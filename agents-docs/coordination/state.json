@@ -17,7 +17,9 @@
     "github-agent",
     "browser-agent"
   ],
-  "current_phase": "test-and-validate",
+  "current_phase": "bootstrap",
+  "version": "0.1.0",
+  "release_status": "alpha",
   "agent_status": {
     "test-agent-v2": {
       "status": "pending",

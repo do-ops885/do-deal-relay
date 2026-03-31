@@ -1,12 +1,33 @@
 # Deal Discovery System - Status
 
-**System**: Active  
-**Version**: 1.0.0  
+**System**: In Development  
+**Version**: 0.1.0-alpha  
+**Status**: Bootstrap Phase  
 **Last Updated**: 2024-03-31
 
 ## Quick Start
 
+### Prerequisites
+
+- Node.js >= 18.0.0
+- npm or yarn
+- Wrangler CLI (`npm install -g wrangler`)
+
+### Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Deploy locally
+npm run dev
+```
+
 ### For AI Agents
+
 ```bash
 # Get all active deals
 curl https://your-worker.workers.dev/deals
@@ -22,8 +43,9 @@ curl https://your-worker.workers.dev/api/log
 ```
 
 ### For Humans
+
 - **Repository**: https://github.com/do-ops885/do-deal-relay
-- **Documentation**: 
+- **Documentation**:
   - [AGENTS.md](AGENTS.md) - System specs and architecture
   - [docs/API.md](docs/API.md) - API reference
   - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
@@ -31,6 +53,8 @@ curl https://your-worker.workers.dev/api/log
 - **Status Dashboard**: Check `/health` endpoint
 
 ## Architecture
+
+**Status**: In design/implementation phase. Not yet deployed.
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -42,6 +66,29 @@ curl https://your-worker.workers.dev/api/log
 │  Sources    │     │  9 Gates    │     │  GitHub     │
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
+
+## Development Roadmap
+
+### Phase 1: Bootstrap (Current - v0.1.0)
+
+- [ ] Fix test infrastructure
+- [ ] Install missing dependencies
+- [ ] Validate core types
+- [ ] Basic KV storage layer
+
+### Phase 2: Test & Validate
+
+- [ ] Write comprehensive tests
+- [ ] Run validation gates
+- [ ] Fix failing checks
+- [ ] Achieve >80% coverage
+
+### Phase 3: Deploy
+
+- [ ] Configure GitHub integration
+- [ ] Set up Cloudflare Workers
+- [ ] Deploy to staging
+- [ ] Production release (v1.0.0)
 
 ## Current Configuration
 
@@ -68,6 +115,7 @@ curl https://your-worker.workers.dev/api/log
 ## Monitoring
 
 Check `/metrics` for:
+
 - Total runs
 - Success rate
 - Deal counts
@@ -76,6 +124,7 @@ Check `/metrics` for:
 ## Support
 
 For issues:
+
 1. Check `/health` endpoint
 2. Review logs via `/api/log`
 3. Open GitHub Issue with trace_id

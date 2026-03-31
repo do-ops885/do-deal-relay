@@ -1,26 +1,13 @@
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022"],
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": ".",
-    "types": ["@cloudflare/workers-types", "vitest/globals"]
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: "miniflare",
+    environmentOptions: {
+      modules: true,
+      scriptPath: "./worker/index.ts",
+      compatibilityDate: "2024-03-20",
+    },
   },
-  "include": ["worker/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
-}
+});
