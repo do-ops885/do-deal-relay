@@ -1,0 +1,48 @@
+# Pre-commit configuration for do-deal-relay
+# TypeScript/Node.js Cloudflare Workers project
+
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-case-conflict
+
+  # Prettier - Code formatter
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [javascript, typescript, json, yaml, markdown]
+        additional_dependencies:
+          - prettier@3.2.5
+
+  # TypeScript compilation check
+  - repo: local
+    hooks:
+      - id: tsc
+        name: TypeScript compiler
+        entry: npx tsc --noEmit
+        language: system
+        pass_filenames: false
+        always_run: true
+        files: \.(ts|tsx)$
+
+  # Run tests
+  - repo: local
+    hooks:
+      - id: vitest
+        name: Run tests
+        entry: npx vitest run
+        language: system
+        pass_filenames: false
+        always_run: true
