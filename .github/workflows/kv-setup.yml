@@ -1,0 +1,144 @@
+name: KV Namespace Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to create KV namespaces for"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+          - both
+      confirm:
+        description: "Confirm you want to create namespaces (idempotent)"
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: kv-setup
+  cancel-in-progress: false
+
+jobs:
+  setup-production-kv:
+    name: Setup Production KV Namespaces
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+
+    if: github.event.inputs.confirm == true && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'both')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@4.79.0
+
+      - name: Create Production KV Namespaces
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Creating production KV namespaces..."
+
+          # Create namespaces with error handling (idempotent)
+          create_namespace() {
+            local name=$1
+            local binding=$2
+            
+            echo "Creating namespace: $name (binding: $binding)"
+            
+            # Try to create, ignore if already exists
+            wrangler kv:namespace create "$name" --env production 2>&1 || {
+              echo "Note: $name may already exist or creation failed"
+            }
+          }
+
+          create_namespace "DEALS_PROD" "DEALS_PROD"
+          create_namespace "DEALS_STAGING" "DEALS_STAGING"
+          create_namespace "DEALS_LOG" "DEALS_LOG"
+          create_namespace "DEALS_LOCK" "DEALS_LOCK"
+          create_namespace "DEALS_SOURCES" "DEALS_SOURCES"
+
+          echo ""
+          echo "✅ Production KV namespace setup complete"
+          echo ""
+          echo "Next steps:"
+          echo "1. Run 'wrangler kv:namespace list' to get namespace IDs"
+          echo "2. Update wrangler.toml with the namespace IDs"
+
+      - name: List created namespaces
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Current KV namespaces:"
+          wrangler kv:namespace list | grep -E "(DEALS_|title|id)" || true
+
+  setup-staging-kv:
+    name: Setup Staging KV Namespaces
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+
+    if: github.event.inputs.confirm == true && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'both')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@4.79.0
+
+      - name: Create Staging KV Namespaces
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Creating staging KV namespaces..."
+
+          # Create namespaces with error handling (idempotent)
+          create_namespace() {
+            local name=$1
+            local binding=$2
+            
+            echo "Creating namespace: $name-staging (binding: $binding)"
+            
+            # Try to create, ignore if already exists
+            wrangler kv:namespace create "$name-staging" --env staging 2>&1 || {
+              echo "Note: $name-staging may already exist or creation failed"
+            }
+          }
+
+          create_namespace "DEALS_PROD" "DEALS_PROD"
+          create_namespace "DEALS_STAGING" "DEALS_STAGING"
+          create_namespace "DEALS_LOG" "DEALS_LOG"
+          create_namespace "DEALS_LOCK" "DEALS_LOCK"
+          create_namespace "DEALS_SOURCES" "DEALS_SOURCES"
+
+          echo ""
+          echo "✅ Staging KV namespace setup complete"
+
+      - name: List created namespaces
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Current KV namespaces:"
+          wrangler kv:namespace list | grep -E "(DEALS_|title|id)" || true
