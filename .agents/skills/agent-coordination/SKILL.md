@@ -12,7 +12,7 @@ Coordinate multiple agents efficiently for complex development tasks across any 
 Choose your coordination strategy:
 
 **Parallel** - Independent tasks → See [PARALLEL.md](PARALLEL.md)
-**Sequential** - Dependent tasks → See [SEQUENTIAL.md](SEQUENTIAL.md)  
+**Sequential** - Dependent tasks → See [SEQUENTIAL.md](SEQUENTIAL.md)
 **Swarm** - Multi-perspective analysis → See [SWARM.md](SWARM.md)
 **Hybrid** - Multi-phase workflows → See [HYBRID.md](HYBRID.md)
 **Iterative** - Progressive refinement → See [ITERATIVE.md](ITERATIVE.md)

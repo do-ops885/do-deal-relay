@@ -85,7 +85,7 @@ def create_directory_structure(base_path: Path) -> None:
         "examples",
         "scripts"
     ]
-    
+
     for directory in directories:
         dir_path = base_path / directory
         dir_path.mkdir(parents=True, exist_ok=True)
@@ -96,13 +96,13 @@ def create_skill_md(base_path: Path, skill_name: str, author: str) -> None:
     """Create the main SKILL.md file."""
     skill_file = base_path / "SKILL.md"
     date_str = datetime.now().strftime("%Y-%m-%d")
-    
+
     content = SKILL_TEMPLATE.format(
         skill_name=skill_name,
         author=author,
         date=date_str
     )
-    
+
     skill_file.write_text(content)
     print(f"Created: {skill_file}")
 
@@ -110,7 +110,7 @@ def create_skill_md(base_path: Path, skill_name: str, author: str) -> None:
 def create_reference_files(base_path: Path) -> None:
     """Create starter reference files."""
     refs_dir = base_path / "references"
-    
+
     # README for references
     readme_content = """# References
 
@@ -126,7 +126,7 @@ Examples:
 - api-reference.md - Complete API documentation
 - examples.md - Extended examples
 """
-    
+
     (refs_dir / "README.md").write_text(readme_content)
     print(f"Created: {refs_dir / 'README.md'}")
 
@@ -134,7 +134,7 @@ Examples:
 def create_examples_dir(base_path: Path) -> None:
     """Create starter example files."""
     examples_dir = base_path / "examples"
-    
+
     readme_content = """# Examples
 
 This directory contains working examples demonstrating the skill.
@@ -149,7 +149,7 @@ Examples should be:
 - Tested and working
 - Demonstrating real use cases
 """
-    
+
     (examples_dir / "README.md").write_text(readme_content)
     print(f"Created: {examples_dir / 'README.md'}")
 
@@ -157,7 +157,7 @@ Examples should be:
 def create_scripts_dir(base_path: Path) -> None:
     """Create starter script files."""
     scripts_dir = base_path / "scripts"
-    
+
     # Test script template
     test_script = '''#!/usr/bin/env python3
 """
@@ -170,16 +170,16 @@ from pathlib import Path
 def test_skill():
     """Run skill tests."""
     print("Testing {skill_name} skill...")
-    
+
     # Add your tests here
     # Return 0 for success, 1 for failure
-    
+
     return 0
 
 if __name__ == "__main__":
     sys.exit(test_skill())
 '''
-    
+
     (scripts_dir / "test.py").write_text(test_script)
     print(f"Created: {scripts_dir / 'test.py'}")
 
@@ -202,28 +202,28 @@ def main():
         default="anonymous",
         help="Author name for the skill"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Determine full path
     base_path = Path(args.base_path) / args.skill_name
-    
+
     # Check if skill already exists
     if base_path.exists():
         print(f"Error: Skill '{args.skill_name}' already exists at {base_path}")
         sys.exit(1)
-    
+
     print(f"Creating skill: {args.skill_name}")
     print(f"Location: {base_path.absolute()}")
     print()
-    
+
     # Create structure
     create_directory_structure(base_path)
     create_skill_md(base_path, args.skill_name, args.author)
     create_reference_files(base_path)
     create_examples_dir(base_path)
     create_scripts_dir(base_path)
-    
+
     print()
     print(f"Skill '{args.skill_name}' initialized successfully!")
     print()

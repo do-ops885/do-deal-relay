@@ -1,7 +1,7 @@
 # Data Agent
 
 **Agent ID**: `data-agent`
-**Status**: 🟢 Complete  
+**Status**: 🟢 Complete
 **Scope**: TypeScript types, Zod schemas, data models
 **Parallel Agent**: Bootstrap Agent (already done)
 

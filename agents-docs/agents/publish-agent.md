@@ -1,9 +1,9 @@
 # Publish Agent
 
 **Agent ID**: `publish-agent`
-**Status**: ⚪ Pending  
+**Status**: ⚪ Pending
 **Scope**: Staging, production publish, GitHub commits, rollback
-**Previous Agent**: Scoring Agent  
+**Previous Agent**: Scoring Agent
 **Next Agent**: Notify Agent
 
 ## Input

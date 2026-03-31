@@ -1,8 +1,8 @@
 # Documentation Agent - Complete Documentation
 
-**Agent ID**: `doc-agent`  
-**Status**: 🟡 Active  
-**Scope**: Create all documentation, README updates, API docs  
+**Agent ID**: `doc-agent`
+**Status**: 🟡 Active
+**Scope**: Create all documentation, README updates, API docs
 **Parallel**: Can run with Test Agent
 
 ## Deliverables

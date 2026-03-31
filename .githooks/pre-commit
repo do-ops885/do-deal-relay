@@ -23,7 +23,7 @@ error() {
     ERRORS=$((ERRORS + 1))
 }
 
-# Function to print warning  
+# Function to print warning
 warning() {
     echo -e "${YELLOW}⚠${NC} $1"
     WARNINGS=$((WARNINGS + 1))
@@ -236,7 +236,7 @@ for file in $FILES; do
                 break
             fi
         done
-        
+
         if [ "$ALLOWED" = false ]; then
             error "Non-essential file in root directory: $file"
             echo "   Move to appropriate subfolder:"

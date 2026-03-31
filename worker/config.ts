@@ -6,18 +6,18 @@ export const CONFIG = {
   // System
   VERSION: '1.0.0',
   SCHEMA_VERSION: '1.0.0',
-  
+
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes
   CRON_SCHEDULE: '0 */6 * * *', // Every 6 hours
   NOTIFICATION_COOLDOWN_HOURS: 6,
-  
+
   // Limits
   MAX_PAYLOAD_SIZE_BYTES: 1_000_000, // 1MB
   FETCH_TIMEOUT_MS: 30_000, // 30 seconds
   MAX_RETRIES: 3,
   MAX_DEALS_PER_RUN: 1000,
-  
+
   // Scoring weights
   SCORING_WEIGHTS: {
     validity_ratio: 0.25,
@@ -28,13 +28,13 @@ export const CONFIG = {
     reward_plausibility: 0.10,
     expiry_confidence: 0.05,
   },
-  
+
   // Validation thresholds
   MIN_TRUST_SCORE: 0.3,
   MIN_CONFIDENCE_SCORE: 0.5,
   SIMILARITY_THRESHOLD: 0.8,
   MAX_REWARD_VALUE: 10000, // $10K cap for sanity
-  
+
   // Trust model
   TRUST_BOUNDS: {
     trusted: { min: 0.8, max: 1.0 },
@@ -46,17 +46,17 @@ export const CONFIG = {
     success: 0.1,
     failure: -0.2,
   },
-  
+
   // Notifications
   HIGH_VALUE_THRESHOLD: 100, // $100
   NOTIFICATION_SEVERITY: ['info', 'warning', 'critical'] as const,
-  
+
   // File paths
   SNAPSHOT_FILE: 'deals.json',
   CANDIDATE_FILE: 'deals-candidate.json',
   RESEARCH_MD_FILE: 'deals-research.md',
   STATUS_FILE: 'status.json',
-  
+
   // KV keys
   KV_KEYS: {
     PROD_SNAPSHOT: 'snapshot:prod',

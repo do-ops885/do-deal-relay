@@ -16,19 +16,19 @@ ERRORS=()
 run_check() {
     local name="$1"
     local cmd="$2"
-    
+
     local output
     local exit_code=0
-    
+
     # Run command and capture output
     output=$(eval "$cmd" 2>&1) || exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
         ERRORS+=("✗ $name failed (exit $exit_code)")
         ERRORS+=("$output")
         return 1
     fi
-    
+
     return 0
 }
 
@@ -58,7 +58,7 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     echo "Quality Gate Failed"
     echo "==================="
     echo ""
-    
+
     for error in "${ERRORS[@]}"; do
         echo "$error"
         # Add blank line after each error block
@@ -66,7 +66,7 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
             echo ""
         fi
     done
-    
+
     exit 2
 fi
 

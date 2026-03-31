@@ -55,9 +55,9 @@ jobs:
           create_namespace() {
             local name=$1
             local binding=$2
-            
+
             echo "Creating namespace: $name (binding: $binding)"
-            
+
             # Try to create, ignore if already exists
             wrangler kv:namespace create "$name" --env production 2>&1 || {
               echo "Note: $name may already exist or creation failed"
@@ -117,9 +117,9 @@ jobs:
           create_namespace() {
             local name=$1
             local binding=$2
-            
+
             echo "Creating namespace: $name-staging (binding: $binding)"
-            
+
             # Try to create, ignore if already exists
             wrangler kv:namespace create "$name-staging" --env staging 2>&1 || {
               echo "Note: $name-staging may already exist or creation failed"

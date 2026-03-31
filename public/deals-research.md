@@ -5,7 +5,7 @@ Autonomous discovery and validation of referral deals for AI agent consumption.
 
 ## Scoring Definition
 ```
-confidence_score = 
+confidence_score =
   validity_ratio × 0.25 +
   uniqueness_score × 0.20 +
   source_diversity × 0.15 +

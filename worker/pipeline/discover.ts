@@ -79,7 +79,7 @@ async function discoverFromSource(
   for (const pattern of source.url_patterns) {
     try {
       const url = `https://${source.domain}${pattern}`;
-      
+
       // Respect payload limits
       const response = await fetch(url, {
         method: 'GET',
@@ -153,11 +153,11 @@ function parseHTMLContent(content: string, source: SourceConfig): ExtractedDeal[
   let match;
   while ((match = codePattern.exec(content)) !== null) {
     const code = match[1];
-    
+
     // Find associated URL
     const urlMatch = content.slice(Math.max(0, match.index - 500), match.index + 500)
       .match(urlPattern);
-    
+
     // Find reward info
     const rewardMatch = content.slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
@@ -271,10 +271,10 @@ function extractTitle(content: string, code: string): string {
   const context = extractContent(content, code);
   const titleMatch = context.match(/<title>([^<]+)/i);
   if (titleMatch) return titleMatch[1].trim();
-  
+
   const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
   if (h1Match) return h1Match[1].trim();
-  
+
   return 'Referral Deal';
 }
 
@@ -282,9 +282,9 @@ function extractDescription(content: string, code: string): string {
   const context = extractContent(content, code, 300);
   const metaMatch = context.match(/<meta[^>]*description[^>]*content="([^"]+)"/i);
   if (metaMatch) return metaMatch[1].trim();
-  
+
   const pMatch = context.match(/<p[^>]*>([^<]+)/i);
   if (pMatch) return pMatch[1].trim();
-  
+
   return `Use referral code ${code}`;
 }

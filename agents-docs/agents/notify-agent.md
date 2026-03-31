@@ -1,9 +1,9 @@
 # Notify Agent
 
 **Agent ID**: `notify-agent`
-**Status**: ⚪ Pending  
+**Status**: ⚪ Pending
 **Scope**: Notification system, Telegram, GitHub Issues, alerts
-**Previous Agent**: Publish Agent  
+**Previous Agent**: Publish Agent
 **Next Agent**: Test Agent
 
 ## Input
@@ -40,7 +40,7 @@ Max 1 per (type + source + 6h window)
 notify(env: Env, event: NotificationEvent): Promise<boolean>
 
 interface NotificationEvent {
-  type: 'checks_failed' | 'publish_incomplete' | 'concurrency_abort' 
+  type: 'checks_failed' | 'publish_incomplete' | 'concurrency_abort'
        | 'high_value_deal' | 'trust_anomaly' | 'system_error';
   severity: 'info' | 'warning' | 'critical';
   run_id: string;

@@ -1,9 +1,9 @@
 # Scoring Agent
 
 **Agent ID**: `scoring-agent`
-**Status**: ⚪ Pending  
+**Status**: ⚪ Pending
 **Scope**: Confidence scoring, trust scoring, deal ranking
-**Previous Agent**: Validation Agent  
+**Previous Agent**: Validation Agent
 **Next Agent**: Publish Agent
 
 ## Input
@@ -24,7 +24,7 @@ From Validation Agent:
 
 ### Scoring Algorithm
 ```
-confidence_score = 
+confidence_score =
   validity_ratio × 0.25 +
   uniqueness_score × 0.20 +
   source_diversity × 0.15 +

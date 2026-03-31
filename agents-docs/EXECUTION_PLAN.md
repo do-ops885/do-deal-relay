@@ -4,7 +4,7 @@
 
 ### 1. Test Agent (test-agent)
 
-**Status**: 🟡 Ready to start  
+**Status**: 🟡 Ready to start
 **Scope**: Write comprehensive tests, run dry runs
 
 **Execute**:
@@ -21,7 +21,7 @@ mkdir -p tests/unit tests/integration tests/e2e tests/fixtures
 
 ### 2. Validation Agent (validation-agent)
 
-**Status**: 🟡 Ready to start  
+**Status**: 🟡 Ready to start
 **Scope**: Run all validations and checks
 
 **Execute**:
@@ -39,7 +39,7 @@ grep -r "ghp_\|sk-" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v 
 
 ### 3. Doc Agent (doc-agent)
 
-**Status**: 🟡 Ready to start  
+**Status**: 🟡 Ready to start
 **Scope**: Create all documentation
 
 **Execute**:
@@ -53,7 +53,7 @@ grep -r "ghp_\|sk-" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v 
 
 ### 4. GitHub Agent (github-agent)
 
-**Status**: 🟡 Ready to start  
+**Status**: 🟡 Ready to start
 **Scope**: gh CLI operations
 
 **Execute**:
@@ -85,7 +85,7 @@ git commit -m "feat: complete deal discovery system with guard rails"
 
 ### 5. Browser Agent (browser-agent)
 
-**Status**: 🟡 Ready to start  
+**Status**: 🟡 Ready to start
 **Scope**: Browser-based testing
 
 **Execute**:

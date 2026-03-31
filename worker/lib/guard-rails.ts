@@ -108,7 +108,7 @@ export function checkResourceLimits(deals: Deal[]): GuardRailResult {
     return {
       passed: false,
       message: issues.join('; '),
-      context: { 
+      context: {
         dealCount: deals.length,
         estimatedSize,
       },
@@ -223,7 +223,7 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
   }
 
   const allIssues = [...issues, ...warnings];
-  
+
   if (issues.length > 0) {
     return {
       passed: false,

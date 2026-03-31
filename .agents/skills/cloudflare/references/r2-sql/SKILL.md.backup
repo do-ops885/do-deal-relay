@@ -87,9 +87,9 @@ WRANGLER_R2_SQL_AUTH_TOKEN=<your-token>
 
 ```bash
 npx wrangler r2 sql query "<warehouse-name>" "
-  SELECT * 
-  FROM namespace.table_name 
-  WHERE condition 
+  SELECT *
+  FROM namespace.table_name
+  WHERE condition
   LIMIT 10"
 ```
 
@@ -180,14 +180,14 @@ SELECT * FROM ns.table;
 SELECT user_id, timestamp, status FROM ns.table;
 
 -- With conditions
-SELECT * FROM ns.table 
+SELECT * FROM ns.table
 WHERE timestamp BETWEEN '2025-01-01T00:00:00Z' AND '2025-01-31T23:59:59Z'
   AND status = 200
 LIMIT 100;
 
 -- Complex conditions
-SELECT * FROM ns.table 
-WHERE (status = 404 OR status = 500) 
+SELECT * FROM ns.table
+WHERE (status = 404 OR status = 500)
   AND method = 'POST'
   AND user_agent IS NOT NULL
 ORDER BY timestamp DESC;
@@ -335,8 +335,8 @@ HAVING COUNT(*) > 10;
 - No egress fees when querying from BI tools
 
 ```sql
-SELECT 
-  department, 
+SELECT
+  department,
   SUM(revenue) as total_revenue,
   AVG(revenue) as avg_revenue
 FROM sales.transactions
