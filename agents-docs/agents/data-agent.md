@@ -8,6 +8,7 @@
 ## Deliverables (Complete ✅)
 
 ### Types
+
 - [x] `worker/types.ts` - Complete type definitions
   - Deal schema
   - Reward schema
@@ -23,6 +24,7 @@
   - GOAP types
 
 ### Schema Validation
+
 - All schemas use Zod for runtime validation
 - Strict TypeScript types
 - No `any` types
@@ -31,6 +33,7 @@
 ## Data Models
 
 ### Deal
+
 ```typescript
 {
   id: string;                    // Canonical ID (SHA256)
@@ -66,6 +69,7 @@
 ```
 
 ### Snapshot
+
 ```typescript
 {
   version: string;
@@ -87,6 +91,7 @@
 ```
 
 ### LogEntry
+
 ```typescript
 {
   run_id: string;

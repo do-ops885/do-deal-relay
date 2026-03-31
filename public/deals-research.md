@@ -1,9 +1,11 @@
 # Deal Discovery Research Log
 
 ## Objective
+
 Autonomous discovery and validation of referral deals for AI agent consumption.
 
 ## Scoring Definition
+
 ```
 confidence_score =
   validity_ratio × 0.25 +
@@ -18,6 +20,7 @@ confidence_score =
 ## Active Deals
 
 ### Trading212
+
 - **Code**: GcCOCxbo
 - **Reward**: Free share worth up to £100
 - **Trust Score**: 0.70
@@ -47,9 +50,10 @@ None currently.
 
 ## Run History
 
-| Run ID | Date | Deals | Status |
-|--------|------|-------|--------|
-| deals-2024-03-31-15 | 2024-03-31 | 1 | Success |
+| Run ID              | Date       | Deals | Status  |
+| ------------------- | ---------- | ----- | ------- |
+| deals-2024-03-31-15 | 2024-03-31 | 1     | Success |
 
 ---
-*Last updated: 2024-03-31 by autonomous discovery system*
+
+_Last updated: 2024-03-31 by autonomous discovery system_

@@ -1,5 +1,5 @@
-import { Deal, PipelineContext } from '../types';
-import { generateDealId } from '../lib/crypto';
+import { Deal, PipelineContext } from "../types";
+import { generateDealId } from "../lib/crypto";
 
 // ============================================================================
 // Normalization Pipeline
@@ -71,15 +71,15 @@ function normalizeUrl(url: string): string {
 
     // Remove tracking parameters
     const trackingParams = [
-      'utm_source',
-      'utm_medium',
-      'utm_campaign',
-      'utm_content',
-      'utm_term',
-      'fbclid',
-      'gclid',
-      'ref',
-      'referrer',
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
+      "utm_term",
+      "fbclid",
+      "gclid",
+      "ref",
+      "referrer",
     ];
 
     for (const param of trackingParams) {
@@ -88,12 +88,12 @@ function normalizeUrl(url: string): string {
 
     // Sort remaining params for consistency
     const sortedParams = new URLSearchParams(
-      [...parsed.searchParams].sort(([a], [b]) => a.localeCompare(b))
+      [...parsed.searchParams].sort(([a], [b]) => a.localeCompare(b)),
     );
     parsed.search = sortedParams.toString();
 
     // Remove trailing slash from pathname
-    if (parsed.pathname.endsWith('/') && parsed.pathname.length > 1) {
+    if (parsed.pathname.endsWith("/") && parsed.pathname.length > 1) {
       parsed.pathname = parsed.pathname.slice(0, -1);
     }
 
@@ -109,8 +109,8 @@ function normalizeUrl(url: string): string {
 function normalizeText(text: string): string {
   return text
     .trim()
-    .replace(/\s+/g, ' ') // Collapse whitespace
-    .replace(/[^\x20-\x7E]/g, '') // Remove non-printable
+    .replace(/\s+/g, " ") // Collapse whitespace
+    .replace(/[^\x20-\x7E]/g, "") // Remove non-printable
     .slice(0, 1000); // Max length
 }
 
@@ -133,11 +133,7 @@ function normalizeDate(date: string): string {
  * Generate canonical ID from normalized deal
  */
 export async function regenerateDealId(deal: Deal): Promise<string> {
-  return generateDealId(
-    deal.source.domain,
-    deal.code,
-    deal.reward.type
-  );
+  return generateDealId(deal.source.domain, deal.code, deal.reward.type);
 }
 
 /**

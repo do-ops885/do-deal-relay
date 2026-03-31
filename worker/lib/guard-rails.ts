@@ -1,5 +1,5 @@
-import { Deal, PipelineError, ErrorClass } from '../types';
-import { CONFIG } from '../config';
+import { Deal, PipelineError, ErrorClass } from "../types";
+import { CONFIG } from "../config";
 
 // ============================================================================
 // Guard Rails - Safety Mechanisms
@@ -7,7 +7,7 @@ import { CONFIG } from '../config';
 
 export interface GuardRailCheck {
   name: string;
-  severity: 'fatal' | 'warning' | 'info';
+  severity: "fatal" | "warning" | "info";
   check: (input: unknown) => Promise<GuardRailResult>;
 }
 
@@ -50,7 +50,7 @@ export async function checkSafety(deal: Deal): Promise<GuardRailResult> {
   }
 
   // Check for suspicious URL schemes
-  const dangerousSchemes = ['javascript:', 'data:', 'vbscript:', 'file:'];
+  const dangerousSchemes = ["javascript:", "data:", "vbscript:", "file:"];
   for (const scheme of dangerousSchemes) {
     if (deal.url.toLowerCase().startsWith(scheme)) {
       issues.push(`Dangerous URL scheme detected: ${scheme}`);
@@ -59,14 +59,17 @@ export async function checkSafety(deal: Deal): Promise<GuardRailResult> {
 
   // Check for control characters
   const controlCharPattern = /[\x00-\x08\x0B-\x0C\x0E-\x1F]/;
-  if (controlCharPattern.test(deal.code) || controlCharPattern.test(deal.title)) {
-    issues.push('Control characters detected in deal data');
+  if (
+    controlCharPattern.test(deal.code) ||
+    controlCharPattern.test(deal.title)
+  ) {
+    issues.push("Control characters detected in deal data");
   }
 
   if (issues.length > 0) {
     return {
       passed: false,
-      message: issues.join('; '),
+      message: issues.join("; "),
       context: { issues },
     };
   }
@@ -82,13 +85,17 @@ export function checkResourceLimits(deals: Deal[]): GuardRailResult {
 
   // Check deal count
   if (deals.length > CONFIG.MAX_DEALS_PER_RUN) {
-    issues.push(`Deal count ${deals.length} exceeds limit ${CONFIG.MAX_DEALS_PER_RUN}`);
+    issues.push(
+      `Deal count ${deals.length} exceeds limit ${CONFIG.MAX_DEALS_PER_RUN}`,
+    );
   }
 
   // Check payload size estimate
   const estimatedSize = JSON.stringify(deals).length;
   if (estimatedSize > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
-    issues.push(`Payload size ${estimatedSize} exceeds limit ${CONFIG.MAX_PAYLOAD_SIZE_BYTES}`);
+    issues.push(
+      `Payload size ${estimatedSize} exceeds limit ${CONFIG.MAX_PAYLOAD_SIZE_BYTES}`,
+    );
   }
 
   // Check individual deal field lengths
@@ -97,7 +104,9 @@ export function checkResourceLimits(deals: Deal[]): GuardRailResult {
       issues.push(`Deal ${deal.id}: title too long (${deal.title.length})`);
     }
     if (deal.description.length > 1000) {
-      issues.push(`Deal ${deal.id}: description too long (${deal.description.length})`);
+      issues.push(
+        `Deal ${deal.id}: description too long (${deal.description.length})`,
+      );
     }
     if (deal.code.length > 50) {
       issues.push(`Deal ${deal.id}: code too long (${deal.code.length})`);
@@ -107,7 +116,7 @@ export function checkResourceLimits(deals: Deal[]): GuardRailResult {
   if (issues.length > 0) {
     return {
       passed: false,
-      message: issues.join('; '),
+      message: issues.join("; "),
       context: {
         dealCount: deals.length,
         estimatedSize,
@@ -123,7 +132,7 @@ export function checkResourceLimits(deals: Deal[]): GuardRailResult {
  */
 export function checkRateLimit(
   currentRequests: number,
-  windowStart: number
+  windowStart: number,
 ): GuardRailResult {
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute window
@@ -161,7 +170,7 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
   const warnings: string[] = [];
 
   if (deals.length === 0) {
-    warnings.push('No deals to validate');
+    warnings.push("No deals to validate");
   }
 
   // Check for empty required fields
@@ -197,24 +206,33 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
     codes.set(deal.code, count + 1);
   }
 
-  const duplicates = Array.from(codes.entries()).filter(([, count]) => count > 1);
+  const duplicates = Array.from(codes.entries()).filter(
+    ([, count]) => count > 1,
+  );
   if (duplicates.length > 0) {
-    warnings.push(`${duplicates.length} duplicate codes found: ${duplicates.map(([code]) => code).join(', ')}`);
+    warnings.push(
+      `${duplicates.length} duplicate codes found: ${duplicates.map(([code]) => code).join(", ")}`,
+    );
   }
 
   // Check reward distribution
   const cashRewards = deals
-    .filter((d) => d.reward.type === 'cash' && typeof d.reward.value === 'number')
+    .filter(
+      (d) => d.reward.type === "cash" && typeof d.reward.value === "number",
+    )
     .map((d) => d.reward.value as number);
 
   if (cashRewards.length > 0) {
-    const avgReward = cashRewards.reduce((a, b) => a + b, 0) / cashRewards.length;
+    const avgReward =
+      cashRewards.reduce((a, b) => a + b, 0) / cashRewards.length;
     const maxReward = Math.max(...cashRewards);
 
     // Flag anomalous rewards (>3σ would be suspicious)
     const suspicious = cashRewards.filter((r) => r > avgReward * 5);
     if (suspicious.length > 0) {
-      warnings.push(`${suspicious.length} deals have suspiciously high rewards`);
+      warnings.push(
+        `${suspicious.length} deals have suspiciously high rewards`,
+      );
     }
 
     if (maxReward > 1000) {
@@ -227,7 +245,7 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
   if (issues.length > 0) {
     return {
       passed: false,
-      message: allIssues.join('; '),
+      message: allIssues.join("; "),
       context: { issues, warnings },
     };
   }
@@ -235,7 +253,7 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
   if (warnings.length > 0) {
     return {
       passed: true, // Warnings don't block
-      message: allIssues.join('; '),
+      message: allIssues.join("; "),
       context: { warnings },
     };
   }
@@ -252,7 +270,7 @@ export function checkDataQuality(deals: Deal[]): GuardRailResult {
  */
 export function checkConsistency(
   before: { count: number; hashes: string[] },
-  after: { count: number; hashes: string[] }
+  after: { count: number; hashes: string[] },
 ): GuardRailResult {
   const issues: string[] = [];
 
@@ -262,9 +280,12 @@ export function checkConsistency(
   }
 
   // Check for data loss (shouldn't lose >50% without reason)
-  const lossRatio = before.count > 0 ? (before.count - after.count) / before.count : 0;
+  const lossRatio =
+    before.count > 0 ? (before.count - after.count) / before.count : 0;
   if (lossRatio > 0.5) {
-    issues.push(`Lost ${(lossRatio * 100).toFixed(1)}% of deals - check pipeline`);
+    issues.push(
+      `Lost ${(lossRatio * 100).toFixed(1)}% of deals - check pipeline`,
+    );
   }
 
   // Check hash integrity (no deals should disappear between stages without tracking)
@@ -277,7 +298,7 @@ export function checkConsistency(
   if (issues.length > 0) {
     return {
       passed: false,
-      message: issues.join('; '),
+      message: issues.join("; "),
       context: {
         beforeCount: before.count,
         afterCount: after.count,
@@ -298,26 +319,27 @@ export function checkConsistency(
  */
 export async function runGuardRails(
   deals: Deal[],
-  stage: 'input' | 'processing' | 'output'
+  stage: "input" | "processing" | "output",
 ): Promise<GuardRailReport> {
-  const checks: GuardRailReport['checks'] = [];
+  const checks: GuardRailReport["checks"] = [];
   const fatalErrors: string[] = [];
   const warnings: string[] = [];
 
   // Stage-specific checks
-  if (stage === 'input') {
+  if (stage === "input") {
     // Resource limits on input
     const resourceCheck = checkResourceLimits(deals);
     checks.push({
-      name: 'resource_limits',
+      name: "resource_limits",
       passed: resourceCheck.passed,
-      severity: 'fatal',
+      severity: "fatal",
       message: resourceCheck.message,
     });
-    if (!resourceCheck.passed) fatalErrors.push(resourceCheck.message || 'Resource limit exceeded');
+    if (!resourceCheck.passed)
+      fatalErrors.push(resourceCheck.message || "Resource limit exceeded");
   }
 
-  if (stage === 'processing') {
+  if (stage === "processing") {
     // Safety checks on each deal
     for (let i = 0; i < Math.min(deals.length, 10); i++) {
       const safetyCheck = await checkSafety(deals[i]);
@@ -325,7 +347,7 @@ export async function runGuardRails(
         checks.push({
           name: `safety_check_${i}`,
           passed: false,
-          severity: 'fatal',
+          severity: "fatal",
           message: safetyCheck.message,
         });
         fatalErrors.push(`Deal ${deals[i].id}: ${safetyCheck.message}`);
@@ -333,17 +355,18 @@ export async function runGuardRails(
     }
   }
 
-  if (stage === 'output') {
+  if (stage === "output") {
     // Data quality on output
     const qualityCheck = checkDataQuality(deals);
     checks.push({
-      name: 'data_quality',
+      name: "data_quality",
       passed: qualityCheck.passed,
-      severity: qualityCheck.passed && qualityCheck.message ? 'warning' : 'fatal',
+      severity:
+        qualityCheck.passed && qualityCheck.message ? "warning" : "fatal",
       message: qualityCheck.message,
     });
     if (!qualityCheck.passed) {
-      fatalErrors.push(qualityCheck.message || 'Data quality check failed');
+      fatalErrors.push(qualityCheck.message || "Data quality check failed");
     } else if (qualityCheck.message) {
       warnings.push(qualityCheck.message);
     }
@@ -362,16 +385,16 @@ export async function runGuardRails(
  */
 export async function enforceGuardRails(
   deals: Deal[],
-  stage: 'input' | 'processing' | 'output'
+  stage: "input" | "processing" | "output",
 ): Promise<void> {
   const report = await runGuardRails(deals, stage);
 
   if (!report.allPassed) {
     throw new PipelineError(
-      'ValidationError',
-      `Guard rails failed: ${report.fatalErrors.join('; ')}`,
-      'validate',
-      false
+      "ValidationError",
+      `Guard rails failed: ${report.fatalErrors.join("; ")}`,
+      "validate",
+      false,
     );
   }
 }

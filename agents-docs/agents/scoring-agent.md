@@ -9,6 +9,7 @@
 ## Input
 
 From Validation Agent:
+
 - Validated deals (passed all 9 gates)
 - Quarantined deals (anomalies)
 - Validation statistics
@@ -16,6 +17,7 @@ From Validation Agent:
 ## Deliverables
 
 ### Scoring System
+
 - [ ] `worker/pipeline/score.ts`
   - Confidence score calculation
   - Trust score calculation
@@ -23,6 +25,7 @@ From Validation Agent:
   - Source trust evolution
 
 ### Scoring Algorithm
+
 ```
 confidence_score =
   validity_ratio × 0.25 +
@@ -35,6 +38,7 @@ confidence_score =
 ```
 
 ### Trust Evolution
+
 - +0.1 on validation success
 - -0.2 on validation failure
 - Bounded [0, 1]
@@ -57,6 +61,7 @@ interface ScoredDeal extends Deal {
 ## Scoring Weights
 
 From config:
+
 - validity_ratio: 0.25
 - uniqueness_score: 0.20
 - source_diversity: 0.15
@@ -68,6 +73,7 @@ From config:
 ## Quarantine Check
 
 High-value deals (> $100) with low trust (< 0.5):
+
 - Move to quarantine
 - Do not publish
 - Log with warning
@@ -75,6 +81,7 @@ High-value deals (> $100) with low trust (< 0.5):
 ## Handoff Checklist
 
 Before handing to Publish Agent:
+
 - [ ] All deals scored
 - [ ] High-value anomalies quarantined
 - [ ] Source trust scores updated
@@ -83,6 +90,7 @@ Before handing to Publish Agent:
 ## Context for Next Agent
 
 Publish Agent receives:
+
 - Scored deals (confidence_score set)
 - Staging snapshot ready to build
 - Quarantine list (for notifications)

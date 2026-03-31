@@ -13,7 +13,7 @@ import { createMcpHandler } from "agents/mcp";
 const apiHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext) {
     return createMcpHandler(server)(request, env, ctx);
-  }
+  },
 };
 
 export default new OAuthProvider({
@@ -22,7 +22,7 @@ export default new OAuthProvider({
   clientRegistrationEndpoint: "/oauth/register",
   apiRoute: "/mcp",
   apiHandler: apiHandler,
-  defaultHandler: AuthHandler
+  defaultHandler: AuthHandler,
 });
 ```
 
@@ -45,6 +45,7 @@ The `workers-oauth-provider` validates that `redirect_uri` in authorization requ
 When proxying to third-party providers, implement your own consent dialog before forwarding users upstream. This prevents the "confused deputy" problem where attackers exploit cached consent.
 
 Your consent dialog should:
+
 - Identify the requesting MCP client by name
 - Display the specific scopes being requested
 
@@ -63,7 +64,10 @@ function generateCSRFProtection(): { token: string; setCookie: string } {
 }
 
 // Validate token when user approves
-function validateCSRFToken(formData: FormData, request: Request): { clearCookie: string } {
+function validateCSRFToken(
+  formData: FormData,
+  request: Request,
+): { clearCookie: string } {
   const tokenFromForm = formData.get("csrf_token");
   const cookieHeader = request.headers.get("Cookie") || "";
   const tokenFromCookie = cookieHeader
@@ -76,7 +80,7 @@ function validateCSRFToken(formData: FormData, request: Request): { clearCookie:
   }
 
   return {
-    clearCookie: `__Host-CSRF_TOKEN=; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=0`
+    clearCookie: `__Host-CSRF_TOKEN=; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=0`,
   };
 }
 ```
@@ -118,6 +122,7 @@ function sanitizeUrl(url: string): string {
 ```
 
 **Required protections:**
+
 - Client names/descriptions: HTML-escape before rendering
 - Logo URLs: Allow only `http:` and `https:` schemes
 - Client URIs: Same as logo URLs
@@ -140,7 +145,7 @@ function buildSecurityHeaders(setCookie: string, nonce?: string): HeadersInit {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "connect-src 'self'"
+    "connect-src 'self'",
   ].join("; ");
 
   return {
@@ -148,7 +153,7 @@ function buildSecurityHeaders(setCookie: string, nonce?: string): HeadersInit {
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",
     "Content-Type": "text/html; charset=utf-8",
-    "Set-Cookie": setCookie
+    "Set-Cookie": setCookie,
   };
 }
 ```
@@ -163,32 +168,36 @@ Ensure the same user that hits authorize reaches the callback. Use a random stat
 // Create state before redirecting to upstream provider
 async function createOAuthState(
   oauthReqInfo: AuthRequest,
-  kv: KVNamespace
+  kv: KVNamespace,
 ): Promise<{ stateToken: string }> {
   const stateToken = crypto.randomUUID();
   await kv.put(`oauth:state:${stateToken}`, JSON.stringify(oauthReqInfo), {
-    expirationTtl: 600
+    expirationTtl: 600,
   });
   return { stateToken };
 }
 
 // Bind state to browser session via hashed cookie
-async function bindStateToSession(stateToken: string): Promise<{ setCookie: string }> {
+async function bindStateToSession(
+  stateToken: string,
+): Promise<{ setCookie: string }> {
   const encoder = new TextEncoder();
   const data = encoder.encode(stateToken);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
   return {
-    setCookie: `__Host-CONSENTED_STATE=${hashHex}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=600`
+    setCookie: `__Host-CONSENTED_STATE=${hashHex}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=600`,
   };
 }
 
 // Validate in callback - check both KV and session cookie
 async function validateOAuthState(
   request: Request,
-  kv: KVNamespace
+  kv: KVNamespace,
 ): Promise<{ oauthReqInfo: AuthRequest; clearCookie: string }> {
   const url = new URL(request.url);
   const stateFromQuery = url.searchParams.get("state");
@@ -216,7 +225,10 @@ async function validateOAuthState(
 
   // Hash state and compare
   const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(stateFromQuery));
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(stateFromQuery),
+  );
   const stateHash = Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -229,7 +241,7 @@ async function validateOAuthState(
 
   return {
     oauthReqInfo: JSON.parse(storedDataJson),
-    clearCookie: `__Host-CONSENTED_STATE=; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=0`
+    clearCookie: `__Host-CONSENTED_STATE=; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=0`,
   };
 }
 ```
@@ -244,9 +256,10 @@ Maintain a registry of approved client IDs per user. Store in a cryptographicall
 export async function addApprovedClient(
   request: Request,
   clientId: string,
-  cookieSecret: string
+  cookieSecret: string,
 ): Promise<string> {
-  const existingClients = await getApprovedClientsFromCookie(request, cookieSecret) || [];
+  const existingClients =
+    (await getApprovedClientsFromCookie(request, cookieSecret)) || [];
   const updatedClients = Array.from(new Set([...existingClients, clientId]));
 
   const payload = JSON.stringify(updatedClients);
@@ -266,6 +279,7 @@ When reading the cookie, verify the signature before trusting data. If client is
 ### Why `__Host-` prefix?
 
 The `__Host-` prefix prevents subdomain attacks on `*.workers.dev` domains. Requirements:
+
 - Must have `Secure` flag (HTTPS only)
 - Must have `Path=/`
 - Must not have `Domain` attribute
@@ -275,6 +289,7 @@ Without this prefix, an attacker on `evil.workers.dev` could set cookies for you
 ### Multiple OAuth Providers
 
 If running multiple OAuth flows on the same domain, namespace your cookies:
+
 - `__Host-CSRF_TOKEN_GITHUB` vs `__Host-CSRF_TOKEN_GOOGLE`
 - `__Host-APPROVED_CLIENTS_GITHUB` vs `__Host-APPROVED_CLIENTS_GOOGLE`
 
@@ -297,7 +312,7 @@ const html = `
 `;
 
 return new Response(html, {
-  headers: buildSecurityHeaders(setCookie, nonce)
+  headers: buildSecurityHeaders(setCookie, nonce),
 });
 ```
 

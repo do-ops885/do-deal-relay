@@ -4,21 +4,21 @@ import {
   FailurePath,
   PipelineError,
   ErrorClass,
-} from './types';
-import { CONFIG } from './config';
-import { generateRunId, generateUUID } from './lib/crypto';
-import { acquireLock, releaseLock, extendLock } from './lib/lock';
-import { createLogBuilder, appendLog } from './lib/logger';
-import { discover } from './pipeline/discover';
-import { normalize } from './pipeline/normalize';
-import { deduplicate, calculateSourceDiversity } from './pipeline/dedupe';
-import { validate, calculateValidationRatio } from './pipeline/validate';
-import { score } from './pipeline/score';
-import { stage } from './pipeline/stage';
-import { publishSnapshot, rollbackSnapshot } from './publish';
-import { notify } from './notify';
-import { enforceGuardRails, runGuardRails } from './lib/guard-rails';
-import type { Env } from './types';
+} from "./types";
+import { CONFIG } from "./config";
+import { generateRunId, generateUUID } from "./lib/crypto";
+import { acquireLock, releaseLock, extendLock } from "./lib/lock";
+import { createLogBuilder, appendLog } from "./lib/logger";
+import { discover } from "./pipeline/discover";
+import { normalize } from "./pipeline/normalize";
+import { deduplicate, calculateSourceDiversity } from "./pipeline/dedupe";
+import { validate, calculateValidationRatio } from "./pipeline/validate";
+import { score } from "./pipeline/score";
+import { stage } from "./pipeline/stage";
+import { publishSnapshot, rollbackSnapshot } from "./publish";
+import { notify } from "./notify";
+import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
+import type { Env } from "./types";
 
 // ============================================================================
 // State Machine Implementation
@@ -26,7 +26,7 @@ import type { Env } from './types';
 
 type StateHandler = (
   ctx: PipelineContext,
-  env: Env
+  env: Env,
 ) => Promise<PipelinePhase | FailurePath>;
 
 interface StateMachine {
@@ -35,16 +35,16 @@ interface StateMachine {
 }
 
 const PHASES: PipelinePhase[] = [
-  'init',
-  'discover',
-  'normalize',
-  'dedupe',
-  'validate',
-  'score',
-  'stage',
-  'publish',
-  'verify',
-  'finalize',
+  "init",
+  "discover",
+  "normalize",
+  "dedupe",
+  "validate",
+  "score",
+  "stage",
+  "publish",
+  "verify",
+  "finalize",
 ];
 
 /**
@@ -72,7 +72,7 @@ export async function executePipeline(env: Env): Promise<{
     retry_count: 0,
   };
 
-  let currentPhase: PipelinePhase = 'init';
+  let currentPhase: PipelinePhase = "init";
   let phaseIndex = 0;
 
   try {
@@ -86,18 +86,18 @@ export async function executePipeline(env: Env): Promise<{
       // Log phase start
       const logBuilder = createLogBuilder(run_id, trace_id)
         .phase(currentPhase)
-        .status('complete');
+        .status("complete");
 
       try {
         // Extend lock for long operations
-        if (['discover', 'validate', 'publish'].includes(currentPhase)) {
+        if (["discover", "validate", "publish"].includes(currentPhase)) {
           await extendLock(env, trace_id, 300);
         }
 
         // Execute phase
         const result = await executePhase(currentPhase, ctx, env);
 
-        if (result === 'finalize') {
+        if (result === "finalize") {
           // Success path
           await appendLog(
             env,
@@ -105,13 +105,13 @@ export async function executePipeline(env: Env): Promise<{
               .duration(Date.now() - startTime)
               .versions(CONFIG.VERSION, CONFIG.SCHEMA_VERSION)
               .notify(false)
-              .build()
+              .build(),
           );
           break;
         } else if (
-          result === 'revert' ||
-          result === 'quarantine' ||
-          result === 'concurrency_abort'
+          result === "revert" ||
+          result === "quarantine" ||
+          result === "concurrency_abort"
         ) {
           // Failure path
           await handleFailure(result, ctx, env);
@@ -128,10 +128,13 @@ export async function executePipeline(env: Env): Promise<{
         await appendLog(
           env,
           logBuilder
-            .status('error')
-            .error((error as PipelineError).errorClass || 'UnknownError', errorMessage)
+            .status("error")
+            .error(
+              (error as PipelineError).errorClass || "UnknownError",
+              errorMessage,
+            )
             .duration(Date.now() - startTime)
-            .build()
+            .build(),
         );
 
         // Check if retryable
@@ -147,13 +150,13 @@ export async function executePipeline(env: Env): Promise<{
         }
 
         // Non-retryable or max retries reached
-        await handleFailure('revert', ctx, env);
+        await handleFailure("revert", ctx, env);
         return { success: false, phase: currentPhase, error: errorMessage };
       }
     }
 
     // Success
-    return { success: true, phase: 'finalize' };
+    return { success: true, phase: "finalize" };
   } catch (error) {
     const errorMessage = (error as Error).message;
     return { success: false, phase: currentPhase, error: errorMessage };
@@ -169,49 +172,49 @@ export async function executePipeline(env: Env): Promise<{
 async function executePhase(
   phase: PipelinePhase,
   ctx: PipelineContext,
-  env: Env
+  env: Env,
 ): Promise<PipelinePhase | FailurePath> {
   switch (phase) {
-    case 'init':
-      return 'discover';
+    case "init":
+      return "discover";
 
-    case 'discover':
+    case "discover":
       const discovery = await discover(env, ctx);
       ctx.candidates = discovery.deals;
 
       // Guard rail: Check input resources
       if (ctx.candidates.length > 0) {
         try {
-          await enforceGuardRails(ctx.candidates, 'input');
+          await enforceGuardRails(ctx.candidates, "input");
         } catch (error) {
           await notify(env, {
-            type: 'system_error',
-            severity: 'critical',
+            type: "system_error",
+            severity: "critical",
             run_id: ctx.run_id,
             message: `Guard rail failed on discovery input: ${(error as Error).message}`,
           });
-          return 'revert';
+          return "revert";
         }
       }
 
       if (discovery.deals.length === 0) {
-        return 'finalize'; // No deals found, skip rest
+        return "finalize"; // No deals found, skip rest
       }
-      return 'normalize';
+      return "normalize";
 
-    case 'normalize':
+    case "normalize":
       ctx.normalized = normalize(ctx.candidates, ctx);
-      return 'dedupe';
+      return "dedupe";
 
-    case 'dedupe':
+    case "dedupe":
       const dedupeResult = deduplicate(ctx.normalized, ctx);
       ctx.deduped = dedupeResult.unique;
       if (ctx.deduped.length === 0) {
-        return 'finalize'; // No unique deals
+        return "finalize"; // No unique deals
       }
-      return 'validate';
+      return "validate";
 
-    case 'validate':
+    case "validate":
       const validation = await validate(ctx.deduped, ctx, env);
       ctx.validated = validation.valid;
 
@@ -219,23 +222,23 @@ async function executePhase(
       await appendLog(
         env,
         createLogBuilder(ctx.run_id, ctx.trace_id)
-          .phase('validate')
-          .status(validation.stats.valid > 0 ? 'complete' : 'incomplete')
+          .phase("validate")
+          .status(validation.stats.valid > 0 ? "complete" : "incomplete")
           .counts({
             candidate: validation.stats.total,
             valid: validation.stats.valid,
             rejected: validation.stats.invalid,
           })
           .reasons(Object.keys(validation.stats.by_gate))
-          .build()
+          .build(),
       );
 
       if (ctx.validated.length === 0) {
-        return 'revert'; // No valid deals
+        return "revert"; // No valid deals
       }
-      return 'score';
+      return "score";
 
-    case 'score':
+    case "score":
       const scoring = await score(ctx.validated, ctx, env);
       ctx.scored = scoring.deals;
 
@@ -243,43 +246,43 @@ async function executePhase(
       await appendLog(
         env,
         createLogBuilder(ctx.run_id, ctx.trace_id)
-          .phase('score')
-          .status('complete')
+          .phase("score")
+          .status("complete")
           .scores({
             confidence: scoring.stats.avg_confidence,
           })
-          .build()
+          .build(),
       );
 
-      return 'stage';
+      return "stage";
 
-    case 'stage':
+    case "stage":
       const stageResult = await stage(ctx.scored, ctx, env);
       ctx.snapshot = stageResult.snapshot;
 
       if (!stageResult.verified) {
-        return 'revert';
+        return "revert";
       }
-      return 'publish';
+      return "publish";
 
-    case 'publish':
+    case "publish":
       try {
         // Guard rail: Check output quality before publishing
         if (ctx.scored.length > 0) {
-          const guardRailReport = await runGuardRails(ctx.scored, 'output');
+          const guardRailReport = await runGuardRails(ctx.scored, "output");
 
           if (!guardRailReport.allPassed) {
             await notify(env, {
-              type: 'checks_failed',
-              severity: 'critical',
+              type: "checks_failed",
+              severity: "critical",
               run_id: ctx.run_id,
-              message: `Guard rails blocked publish: ${guardRailReport.fatalErrors.join('; ')}`,
+              message: `Guard rails blocked publish: ${guardRailReport.fatalErrors.join("; ")}`,
               context: {
                 checks: guardRailReport.checks,
                 warnings: guardRailReport.warnings,
               },
             });
-            return 'revert';
+            return "revert";
           }
 
           // Log warnings if any
@@ -287,32 +290,32 @@ async function executePhase(
             await appendLog(
               env,
               createLogBuilder(ctx.run_id, ctx.trace_id)
-                .phase('publish')
-                .status('complete')
-                .build()
+                .phase("publish")
+                .status("complete")
+                .build(),
             );
           }
         }
 
         await publishSnapshot(env, ctx.snapshot!, ctx);
-        return 'verify';
+        return "verify";
       } catch (error) {
-        return 'revert';
+        return "revert";
       }
 
-    case 'verify':
+    case "verify":
       // Verification happens in publish
-      return 'finalize';
+      return "finalize";
 
-    case 'finalize':
+    case "finalize":
       // Send success notification if needed
       await notify(env, {
-        type: 'system_error',
-        severity: 'info',
+        type: "system_error",
+        severity: "info",
         run_id: ctx.run_id,
         message: `Pipeline completed successfully. ${ctx.scored.length} deals published.`,
       });
-      return 'finalize';
+      return "finalize";
 
     default:
       throw new Error(`Unknown phase: ${phase}`);
@@ -325,39 +328,44 @@ async function executePhase(
 async function handleFailure(
   path: FailurePath,
   ctx: PipelineContext,
-  env: Env
+  env: Env,
 ): Promise<void> {
   switch (path) {
-    case 'revert':
+    case "revert":
       if (ctx.previous_snapshot) {
-        const { revertProduction } = await import('./lib/storage');
+        const { revertProduction } = await import("./lib/storage");
         await revertProduction(env, ctx.previous_snapshot);
       }
       await notify(env, {
-        type: 'publish_incomplete',
-        severity: 'critical',
+        type: "publish_incomplete",
+        severity: "critical",
         run_id: ctx.run_id,
-        message: `Pipeline failed at ${ctx.errors[ctx.errors.length - 1]?.phase || 'unknown'}. Rolled back.`,
-        context: { errors: ctx.errors.map((e) => ({ phase: e.phase, message: e.error.message })) },
+        message: `Pipeline failed at ${ctx.errors[ctx.errors.length - 1]?.phase || "unknown"}. Rolled back.`,
+        context: {
+          errors: ctx.errors.map((e) => ({
+            phase: e.phase,
+            message: e.error.message,
+          })),
+        },
       });
       break;
 
-    case 'quarantine':
+    case "quarantine":
       // Quarantine deals are already marked
       await notify(env, {
-        type: 'trust_anomaly',
-        severity: 'warning',
+        type: "trust_anomaly",
+        severity: "warning",
         run_id: ctx.run_id,
-        message: 'Deals quarantined due to anomalies',
+        message: "Deals quarantined due to anomalies",
       });
       break;
 
-    case 'concurrency_abort':
+    case "concurrency_abort":
       await notify(env, {
-        type: 'system_error',
-        severity: 'warning',
+        type: "system_error",
+        severity: "warning",
         run_id: ctx.run_id,
-        message: 'Pipeline aborted due to concurrent execution',
+        message: "Pipeline aborted due to concurrent execution",
       });
       break;
 
@@ -378,8 +386,8 @@ export async function getPipelineStatus(env: Env): Promise<{
     success: boolean;
   };
 }> {
-  const { getLockStatus } = await import('./lib/lock');
-  const { getLastRunMetadata } = await import('./lib/storage');
+  const { getLockStatus } = await import("./lib/lock");
+  const { getLastRunMetadata } = await import("./lib/storage");
 
   const lockStatus = await getLockStatus(env);
   const lastRun = await getLastRunMetadata(env);

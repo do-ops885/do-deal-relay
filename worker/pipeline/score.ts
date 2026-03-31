@@ -1,7 +1,7 @@
-import { Deal, PipelineContext } from '../types';
-import { CONFIG } from '../config';
-import { getProductionSnapshot } from '../lib/storage';
-import type { Env } from '../types';
+import { Deal, PipelineContext } from "../types";
+import { CONFIG } from "../config";
+import { getProductionSnapshot } from "../lib/storage";
+import type { Env } from "../types";
 
 // ============================================================================
 // Scoring Pipeline
@@ -35,7 +35,7 @@ interface ScoringResult {
 export async function score(
   deals: Deal[],
   ctx: PipelineContext,
-  env: Env
+  env: Env,
 ): Promise<ScoringResult> {
   const scoredDeals: ScoredDeal[] = [];
   let totalConfidence = 0;
@@ -53,7 +53,10 @@ export async function score(
   // Calculate uniqueness from deduplication phase
   const totalCandidates = ctx.candidates.length;
   const duplicateCount = totalCandidates - deals.length;
-  const uniquenessScore = calculateUniquenessScore(duplicateCount, totalCandidates);
+  const uniquenessScore = calculateUniquenessScore(
+    duplicateCount,
+    totalCandidates,
+  );
 
   for (const deal of deals) {
     // Calculate individual scores
@@ -140,7 +143,7 @@ export function calculateSourceDiversity(deals: Deal[]): number {
  */
 export function calculateUniquenessScore(
   duplicates: number,
-  totalCandidates: number
+  totalCandidates: number,
 ): number {
   if (totalCandidates === 0) return 1.0;
   const uniqueRatio = (totalCandidates - duplicates) / totalCandidates;
@@ -154,7 +157,7 @@ function calculateRewardPlausibility(deal: Deal): number {
   const reward = deal.reward;
 
   // Cash rewards: lower is more plausible (except 0)
-  if (reward.type === 'cash' && typeof reward.value === 'number') {
+  if (reward.type === "cash" && typeof reward.value === "number") {
     if (reward.value === 0) return 0.5; // Suspicious but possible
     if (reward.value <= 50) return 1.0;
     if (reward.value <= 100) return 0.9;
@@ -163,7 +166,7 @@ function calculateRewardPlausibility(deal: Deal): number {
   }
 
   // Percent rewards: 10-50% is most plausible
-  if (reward.type === 'percent' && typeof reward.value === 'number') {
+  if (reward.type === "percent" && typeof reward.value === "number") {
     if (reward.value >= 10 && reward.value <= 50) return 1.0;
     if (reward.value > 50) return 0.8;
     if (reward.value >= 5) return 0.9;
@@ -171,10 +174,10 @@ function calculateRewardPlausibility(deal: Deal): number {
   }
 
   // Credit: usually reasonable
-  if (reward.type === 'credit') return 0.9;
+  if (reward.type === "credit") return 0.9;
 
   // Item: hard to assess
-  if (reward.type === 'item') return 0.8;
+  if (reward.type === "item") return 0.8;
 
   return 0.8;
 }
@@ -188,7 +191,7 @@ function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
     (d) =>
       d.id !== deal.id &&
       d.source.domain === deal.source.domain &&
-      d.code === deal.code
+      d.code === deal.code,
   );
 
   if (similarInBatch.length > 0) {
@@ -202,11 +205,11 @@ function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
  * Check if deal is high value
  */
 function isHighValue(deal: Deal): boolean {
-  if (deal.reward.type === 'cash' && typeof deal.reward.value === 'number') {
+  if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
     return deal.reward.value > CONFIG.HIGH_VALUE_THRESHOLD;
   }
 
-  if (deal.reward.type === 'percent' && typeof deal.reward.value === 'number') {
+  if (deal.reward.type === "percent" && typeof deal.reward.value === "number") {
     return deal.reward.value > 50;
   }
 
@@ -219,9 +222,9 @@ function isHighValue(deal: Deal): boolean {
 export async function evolveSourceTrust(
   env: Env,
   deals: Deal[],
-  allValid: boolean
+  allValid: boolean,
 ): Promise<void> {
-  const { DEFAULT_SOURCES } = await import('../config');
+  const { DEFAULT_SOURCES } = await import("../config");
   const adjustment = allValid
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;

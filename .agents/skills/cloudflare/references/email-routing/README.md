@@ -21,7 +21,7 @@ export default {
 
     // Forward or reject
     await message.forward("verified@destination.com");
-  }
+  },
 } satisfies ExportedHandler<Env>;
 ```
 

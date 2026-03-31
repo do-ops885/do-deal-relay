@@ -1,9 +1,13 @@
-import { Deal, Snapshot, PipelineContext } from '../types';
-import { SnapshotSchema } from '../types';
-import { CONFIG } from '../config';
-import { generateSnapshotHash, generateRunId, generateUUID } from '../lib/crypto';
-import { writeStagingSnapshot } from '../lib/storage';
-import type { Env } from '../types';
+import { Deal, Snapshot, PipelineContext } from "../types";
+import { SnapshotSchema } from "../types";
+import { CONFIG } from "../config";
+import {
+  generateSnapshotHash,
+  generateRunId,
+  generateUUID,
+} from "../lib/crypto";
+import { writeStagingSnapshot } from "../lib/storage";
+import type { Env } from "../types";
 
 // ============================================================================
 // Staging Pipeline
@@ -20,7 +24,7 @@ interface StageResult {
 export async function stage(
   deals: Deal[],
   ctx: PipelineContext,
-  env: Env
+  env: Env,
 ): Promise<StageResult> {
   const now = new Date().toISOString();
 
@@ -30,13 +34,14 @@ export async function stage(
     generated_at: now,
     run_id: ctx.run_id,
     trace_id: ctx.trace_id,
-    previous_hash: '', // Will be set from previous snapshot
+    previous_hash: "", // Will be set from previous snapshot
     schema_version: CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
-      active: deals.filter((d) => d.metadata.status === 'active').length,
-      quarantined: deals.filter((d) => d.metadata.status === 'quarantined').length,
-      rejected: deals.filter((d) => d.metadata.status === 'rejected').length,
+      active: deals.filter((d) => d.metadata.status === "active").length,
+      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
+        .length,
+      rejected: deals.filter((d) => d.metadata.status === "rejected").length,
       duplicates: 0, // Already filtered
     },
     deals,
@@ -73,7 +78,7 @@ export async function stage(
  * Verify staging write succeeded
  */
 async function verifyStaging(env: Env, expected: Snapshot): Promise<boolean> {
-  const { getStagingSnapshot } = await import('../lib/storage');
+  const { getStagingSnapshot } = await import("../lib/storage");
   const staged = await getStagingSnapshot(env);
 
   if (!staged) {
@@ -95,7 +100,7 @@ async function verifyStaging(env: Env, expected: Snapshot): Promise<boolean> {
 export function prepareSnapshot(
   deals: Deal[],
   ctx: PipelineContext,
-  previousHash: string
+  previousHash: string,
 ): Promise<Snapshot> {
   const now = new Date().toISOString();
 
@@ -108,8 +113,9 @@ export function prepareSnapshot(
     schema_version: CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
-      active: deals.filter((d) => d.metadata.status === 'active').length,
-      quarantined: deals.filter((d) => d.metadata.status === 'quarantined').length,
+      active: deals.filter((d) => d.metadata.status === "active").length,
+      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
+        .length,
       rejected: 0, // Already filtered
       duplicates: 0,
     },

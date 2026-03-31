@@ -8,9 +8,9 @@
 export async function sha256(input: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -20,7 +20,7 @@ export async function sha256(input: string): Promise<string> {
 export async function generateDealId(
   domain: string,
   code: string,
-  rewardType: string
+  rewardType: string,
 ): Promise<string> {
   const normalized = `${domain.toLowerCase().trim()}:${code.toLowerCase().trim()}:${rewardType}`;
   return sha256(normalized);
@@ -40,9 +40,9 @@ export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
  */
 export function generateRunId(date: Date = new Date()): string {
   const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hour = String(date.getUTCHours()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hour = String(date.getUTCHours()).padStart(2, "0");
   return `deals-${year}-${month}-${day}-${hour}`;
 }
 
@@ -58,7 +58,7 @@ export function generateUUID(): string {
  * Uses Jaccard similarity on character bigrams
  */
 export function calculateStringSimilarity(a: string, b: string): number {
-  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const strA = normalize(a);
   const strB = normalize(b);
 
@@ -96,15 +96,16 @@ export function calculateUrlSimilarity(urlA: string, urlB: string): number {
     }
 
     // Compare paths
-    const pathSim = calculateStringSimilarity(parsedA.pathname, parsedB.pathname);
+    const pathSim = calculateStringSimilarity(
+      parsedA.pathname,
+      parsedB.pathname,
+    );
 
     // Compare query parameters (if present)
     const paramsA = parsedA.searchParams.toString();
     const paramsB = parsedB.searchParams.toString();
     const paramsSim =
-      paramsA || paramsB
-        ? calculateStringSimilarity(paramsA, paramsB)
-        : 1.0;
+      paramsA || paramsB ? calculateStringSimilarity(paramsA, paramsB) : 1.0;
 
     // Weighted average: path matters more
     return pathSim * 0.7 + paramsSim * 0.3;

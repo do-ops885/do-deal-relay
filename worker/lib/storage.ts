@@ -1,7 +1,7 @@
-import { Snapshot, SnapshotSchema, Deal, SourceConfig } from '../types';
-import type { Env } from '../types';
-import { CONFIG } from '../config';
-import { generateSnapshotHash } from './crypto';
+import { Snapshot, SnapshotSchema, Deal, SourceConfig } from "../types";
+import type { Env } from "../types";
+import { CONFIG } from "../config";
+import { generateSnapshotHash } from "./crypto";
 
 // ============================================================================
 // KV Storage Abstraction Layer
@@ -10,15 +10,17 @@ import { generateSnapshotHash } from './crypto';
 /**
  * Get production snapshot
  */
-export async function getProductionSnapshot(env: Env): Promise<Snapshot | null> {
+export async function getProductionSnapshot(
+  env: Env,
+): Promise<Snapshot | null> {
   try {
     const data = await env.DEALS_PROD.get<Snapshot>(
       CONFIG.KV_KEYS.PROD_SNAPSHOT,
-      'json'
+      "json",
     );
     return data;
   } catch (error) {
-    console.error('Failed to get production snapshot:', error);
+    console.error("Failed to get production snapshot:", error);
     return null;
   }
 }
@@ -30,11 +32,11 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
   try {
     const data = await env.DEALS_STAGING.get<Snapshot>(
       CONFIG.KV_KEYS.STAGING_SNAPSHOT,
-      'json'
+      "json",
     );
     return data;
   } catch (error) {
-    console.error('Failed to get staging snapshot:', error);
+    console.error("Failed to get staging snapshot:", error);
     return null;
   }
 }
@@ -44,7 +46,7 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
  */
 export async function writeStagingSnapshot(
   env: Env,
-  snapshot: Omit<Snapshot, 'snapshot_hash'>
+  snapshot: Omit<Snapshot, "snapshot_hash">,
 ): Promise<Snapshot> {
   const hash = await generateSnapshotHash(snapshot.deals);
   const fullSnapshot: Snapshot = {
@@ -60,7 +62,7 @@ export async function writeStagingSnapshot(
 
   await env.DEALS_STAGING.put(
     CONFIG.KV_KEYS.STAGING_SNAPSHOT,
-    JSON.stringify(fullSnapshot)
+    JSON.stringify(fullSnapshot),
   );
 
   return fullSnapshot;
@@ -71,28 +73,28 @@ export async function writeStagingSnapshot(
  */
 export async function promoteToProduction(
   env: Env,
-  expectedPreviousHash: string
+  expectedPreviousHash: string,
 ): Promise<Snapshot> {
   const staging = await getStagingSnapshot(env);
 
   if (!staging) {
-    throw new Error('No staging snapshot found to promote');
+    throw new Error("No staging snapshot found to promote");
   }
 
   // Verify hash chain
   const currentProd = await getProductionSnapshot(env);
-  const actualPreviousHash = currentProd?.snapshot_hash || '';
+  const actualPreviousHash = currentProd?.snapshot_hash || "";
 
   if (actualPreviousHash !== expectedPreviousHash) {
     throw new Error(
-      `Hash chain broken: expected ${expectedPreviousHash}, got ${actualPreviousHash}`
+      `Hash chain broken: expected ${expectedPreviousHash}, got ${actualPreviousHash}`,
     );
   }
 
   // Write to production
   await env.DEALS_PROD.put(
     CONFIG.KV_KEYS.PROD_SNAPSHOT,
-    JSON.stringify(staging)
+    JSON.stringify(staging),
   );
 
   // Clear staging (optional - keeps history)
@@ -106,11 +108,11 @@ export async function promoteToProduction(
  */
 export async function revertProduction(
   env: Env,
-  previousSnapshot: Snapshot
+  previousSnapshot: Snapshot,
 ): Promise<void> {
   await env.DEALS_PROD.put(
     CONFIG.KV_KEYS.PROD_SNAPSHOT,
-    JSON.stringify(previousSnapshot)
+    JSON.stringify(previousSnapshot),
   );
 }
 
@@ -119,7 +121,10 @@ export async function revertProduction(
  */
 export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
   try {
-    const data = await env.DEALS_SOURCES.get<SourceConfig[]>('registry', 'json');
+    const data = await env.DEALS_SOURCES.get<SourceConfig[]>(
+      "registry",
+      "json",
+    );
     return data || [];
   } catch {
     return [];
@@ -131,9 +136,9 @@ export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
  */
 export async function updateSourceRegistry(
   env: Env,
-  sources: SourceConfig[]
+  sources: SourceConfig[],
 ): Promise<void> {
-  await env.DEALS_SOURCES.put('registry', JSON.stringify(sources));
+  await env.DEALS_SOURCES.put("registry", JSON.stringify(sources));
 }
 
 /**
@@ -141,7 +146,7 @@ export async function updateSourceRegistry(
  */
 export async function getSourceConfig(
   env: Env,
-  domain: string
+  domain: string,
 ): Promise<SourceConfig | null> {
   const registry = await getSourceRegistry(env);
   return registry.find((s) => s.domain === domain) || null;
@@ -153,7 +158,7 @@ export async function getSourceConfig(
 export async function updateSourceTrust(
   env: Env,
   domain: string,
-  adjustment: number
+  adjustment: number,
 ): Promise<void> {
   const registry = await getSourceRegistry(env);
   const source = registry.find((s) => s.domain === domain);
@@ -161,7 +166,7 @@ export async function updateSourceTrust(
   if (source) {
     source.trust_initial = Math.max(
       0,
-      Math.min(1, source.trust_initial + adjustment)
+      Math.min(1, source.trust_initial + adjustment),
     );
     await updateSourceRegistry(env, registry);
   }
@@ -173,7 +178,7 @@ export async function updateSourceTrust(
 export async function recordSourceValidation(
   env: Env,
   domain: string,
-  success: boolean
+  success: boolean,
 ): Promise<void> {
   const registry = await getSourceRegistry(env);
   const source = registry.find((s) => s.domain === domain);
@@ -193,10 +198,7 @@ export async function recordSourceValidation(
 /**
  * Get deal by ID
  */
-export async function getDealById(
-  env: Env,
-  id: string
-): Promise<Deal | null> {
+export async function getDealById(env: Env, id: string): Promise<Deal | null> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) return null;
   return snapshot.deals.find((d) => d.id === id) || null;
@@ -205,14 +207,11 @@ export async function getDealById(
 /**
  * Get deals by code
  */
-export async function getDealsByCode(
-  env: Env,
-  code: string
-): Promise<Deal[]> {
+export async function getDealsByCode(env: Env, code: string): Promise<Deal[]> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) return [];
   return snapshot.deals.filter(
-    (d) => d.code.toLowerCase() === code.toLowerCase()
+    (d) => d.code.toLowerCase() === code.toLowerCase(),
   );
 }
 
@@ -221,14 +220,12 @@ export async function getDealsByCode(
  */
 export async function getDealsByCategory(
   env: Env,
-  category: string
+  category: string,
 ): Promise<Deal[]> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) return [];
   return snapshot.deals.filter((d) =>
-    d.metadata.category.some(
-      (c) => c.toLowerCase() === category.toLowerCase()
-    )
+    d.metadata.category.some((c) => c.toLowerCase() === category.toLowerCase()),
   );
 }
 
@@ -238,7 +235,7 @@ export async function getDealsByCategory(
 export async function getActiveDeals(env: Env): Promise<Deal[]> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) return [];
-  return snapshot.deals.filter((d) => d.metadata.status === 'active');
+  return snapshot.deals.filter((d) => d.metadata.status === "active");
 }
 
 /**
@@ -247,7 +244,7 @@ export async function getActiveDeals(env: Env): Promise<Deal[]> {
 export async function getQuarantinedDeals(env: Env): Promise<Deal[]> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) return [];
-  return snapshot.deals.filter((d) => d.metadata.status === 'quarantined');
+  return snapshot.deals.filter((d) => d.metadata.status === "quarantined");
 }
 
 /**
@@ -260,7 +257,7 @@ export async function setLastRunMetadata(
     timestamp: string;
     duration_ms: number;
     deals_count: number;
-  }
+  },
 ): Promise<void> {
   await env.DEALS_PROD.put(CONFIG.KV_KEYS.LAST_RUN, JSON.stringify(metadata));
 }
@@ -274,7 +271,7 @@ export async function getLastRunMetadata(env: Env) {
     timestamp: string;
     duration_ms: number;
     deals_count: number;
-  }>(CONFIG.KV_KEYS.LAST_RUN, 'json');
+  }>(CONFIG.KV_KEYS.LAST_RUN, "json");
 }
 
 /**

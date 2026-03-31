@@ -9,6 +9,7 @@
 ## Input
 
 From Scoring Agent:
+
 - Scored deals (confidence_score set)
 - Quarantine list
 - Source trust updates
@@ -16,6 +17,7 @@ From Scoring Agent:
 ## Deliverables
 
 ### Staging
+
 - [ ] `worker/pipeline/stage.ts`
   - Build candidate snapshot
   - Calculate snapshot hash
@@ -23,6 +25,7 @@ From Scoring Agent:
   - Read-after-write verification
 
 ### Production Publish
+
 - [ ] `worker/publish.ts`
   - Two-phase publish flow
   - Hash chain verification
@@ -31,6 +34,7 @@ From Scoring Agent:
   - Verify commit SHA
 
 ### Rollback
+
 - [ ] Rollback mechanism
   - Revert to previous snapshot
   - Log rollback event
@@ -86,6 +90,7 @@ rollback(env: Env, previousSnapshot: Snapshot): Promise<void>
 ## Handoff Checklist
 
 Before handing to Notify Agent:
+
 - [ ] Snapshot published to production
 - [ ] GitHub commit verified
 - [ ] Status.json updated
@@ -94,6 +99,7 @@ Before handing to Notify Agent:
 ## Context for Next Agent
 
 Notify Agent receives:
+
 - Publish success/failure status
 - Quarantine list (for alerts)
 - New snapshot metadata
