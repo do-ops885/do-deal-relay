@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "id": "goap-agent-1",
+      "prompt": "Plan a multi-step build task",
+      "expected_output": "Action plan with steps",
+      "assertions": ["Shows decomposed tasks", "Identifies dependencies"]
+    },
+    {
+      "id": "goap-agent-2",
+      "prompt": "What is goal-oriented action planning?",
+      "expected_output": "Definition and approach",
+      "assertions": ["Defines GOAP concept", "Explains goal decomposition"]
+    }
+  ]
+}

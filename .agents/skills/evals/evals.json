@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "id": "evals-1",
+      "prompt": "Run skill evaluations for all skills",
+      "expected_output": "Evaluation results",
+      "assertions": ["Runs evaluation script", "Shows pass/fail results"]
+    },
+    {
+      "id": "evals-2",
+      "prompt": "How to add an eval case to a skill?",
+      "expected_output": "Process for adding evals",
+      "assertions": ["Shows evals.json format", "Explains required fields"]
+    }
+  ]
+}

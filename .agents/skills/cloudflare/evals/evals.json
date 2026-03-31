@@ -1,0 +1,23 @@
+{
+  "evals": [
+    {
+      "id": "cloudflare-1",
+      "prompt": "How do I create a new D1 database using Wrangler?",
+      "expected_output": "Wrangler D1 create command",
+      "assertions": [
+        "Contains 'wrangler d1 create' command",
+        "Mentions database name parameter"
+      ]
+    },
+    {
+      "id": "cloudflare-2",
+      "prompt": "What's the difference between KV and R2?",
+      "expected_output": "Comparison of KV (key-value) vs R2 (object storage)",
+      "assertions": [
+        "Explains KV is key-value store",
+        "Explains R2 is object storage",
+        "Mentions pricing difference (egress)"
+      ]
+    }
+  ]
+}

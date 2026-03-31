@@ -1,0 +1,19 @@
+{
+  "evals": [
+    {
+      "id": "pre-commit-1",
+      "prompt": "Add a pre-commit hook for TypeScript linting",
+      "expected_output": "Pre-commit configuration",
+      "assertions": ["Shows .pre-commit-config.yaml", "Includes linting hook"]
+    },
+    {
+      "id": "pre-commit-2",
+      "prompt": "How to install and run pre-commit hooks?",
+      "expected_output": "Installation and usage",
+      "assertions": [
+        "Mentions 'pre-commit install'",
+        "Mentions 'pre-commit run'"
+      ]
+    }
+  ]
+}

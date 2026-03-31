@@ -1,0 +1,19 @@
+{
+  "evals": [
+    {
+      "id": "sandbox-sdk-1",
+      "prompt": "Create a sandboxed code interpreter",
+      "expected_output": "Sandbox setup with code execution",
+      "assertions": [
+        "Shows Sandbox initialization",
+        "Includes code execution method"
+      ]
+    },
+    {
+      "id": "sandbox-sdk-2",
+      "prompt": "What are the security features of Sandbox SDK?",
+      "expected_output": "Security capabilities",
+      "assertions": ["Mentions isolation", "Mentions secure execution"]
+    }
+  ]
+}

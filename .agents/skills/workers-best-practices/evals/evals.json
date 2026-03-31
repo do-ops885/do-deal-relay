@@ -1,0 +1,20 @@
+{
+  "evals": [
+    {
+      "id": "workers-best-practices-1",
+      "prompt": "Review this code for Workers anti-patterns: export default { fetch: () => new Response('hi') }",
+      "expected_output": "Code review findings",
+      "assertions": ["Identifies anti-patterns or best practices"]
+    },
+    {
+      "id": "workers-best-practices-2",
+      "prompt": "What are common Workers performance anti-patterns?",
+      "expected_output": "List of anti-patterns",
+      "assertions": [
+        "Mentions streaming",
+        "Mentions floating promises",
+        "Mentions global state"
+      ]
+    }
+  ]
+}

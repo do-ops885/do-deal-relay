@@ -1,0 +1,25 @@
+{
+  "evals": [
+    {
+      "id": "agent-browser-1",
+      "prompt": "Open a website, fill a form field, and take a screenshot of the result",
+      "expected_output": "Uses agent-browser commands: open, fill, snapshot. Commands are in correct order.",
+      "assertions": [
+        "Contains 'agent-browser open' command",
+        "Contains 'agent-browser fill' command",
+        "Contains 'agent-browser snapshot' command",
+        "Order is correct: open -> fill -> snapshot"
+      ]
+    },
+    {
+      "id": "agent-browser-2",
+      "prompt": "How do I install and set up agent-browser?",
+      "expected_output": "Installation instructions and setup steps",
+      "assertions": [
+        "Mentions npm install or brew install or cargo install",
+        "Mentions 'agent-browser install' for downloading Chrome",
+        "Mentions upgrade command"
+      ]
+    }
+  ]
+}

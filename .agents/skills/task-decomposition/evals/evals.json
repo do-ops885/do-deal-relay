@@ -1,0 +1,24 @@
+{
+  "evals": [
+    {
+      "id": "task-decomposition-1",
+      "prompt": "Break down building a todo app with user authentication",
+      "expected_output": "Decomposed tasks with dependencies",
+      "assertions": [
+        "Identifies at least 5 sub-tasks",
+        "Shows dependencies between tasks",
+        "Includes success criteria"
+      ]
+    },
+    {
+      "id": "task-decomposition-2",
+      "prompt": "What's the difference between sequential and parallel execution?",
+      "expected_output": "Explanation with examples",
+      "assertions": [
+        "Defines sequential execution",
+        "Defines parallel execution",
+        "Shows when to use each"
+      ]
+    }
+  ]
+}
