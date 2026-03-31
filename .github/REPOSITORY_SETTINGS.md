@@ -4,8 +4,8 @@ This document outlines the recommended GitHub repository settings for this proje
 
 ## Current Configuration
 
-**Repository:** do-ops885/do-deal-relay  
-**Visibility:** Private  
+**Repository:** do-ops885/do-deal-relay
+**Visibility:** Private
 **Default Branch:** main
 
 ## Recommended Settings

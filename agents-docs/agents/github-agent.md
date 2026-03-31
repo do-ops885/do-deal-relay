@@ -1,8 +1,8 @@
 # GitHub Agent - Git Operations & Integration
 
-**Agent ID**: `github-agent`  
-**Status**: 🟡 Active  
-**Scope**: gh CLI operations, commits, PRs, issues  
+**Agent ID**: `github-agent`
+**Status**: 🟡 Active
+**Scope**: gh CLI operations, commits, PRs, issues
 **Tools**: GitHub CLI (gh)
 
 ## Deliverables

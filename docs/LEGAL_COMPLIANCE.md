@@ -7,7 +7,7 @@ This system aggregates and shares referral deals and affiliate links. This guide
 
 ### 1. FTC Endorsement Guides (United States)
 
-**Source**: Federal Trade Commission  
+**Source**: Federal Trade Commission
 **Applies To**: US-based operations and any content reaching US consumers
 
 #### Core Requirements:
@@ -47,7 +47,7 @@ This system aggregates and shares referral deals and affiliate links. This guide
 
 ### 2. GDPR (European Union)
 
-**Source**: General Data Protection Regulation  
+**Source**: General Data Protection Regulation
 **Applies To**: Any processing of EU residents' personal data
 
 #### Core Requirements:
@@ -82,7 +82,7 @@ This system aggregates and shares referral deals and affiliate links. This guide
 
 ### 4. CCPA/CPRA (California, USA)
 
-**Source**: California Consumer Privacy Act / Privacy Rights Act  
+**Source**: California Consumer Privacy Act / Privacy Rights Act
 **Applies To**: California residents
 
 #### Core Requirements:
@@ -284,7 +284,7 @@ export function generateDisclosure(deal: Deal): string {
     received_free: `Disclosure: I received this product/service free`
   };
 
-  return templates[deal.compliance.ftc_disclosure.type] || 
+  return templates[deal.compliance.ftc_disclosure.type] ||
          deal.compliance.ftc_disclosure.text ||
          'This is a referral/affiliate link';
 }
@@ -337,14 +337,14 @@ export function assessLegalRisk(deal: Deal): RiskAssessment {
   const required_disclosures: string[] = [];
 
   // Financial products
-  if (deal.metadata.category.includes('financial') || 
+  if (deal.metadata.category.includes('financial') ||
       deal.metadata.category.includes('investment')) {
     risks.push('financial_product');
     required_disclosures.push('not_financial_advice');
   }
 
   // Health products
-  if (deal.metadata.category.includes('health') || 
+  if (deal.metadata.category.includes('health') ||
       deal.metadata.category.includes('medical')) {
     risks.push('health_claim');
     required_disclosures.push('not_medical_advice');

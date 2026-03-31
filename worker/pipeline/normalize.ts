@@ -22,36 +22,36 @@ function normalizeDeal(deal: Deal): Deal {
     ...deal,
     // Normalize IDs
     id: deal.id, // Already hashed in discovery
-    
+
     // Normalize source
     source: {
       ...deal.source,
       domain: deal.source.domain.toLowerCase().trim(),
       url: normalizeUrl(deal.source.url),
     },
-    
+
     // Normalize text fields
     title: normalizeText(deal.title),
     description: normalizeText(deal.description),
     code: deal.code.toUpperCase().trim(), // Codes typically uppercase
     url: normalizeUrl(deal.url),
-    
+
     // Normalize reward
     reward: {
       ...deal.reward,
       type: deal.reward.type,
       currency: deal.reward.currency?.toUpperCase(),
     },
-    
+
     // Normalize requirements
     requirements: deal.requirements?.map(normalizeText),
-    
+
     // Normalize expiry
     expiry: {
       ...deal.expiry,
       date: deal.expiry.date ? normalizeDate(deal.expiry.date) : undefined,
     },
-    
+
     // Update metadata
     metadata: {
       ...deal.metadata,
@@ -68,7 +68,7 @@ function normalizeDeal(deal: Deal): Deal {
 function normalizeUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    
+
     // Remove tracking parameters
     const trackingParams = [
       'utm_source',
@@ -81,22 +81,22 @@ function normalizeUrl(url: string): string {
       'ref',
       'referrer',
     ];
-    
+
     for (const param of trackingParams) {
       parsed.searchParams.delete(param);
     }
-    
+
     // Sort remaining params for consistency
     const sortedParams = new URLSearchParams(
       [...parsed.searchParams].sort(([a], [b]) => a.localeCompare(b))
     );
     parsed.search = sortedParams.toString();
-    
+
     // Remove trailing slash from pathname
     if (parsed.pathname.endsWith('/') && parsed.pathname.length > 1) {
       parsed.pathname = parsed.pathname.slice(0, -1);
     }
-    
+
     return parsed.toString();
   } catch {
     return url.toLowerCase().trim();
@@ -154,19 +154,19 @@ export function verifyNormalization(deals: Deal[]): {
     if (!deal.code) issues.push(`Deal ${deal.id}: missing code`);
     if (!deal.url) issues.push(`Deal ${deal.id}: missing URL`);
     if (!deal.title) issues.push(`Deal ${deal.id}: missing title`);
-    
+
     // Check URL format
     try {
       new URL(deal.url);
     } catch {
       issues.push(`Deal ${deal.id}: invalid URL ${deal.url}`);
     }
-    
+
     // Check code format (alphanumeric, reasonable length)
     if (!/^[A-Z0-9_-]{4,50}$/.test(deal.code)) {
       issues.push(`Deal ${deal.id}: suspicious code format ${deal.code}`);
     }
-    
+
     // Check domain is lowercase
     if (deal.source.domain !== deal.source.domain.toLowerCase()) {
       issues.push(`Deal ${deal.id}: domain not lowercase`);

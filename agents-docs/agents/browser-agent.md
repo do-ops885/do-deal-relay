@@ -1,8 +1,8 @@
 # Browser Agent - Web Testing & Validation
 
-**Agent ID**: `browser-agent`  
-**Status**: 🟡 Active  
-**Scope**: Browser-based testing, actual endpoint validation  
+**Agent ID**: `browser-agent`
+**Status**: 🟡 Active
+**Scope**: Browser-based testing, actual endpoint validation
 **Tools**: Playwright or similar browser automation
 
 ## Deliverables

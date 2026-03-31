@@ -12,38 +12,38 @@ from pathlib import Path
 def detect_project_languages(project_path: Path) -> list:
     """Detect languages used in the project."""
     languages = []
-    
+
     # Check for Python
     if any(project_path.glob("*.py")) or (project_path / "pyproject.toml").exists() or (project_path / "setup.py").exists():
         languages.append("python")
-    
+
     # Check for JavaScript/TypeScript
     if any(project_path.glob("*.js")) or any(project_path.glob("*.ts")) or (project_path / "package.json").exists():
         languages.append("javascript")
-    
+
     # Check for Go
     if any(project_path.glob("*.go")) or (project_path / "go.mod").exists():
         languages.append("go")
-    
+
     # Check for Rust
     if (project_path / "Cargo.toml").exists():
         languages.append("rust")
-    
+
     # Check for Ruby
     if (project_path / "Gemfile").exists():
         languages.append("ruby")
-    
+
     # Check for Java
     if any(project_path.glob("*.java")) or (project_path / "pom.xml").exists():
         languages.append("java")
-    
+
     return languages
 
 
 def generate_config(languages: list) -> str:
     """Generate pre-commit config based on detected languages."""
     config_lines = ["repos:"]
-    
+
     # Always include general hooks
     config_lines.extend([
         "",
@@ -61,7 +61,7 @@ def generate_config(languages: list) -> str:
         "      - id: check-merge-conflict",
         "      - id: detect-private-key",
     ])
-    
+
     # Python-specific hooks
     if "python" in languages:
         config_lines.extend([
@@ -84,7 +84,7 @@ def generate_config(languages: list) -> str:
             "    hooks:",
             "      - id: flake8",
         ])
-    
+
     # JavaScript/TypeScript hooks
     if "javascript" in languages:
         config_lines.extend([
@@ -102,7 +102,7 @@ def generate_config(languages: list) -> str:
             "    hooks:",
             "      - id: prettier",
         ])
-    
+
     # Go hooks
     if "go" in languages:
         config_lines.extend([
@@ -115,7 +115,7 @@ def generate_config(languages: list) -> str:
             "      - id: go-vet",
             "      - id: golangci-lint",
         ])
-    
+
     # Rust hooks
     if "rust" in languages:
         config_lines.extend([
@@ -127,7 +127,7 @@ def generate_config(languages: list) -> str:
             "      - id: fmt",
             "      - id: cargo-check",
         ])
-    
+
     # Ruby hooks
     if "ruby" in languages:
         config_lines.extend([
@@ -138,14 +138,14 @@ def generate_config(languages: list) -> str:
             "    hooks:",
             "      - id: rubocop",
         ])
-    
+
     return "\n".join(config_lines)
 
 
 def init_precommit(project_path: Path, dry_run: bool = False) -> None:
     """Initialize pre-commit for a project."""
     config_path = project_path / ".pre-commit-config.yaml"
-    
+
     # Check if config already exists
     if config_path.exists():
         print(f"Configuration already exists at {config_path}")
@@ -153,14 +153,14 @@ def init_precommit(project_path: Path, dry_run: bool = False) -> None:
         if response != 'y':
             print("Aborted.")
             return
-    
+
     # Detect languages
     languages = detect_project_languages(project_path)
     print(f"Detected languages: {', '.join(languages) if languages else 'none'}")
-    
+
     # Generate config
     config = generate_config(languages)
-    
+
     if dry_run:
         print("\nGenerated configuration:")
         print("=" * 50)
@@ -170,7 +170,7 @@ def init_precommit(project_path: Path, dry_run: bool = False) -> None:
         # Write config
         config_path.write_text(config)
         print(f"Created: {config_path}")
-        
+
         # Install pre-commit
         print("\nNext steps:")
         print("1. Install pre-commit: pip install pre-commit")
@@ -192,22 +192,22 @@ def main():
         action="store_true",
         help="Show generated config without writing"
     )
-    
+
     args = parser.parse_args()
-    
+
     project_path = Path(args.project_path).resolve()
-    
+
     if not project_path.exists():
         print(f"Error: Project path does not exist: {project_path}")
         sys.exit(1)
-    
+
     if not (project_path / ".git").exists():
         print(f"Warning: {project_path} does not appear to be a git repository")
         response = input("Continue anyway? [y/N]: ").lower()
         if response != 'y':
             print("Aborted.")
             sys.exit(1)
-    
+
     init_precommit(project_path, dry_run=args.dry_run)
 
 

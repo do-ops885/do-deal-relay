@@ -1,7 +1,7 @@
 # Bootstrap Agent
 
 **Agent ID**: `bootstrap-agent`
-**Status**: 🟡 In Progress  
+**Status**: 🟡 In Progress
 **Scope**: Repository structure, configuration files, TypeScript setup
 **Next Agent**: Storage Agent
 

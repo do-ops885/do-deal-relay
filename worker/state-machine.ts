@@ -178,7 +178,7 @@ async function executePhase(
     case 'discover':
       const discovery = await discover(env, ctx);
       ctx.candidates = discovery.deals;
-      
+
       // Guard rail: Check input resources
       if (ctx.candidates.length > 0) {
         try {
@@ -193,7 +193,7 @@ async function executePhase(
           return 'revert';
         }
       }
-      
+
       if (discovery.deals.length === 0) {
         return 'finalize'; // No deals found, skip rest
       }
@@ -214,7 +214,7 @@ async function executePhase(
     case 'validate':
       const validation = await validate(ctx.deduped, ctx, env);
       ctx.validated = validation.valid;
-      
+
       // Log validation stats
       await appendLog(
         env,
@@ -229,7 +229,7 @@ async function executePhase(
           .reasons(Object.keys(validation.stats.by_gate))
           .build()
       );
-      
+
       if (ctx.validated.length === 0) {
         return 'revert'; // No valid deals
       }
@@ -238,7 +238,7 @@ async function executePhase(
     case 'score':
       const scoring = await score(ctx.validated, ctx, env);
       ctx.scored = scoring.deals;
-      
+
       // Log scoring stats
       await appendLog(
         env,
@@ -250,13 +250,13 @@ async function executePhase(
           })
           .build()
       );
-      
+
       return 'stage';
 
     case 'stage':
       const stageResult = await stage(ctx.scored, ctx, env);
       ctx.snapshot = stageResult.snapshot;
-      
+
       if (!stageResult.verified) {
         return 'revert';
       }
@@ -267,21 +267,21 @@ async function executePhase(
         // Guard rail: Check output quality before publishing
         if (ctx.scored.length > 0) {
           const guardRailReport = await runGuardRails(ctx.scored, 'output');
-          
+
           if (!guardRailReport.allPassed) {
             await notify(env, {
               type: 'checks_failed',
               severity: 'critical',
               run_id: ctx.run_id,
               message: `Guard rails blocked publish: ${guardRailReport.fatalErrors.join('; ')}`,
-              context: { 
+              context: {
                 checks: guardRailReport.checks,
                 warnings: guardRailReport.warnings,
               },
             });
             return 'revert';
           }
-          
+
           // Log warnings if any
           if (guardRailReport.warnings.length > 0) {
             await appendLog(
@@ -293,7 +293,7 @@ async function executePhase(
             );
           }
         }
-        
+
         await publishSnapshot(env, ctx.snapshot!, ctx);
         return 'verify';
       } catch (error) {

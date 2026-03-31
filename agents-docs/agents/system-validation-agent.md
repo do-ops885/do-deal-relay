@@ -1,8 +1,8 @@
 # System Validation Agent
 
-**Agent ID**: `system-validation-agent`  
-**Status**: 🟡 Active  
-**Scope**: Run all validations, evals, security checks  
+**Agent ID**: `system-validation-agent`
+**Status**: 🟡 Active
+**Scope**: Run all validations, evals, security checks
 **Previous Agent**: Test Agent (runs after Test Agent completes)
 
 ## Deliverables

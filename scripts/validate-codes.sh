@@ -138,7 +138,7 @@ if [ -f "wrangler.toml" ]; then
     else
         print_warning "KV namespace placeholders present (needs real IDs for deploy)"
     fi
-    
+
     if grep -q "crons" wrangler.toml; then
         print_status 0 "Cron trigger configured"
     else
