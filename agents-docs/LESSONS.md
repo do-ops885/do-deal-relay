@@ -362,3 +362,200 @@ Applied 5 key patterns from the template:
 | CLI override files    | ✅ Applied | 2 new            |
 | Skills compliance     | ✅ Applied | 5 skills updated |
 | AGENTS.md restructure | ✅ Applied | 1 modified       |
+
+### LESSON-010: Guard Rail Validation Improvements
+
+**Date**: 2026-03-31
+**Component**: Guard Rails / Validation
+
+**Issue**: Three validation issues discovered in guard rails:
+
+1. WIP detection was matching "template" substring instead of only lines starting with "WIP"
+2. Branch naming validation was missing conventional commit prefixes (feat/, fix/, docs/, etc.)
+3. Schema version detection had incorrect grep patterns
+
+**Root Cause**:
+
+- WIP check used `grep "WIP"` which matches any line containing those characters
+- Branch validation only checked for semantic versioning patterns, not conventional commit prefixes
+- Schema detection patterns were overly broad
+
+**Solution**:
+
+1. **WIP Detection Fix**:
+
+   ```bash
+   # Before
+   grep "WIP" file.md
+
+   # After
+   grep "^WIP" file.md
+   ```
+
+2. **Branch Naming Fix**:
+   Added conventional commit prefixes to valid patterns:
+   - `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`, `test/`
+   - Pattern: `^(feat|fix|docs|chore|refactor|test)/`
+
+3. **Schema Version Detection**:
+   - Fixed grep patterns to match exact field names
+   - Added proper escaping for JSON field matching
+
+**Impact**:
+
+- Eliminates false positives in WIP detection
+- Enforces conventional commit branch naming
+- Accurate schema version validation
+- Cleaner CI/CD pipeline with proper validation gates
+
+**Prevention**:
+
+- **RULE**: Always use `^` anchor for line-start patterns
+- **RULE**: Validate branch names against conventional commit spec
+- **RULE**: Test grep patterns with sample data before deployment
+- **RULE**: Use word boundaries (`\b`) for exact word matching
+
+### LESSON-011: GitHub Actions Best Practices
+
+**Date**: 2026-03-31
+**Component**: CI/CD / GitHub Actions
+
+**Issue**: Multiple workflow security and reliability issues:
+
+1. Action versions using `@main` instead of pinned versions
+2. Missing package-lock.json causing npm install failures
+3. Error handling using `|| true` masking real failures
+4. Hardcoded URLs in workflow files
+
+**Root Cause**:
+
+- Used floating references (@main) that can break unexpectedly
+- Didn't account for npm's requirement of package-lock.json in some scenarios
+- Overly permissive error handling hiding issues
+- Hardcoded configuration values in workflow YAML
+
+**Solution**:
+
+1. **Pin Action Versions**:
+
+   ```yaml
+   # Before
+   uses: actions/checkout@main
+
+   # After
+   uses: actions/checkout@v4.1.1
+   ```
+
+2. **Handle Missing package-lock.json**:
+
+   ```yaml
+   - name: Install dependencies
+     run: |
+       if [ -f package-lock.json ]; then
+         npm ci
+       else
+         npm install
+       fi
+   ```
+
+3. **Proper Error Handling**:
+
+   ```yaml
+   # Before
+   - run: command || true
+
+   # After
+   - run: command
+     continue-on-error: false
+     id: step_id
+   - run: echo "Step failed but continuing"
+     if: failure() && steps.step_id.outcome == 'failure'
+   ```
+
+4. **Use Environment Variables**:
+   ```yaml
+   env:
+     API_URL: ${{ secrets.API_URL }}
+   ```
+
+**Impact**:
+
+- Reproducible builds with pinned versions
+- Works with or without package-lock.json
+- Real errors surface immediately
+- No hardcoded secrets/URLs in code
+
+**Prevention**:
+
+- **RULE**: Always pin action versions to specific SHAs or version tags
+- **RULE**: Handle both npm ci and npm install scenarios
+- **RULE**: Never use `|| true` to hide failures
+- **RULE**: Use secrets/environment variables for all URLs and tokens
+- **RULE**: Review all workflow files for security best practices
+
+### LESSON-012: Cloudflare Skills Integration
+
+**Date**: 2026-03-31
+**Component**: Agent Skills / Cloudflare Integration
+
+**Issue**: Needed to integrate 40+ Cloudflare service references for comprehensive agent support while maintaining clean organization.
+
+**Root Cause**:
+
+- Multiple AI agents (Claude, Qwen) need access to Cloudflare documentation
+- Skills need dependency tracking
+- Different agents may need different skill configurations
+
+**Solution**:
+
+1. **Successfully Integrated 40+ Cloudflare Skills**:
+   - Workers, KV, Durable Objects, R2, D1, Queues, Pages, etc.
+   - AI Gateway, Vectorize, Workers AI, Browser Rendering
+   - Authentication (Access, Turnstile), Security (WAF, Rate Limiting)
+
+2. **Agent Configuration Directories**:
+
+   ```
+   .claude/    - Claude-specific skill configurations
+   .qwen/      - Qwen-specific skill configurations
+   ```
+
+   Each directory contains:
+   - `skills.json` - Skill availability and priority
+   - `context.md` - Agent-specific context and preferences
+
+3. **Skills Lock File**:
+   Created `.agents/skills.lock` for dependency tracking:
+   ```json
+   {
+     "version": "1.0.0",
+     "skills": [
+       { "name": "cloudflare", "version": "2024.3.0" },
+       { "name": "workers-best-practices", "version": "2.1.0" }
+     ],
+     "last_updated": "2026-03-31T10:00:00Z"
+   }
+   ```
+
+**Impact**:
+
+- Comprehensive Cloudflare service coverage
+- Multi-agent coordination with isolated configurations
+- Reproducible skill environments via lock file
+- Easy skill updates and version management
+
+**Prevention**:
+
+- **RULE**: Use agent-specific directories for multi-agent coordination
+- **RULE**: Maintain skills.lock for reproducible environments
+- **RULE**: Document all integrated skills in reference files
+- **RULE**: Separate skill metadata (SKILL.md) from detailed docs (reference/)
+
+**Integration Checklist**:
+
+- [ ] Identify required Cloudflare services
+- [ ] Create skill structure (SKILL.md + reference/)
+- [ ] Set up agent configuration directories
+- [ ] Generate skills.lock file
+- [ ] Test skill loading and resolution
+- [ ] Document skill usage patterns
