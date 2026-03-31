@@ -1,0 +1,19 @@
+{
+  "evals": [
+    {
+      "id": "web-perf-1",
+      "prompt": "What are Core Web Vitals?",
+      "expected_output": "CWV definitions",
+      "assertions": ["Defines LCP", "Defines FID/INP", "Defines CLS"]
+    },
+    {
+      "id": "web-perf-2",
+      "prompt": "How to improve LCP score?",
+      "expected_output": "LCP optimization tips",
+      "assertions": [
+        "Mentions optimize server response",
+        "Mentions optimize resources"
+      ]
+    }
+  ]
+}

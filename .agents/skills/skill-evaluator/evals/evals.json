@@ -1,0 +1,22 @@
+{
+  "evals": [
+    {
+      "id": "skill-evaluator-1",
+      "prompt": "Evaluate the cloudflare skill",
+      "expected_output": "Evaluation report",
+      "assertions": [
+        "Checks structure (SKILL.md exists)",
+        "Checks evals/evals.json"
+      ]
+    },
+    {
+      "id": "skill-evaluator-2",
+      "prompt": "What makes a good eval?",
+      "expected_output": "Eval quality criteria",
+      "assertions": [
+        "Mentions concrete assertions",
+        "Mentions real user prompts"
+      ]
+    }
+  ]
+}

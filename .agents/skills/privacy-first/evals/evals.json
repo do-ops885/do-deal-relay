@@ -1,0 +1,22 @@
+{
+  "evals": [
+    {
+      "id": "privacy-first-1",
+      "prompt": "Check if this email appears: user@example.com",
+      "expected_output": "Detection result",
+      "assertions": [
+        "Identifies email pattern",
+        "Flags the email as personal data"
+      ]
+    },
+    {
+      "id": "privacy-first-2",
+      "prompt": "How to prevent email addresses in config files?",
+      "expected_output": "Prevention strategies",
+      "assertions": [
+        "Mentions pattern detection",
+        "Suggests validation approach"
+      ]
+    }
+  ]
+}

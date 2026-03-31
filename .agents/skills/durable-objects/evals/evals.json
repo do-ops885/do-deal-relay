@@ -1,0 +1,20 @@
+{
+  "evals": [
+    {
+      "id": "durable-objects-1",
+      "prompt": "Create a Durable Object with SQLite storage and RPC methods",
+      "expected_output": "DO class with SQLite and RPC",
+      "assertions": [
+        "Extends DurableObject class",
+        "Includes SQLite storage initialization",
+        "Shows RPC method definition"
+      ]
+    },
+    {
+      "id": "durable-objects-2",
+      "prompt": "What are best practices for Durable Object alarms?",
+      "expected_output": "Alarm configuration and usage patterns",
+      "assertions": ["Mentions alarm() method", "Explains alarm() scheduling"]
+    }
+  ]
+}

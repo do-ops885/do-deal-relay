@@ -1,0 +1,22 @@
+{
+  "evals": [
+    {
+      "id": "parallel-execution-1",
+      "prompt": "Execute 5 independent API calls concurrently",
+      "expected_output": "Parallel execution setup",
+      "assertions": [
+        "Shows concurrent execution",
+        "Uses Promise.all or similar"
+      ]
+    },
+    {
+      "id": "parallel-execution-2",
+      "prompt": "When should I use parallel vs sequential execution?",
+      "expected_output": "Decision guidance",
+      "assertions": [
+        "Explains when parallel is better",
+        "Explains when sequential is better"
+      ]
+    }
+  ]
+}

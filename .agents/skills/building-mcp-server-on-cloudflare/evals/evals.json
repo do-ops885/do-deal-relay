@@ -1,0 +1,20 @@
+{
+  "evals": [
+    {
+      "id": "building-mcp-server-on-cloudflare-1",
+      "prompt": "Create an MCP server with tools and OAuth authentication",
+      "expected_output": "MCP server code with tools and OAuth",
+      "assertions": [
+        "Defines MCP tools",
+        "Includes OAuth configuration",
+        "Shows server deployment"
+      ]
+    },
+    {
+      "id": "building-mcp-server-on-cloudflare-2",
+      "prompt": "What are MCP authentication providers?",
+      "expected_output": "OAuth provider options",
+      "assertions": ["Lists authentication options"]
+    }
+  ]
+}

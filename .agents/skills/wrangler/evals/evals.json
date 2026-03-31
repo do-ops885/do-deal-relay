@@ -1,0 +1,22 @@
+{
+  "evals": [
+    {
+      "id": "wrangler-1",
+      "prompt": "Deploy a Worker with KV namespace binding using wrangler.toml",
+      "expected_output": "wrangler.toml with kv_namespaces binding",
+      "assertions": [
+        "Shows wrangler.toml with kv_namespaces section",
+        "Includes binding name and id"
+      ]
+    },
+    {
+      "id": "wrangler-2",
+      "prompt": "What wrangler version is required for Workers?",
+      "expected_output": "Version requirement",
+      "assertions": [
+        "Mentions wrangler v3 or v4",
+        "Shows version check command"
+      ]
+    }
+  ]
+}

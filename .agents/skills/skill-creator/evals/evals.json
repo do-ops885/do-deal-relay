@@ -1,0 +1,22 @@
+{
+  "evals": [
+    {
+      "id": "skill-creator-1",
+      "prompt": "Create a new skill for API documentation",
+      "expected_output": "Skill structure with SKILL.md",
+      "assertions": [
+        "Creates SKILL.md with proper frontmatter",
+        "Defines skill description"
+      ]
+    },
+    {
+      "id": "skill-creator-2",
+      "prompt": "How do I evaluate a skill?",
+      "expected_output": "Evaluation process",
+      "assertions": [
+        "Mentions structure check",
+        "Mentions running test prompts"
+      ]
+    }
+  ]
+}

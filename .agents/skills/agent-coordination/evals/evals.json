@@ -1,0 +1,23 @@
+{
+  "evals": [
+    {
+      "id": "agent-coordination-1",
+      "prompt": "Run three independent tasks in parallel",
+      "expected_output": "Parallel execution plan",
+      "assertions": [
+        "Shows multiple agents executing simultaneously",
+        "Mentions task coordination"
+      ]
+    },
+    {
+      "id": "agent-coordination-2",
+      "prompt": "What coordination strategies are available?",
+      "expected_output": "Strategy options",
+      "assertions": [
+        "Mentions parallel execution",
+        "Mentions sequential execution",
+        "Mentions swarm analysis"
+      ]
+    }
+  ]
+}
