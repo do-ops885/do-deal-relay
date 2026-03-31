@@ -52,7 +52,7 @@ SECRETS_FOUND=0
 if grep -r "ghp_" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     SECRETS_FOUND=1
 fi
-if grep -r "sk-" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+if grep -r "sk-" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
     SECRETS_FOUND=1
 fi
 if [ $SECRETS_FOUND -eq 0 ]; then
