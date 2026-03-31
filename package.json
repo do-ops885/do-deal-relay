@@ -1,0 +1,42 @@
+{
+  "name": "do-deal-relay",
+  "version": "1.0.0",
+  "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "lint": "tsc --noEmit",
+    "validate": "bash scripts/validate-codes.sh",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240320.1",
+    "typescript": "^5.4.3",
+    "wrangler": "^3.39.0",
+    "vitest": "^1.4.0",
+    "miniflare": "^3.20240320.0",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "deals",
+    "referral",
+    "cloudflare-workers",
+    "autonomous",
+    "ai-agent"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/do-ops885/do-deal-relay"
+  }
+}

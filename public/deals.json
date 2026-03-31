@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2024-03-31T15:00:00Z",
+  "run_id": "deals-2024-03-31-15",
+  "trace_id": "example-trace-id",
+  "snapshot_hash": "abc123def456",
+  "previous_hash": "",
+  "schema_version": "1.0.0",
+  "stats": {
+    "total": 1,
+    "active": 1,
+    "quarantined": 0,
+    "rejected": 0,
+    "duplicates": 0
+  },
+  "deals": [
+    {
+      "id": "sha256-hash-of-deal",
+      "source": {
+        "url": "https://www.trading212.com/invite/GcCOCxbo",
+        "domain": "trading212.com",
+        "discovered_at": "2024-03-31T15:00:00Z",
+        "trust_score": 0.7
+      },
+      "title": "Trading212",
+      "description": "Get a free share worth up to £100 when you sign up with this referral code",
+      "code": "GcCOCxbo",
+      "url": "https://www.trading212.com/invite/GcCOCxbo",
+      "reward": {
+        "type": "item",
+        "value": "Free share worth up to £100",
+        "currency": "GBP",
+        "description": "Receive a free fractional share worth up to £100 when you deposit £1"
+      },
+      "requirements": [
+        "New users only",
+        "Minimum deposit £1",
+        "Account verification required"
+      ],
+      "expiry": {
+        "date": null,
+        "confidence": 0.3,
+        "type": "unknown"
+      },
+      "metadata": {
+        "category": ["trading", "investment", "stocks"],
+        "tags": ["trading212", "free-share", "investment"],
+        "normalized_at": "2024-03-31T15:00:00Z",
+        "confidence_score": 0.85,
+        "status": "active"
+      }
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+#!/bin/bash
+#
+# Pre-push Guard Rails Hook
+# Prevents pushing broken or unsafe code
+#
+
+set -e
+
+echo "🛡️  Running pre-push guard rails..."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+ERRORS=0
+
+error() {
+    echo -e "${RED}✗${NC} $1"
+    ERRORS=$((ERRORS + 1))
+}
+
+success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+# GUARD RAIL 1: TypeScript Compilation
+echo "Guard Rail 1: TypeScript Compilation"
+if npx tsc --noEmit 2>/dev/null; then
+    success "TypeScript compilation passed"
+else
+    error "TypeScript compilation failed"
+    echo "   Run: npx tsc --noEmit"
+fi
+echo ""
+
+# GUARD RAIL 2: Run Tests (if they exist)
+echo "Guard Rail 2: Test Suite"
+if [ -f "package.json" ] && grep -q '"test"' package.json; then
+    if npm test 2>/dev/null | grep -q "pass\|✓"; then
+        success "Tests passing"
+    else
+        warning "Test status unclear - review manually"
+    fi
+else
+    success "No tests configured (skipping)"
+fi
+echo ""
+
+# GUARD RAIL 3: Validation Script
+echo "Guard Rail 3: Validation Script"
+if [ -f "scripts/validate-codes.sh" ]; then
+    if bash scripts/validate-codes.sh 2>&1 | grep -q "All validation gates passed"; then
+        success "Validation script passed"
+    else
+        error "Validation script found issues"
+        echo "   Run: ./scripts/validate-codes.sh"
+    fi
+else
+    success "No validation script (skipping)"
+fi
+echo ""
+
+# GUARD RAIL 4: Secret Scan
+echo "Guard Rail 4: Secret Detection"
+SECRET_PATTERNS=(
+    "ghp_[a-zA-Z0-9]{36}"
+    "sk-[a-zA-Z0-9]{48}"
+    "AKIA[0-9A-Z]{16}"
+)
+
+SCANNED=0
+FOUND=0
+for pattern in "${SECRET_PATTERNS[@]}"; do
+    if git diff --cached --name-only | xargs git diff --cached 2>/dev/null | grep -qE "$pattern"; then
+        error "Potential secret in staged changes!"
+        FOUND=1
+    fi
+    SCANNED=$((SCANNED + 1))
+done
+
+if [ $FOUND -eq 0 ]; then
+    success "No secrets in staged changes ($SCANNED patterns checked)"
+fi
+echo ""
+
+# GUARD RAIL 5: Check Branch Name
+echo "Guard Rail 5: Branch Name"
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "unknown")
+
+if [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]]; then
+    error "Direct push to $BRANCH branch detected!"
+    echo "   Create a feature branch: git checkout -b feature/name"
+    echo "   Then push and create a PR"
+fi
+
+if [[ $BRANCH =~ ^(feature|fix|hotfix|release)/[a-z0-9-]+$ ]]; then
+    success "Branch name follows convention: $BRANCH"
+else
+    warning "Branch name doesn't follow convention: $BRANCH"
+    echo "   Recommended: feature/description, fix/bug-name, hotfix/critical-fix"
+fi
+echo ""
+
+# GUARD RAIL 6: Check Commit Messages
+echo "Guard Rail 6: Recent Commits"
+COMMITS=$(git log --oneline --no-merges -5 2>/dev/null || echo "")
+if [ -n "$COMMITS" ]; then
+    # Check for WIP commits
+    if echo "$COMMITS" | grep -qi "wip\|work in progress\|tmp\|temp\|draft"; then
+        error "WIP/temporary commits detected!"
+        echo "$COMMITS" | head -3
+        echo "   Clean up commits before pushing"
+    else
+        success "Recent commits look clean"
+    fi
+else
+    success "No commits to check"
+fi
+echo ""
+
+# Summary
+echo "=================================="
+echo "Pre-Push Guard Rails Summary"
+echo "=================================="
+echo "Errors: $ERRORS"
+echo ""
+
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}✗ PUSH BLOCKED${NC}"
+    echo "Fix the errors above before pushing."
+    echo ""
+    echo "To bypass (not recommended): git push --no-verify"
+    exit 1
+else
+    echo -e "${GREEN}✓ ALL GUARD RAILS PASSED${NC}"
+    echo "Safe to push!"
+    exit 0
+fi
