@@ -29,6 +29,8 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 
 ## Project Structure
 
+**IMPORTANT**: Only standard configuration files belong in root. All other files MUST use subfolders.
+
 ```
 ├── .github/workflows/    # CI/CD workflows
 ├── .agents/skills/       # Agent coordination skills
@@ -40,6 +42,30 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 ├── tests/                # Test suite
 └── worker/               # Cloudflare Worker source
 ```
+
+### Root Directory Policy
+
+**Allowed in root** (standard project files only):
+
+- `.gitignore` - Git ignore patterns
+- `package.json` - NPM manifest
+- `package-lock.json` - NPM lockfile
+- `tsconfig.json` - TypeScript config
+- `vitest.config.ts` - Test runner config
+- `wrangler.toml` - Cloudflare Workers config
+- `README.md` - Main project documentation
+- `VERSION` - Version file
+- `LICENSE` - License file
+
+**MUST use subfolders**:
+
+- Documentation → `docs/` or `agents-docs/`
+- Reports/status → `temp/`
+- Scripts → `scripts/`
+- Tests → `tests/`
+- Generated files → `temp/`
+
+See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rules.
 
 ## Reference
 
@@ -88,6 +114,7 @@ Run `./scripts/quality_gate.sh` to execute all validation checks:
 - Unit tests
 - Validation gates
 - Security checks
+- Root directory file organization (via `./scripts/check-root-files.sh`)
 
 ## Active Agents
 

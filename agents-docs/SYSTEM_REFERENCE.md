@@ -1,11 +1,46 @@
 # System Reference
 
-**System**: Deal Discovery System  
-**Version**: 0.1.0-alpha  
-**Phase**: Bootstrap  
+**System**: Deal Discovery System
+**Version**: 0.1.0-alpha
+**Phase**: Bootstrap
 **Status**: In Development
 
 ## Architecture
+
+### Project Structure
+
+```
+├── .github/workflows/    # CI/CD workflows
+├── .agents/skills/       # Agent coordination skills
+├── agents-docs/          # System documentation
+├── docs/                 # API documentation
+├── plans/                # Execution plans
+├── scripts/              # Utility scripts
+├── temp/                 # Analysis reports & state (gitignored)
+├── tests/                # Test suite
+└── worker/               # Cloudflare Worker source
+```
+
+### File Organization Rules
+
+**CRITICAL**: Only these files belong in root:
+
+- `.gitignore` - Git ignore patterns
+- `package.json` - NPM manifest
+- `package-lock.json` - NPM lockfile
+- `tsconfig.json` - TypeScript config
+- `vitest.config.ts` - Test runner config
+- `wrangler.toml` - Cloudflare Workers config
+- `README.md` - Main project documentation
+- `VERSION` - Version file
+
+**ALL other files MUST use appropriate subfolders**:
+
+- Reports/status → `temp/`
+- Documentation → `docs/` or `agents-docs/`
+- Scripts → `scripts/`
+- Tests → `tests/`
+- Source code → `worker/`
 
 ### Two-Phase Publishing
 
@@ -154,7 +189,7 @@ Use: `skill <name>` to load platform guidance.
 
 ## Related Documentation
 
-- [Architecture Overview](../AGENTS.md)
+- [Architecture Overview](../docs/AGENTS.md)
 - [Agent Specs](../agents-docs/agents/) - Individual agent docs
 - [Guard Rails](../agents-docs/guard-rails.md) - Security
 - [Coordination](../agents-docs/coordination/) - State tracking
