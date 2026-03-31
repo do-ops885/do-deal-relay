@@ -99,11 +99,11 @@ if [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]]; then
     echo "   Then push and create a PR"
 fi
 
-if [[ $BRANCH =~ ^(feature|fix|hotfix|release)/[a-z0-9-]+$ ]]; then
+if [[ $BRANCH =~ ^(feature|fix|hotfix|release|chore|docs|refactor|test|style|perf|ci|build)/[a-z0-9-]+$ ]]; then
     success "Branch name follows convention: $BRANCH"
 else
     warning "Branch name doesn't follow convention: $BRANCH"
-    echo "   Recommended: feature/description, fix/bug-name, hotfix/critical-fix"
+    echo "   Recommended: feature/description, fix/bug-name, hotfix/critical-fix, chore/task-name, docs/update-name"
 fi
 echo ""
 
@@ -111,8 +111,8 @@ echo ""
 echo "Guard Rail 6: Recent Commits"
 COMMITS=$(git log --oneline --no-merges -5 2>/dev/null || echo "")
 if [ -n "$COMMITS" ]; then
-    # Check for WIP commits
-    if echo "$COMMITS" | grep -qi "wip\|work in progress\|tmp\|temp\|draft"; then
+    # Check for WIP commits (only at start of message)
+    if echo "$COMMITS" | grep -qiE "^(wip|work in progress|tmp|temp|draft)"; then
         error "WIP/temporary commits detected!"
         echo "$COMMITS" | head -3
         echo "   Clean up commits before pushing"

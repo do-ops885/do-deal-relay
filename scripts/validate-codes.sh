@@ -151,8 +151,8 @@ echo ""
 
 # Gate 8: Validate schema version consistency
 echo "Gate 8: Schema Version Consistency"
-CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -o '"[^"]*"' | tr -d '"')
-AGENTS_VERSION=$(grep "Schema Version:" AGENTS.md | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+")
+CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -o "'[^']*'" | tr -d "'")
+AGENTS_VERSION=$(grep "\\*\\*Version\\*\\*:" AGENTS.md | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+")
 
 if [ "$CONFIG_VERSION" = "$AGENTS_VERSION" ]; then
     print_status 0 "Schema versions consistent ($CONFIG_VERSION)"
