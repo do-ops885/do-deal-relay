@@ -219,6 +219,7 @@ ALLOWED_ROOT_FILES=(
     "^README\.md$"
     "^VERSION$"
     "^LICENSE$"
+    "^\.pre-commit-config\.yaml$"
 )
 
 # Check each staged file that's in root
