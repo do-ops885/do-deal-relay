@@ -26,10 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Quality Gate
         run: ./scripts/quality_gate.sh
@@ -49,10 +49,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npx tsc --noEmit
@@ -72,10 +72,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         run: npm run test:ci
@@ -105,10 +105,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run validation script
         run: ./scripts/validate-codes.sh
@@ -156,10 +156,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Check formatting
         run: npx prettier --check .
@@ -183,10 +183,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Cache disabled - using npm ci directly
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build TypeScript
         run: npm run build
