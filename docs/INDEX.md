@@ -4,7 +4,8 @@
 
 ### System Overview
 
-- **[AGENTS.md](../AGENTS.md)** - Agent coordination and system reference (root)
+- **[AGENTS.md](../AGENTS.md)** - Quick reference and status (root)
+- **[agents-docs/SYSTEM_REFERENCE.md](../agents-docs/SYSTEM_REFERENCE.md)** - Complete system details
 - **[README.md](../README.md)** - Quick start and system status (root)
 
 ### Technical Documentation
@@ -21,6 +22,7 @@
 See `../agents-docs/` directory for:
 
 - Agent specifications
+- System reference
 - Handoff protocols
 - Coordination state
 - Self-learning lessons

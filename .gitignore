@@ -50,3 +50,9 @@ secrets/
 *.tmp
 .tmp/
 temp/
+
+# Agent system state
+state.json
+
+# Opencode
+.opencode/
