@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { score, calculateSourceDiversity } from "../../worker/pipeline/score";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
 
@@ -47,11 +47,29 @@ describe("Scoring Pipeline", () => {
   };
 
   const mockEnv = {
-    DEALS_PROD: {} as KVNamespace,
-    DEALS_STAGING: {} as KVNamespace,
-    DEALS_LOG: {} as KVNamespace,
-    DEALS_LOCK: {} as KVNamespace,
-    DEALS_SOURCES: {} as KVNamespace,
+    DEALS_PROD: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as unknown as KVNamespace,
+    DEALS_STAGING: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as unknown as KVNamespace,
+    DEALS_LOG: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+    } as unknown as KVNamespace,
+    DEALS_LOCK: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as unknown as KVNamespace,
+    DEALS_SOURCES: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+    } as unknown as KVNamespace,
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
