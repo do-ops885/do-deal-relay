@@ -51,7 +51,7 @@ export async function publishSnapshot(
 
     // Step 3: Check if already published (idempotency)
     const alreadyCommitted = await isSnapshotCommitted(
-      CONFIG.GITHUB_REPO,
+      env.GITHUB_REPO,
       snapshot.snapshot_hash
     );
 
@@ -64,13 +64,13 @@ export async function publishSnapshot(
     const publishedSnapshot = await promoteToProduction(env, expectedPreviousHash);
 
     // Step 5: Commit to GitHub
-    const commitSha = await commitSnapshot(CONFIG.GITHUB_REPO, publishedSnapshot, {
+    const commitSha = await commitSnapshot(env.GITHUB_REPO, publishedSnapshot, {
       total: publishedSnapshot.stats.total,
       active: publishedSnapshot.stats.active,
     });
 
     // Step 6: Verify commit
-    const verified = await verifyCommit(CONFIG.GITHUB_REPO, commitSha);
+    const verified = await verifyCommit(env.GITHUB_REPO, commitSha);
     if (!verified) {
       throw new PipelineError(
         'PublishError',

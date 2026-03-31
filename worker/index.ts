@@ -2,6 +2,7 @@ import { executePipeline, getPipelineStatus } from './state-machine';
 import { getProductionSnapshot, getActiveDeals, getDealsByCode } from './lib/storage';
 import { appendLog, getRunLogs, getRecentLogs, exportLogsAsJSONL } from './lib/logger';
 import { notify } from './notify';
+import { setGitHubToken } from './lib/github';
 import type { Env, GetDealsQuery, SubmitDealBody, HealthStatus } from './types';
 import { GetDealsQuerySchema, SubmitDealBodySchema } from './types';
 import { CONFIG } from './config';
@@ -12,6 +13,11 @@ import { CONFIG } from './config';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // Initialize GitHub token if available
+    if (env.GITHUB_TOKEN) {
+      setGitHubToken(env.GITHUB_TOKEN);
+    }
+    
     const url = new URL(request.url);
     const path = url.pathname;
 

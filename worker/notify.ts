@@ -130,7 +130,7 @@ ${event.context ? `\`\`\`json\n${JSON.stringify(event.context, null, 2)}\n\`\`\`
     throw new Error(`Telegram API error: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { ok: boolean };
   return data.ok === true;
 }
 
@@ -149,7 +149,7 @@ async function sendGitHubNotification(env: Env, event: NotificationEvent): Promi
     },
   };
 
-  return createGitHubIssue(CONFIG.GITHUB_REPO, event.type, event.run_id, details);
+  return createGitHubIssue(env.GITHUB_REPO, event.type, event.run_id, details);
 }
 
 /**

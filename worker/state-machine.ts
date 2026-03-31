@@ -129,7 +129,7 @@ export async function executePipeline(env: Env): Promise<{
           env,
           logBuilder
             .status('error')
-            .error((error as PipelineError).class || 'UnknownError', errorMessage)
+            .error((error as PipelineError).errorClass || 'UnknownError', errorMessage)
             .duration(Date.now() - startTime)
             .build()
         );

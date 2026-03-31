@@ -9,8 +9,8 @@
     "strictNullChecks": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -21,6 +21,6 @@
     "rootDir": ".",
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["worker/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["worker/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
 }

@@ -98,6 +98,7 @@ export const LogEntrySchema = z.object({
     'score',
     'stage',
     'publish',
+    'verify',
     'finalize',
     'revert',
     'quarantine',
@@ -214,7 +215,7 @@ export type ErrorClass = z.infer<typeof ErrorClassSchema>;
 
 export class PipelineError extends Error {
   constructor(
-    public readonly class: ErrorClass,
+    public readonly errorClass: ErrorClass,
     message: string,
     public readonly phase: PipelinePhase,
     public readonly retryable: boolean = false
@@ -248,6 +249,14 @@ export type SubmitDealBody = z.infer<typeof SubmitDealBodySchema>;
 // Environment Types
 // ============================================================================
 
+export interface NotificationEvent {
+  type: 'checks_failed' | 'publish_incomplete' | 'concurrency_abort' | 'high_value_deal' | 'trust_anomaly' | 'system_error';
+  severity: 'info' | 'warning' | 'critical';
+  run_id: string;
+  message: string;
+  context?: Record<string, unknown>;
+}
+
 export interface Env {
   DEALS_PROD: KVNamespace;
   DEALS_STAGING: KVNamespace;
@@ -256,6 +265,7 @@ export interface Env {
   DEALS_SOURCES: KVNamespace;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
+  GITHUB_TOKEN?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;

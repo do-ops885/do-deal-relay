@@ -1,6 +1,6 @@
-import { Deal, PipelineContext, ValidationGate, PipelineError, ErrorClass } from '../types';
+import { Deal, PipelineContext, PipelineError, ErrorClass } from '../types';
 import { DealSchema } from '../types';
-import { CONFIG, VALIDATION_GATES } from '../config';
+import { CONFIG, VALIDATION_GATES, type ValidationGate } from '../config';
 import { verifyNormalization } from './normalize';
 import { getProductionSnapshot } from '../lib/storage';
 import type { Env } from '../types';

@@ -20,19 +20,28 @@ interface GitHubContent {
   sha: string;
 }
 
+// Store token for the session (set by worker/index.ts)
+let githubToken: string | undefined;
+
+/**
+ * Set GitHub token for API calls
+ */
+export function setGitHubToken(token: string): void {
+  githubToken = token;
+}
+
 /**
  * Get GitHub API base URL and headers
  */
 function getGitHubConfig() {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    throw new Error('GITHUB_TOKEN not configured');
+  if (!githubToken) {
+    throw new Error('GITHUB_TOKEN not configured. Call setGitHubToken() first.');
   }
 
   return {
     baseUrl: 'https://api.github.com',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${githubToken}`,
       Accept: 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     },
@@ -63,7 +72,7 @@ export async function getFileContent(
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { content: string; sha: string };
     return {
       content: data.content,
       sha: data.sha,
@@ -115,7 +124,7 @@ export async function commitFile(
       throw new Error(`GitHub commit failed: ${response.status} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { commit: { sha: string } };
     return data.commit.sha;
   } catch (error) {
     console.error('Failed to commit file:', error);
@@ -150,7 +159,7 @@ export async function commitSnapshot(
 /**
  * Create GitHub Issue for notification
  */
-export async function createNotificationIssue(
+export async function createGitHubIssue(
   repo: string,
   type: string,
   run_id: string,
@@ -200,7 +209,7 @@ ${JSON.stringify(details.context || {}, null, 2)}
       throw new Error(`Failed to create issue: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { number: number };
     return data.number;
   } catch (error) {
     console.error('Failed to create notification issue:', error);
@@ -228,8 +237,18 @@ export async function getRecentCommits(
       throw new Error(`Failed to get commits: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.map((commit: { sha: string; commit: { message: string; author: { name: string; email: string; date: string } } }) => ({
+    const data = await response.json() as Array<{
+      sha: string;
+      commit: {
+        message: string;
+        author: {
+          name: string;
+          email: string;
+          date: string;
+        };
+      };
+    }>;
+    return data.map((commit) => ({
       sha: commit.sha,
       message: commit.commit.message,
       author: commit.commit.author,

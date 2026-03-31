@@ -1,5 +1,5 @@
-import { Deal, PipelineError, ErrorClass } from './types';
-import { CONFIG } from './config';
+import { Deal, PipelineError, ErrorClass } from '../types';
+import { CONFIG } from '../config';
 
 // ============================================================================
 // Guard Rails - Safety Mechanisms
