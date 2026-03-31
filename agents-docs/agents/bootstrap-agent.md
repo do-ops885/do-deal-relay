@@ -8,6 +8,7 @@
 ## Deliverables
 
 ### Must Create
+
 - [x] `AGENTS.md` (reduced)
 - [x] `agents-docs/` structure
 - [x] `package.json`
@@ -17,6 +18,7 @@
 - [ ] Worker entry point
 
 ### Already Exists
+
 - ✅ `worker/types.ts` (TypeScript types)
 - ✅ `worker/config.ts` (Configuration)
 - ✅ `worker/lib/crypto.ts` (Hashing)
@@ -31,6 +33,7 @@
 ## Handoff Checklist
 
 Before handing to Storage Agent:
+
 - [ ] All worker/ files exist and compile
 - [ ] Directory structure complete
 - [ ] No compilation errors (`npm run lint`)
@@ -39,6 +42,7 @@ Before handing to Storage Agent:
 ## Context for Next Agent
 
 Storage Agent needs:
+
 1. Types and schemas (already done)
 2. Config constants (already done)
 3. Working directory structure

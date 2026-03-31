@@ -1,12 +1,12 @@
-import { LogEntry, LogEntrySchema } from '../types';
-import type { Env, PipelinePhase } from '../types';
+import { LogEntry, LogEntrySchema } from "../types";
+import type { Env, PipelinePhase } from "../types";
 
 // ============================================================================
 // Append-Only JSONL Logger
 // ============================================================================
 
-const LOG_KEY_PREFIX = 'log:';
-const LOG_INDEX_KEY = 'log:index';
+const LOG_KEY_PREFIX = "log:";
+const LOG_INDEX_KEY = "log:index";
 
 interface LogIndex {
   total_entries: number;
@@ -20,7 +20,7 @@ interface LogIndex {
  */
 export async function appendLog(
   env: Env,
-  entry: Omit<LogEntry, 'ts'>
+  entry: Omit<LogEntry, "ts">,
 ): Promise<void> {
   const timestamp = new Date().toISOString();
   const logEntry: LogEntry = {
@@ -31,21 +31,24 @@ export async function appendLog(
   // Validate entry
   const result = LogEntrySchema.safeParse(logEntry);
   if (!result.success) {
-    console.error('Invalid log entry:', result.error);
+    console.error("Invalid log entry:", result.error);
     throw new Error(`Invalid log entry: ${result.error.message}`);
   }
 
   try {
     // Get current index
-    const index = await env.DEALS_LOG.get<LogIndex>(LOG_INDEX_KEY, 'json') || {
+    const index = (await env.DEALS_LOG.get<LogIndex>(
+      LOG_INDEX_KEY,
+      "json",
+    )) || {
       total_entries: 0,
-      last_entry_key: '',
-      last_run_id: '',
+      last_entry_key: "",
+      last_run_id: "",
     };
 
     // Generate entry key
     const entryNumber = index.total_entries + 1;
-    const entryKey = `${LOG_KEY_PREFIX}${String(entryNumber).padStart(10, '0')}`;
+    const entryKey = `${LOG_KEY_PREFIX}${String(entryNumber).padStart(10, "0")}`;
 
     // Store entry
     await env.DEALS_LOG.put(entryKey, JSON.stringify(logEntry));
@@ -60,11 +63,12 @@ export async function appendLog(
 
     // Also maintain a list per run_id for easy retrieval
     const runListKey = `run:${logEntry.run_id}`;
-    const runList = await env.DEALS_LOG.get<string[]>(runListKey, 'json') || [];
+    const runList =
+      (await env.DEALS_LOG.get<string[]>(runListKey, "json")) || [];
     runList.push(entryKey);
     await env.DEALS_LOG.put(runListKey, JSON.stringify(runList));
   } catch (error) {
-    console.error('Failed to append log:', error);
+    console.error("Failed to append log:", error);
     throw new Error(`Log append failed: ${(error as Error).message}`);
   }
 }
@@ -74,11 +78,11 @@ export async function appendLog(
  */
 export async function getRunLogs(
   env: Env,
-  run_id: string
+  run_id: string,
 ): Promise<LogEntry[]> {
   try {
     const runListKey = `run:${run_id}`;
-    const entryKeys = await env.DEALS_LOG.get<string[]>(runListKey, 'json');
+    const entryKeys = await env.DEALS_LOG.get<string[]>(runListKey, "json");
 
     if (!entryKeys || entryKeys.length === 0) {
       return [];
@@ -86,7 +90,7 @@ export async function getRunLogs(
 
     const entries: LogEntry[] = [];
     for (const key of entryKeys) {
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, 'json');
+      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
       if (entry) {
         entries.push(entry);
       }
@@ -94,10 +98,10 @@ export async function getRunLogs(
 
     // Sort by timestamp
     return entries.sort(
-      (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime()
+      (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime(),
     );
   } catch (error) {
-    console.error('Failed to get run logs:', error);
+    console.error("Failed to get run logs:", error);
     return [];
   }
 }
@@ -107,10 +111,10 @@ export async function getRunLogs(
  */
 export async function getRecentLogs(
   env: Env,
-  count: number = 100
+  count: number = 100,
 ): Promise<LogEntry[]> {
   try {
-    const index = await env.DEALS_LOG.get<LogIndex>(LOG_INDEX_KEY, 'json');
+    const index = await env.DEALS_LOG.get<LogIndex>(LOG_INDEX_KEY, "json");
 
     if (!index || index.total_entries === 0) {
       return [];
@@ -120,8 +124,8 @@ export async function getRecentLogs(
     const startEntry = Math.max(1, index.total_entries - count + 1);
 
     for (let i = startEntry; i <= index.total_entries; i++) {
-      const key = `${LOG_KEY_PREFIX}${String(i).padStart(10, '0')}`;
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, 'json');
+      const key = `${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`;
+      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
       if (entry) {
         entries.push(entry);
       }
@@ -129,7 +133,7 @@ export async function getRecentLogs(
 
     return entries;
   } catch (error) {
-    console.error('Failed to get recent logs:', error);
+    console.error("Failed to get recent logs:", error);
     return [];
   }
 }
@@ -137,10 +141,7 @@ export async function getRecentLogs(
 /**
  * Create a log entry builder for fluent logging
  */
-export function createLogBuilder(
-  run_id: string,
-  trace_id: string
-): LogBuilder {
+export function createLogBuilder(run_id: string, trace_id: string): LogBuilder {
   return new LogBuilder(run_id, trace_id);
 }
 
@@ -151,7 +152,7 @@ class LogBuilder {
     this.entry = {
       run_id,
       trace_id,
-      status: 'complete',
+      status: "complete",
       retry_count: 0,
       notification_sent: false,
     };
@@ -162,7 +163,7 @@ class LogBuilder {
     return this;
   }
 
-  status(status: LogEntry['status']): this {
+  status(status: LogEntry["status"]): this {
     this.entry.status = status;
     return this;
   }
@@ -231,12 +232,12 @@ class LogBuilder {
   error(errorClass: string, message: string): this {
     this.entry.error_class = errorClass;
     this.entry.error_message = message;
-    this.entry.status = 'error';
+    this.entry.status = "error";
     return this;
   }
 
-  build(): Omit<LogEntry, 'ts'> {
-    return this.entry as Omit<LogEntry, 'ts'>;
+  build(): Omit<LogEntry, "ts"> {
+    return this.entry as Omit<LogEntry, "ts">;
   }
 }
 
@@ -245,5 +246,5 @@ class LogBuilder {
  */
 export async function exportLogsAsJSONL(env: Env): Promise<string> {
   const entries = await getRecentLogs(env, 10000);
-  return entries.map((e) => JSON.stringify(e)).join('\n');
+  return entries.map((e) => JSON.stringify(e)).join("\n");
 }

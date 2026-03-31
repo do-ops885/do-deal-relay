@@ -33,9 +33,9 @@ export default defineWorkersConfig({
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "moduleResolution": "bundler",
-    "types": ["@cloudflare/vitest-pool-workers"]
+    "types": ["@cloudflare/vitest-pool-workers"],
   },
-  "include": ["./**/*.ts", "../src/worker-configuration.d.ts"]
+  "include": ["./**/*.ts", "../src/worker-configuration.d.ts"],
 }
 ```
 
@@ -123,10 +123,9 @@ describe("DO internals", () => {
       expect(instance).toBeInstanceOf(Counter);
 
       const result = state.storage.sql
-        .exec<{ value: number }>(
-          "SELECT value FROM counters WHERE name = ?",
-          "default"
-        )
+        .exec<{
+          value: number;
+        }>("SELECT value FROM counters WHERE name = ?", "default")
         .one();
       expect(result.value).toBe(2);
     });
@@ -150,8 +149,8 @@ describe("DO listing", () => {
 
     const ids = await listDurableObjectIds(env.COUNTER);
     expect(ids.length).toBe(2);
-    expect(ids.some(id => id.equals(id1))).toBe(true);
-    expect(ids.some(id => id.equals(id2))).toBe(true);
+    expect(ids.some((id) => id.equals(id1))).toBe(true);
+    expect(ids.some((id) => id.equals(id2))).toBe(true);
   });
 });
 ```
@@ -161,7 +160,11 @@ describe("DO listing", () => {
 Use `runDurableObjectAlarm()` to trigger alarms immediately:
 
 ```typescript
-import { env, runInDurableObject, runDurableObjectAlarm } from "cloudflare:test";
+import {
+  env,
+  runInDurableObject,
+  runDurableObjectAlarm,
+} from "cloudflare:test";
 import { describe, it, expect } from "vitest";
 
 describe("DO alarms", () => {
@@ -191,6 +194,7 @@ describe("DO alarms", () => {
 ```
 
 Example alarm handler:
+
 ```typescript
 async alarm(): Promise<void> {
   this.ctx.storage.sql.exec("DELETE FROM counters");
@@ -231,9 +235,10 @@ describe("SQLite", () => {
 
     await runInDurableObject(stub, async (instance, state) => {
       const rows = state.storage.sql
-        .exec<{ name: string; value: number }>(
-          "SELECT name, value FROM counters ORDER BY name"
-        )
+        .exec<{
+          name: string;
+          value: number;
+        }>("SELECT name, value FROM counters ORDER BY name")
         .toArray();
 
       expect(rows).toEqual([
@@ -255,6 +260,7 @@ npx vitest run    # Single run
 ```
 
 package.json:
+
 ```json
 {
   "scripts": {

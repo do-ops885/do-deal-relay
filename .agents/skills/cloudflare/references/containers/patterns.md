@@ -10,11 +10,12 @@ export class SessionBackend extends Container {
 
 export default {
   async fetch(request: Request, env: Env) {
-    const sessionId = request.headers.get("X-Session-ID") || crypto.randomUUID();
+    const sessionId =
+      request.headers.get("X-Session-ID") || crypto.randomUUID();
     const container = env.SESSION_BACKEND.getByName(sessionId);
     await container.startAndWaitForPorts();
     return container.fetch(request);
-  }
+  },
 };
 ```
 
@@ -28,7 +29,7 @@ export default {
     const container = env.STATELESS_API.getRandom();
     await container.startAndWaitForPorts();
     return container.fetch(request);
-  }
+  },
 };
 ```
 
@@ -42,7 +43,7 @@ export default {
     const container = env.GLOBAL_SERVICE.getByName("singleton");
     await container.startAndWaitForPorts();
     return container.fetch(request);
-  }
+  },
 };
 ```
 
@@ -54,7 +55,8 @@ export default {
 export default {
   async fetch(request: Request, env: Env) {
     if (request.headers.get("Upgrade") === "websocket") {
-      const sessionId = request.headers.get("X-Session-ID") || crypto.randomUUID();
+      const sessionId =
+        request.headers.get("X-Session-ID") || crypto.randomUUID();
       const container = env.WS_BACKEND.getByName(sessionId);
       await container.startAndWaitForPorts();
 
@@ -62,7 +64,7 @@ export default {
       return container.fetch(request);
     }
     return new Response("Not a WebSocket request", { status: 400 });
-  }
+  },
 };
 ```
 
@@ -83,7 +85,7 @@ export class GracefulContainer extends Container {
   }
 
   onActivityExpired(): boolean {
-    return this.connections.size > 0;  // Keep alive if connections
+    return this.connections.size > 0; // Keep alive if connections
   }
 }
 ```
@@ -161,10 +163,12 @@ export class ProcessingWorkflow extends WorkflowEntrypoint {
     });
 
     const result = await step.do("process", async () => {
-      return container.fetch("/process", {
-        method: "POST",
-        body: JSON.stringify(event.payload.data)
-      }).then(r => r.json());
+      return container
+        .fetch("/process", {
+          method: "POST",
+          body: JSON.stringify(event.payload.data),
+        })
+        .then((r) => r.json());
     });
 
     return result;
@@ -186,7 +190,7 @@ export default {
 
         const response = await container.fetch("/process", {
           method: "POST",
-          body: JSON.stringify(msg.body)
+          body: JSON.stringify(msg.body),
         });
 
         response.ok ? msg.ack() : msg.retry();
@@ -195,7 +199,7 @@ export default {
         msg.retry();
       }
     }
-  }
+  },
 };
 ```
 

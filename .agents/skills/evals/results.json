@@ -1,0 +1,337 @@
+{
+  "timestamp": "2026-03-31T18:46:01.466570",
+  "total_skills": 15,
+  "passed": 1,
+  "passed_with_warnings": 10,
+  "failed": 4,
+  "skills": {
+    "agent-browser": {
+      "name": "agent-browser",
+      "status": "failed",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 754,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [
+        "SKILL.md exceeds 250 lines (754)"
+      ],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "agent-coordination": {
+      "name": "agent-coordination",
+      "status": "failed",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": true,
+        "line_count": 92,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": false
+      },
+      "errors": [
+        "Tests failed: "
+      ],
+      "warnings": [
+        "Missing section: ## Overview",
+        "No examples directory",
+        "No references directory"
+      ]
+    },
+    "building-mcp-server-on-cloudflare": {
+      "name": "building-mcp-server-on-cloudflare",
+      "status": "failed",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": true,
+        "line_count": 271,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [
+        "SKILL.md exceeds 250 lines (271)"
+      ],
+      "warnings": [
+        "Missing section: ## Overview",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "cloudflare": {
+      "name": "cloudflare",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 238,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "durable-objects": {
+      "name": "durable-objects",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 186,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "goap-agent": {
+      "name": "goap-agent",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 149,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No references directory"
+      ]
+    },
+    "parallel-execution": {
+      "name": "parallel-execution",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 221,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No references directory"
+      ]
+    },
+    "pre-commit": {
+      "name": "pre-commit",
+      "status": "passed",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": true,
+        "has_##_quick_start": true,
+        "line_count": 221,
+        "examples_count": 5,
+        "has_references": true,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": []
+    },
+    "privacy-first": {
+      "name": "privacy-first",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 122,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory"
+      ]
+    },
+    "sandbox-sdk": {
+      "name": "sandbox-sdk",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 179,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "skill-creator": {
+      "name": "skill-creator",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": true,
+        "has_##_quick_start": true,
+        "line_count": 241,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": true,
+        "has_test_script": false
+      },
+      "errors": [],
+      "warnings": [
+        "No examples directory",
+        "No test.py script found"
+      ]
+    },
+    "task-decomposition": {
+      "name": "task-decomposition",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 158,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No references directory"
+      ]
+    },
+    "web-perf": {
+      "name": "web-perf",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 210,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": true,
+        "has_test_script": true,
+        "tests_passed": true
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No references directory"
+      ]
+    },
+    "workers-best-practices": {
+      "name": "workers-best-practices",
+      "status": "passed_with_warnings",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": false,
+        "line_count": 127,
+        "examples_count": 0,
+        "has_references": true,
+        "has_scripts": false
+      },
+      "errors": [],
+      "warnings": [
+        "Missing section: ## Overview",
+        "Missing section: ## Quick Start",
+        "No examples directory",
+        "No scripts directory"
+      ]
+    },
+    "wrangler": {
+      "name": "wrangler",
+      "status": "failed",
+      "checks": {
+        "skill_md_exists": true,
+        "has_frontmatter": true,
+        "has_##_overview": false,
+        "has_##_quick_start": true,
+        "line_count": 877,
+        "examples_count": 0,
+        "has_references": false,
+        "has_scripts": false
+      },
+      "errors": [
+        "SKILL.md exceeds 250 lines (877)"
+      ],
+      "warnings": [
+        "Missing section: ## Overview",
+        "No examples directory",
+        "No references directory",
+        "No scripts directory"
+      ]
+    }
+  }
+}

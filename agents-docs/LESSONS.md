@@ -394,6 +394,7 @@ Applied 5 key patterns from the template:
 
 2. **Branch Naming Fix**:
    Added conventional commit prefixes to valid patterns:
+
    - `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`, `test/`
    - Pattern: `^(feat|fix|docs|chore|refactor|test)/`
 
@@ -509,6 +510,7 @@ Applied 5 key patterns from the template:
 **Solution**:
 
 1. **Successfully Integrated 40+ Cloudflare Skills**:
+
    - Workers, KV, Durable Objects, R2, D1, Queues, Pages, etc.
    - AI Gateway, Vectorize, Workers AI, Browser Rendering
    - Authentication (Access, Turnstile), Security (WAF, Rate Limiting)
@@ -521,6 +523,7 @@ Applied 5 key patterns from the template:
    ```
 
    Each directory contains:
+
    - `skills.json` - Skill availability and priority
    - `context.md` - Agent-specific context and preferences
 

@@ -9,6 +9,7 @@
 ## Input
 
 From Storage Agent:
+
 - Storage layer (save discovered deals)
 - Lock mechanism
 - Logger
@@ -16,6 +17,7 @@ From Storage Agent:
 ## Deliverables
 
 ### Discovery Engine
+
 - [ ] `worker/pipeline/discover.ts`
   - Source registry loading
   - URL fetching with timeouts
@@ -24,12 +26,14 @@ From Storage Agent:
   - Deal extraction from content
 
 ### Source Management
+
 - [ ] `worker/lib/sources.ts` (or in discover.ts)
   - Source registry interface
   - Trust score tracking
   - Discovery count tracking
 
 ### Extraction Logic
+
 - Referral code patterns
 - URL extraction
 - Reward amount extraction
@@ -50,6 +54,7 @@ interface DiscoveryResult {
 ## Configuration
 
 ### Default Sources
+
 ```typescript
 {
   domain: "trading212.com",
@@ -75,6 +80,7 @@ interface DiscoveryResult {
 ## Handoff Checklist
 
 Before handing to Validation Agent:
+
 - [ ] Discovery returns Deal[]
 - [ ] Errors are captured and logged
 - [ ] Source trust scores updated
@@ -83,6 +89,7 @@ Before handing to Validation Agent:
 ## Context for Next Agent
 
 Validation Agent receives:
+
 - Raw discovered deals
 - Source trust information
 - Discovery error log

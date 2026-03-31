@@ -9,6 +9,7 @@
 ## Input
 
 From Publish Agent:
+
 - Publish success/failure status
 - Quarantine list
 - New snapshot metadata
@@ -17,6 +18,7 @@ From Publish Agent:
 ## Deliverables
 
 ### Notification System
+
 - [ ] `worker/notify.ts`
   - Telegram bot integration (optional)
   - GitHub Issues fallback
@@ -24,6 +26,7 @@ From Publish Agent:
   - Severity classification
 
 ### Trigger Conditions
+
 - `checks_failed` - Validation gate failure
 - `publish_incomplete` - Publish aborted
 - `concurrency_abort` - Lock conflict
@@ -32,6 +35,7 @@ From Publish Agent:
 - `system_error` - Unhandled exception
 
 ### Dedupe Logic
+
 Max 1 per (type + source + 6h window)
 
 ## Interface Contract
@@ -59,11 +63,13 @@ createGitHubIssue(
 ## Channels
 
 ### Primary: Telegram (Optional)
+
 - Bot token from env
 - Chat ID from env
 - Markdown formatting
 
 ### Fallback: GitHub Issues
+
 - Always available
 - Title: `[NOTIFY] {type} - {run_id}`
 - Labels: type, severity, automated
@@ -78,6 +84,7 @@ createGitHubIssue(
 ## Handoff Checklist
 
 Before handing to Test Agent:
+
 - [ ] Telegram integration (if env vars present)
 - [ ] GitHub Issues fallback working
 - [ ] Notification deduplication active
@@ -86,6 +93,7 @@ Before handing to Test Agent:
 ## Context for Next Agent
 
 Test Agent receives:
+
 - Notification system status
 - Example notifications
 - All components integrated

@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // ============================================================================
 // Core Deal Schema
 // ============================================================================
 
-export const RewardTypeSchema = z.enum(['cash', 'credit', 'percent', 'item']);
+export const RewardTypeSchema = z.enum(["cash", "credit", "percent", "item"]);
 
 export const RewardSchema = z.object({
   type: RewardTypeSchema,
@@ -23,7 +23,7 @@ export const SourceSchema = z.object({
 export const ExpirySchema = z.object({
   date: z.string().datetime().optional(),
   confidence: z.number().min(0).max(1),
-  type: z.enum(['hard', 'soft', 'unknown']),
+  type: z.enum(["hard", "soft", "unknown"]),
 });
 
 export const DealMetadataSchema = z.object({
@@ -31,7 +31,7 @@ export const DealMetadataSchema = z.object({
   tags: z.array(z.string()),
   normalized_at: z.string().datetime(),
   confidence_score: z.number().min(0),
-  status: z.enum(['active', 'quarantined', 'rejected']),
+  status: z.enum(["active", "quarantined", "rejected"]),
 });
 
 export const DealSchema = z.object({
@@ -90,20 +90,20 @@ export const LogEntrySchema = z.object({
   trace_id: z.string(),
   ts: z.string().datetime(),
   phase: z.enum([
-    'init',
-    'discover',
-    'normalize',
-    'dedupe',
-    'validate',
-    'score',
-    'stage',
-    'publish',
-    'verify',
-    'finalize',
-    'revert',
-    'quarantine',
+    "init",
+    "discover",
+    "normalize",
+    "dedupe",
+    "validate",
+    "score",
+    "stage",
+    "publish",
+    "verify",
+    "finalize",
+    "revert",
+    "quarantine",
   ]),
-  status: z.enum(['complete', 'incomplete', 'error', 'skipped']),
+  status: z.enum(["complete", "incomplete", "error", "skipped"]),
   candidate_count: z.number().int().min(0).optional(),
   valid_count: z.number().int().min(0).optional(),
   duplicate_count: z.number().int().min(0).optional(),
@@ -131,10 +131,10 @@ export type LogEntry = z.infer<typeof LogEntrySchema>;
 // ============================================================================
 
 export const SourceClassificationSchema = z.enum([
-  'trusted',
-  'probationary',
-  'unverified',
-  'blocked',
+  "trusted",
+  "probationary",
+  "unverified",
+  "blocked",
 ]);
 
 export const SourceConfigSchema = z.object({
@@ -158,24 +158,24 @@ export type SourceConfig = z.infer<typeof SourceConfigSchema>;
 // ============================================================================
 
 export const PipelinePhaseSchema = z.enum([
-  'init',
-  'discover',
-  'normalize',
-  'dedupe',
-  'validate',
-  'score',
-  'stage',
-  'publish',
-  'verify',
-  'finalize',
+  "init",
+  "discover",
+  "normalize",
+  "dedupe",
+  "validate",
+  "score",
+  "stage",
+  "publish",
+  "verify",
+  "finalize",
 ]);
 
 export const FailurePathSchema = z.enum([
-  'revert',
-  'quarantine',
-  'retry',
-  'concurrency_abort',
-  'skipped_locked',
+  "revert",
+  "quarantine",
+  "retry",
+  "concurrency_abort",
+  "skipped_locked",
 ]);
 
 export type PipelinePhase = z.infer<typeof PipelinePhaseSchema>;
@@ -201,14 +201,14 @@ export interface PipelineContext {
 // ============================================================================
 
 export const ErrorClassSchema = z.enum([
-  'FetchError',
-  'ParseError',
-  'ValidationError',
-  'ScoringError',
-  'PublishError',
-  'NotificationError',
-  'ConcurrencyError',
-  'ConfigError',
+  "FetchError",
+  "ParseError",
+  "ValidationError",
+  "ScoringError",
+  "PublishError",
+  "NotificationError",
+  "ConcurrencyError",
+  "ConfigError",
 ]);
 
 export type ErrorClass = z.infer<typeof ErrorClassSchema>;
@@ -218,10 +218,10 @@ export class PipelineError extends Error {
     public readonly errorClass: ErrorClass,
     message: string,
     public readonly phase: PipelinePhase,
-    public readonly retryable: boolean = false
+    public readonly retryable: boolean = false,
   ) {
     super(message);
-    this.name = 'PipelineError';
+    this.name = "PipelineError";
   }
 }
 
@@ -250,8 +250,14 @@ export type SubmitDealBody = z.infer<typeof SubmitDealBodySchema>;
 // ============================================================================
 
 export interface NotificationEvent {
-  type: 'checks_failed' | 'publish_incomplete' | 'concurrency_abort' | 'high_value_deal' | 'trust_anomaly' | 'system_error';
-  severity: 'info' | 'warning' | 'critical';
+  type:
+    | "checks_failed"
+    | "publish_incomplete"
+    | "concurrency_abort"
+    | "high_value_deal"
+    | "trust_anomaly"
+    | "system_error";
+  severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;
   context?: Record<string, unknown>;
@@ -276,7 +282,7 @@ export interface Env {
 // ============================================================================
 
 export interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   version: string;
   timestamp: string;
   checks: {

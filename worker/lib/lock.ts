@@ -1,12 +1,12 @@
-import { CONFIG } from '../config';
-import { PipelineError, ErrorClass } from '../types';
-import type { Env } from '../types';
+import { CONFIG } from "../config";
+import { PipelineError, ErrorClass } from "../types";
+import type { Env } from "../types";
 
 // ============================================================================
 // Distributed Lock Implementation
 // ============================================================================
 
-const LOCK_KEY = 'pipeline:lock';
+const LOCK_KEY = "pipeline:lock";
 
 interface LockData {
   run_id: string;
@@ -22,7 +22,7 @@ interface LockData {
 export async function acquireLock(
   env: Env,
   run_id: string,
-  trace_id: string
+  trace_id: string,
 ): Promise<boolean> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CONFIG.LOCK_TTL_SECONDS * 1000);
@@ -36,7 +36,7 @@ export async function acquireLock(
 
   try {
     // Check existing lock
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, 'json');
+    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
     if (existing) {
       const expiresAtExisting = new Date(existing.expires_at);
@@ -45,16 +45,16 @@ export async function acquireLock(
       // Lock is still valid
       if (expiresAtExisting > now) {
         throw new PipelineError(
-          'ConcurrencyError',
+          "ConcurrencyError",
           `Lock held by run ${existing.run_id} until ${existing.expires_at}`,
-          'init',
-          false
+          "init",
+          false,
         );
       }
 
       // Lock expired, we can take over (log warning)
       console.warn(
-        `Lock expired for run ${existing.run_id}, taking over with ${run_id}`
+        `Lock expired for run ${existing.run_id}, taking over with ${run_id}`,
       );
     }
 
@@ -64,13 +64,13 @@ export async function acquireLock(
     });
 
     // Verify lock was acquired
-    const verify = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, 'json');
+    const verify = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
     if (!verify || verify.trace_id !== trace_id) {
       throw new PipelineError(
-        'ConcurrencyError',
-        'Failed to verify lock acquisition',
-        'init',
-        false
+        "ConcurrencyError",
+        "Failed to verify lock acquisition",
+        "init",
+        false,
       );
     }
 
@@ -80,10 +80,10 @@ export async function acquireLock(
       throw error;
     }
     throw new PipelineError(
-      'ConcurrencyError',
+      "ConcurrencyError",
       `Lock acquisition failed: ${(error as Error).message}`,
-      'init',
-      true
+      "init",
+      true,
     );
   }
 }
@@ -93,24 +93,24 @@ export async function acquireLock(
  */
 export async function releaseLock(env: Env, trace_id: string): Promise<void> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, 'json');
+    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
     if (!existing) {
-      console.warn('No active lock found during release');
+      console.warn("No active lock found during release");
       return;
     }
 
     // Verify we're releasing our own lock
     if (existing.trace_id !== trace_id) {
       console.warn(
-        `Lock owned by ${existing.trace_id}, cannot release with ${trace_id}`
+        `Lock owned by ${existing.trace_id}, cannot release with ${trace_id}`,
       );
       return;
     }
 
     await env.DEALS_LOCK.delete(LOCK_KEY);
   } catch (error) {
-    console.error('Failed to release lock:', error);
+    console.error("Failed to release lock:", error);
     // Don't throw - lock will expire naturally
   }
 }
@@ -121,17 +121,17 @@ export async function releaseLock(env: Env, trace_id: string): Promise<void> {
 export async function extendLock(
   env: Env,
   trace_id: string,
-  additionalSeconds: number = 300
+  additionalSeconds: number = 300,
 ): Promise<void> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, 'json');
+    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
     if (!existing || existing.trace_id !== trace_id) {
       throw new PipelineError(
-        'ConcurrencyError',
-        'Cannot extend lock - not owned by current trace',
-        'init',
-        false
+        "ConcurrencyError",
+        "Cannot extend lock - not owned by current trace",
+        "init",
+        false,
       );
     }
 
@@ -151,10 +151,10 @@ export async function extendLock(
       throw error;
     }
     throw new PipelineError(
-      'ConcurrencyError',
+      "ConcurrencyError",
       `Lock extension failed: ${(error as Error).message}`,
-      'init',
-      true
+      "init",
+      true,
     );
   }
 }
@@ -169,7 +169,7 @@ export async function getLockStatus(env: Env): Promise<{
   expires_at?: string;
 }> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, 'json');
+    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
     if (!existing) {
       return { locked: false };

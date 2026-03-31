@@ -23,7 +23,9 @@ async function getCached(env: Env, key: string): Promise<any> {
   }
 
   // L3: Origin (slow)
-  const origin = await fetch(`https://api.example.com/${key}`).then(r => r.json());
+  const origin = await fetch(`https://api.example.com/${key}`).then((r) =>
+    r.json(),
+  );
 
   // Backfill caches
   await env.CACHE.put(key, JSON.stringify(origin), { expirationTtl: 300 }); // 5min in KV
@@ -36,7 +38,11 @@ async function getCached(env: Env, key: string): Promise<any> {
 ## API Response Caching
 
 ```typescript
-async function getCachedData(env: Env, key: string, fetcher: () => Promise<any>): Promise<any> {
+async function getCachedData(
+  env: Env,
+  key: string,
+  fetcher: () => Promise<any>,
+): Promise<any> {
   const cached = await env.MY_KV.get(key, "json");
   if (cached) return cached;
 
@@ -45,32 +51,36 @@ async function getCachedData(env: Env, key: string, fetcher: () => Promise<any>)
   return data;
 }
 
-const apiData = await getCachedData(
-  env,
-  "cache:users",
-  () => fetch("https://api.example.com/users").then(r => r.json())
+const apiData = await getCachedData(env, "cache:users", () =>
+  fetch("https://api.example.com/users").then((r) => r.json()),
 );
 ```
 
 ## Session Management
 
 ```typescript
-interface Session { userId: string; expiresAt: number; }
+interface Session {
+  userId: string;
+  expiresAt: number;
+}
 
 async function createSession(env: Env, userId: string): Promise<string> {
   const sessionId = crypto.randomUUID();
-  const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
+  const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
   await env.SESSIONS.put(
     `session:${sessionId}`,
     JSON.stringify({ userId, expiresAt }),
-    { expirationTtl: 86400, metadata: { createdAt: Date.now() } }
+    { expirationTtl: 86400, metadata: { createdAt: Date.now() } },
   );
 
   return sessionId;
 }
 
-async function getSession(env: Env, sessionId: string): Promise<Session | null> {
+async function getSession(
+  env: Env,
+  sessionId: string,
+): Promise<Session | null> {
   const data = await env.SESSIONS.get<Session>(`session:${sessionId}`, "json");
   if (!data || data.expiresAt < Date.now()) return null;
   return data;
@@ -85,11 +95,14 @@ await env.KV.put("user:123:name", "John");
 await env.KV.put("user:123:email", "john@example.com");
 
 // ✅ GOOD: Single coalesced object
-await env.USERS.put("user:123:profile", JSON.stringify({
-  name: "John",
-  email: "john@example.com",
-  role: "admin"
-}));
+await env.USERS.put(
+  "user:123:profile",
+  JSON.stringify({
+    name: "John",
+    email: "john@example.com",
+    role: "admin",
+  }),
+);
 
 // Benefits: Hot key cache, single read, reduced operations
 // Trade-off: Harder to update individual fields
@@ -103,7 +116,7 @@ const PREFIXES = {
   users: "user:",
   sessions: "session:",
   cache: "cache:",
-  features: "feature:"
+  features: "feature:",
 } as const;
 
 // Write with prefix
@@ -119,15 +132,15 @@ async function getUser(env: Env, id: string) {
 // List by prefix
 async function listUserIds(env: Env): Promise<string[]> {
   const result = await env.KV.list({ prefix: PREFIXES.users });
-  return result.keys.map(k => k.name.replace(PREFIXES.users, ""));
+  return result.keys.map((k) => k.name.replace(PREFIXES.users, ""));
 }
 
 // Example hierarchy
-"user:123:profile"
-"user:123:settings"
-"cache:api:users"
-"session:abc-def"
-"feature:flags:beta"
+("user:123:profile");
+("user:123:settings");
+("cache:api:users");
+("session:abc-def");
+("feature:flags:beta");
 ```
 
 ## Metadata Versioning
@@ -152,7 +165,7 @@ async function migrateIfNeeded(env: Env, key: string) {
 
     // Store with new version
     await env.DATA.put(key, JSON.stringify(migrated), {
-      metadata: { version: targetVersion, migratedAt: Date.now() }
+      metadata: { version: targetVersion, migratedAt: Date.now() },
     });
 
     return migrated;
@@ -174,11 +187,7 @@ function migrate(data: any, from: number, to: number): any {
 
 ```typescript
 // Resilient get with fallback
-async function resilientGet<T>(
-  env: Env,
-  key: string,
-  fallback: T
-): Promise<T> {
+async function resilientGet<T>(env: Env, key: string, fallback: T): Promise<T> {
   try {
     const value = await env.KV.get<T>(key, "json");
     return value ?? fallback;
@@ -191,6 +200,6 @@ async function resilientGet<T>(
 // Usage
 const config = await resilientGet(env, "config:app", {
   theme: "light",
-  maxItems: 10
+  maxItems: 10,
 });
 ```

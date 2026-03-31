@@ -11,9 +11,9 @@ Configuration reference for wrangler.jsonc (recommended).
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "my-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2025-01-01",  // Use current date
+  "compatibility_date": "2025-01-01", // Use current date
   "vars": { "API_KEY": "dev-key" },
-  "kv_namespaces": [{ "binding": "MY_KV", "id": "abc123" }]
+  "kv_namespaces": [{ "binding": "MY_KV", "id": "abc123" }],
 }
 ```
 
@@ -32,9 +32,9 @@ Non-inheritable (define per env): `vars`, bindings (KV, D1, R2, etc.)
     "production": {
       "name": "my-worker-prod",
       "vars": { "ENV": "prod" },
-      "route": { "pattern": "example.com/*", "zone_name": "example.com" }
-    }
-  }
+      "route": { "pattern": "example.com/*", "zone_name": "example.com" },
+    },
+  },
 }
 ```
 
@@ -116,13 +116,14 @@ Recommended for serving static files (replaces old `site` config).
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "html_handling": "auto-trailing-slash",  // or "none", "force-trailing-slash"
-    "not_found_handling": "single-page-application"  // or "404-page", "none"
-  }
+    "html_handling": "auto-trailing-slash", // or "none", "force-trailing-slash"
+    "not_found_handling": "single-page-application", // or "404-page", "none"
+  },
 }
 ```
 
 Access in Worker:
+
 ```typescript
 export default {
   async fetch(request, env) {
@@ -132,8 +133,8 @@ export default {
 
     // Custom logic for non-assets
     return new Response("API response");
-  }
-}
+  },
+};
 ```
 
 ## Placement
@@ -143,8 +144,8 @@ Control where Workers run geographically.
 ```jsonc
 {
   "placement": {
-    "mode": "smart"  // or "off"
-  }
+    "mode": "smart", // or "off"
+  },
 }
 ```
 
@@ -156,7 +157,8 @@ Control where Workers run geographically.
 Omit resource IDs - Wrangler creates them and writes back to config on deploy.
 
 ```jsonc
-{ "kv_namespaces": [{ "binding": "MY_KV" }] }  // No id - auto-provisioned
+{ "kv_namespaces": [{ "binding": "MY_KV" }] }
+ // No id - auto-provisioned
 ```
 
 After deploy, ID is added to config automatically.

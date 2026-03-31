@@ -26,7 +26,7 @@ new Miniflare({
 new Miniflare({
   compatibilityDate: "2026-01-01", // Use recent date for latest features
   compatibilityFlags: [
-    "nodejs_compat",        // Node.js APIs (process, Buffer, etc)
+    "nodejs_compat", // Node.js APIs (process, Buffer, etc)
     "streams_enable_constructors", // Stream constructors
   ],
   upstream: "https://example.com", // Fallback for unhandled requests
@@ -39,12 +39,12 @@ new Miniflare({
 
 ```js
 new Miniflare({
-  port: 8787,              // Default: 8787
+  port: 8787, // Default: 8787
   host: "127.0.0.1",
-  https: true,             // Self-signed cert
-  liveReload: true,        // Auto-reload HTML
+  https: true, // Self-signed cert
+  liveReload: true, // Auto-reload HTML
 
-  cf: true,                // Fetch live Request.cf data (cached)
+  cf: true, // Fetch live Request.cf data (cached)
   // cf: "./cf.json",      // Or load from file
   // cf: { colo: "DFW" },  // Or inline mock
 });
@@ -121,6 +121,7 @@ new Miniflare({
 ```
 
 **With routing:**
+
 ```js
 workers: [
   { name: "api", scriptPath: "./api.js", routes: ["api.example.com/*"] },
@@ -135,8 +136,8 @@ import { Log, LogLevel } from "miniflare";
 
 new Miniflare({
   log: new Log(LogLevel.DEBUG), // DEBUG | INFO | WARN | ERROR | NONE
-  scriptTimeout: 30000,         // CPU limit (ms)
-  workersConcurrencyLimit: 10,  // Max concurrent workers
+  scriptTimeout: 30000, // CPU limit (ms)
+  workersConcurrencyLimit: 10, // Max concurrent workers
 });
 ```
 

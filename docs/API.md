@@ -1,18 +1,22 @@
 # API Documentation
 
 ## Base URL
+
 Production: `https://your-worker.workers.dev`
 
 ## Authentication
+
 No authentication required for public endpoints.
 For admin endpoints (future), API key via header: `X-API-Key: your-key`
 
 ## Endpoints
 
 ### GET /health
+
 Check system health status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -27,20 +31,24 @@ Check system health status.
 ```
 
 **Status Codes:**
+
 - 200: Healthy
 - 503: Degraded/Unhealthy
 
 ---
 
 ### GET /deals
+
 Get active deals (filtered array).
 
 **Query Parameters:**
+
 - `category` (string): Filter by category (e.g., 'trading', 'crypto')
 - `min_reward` (number): Minimum reward value
 - `limit` (number): Max deals to return (default: 100, max: 1000)
 
 **Response:**
+
 ```json
 [
   {
@@ -63,9 +71,11 @@ Get active deals (filtered array).
 ---
 
 ### GET /deals.json
+
 Get full snapshot with metadata.
 
 **Response:**
+
 ```json
 {
   "version": "1.0.0",
@@ -85,9 +95,11 @@ Get full snapshot with metadata.
 ---
 
 ### GET /metrics
+
 Prometheus-compatible metrics.
 
 **Response:**
+
 ```
 # HELP deals_runs_total Total discovery runs
 deals_runs_total 42
@@ -101,9 +113,11 @@ deals_active_deals 45
 ---
 
 ### POST /api/discover
+
 Trigger manual discovery (triggers pipeline).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -112,6 +126,7 @@ Trigger manual discovery (triggers pipeline).
 ```
 
 **Status Codes:**
+
 - 200: Pipeline triggered
 - 409: Another run in progress
 - 500: Pipeline failed
@@ -119,9 +134,11 @@ Trigger manual discovery (triggers pipeline).
 ---
 
 ### GET /api/status
+
 Get current pipeline status.
 
 **Response:**
+
 ```json
 {
   "locked": false,
@@ -137,14 +154,17 @@ Get current pipeline status.
 ---
 
 ### GET /api/log
+
 Get research logs.
 
 **Query Parameters:**
+
 - `run_id` (string): Get logs for specific run
 - `count` (number): Number of recent logs (default: 100)
 - `format` (string): 'json' or 'jsonl' (default: json)
 
 **Response (JSON):**
+
 ```json
 {
   "logs": [
@@ -160,6 +180,7 @@ Get research logs.
 ```
 
 **Response (JSONL):**
+
 ```
 {"run_id":"...","phase":"discover","status":"complete"}
 {"run_id":"...","phase":"validate","status":"complete"}
@@ -168,9 +189,11 @@ Get research logs.
 ---
 
 ### POST /api/submit
+
 Submit a new deal for validation.
 
 **Request Body:**
+
 ```json
 {
   "url": "https://example.com/invite/CODE123",
@@ -181,6 +204,7 @@ Submit a new deal for validation.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -190,6 +214,7 @@ Submit a new deal for validation.
 ```
 
 **Status Codes:**
+
 - 202: Submitted for review
 - 400: Invalid request
 - 409: Deal already exists
@@ -197,6 +222,7 @@ Submit a new deal for validation.
 ## Error Responses
 
 All errors follow this format:
+
 ```json
 {
   "error": "Error description",
@@ -205,6 +231,7 @@ All errors follow this format:
 ```
 
 **Status Codes:**
+
 - 400: Bad Request
 - 404: Not Found
 - 409: Conflict
@@ -220,6 +247,7 @@ All errors follow this format:
 ## CORS
 
 All endpoints support CORS:
+
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: GET, POST, OPTIONS`
 - `Access-Control-Allow-Headers: Content-Type`
@@ -227,6 +255,7 @@ All endpoints support CORS:
 ## Tool Definitions (for AI Agents)
 
 ### get_deals
+
 ```json
 {
   "name": "get_deals",
@@ -234,15 +263,16 @@ All endpoints support CORS:
   "parameters": {
     "type": "object",
     "properties": {
-      "category": {"type": "string"},
-      "min_reward": {"type": "number"},
-      "limit": {"type": "number", "default": 100}
+      "category": { "type": "string" },
+      "min_reward": { "type": "number" },
+      "limit": { "type": "number", "default": 100 }
     }
   }
 }
 ```
 
 ### get_deal_by_code
+
 ```json
 {
   "name": "get_deal_by_code",
@@ -250,7 +280,7 @@ All endpoints support CORS:
   "parameters": {
     "type": "object",
     "properties": {
-      "code": {"type": "string"}
+      "code": { "type": "string" }
     },
     "required": ["code"]
   }
@@ -258,6 +288,7 @@ All endpoints support CORS:
 ```
 
 ### submit_deal
+
 ```json
 {
   "name": "submit_deal",
@@ -265,9 +296,9 @@ All endpoints support CORS:
   "parameters": {
     "type": "object",
     "properties": {
-      "url": {"type": "string"},
-      "code": {"type": "string"},
-      "source": {"type": "string"}
+      "url": { "type": "string" },
+      "code": { "type": "string" },
+      "source": { "type": "string" }
     },
     "required": ["url", "code"]
   }

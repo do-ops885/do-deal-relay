@@ -1,8 +1,8 @@
-import { Deal, SourceConfig, PipelineError, PipelineContext } from '../types';
-import type { Env } from '../types';
-import { CONFIG } from '../config';
-import { getSourceRegistry, recordSourceValidation } from '../lib/storage';
-import { generateDealId, calculateStringSimilarity } from '../lib/crypto';
+import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
+import type { Env } from "../types";
+import { CONFIG } from "../config";
+import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
+import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 
 // ============================================================================
 // Discovery Engine
@@ -29,13 +29,13 @@ interface ExtractedDeal {
  */
 export async function discover(
   env: Env,
-  ctx: PipelineContext
+  ctx: PipelineContext,
 ): Promise<DiscoveryResult> {
   const sources = await getSourceRegistry(env);
   const activeSources = sources.filter((s) => s.active);
 
   if (activeSources.length === 0) {
-    console.warn('No active sources configured');
+    console.warn("No active sources configured");
     return { deals: [], errors: [] };
   }
 
@@ -43,7 +43,7 @@ export async function discover(
   const errors: Array<{ url: string; error: string }> = [];
 
   for (const source of activeSources) {
-    if (source.classification === 'blocked') {
+    if (source.classification === "blocked") {
       continue;
     }
 
@@ -71,7 +71,7 @@ export async function discover(
  */
 async function discoverFromSource(
   env: Env,
-  source: SourceConfig
+  source: SourceConfig,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
@@ -82,10 +82,10 @@ async function discoverFromSource(
 
       // Respect payload limits
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'User-Agent': 'DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)',
-          Accept: 'text/html,application/json',
+          "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+          Accept: "text/html,application/json",
         },
         signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
       });
@@ -94,17 +94,17 @@ async function discoverFromSource(
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const contentType = response.headers.get('content-type') || '';
+      const contentType = response.headers.get("content-type") || "";
       const content = await response.text();
 
       // Check payload size
       if (content.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
-        throw new Error('Payload exceeds size limit');
+        throw new Error("Payload exceeds size limit");
       }
 
       let extracted: ExtractedDeal[];
 
-      if (contentType.includes('application/json')) {
+      if (contentType.includes("application/json")) {
         extracted = parseJSONContent(content, source);
       } else {
         extracted = parseHTMLContent(content, source);
@@ -139,15 +139,20 @@ async function discoverFromSource(
 /**
  * Parse HTML content using selectors
  */
-function parseHTMLContent(content: string, source: SourceConfig): ExtractedDeal[] {
+function parseHTMLContent(
+  content: string,
+  source: SourceConfig,
+): ExtractedDeal[] {
   const deals: ExtractedDeal[] = [];
   const selectors = source.selectors || {};
 
   // Use regex-based extraction as we don't have DOM parser in Workers
   // Look for referral code patterns
-  const codePattern = /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
+  const codePattern =
+    /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
-  const rewardPattern = /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+  const rewardPattern =
+    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
 
   // Extract codes
   let match;
@@ -155,11 +160,13 @@ function parseHTMLContent(content: string, source: SourceConfig): ExtractedDeal[
     const code = match[1];
 
     // Find associated URL
-    const urlMatch = content.slice(Math.max(0, match.index - 500), match.index + 500)
+    const urlMatch = content
+      .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(urlPattern);
 
     // Find reward info
-    const rewardMatch = content.slice(Math.max(0, match.index - 500), match.index + 500)
+    const rewardMatch = content
+      .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
 
     deals.push({
@@ -167,9 +174,16 @@ function parseHTMLContent(content: string, source: SourceConfig): ExtractedDeal[
       url: urlMatch ? urlMatch[0] : `https://${source.domain}/invite/${code}`,
       title: extractTitle(content, code),
       description: extractDescription(content, code),
-      reward_type: rewardMatch ? (rewardMatch[3] === '%' ? 'percent' : 'cash') : 'credit',
-      reward_value: rewardMatch ? parseFloat(rewardMatch[1].replace(',', '')) : 0,
-      reward_currency: rewardMatch?.[3] && rewardMatch[3] !== '%' ? rewardMatch[3] : undefined,
+      reward_type: rewardMatch
+        ? rewardMatch[3] === "%"
+          ? "percent"
+          : "cash"
+        : "credit",
+      reward_value: rewardMatch
+        ? parseFloat(rewardMatch[1].replace(",", ""))
+        : 0,
+      reward_currency:
+        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
     });
   }
 
@@ -185,22 +199,30 @@ function parseHTMLContent(content: string, source: SourceConfig): ExtractedDeal[
 /**
  * Parse JSON content
  */
-function parseJSONContent(content: string, source: SourceConfig): ExtractedDeal[] {
+function parseJSONContent(
+  content: string,
+  source: SourceConfig,
+): ExtractedDeal[] {
   try {
     const data = JSON.parse(content);
     const deals: ExtractedDeal[] = [];
 
     // Handle different JSON structures
-    const items = Array.isArray(data) ? data : data.deals || data.items || [data];
+    const items = Array.isArray(data)
+      ? data
+      : data.deals || data.items || [data];
 
     for (const item of items) {
       if (item.code || item.referral_code || item.invite_code) {
         deals.push({
           code: item.code || item.referral_code || item.invite_code,
-          url: item.url || item.link || `https://${source.domain}/invite/${item.code}`,
+          url:
+            item.url ||
+            item.link ||
+            `https://${source.domain}/invite/${item.code}`,
           title: item.title || item.name || `${source.domain} Referral`,
           description: item.description || `Referral code for ${source.domain}`,
-          reward_type: item.reward_type || (item.percent ? 'percent' : 'cash'),
+          reward_type: item.reward_type || (item.percent ? "percent" : "cash"),
           reward_value: item.reward_value || item.amount || item.bonus || 0,
           reward_currency: item.currency || item.reward_currency,
           expiry_date: item.expiry || item.expires_at,
@@ -219,12 +241,16 @@ function parseJSONContent(content: string, source: SourceConfig): ExtractedDeal[
  */
 async function buildDeal(
   extracted: ExtractedDeal,
-  source: SourceConfig
+  source: SourceConfig,
 ): Promise<Deal> {
   const domain = source.domain;
   const now = new Date().toISOString();
 
-  const id = await generateDealId(domain, extracted.code, extracted.reward_type);
+  const id = await generateDealId(
+    domain,
+    extracted.code,
+    extracted.reward_type,
+  );
 
   return {
     id,
@@ -239,21 +265,21 @@ async function buildDeal(
     code: extracted.code,
     url: extracted.url,
     reward: {
-      type: extracted.reward_type as 'cash' | 'credit' | 'percent' | 'item',
+      type: extracted.reward_type as "cash" | "credit" | "percent" | "item",
       value: extracted.reward_value,
       currency: extracted.reward_currency,
     },
     expiry: {
       date: extracted.expiry_date,
       confidence: extracted.expiry_date ? 0.8 : 0.3,
-      type: extracted.expiry_date ? 'hard' : 'unknown',
+      type: extracted.expiry_date ? "hard" : "unknown",
     },
     metadata: {
-      category: ['referral', 'signup'],
+      category: ["referral", "signup"],
       tags: [domain, extracted.reward_type],
       normalized_at: now,
       confidence_score: source.trust_initial,
-      status: 'active',
+      status: "active",
     },
   };
 }
@@ -261,9 +287,13 @@ async function buildDeal(
 /**
  * Extract title from content context
  */
-function extractContent(content: string, code: string, window: number = 500): string {
+function extractContent(
+  content: string,
+  code: string,
+  window: number = 500,
+): string {
   const index = content.indexOf(code);
-  if (index === -1) return '';
+  if (index === -1) return "";
   return content.slice(Math.max(0, index - window), index + window);
 }
 
@@ -275,12 +305,14 @@ function extractTitle(content: string, code: string): string {
   const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
   if (h1Match) return h1Match[1].trim();
 
-  return 'Referral Deal';
+  return "Referral Deal";
 }
 
 function extractDescription(content: string, code: string): string {
   const context = extractContent(content, code, 300);
-  const metaMatch = context.match(/<meta[^>]*description[^>]*content="([^"]+)"/i);
+  const metaMatch = context.match(
+    /<meta[^>]*description[^>]*content="([^"]+)"/i,
+  );
   if (metaMatch) return metaMatch[1].trim();
 
   const pMatch = context.match(/<p[^>]*>([^<]+)/i);

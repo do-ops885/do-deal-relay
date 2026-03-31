@@ -6,16 +6,12 @@
 {
   "name": "my-agents-app",
   "durable_objects": {
-    "bindings": [
-      {"name": "MyAgent", "class_name": "MyAgent"}
-    ]
+    "bindings": [{ "name": "MyAgent", "class_name": "MyAgent" }],
   },
-  "migrations": [
-    {"tag": "v1", "new_sqlite_classes": ["MyAgent"]}
-  ],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MyAgent"] }],
   "ai": {
-    "binding": "AI"
-  }
+    "binding": "AI",
+  },
 }
 ```
 
@@ -25,16 +21,16 @@
 
 ```typescript
 interface Env {
-  AI?: Ai;                              // Workers AI
+  AI?: Ai; // Workers AI
   MyAgent?: DurableObjectNamespace<MyAgent>;
   ChatAgent?: DurableObjectNamespace<ChatAgent>;
-  DB?: D1Database;                      // D1 database
-  KV?: KVNamespace;                     // KV storage
-  R2?: R2Bucket;                        // R2 bucket
-  OPENAI_API_KEY?: string;              // Secrets
-  GITHUB_CLIENT_ID?: string;            // MCP OAuth credentials
+  DB?: D1Database; // D1 database
+  KV?: KVNamespace; // KV storage
+  R2?: R2Bucket; // R2 bucket
+  OPENAI_API_KEY?: string; // Secrets
+  GITHUB_CLIENT_ID?: string; // MCP OAuth credentials
   GITHUB_CLIENT_SECRET?: string;
-  QUEUE?: Queue;                        // Queues
+  QUEUE?: Queue; // Queues
 }
 ```
 
@@ -63,8 +59,8 @@ import { routeAgent } from "agents";
 export default {
   fetch(request: Request, env: Env) {
     return routeAgent(request, env);
-  }
-}
+  },
+};
 ```
 
 Helper routes requests to agents automatically based on URL patterns.
@@ -84,8 +80,8 @@ export default {
 
     const stub = env.MyAgent.get(id);
     return stub.fetch(request);
-  }
-}
+  },
+};
 ```
 
 **Multi-agent setup:**
@@ -106,8 +102,8 @@ export default {
     }
 
     return new Response("Not found", { status: 404 });
-  }
-}
+  },
+};
 ```
 
 ## Email Routing
@@ -121,8 +117,8 @@ export default {
   fetch: (req: Request, env: Env) => routeAgent(req, env),
   email: (message: ForwardableEmailMessage, env: Env) => {
     return routeAgentEmail(message, env);
-  }
-}
+  },
+};
 ```
 
 **Dashboard setup:**
@@ -156,9 +152,9 @@ const response = await this.env.AI.run(
     gateway: {
       id: "my-gateway-id",
       skipCache: false,
-      cacheTtl: 3600
-    }
-  }
+      cacheTtl: 3600,
+    },
+  },
 );
 ```
 
