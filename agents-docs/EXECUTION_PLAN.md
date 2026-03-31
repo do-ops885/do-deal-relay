@@ -2,11 +2,13 @@
 
 ## Active Agents (5 Parallel)
 
-### 1. Test Agent (test-agent-v2)
+### 1. Test Agent (test-agent)
+
 **Status**: 🟡 Ready to start  
 **Scope**: Write comprehensive tests, run dry runs
 
 **Execute**:
+
 ```bash
 # Install dependencies first
 npm install
@@ -17,11 +19,13 @@ mkdir -p tests/unit tests/integration tests/e2e tests/fixtures
 # Run test agent scope
 ```
 
-### 2. Validation Agent (validation-agent-v2)
+### 2. Validation Agent (validation-agent)
+
 **Status**: 🟡 Ready to start  
 **Scope**: Run all validations and checks
 
 **Execute**:
+
 ```bash
 # TypeScript compilation
 npx tsc --noEmit
@@ -34,10 +38,12 @@ grep -r "ghp_\|sk-" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v 
 ```
 
 ### 3. Doc Agent (doc-agent)
+
 **Status**: 🟡 Ready to start  
 **Scope**: Create all documentation
 
 **Execute**:
+
 ```bash
 # Update README
 # Create API.md
@@ -46,10 +52,12 @@ grep -r "ghp_\|sk-" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v 
 ```
 
 ### 4. GitHub Agent (github-agent)
+
 **Status**: 🟡 Ready to start  
 **Scope**: gh CLI operations
 
 **Execute**:
+
 ```bash
 # Check gh auth
 gh auth status
@@ -76,10 +84,12 @@ git commit -m "feat: complete deal discovery system with guard rails"
 ```
 
 ### 5. Browser Agent (browser-agent)
+
 **Status**: 🟡 Ready to start  
 **Scope**: Browser-based testing
 
 **Execute**:
+
 ```bash
 # Install Playwright
 npm install -D @playwright/test
@@ -113,6 +123,7 @@ npx playwright install
 3. **E2E/Browser Tests** - Full system validation
 
 Plus:
+
 - Validation script (9 gates)
 - Guard rails (3 stages)
 - Security audit (secret detection)
@@ -120,11 +131,12 @@ Plus:
 ## Sync Points
 
 All agents report to `state.json`:
+
 ```json
 {
   "agent_status": {
-    "test-agent-v2": { "status": "complete", "progress": 100 },
-    "validation-agent-v2": { "status": "complete", "progress": 100 },
+    "test-agent": { "status": "complete", "progress": 100 },
+    "validation-agent": { "status": "complete", "progress": 100 },
     "doc-agent": { "status": "complete", "progress": 100 },
     "github-agent": { "status": "complete", "progress": 100 },
     "browser-agent": { "status": "complete", "progress": 100 }
@@ -145,9 +157,10 @@ All agents report to `state.json`:
 ## Start Command
 
 Execute all agent scopes in parallel where possible:
+
 1. Install dependencies
 2. Run Test Agent
-3. Run Validation Agent  
+3. Run Validation Agent
 4. Run Doc Agent
 5. Run GitHub Agent
 6. Run Browser Agent

@@ -11,8 +11,8 @@
     "ready_for_deploy": false
   },
   "active_agents": [
-    "test-agent-v2",
-    "validation-agent-v2",
+    "test-agent",
+    "validation-agent",
     "doc-agent",
     "github-agent",
     "browser-agent"
@@ -21,14 +21,14 @@
   "version": "0.1.0",
   "release_status": "alpha",
   "agent_status": {
-    "test-agent-v2": {
+    "test-agent": {
       "status": "pending",
       "progress": 0,
       "tests_written": 0,
       "tests_passing": 0,
       "coverage": 0
     },
-    "validation-agent-v2": {
+    "validation-agent": {
       "status": "pending",
       "progress": 0,
       "checks_passed": 0,

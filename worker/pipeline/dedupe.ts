@@ -1,6 +1,9 @@
-import { Deal, PipelineContext } from '../types';
-import { CONFIG } from '../config';
-import { calculateUrlSimilarity, calculateStringSimilarity } from '../lib/crypto';
+import { Deal, PipelineContext } from "../types";
+import { CONFIG } from "../config";
+import {
+  calculateUrlSimilarity,
+  calculateStringSimilarity,
+} from "../lib/crypto";
 
 // ============================================================================
 // Deduplication Pipeline
@@ -21,7 +24,7 @@ interface DedupeResult {
 export function deduplicate(
   deals: Deal[],
   ctx: PipelineContext,
-  existingDeals?: Deal[]
+  existingDeals?: Deal[],
 ): DedupeResult {
   const result: DedupeResult = {
     unique: [],
@@ -39,7 +42,7 @@ export function deduplicate(
       result.duplicates.push({
         deal,
         matched_with: deal.id,
-        reason: 'duplicate_id',
+        reason: "duplicate_id",
       });
       continue;
     }
@@ -52,7 +55,7 @@ export function deduplicate(
       result.duplicates.push({
         deal,
         matched_with: existing.id,
-        reason: 'duplicate_code',
+        reason: "duplicate_code",
       });
       continue;
     }
@@ -64,7 +67,7 @@ export function deduplicate(
       result.duplicates.push({
         deal,
         matched_with: existing.id,
-        reason: 'duplicate_url',
+        reason: "duplicate_url",
       });
       continue;
     }
@@ -79,7 +82,7 @@ export function deduplicate(
 
   for (const deal of result.unique) {
     let isDuplicate = false;
-    let matchedWith = '';
+    let matchedWith = "";
 
     for (const [url, existing] of semanticUrls) {
       const similarity = calculateUrlSimilarity(deal.url, url);
@@ -94,7 +97,7 @@ export function deduplicate(
       result.duplicates.push({
         deal,
         matched_with: matchedWith,
-        reason: 'semantic_url_similarity',
+        reason: "semantic_url_similarity",
       });
     } else {
       semanticUrls.set(deal.url, deal);
@@ -122,7 +125,7 @@ export function deduplicate(
           result.duplicates.push({
             deal: existing,
             matched_with: deal.id,
-            reason: 'cross_source_lower_trust',
+            reason: "cross_source_lower_trust",
           });
           crossSourceUnique[index] = deal;
           crossSourceKeys.set(key, deal);
@@ -131,7 +134,7 @@ export function deduplicate(
         result.duplicates.push({
           deal,
           matched_with: existing.id,
-          reason: 'cross_source_duplicate',
+          reason: "cross_source_duplicate",
         });
       }
     } else {
@@ -148,7 +151,7 @@ export function deduplicate(
 
     for (const deal of result.unique) {
       let isDuplicate = false;
-      let matchedWith = '';
+      let matchedWith = "";
 
       for (const existing of existingDeals) {
         // Exact ID match
@@ -181,7 +184,7 @@ export function deduplicate(
         result.duplicates.push({
           deal,
           matched_with: matchedWith,
-          reason: 'existing_production_duplicate',
+          reason: "existing_production_duplicate",
         });
       } else {
         finalUnique.push(deal);
@@ -199,9 +202,9 @@ export function deduplicate(
  */
 function createCrossSourceKey(deal: Deal): string {
   // Normalize title and reward for comparison
-  const normalizedTitle = deal.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalizedTitle = deal.title.toLowerCase().replace(/[^a-z0-9]/g, "");
   const rewardKey = `${deal.reward.type}:${deal.reward.value}`;
-  
+
   return `${normalizedTitle}:${deal.code}:${rewardKey}`;
 }
 
@@ -209,11 +212,11 @@ function createCrossSourceKey(deal: Deal): string {
  * Calculate uniqueness score
  */
 export function calculateUniquenessScore(
-  duplicates: DedupeResult['duplicates'],
-  totalCandidates: number
+  duplicateCount: number,
+  totalCandidates: number,
 ): number {
   if (totalCandidates === 0) return 1.0;
-  const uniqueRatio = (totalCandidates - duplicates.length) / totalCandidates;
+  const uniqueRatio = (totalCandidates - duplicateCount) / totalCandidates;
   return Math.min(1.0, uniqueRatio);
 }
 
@@ -229,6 +232,6 @@ export function calculateSourceDiversity(deals: Deal[]): number {
   // Reward having deals from multiple sources
   // Max score at ~5 different domains for 10 deals
   const optimalRatio = Math.min(domains.size / 5, 1.0);
-  
+
   return Math.min(1.0, diversity * 2) * optimalRatio;
 }

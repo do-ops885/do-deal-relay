@@ -7,16 +7,19 @@ Multiple specialized agents work in parallel with defined handoff points.
 ## Coordination Files
 
 ### State Tracking
+
 - `/agents-docs/coordination/state.json` - Current world state
 - `/agents-docs/coordination/handoff-log.jsonl` - Handoff history
 - `/agents-docs/coordination/blockers.md` - Active blockers
 
 ### Agent Registry
+
 All agents defined in `/agents-docs/agents/*.md`
 
 ## Handoff Protocol
 
 ### Trigger Conditions
+
 1. Agent completes its scope
 2. Agent encounters blocker
 3. Parallel agent needs sync point
@@ -57,11 +60,13 @@ All agents defined in `/agents-docs/agents/*.md`
 ## Parallel Execution
 
 ### Concurrent Agents
+
 - Bootstrap + Config Agent (initial)
 - Discovery + Validation Agent (after storage)
 - Scoring + Notify Agent (final)
 
 ### Sync Points
+
 1. After Bootstrap (all files created)
 2. After Storage (KV ready)
 3. After Validation (data clean)
@@ -74,11 +79,13 @@ Check latest handoff in `/agents-docs/coordination/handoff-log.jsonl`
 ## Agent Communication
 
 ### Via Files
+
 - State changes → `coordination/state.json`
 - Blockers → `coordination/blockers.md`
 - Deliveries → Individual agent output dirs
 
 ### Via Comments
+
 - GitHub issues for async discussion
 - Code comments for in-file context
 
@@ -89,3 +96,20 @@ Check latest handoff in `/agents-docs/coordination/handoff-log.jsonl`
 3. Find your predecessor's handoff in log
 4. Execute your scope
 5. Create handoff to next agent
+
+## External Skills
+
+**Platform Skills** (global install):
+
+- `skill cloudflare` - Load Cloudflare platform knowledge
+- `skill agents-sdk` - Agent SDK patterns
+- `skill wrangler` - Deployment guidance
+
+**Coordination Skills** (project-local):
+
+- `skill agent-coordination` - Multi-agent patterns
+- `skill goap-agent` - Goal-oriented planning
+- `skill task-decomposition` - Task breakdown
+- `skill parallel-execution` - Parallel workflows
+
+Install external: `npx skills add https://github.com/cloudflare/skills`

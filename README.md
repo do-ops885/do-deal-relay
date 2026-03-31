@@ -12,6 +12,7 @@
 - Node.js >= 18.0.0
 - npm or yarn
 - Wrangler CLI (`npm install -g wrangler`)
+- Cloudflare Skills (`npx skills add https://github.com/cloudflare/skills`)
 
 ### Setup
 

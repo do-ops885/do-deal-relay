@@ -1,13 +1,14 @@
-# Validation Agent - System Validation
+# System Validation Agent
 
-**Agent ID**: `validation-agent`  
+**Agent ID**: `system-validation-agent`  
 **Status**: 🟡 Active  
 **Scope**: Run all validations, evals, security checks  
-**Previous Agent**: Test Agent (can run in parallel after tests)
+**Previous Agent**: Test Agent (runs after Test Agent completes)
 
 ## Deliverables
 
 ### Validation Checks
+
 - [ ] TypeScript compilation
 - [ ] Secret detection (no hardcoded tokens)
 - [ ] File size limits (≤500 LOC)
@@ -17,6 +18,7 @@
 - [ ] Security pattern checks
 
 ### Evaluation Metrics
+
 - [ ] Test coverage >80%
 - [ ] All validation gates pass
 - [ ] Guard rails active
@@ -24,6 +26,7 @@
 - [ ] Documentation complete
 
 ### Reports
+
 - [ ] Validation report JSON
 - [ ] Security audit report
 - [ ] Performance benchmarks
@@ -31,6 +34,7 @@
 ## Handoff Protocol
 
 ### Output
+
 ```json
 {
   "validation_status": "passed",
@@ -45,6 +49,7 @@
 ## Implementation
 
 Execute:
+
 1. Run `./scripts/validate-codes.sh`
 2. Check for secrets with `trufflehog`
 3. Verify all tests pass
@@ -55,9 +60,10 @@ Execute:
 ## Status Tracking
 
 Update `/agents-docs/coordination/state.json`:
+
 ```json
 {
-  "validation_agent": {
+  "system_validation_agent": {
     "status": "in_progress",
     "checks_passed": 0,
     "total_checks": 9,
