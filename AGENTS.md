@@ -1,8 +1,8 @@
 # AGENTS.md - Deal Discovery System
 
-**Goal**: Build autonomous deal discovery system with coordinated AI agents  
-**Version**: 0.1.0-alpha  
-**Phase**: Bootstrap  
+**Goal**: Build autonomous deal discovery system with coordinated AI agents
+**Version**: 0.1.0-alpha
+**Phase**: Bootstrap
 **Status**: In Development
 
 ## Quick Start
@@ -20,16 +20,26 @@ npm run dev
 
 ## System Overview
 
-**Architecture**: Two-phase publish (Staging → Production) with 9 validation gates  
-**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize  
-**Infrastructure**: Cloudflare Workers + 5 KV namespaces  
+**Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
+**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
+**Infrastructure**: Cloudflare Workers + 5 KV namespaces
 **Schedule**: Every 6 hours
 
 See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 
-## Current Status
+## Project Structure
 
-See state.json for current agent status and progress.
+```
+├── .github/workflows/    # CI/CD workflows
+├── .agents/skills/       # Agent coordination skills
+├── agents-docs/          # System documentation
+├── docs/                 # API documentation
+├── plans/                # Execution plans
+├── scripts/              # Utility scripts
+├── temp/                 # Analysis reports & state (gitignored)
+├── tests/                # Test suite
+└── worker/               # Cloudflare Worker source
+```
 
 ## Reference
 
@@ -39,6 +49,8 @@ See state.json for current agent status and progress.
 | Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
 | Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
 | Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
+| Execution Plan   | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
+| Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
 | API Docs         | [docs/API.md](docs/API.md)                                         |
 | Skills           | [.agents/skills/](.agents/skills/)                                 |
 
@@ -56,7 +68,30 @@ Use: `skill <name>` to load guidance.
 
 See [docs/API.md](docs/API.md) for endpoint documentation.
 
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build TypeScript
+- `npm test` - Run tests in watch mode
+- `npm run test:ci` - Run tests once (for CI)
+- `npm run lint` - Type check
+- `npm run validate` - Run validation gates
+- `npm run format` - Format code with Prettier
+
+### Quality Gates
+
+Run `./scripts/quality_gate.sh` to execute all validation checks:
+
+- TypeScript compilation
+- Unit tests
+- Validation gates
+- Security checks
+
 ## Active Agents
+
+See `temp/state.json` for current agent status and progress.
 
 | Agent               | Status  | Phase           | Responsibility      |
 | ------------------- | ------- | --------------- | ------------------- |
@@ -65,3 +100,9 @@ See [docs/API.md](docs/API.md) for endpoint documentation.
 | doc-agent           | pending | Test & Validate | Documentation       |
 | github-agent        | pending | Test & Validate | GitHub integration  |
 | browser-agent       | pending | Test & Validate | Browser testing     |
+
+## Notes
+
+- **Analysis Reports**: Generated reports and swarm analysis are stored in `temp/` (not tracked in git)
+- **State Tracking**: Agent progress and system state tracked in `temp/state.json`
+- **Skills Lock**: External skill versions tracked in `temp/skills-lock.json`
