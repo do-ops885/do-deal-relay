@@ -1,0 +1,102 @@
+name: Scheduled Discovery
+
+on:
+  schedule:
+    # Run every 6 hours (matching the cron in wrangler.toml)
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to run discovery on"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+concurrency:
+  group: scheduled-discovery
+  cancel-in-progress: false
+
+jobs:
+  discovery-production:
+    name: Discovery - Production
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+
+    if: github.event.schedule == '0 */6 * * *' || github.event.inputs.environment == 'production'
+
+    steps:
+      - name: Trigger discovery pipeline
+        run: |
+          echo "Triggering scheduled discovery on production..."
+
+          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+
+          # Health check first
+          echo "Checking production health..."
+          if ! curl -sf "$PROD_URL/health"; then
+            echo "⚠️ Production health check failed, but continuing with discovery"
+          fi
+
+          # Trigger discovery
+          echo "Triggering discovery..."
+          RESPONSE=$(curl -sf -X POST "$PROD_URL/api/discover" 2>&1) || {
+            echo "Discovery trigger failed: $RESPONSE"
+            exit 1
+          }
+
+          echo "Discovery triggered successfully: $RESPONSE"
+
+      - name: Wait and verify
+        run: |
+          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+
+          echo "Waiting 2 minutes for discovery to complete..."
+          sleep 120
+
+          # Check status
+          echo "Checking discovery status..."
+          STATUS=$(curl -sf "$PROD_URL/api/status" 2>/dev/null || echo '{}')
+          echo "Status: $STATUS"
+
+      - name: Report to logs
+        if: always()
+        run: |
+          echo "Scheduled discovery run completed at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "Run ID: ${{ github.run_id }}"
+
+  discovery-staging:
+    name: Discovery - Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 30
+
+    if: github.event.inputs.environment == 'staging'
+
+    steps:
+      - name: Trigger discovery on staging
+        run: |
+          echo "Triggering discovery on staging..."
+
+          STAGING_URL="https://do-deal-relay-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+
+          # Health check
+          echo "Checking staging health..."
+          curl -sf "$STAGING_URL/health" || echo "⚠️ Staging health check warning"
+
+          # Trigger discovery
+          echo "Triggering discovery..."
+          curl -sf -X POST "$STAGING_URL/api/discover" || {
+            echo "❌ Discovery trigger failed"
+            exit 1
+          }
+
+          echo "✅ Discovery triggered on staging"
+
+      - name: Report to logs
+        if: always()
+        run: |
+          echo "Staging discovery run completed at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
