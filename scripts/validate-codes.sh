@@ -151,7 +151,7 @@ echo ""
 
 # Gate 8: Validate schema version consistency
 echo "Gate 8: Schema Version Consistency"
-CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -o "'[^']*'" | tr -d "'")
+CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 AGENTS_VERSION=$(grep "\\*\\*Version\\*\\*:" AGENTS.md | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+")
 
 if [ "$CONFIG_VERSION" = "$AGENTS_VERSION" ]; then
@@ -177,7 +177,7 @@ if grep -r "innerHTML" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v
 fi
 
 # Check for http:// (should be https://)
-if grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://"; then
+if grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://" | grep -v "tests/"; then
     print_warning "HTTP URLs found (should use HTTPS)"
 fi
 
