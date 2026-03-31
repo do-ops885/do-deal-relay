@@ -205,6 +205,57 @@ if [ $ERRORS -eq 0 ]; then
 fi
 echo ""
 
+# GUARD RAIL 8: Root Directory File Organization (NEW)
+echo "Guard Rail 8: Root Directory File Organization"
+
+# List of allowed files in root (standard project files only)
+ALLOWED_ROOT_FILES=(
+    "^\.gitignore$"
+    "^package\.json$"
+    "^package-lock\.json$"
+    "^tsconfig\.json$"
+    "^vitest\.config\.ts$"
+    "^wrangler\.toml$"
+    "^README\.md$"
+    "^VERSION$"
+    "^LICENSE$"
+)
+
+# Check each staged file that's in root
+ROOT_VIOLATIONS=0
+for file in $FILES; do
+    # Check if file is directly in root (no slashes)
+    if [[ ! "$file" == */* ]]; then
+        # Check if it's an allowed file
+        ALLOWED=false
+        for pattern in "${ALLOWED_ROOT_FILES[@]}"; do
+            if echo "$file" | grep -qE "$pattern"; then
+                ALLOWED=true
+                break
+            fi
+        done
+        
+        if [ "$ALLOWED" = false ]; then
+            error "Non-essential file in root directory: $file"
+            echo "   Move to appropriate subfolder:"
+            echo "   - Documentation → docs/ or agents-docs/"
+            echo "   - Reports/status → temp/"
+            echo "   - Scripts → scripts/"
+            echo "   - Tests → tests/"
+            echo "   - Source code → worker/"
+            ROOT_VIOLATIONS=$((ROOT_VIOLATIONS + 1))
+        fi
+    fi
+done
+
+if [ $ROOT_VIOLATIONS -eq 0 ]; then
+    success "Root directory organization is valid"
+else
+    echo ""
+    echo "   Reference: See agents-docs/guard-rails.md for file organization rules"
+fi
+echo ""
+
 # Summary
 echo "=================================="
 echo "Guard Rails Summary"
