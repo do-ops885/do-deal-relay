@@ -13,7 +13,6 @@ import {
   exportLogsAsJSONL,
 } from "./lib/logger";
 import { notify } from "./notify";
-import { setGitHubToken } from "./lib/github";
 import type {
   Env,
   GetDealsQuery,
@@ -31,11 +30,6 @@ import { CONFIG } from "./config";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Initialize GitHub token if available
-    if (env.GITHUB_TOKEN) {
-      setGitHubToken(env.GITHUB_TOKEN);
-    }
-
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -69,6 +63,21 @@ export default {
       }
 
       if (path === "/api/submit" && request.method === "POST") {
+        // Validate content type
+        const contentType = request.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          return jsonResponse(
+            { error: "Content-Type must be application/json" },
+            415,
+          );
+        }
+
+        // Validate body size (1MB limit)
+        const contentLength = request.headers.get("content-length");
+        if (contentLength && parseInt(contentLength) > 1024 * 1024) {
+          return jsonResponse({ error: "Request body too large" }, 413);
+        }
+
         const body = await request.json();
         return handleSubmit(body as SubmitDealBody, env);
       }
@@ -77,10 +86,7 @@ export default {
       return jsonResponse({ error: "Not found" }, 404);
     } catch (error) {
       console.error("Request handler error:", error);
-      return jsonResponse(
-        { error: "Internal server error", message: (error as Error).message },
-        500,
-      );
+      return jsonResponse({ error: "Internal server error" }, 500);
     }
   },
 

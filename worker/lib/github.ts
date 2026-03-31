@@ -1,5 +1,5 @@
-import { CONFIG } from '../config';
-import type { Snapshot } from '../types';
+import { CONFIG } from "../config";
+import type { Snapshot } from "../types";
 
 // ============================================================================
 // GitHub API Integration
@@ -20,30 +20,16 @@ interface GitHubContent {
   sha: string;
 }
 
-// Store token for the session (set by worker/index.ts)
-let githubToken: string | undefined;
-
-/**
- * Set GitHub token for API calls
- */
-export function setGitHubToken(token: string): void {
-  githubToken = token;
-}
-
 /**
  * Get GitHub API base URL and headers
  */
-function getGitHubConfig() {
-  if (!githubToken) {
-    throw new Error('GITHUB_TOKEN not configured. Call setGitHubToken() first.');
-  }
-
+function getGitHubConfig(token: string) {
   return {
-    baseUrl: 'https://api.github.com',
+    baseUrl: "https://api.github.com",
     headers: {
-      Authorization: `Bearer ${githubToken}`,
-      Accept: 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github.v3+json",
+      "Content-Type": "application/json",
     },
   };
 }
@@ -54,14 +40,15 @@ function getGitHubConfig() {
 export async function getFileContent(
   repo: string,
   path: string,
-  branch: string = 'main'
+  token: string,
+  branch: string = "main",
 ): Promise<GitHubContent | null> {
-  const { baseUrl, headers } = getGitHubConfig();
+  const { baseUrl, headers } = getGitHubConfig(token);
 
   try {
     const response = await fetch(
       `${baseUrl}/repos/${repo}/contents/${path}?ref=${branch}`,
-      { headers }
+      { headers },
     );
 
     if (response.status === 404) {
@@ -69,16 +56,18 @@ export async function getFileContent(
     }
 
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `GitHub API error: ${response.status} ${response.statusText}`,
+      );
     }
 
-    const data = await response.json() as { content: string; sha: string };
+    const data = (await response.json()) as { content: string; sha: string };
     return {
       content: data.content,
       sha: data.sha,
     };
   } catch (error) {
-    console.error('Failed to get file content:', error);
+    console.error("Failed to get file content:", error);
     throw error;
   }
 }
@@ -90,14 +79,19 @@ export async function commitFile(
   repo: string,
   path: string,
   content: string,
+  token: string,
   message: string,
-  branch: string = 'main',
-  sha?: string
+  branch: string = "main",
+  sha?: string,
 ): Promise<string> {
-  const { baseUrl, headers } = getGitHubConfig();
+  const { baseUrl, headers } = getGitHubConfig(token);
 
   // Encode content to base64
-  const encodedContent = btoa(unescape(encodeURIComponent(content)));
+  const encodedContent = btoa(
+    encodeURIComponent(content).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+      String.fromCharCode(parseInt(p1, 16)),
+    ),
+  );
 
   const body: Record<string, string> = {
     message,
@@ -110,24 +104,21 @@ export async function commitFile(
   }
 
   try {
-    const response = await fetch(
-      `${baseUrl}/repos/${repo}/contents/${path}`,
-      {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(body),
-      }
-    );
+    const response = await fetch(`${baseUrl}/repos/${repo}/contents/${path}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body),
+    });
 
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`GitHub commit failed: ${response.status} - ${error}`);
     }
 
-    const data = await response.json() as { commit: { sha: string } };
+    const data = (await response.json()) as { commit: { sha: string } };
     return data.commit.sha;
   } catch (error) {
-    console.error('Failed to commit file:', error);
+    console.error("Failed to commit file:", error);
     throw error;
   }
 }
@@ -137,8 +128,9 @@ export async function commitFile(
  */
 export async function commitSnapshot(
   repo: string,
+  token: string,
   snapshot: Snapshot,
-  stats: { total: number; active: number }
+  stats: { total: number; active: number },
 ): Promise<string> {
   const content = JSON.stringify(snapshot, null, 2);
   const message = `[AUTO] Update deals - ${snapshot.run_id}
@@ -150,10 +142,18 @@ export async function commitSnapshot(
 [skip ci]`;
 
   // Try to get existing file SHA
-  const existing = await getFileContent(repo, CONFIG.SNAPSHOT_FILE);
+  const existing = await getFileContent(repo, CONFIG.SNAPSHOT_FILE, token);
   const sha = existing?.sha;
 
-  return commitFile(repo, CONFIG.SNAPSHOT_FILE, content, message, 'main', sha);
+  return commitFile(
+    repo,
+    CONFIG.SNAPSHOT_FILE,
+    content,
+    token,
+    message,
+    "main",
+    sha,
+  );
 }
 
 /**
@@ -161,15 +161,16 @@ export async function commitSnapshot(
  */
 export async function createGitHubIssue(
   repo: string,
+  token: string,
   type: string,
   run_id: string,
   details: {
-    severity: 'info' | 'warning' | 'critical';
+    severity: "info" | "warning" | "critical";
     message: string;
     context?: Record<string, unknown>;
-  }
+  },
 ): Promise<number> {
-  const { baseUrl, headers } = getGitHubConfig();
+  const { baseUrl, headers } = getGitHubConfig(token);
 
   const title = `[NOTIFY] ${type} - ${run_id}`;
   const body = `## Notification
@@ -192,27 +193,24 @@ ${JSON.stringify(details.context || {}, null, 2)}
 `;
 
   try {
-    const response = await fetch(
-      `${baseUrl}/repos/${repo}/issues`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          title,
-          body,
-          labels: [type, details.severity, 'automated'],
-        }),
-      }
-    );
+    const response = await fetch(`${baseUrl}/repos/${repo}/issues`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        title,
+        body,
+        labels: [type, details.severity, "automated"],
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to create issue: ${response.status}`);
     }
 
-    const data = await response.json() as { number: number };
+    const data = (await response.json()) as { number: number };
     return data.number;
   } catch (error) {
-    console.error('Failed to create notification issue:', error);
+    console.error("Failed to create notification issue:", error);
     throw error;
   }
 }
@@ -222,22 +220,23 @@ ${JSON.stringify(details.context || {}, null, 2)}
  */
 export async function getRecentCommits(
   repo: string,
+  token: string,
   path: string,
-  count: number = 10
+  count: number = 10,
 ): Promise<GitHubCommit[]> {
-  const { baseUrl, headers } = getGitHubConfig();
+  const { baseUrl, headers } = getGitHubConfig(token);
 
   try {
     const response = await fetch(
       `${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`,
-      { headers }
+      { headers },
     );
 
     if (!response.ok) {
       throw new Error(`Failed to get commits: ${response.status}`);
     }
 
-    const data = await response.json() as Array<{
+    const data = (await response.json()) as Array<{
       sha: string;
       commit: {
         message: string;
@@ -254,7 +253,7 @@ export async function getRecentCommits(
       author: commit.commit.author,
     }));
   } catch (error) {
-    console.error('Failed to get recent commits:', error);
+    console.error("Failed to get recent commits:", error);
     return [];
   }
 }
@@ -264,9 +263,10 @@ export async function getRecentCommits(
  */
 export async function isSnapshotCommitted(
   repo: string,
-  snapshot_hash: string
+  token: string,
+  snapshot_hash: string,
 ): Promise<boolean> {
-  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 20);
+  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 20);
   return commits.some((c) => c.message.includes(snapshot_hash));
 }
 
@@ -275,9 +275,10 @@ export async function isSnapshotCommitted(
  */
 export async function verifyCommit(
   repo: string,
-  expectedSha: string
+  token: string,
+  expectedSha: string,
 ): Promise<boolean> {
-  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
+  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 1);
   if (commits.length === 0) return false;
   return commits[0].sha === expectedSha;
 }
