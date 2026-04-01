@@ -28,7 +28,10 @@ wrangler dev
 # Terminal 2: Configure CLI
 npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
 
-# Add a code
+# Add a code with smart-parse
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
+
+# Or add manually
 npx ts-node scripts/refcli.ts codes add \
   --code ABC123 \
   --url https://example.com/invite/ABC123 \
@@ -45,9 +48,36 @@ wrangler deploy
 npx ts-node scripts/refcli.ts auth login \
   --endpoint https://do-deal-relay.YOUR_SUBDOMAIN.workers.dev
 
-# List codes
-npx ts-node scripts/refcli.ts codes list --status active
+# Smart-add a referral URL
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
 ```
+
+## Smart Add (Auto-Parse URL)
+
+The easiest way to add a referral - just paste the URL:
+
+```bash
+npx ts-node scripts/refcli.ts codes smart-add <referral-url>
+```
+
+**Examples:**
+
+```bash
+# Picnic referral
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
+
+# Trading212 invite
+npx ts-node scripts/refcli.ts codes smart-add https://www.trading212.com/invite/GcCOCxbo
+
+# Crypto.com
+npx ts-node scripts/refcli.ts codes smart-add https://crypto.com/app/ABC123
+```
+
+**Smart Add extracts:**
+
+- Domain from hostname (e.g., picnic.app)
+- Code from last path segment (e.g., DOMI6869)
+- Full URL for storage
 
 ## Core Commands
 
@@ -60,26 +90,44 @@ npx ts-node scripts/refcli.ts auth whoami
 
 ### Code Management
 
+**Smart Add (Recommended):**
+
 ```bash
-# Add
+npx ts-node scripts/refcli.ts codes smart-add <referral-url>
+```
+
+**Manual Add:**
+
+```bash
 npx ts-node scripts/refcli.ts codes add \
   --code <code> --url <url> --domain <domain> \
   [--title <title>] [--reward-type <type>] [--category <cats>]
+```
 
-# List
+**List:**
+
+```bash
 npx ts-node scripts/refcli.ts codes list \
   [--status active|inactive|expired] \
   [--domain <domain>] [--output table|json|csv|yaml]
+```
 
-# Get
+**Get:**
+
+```bash
 npx ts-node scripts/refcli.ts codes get <code>
+```
 
-# Deactivate
+**Deactivate:**
+
+```bash
 npx ts-node scripts/refcli.ts codes deactivate <code> \
-  --reason <user_request|expired|invalid|violation|replaced> \
-  [--replaced-by <new_code>]
+  --reason <user_request|expired|invalid|violation|replaced>
+```
 
-# Reactivate
+**Reactivate:**
+
+```bash
 npx ts-node scripts/refcli.ts codes reactivate <code>
 ```
 
@@ -99,26 +147,15 @@ npx ts-node scripts/refcli.ts system health
 npx ts-node scripts/refcli.ts system metrics
 ```
 
-## Wrangler Workflow
-
-```bash
-# Development
-wrangler dev                      # Local server at localhost:8787
-
-# Deployment
-wrangler deploy                   # Production
-wrangler deploy --env staging     # Staging
-
-# Logs
-wrangler tail                     # Stream logs
-
-# KV
-wrangler kv list --binding DEALS_SOURCES
-```
-
 ## Examples
 
-### Full Code Add
+### Quick Add with URL
+
+```bash
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
+```
+
+### Full Metadata Add
 
 ```bash
 npx ts-node scripts/refcli.ts codes add \
@@ -146,15 +183,22 @@ npx ts-node scripts/refcli.ts research run \
   --domain trading212.com --depth thorough
 ```
 
-## API Endpoints
+## Wrangler Workflow
 
-- `GET /api/referrals` - List/search
-- `POST /api/referrals` - Create
-- `GET /api/referrals/:code` - Get details
-- `POST /api/referrals/:code/deactivate` - Deactivate
-- `POST /api/referrals/:code/reactivate` - Reactivate
-- `POST /api/research` - Web research
-- `GET /api/research/:domain` - Research results
+```bash
+# Development
+wrangler dev                      # Local server at localhost:8787
+
+# Deployment
+wrangler deploy                   # Production
+wrangler deploy --env staging     # Staging
+
+# Logs
+wrangler tail                     # Stream logs
+
+# KV
+wrangler kv list --binding DEALS_SOURCES
+```
 
 ## Troubleshooting
 

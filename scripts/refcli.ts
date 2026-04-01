@@ -93,6 +93,47 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 // ============================================================================
+// URL Parser for Smart Add
+// ============================================================================
+
+interface ParsedReferralUrl {
+  url: string;
+  domain: string;
+  code: string;
+  path: string;
+}
+
+function parseReferralUrl(input: string): ParsedReferralUrl | null {
+  try {
+    // Ensure it starts with protocol
+    let urlStr = input.trim();
+    if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
+      urlStr = "https://" + urlStr;
+    }
+
+    const url = new URL(urlStr);
+    const domain = url.hostname.replace(/^www\./, "");
+    const path = url.pathname;
+
+    // Extract code from path (last segment after last /)
+    const segments = path.split("/").filter(s => s.length > 0);
+    const lastSegment = segments[segments.length - 1] || "";
+
+    // Code should be alphanumeric and at least 4 chars
+    const codeMatch = lastSegment.match(/^[A-Z0-9]{4,}$/i);
+    const code = codeMatch ? codeMatch[0].toUpperCase() : lastSegment;
+
+    if (!code || code.length < 3) {
+      return null;
+    }
+
+    return { url: urlStr, domain, code, path };
+  } catch {
+    return null;
+  }
+}
+
+// ============================================================================
 // HTTP Client
 // ============================================================================
 
@@ -214,9 +255,9 @@ async function handleAuth(args: ParsedArgs): Promise<void> {
         config.endpoint = endpoint;
         config.apiKey = apiKey;
         await apiRequest("GET", "/health");
-        console.log(`✓ Authenticated to ${endpoint}`);
+        console.log(`[OK] Authenticated to ${endpoint}`);
       } catch (error) {
-        console.error(`✗ Authentication failed: ${(error as Error).message}`);
+        console.error(`[FAIL] Authentication failed: ${(error as Error).message}`);
         process.exit(1);
       }
       break;
@@ -224,7 +265,7 @@ async function handleAuth(args: ParsedArgs): Promise<void> {
 
     case "logout": {
       config.apiKey = undefined;
-      console.log("✓ Logged out");
+      console.log("[OK] Logged out");
       break;
     }
 
@@ -263,6 +304,60 @@ async function handleCodes(args: ParsedArgs): Promise<void> {
       break;
     }
 
+    case "smart-add":
+    case "smartadd": {
+      // Smart add - parse URL automatically
+      const urlInput = args.flags.url as string || args.positional[0];
+
+      if (!urlInput) {
+        console.error("Error: URL required");
+        console.error("Usage: refcli codes smart-add <referral-url>");
+        console.error("Example: refcli codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869");
+        process.exit(1);
+      }
+
+      const parsed = parseReferralUrl(urlInput);
+      if (!parsed) {
+        console.error("Error: Could not parse referral URL");
+        console.error("URL must contain a code in the path (e.g., /invite/CODE123)");
+        process.exit(1);
+      }
+
+      console.log(`Parsed referral URL:`);
+      console.log(`  URL: ${parsed.url}`);
+      console.log(`  Domain: ${parsed.domain}`);
+      console.log(`  Code: ${parsed.code}`);
+
+      const body = {
+        code: parsed.code,
+        url: parsed.url,
+        domain: parsed.domain,
+        source: "cli-smart",
+        submitted_by: "cli-user",
+        metadata: {
+          title: (args.flags.title as string) || `${parsed.domain} Referral`,
+          description: args.flags.description as string | undefined,
+          reward_type: (args.flags["reward-type"] as string) || "unknown",
+          reward_value: args.flags["reward-value"] as string | number | undefined,
+          currency: args.flags.currency as string | undefined,
+          category: args.flags.category ? (args.flags.category as string).split(",") : ["general"],
+          tags: ["smart-add", "cli-added"],
+          notes: `Auto-parsed from URL: ${parsed.path}`,
+        },
+      };
+
+      const data = await apiRequest("POST", "/api/referrals", body) as {
+        success: boolean;
+        referral: unknown;
+      };
+
+      if (data.success) {
+        console.log(`[OK] Created referral: ${parsed.code}`);
+        console.log(formatOutput(data.referral, output));
+      }
+      break;
+    }
+
     case "add": {
       const code = args.flags.code as string;
       const url = args.flags.url as string;
@@ -297,7 +392,7 @@ async function handleCodes(args: ParsedArgs): Promise<void> {
       };
 
       if (data.success) {
-        console.log(`✓ Created referral: ${code}`);
+        console.log(`[OK] Created referral: ${code}`);
         console.log(formatOutput(data.referral, output));
       }
       break;
@@ -340,7 +435,7 @@ async function handleCodes(args: ParsedArgs): Promise<void> {
       };
 
       if (data.success) {
-        console.log(`✓ Deactivated referral: ${code}`);
+        console.log(`[OK] Deactivated referral: ${code}`);
         console.log(formatOutput(data.referral, output));
       }
       break;
@@ -359,14 +454,14 @@ async function handleCodes(args: ParsedArgs): Promise<void> {
       };
 
       if (data.success) {
-        console.log(`✓ Reactivated referral: ${code}`);
+        console.log(`[OK] Reactivated referral: ${code}`);
         console.log(formatOutput(data.referral, output));
       }
       break;
     }
 
     default:
-      console.log("Usage: refcli codes [list|add|get|deactivate|reactivate]");
+      console.log("Usage: refcli codes [list|add|smart-add|get|deactivate|reactivate]");
   }
 }
 
@@ -402,7 +497,7 @@ async function handleResearch(args: ParsedArgs): Promise<void> {
       };
 
       if (data.success) {
-        console.log(`✓ Research completed`);
+        console.log(`[OK] Research completed`);
         console.log(`  Discovered: ${data.discovered_codes} codes`);
         console.log(`  Stored: ${data.stored_referrals} referrals`);
 
@@ -466,45 +561,46 @@ async function main(): Promise<void> {
 
   // Show help
   if (args.flags.help || args.flags.h) {
-    console.log(`
-refcli - CLI tool for managing referral codes
-
-USAGE:
-  refcli [command] [subcommand] [options]
-
-COMMANDS:
-  auth        Authentication management
-    login     --endpoint <url> --key <api_key>
-    logout
-    whoami
-
-  codes       Referral code management
-    list      [--status active|inactive] [--domain <domain>] [--limit <n>]
-    add       --code <code> --url <url> --domain <domain>
-              [--title <title>] [--reward-type <type>] [--reward-value <val>]
-    get       <code>
-    deactivate <code> --reason <reason> [--replaced-by <new_code>]
-    reactivate <code>
-
-  research    Web research for referral codes
-    run       --domain <domain> [--depth quick|thorough|deep]
-    results   --domain <domain>
-
-  system      System operations
-    health    Check system health
-    metrics   View system metrics
-
-GLOBAL OPTIONS:
-  --output    Output format: table, json, csv, yaml (default: table)
-  --help      Show this help message
-
-EXAMPLES:
-  refcli auth login --endpoint https://api.example.com --key my-api-key
-  refcli codes add --code ABC123 --url https://example.com/invite/ABC123 --domain example.com
-  refcli codes list --status active --domain example.com
-  refcli codes deactivate ABC123 --reason expired --replaced-by NEW456
-  refcli research run --domain example.com --depth thorough
-`);
+    console.log("");
+    console.log("refcli - CLI tool for managing referral codes");
+    console.log("");
+    console.log("USAGE:");
+    console.log("  refcli [command] [subcommand] [options]");
+    console.log("");
+    console.log("COMMANDS:");
+    console.log("  auth        Authentication management");
+    console.log("    login     --endpoint <url> --key <api_key>");
+    console.log("    logout");
+    console.log("    whoami");
+    console.log("");
+    console.log("  codes       Referral code management");
+    console.log("    list      [--status active|inactive] [--domain <domain>] [--limit <n>]");
+    console.log("    add       --code <code> --url <url> --domain <domain>");
+    console.log("              [--title <title>] [--reward-type <type>] [--reward-value <val>]");
+    console.log("    smart-add <url>   Auto-parse URL to extract code/domain");
+    console.log("    get       <code>");
+    console.log("    deactivate <code> --reason <reason> [--replaced-by <new_code>]");
+    console.log("    reactivate <code>");
+    console.log("");
+    console.log("  research    Web research for referral codes");
+    console.log("    run       --domain <domain> [--depth quick|thorough|deep]");
+    console.log("    results   --domain <domain>");
+    console.log("");
+    console.log("  system      System operations");
+    console.log("    health    Check system health");
+    console.log("    metrics   View system metrics");
+    console.log("");
+    console.log("GLOBAL OPTIONS:");
+    console.log("  --output    Output format: table, json, csv, yaml (default: table)");
+    console.log("  --help      Show this help message");
+    console.log("");
+    console.log("EXAMPLES:");
+    console.log("  refcli auth login --endpoint https://api.example.com --key my-api-key");
+    console.log("  refcli codes add --code ABC123 --url https://example.com/invite/ABC123 --domain example.com");
+    console.log("  refcli codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869");
+    console.log("  refcli codes list --status active --domain example.com");
+    console.log("  refcli codes deactivate ABC123 --reason expired --replaced-by NEW456");
+    console.log("  refcli research run --domain example.com --depth thorough");
     return;
   }
 
