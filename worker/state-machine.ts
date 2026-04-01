@@ -24,6 +24,7 @@ import { publishSnapshot, rollbackSnapshot } from "./publish";
 import { getProductionSnapshot } from "./lib/storage";
 import { notify } from "./notify";
 import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
+import { triggerWebhooks } from "./lib/webhooks";
 import {
   createMetrics,
   recordPhaseTiming,
@@ -239,6 +240,18 @@ export async function executePipeline(env: Env): Promise<{
             retry_count: ctx.retry_count,
           },
         );
+        // Trigger webhook for system error
+        await triggerWebhooks(
+          env,
+          "system.error",
+          {
+            phase: currentPhase,
+            error: errorMessage,
+            run_id: ctx.run_id,
+            retry_count: ctx.retry_count,
+          },
+          ctx.run_id,
+        );
         // Record error and finalize metrics
         recordError(metrics);
         finalizeMetrics(metrics, false, currentPhase);
@@ -295,6 +308,25 @@ async function executePhase(
 
       // Record discovered deal count
       recordDealCount(metrics, "discovered", ctx.candidates.length);
+
+      // Trigger webhooks for discovered deals
+      if (ctx.candidates.length > 0) {
+        await triggerWebhooks(
+          env,
+          "deal.discovered",
+          {
+            count: ctx.candidates.length,
+            run_id: ctx.run_id,
+            deals: ctx.candidates.map((d) => ({
+              id: d.id,
+              code: d.code,
+              title: d.title,
+              source: d.source.domain,
+            })),
+          },
+          ctx.run_id,
+        );
+      }
 
       // Guard rail: Check input resources
       if (ctx.candidates.length > 0) {
@@ -488,6 +520,27 @@ async function executePhase(
 
     case "finalize":
       logger.info("Finalizing pipeline", { total_deals: ctx.scored.length });
+
+      // Trigger webhooks for published deals
+      if (ctx.scored.length > 0) {
+        await triggerWebhooks(
+          env,
+          "deal.published",
+          {
+            count: ctx.scored.length,
+            run_id: ctx.run_id,
+            snapshot_hash: ctx.snapshot?.snapshot_hash,
+            deals: ctx.scored.map((d) => ({
+              id: d.id,
+              code: d.code,
+              title: d.title,
+              reward: d.reward,
+            })),
+          },
+          ctx.run_id,
+        );
+      }
+
       // Send success notification if needed
       await notify(env, {
         type: "system_error",
@@ -511,6 +564,21 @@ async function handleFailure(
   env: Env,
   logger: Logger,
 ): Promise<void> {
+  // Trigger webhook for system error on any failure path
+  const lastError = ctx.errors[ctx.errors.length - 1];
+  await triggerWebhooks(
+    env,
+    "system.error",
+    {
+      failure_path: path,
+      phase: lastError?.phase,
+      error: lastError?.error.message,
+      run_id: ctx.run_id,
+      error_count: ctx.errors.length,
+    },
+    ctx.run_id,
+  );
+
   switch (path) {
     case "revert":
       logger.error("Handling revert failure", undefined, {

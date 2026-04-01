@@ -1,6 +1,7 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
 import { getProductionSnapshot } from "../lib/storage";
+import { categorizeDeal, DealCategory } from "../lib/categorizer";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -17,6 +18,7 @@ interface ScoredDeal extends Deal {
     reward_plausibility: number;
     expiry: number;
   };
+  category: DealCategory;
 }
 
 interface ScoringResult {
@@ -89,6 +91,9 @@ export async function score(
       highValueCount++;
     }
 
+    // Categorize the deal
+    const category = categorizeDeal(deal);
+
     // Create scored deal
     const scoredDeal: ScoredDeal = {
       ...deal,
@@ -101,9 +106,13 @@ export async function score(
         reward_plausibility: rewardPlausibility,
         expiry: expiryScore,
       },
+      category,
       metadata: {
         ...deal.metadata,
         confidence_score: confidenceScore,
+        // Update category in metadata to match detected primary category
+        category: [category.primary, ...category.subcategories],
+        tags: [...new Set([...deal.metadata.tags, ...category.tags])],
       },
     };
 

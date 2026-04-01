@@ -34,6 +34,7 @@ import {
   formatMetricsForPrometheus,
   getPhaseTimingStats,
 } from "./lib/metrics";
+import { checkDealExpirations } from "./lib/expiration";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -106,9 +107,32 @@ export default {
     }
   },
 
-  async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     console.log(`Scheduled event triggered at ${new Date().toISOString()}`);
+    console.log(`Cron schedule: ${event.cron}`);
 
+    // Check if this is the daily 9am expiration check
+    // The cron "0 9 * * *" runs at 9am daily
+    if (event.cron === "0 9 * * *") {
+      console.log("Running daily expiration check...");
+      try {
+        const expiryResult = await checkDealExpirations(env);
+        console.log(
+          `Expiration check completed: ${expiryResult.expiringFound} expiring, ${expiryResult.expiredMarked} marked as expired`,
+        );
+      } catch (error) {
+        console.error("Expiration check failed:", error);
+        await notify(env, {
+          type: "system_error",
+          severity: "warning",
+          run_id: `expiry-check-${Date.now()}`,
+          message: `Expiration check failed: ${(error as Error).message}`,
+        });
+      }
+      return;
+    }
+
+    // Otherwise run the discovery pipeline (every 6 hours)
     try {
       const result = await executePipeline(env);
 

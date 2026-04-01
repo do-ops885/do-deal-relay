@@ -128,8 +128,9 @@ async function sendTelegramNotification(
     return false;
   }
 
-  const emoji = getSeverityEmoji(event.severity);
-  const message = `${emoji} **${event.type}**
+  const emoji = getTypeEmoji(event.type);
+  const severityEmoji = getSeverityEmoji(event.severity);
+  const message = `${emoji} ${severityEmoji} **${event.type}**
 
 **Severity:** ${event.severity}
 **Run ID:** ${event.run_id}
@@ -203,6 +204,32 @@ function getSeverityEmoji(severity: NotificationEvent["severity"]): string {
     case "warning":
       return "⚠️";
     case "info":
+    default:
+      return "ℹ️";
+  }
+}
+
+/**
+ * Get emoji for notification type
+ */
+function getTypeEmoji(type: NotificationEvent["type"]): string {
+  switch (type) {
+    case "deal_expiring":
+      return "⏰";
+    case "deal_expired":
+      return "🚫";
+    case "high_value_deal":
+      return "💰";
+    case "system_error":
+      return "💥";
+    case "checks_failed":
+      return "❌";
+    case "publish_incomplete":
+      return "⚠️";
+    case "trust_anomaly":
+      return "🔍";
+    case "concurrency_abort":
+      return "🚦";
     default:
       return "ℹ️";
   }
