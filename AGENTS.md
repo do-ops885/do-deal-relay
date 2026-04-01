@@ -4,7 +4,7 @@
 > Supported by: Claude Code, Gemini CLI, OpenCode, Qwen Code, Windsurf, Cursor
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents  
-**Version**: 1.0.0  
+**Version**: 0.1.0  
 **Phase**: Bootstrap  
 **Status**: In Development ⚠️ NOT PRODUCTION READY
 

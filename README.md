@@ -1,8 +1,9 @@
 # Deal Discovery System - Status
 
-**System**: In Development
-**Version**: 0.1.1
-**Status**: Bootstrap Phase
+**System**: In Development  
+**Version**: 0.1.0  
+**Status**: Bootstrap Phase  
+**Last Updated**: 2024-03-31
 
 ## Quick Start
 
@@ -42,13 +43,14 @@ curl https://your-worker.workers.dev/health
 curl https://your-worker.workers.dev/api/log
 ```
 
-### Documentation
+### For Humans
 
-- [AGENTS.md](AGENTS.md) - Agent coordination and system specs
-- [QUICKSTART.md](QUICKSTART.md) - 5-minute getting started guide
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [SECURITY.md](SECURITY.md) - Security policy
-- [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) - System architecture
+- **Repository**: https://github.com/do-ops885/do-deal-relay
+- **Documentation**:
+  - [AGENTS.md](AGENTS.md) - System specs and architecture
+  - [docs/API.md](docs/API.md) - API reference
+  - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
+  - [docs/LEGAL_COMPLIANCE.md](docs/LEGAL_COMPLIANCE.md) - Legal requirements
 - **Status Dashboard**: Check `/health` endpoint
 
 ## Architecture
@@ -68,7 +70,7 @@ curl https://your-worker.workers.dev/api/log
 
 ## Development Roadmap
 
-### Phase 1: Bootstrap (Current - v0.1.1)
+### Phase 1: Bootstrap (Current - v0.1.0)
 
 - [ ] Fix test infrastructure
 - [ ] Install missing dependencies
@@ -102,23 +104,6 @@ curl https://your-worker.workers.dev/api/log
 - `get_deals` - Retrieve active deals
 - `get_deal_by_code` - Find specific code
 - `submit_deal` - Submit new discovery
-
-## Available Scripts
-
-- `./scripts/quality_gate.sh` - Run all validation gates
-- `./scripts/validate-codes.sh` - Validate deal codes
-- `./scripts/setup-skills.sh` - Setup agent skills
-
-## Skills System
-
-The project uses a comprehensive skill system in `.agents/skills/`:
-
-- **Agent Coordination**: `agent-coordination`, `parallel-execution`, `goap-agent`
-- **Cloudflare**: `cloudflare`, `wrangler`, `durable-objects`, `workers-best-practices`
-- **Security**: `guard-rails`, `privacy-first`, `validation-gates`
-- **Development**: `pre-commit`, `skill-creator`, `shell-script-quality`
-
-See `.agents/skills/README.md` for the full catalog.
 
 ## Safety Features
 

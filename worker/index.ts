@@ -107,7 +107,11 @@ export default {
     }
   },
 
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(
+    event: ScheduledEvent,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
     console.log(`Scheduled event triggered at ${new Date().toISOString()}`);
     console.log(`Cron schedule: ${event.cron}`);
 
@@ -797,7 +801,7 @@ async function handleSubmit(body: SubmitDealBody, env: Env): Promise<Response> {
     run_id: stagingSnapshot?.run_id || `manual-${Date.now()}`,
     trace_id: stagingSnapshot?.trace_id || `manual-${dealId}`,
     previous_hash: stagingSnapshot?.snapshot_hash || "",
-    schema_version: stagingSnapshot?.schema_version || "1.0.0",
+    schema_version: stagingSnapshot?.schema_version || CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
       active: deals.filter((d) => d.metadata.status === "active").length,
