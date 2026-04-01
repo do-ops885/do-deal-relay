@@ -1,129 +1,124 @@
 ---
 name: refcli
-description: Manage referral codes using the refcli command-line tool
+description: Manage referral codes via CLI with Cloudflare Workers
 version: 1.0.0
 author: do-deal-relay
-tags: [cli, referral, management, api]
+tags: [cli, referral, cloudflare, wrangler]
 ---
 
 # Skill: refcli - Referral Management CLI
 
 ## Overview
 
-Use the refcli tool to manage referral codes through the command-line interface. This skill enables adding, deactivating, searching, and researching referral codes.
+Manage referral codes via CLI with Cloudflare Workers. Supports local dev and production deployments.
 
 ## Prerequisites
 
 - Node.js installed
-- API endpoint accessible (default: http://localhost:8787)
+- Wrangler CLI: `npm install -g wrangler`
 
 ## Quick Start
 
+### Local Development
+
 ```bash
-# Authenticate
+# Terminal 1: Start dev server
+wrangler dev
+
+# Terminal 2: Configure CLI
 npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
 
-# Add a referral code
+# Add a code
 npx ts-node scripts/refcli.ts codes add \
   --code ABC123 \
   --url https://example.com/invite/ABC123 \
   --domain example.com
+```
 
-# List active codes
+### Production
+
+```bash
+# Deploy
+wrangler deploy
+
+# Configure for production
+npx ts-node scripts/refcli.ts auth login \
+  --endpoint https://do-deal-relay.YOUR_SUBDOMAIN.workers.dev
+
+# List codes
 npx ts-node scripts/refcli.ts codes list --status active
-
-# Deactivate a code
-npx ts-node scripts/refcli.ts codes deactivate ABC123 --reason expired
 ```
 
 ## Core Commands
 
-### Authentication
+### Auth
 
 ```bash
-# Login
-npx ts-node scripts/refcli.ts auth login --endpoint <url> --key <api_key>
-
-# Check current user
+npx ts-node scripts/refcli.ts auth login --endpoint <url> [--key <api_key>]
 npx ts-node scripts/refcli.ts auth whoami
 ```
 
 ### Code Management
 
-**Add New Code:**
-
 ```bash
+# Add
 npx ts-node scripts/refcli.ts codes add \
-  --code <code> \
-  --url <url> \
-  --domain <domain> \
-  [--title <title>] \
-  [--reward-type <type>] \
-  [--reward-value <value>] \
-  [--category <cat1,cat2>]
-```
+  --code <code> --url <url> --domain <domain> \
+  [--title <title>] [--reward-type <type>] [--category <cats>]
 
-**List Codes:**
-
-```bash
+# List
 npx ts-node scripts/refcli.ts codes list \
   [--status active|inactive|expired] \
-  [--domain <domain>] \
-  [--limit <n>] \
-  [--output table|json|csv|yaml]
-```
+  [--domain <domain>] [--output table|json|csv|yaml]
 
-**Get Code Details:**
-
-```bash
+# Get
 npx ts-node scripts/refcli.ts codes get <code>
-```
 
-**Deactivate:**
-
-```bash
+# Deactivate
 npx ts-node scripts/refcli.ts codes deactivate <code> \
   --reason <user_request|expired|invalid|violation|replaced> \
-  [--replaced-by <new_code>] \
-  [--notes <notes>]
-```
+  [--replaced-by <new_code>]
 
-**Reactivate:**
-
-```bash
+# Reactivate
 npx ts-node scripts/refcli.ts codes reactivate <code>
 ```
 
 ### Web Research
 
-**Run Research:**
-
 ```bash
 npx ts-node scripts/refcli.ts research run \
-  --domain <domain> \
-  [--depth quick|thorough|deep] \
-  [--verbose]
-```
+  --domain <domain> [--depth quick|thorough|deep]
 
-**View Results:**
-
-```bash
 npx ts-node scripts/refcli.ts research results --domain <domain>
 ```
 
-### System Operations
+### System
 
 ```bash
-# Check health
 npx ts-node scripts/refcli.ts system health
-
-# View metrics
 npx ts-node scripts/refcli.ts system metrics
 ```
 
-## Common Patterns
+## Wrangler Workflow
 
-### Add Code with Metadata
+```bash
+# Development
+wrangler dev                      # Local server at localhost:8787
+
+# Deployment
+wrangler deploy                   # Production
+wrangler deploy --env staging     # Staging
+
+# Logs
+wrangler tail                     # Stream logs
+
+# KV
+wrangler kv list --binding DEALS_SOURCES
+```
+
+## Examples
+
+### Full Code Add
 
 ```bash
 npx ts-node scripts/refcli.ts codes add \
@@ -131,42 +126,27 @@ npx ts-node scripts/refcli.ts codes add \
   --url https://example.com/ref/WELCOME2024 \
   --domain example.com \
   --title "Welcome Bonus" \
-  --description "Get $50 when you sign up" \
   --reward-type cash \
   --reward-value 50 \
   --currency USD \
   --category "finance,investment"
 ```
 
-### Bulk Operations
+### Export Active Codes
 
 ```bash
-# Export all active codes to JSON
 npx ts-node scripts/refcli.ts codes list \
-  --status active \
-  --output json > active_codes.json
+  --status active --output json > codes.json
 ```
 
-### Research and Discover
+### Research Domain
 
 ```bash
-# Research domain for codes
 npx ts-node scripts/refcli.ts research run \
-  --domain example.com \
-  --depth thorough \
-  --verbose
+  --domain trading212.com --depth thorough
 ```
-
-## Error Handling
-
-Exit codes:
-
-- **0**: Success
-- **1**: General error (invalid arguments, network error)
 
 ## API Endpoints
-
-The CLI communicates with:
 
 - `GET /api/referrals` - List/search
 - `POST /api/referrals` - Create
@@ -176,9 +156,17 @@ The CLI communicates with:
 - `POST /api/research` - Web research
 - `GET /api/research/:domain` - Research results
 
+## Troubleshooting
+
+| Issue              | Solution                                   |
+| ------------------ | ------------------------------------------ |
+| Connection refused | Ensure `wrangler dev` is running           |
+| KV errors          | Check KV IDs in `wrangler.toml`            |
+| Deploy fails       | Run `wrangler deploy --dry-run` to preview |
+
 ## References
 
-- CLI Implementation: `scripts/refcli.ts`
-- API Endpoints: `worker/index.ts`
-- Storage Layer: `worker/lib/referral-storage.ts`
-- Research Agent: `worker/lib/research-agent.ts`
+- CLI: `scripts/refcli.ts`
+- API: `worker/index.ts`
+- Config: `wrangler.toml`
+- Docs: https://developers.cloudflare.com/workers/
