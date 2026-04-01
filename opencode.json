@@ -1,12 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "perplexity": {
-      "npm": "@ai-sdk/perplexity",
-      "name": "Perplexity AI",
-      "options": {
-        "baseURL": "https://api.perplexity.ai"
-      }
+    "default": {
+      "name": "OpenCode Default"
     }
+  },
+  "skills": {
+    "path": ".agents/skills"
   }
 }

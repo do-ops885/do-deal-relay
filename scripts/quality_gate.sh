@@ -2,6 +2,7 @@
 # Quality Gate - Silent Success / Loud Failure Pattern
 # Runs all validation checks
 # Exit 0 (silent) on success, Exit 2 (loud) on failure
+# Enhanced with multi-language support from github-template-ai-agents
 
 set -e
 
@@ -41,12 +42,30 @@ run_check "Unit tests" "npm run test:ci"
 # Check 3: Validation gates
 run_check "Validation gates" "npm run validate"
 
-# Check 4: Skill symlinks intact (if .claude exists)
-if [ -d ".claude" ]; then
-    run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
+# Check 4: ShellCheck for bash scripts (if shellcheck available)
+if command -v shellcheck &> /dev/null; then
+    SH_FILES=$(find scripts -name "*.sh" -not -path "./.git/*" 2>/dev/null)
+    if [ -n "$SH_FILES" ]; then
+        run_check "ShellCheck (bash scripts)" "echo '$SH_FILES' | xargs shellcheck -e SC2034"
+    fi
+else
+    echo "⚠️  ShellCheck not installed - skipping shell script validation"
+    echo "   Install: apt-get install shellcheck  or  brew install shellcheck"
 fi
 
-# Check 5: Git hooks installed
+# Check 5: Markdown linting (if markdownlint available)
+if command -v markdownlint &> /dev/null; then
+    run_check "Markdown linting" "markdownlint '**/*.md' --ignore node_modules --ignore target 2>/dev/null || true"
+fi
+
+# Check 6: Skill symlinks intact (if .claude exists)
+if [ -d ".claude" ]; then
+    if [ -f "${SCRIPT_DIR}/validate-skills.sh" ]; then
+        run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
+    fi
+fi
+
+# Check 7: Git hooks installed
 if [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
