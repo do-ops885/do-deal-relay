@@ -10,6 +10,74 @@ Guard rails are automated safety checks that prevent the system from:
 - Violating security policies
 - Creating files in incorrect locations
 
+### Pre-Push Hook Guard Rails
+
+The pre-push hook runs automatically when `git push` is executed. It performs the following checks:
+
+| Guard Rail             | Purpose                                           |
+| ---------------------- | ------------------------------------------------- |
+| TypeScript Compilation | Ensures code compiles before pushing              |
+| Test Suite             | Runs tests and verifies they pass                 |
+| Validation Script      | Executes `./scripts/validate-codes.sh` if present |
+| Secret Detection       | Scans for potential secrets in staged changes     |
+| Branch Name            | Validates branch follows naming conventions       |
+| Recent Commits         | Checks for WIP/temporary commits                  |
+
+#### Main Branch Protection
+
+When pushing to `main` or `master`, the hook enforces special handling:
+
+```
+⚠️  Direct push to main branch detected
+
+Recommended workflow: Use feature branches for changes
+
+Options:
+  1. Cancel and use: git checkout -b feature/xxx && git push -u origin feature/xxx
+  2. Type 'I understand pushing to main' to continue with main push
+  3. Use --no-verify to bypass all checks (not recommended)
+
+Enter your choice (or type the confirmation phrase):
+```
+
+**Confirmation Flow:**
+
+1. User types exact phrase: `I understand pushing to main`
+2. Push is ALLOWED to proceed
+3. Event is logged to `temp/main-push-audit.log`
+
+**Blocked Flow:**
+
+1. User enters anything else or cancels
+2. Push is BLOCKED
+3. Attempt is logged to `temp/main-push-audit.log`
+
+**Audit Log Format:**
+
+```
+[2026-04-01T12:34:56+00:00] AUTHORIZED main push by user@example.com from branch: main, remote: refs/heads/main
+[2026-04-01T12:35:12+00:00] BLOCKED main push attempt by user@example.com from branch: main, remote: refs/heads/main, input: 'no'
+```
+
+#### Hook Locations
+
+- **Active Hook**: `.git/hooks/pre-push` (Git-managed, auto-installed on clone)
+- **Canonical Version**: `.githooks/pre-push` (project source)
+- **Standalone Script**: `scripts/pre-push-hook.sh` (for manual execution)
+
+To install the canonical hook manually:
+
+```bash
+cp .githooks/pre-push .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
+To bypass all checks (use sparingly):
+
+```bash
+git push --no-verify
+```
+
 ### File Organization Guard Rails
 
 **ROOT DIRECTORY POLICY**: Only essential configuration files belong in root. All other files MUST use appropriate subfolders.
