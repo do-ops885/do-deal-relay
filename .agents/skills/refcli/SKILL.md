@@ -1,6 +1,6 @@
 ---
 name: refcli
-description: Manage referral codes via CLI with Cloudflare Workers - PRESERVE COMPLETE LINKS
+description: Manage referral codes via CLI - FULL URL ALWAYS RETURNED
 version: 1.0.0
 author: do-deal-relay
 tags: [cli, referral, cloudflare, wrangler]
@@ -8,42 +8,58 @@ tags: [cli, referral, cloudflare, wrangler]
 
 # Skill: refcli - Referral Management CLI
 
-## Overview
+## CRITICAL RULES
 
-CLI tool for managing referral codes in Cloudflare Workers. Extracts code and domain metadata while **always preserving the complete URL exactly as provided**.
-
-## CRITICAL RULE: PRESERVE COMPLETE LINKS
+### 1. PRESERVE COMPLETE LINKS (Input)
 
 **ALWAYS use the COMPLETE link as provided. NEVER modify or shorten the URL.**
 
-### Correct Usage:
-
 ```bash
-# [CORRECT] Full link preserved exactly as provided
+# [CORRECT] Full link preserved exactly
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
 
-# [CORRECT] Result stores: https://picnic.app/de/freunde-rabatt/DOMI6869
+# [WRONG] Never use partial URLs
+npx ts-node scripts/refcli.ts codes smart-add picnic.app/DOMI6869  # NEVER DO THIS
 ```
 
-### Incorrect (DO NOT DO):
+### 2. FULL URL ALWAYS RETURNED (Output)
 
-```bash
-# [WRONG] Never use shortened or partial URLs
-npx ts-node scripts/refcli.ts codes smart-add picnic.app/DOMI6869
-npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/DOMI6869
+**When querying the system, the COMPLETE URL is always returned in the `url` field.**
+
+```json
+{
+  "referral": {
+    "id": "ref-abc123",
+    "code": "DOMI6869",
+    "url": "https://picnic.app/de/freunde-rabatt/DOMI6869",
+    "domain": "picnic.app"
+  }
+}
 ```
+
+**All API responses include the full URL:**
+
+- `GET /api/referrals` - Each referral has complete `url` field
+- `GET /api/referrals/:code` - Returns referral with full `url`
+- `POST /api/referrals` - Created referral includes full `url`
+- `POST /api/referrals/:code/deactivate` - Deactivated referral includes full `url`
+- `POST /api/referrals/:code/reactivate` - Reactivated referral includes full `url`
 
 ## Quick Start
 
 ### Local Development
 
 ```bash
-# Terminal 1: Start dev server
+# Start dev server
 wrangler dev
 
-# Terminal 2: Add a code with COMPLETE link
+# Add with COMPLETE link
 npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
+
+# Query returns FULL URL
+npx ts-node scripts/refcli.ts codes get DOMI6869
+# Output includes: "url": "https://picnic.app/de/freunde-rabatt/DOMI6869"
 ```
 
 ### Production
@@ -55,89 +71,82 @@ npx ts-node scripts/refcli.ts auth login \
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
 ```
 
-## Smart Add (Auto-Parse)
+## Smart Add
 
-The smart-add command extracts metadata while **preserving the complete URL**:
-
-```bash
-npx ts-node scripts/refcli.ts codes smart-add <full-referral-url>
-```
-
-**What gets stored:**
-
-- **URL**: Complete link exactly as provided (e.g., `https://picnic.app/de/freunde-rabatt/DOMI6869`)
-- **Domain**: Extracted from hostname (e.g., `picnic.app`)
-- **Code**: Last path segment (e.g., `DOMI6869`)
-
-### Examples with COMPLETE Links:
-
-```bash
-# Picnic (German referral)
-npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
-
-# Trading212
-npx ts-node scripts/refcli.ts codes smart-add https://www.trading212.com/invite/GcCOCxbo
-
-# Crypto.com
-npx ts-node scripts/refcli.ts codes smart-add https://crypto.com/app/ABC123
-
-# Airbnb
-npx ts-node scripts/refcli.ts codes smart-add https://www.airbnb.com/c/somecode123
-```
-
-## Core Commands
-
-### Auth
-
-```bash
-npx ts-node scripts/refcli.ts auth login --endpoint <url> [--key <api_key>]
-npx ts-node scripts/refcli.ts auth whoami
-```
-
-### Smart Add (Recommended)
+Auto-parse while preserving complete URL:
 
 ```bash
 npx ts-node scripts/refcli.ts codes smart-add <complete-referral-url>
 ```
 
-### Manual Add (when metadata needed)
+**Stores:**
+
+- `url`: Complete link (e.g., `https://picnic.app/de/freunde-rabatt/DOMI6869`)
+- `domain`: Extracted (e.g., `picnic.app`)
+- `code`: Last path segment (e.g., `DOMI6869`)
+
+## Commands
+
+### Auth
 
 ```bash
+npx ts-node scripts/refcli.ts auth login --endpoint <url>
+npx ts-node scripts/refcli.ts auth whoami
+```
+
+### Code Management
+
+```bash
+# Add with auto-parse
+npx ts-node scripts/refcli.ts codes smart-add <complete-url>
+
+# Manual add
 npx ts-node scripts/refcli.ts codes add \
-  --code <code> \
-  --url <complete-url> \
-  --domain <domain> \
-  [--title <title>] \
-  [--reward-type <type>]
+  --code <code> --url <complete-url> --domain <domain>
+
+# List (returns referrals with full urls)
+npx ts-node scripts/refcli.ts codes list [--status active]
+
+# Get single (returns full url)
+npx ts-node scripts/refcli.ts codes get <code>
+
+# Deactivate (returns full url)
+npx ts-node scripts/refcli.ts codes deactivate <code> --reason <reason>
+
+# Reactivate (returns full url)
+npx ts-node scripts/refcli.ts codes reactivate <code>
 ```
 
-### List Codes
+### Research
 
 ```bash
-npx ts-node scripts/refcli.ts codes list \
-  [--status active|inactive|expired] \
-  [--domain <domain>]
+npx ts-node scripts/refcli.ts research run --domain <domain>
+npx ts-node scripts/refcli.ts research results --domain <domain>
 ```
 
-### Deactivate
+## API Response Format
 
-```bash
-npx ts-node scripts/refcli.ts codes deactivate <code> \
-  --reason <user_request|expired|invalid|violation|replaced>
+All referral objects include the **complete URL**:
+
+```json
+{
+  "id": "ref-xxx",
+  "code": "ABC123",
+  "url": "https://example.com/full/path/ABC123",
+  "domain": "example.com",
+  "status": "active",
+  "metadata": {
+    "title": "Example Referral"
+  }
+}
 ```
 
 ## Wrangler Commands
 
 ```bash
-# Development
-wrangler dev                      # Local server at localhost:8787
-
-# Deployment
-wrangler deploy                   # Production
-wrangler deploy --env staging     # Staging
-
-# Logs
-wrangler tail                     # Stream logs
+wrangler dev
+wrangler deploy
+wrangler tail
 ```
 
 ## References
@@ -145,4 +154,3 @@ wrangler tail                     # Stream logs
 - CLI: `scripts/refcli.ts`
 - API: `worker/index.ts`
 - Config: `wrangler.toml`
-- Cloudflare Docs: https://developers.cloudflare.com/workers/

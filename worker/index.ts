@@ -359,6 +359,7 @@ async function handleCreateReferral(
         referral: {
           id: referral.id,
           code: referral.code,
+          url: referral.url,
           domain: referral.domain,
           status: referral.status,
         },
@@ -451,6 +452,8 @@ async function handleDeactivateReferral(
       referral: {
         id: referral.id,
         code: referral.code,
+        url: referral.url,
+        domain: referral.domain,
         status: referral.status,
         deactivated_at: referral.deactivated_at,
         reason: referral.deactivated_reason,
@@ -489,6 +492,8 @@ async function handleReactivateReferral(
       referral: {
         id: referral.id,
         code: referral.code,
+        url: referral.url,
+        domain: referral.domain,
         status: referral.status,
       },
     });
