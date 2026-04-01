@@ -1,0 +1,42 @@
+# Prettier Ignore Patterns
+# Files and directories that Prettier should not format
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+*.log
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Markdown (let markdownlint handle these)
+*.md
+
+# JSON files (often auto-generated)
+state.json
+*.lock
+
+# Minified files
+*.min.js
+*.min.css
+
+# Vendor directories
+vendor/
+third_party/
+
+# Test outputs
+coverage/
