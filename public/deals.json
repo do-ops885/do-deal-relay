@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
+  "version": "0.1.0",
   "generated_at": "2024-03-31T15:00:00Z",
   "run_id": "deals-2024-03-31-15",
   "trace_id": "example-trace-id",
   "snapshot_hash": "abc123def456",
   "previous_hash": "",
-  "schema_version": "1.0.0",
+  "schema_version": "0.1.0",
   "stats": {
     "total": 1,
     "active": 1,
