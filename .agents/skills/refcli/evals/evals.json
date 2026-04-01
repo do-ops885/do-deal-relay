@@ -1,0 +1,63 @@
+{
+  "skill": "refcli",
+  "version": "1.0.0",
+  "description": "Agent skill for managing referral codes using the refcli CLI tool",
+  "capabilities": [
+    "add_referral_codes",
+    "deactivate_referral_codes",
+    "search_referral_codes",
+    "run_web_research",
+    "check_system_health"
+  ],
+  "evals": [
+    {
+      "name": "add_referral_code",
+      "description": "Add a new referral code via CLI",
+      "criteria": [
+        "Uses correct command structure",
+        "Includes required fields (code, url, domain)",
+        "Handles optional metadata fields",
+        "Verifies successful creation"
+      ]
+    },
+    {
+      "name": "deactivate_referral_code",
+      "description": "Deactivate an existing referral code",
+      "criteria": [
+        "Specifies correct code",
+        "Provides valid reason",
+        "Optionally includes replacement code",
+        "Confirms deactivation status"
+      ]
+    },
+    {
+      "name": "search_referral_codes",
+      "description": "Search and filter referral codes",
+      "criteria": [
+        "Uses appropriate filters (status, domain)",
+        "Formats output correctly",
+        "Handles pagination if needed"
+      ]
+    },
+    {
+      "name": "run_web_research",
+      "description": "Execute web research for referral codes",
+      "criteria": [
+        "Specifies domain correctly",
+        "Chooses appropriate depth level",
+        "Processes research results",
+        "Stores discovered codes"
+      ]
+    },
+    {
+      "name": "cli_error_handling",
+      "description": "Handle CLI errors gracefully",
+      "criteria": [
+        "Checks for required parameters",
+        "Handles authentication errors",
+        "Provides helpful error messages",
+        "Suggests next steps on failure"
+      ]
+    }
+  ]
+}
