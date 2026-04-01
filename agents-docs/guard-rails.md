@@ -24,6 +24,13 @@ tsconfig.json       # TypeScript config
 vitest.config.ts    # Test runner config
 wrangler.toml       # Cloudflare Workers config
 README.md           # Main project documentation
+QUICKSTART.md       # Quick start guide
+CONTRIBUTING.md     # Contribution guidelines
+SECURITY.md         # Security policy
+AGENTS.md           # Agent coordination hub
+CLAUDE.md           # Claude CLI spec
+GEMINI.md           # Gemini CLI spec
+QWEN.md             # Qwen CLI spec
 VERSION             # Version file
 LICENSE             # License file (if present)
 ```

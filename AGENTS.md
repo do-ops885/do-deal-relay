@@ -109,5 +109,8 @@ Always run `./scripts/quality_gate.sh` before handoff or completion:
 | Skills Directory      | [.agents/skills/](.agents/skills/)                                 |
 | API Documentation     | [docs/API.md](docs/API.md)                                         |
 | Handoff Templates     | [agents-docs/handoffs/](agents-docs/handoffs/)                     |
+| Quick Start           | [QUICKSTART.md](QUICKSTART.md)                                     |
+| Contributing          | [CONTRIBUTING.md](CONTRIBUTING.md)                                 |
+| Security              | [SECURITY.md](SECURITY.md)                                         |
 
 **Active Agents**: See `temp/state.json` for current status and assignments.

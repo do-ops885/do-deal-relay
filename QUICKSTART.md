@@ -370,6 +370,7 @@ Now that you have the system running:
 | **Deployment**         | [agents-docs/DEPLOYMENT.md](agents-docs/DEPLOYMENT.md)             | Production setup       |
 | **Agent Coordination** | [AGENTS.md](AGENTS.md)                                             | Multi-agent protocols  |
 | **Contributing**       | [CONTRIBUTING.md](CONTRIBUTING.md)                                 | Development guidelines |
+| **Security**           | [SECURITY.md](SECURITY.md)                                         | Security policy        |
 
 ### Common Development Tasks
 
