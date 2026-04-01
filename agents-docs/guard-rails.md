@@ -10,7 +10,7 @@ Guard rails are automated safety checks that prevent the system from:
 - Violating security policies
 - Creating files in incorrect locations
 
-### File Organization Guard Rails (NEW)
+### File Organization Guard Rails
 
 **ROOT DIRECTORY POLICY**: Only essential configuration files belong in root. All other files MUST use appropriate subfolders.
 
@@ -130,8 +130,8 @@ await enforceGuardRails(deals, "output");
 ### Pre-Commit Check
 
 ```bash
-# Run file organization check manually
-./scripts/check-root-files.sh
+# Run validation manually
+./scripts/validate-codes.sh
 
 # Git hook runs automatically on commit
 ```
