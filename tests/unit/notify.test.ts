@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { notify, notifyHighValueDeals } from "../../worker/notify";
+import { setGitHubToken } from "../../worker/lib/github";
 import type { Env, NotificationEvent } from "../../worker/types";
 
 describe("Notification System", () => {
@@ -11,6 +12,7 @@ describe("Notification System", () => {
     mockKvStorage = new Map();
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    setGitHubToken("test-token");
 
     mockEnv = {
       DEALS_PROD: {
@@ -27,6 +29,7 @@ describe("Notification System", () => {
       DEALS_SOURCES: {} as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
+      GITHUB_TOKEN: "test-token",
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
   });

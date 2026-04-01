@@ -142,6 +142,7 @@ describe("State Machine", () => {
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
+      GITHUB_TOKEN: "test-token",
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
   });

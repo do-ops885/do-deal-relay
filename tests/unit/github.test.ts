@@ -7,6 +7,7 @@ import {
   getRecentCommits,
   isSnapshotCommitted,
   verifyCommit,
+  setGitHubToken,
 } from "../../worker/lib/github";
 import type { Snapshot } from "../../worker/types";
 
@@ -18,6 +19,7 @@ describe("GitHub Integration", () => {
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    setGitHubToken(TEST_TOKEN);
   });
 
   afterEach(() => {
