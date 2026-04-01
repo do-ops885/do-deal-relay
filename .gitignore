@@ -1,58 +1,362 @@
-# Dependencies
+# Comprehensive .gitignore for AI Agent Projects
+# This .gitignore covers multiple languages and tools commonly used in AI agent development
+# Based on production patterns from github-template-ai-agents and do-deal-relay
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+
+# Node.js
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Build outputs
-dist/
-build/
-*.tsbuildinfo
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+requirements.txt.lock
+poetry.lock
 
-# OS
-.DS_Store
-Thumbs.db
+# Rust
+/target/
+Cargo.lock
+**/*.rs.bk
 
-# Testing
-coverage/
-.nyc_output/
+# Go
+/vendor/
+go.sum
 
-# Cloudflare
-.wrangler/
-wrangler.toml
-!wrangler.toml.example
+# Java
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+build/
+target/
 
-# Secrets (NEVER commit)
+# Ruby
+*.gem
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/vendor/bundle/
+
+# ============================================================================
+# BUILD OUTPUTS
+# ============================================================================
+
+dist/
+build/
+lib/
+out/
+*.tsbuildinfo
+*.tscache
+.rollup.cache
+.parcel-cache
+.cache/
+.vite/
+.next/
+.nuxt/
+.svelte-kit/
+
+# ============================================================================
+# ENVIRONMENT & SECRETS
+# ============================================================================
+
+# Environment files (NEVER commit)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+!.env.example
+!.env.template
+
+# Secrets and keys (CRITICAL)
 *.key
 *.pem
 *.cert
+*.crt
+*.p12
+*.pfx
 secrets/
+.private/
+credentials.json
+token.json
+service-account.json
+*-credentials.json
+*secret*.json
+*api-key*
+*apikey*
+*api_key*
+*password*
+*passwd*
+*token*
 
-# Temporary files
+# SSH keys
+.ssh/
+*.pem
+*.ppk
+id_rsa
+id_ecdsa
+id_ed25519
+
+# ============================================================================
+# LOGS & TEMPORARY FILES
+# ============================================================================
+
+*.log
+logs/
 *.tmp
 .tmp/
 temp/
+tmp/
+*.temp
+*.cache
+cache/
+*.pid
+*.seed
+*.pid.lock
 
-# Agent system state
+# ============================================================================
+# IDE & EDITOR
+# ============================================================================
+
+# VS Code
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json.example
+*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# OS FILES
+# ============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.nfs*
+
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+
+coverage/
+.nyc_output/
+*.lcov
+htmlcov/
+.tox/
+.pytest_cache/
+.hypothesis/
+.rspec
+jest-coverage/
+vitest-coverage/
+
+# ============================================================================
+# CLOUDFLARE (if using Workers)
+# ============================================================================
+
+.wrangler/
+wrangler.toml
+!wrangler.toml.example
+.dev.vars
+!.dev.vars.example
+.cloudflare/
+
+# ============================================================================
+# AI AGENT SPECIFIC
+# ============================================================================
+
+# Agent state files
 state.json
+state.*.json
+.agents/state/
+*.agent-state
 
-# Opencode
-.opencode/
+# Skill lock files
+.agents/skills/.lock
+skills-lock.json
+
+# Temporary agent outputs
+temp/BIDIRECTIONAL_*
+temp/SWARM_*
+temp/DEPLOYMENT_*
+temp/*.md
+
+# Context files (may contain sensitive data)
+.context/
+*.context.json
+
+# Sub-agent outputs
+.agents/outputs/
+
+# ============================================================================
+# PACKAGE MANAGERS
+# ============================================================================
+
+# npm
+.npm
+
+# yarn
+.yarn-integrity
+.yarn-cache/
+
+# pnpm
+.pnpm-debug.log*
+
+# ============================================================================
+# DEPLOYMENT & CI/CD
+# ============================================================================
+
+.vercel
+.netlify
+.serverless
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terragrunt-cache/
+
+# Docker
+.dockerignore.local
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+.kube/
+
+# ============================================================================
+# DATABASES
+# ============================================================================
+
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+
+# ============================================================================
+# DOCUMENTATION BUILDS
+# ============================================================================
+
+/site/
+/_site/
+docs/_build/
+doc/_build/
+
+# ============================================================================
+# LOCAL DEVELOPMENT
+# ============================================================================
+
+# Local development files
+local/
+local.*
+*.local
+.dev/
+development/
+
+# Debug files
+.debug/
+debug/
+*.debug
+
+# Profiling
+*.prof
+*.profile
+
+# ============================================================================
+# BACKUPS
+# ============================================================================
+
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*~
+
+# ============================================================================
+# MISCELLANEOUS
+# ============================================================================
+
+# Draw.io
+*.drawio.bkp
+
+# Excel temp files
+~$*.xlsx
+~$*.xls
+
+# Word temp files
+~$*.docx
+~$*.doc
+
+# PDF generation
+*.pdf
+!docs/*.pdf
+
+# Archives
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
