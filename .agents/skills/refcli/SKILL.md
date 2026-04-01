@@ -1,6 +1,6 @@
 ---
 name: refcli
-description: Manage referral codes via CLI with Cloudflare Workers
+description: Manage referral codes via CLI with Cloudflare Workers - PRESERVE COMPLETE LINKS
 version: 1.0.0
 author: do-deal-relay
 tags: [cli, referral, cloudflare, wrangler]
@@ -10,12 +10,28 @@ tags: [cli, referral, cloudflare, wrangler]
 
 ## Overview
 
-Manage referral codes via CLI with Cloudflare Workers. Supports local dev and production deployments.
+CLI tool for managing referral codes in Cloudflare Workers. Extracts code and domain metadata while **always preserving the complete URL exactly as provided**.
 
-## Prerequisites
+## CRITICAL RULE: PRESERVE COMPLETE LINKS
 
-- Node.js installed
-- Wrangler CLI: `npm install -g wrangler`
+**ALWAYS use the COMPLETE link as provided. NEVER modify or shorten the URL.**
+
+### Correct Usage:
+
+```bash
+# [CORRECT] Full link preserved exactly as provided
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
+
+# [CORRECT] Result stores: https://picnic.app/de/freunde-rabatt/DOMI6869
+```
+
+### Incorrect (DO NOT DO):
+
+```bash
+# [WRONG] Never use shortened or partial URLs
+npx ts-node scripts/refcli.ts codes smart-add picnic.app/DOMI6869
+npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/DOMI6869
+```
 
 ## Quick Start
 
@@ -25,59 +41,49 @@ Manage referral codes via CLI with Cloudflare Workers. Supports local dev and pr
 # Terminal 1: Start dev server
 wrangler dev
 
-# Terminal 2: Configure CLI
+# Terminal 2: Add a code with COMPLETE link
 npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
-
-# Add a code with smart-parse
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
-
-# Or add manually
-npx ts-node scripts/refcli.ts codes add \
-  --code ABC123 \
-  --url https://example.com/invite/ABC123 \
-  --domain example.com
 ```
 
 ### Production
 
 ```bash
-# Deploy
 wrangler deploy
-
-# Configure for production
 npx ts-node scripts/refcli.ts auth login \
   --endpoint https://do-deal-relay.YOUR_SUBDOMAIN.workers.dev
-
-# Smart-add a referral URL
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
 ```
 
-## Smart Add (Auto-Parse URL)
+## Smart Add (Auto-Parse)
 
-The easiest way to add a referral - just paste the URL:
+The smart-add command extracts metadata while **preserving the complete URL**:
 
 ```bash
-npx ts-node scripts/refcli.ts codes smart-add <referral-url>
+npx ts-node scripts/refcli.ts codes smart-add <full-referral-url>
 ```
 
-**Examples:**
+**What gets stored:**
+
+- **URL**: Complete link exactly as provided (e.g., `https://picnic.app/de/freunde-rabatt/DOMI6869`)
+- **Domain**: Extracted from hostname (e.g., `picnic.app`)
+- **Code**: Last path segment (e.g., `DOMI6869`)
+
+### Examples with COMPLETE Links:
 
 ```bash
-# Picnic referral
+# Picnic (German referral)
 npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
 
-# Trading212 invite
+# Trading212
 npx ts-node scripts/refcli.ts codes smart-add https://www.trading212.com/invite/GcCOCxbo
 
 # Crypto.com
 npx ts-node scripts/refcli.ts codes smart-add https://crypto.com/app/ABC123
+
+# Airbnb
+npx ts-node scripts/refcli.ts codes smart-add https://www.airbnb.com/c/somecode123
 ```
-
-**Smart Add extracts:**
-
-- Domain from hostname (e.g., picnic.app)
-- Code from last path segment (e.g., DOMI6869)
-- Full URL for storage
 
 ## Core Commands
 
@@ -88,102 +94,39 @@ npx ts-node scripts/refcli.ts auth login --endpoint <url> [--key <api_key>]
 npx ts-node scripts/refcli.ts auth whoami
 ```
 
-### Code Management
-
-**Smart Add (Recommended):**
+### Smart Add (Recommended)
 
 ```bash
-npx ts-node scripts/refcli.ts codes smart-add <referral-url>
+npx ts-node scripts/refcli.ts codes smart-add <complete-referral-url>
 ```
 
-**Manual Add:**
+### Manual Add (when metadata needed)
 
 ```bash
 npx ts-node scripts/refcli.ts codes add \
-  --code <code> --url <url> --domain <domain> \
-  [--title <title>] [--reward-type <type>] [--category <cats>]
+  --code <code> \
+  --url <complete-url> \
+  --domain <domain> \
+  [--title <title>] \
+  [--reward-type <type>]
 ```
 
-**List:**
+### List Codes
 
 ```bash
 npx ts-node scripts/refcli.ts codes list \
   [--status active|inactive|expired] \
-  [--domain <domain>] [--output table|json|csv|yaml]
+  [--domain <domain>]
 ```
 
-**Get:**
-
-```bash
-npx ts-node scripts/refcli.ts codes get <code>
-```
-
-**Deactivate:**
+### Deactivate
 
 ```bash
 npx ts-node scripts/refcli.ts codes deactivate <code> \
   --reason <user_request|expired|invalid|violation|replaced>
 ```
 
-**Reactivate:**
-
-```bash
-npx ts-node scripts/refcli.ts codes reactivate <code>
-```
-
-### Web Research
-
-```bash
-npx ts-node scripts/refcli.ts research run \
-  --domain <domain> [--depth quick|thorough|deep]
-
-npx ts-node scripts/refcli.ts research results --domain <domain>
-```
-
-### System
-
-```bash
-npx ts-node scripts/refcli.ts system health
-npx ts-node scripts/refcli.ts system metrics
-```
-
-## Examples
-
-### Quick Add with URL
-
-```bash
-npx ts-node scripts/refcli.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
-```
-
-### Full Metadata Add
-
-```bash
-npx ts-node scripts/refcli.ts codes add \
-  --code WELCOME2024 \
-  --url https://example.com/ref/WELCOME2024 \
-  --domain example.com \
-  --title "Welcome Bonus" \
-  --reward-type cash \
-  --reward-value 50 \
-  --currency USD \
-  --category "finance,investment"
-```
-
-### Export Active Codes
-
-```bash
-npx ts-node scripts/refcli.ts codes list \
-  --status active --output json > codes.json
-```
-
-### Research Domain
-
-```bash
-npx ts-node scripts/refcli.ts research run \
-  --domain trading212.com --depth thorough
-```
-
-## Wrangler Workflow
+## Wrangler Commands
 
 ```bash
 # Development
@@ -195,22 +138,11 @@ wrangler deploy --env staging     # Staging
 
 # Logs
 wrangler tail                     # Stream logs
-
-# KV
-wrangler kv list --binding DEALS_SOURCES
 ```
-
-## Troubleshooting
-
-| Issue              | Solution                                   |
-| ------------------ | ------------------------------------------ |
-| Connection refused | Ensure `wrangler dev` is running           |
-| KV errors          | Check KV IDs in `wrangler.toml`            |
-| Deploy fails       | Run `wrangler deploy --dry-run` to preview |
 
 ## References
 
 - CLI: `scripts/refcli.ts`
 - API: `worker/index.ts`
 - Config: `wrangler.toml`
-- Docs: https://developers.cloudflare.com/workers/
+- Cloudflare Docs: https://developers.cloudflare.com/workers/
