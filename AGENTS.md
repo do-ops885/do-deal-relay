@@ -97,6 +97,40 @@ Always run the full quality gate before committing. Fix all errors before finish
 - Never connect to untrusted MCP servers - tool descriptions inject into the system prompt
 - Report vulnerabilities via GitHub private advisories
 
+## Swarm Coordination Patterns
+
+**Pattern 1: Research Swarm** (Gemini + Qwen) - Delegate web research tasks, aggregate in `temp/swarm-research-*.md`.
+
+**Pattern 2: Validation Pipeline** (Claude + Qwen) - Run all validation gates in parallel, aggregate results, fail fast.
+
+**Pattern 3: Code Review Swarm** (Claude + Gemini) - Split by module, each agent reviews + reports, consolidate findings.
+
+Load `skill parallel-execution` for implementation. See `agents-docs/SUB-AGENTS.md`.
+
+## Handoff Coordination Protocol
+
+**Trigger Conditions**: Context limit, agent switch, task completion, parallel need.
+
+**Handoff Steps**:
+
+1. Current agent writes `temp/handoff-*.md` with: task status (done/partial/blocked), key decisions, next steps, relevant file paths
+2. Update `agents-docs/coordination/handoff-log.jsonl`
+3. Next agent reads handoff file + AGENTS.md + its own spec
+4. Confirm understanding before proceeding
+
+**Blocker Escalation**: 30min stuck → Escalate to `agents-docs/coordination/blockers.md` with issue, attempted fixes, relevant code, hypothesis.
+
+See `agents-docs/coordination/` for full protocol.
+
+## State Management
+
+| File | Purpose |
+|------|---------|
+| `temp/state.json` | Active agent status, current phase |
+| `temp/skills-lock.json` | External skill version tracking |
+| `agents-docs/coordination/handoff-log.jsonl` | Handoff history |
+| `agents-docs/coordination/blockers.md` | Escalated issues |
+
 ## Agent Guidance
 
 ### Plan Before Executing
