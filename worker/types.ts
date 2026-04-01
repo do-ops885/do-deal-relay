@@ -310,6 +310,125 @@ export interface Metrics {
 }
 
 // ============================================================================
+// Referral Input Management Schema
+// ============================================================================
+
+export const ReferralInputSchema = z.object({
+  id: z.string(),
+  code: z.string().min(1).max(100),
+  url: z.string().url(),
+  domain: z.string().min(1),
+  source: z.enum(["manual", "web_research", "api", "discovered"]),
+  status: z.enum(["active", "inactive", "expired", "quarantined"]),
+  submitted_at: z.string().datetime(),
+  submitted_by: z.string().optional(),
+  expires_at: z.string().datetime().optional(),
+  deactivated_at: z.string().datetime().optional(),
+  deactivated_reason: z
+    .enum(["user_request", "expired", "invalid", "violation", "replaced"])
+    .optional(),
+  metadata: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    reward_type: z.enum(["cash", "credit", "percent", "item", "unknown"]),
+    reward_value: z.union([z.number(), z.string()]).optional(),
+    currency: z.string().optional(),
+    category: z.array(z.string()).default([]),
+    tags: z.array(z.string()).default([]),
+    requirements: z.array(z.string()).default([]),
+    research_sources: z.array(z.string()).optional(),
+    confidence_score: z.number().min(0).max(1).default(0.5),
+    notes: z.string().optional(),
+  }),
+  validation: z
+    .object({
+      last_validated: z.string().datetime().optional(),
+      is_valid: z.boolean().optional(),
+      validation_errors: z.array(z.string()).optional(),
+      checked_urls: z.array(z.string()).optional(),
+    })
+    .optional(),
+  related_codes: z.array(z.string()).optional(), // For tracking variations
+});
+
+export const ReferralResearchResultSchema = z.object({
+  query: z.string(),
+  domain: z.string(),
+  discovered_codes: z.array(
+    z.object({
+      code: z.string(),
+      url: z.string().url(),
+      source: z.string(),
+      discovered_at: z.string().datetime(),
+      reward_summary: z.string().optional(),
+      confidence: z.number().min(0).max(1),
+    }),
+  ),
+  research_metadata: z.object({
+    sources_checked: z.array(z.string()),
+    search_queries: z.array(z.string()),
+    research_duration_ms: z.number(),
+    agent_id: z.string(),
+  }),
+});
+
+export const ReferralDeactivateBodySchema = z.object({
+  code: z.string().min(1),
+  reason: z.enum([
+    "user_request",
+    "expired",
+    "invalid",
+    "violation",
+    "replaced",
+  ]),
+  replaced_by: z.string().optional(), // New code that replaces this one
+  notes: z.string().optional(),
+});
+
+export const ReferralSearchQuerySchema = z.object({
+  domain: z.string().optional(),
+  status: z
+    .enum(["active", "inactive", "expired", "quarantined", "all"])
+    .default("all"),
+  category: z.string().optional(),
+  source: z
+    .enum(["manual", "web_research", "api", "discovered", "all"])
+    .default("all"),
+  limit: z.coerce.number().int().min(1).max(1000).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export const WebResearchRequestSchema = z.object({
+  query: z.string().min(1),
+  domain: z.string().optional(),
+  depth: z.enum(["quick", "thorough", "deep"]).default("thorough"),
+  sources: z
+    .array(
+      z.enum([
+        "producthunt",
+        "github",
+        "hackernews",
+        "reddit",
+        "twitter",
+        "company_site",
+        "all",
+      ]),
+    )
+    .default(["all"]),
+  max_results: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type ReferralInput = z.infer<typeof ReferralInputSchema>;
+export type ReferralResearchResult = z.infer<
+  typeof ReferralResearchResultSchema
+>;
+export type ReferralDeactivateBody = z.infer<
+  typeof ReferralDeactivateBodySchema
+>;
+export type ReferralSearchQuery = z.infer<typeof ReferralSearchQuerySchema>;
+export type WebResearchRequest = z.infer<typeof WebResearchRequestSchema>;
+
+// ============================================================================
 // GOAP World State
 // ============================================================================
 

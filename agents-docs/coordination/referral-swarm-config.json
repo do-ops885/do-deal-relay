@@ -1,0 +1,706 @@
+{
+  "$schema": "./swarm-config.schema.json",
+  "version": "1.0.0",
+  "swarm_id": "referral-management-swarm",
+  "name": "Referral Code Management Swarm",
+  "description": "Multi-agent swarm for managing referral codes with web research, validation, and multiple input methods",
+
+  "system_context": {
+    "environment": "production",
+    "kv_namespaces": [
+      "DEALS_PROD",
+      "DEALS_STAGING",
+      "DEALS_LOG",
+      "DEALS_LOCK",
+      "DEALS_SOURCES"
+    ],
+    "pipeline_phases": [
+      "init",
+      "discover",
+      "normalize",
+      "dedupe",
+      "validate",
+      "score",
+      "stage",
+      "publish",
+      "verify",
+      "finalize"
+    ],
+    "cron_schedule": "0 */6 * * *",
+    "max_deals_per_run": 1000,
+    "timeout_ms": 30000
+  },
+
+  "agents": {
+    "ingestion-agent": {
+      "agent_id": "ingestion-agent",
+      "name": "Code Ingestion Agent",
+      "type": "discovery",
+      "subtype": "input_processor",
+      "description": "Processes new referral code submissions from all input methods (CLI, API, Extension, Bot, Email, Webhook)",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "data_extraction",
+        "validation",
+        "normalization",
+        "input_sanitization",
+        "storage"
+      ],
+      "inputs": ["ReferralInput", "Deal"],
+      "outputs": ["ReferralInput", "ValidationResult"],
+      "config": {
+        "max_retries": 3,
+        "timeout_ms": 5000,
+        "batch_size": 100
+      },
+      "safety_rules": [
+        "input_sanitization",
+        "payload_limit",
+        "timeout_enforcement",
+        "secret_detection"
+      ]
+    },
+
+    "research-agent": {
+      "agent_id": "research-agent",
+      "name": "Web Research Agent",
+      "type": "research",
+      "subtype": "web_scraper",
+      "description": "Discovers referral codes across the web from ProductHunt, GitHub, Hacker News, Reddit, company sites",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "web_research",
+        "data_extraction",
+        "html_parsing",
+        "trust_calculation"
+      ],
+      "inputs": ["WebResearchRequest"],
+      "outputs": ["ReferralResearchResult"],
+      "config": {
+        "max_retries": 3,
+        "timeout_ms": 30000,
+        "parallel_limit": 5,
+        "sources": [
+          {
+            "domain": "producthunt.com",
+            "url_patterns": ["/search/*"],
+            "trust_initial": 0.7,
+            "classification": "trusted",
+            "active": true
+          },
+          {
+            "domain": "reddit.com",
+            "url_patterns": ["/r/*/search*"],
+            "trust_initial": 0.5,
+            "classification": "probationary",
+            "active": true
+          },
+          {
+            "domain": "news.ycombinator.com",
+            "url_patterns": ["/search*"],
+            "trust_initial": 0.8,
+            "classification": "trusted",
+            "active": true
+          },
+          {
+            "domain": "github.com",
+            "url_patterns": ["/search*"],
+            "trust_initial": 0.7,
+            "classification": "trusted",
+            "active": true
+          }
+        ]
+      },
+      "safety_rules": [
+        "https_only",
+        "respect_robots_txt",
+        "no_js_execution",
+        "rate_limit_enforcement"
+      ]
+    },
+
+    "validation-agent": {
+      "agent_id": "validation-agent",
+      "name": "Code Validation Agent",
+      "type": "validation",
+      "subtype": "trust_calculator",
+      "description": "Validates referral codes for format correctness, URL accessibility, and duplicate detection",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "validation",
+        "deduplication",
+        "trust_calculation",
+        "error_handling"
+      ],
+      "inputs": ["ReferralInput", "ReferralResearchResult"],
+      "outputs": ["ValidationResult", "Deal"],
+      "config": {
+        "max_retries": 2,
+        "timeout_ms": 10000,
+        "thresholds": {
+          "min_trust_score": 0.3,
+          "min_confidence_score": 0.5,
+          "similarity_threshold": 0.8
+        }
+      }
+    },
+
+    "deactivation-agent": {
+      "agent_id": "deactivation-agent",
+      "name": "Code Deactivation Agent",
+      "type": "coordination",
+      "subtype": "state_manager",
+      "description": "Handles deactivation of old codes, reason tracking, and replacement management",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "state_management",
+        "logging",
+        "notification",
+        "storage"
+      ],
+      "inputs": ["ReferralInput", "ReferralDeactivateBody"],
+      "outputs": ["ReferralInput", "LogEntry"],
+      "config": {
+        "max_retries": 3,
+        "timeout_ms": 5000
+      }
+    },
+
+    "cli-interface-agent": {
+      "agent_id": "cli-interface-agent",
+      "name": "CLI Interface Agent",
+      "type": "coordination",
+      "subtype": "command_handler",
+      "description": "Handles CLI tool commands: add, deactivate, search, import, research",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "input_sanitization",
+        "validation",
+        "storage",
+        "logging"
+      ],
+      "inputs": ["Command", "Arguments"],
+      "outputs": ["Result", "LogEntry"],
+      "dependencies": ["ingestion-agent", "deactivation-agent"]
+    },
+
+    "api-interface-agent": {
+      "agent_id": "api-interface-agent",
+      "name": "REST API Interface Agent",
+      "type": "coordination",
+      "subtype": "api_handler",
+      "description": "Handles REST API requests for referral management",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "input_sanitization",
+        "validation",
+        "storage",
+        "logging"
+      ],
+      "inputs": ["HTTPRequest"],
+      "outputs": ["HTTPResponse", "LogEntry"],
+      "dependencies": [
+        "ingestion-agent",
+        "deactivation-agent",
+        "research-agent"
+      ]
+    },
+
+    "extension-interface-agent": {
+      "agent_id": "extension-interface-agent",
+      "name": "Browser Extension Interface Agent",
+      "type": "coordination",
+      "subtype": "extension_handler",
+      "description": "Handles browser extension messages: auto-detect, capture, bulk import",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": ["data_extraction", "input_sanitization", "storage"],
+      "inputs": ["ExtensionMessage"],
+      "outputs": ["ExtensionResponse", "ReferralInput"],
+      "dependencies": ["ingestion-agent"]
+    },
+
+    "bot-interface-agent": {
+      "agent_id": "bot-interface-agent",
+      "name": "Chat Bot Interface Agent",
+      "type": "coordination",
+      "subtype": "bot_handler",
+      "description": "Handles Telegram/Discord bot commands and conversations",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "input_sanitization",
+        "validation",
+        "storage",
+        "notification"
+      ],
+      "inputs": ["BotMessage", "Command"],
+      "outputs": ["BotResponse", "ReferralInput"],
+      "dependencies": [
+        "ingestion-agent",
+        "deactivation-agent",
+        "research-agent"
+      ]
+    },
+
+    "email-interface-agent": {
+      "agent_id": "email-interface-agent",
+      "name": "Email Interface Agent",
+      "type": "coordination",
+      "subtype": "email_handler",
+      "description": "Handles email parsing: forwarded referrals, commands, digests",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "data_extraction",
+        "input_sanitization",
+        "storage",
+        "notification"
+      ],
+      "inputs": ["Email"],
+      "outputs": ["ReferralInput", "EmailResponse"],
+      "dependencies": ["ingestion-agent"]
+    },
+
+    "webhook-interface-agent": {
+      "agent_id": "webhook-interface-agent",
+      "name": "Webhook Interface Agent",
+      "type": "coordination",
+      "subtype": "webhook_handler",
+      "description": "Handles incoming webhooks from partners and outgoing event notifications",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "validation",
+        "error_handling",
+        "storage",
+        "notification"
+      ],
+      "inputs": ["WebhookPayload"],
+      "outputs": ["WebhookResponse", "NotificationEvent"],
+      "dependencies": ["ingestion-agent"]
+    },
+
+    "synthesis-agent": {
+      "agent_id": "synthesis-agent",
+      "name": "Result Synthesis Agent",
+      "type": "coordination",
+      "subtype": "aggregator",
+      "description": "Aggregates results from all interface agents and maintains swarm state",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": ["state_management", "logging", "metrics_collection"],
+      "inputs": ["ValidationResult", "ReferralInput", "LogEntry"],
+      "outputs": ["Snapshot", "Metrics"]
+    }
+  },
+
+  "phases": {
+    "input_reception": {
+      "phase_id": "input_reception",
+      "name": "Input Reception",
+      "description": "Receive input from all interface methods",
+      "agents": [
+        "cli-interface-agent",
+        "api-interface-agent",
+        "extension-interface-agent",
+        "bot-interface-agent",
+        "email-interface-agent",
+        "webhook-interface-agent"
+      ],
+      "execution_mode": "parallel",
+      "timeout_ms": 10000,
+      "output_stage": "staging"
+    },
+
+    "ingestion": {
+      "phase_id": "ingestion",
+      "name": "Code Ingestion",
+      "description": "Process and normalize incoming referral data",
+      "agents": ["ingestion-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 5000,
+      "output_stage": "staging"
+    },
+
+    "research": {
+      "phase_id": "research",
+      "name": "Web Research",
+      "description": "Research additional referral codes from web sources",
+      "agents": ["research-agent"],
+      "execution_mode": "parallel",
+      "timeout_ms": 60000,
+      "retry_policy": {
+        "max_retries": 3,
+        "backoff_multiplier": 2,
+        "initial_delay_ms": 1000,
+        "retryable_errors": ["FetchError", "NetworkError"]
+      },
+      "output_stage": "staging"
+    },
+
+    "validation": {
+      "phase_id": "validation",
+      "name": "Code Validation",
+      "description": "Validate codes for correctness and duplicates",
+      "agents": ["validation-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 15000,
+      "output_stage": "staging"
+    },
+
+    "deactivation": {
+      "phase_id": "deactivation",
+      "name": "Code Deactivation",
+      "description": "Handle deactivation requests and replacements",
+      "agents": ["deactivation-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 5000,
+      "output_stage": "production"
+    },
+
+    "synthesis": {
+      "phase_id": "synthesis",
+      "name": "Result Synthesis",
+      "description": "Aggregate results and update system state",
+      "agents": ["synthesis-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 5000,
+      "output_stage": "production"
+    }
+  },
+
+  "handoff_rules": {
+    "transitions": [
+      {
+        "from_phase": "input_reception",
+        "to_phase": "ingestion",
+        "trigger": "complete",
+        "conditions": [{ "type": "no_errors" }],
+        "data_mapping": {
+          "referral_input": {
+            "source_field": "raw_input",
+            "target_field": "normalized_input",
+            "transform": "validate"
+          }
+        },
+        "timeout_ms": 5000,
+        "failure_action": "quarantine"
+      },
+      {
+        "from_phase": "ingestion",
+        "to_phase": "research",
+        "trigger": "complete",
+        "conditions": [
+          { "type": "min_count", "value": 1 },
+          { "type": "no_errors" }
+        ],
+        "data_mapping": {
+          "domain": {
+            "source_field": "referral.domain",
+            "target_field": "research_query",
+            "transform": "identity"
+          }
+        },
+        "timeout_ms": 60000,
+        "failure_action": "skip"
+      },
+      {
+        "from_phase": "ingestion",
+        "to_phase": "validation",
+        "trigger": "complete",
+        "conditions": [{ "type": "all_valid" }],
+        "data_mapping": {
+          "referral": {
+            "source_field": "normalized_referral",
+            "target_field": "validation_target",
+            "transform": "identity"
+          }
+        },
+        "timeout_ms": 15000,
+        "failure_action": "quarantine"
+      },
+      {
+        "from_phase": "validation",
+        "to_phase": "deactivation",
+        "trigger": "success",
+        "conditions": [
+          { "type": "custom", "expression": "deactivation_requested" }
+        ],
+        "timeout_ms": 5000,
+        "failure_action": "retry"
+      },
+      {
+        "from_phase": "validation",
+        "to_phase": "synthesis",
+        "trigger": "success",
+        "conditions": [{ "type": "no_errors" }],
+        "timeout_ms": 5000,
+        "failure_action": "retry"
+      }
+    ],
+    "default_failure_action": "quarantine",
+    "escalation_policy": {
+      "escalation_threshold_minutes": 30,
+      "escalation_targets": ["synthesis-agent"],
+      "notification_channels": ["telegram", "webhook"]
+    }
+  },
+
+  "parallel_execution_groups": {
+    "groups": [
+      {
+        "group_id": "interface-agents",
+        "name": "Interface Agents Group",
+        "description": "All interface agents can execute in parallel",
+        "agents": [
+          "cli-interface-agent",
+          "api-interface-agent",
+          "extension-interface-agent",
+          "bot-interface-agent",
+          "email-interface-agent",
+          "webhook-interface-agent"
+        ],
+        "execution_strategy": "all_parallel",
+        "sync_point": "before_next_phase",
+        "concurrency_limit": 6,
+        "result_aggregation": "concat",
+        "failure_mode": "continue",
+        "applies_to_phases": ["input_reception"]
+      },
+      {
+        "group_id": "research-sources",
+        "name": "Research Sources Group",
+        "description": "Research across multiple sources in parallel",
+        "agents": ["research-agent"],
+        "execution_strategy": "map_reduce",
+        "sync_point": "before_next_phase",
+        "concurrency_limit": 5,
+        "result_aggregation": "merge",
+        "failure_mode": "best_effort",
+        "applies_to_phases": ["research"]
+      }
+    ],
+    "max_global_concurrency": 10
+  },
+
+  "web_research": {
+    "enabled": true,
+    "agents": ["research-agent"],
+    "sources": [
+      {
+        "domain": "producthunt.com",
+        "priority": 1,
+        "rate_limit_rpm": 60,
+        "timeout_ms": 10000,
+        "fetch_strategy": "cached",
+        "selectors": {
+          "code": "[data-testid='referral-code']",
+          "reward": ".reward-amount"
+        },
+        "extraction_patterns": [
+          {
+            "field": "code",
+            "pattern": "referral[:\\s]+([A-Z0-9]{4,})",
+            "type": "regex"
+          }
+        ],
+        "trust_config": {
+          "initial_trust": 0.7,
+          "classification": "trusted",
+          "adjustment_on_success": 0.1,
+          "adjustment_on_failure": -0.2
+        }
+      },
+      {
+        "domain": "reddit.com",
+        "priority": 2,
+        "rate_limit_rpm": 30,
+        "timeout_ms": 15000,
+        "fetch_strategy": "direct",
+        "trust_config": {
+          "initial_trust": 0.5,
+          "classification": "probationary",
+          "adjustment_on_success": 0.05,
+          "adjustment_on_failure": -0.1
+        }
+      },
+      {
+        "domain": "news.ycombinator.com",
+        "priority": 1,
+        "rate_limit_rpm": 60,
+        "timeout_ms": 10000,
+        "fetch_strategy": "cached",
+        "trust_config": {
+          "initial_trust": 0.8,
+          "classification": "trusted",
+          "adjustment_on_success": 0.1,
+          "adjustment_on_failure": -0.15
+        }
+      },
+      {
+        "domain": "github.com",
+        "priority": 2,
+        "rate_limit_rpm": 60,
+        "timeout_ms": 10000,
+        "fetch_strategy": "cached",
+        "trust_config": {
+          "initial_trust": 0.7,
+          "classification": "trusted",
+          "adjustment_on_success": 0.1,
+          "adjustment_on_failure": -0.15
+        }
+      }
+    ],
+    "extraction_pipeline": {
+      "max_retries": 3,
+      "timeout_per_source_ms": 10000,
+      "parallel_sources": 5,
+      "validation_rules": [
+        {
+          "field": "code",
+          "rule": "required"
+        },
+        {
+          "field": "url",
+          "rule": "format",
+          "params": { "type": "url" }
+        }
+      ]
+    },
+    "caching": {
+      "enabled": true,
+      "ttl_seconds": 3600,
+      "kv_namespace": "DEALS_SOURCES"
+    }
+  },
+
+  "quality_gates": {
+    "gates": [
+      {
+        "gate_id": "schema_validation",
+        "name": "Schema Validation",
+        "applies_to_phases": ["ingestion", "validation"],
+        "type": "schema",
+        "validator_agent": "validation-agent",
+        "auto_enabled": true,
+        "blocking": true,
+        "config": {
+          "required_fields": ["code", "url", "domain", "source"]
+        },
+        "failure_action": "block"
+      },
+      {
+        "gate_id": "duplicate_check",
+        "name": "Duplicate Code Check",
+        "applies_to_phases": ["validation"],
+        "type": "data_quality",
+        "validator_agent": "validation-agent",
+        "auto_enabled": true,
+        "blocking": true,
+        "config": {
+          "similarity_threshold": 0.9
+        },
+        "failure_action": "quarantine"
+      },
+      {
+        "gate_id": "trust_score_validation",
+        "name": "Trust Score Validation",
+        "applies_to_phases": ["validation"],
+        "type": "logic",
+        "validator_agent": "validation-agent",
+        "auto_enabled": true,
+        "blocking": false,
+        "config": {
+          "min_trust_score": 0.3,
+          "min_confidence_score": 0.5
+        },
+        "failure_action": "warn"
+      }
+    ],
+    "validation_severity": "strict",
+    "quarantine_threshold": 0.3
+  },
+
+  "notifications": {
+    "channels": [
+      {
+        "channel_id": "telegram",
+        "type": "telegram",
+        "enabled": true,
+        "config": {
+          "bot_token_env": "TELEGRAM_BOT_TOKEN",
+          "chat_id_env": "TELEGRAM_CHAT_ID"
+        },
+        "events": [
+          "phase_complete",
+          "phase_error",
+          "quality_gate_fail",
+          "high_value_deal",
+          "system_error"
+        ],
+        "severity_filter": ["warning", "critical"]
+      },
+      {
+        "channel_id": "webhook",
+        "type": "webhook",
+        "enabled": true,
+        "config": {
+          "url_env": "WEBHOOK_URL",
+          "secret_env": "WEBHOOK_SECRET"
+        },
+        "events": [
+          "phase_complete",
+          "handoff_success",
+          "handoff_failure",
+          "quality_gate_pass",
+          "quality_gate_fail"
+        ],
+        "severity_filter": ["info", "warning", "critical"]
+      },
+      {
+        "channel_id": "log",
+        "type": "log",
+        "enabled": true,
+        "config": {},
+        "events": [
+          "phase_complete",
+          "phase_error",
+          "handoff_success",
+          "handoff_failure"
+        ],
+        "severity_filter": ["info", "warning", "critical"]
+      }
+    ],
+    "cooldown_seconds": 3600
+  },
+
+  "state_tracking": {
+    "enabled": true,
+    "kv_namespace": "DEALS_LOG",
+    "track_metrics": true,
+    "retention_days": 30,
+    "checkpoint_interval_ms": 30000
+  },
+
+  "metrics": {
+    "enabled": true,
+    "collectors": [
+      "pipeline_duration",
+      "phase_duration",
+      "agent_execution_time",
+      "deal_throughput",
+      "error_rate",
+      "quality_gate_pass_rate",
+      "trust_score_evolution",
+      "source_diversity"
+    ],
+    "prometheus_enabled": true
+  }
+}
