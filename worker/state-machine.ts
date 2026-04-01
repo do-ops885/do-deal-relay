@@ -16,6 +16,7 @@ import { validate, calculateValidationRatio } from "./pipeline/validate";
 import { score } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
 import { publishSnapshot, rollbackSnapshot } from "./publish";
+import { getProductionSnapshot } from "./lib/storage";
 import { notify } from "./notify";
 import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
 import type { Env } from "./types";
@@ -71,6 +72,10 @@ export async function executePipeline(env: Env): Promise<{
     errors: [],
     retry_count: 0,
   };
+
+  // Initialize previous snapshot for rollback capability
+  const prodSnapshot = await getProductionSnapshot(env);
+  ctx.previous_snapshot = prodSnapshot ?? undefined;
 
   let currentPhase: PipelinePhase = "init";
   let phaseIndex = 0;
@@ -362,7 +367,7 @@ async function handleFailure(
 
     case "concurrency_abort":
       await notify(env, {
-        type: "system_error",
+        type: "concurrency_abort",
         severity: "warning",
         run_id: ctx.run_id,
         message: "Pipeline aborted due to concurrent execution",

@@ -110,6 +110,18 @@ export async function score(
     scoredDeals.push(scoredDeal);
   }
 
+  // Notify for high-value deals
+  if (highValueCount > 0) {
+    const { notifyHighValueDeals } = await import("../notify");
+    const highValueDeals: Array<{ code: string; reward: number }> = scoredDeals
+      .filter((d) => isHighValue(d))
+      .map((d) => ({
+        code: d.code,
+        reward: typeof d.reward.value === "number" ? d.reward.value : 0,
+      }));
+    await notifyHighValueDeals(env, highValueDeals, ctx.run_id);
+  }
+
   return {
     deals: scoredDeals,
     stats: {
@@ -204,7 +216,7 @@ function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
 /**
  * Check if deal is high value
  */
-function isHighValue(deal: Deal): boolean {
+export function isHighValue(deal: Deal): boolean {
   if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
     return deal.reward.value > CONFIG.HIGH_VALUE_THRESHOLD;
   }
@@ -224,12 +236,22 @@ export async function evolveSourceTrust(
   deals: Deal[],
   allValid: boolean,
 ): Promise<void> {
-  const { DEFAULT_SOURCES } = await import("../config");
+  const { updateSourceTrust, recordSourceValidation } =
+    await import("../lib/storage");
+
+  // Get unique sources
+  const uniqueDomains = [...new Set(deals.map((d) => d.source.domain))];
+
   const adjustment = allValid
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
-  // This would update the source registry
-  // Implementation depends on storage layer
-  console.log(`Evolving trust: adjustment=${adjustment}, allValid=${allValid}`);
+  for (const domain of uniqueDomains) {
+    await updateSourceTrust(env, domain, adjustment);
+    await recordSourceValidation(env, domain, allValid);
+  }
+
+  console.log(
+    `Evolving trust for ${uniqueDomains.length} sources: adjustment=${allValid ? "+" : "-"}${Math.abs(adjustment)}`,
+  );
 }
