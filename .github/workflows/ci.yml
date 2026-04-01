@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup wrangler.toml for CI
+        run: bash scripts/generate-wrangler-ci.sh
+
       - name: Run Quality Gate
         run: ./scripts/quality_gate.sh
 
@@ -109,6 +112,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Setup wrangler.toml for CI
+        run: bash scripts/generate-wrangler-ci.sh
 
       - name: Run validation script
         run: ./scripts/validate-codes.sh
