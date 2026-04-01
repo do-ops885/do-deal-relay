@@ -155,7 +155,7 @@ export class TrustModel {
   }
 }
 
-// Risk-based action engine
+// Risk action decision engine
 export class RiskActions {
   private config: Record<string, RiskAction>;
 
