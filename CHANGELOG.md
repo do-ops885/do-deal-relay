@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2026-04-01
+## [0.1.1] - 2026-04-01
 
 ### Added
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Documentation synchronized across README, QUICKSTART, and CONTRIBUTING
 - Guard rails audit completed with bypass prevention policy
-- Version standardized to 0.2.0 across all files
+- Version standardized to 0.1.1 across all files
 - LESSONS.md reduced noise and updated stale references
 - Test suite improved with proper vitest mocks
 - Secret detection exclusions for .agents/skills directory

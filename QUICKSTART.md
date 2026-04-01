@@ -412,6 +412,6 @@ curl "http://localhost:8787/api/log?run_id=abc-123&count=50"
 
 ---
 
-**Version**: 0.2.0
+**Version**: 0.1.1
 **License**: MIT
 **Last Updated**: 2024

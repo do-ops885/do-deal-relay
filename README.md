@@ -1,7 +1,7 @@
 # Deal Discovery System - Status
 
 **System**: In Development
-**Version**: 0.2.0
+**Version**: 0.1.1
 **Status**: Bootstrap Phase
 
 ## Quick Start
@@ -68,7 +68,7 @@ curl https://your-worker.workers.dev/api/log
 
 ## Development Roadmap
 
-### Phase 1: Bootstrap (Current - v0.2.0)
+### Phase 1: Bootstrap (Current - v0.1.1)
 
 - [ ] Fix test infrastructure
 - [ ] Install missing dependencies

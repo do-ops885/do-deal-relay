@@ -18,7 +18,7 @@
     "browser-agent"
   ],
   "current_phase": "bootstrap",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "release_status": "alpha",
   "agent_status": {
     "test-agent": {

@@ -1,7 +1,7 @@
 # AGENTS.md - Master Coordination Hub
 
 **Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
-**Version**: 0.2.0
+**Version**: 0.1.1
 **Architecture**: Agent-First CLI with swarm coordination
 **Status**: Active Development
 

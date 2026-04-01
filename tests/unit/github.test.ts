@@ -184,13 +184,13 @@ describe("GitHub Integration", () => {
         });
 
       const snapshot: Snapshot = {
-        version: "0.2.0",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run-123",
         trace_id: "test-trace",
         snapshot_hash: "abc123hash",
         previous_hash: "",
-        schema_version: "0.2.0",
+        schema_version: "0.1.1",
         stats: {
           total: 10,
           active: 8,
@@ -232,13 +232,13 @@ describe("GitHub Integration", () => {
         });
 
       const snapshot: Snapshot = {
-        version: "0.2.0",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "run-456",
         trace_id: "trace-456",
         snapshot_hash: "def456",
         previous_hash: "",
-        schema_version: "0.2.0",
+        schema_version: "0.1.1",
         stats: {
           total: 5,
           active: 5,
