@@ -76,7 +76,7 @@ fi
 # Check 5: Capitalization
 if [[ $COMMIT_MSG =~ ^[a-z] ]]; then
     warning "Commit message starts with lowercase"
-    echo "   Capitalize first letter: '${COMMIT_MSG:0:1}' → '${COMMIT_MSG:0:1^^}'"
+    echo "   Capitalize first letter: '${COMMIT_MSG:0:1}' → '$(echo "${COMMIT_MSG:0:1}" | tr '[:lower:]' '[:upper:]')'"
 fi
 
 # Check 6: No merge conflict markers

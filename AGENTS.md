@@ -1,7 +1,7 @@
 # AGENTS.md - Master Coordination Hub
 
 **Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
-**Version**: 1.0.0
+**Version**: 0.1.0
 **Architecture**: Agent-First CLI with swarm coordination
 **Status**: Active Development
 
@@ -13,34 +13,6 @@ npm install                    # Install dependencies
 npm run test:ci                # Run test suite
 npm run dev                    # Start development
 ```
-
-## Available Agents Matrix
-
-| Agent      | CLI      | Context | Strengths                  | Sub-Agents | Skill Cmd |
-| ---------- | -------- | ------- | -------------------------- | ---------- | --------- |
-| **Claude** | `claude` | 200K    | Code, planning, file ops   | Yes        | Yes       |
-| **Gemini** | `gemini` | 1M      | Research, large context    | No         | No        |
-| **Qwen**   | `qwen`   | 128K    | TS/JS patterns, validation | No         | No        |
-
-See `CLAUDE.md`, `GEMINI.md`, `QWEN.md` for CLI-specific overrides.
-
-## Agent-First CLI Architecture
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Agent CLI  │────→│  AGENTS.md  │────→│ Skill System│
-│ (3 options) │     │ (this file) │     │ (.agents/)  │
-└─────────────┘     └─────────────┘     └─────────────┘
-         ↓                  ↓                  ↓
-   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-   │  Agent Spec │    │ Coordination│    │   Swarm     │
-   │ (CLAUDE.md) │    │  Protocol   │    │  Execution  │
-   │ (GEMINI.md) │    │             │    │             │
-   │  (QWEN.md)  │    │             │    │             │
-   └─────────────┘    └─────────────┘    └─────────────┘
-```
-
-**Core Principle**: All agents read AGENTS.md first, then apply CLI-specific overrides.
 
 ## Handoff Coordination Protocol
 
