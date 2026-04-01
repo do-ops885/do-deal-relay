@@ -97,8 +97,8 @@ export async function promoteToProduction(
     JSON.stringify(staging),
   );
 
-  // Clear staging (optional - keeps history)
-  // await env.DEALS_STAGING.delete(CONFIG.KV_KEYS.STAGING_SNAPSHOT);
+  // Clear staging after successful promotion
+  await env.DEALS_STAGING.delete(CONFIG.KV_KEYS.STAGING_SNAPSHOT);
 
   return staging;
 }

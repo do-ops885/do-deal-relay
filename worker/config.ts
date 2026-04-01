@@ -4,8 +4,8 @@
 
 export const CONFIG = {
   // System
-  VERSION: "0.1.1",
-  SCHEMA_VERSION: "0.1.1",
+  VERSION: "1.0.0",
+  SCHEMA_VERSION: "1.0.0",
 
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes
@@ -77,6 +77,50 @@ export const DEFAULT_SOURCES = [
     selectors: {
       code: "[data-ref-code], .referral-code, .invite-code",
       reward: ".reward-amount, [data-reward], .bonus-value",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "robinhood.com",
+    url_patterns: ["/referral/*", "/invite/*"],
+    selectors: {
+      code: "[data-code], .referral-code",
+      reward: ".reward-value",
+    },
+    trust_initial: 0.8,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "webull.com",
+    url_patterns: ["/activity/invite/*"],
+    selectors: {
+      code: ".invite-code, [data-invite]",
+      reward: ".bonus-amount",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "public.com",
+    url_patterns: ["/referral/*"],
+    selectors: {
+      code: ".ref-code",
+      reward: ".stock-value",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "moomoo.com",
+    url_patterns: ["/invite/*", "/referral/*"],
+    selectors: {
+      code: ".invite-code, [data-invite-code]",
+      reward: ".bonus-value",
     },
     trust_initial: 0.7,
     classification: "probationary" as const,

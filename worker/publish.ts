@@ -21,16 +21,6 @@ export async function publishSnapshot(
   success: boolean;
   commitSha?: string;
 }> {
-  // Validate GitHub token is configured
-  if (!env.GITHUB_TOKEN) {
-    throw new PipelineError(
-      "PublishError",
-      "GITHUB_TOKEN not configured",
-      "publish",
-      false,
-    );
-  }
-
   try {
     // Step 1: Verify staging exists and matches
     const { getStagingSnapshot } = await import("./lib/storage");
@@ -62,7 +52,6 @@ export async function publishSnapshot(
     // Step 3: Check if already published (idempotency)
     const alreadyCommitted = await isSnapshotCommitted(
       env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
       snapshot.snapshot_hash,
     );
 
@@ -78,22 +67,13 @@ export async function publishSnapshot(
     );
 
     // Step 5: Commit to GitHub
-    const commitSha = await commitSnapshot(
-      env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
-      publishedSnapshot,
-      {
-        total: publishedSnapshot.stats.total,
-        active: publishedSnapshot.stats.active,
-      },
-    );
+    const commitSha = await commitSnapshot(env.GITHUB_REPO, publishedSnapshot, {
+      total: publishedSnapshot.stats.total,
+      active: publishedSnapshot.stats.active,
+    });
 
     // Step 6: Verify commit
-    const verified = await verifyCommit(
-      env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
-      commitSha,
-    );
+    const verified = await verifyCommit(env.GITHUB_REPO, commitSha);
     if (!verified) {
       throw new PipelineError(
         "PublishError",
@@ -133,13 +113,29 @@ export async function rollbackSnapshot(
   previousSnapshot: Snapshot,
 ): Promise<void> {
   try {
+    const { revertProduction, getProductionSnapshot } =
+      await import("./lib/storage");
     await revertProduction(env, previousSnapshot);
-    console.log(`Rolled back to snapshot ${previousSnapshot.snapshot_hash}`);
+
+    // Verify rollback succeeded
+    const verified = await getProductionSnapshot(env);
+    if (verified?.snapshot_hash !== previousSnapshot.snapshot_hash) {
+      throw new PipelineError(
+        "PublishError",
+        `Rollback verification failed: expected ${previousSnapshot.snapshot_hash}, got ${verified?.snapshot_hash}`,
+        "publish",
+        false,
+      );
+    }
+
+    console.log(
+      `Rolled back to snapshot ${previousSnapshot.snapshot_hash} (verified)`,
+    );
   } catch (error) {
     console.error("Rollback failed:", error);
     throw new PipelineError(
       "PublishError",
-      `Rollback failed: ${(error as Error).message}`,
+      (error as Error).message,
       "publish",
       false,
     );
@@ -151,11 +147,10 @@ export async function rollbackSnapshot(
  */
 async function verifyCommit(
   repo: string,
-  token: string,
   expectedSha: string,
 ): Promise<boolean> {
   const { getRecentCommits } = await import("./lib/github");
-  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 1);
+  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
 
   if (commits.length === 0) {
     return false;

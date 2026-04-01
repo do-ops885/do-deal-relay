@@ -1,116 +1,67 @@
-# AGENTS.md - Master Coordination Hub
+# AGENTS.md - Deal Discovery System
 
-**Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
-**Version**: 0.1.1
-**Architecture**: Agent-First CLI with swarm coordination
-**Status**: Active Development
+**Goal**: Build autonomous deal discovery system with coordinated AI agents
+**Version**: 1.0.0
+**Phase**: Bootstrap
+**Status**: In Development
 
 ## Quick Start
 
 ```bash
-npm install                    # Install dependencies
-./scripts/quality_gate.sh      # Validate all systems
-npm run test:ci                # Run test suite
-npm run dev                    # Start development
+# Install dependencies
+npm install
+# Run quality gate (silent on success)
+./scripts/quality_gate.sh
+# Run tests
+npm test
+# Start development
+npm run dev
 ```
 
-## Handoff Coordination Protocol
+## System Overview
 
-**Trigger Conditions**: Context limit, agent switch, task completion, parallel need.
+**Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
+**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
+**Infrastructure**: Cloudflare Workers + 5 KV namespaces
+**Schedule**: Every 6 hours
 
-**Handoff Steps**:
+See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 
-1. Current agent writes `temp/handoff-*.md` with: task status (done/partial/blocked), key decisions, next steps, relevant file paths
-2. Update `agents-docs/coordination/handoff-log.jsonl`
-3. Next agent reads handoff file + AGENTS.md + its own spec
-4. Confirm understanding before proceeding
+## Current Status
 
-**Blocker Escalation**: 30min stuck → Escalate to `agents-docs/coordination/blockers.md` with issue, attempted fixes, relevant code, hypothesis.
+See state.json for current agent status and progress.
 
-See [agents-docs/coordination/](agents-docs/coordination/) for full protocol.
+## Reference
 
-## Swarm Coordination Patterns
+| Resource         | Location                                                           |
+| ---------------- | ------------------------------------------------------------------ |
+| System Reference | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
+| Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
+| Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
+| Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
+| API Docs         | [docs/API.md](docs/API.md)                                         |
+| Skills           | [.agents/skills/](.agents/skills/)                                 |
 
-**Pattern 1: Research Swarm** (Gemini + Qwen) - Delegate web research tasks, aggregate in `temp/swarm-research-*.md`.
+## Skills
 
-**Pattern 2: Validation Pipeline** (Claude + Qwen) - Run all 9 gates in parallel, aggregate results, fail fast.
+**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`
 
-**Pattern 3: Code Review Swarm** (Claude + Gemini) - Split by module (worker/, tests/, scripts/), each agent reviews + reports, consolidate findings.
+**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`
 
-Load `skill parallel-execution` for implementation.
+Use: `skill <name>` to load guidance.
 
-## Web Research Integration
+## Endpoints
 
-**Sources**: ProductHunt, GitHub Trending, Hacker News, RSS feeds.
+`/deals` · `/deals.json` · `/health` · `/metrics` · `/api/status` · `/api/log` · `/api/submit` · `/api/discover`
 
-**Research Command**:
+See [docs/API.md](docs/API.md) for endpoint documentation.
 
-```bash
-skill goap-agent
-research-task: "Find 10 AI devtools launched this week"
-output: temp/research-*.md
-```
+## Active Agents
 
-**Integration Points**: Research → `temp/research-*.md` → Deal extraction pipeline → Update `worker/sources/`.
-
-See [agents-docs/RESEARCH.md](agents-docs/RESEARCH.md) for source specifications.
-
-## Project Structure
-
-```
-├── CLAUDE.md, GEMINI.md, QWEN.md  # Agent CLI specs (root level)
-├── AGENTS.md                      # This coordination hub
-├── .agents/skills/                # Coordination skills
-├── agents-docs/                   # System documentation
-│   ├── coordination/              # Handoff logs, blockers
-│   ├── agents/                    # Agent specifications
-│   └── handoffs/                  # Handoff templates
-├── temp/                          # State, reports (gitignored)
-└── worker/                        # Cloudflare Worker source
-```
-
-### Root Directory Policy
-
-**Allowed**: Standard project files only (package.json, tsconfig.json, wrangler.toml, README.md, LICENSE, VERSION, CHANGELOG.md, .gitignore).
-
-**MUST use subfolders**: Docs → agents-docs/, Reports → temp/, Scripts → scripts/, Tests → tests/.
-
-See [agents-docs/guard-rails.md](agents-docs/guard-rails.md) for complete rules.
-
-## State Management
-
-| File                                         | Purpose                            |
-| -------------------------------------------- | ---------------------------------- |
-| `temp/state.json`                            | Active agent status, current phase |
-| `temp/skills-lock.json`                      | External skill version tracking    |
-| `agents-docs/coordination/handoff-log.jsonl` | Handoff history                    |
-| `agents-docs/coordination/blockers.md`       | Escalated issues                   |
-
-## Quality Gates
-
-Always run `./scripts/quality_gate.sh` before handoff or completion:
-
-1. TypeScript compilation
-2. Unit tests (>80% coverage)
-3. Validation gates
-4. Security checks
-5. Root directory organization
-
-**Rule**: Silent on success, loud on failure.
-
-## Next Steps & References
-
-| Resource              | Location                                                           |
-| --------------------- | ------------------------------------------------------------------ |
-| System Architecture   | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
-| Coordination Protocol | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Guard Rails           | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
-| Execution Plan        | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
-| Skills Directory      | [.agents/skills/](.agents/skills/)                                 |
-| API Documentation     | [docs/API.md](docs/API.md)                                         |
-| Handoff Templates     | [agents-docs/handoffs/](agents-docs/handoffs/)                     |
-| Quick Start           | [QUICKSTART.md](QUICKSTART.md)                                     |
-| Contributing          | [CONTRIBUTING.md](CONTRIBUTING.md)                                 |
-| Security              | [SECURITY.md](SECURITY.md)                                         |
-
-**Active Agents**: See `temp/state.json` for current status and assignments.
+| Agent               | Status  | Phase           | Responsibility      |
+| ------------------- | ------- | --------------- | ------------------- |
+| test-agent-v2       | pending | Test & Validate | Integration testing |
+| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
+| doc-agent           | pending | Test & Validate | Documentation       |
+| github-agent        | pending | Test & Validate | GitHub integration  |
+| browser-agent       | pending | Test & Validate | Browser testing     |

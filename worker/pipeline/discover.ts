@@ -5,6 +5,102 @@ import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 
 // ============================================================================
+// Robots.txt Compliance
+// ============================================================================
+
+/**
+ * Check if crawling is allowed by robots.txt
+ * Returns true if allowed, false if disallowed
+ * Fails open (returns true) on timeout or fetch errors
+ */
+async function checkRobotsTxt(domain: string): Promise<boolean> {
+  try {
+    const response = await fetch(`https://${domain}/robots.txt`, {
+      method: "GET",
+      headers: { "User-Agent": "DealDiscoveryBot/1.0" },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      // No robots.txt means allow all
+      return true;
+    }
+
+    const content = await response.text();
+    const lines = content.split("\n");
+    let userAgentMatch = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim().toLowerCase();
+
+      if (trimmed.startsWith("user-agent:")) {
+        const agent = trimmed.replace("user-agent:", "").trim();
+        // Match wildcard or any agent containing "deal"
+        userAgentMatch = agent === "*" || agent.includes("deal");
+      }
+
+      if (userAgentMatch && trimmed.startsWith("disallow:")) {
+        const path = line.trim().substring("disallow:".length).trim();
+        // Blocked if disallowing root or common referral/invite paths
+        if (
+          path === "/" ||
+          path.includes("invite") ||
+          path.includes("referral")
+        ) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  } catch {
+    // Fail open on any error (timeout, network, etc.)
+    return true;
+  }
+}
+
+// ============================================================================
+// Fetch with Retry
+// ============================================================================
+
+/**
+ * Fetch with retry logic and exponential backoff
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number = CONFIG.MAX_RETRIES,
+): Promise<Response> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      // Retry on 5xx or network errors
+      if (response.ok || response.status < 500) {
+        return response;
+      }
+
+      // 5xx error - retry
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error as Error;
+    }
+
+    if (attempt < maxRetries) {
+      const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10s delay
+      console.log(
+        `Retry ${attempt + 1}/${maxRetries} for ${url} after ${delay}ms`,
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  throw lastError || new Error(`Failed after ${maxRetries} retries`);
+}
+
+// ============================================================================
 // Discovery Engine
 // ============================================================================
 
@@ -76,12 +172,23 @@ async function discoverFromSource(
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
+  // Check robots.txt compliance before fetching
+  const allowed = await checkRobotsTxt(source.domain);
+  if (!allowed) {
+    errors.push({
+      url: source.domain,
+      error: "Crawling disallowed by robots.txt",
+    });
+    await recordSourceValidation(env, source.domain, false);
+    return { deals, errors };
+  }
+
   for (const pattern of source.url_patterns) {
     try {
       const url = `https://${source.domain}${pattern}`;
 
-      // Respect payload limits
-      const response = await fetch(url, {
+      // Respect payload limits with retry logic
+      const response = await fetchWithRetry(url, {
         method: "GET",
         headers: {
           "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
@@ -153,6 +260,8 @@ function parseHTMLContent(
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+  const expiryPattern =
+    /(?:expires?|valid until|ends?|deadline)[:\s,]+([A-Za-z]{3,10}\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/gi;
 
   // Extract codes
   let match;
@@ -169,6 +278,15 @@ function parseHTMLContent(
       .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
 
+    // Find expiry date
+    const expiryMatch = content
+      .slice(Math.max(0, match.index - 500), match.index + 500)
+      .match(expiryPattern);
+
+    const expiry_date = expiryMatch
+      ? normalizeExtractedDate(expiryMatch[1])
+      : undefined;
+
     deals.push({
       code,
       url: urlMatch ? urlMatch[0] : `https://${source.domain}/invite/${code}`,
@@ -184,6 +302,7 @@ function parseHTMLContent(
         : 0,
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+      expiry_date,
     });
   }
 
@@ -282,6 +401,17 @@ async function buildDeal(
       status: "active",
     },
   };
+}
+
+/**
+ * Normalize extracted date string to ISO format
+ */
+function normalizeExtractedDate(dateStr: string): string | undefined {
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+  return undefined;
 }
 
 /**

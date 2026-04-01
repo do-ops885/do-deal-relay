@@ -110,16 +110,27 @@ export async function score(
     scoredDeals.push(scoredDeal);
   }
 
-  // Notify for high-value deals
+  // Notify for high-value deals (batched)
   if (highValueCount > 0) {
-    const { notifyHighValueDeals } = await import("../notify");
+    const { notify } = await import("../notify");
     const highValueDeals: Array<{ code: string; reward: number }> = scoredDeals
       .filter((d) => isHighValue(d))
       .map((d) => ({
         code: d.code,
         reward: typeof d.reward.value === "number" ? d.reward.value : 0,
       }));
-    await notifyHighValueDeals(env, highValueDeals, ctx.run_id);
+
+    // Send single batched notification
+    await notify(env, {
+      type: "high_value_deal",
+      severity: "info",
+      run_id: ctx.run_id,
+      message: `Discovered ${highValueCount} high-value deal${highValueCount > 1 ? "s" : ""}`,
+      context: {
+        count: highValueCount,
+        deals: highValueDeals,
+      },
+    });
   }
 
   return {
