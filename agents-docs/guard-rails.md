@@ -101,6 +101,7 @@ GEMINI.md           # Gemini CLI spec
 QWEN.md             # Qwen CLI spec
 VERSION             # Version file
 LICENSE             # License file (if present)
+CHANGELOG.md        # Changelog for releases
 ```
 
 #### Required Subfolder Usage
@@ -129,7 +130,7 @@ LICENSE             # License file (if present)
 
 ```bash
 # Verify no new files in root
-if git diff --cached --name-only | grep -E "^[^/]+$" | grep -v -E "^\.(git|gitignore)|package(-lock)?\.json|tsconfig\.json|vitest\.config\.ts|wrangler\.toml|README\.md|VERSION|LICENSE$"; then
+if git diff --cached --name-only | grep -E "^[^/]+$" | grep -v -E "^\.(git|gitignore)|package(-lock)?\.json|tsconfig\.json|vitest\.config\.ts|wrangler\.toml|README\.md|CHANGELOG\.md|VERSION|LICENSE$"; then
   echo "ERROR: Files added to root directory. Move to appropriate subfolder."
   exit 1
 fi

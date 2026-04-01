@@ -1,7 +1,7 @@
 # System Reference
 
 **System**: Deal Discovery System
-**Version**: 0.1.0-alpha
+**Version**: 0.2.0-alpha
 **Phase**: Bootstrap
 **Status**: In Development
 

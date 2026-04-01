@@ -1,7 +1,7 @@
 # AGENTS.md - Master Coordination Hub
 
 **Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
-**Version**: 0.1.0
+**Version**: 0.2.0
 **Architecture**: Agent-First CLI with swarm coordination
 **Status**: Active Development
 
@@ -71,7 +71,7 @@ See [agents-docs/RESEARCH.md](agents-docs/RESEARCH.md) for source specifications
 
 ### Root Directory Policy
 
-**Allowed**: Standard project files only (package.json, tsconfig.json, wrangler.toml, README.md, LICENSE, VERSION, .gitignore).
+**Allowed**: Standard project files only (package.json, tsconfig.json, wrangler.toml, README.md, LICENSE, VERSION, CHANGELOG.md, .gitignore).
 
 **MUST use subfolders**: Docs → agents-docs/, Reports → temp/, Scripts → scripts/, Tests → tests/.
 

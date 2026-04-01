@@ -225,6 +225,7 @@ ALLOWED_ROOT_FILES=(
     "^QWEN\.md$"
     "^VERSION$"
     "^LICENSE$"
+    "^CHANGELOG\.md$"
     "^\.pre-commit-config\.yaml$"
     "^AGENTS\.md$"
 )
