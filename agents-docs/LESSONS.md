@@ -354,3 +354,82 @@ Each lesson follows this structure:
 ---
 
 _Last Updated: 2026-04-01 | Total Lessons: 017_
+
+## LESSON-018: Monolithic PR Anti-Pattern
+
+**Date**: 2026-04-01
+**Component**: GitHub / Pull Requests
+
+**Issue**: PR #4 had 15 commits mixing bug fixes, features, skills, infrastructure. CI failures blocked entire PR. Couldn't merge valuable parts separately.
+
+**Root Cause**:
+- Mixed concerns in single PR
+- Test debt in some commits blocked all others
+- Merge conflicts after main branch advanced
+- Skills already extracted separately caused duplication
+
+**Solution**:
+- Decompose large PRs into focused PRs by concern:
+  - Bug fixes only (fix/critical-swarm-bugs)
+  - Feature additions only (feat/performance-observability)
+  - Infrastructure only (.gitignore, configs)
+  - Documentation only
+- Each focused PR should pass CI independently
+- Extract value from failing PRs by cherry-picking to clean branches
+
+**Applied**:
+- PR #4 skills → PR #6 (merged cleanly)
+- PR #4 bug fixes → fix/critical-swarm-bugs (PR #7)
+- PR #4 features → feat/performance-observability (PR #8)
+
+**Prevention**: 
+- Create focused PRs from the start
+- Maximum 3-5 commits per PR
+- Single concern per PR
+
+---
+
+## LESSON-019: CI Failure Recovery Strategy
+
+**Date**: 2026-04-01
+**Component**: CI/CD / GitHub Actions
+
+**Issue**: PR #4 failed 4 CI jobs (Quality Gate, Unit Tests, CI Summary, CodeQL). Valuable work was trapped in failing PR.
+
+**Root Cause**: 
+- Pre-existing test failures unrelated to PR changes
+- CI environment differences from local
+- Monolithic PR meant all-or-nothing merge
+
+**Solution** - 6-Step Recovery:
+1. **Analyze**: What's valuable vs what's broken
+2. **Extract**: Create clean branches for valuable parts
+3. **Cherry-pick**: Move good commits to clean history
+4. **Test**: Verify extracted parts pass CI
+5. **Close**: Document closure with extraction references
+6. **Merge**: Focused PRs pass CI and merge cleanly
+
+**Applied**:
+- Analyzed PR #4 commits (temp/pr-4-analysis.md)
+- Extracted 3 clean branches from messy PR
+- All 3 extractions pass quality gates
+- Closed PR #4 with comprehensive documentation
+
+**Prevention**:
+- Don't force-merge failing PRs
+- Use git cherry-pick to salvage good commits
+- Create extraction branches early when PR goes red
+- Document extractions for team visibility
+
+---
+
+## Checklist: PR Management
+
+- [ ] Decompose PRs by concern (bugs, features, infra, docs)
+- [ ] Maximum 3-5 commits per PR
+- [ ] Extract value from failing PRs rather than force-merge
+- [ ] Use git cherry-pick to salvage good commits
+- [ ] Create focused PRs that pass CI independently
+- [ ] Document PR closures with extraction references
+- [ ] Update LESSONS.md with PR process insights
+
