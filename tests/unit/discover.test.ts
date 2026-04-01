@@ -75,8 +75,20 @@ describe("Discovery Engine", () => {
 
   const createMockEnv = (sources: SourceConfig[] = []): Env => {
     mockKvStorage.set("registry", sources);
+    // Pre-populate robots.txt cache to allow all (avoids extra fetches in tests)
+    for (const source of sources) {
+      mockKvStorage.set(`cache:robots_txt:robots_txt:${source.domain}`, {
+        data: true,
+        timestamp: Date.now(),
+        ttl_seconds: 3600,
+      });
+    }
     return {
-      DEALS_PROD: {} as KVNamespace,
+      DEALS_PROD: {
+        get: vi.fn(async () => null),
+        put: vi.fn(async () => {}),
+        delete: vi.fn(async () => {}),
+      } as unknown as KVNamespace,
       DEALS_STAGING: {} as KVNamespace,
       DEALS_LOG: {} as KVNamespace,
       DEALS_LOCK: {} as KVNamespace,
@@ -84,6 +96,9 @@ describe("Discovery Engine", () => {
         get: vi.fn(async <T>(key: string) => mockKvStorage.get(key) as T),
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(key, JSON.parse(value));
+        }),
+        delete: vi.fn(async (key: string) => {
+          mockKvStorage.delete(key);
         }),
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",

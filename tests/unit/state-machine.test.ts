@@ -136,6 +136,9 @@ describe("State Machine", () => {
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(`sources:${key}`, value);
         }),
+        delete: vi.fn(async (key: string) => {
+          mockKvStorage.delete(`sources:${key}`);
+        }),
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

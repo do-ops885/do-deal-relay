@@ -1,6 +1,10 @@
 import { CONFIG } from "./config";
 import { createGitHubIssue } from "./lib/github";
 import { getRecentLogs } from "./lib/logger";
+import {
+  createTelegramCircuitBreaker,
+  CircuitBreakerOpenError,
+} from "./lib/circuit-breaker";
 import type { Env, NotificationEvent } from "./types";
 
 // ============================================================================
@@ -135,25 +139,37 @@ ${event.message}
 
 ${event.context ? `\`\`\`json\n${JSON.stringify(event.context, null, 2)}\n\`\`\`` : ""}`;
 
-  const response = await fetch(
-    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: env.TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: "Markdown",
-      }),
-    },
-  );
+  const cb = createTelegramCircuitBreaker(env);
+  const execute = async () => {
+    const response = await fetch(
+      `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: env.TELEGRAM_CHAT_ID,
+          text: message,
+          parse_mode: "Markdown",
+        }),
+      },
+    );
 
-  if (!response.ok) {
-    throw new Error(`Telegram API error: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Telegram API error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { ok: boolean };
+    return data.ok === true;
+  };
+
+  try {
+    return await cb.execute(execute);
+  } catch (error) {
+    if (error instanceof CircuitBreakerOpenError) {
+      console.log(`Telegram circuit breaker is open: ${error.message}`);
+    }
+    throw error;
   }
-
-  const data = (await response.json()) as { ok: boolean };
-  return data.ok === true;
 }
 
 /**

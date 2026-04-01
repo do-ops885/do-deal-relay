@@ -2,22 +2,46 @@ import { Snapshot, SnapshotSchema, Deal, SourceConfig } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { generateSnapshotHash } from "./crypto";
+import {
+  createSourceCache,
+  createSnapshotCache,
+  createStagingSnapshotCache,
+} from "./cache";
 
 // ============================================================================
-// KV Storage Abstraction Layer
+// KV Storage Abstraction Layer with Caching
 // ============================================================================
+
+const SNAPSHOT_CACHE_KEY = "production_snapshot";
+const STAGING_SNAPSHOT_CACHE_KEY = "staging_snapshot";
+const SOURCE_REGISTRY_CACHE_KEY = "registry";
 
 /**
- * Get production snapshot
+ * Get production snapshot (with caching)
  */
 export async function getProductionSnapshot(
   env: Env,
 ): Promise<Snapshot | null> {
   try {
+    const cache = createSnapshotCache(env);
+
+    // Try cache first
+    const cached = await cache.get<Snapshot>(SNAPSHOT_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from KV
     const data = await env.DEALS_PROD.get<Snapshot>(
       CONFIG.KV_KEYS.PROD_SNAPSHOT,
       "json",
     );
+
+    // Cache if found
+    if (data) {
+      await cache.set(SNAPSHOT_CACHE_KEY, data);
+    }
+
     return data;
   } catch (error) {
     console.error("Failed to get production snapshot:", error);
@@ -26,14 +50,29 @@ export async function getProductionSnapshot(
 }
 
 /**
- * Get staging snapshot
+ * Get staging snapshot (with caching)
  */
 export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
   try {
+    const cache = createStagingSnapshotCache(env);
+
+    // Try cache first
+    const cached = await cache.get<Snapshot>(STAGING_SNAPSHOT_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from KV
     const data = await env.DEALS_STAGING.get<Snapshot>(
       CONFIG.KV_KEYS.STAGING_SNAPSHOT,
       "json",
     );
+
+    // Cache if found
+    if (data) {
+      await cache.set(STAGING_SNAPSHOT_CACHE_KEY, data);
+    }
+
     return data;
   } catch (error) {
     console.error("Failed to get staging snapshot:", error);
@@ -64,6 +103,10 @@ export async function writeStagingSnapshot(
     CONFIG.KV_KEYS.STAGING_SNAPSHOT,
     JSON.stringify(fullSnapshot),
   );
+
+  // Update cache
+  const cache = createStagingSnapshotCache(env);
+  await cache.set(STAGING_SNAPSHOT_CACHE_KEY, fullSnapshot);
 
   return fullSnapshot;
 }
@@ -97,8 +140,16 @@ export async function promoteToProduction(
     JSON.stringify(staging),
   );
 
+  // Update production cache
+  const prodCache = createSnapshotCache(env);
+  await prodCache.set(SNAPSHOT_CACHE_KEY, staging);
+
   // Clear staging after successful promotion
   await env.DEALS_STAGING.delete(CONFIG.KV_KEYS.STAGING_SNAPSHOT);
+
+  // Clear staging cache
+  const stagingCache = createStagingSnapshotCache(env);
+  await stagingCache.delete(STAGING_SNAPSHOT_CACHE_KEY);
 
   return staging;
 }
@@ -114,31 +165,54 @@ export async function revertProduction(
     CONFIG.KV_KEYS.PROD_SNAPSHOT,
     JSON.stringify(previousSnapshot),
   );
+
+  // Update cache
+  const cache = createSnapshotCache(env);
+  await cache.set(SNAPSHOT_CACHE_KEY, previousSnapshot);
 }
 
 /**
- * Get source registry
+ * Get source registry (with caching)
  */
 export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
   try {
+    const cache = createSourceCache(env);
+
+    // Try cache first
+    const cached = await cache.get<SourceConfig[]>(SOURCE_REGISTRY_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from KV
     const data = await env.DEALS_SOURCES.get<SourceConfig[]>(
       "registry",
       "json",
     );
-    return data || [];
+
+    const registry = data || [];
+
+    // Cache the result
+    await cache.set(SOURCE_REGISTRY_CACHE_KEY, registry);
+
+    return registry;
   } catch {
     return [];
   }
 }
 
 /**
- * Update source registry
+ * Update source registry (invalidates cache)
  */
 export async function updateSourceRegistry(
   env: Env,
   sources: SourceConfig[],
 ): Promise<void> {
   await env.DEALS_SOURCES.put("registry", JSON.stringify(sources));
+
+  // Invalidate cache
+  const cache = createSourceCache(env);
+  await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
 }
 
 /**
@@ -153,7 +227,7 @@ export async function getSourceConfig(
 }
 
 /**
- * Update source trust score
+ * Update source trust score (invalidates cache)
  */
 export async function updateSourceTrust(
   env: Env,
@@ -168,12 +242,16 @@ export async function updateSourceTrust(
       0,
       Math.min(1, source.trust_initial + adjustment),
     );
-    await updateSourceRegistry(env, registry);
+    await env.DEALS_SOURCES.put("registry", JSON.stringify(registry));
+
+    // Invalidate cache
+    const cache = createSourceCache(env);
+    await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
   }
 }
 
 /**
- * Record validation result for source
+ * Record validation result for source (invalidates cache)
  */
 export async function recordSourceValidation(
   env: Env,
@@ -191,7 +269,11 @@ export async function recordSourceValidation(
       source.validation_failure_count =
         (source.validation_failure_count || 0) + 1;
     }
-    await updateSourceRegistry(env, registry);
+    await env.DEALS_SOURCES.put("registry", JSON.stringify(registry));
+
+    // Invalidate cache
+    const cache = createSourceCache(env);
+    await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
   }
 }
 
