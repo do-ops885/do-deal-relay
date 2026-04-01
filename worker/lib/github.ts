@@ -1,8 +1,10 @@
 import { CONFIG } from "../config";
 import type { Snapshot } from "../types";
+import { CircuitBreaker, createGitHubCircuitBreaker } from "./circuit-breaker";
+import { createGitHubCache } from "./cache";
 
 // ============================================================================
-// GitHub API Integration
+// GitHub API Integration with Caching
 // ============================================================================
 
 interface GitHubCommit {
@@ -20,14 +22,48 @@ interface GitHubContent {
   sha: string;
 }
 
+// Store token for the session (set by worker/index.ts)
+let githubToken: string | undefined;
+let githubCircuitBreaker: CircuitBreaker | undefined;
+let githubCache: ReturnType<typeof createGitHubCache> | undefined;
+
+/**
+ * Initialize GitHub circuit breaker and cache
+ */
+export function initGitHubCircuitBreaker(env?: {
+  DEALS_PROD: KVNamespace;
+}): void {
+  githubCircuitBreaker = createGitHubCircuitBreaker(
+    env as Parameters<typeof createGitHubCircuitBreaker>[0],
+  );
+
+  // Initialize cache if env provided
+  if (env) {
+    githubCache = createGitHubCache(env as any);
+  }
+}
+
+/**
+ * Set GitHub token for API calls
+ */
+export function setGitHubToken(token: string): void {
+  githubToken = token;
+}
+
 /**
  * Get GitHub API base URL and headers
  */
-function getGitHubConfig(token: string) {
+function getGitHubConfig() {
+  if (!githubToken) {
+    throw new Error(
+      "GITHUB_TOKEN not configured. Call setGitHubToken() first.",
+    );
+  }
+
   return {
     baseUrl: "https://api.github.com",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${githubToken}`,
       Accept: "application/vnd.github.v3+json",
       "Content-Type": "application/json",
     },
@@ -35,17 +71,28 @@ function getGitHubConfig(token: string) {
 }
 
 /**
- * Get current file content from GitHub
+ * Get current file content from GitHub (with caching)
  */
 export async function getFileContent(
   repo: string,
   path: string,
-  token: string,
   branch: string = "main",
 ): Promise<GitHubContent | null> {
-  const { baseUrl, headers } = getGitHubConfig(token);
+  const cacheKey = `file_content:${repo}:${path}:${branch}`;
 
-  try {
+  // Try cache first
+  if (githubCache) {
+    const cached = await githubCache.get<GitHubContent>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const { baseUrl, headers } = getGitHubConfig();
+
+  // Use circuit breaker if available
+  const cb = githubCircuitBreaker;
+  const execute = async () => {
     const response = await fetch(
       `${baseUrl}/repos/${repo}/contents/${path}?ref=${branch}`,
       { headers },
@@ -66,6 +113,22 @@ export async function getFileContent(
       content: data.content,
       sha: data.sha,
     };
+  };
+
+  try {
+    let result: GitHubContent | null;
+    if (cb) {
+      result = await cb.execute(execute);
+    } else {
+      result = await execute();
+    }
+
+    // Cache successful result
+    if (result && githubCache) {
+      await githubCache.set(cacheKey, result);
+    }
+
+    return result;
   } catch (error) {
     console.error("Failed to get file content:", error);
     throw error;
@@ -73,25 +136,20 @@ export async function getFileContent(
 }
 
 /**
- * Create or update file in GitHub
+ * Create or update file in GitHub (invalidates cache)
  */
 export async function commitFile(
   repo: string,
   path: string,
   content: string,
-  token: string,
   message: string,
   branch: string = "main",
   sha?: string,
 ): Promise<string> {
-  const { baseUrl, headers } = getGitHubConfig(token);
+  const { baseUrl, headers } = getGitHubConfig();
 
   // Encode content to base64
-  const encodedContent = btoa(
-    encodeURIComponent(content).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-      String.fromCharCode(parseInt(p1, 16)),
-    ),
-  );
+  const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
   const body: Record<string, string> = {
     message,
@@ -103,7 +161,8 @@ export async function commitFile(
     body.sha = sha;
   }
 
-  try {
+  const cb = githubCircuitBreaker;
+  const execute = async () => {
     const response = await fetch(`${baseUrl}/repos/${repo}/contents/${path}`, {
       method: "PUT",
       headers,
@@ -117,6 +176,24 @@ export async function commitFile(
 
     const data = (await response.json()) as { commit: { sha: string } };
     return data.commit.sha;
+  };
+
+  try {
+    let result: string;
+    if (cb) {
+      result = await cb.execute(execute);
+    } else {
+      result = await execute();
+    }
+
+    // Invalidate file content cache
+    if (githubCache) {
+      await githubCache.delete(`file_content:${repo}:${path}:${branch}`);
+      // Also invalidate commits cache since we added a new commit
+      await githubCache.delete(`commits:${repo}:${path}:*`);
+    }
+
+    return result;
   } catch (error) {
     console.error("Failed to commit file:", error);
     throw error;
@@ -128,7 +205,6 @@ export async function commitFile(
  */
 export async function commitSnapshot(
   repo: string,
-  token: string,
   snapshot: Snapshot,
   stats: { total: number; active: number },
 ): Promise<string> {
@@ -142,18 +218,10 @@ export async function commitSnapshot(
 [skip ci]`;
 
   // Try to get existing file SHA
-  const existing = await getFileContent(repo, CONFIG.SNAPSHOT_FILE, token);
+  const existing = await getFileContent(repo, CONFIG.SNAPSHOT_FILE);
   const sha = existing?.sha;
 
-  return commitFile(
-    repo,
-    CONFIG.SNAPSHOT_FILE,
-    content,
-    token,
-    message,
-    "main",
-    sha,
-  );
+  return commitFile(repo, CONFIG.SNAPSHOT_FILE, content, message, "main", sha);
 }
 
 /**
@@ -161,7 +229,6 @@ export async function commitSnapshot(
  */
 export async function createGitHubIssue(
   repo: string,
-  token: string,
   type: string,
   run_id: string,
   details: {
@@ -170,7 +237,7 @@ export async function createGitHubIssue(
     context?: Record<string, unknown>;
   },
 ): Promise<number> {
-  const { baseUrl, headers } = getGitHubConfig(token);
+  const { baseUrl, headers } = getGitHubConfig();
 
   const title = `[NOTIFY] ${type} - ${run_id}`;
   const body = `## Notification
@@ -192,7 +259,8 @@ ${JSON.stringify(details.context || {}, null, 2)}
 *This issue was automatically created by the Deal Discovery System.*
 `;
 
-  try {
+  const cb = githubCircuitBreaker;
+  const execute = async () => {
     const response = await fetch(`${baseUrl}/repos/${repo}/issues`, {
       method: "POST",
       headers,
@@ -209,6 +277,13 @@ ${JSON.stringify(details.context || {}, null, 2)}
 
     const data = (await response.json()) as { number: number };
     return data.number;
+  };
+
+  try {
+    if (cb) {
+      return await cb.execute(execute);
+    }
+    return await execute();
   } catch (error) {
     console.error("Failed to create notification issue:", error);
     throw error;
@@ -216,17 +291,27 @@ ${JSON.stringify(details.context || {}, null, 2)}
 }
 
 /**
- * Get recent commits for idempotency check
+ * Get recent commits for idempotency check (with caching)
  */
 export async function getRecentCommits(
   repo: string,
-  token: string,
   path: string,
   count: number = 10,
 ): Promise<GitHubCommit[]> {
-  const { baseUrl, headers } = getGitHubConfig(token);
+  const cacheKey = `commits:${repo}:${path}:${count}`;
 
-  try {
+  // Try cache first
+  if (githubCache) {
+    const cached = await githubCache.get<GitHubCommit[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const { baseUrl, headers } = getGitHubConfig();
+
+  const cb = githubCircuitBreaker;
+  const execute = async () => {
     const response = await fetch(
       `${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`,
       { headers },
@@ -252,6 +337,22 @@ export async function getRecentCommits(
       message: commit.commit.message,
       author: commit.commit.author,
     }));
+  };
+
+  try {
+    let result: GitHubCommit[];
+    if (cb) {
+      result = await cb.execute(execute);
+    } else {
+      result = await execute();
+    }
+
+    // Cache successful result
+    if (githubCache) {
+      await githubCache.set(cacheKey, result);
+    }
+
+    return result;
   } catch (error) {
     console.error("Failed to get recent commits:", error);
     return [];
@@ -263,10 +364,9 @@ export async function getRecentCommits(
  */
 export async function isSnapshotCommitted(
   repo: string,
-  token: string,
   snapshot_hash: string,
 ): Promise<boolean> {
-  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 20);
+  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 20);
   return commits.some((c) => c.message.includes(snapshot_hash));
 }
 
@@ -275,10 +375,9 @@ export async function isSnapshotCommitted(
  */
 export async function verifyCommit(
   repo: string,
-  token: string,
   expectedSha: string,
 ): Promise<boolean> {
-  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 1);
+  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
   if (commits.length === 0) return false;
   return commits[0].sha === expectedSha;
 }

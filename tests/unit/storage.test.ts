@@ -151,6 +151,9 @@ describe("Storage Layer", () => {
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(`sources:${key}`, value);
         }),
+        delete: vi.fn(async (key: string) => {
+          mockKvStorage.delete(`sources:${key}`);
+        }),
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -370,9 +373,10 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      // Get the updated registry from the mock put call
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      // Get the last put call (the actual registry update, not the cache)
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(0.7);
     });
@@ -388,8 +392,9 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
     });
@@ -403,8 +408,9 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", true);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_success_count).toBe(1);
     });
@@ -418,13 +424,14 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", false);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_failure_count).toBe(1);
     });
 
-    it("should clamp trust score to valid range", async () => {
+    it("should clamp trust score to valid range (duplicate)", async () => {
       const sources = [
         createMockSource({ domain: "test.com", trust_initial: 0.9 }),
       ];
@@ -435,13 +442,14 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
     });
 
-    it("should record successful validation", async () => {
+    it("should record successful validation (duplicate)", async () => {
       const sources = [createMockSource({ domain: "test.com" })];
       mockKvStorage.set(
         "sources:registry",
@@ -450,13 +458,14 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", true);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_success_count).toBe(1);
     });
 
-    it("should record failed validation", async () => {
+    it("should record failed validation (duplicate)", async () => {
       const sources = [createMockSource({ domain: "test.com" })];
       mockKvStorage.set(
         "sources:registry",
@@ -465,8 +474,9 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", false);
 
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
+      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls;
+      const putCall = putCalls[putCalls.length - 1];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_failure_count).toBe(1);
     });
