@@ -1,0 +1,31 @@
+{
+  "skill": "web-search-researcher",
+  "version": "1.0.0",
+  "description": "Evaluation cases for web-search-researcher skill",
+  "evaluations": [
+    {
+      "id": "company-funding-research",
+      "prompt": "Research the funding history of Stripe. Find their total funding amount, key investors, and latest valuation.",
+      "expected_output": "Structured research with funding rounds, amounts, investors, sources",
+      "assertions": [
+        "Uses proper query syntax with quotes",
+        "Includes multiple source verification",
+        "Provides specific funding amounts",
+        "Lists key investors by name",
+        "Cites source URLs"
+      ]
+    },
+    {
+      "id": "deal-validation-check",
+      "prompt": "Validate if 'AcmeAI' company actually raised $10M Series A in 2024 as claimed in a deal submission",
+      "expected_output": "Cross-referenced validation with confidence rating",
+      "assertions": [
+        "Searches for company + funding + 2024",
+        "Checks multiple sources (Crunchbase, news, press releases)",
+        "Provides confidence rating (high/medium/low)",
+        "Notes any discrepancies found",
+        "Suggests follow-up research if needed"
+      ]
+    }
+  ]
+}

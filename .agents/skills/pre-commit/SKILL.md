@@ -2,7 +2,7 @@
 name: pre-commit
 description: Manage and maintain multi-language pre-commit hooks for code quality
 version: 1.0.0
-author: agent
+author: d-oit
 tags: [git, hooks, linting, formatting]
 ---
 

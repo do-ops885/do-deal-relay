@@ -1,0 +1,29 @@
+{
+  "skill": "shell-script-quality",
+  "version": "1.0.0",
+  "description": "Evaluation cases for shell-script-quality skill",
+  "evaluations": [
+    {
+      "id": "basic-lint-check",
+      "prompt": "Review this shell script for quality issues: #!/bin/bash\nrm -rf /tmp/$1\necho Done",
+      "expected_output": "List of issues found with shellcheck recommendations",
+      "assertions": [
+        "Identifies unquoted variable $1",
+        "Mentions set -euo pipefail missing",
+        "Suggests using shellcheck",
+        "Provides improved code example"
+      ]
+    },
+    {
+      "id": "ci-pipeline-setup",
+      "prompt": "Create a CI pipeline script that validates all .sh files in a project",
+      "expected_output": "Shell script with find command, shellcheck loop, exit code handling",
+      "assertions": [
+        "Uses find to locate .sh files",
+        "Runs shellcheck on each file",
+        "Has proper error handling",
+        "Returns appropriate exit code"
+      ]
+    }
+  ]
+}

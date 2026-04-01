@@ -1,0 +1,29 @@
+{
+  "skill": "github-readme",
+  "version": "1.0.0",
+  "description": "Evaluation cases for github-readme skill",
+  "evaluations": [
+    {
+      "id": "basic-readme-structure",
+      "prompt": "Create a README.md for a simple Python CLI tool that converts JSON to CSV. The tool is called 'json2csv' and has install instructions.",
+      "expected_output": "README with title, description, install section, usage example",
+      "assertions": [
+        "Contains markdown header (h1) with project name",
+        "Includes installation instructions",
+        "Has usage examples with code blocks",
+        "Follows human-first README pattern"
+      ]
+    },
+    {
+      "id": "deal-discovery-context",
+      "prompt": "Create a README.md for an agent-powered deal discovery system using Cloudflare Workers. Include multi-agent architecture mention.",
+      "expected_output": "README with architecture diagram reference, agent coordination mention, deal discovery value prop",
+      "assertions": [
+        "Mentions multi-agent architecture",
+        "Includes Cloudflare Workers reference",
+        "Has mermaid diagram or architecture section",
+        "Mentions deal discovery or relay"
+      ]
+    }
+  ]
+}

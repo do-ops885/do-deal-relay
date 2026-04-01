@@ -1,0 +1,29 @@
+{
+  "skill": "anti-ai-slop",
+  "version": "1.0.0",
+  "description": "Evaluation cases for anti-ai-slop skill",
+  "evaluations": [
+    {
+      "id": "detect-generic-code",
+      "prompt": "Review this function for AI slop: function processData(data) { // This function processes the data\n  for (let item of data) {\n    // Process each item\n    handle(item);\n  }\n}",
+      "expected_output": "Identifies generic comments, suggests specific names and comments",
+      "assertions": [
+        "Identifies 'This function processes the data' as generic",
+        "Suggests renaming processData to something specific",
+        "Recommends removing obvious comments",
+        "Provides improved code example"
+      ]
+    },
+    {
+      "id": "review-research-report",
+      "prompt": "Check this research summary for quality: 'The company is doing interesting things in the AI space. They have a strong team and good technology. The market is growing.'",
+      "expected_output": "Identifies vague language, requests quantification and specifics",
+      "assertions": [
+        "Flags 'interesting things' as vague",
+        "Requests specific technology names",
+        "Asks for market size numbers",
+        "Suggests confidence ratings"
+      ]
+    }
+  ]
+}

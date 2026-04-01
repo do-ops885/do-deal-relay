@@ -1,0 +1,1184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://do-deal-relay.dev/schemas/swarm-config.schema.json",
+  "title": "Swarm Coordination Configuration",
+  "description": "Configuration schema for multi-agent swarm coordination in the Deal Discovery System",
+  "type": "object",
+  "required": [
+    "version",
+    "swarm_id",
+    "name",
+    "agents",
+    "phases",
+    "handoff_rules",
+    "quality_gates"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version of the swarm configuration",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
+    },
+    "swarm_id": {
+      "type": "string",
+      "description": "Unique identifier for the swarm",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the swarm",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the swarm's purpose",
+      "maxLength": 500
+    },
+    "system_context": {
+      "type": "object",
+      "description": "System-wide context shared across all agents",
+      "properties": {
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "default": "development"
+        },
+        "kv_namespaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DEALS_PROD",
+              "DEALS_STAGING",
+              "DEALS_LOG",
+              "DEALS_LOCK",
+              "DEALS_SOURCES"
+            ]
+          }
+        },
+        "pipeline_phases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "init",
+              "discover",
+              "normalize",
+              "dedupe",
+              "validate",
+              "score",
+              "stage",
+              "publish",
+              "verify",
+              "finalize"
+            ]
+          },
+          "default": [
+            "init",
+            "discover",
+            "normalize",
+            "dedupe",
+            "validate",
+            "score",
+            "stage",
+            "publish",
+            "verify",
+            "finalize"
+          ]
+        },
+        "cron_schedule": {
+          "type": "string",
+          "description": "Cron expression for scheduled runs",
+          "default": "0 */6 * * *"
+        },
+        "max_deals_per_run": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 1000
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000
+        }
+      }
+    },
+
+    "agents": {
+      "type": "object",
+      "description": "Agent definitions keyed by agent_id",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["agent_id", "name", "type", "capabilities"],
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Unique identifier for the agent"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable agent name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "research",
+              "discovery",
+              "validation",
+              "scoring",
+              "publishing",
+              "notification",
+              "storage",
+              "testing",
+              "documentation",
+              "coordination",
+              "orchestration"
+            ],
+            "description": "Type of agent specialization"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Specific subtype within the agent type",
+            "examples": [
+              "web_scraper",
+              "api_fetcher",
+              "data_normalizer",
+              "trust_calculator"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Agent description and responsibilities"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "description": "Agent implementation version"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "pending", "deprecated"],
+            "default": "pending"
+          },
+          "capabilities": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "web_research",
+                "data_extraction",
+                "html_parsing",
+                "json_parsing",
+                "normalization",
+                "deduplication",
+                "validation",
+                "scoring",
+                "trust_calculation",
+                "publishing",
+                "notification",
+                "storage",
+                "logging",
+                "locking",
+                "testing",
+                "documentation",
+                "github_ops",
+                "browser_testing",
+                "handoff",
+                "parallel_execution",
+                "error_handling",
+                "retry_logic",
+                "state_management",
+                "snapshot_generation",
+                "metrics_collection",
+                "security_audit",
+                "code_review"
+              ]
+            }
+          },
+          "skills": {
+            "type": "array",
+            "description": "Skill references the agent can use",
+            "items": {
+              "type": "object",
+              "required": ["skill_id", "source"],
+              "properties": {
+                "skill_id": {
+                  "type": "string",
+                  "enum": [
+                    "agent-coordination",
+                    "goap-agent",
+                    "task-decomposition",
+                    "parallel-execution",
+                    "cloudflare",
+                    "agents-sdk",
+                    "durable-objects",
+                    "wrangler",
+                    "workers-best-practices",
+                    "building-ai-agent-on-cloudflare",
+                    "building-mcp-server-on-cloudflare",
+                    "sandbox-sdk",
+                    "web-perf"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "enum": ["local", "external"]
+                },
+                "version": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 5
+                }
+              }
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Other agents this agent depends on",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "description": "Expected input data types",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Deal",
+                "Deal[]",
+                "Snapshot",
+                "SourceConfig",
+                "LogEntry",
+                "DiscoveryResult",
+                "ValidationResult",
+                "ScoredDeal",
+                "PipelineContext",
+                "NotificationEvent",
+                "WorldState"
+              ]
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "description": "Produced output data types",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Deal",
+                "Deal[]",
+                "Snapshot",
+                "SourceConfig",
+                "LogEntry",
+                "DiscoveryResult",
+                "ValidationResult",
+                "ScoredDeal",
+                "PipelineContext",
+                "NotificationEvent",
+                "ValidationReport",
+                "TestResults"
+              ]
+            }
+          },
+          "config": {
+            "type": "object",
+            "description": "Agent-specific configuration",
+            "additionalProperties": true,
+            "properties": {
+              "max_retries": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1000
+              },
+              "batch_size": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "parallel_limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "weights": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "thresholds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["domain"],
+                  "properties": {
+                    "domain": {
+                      "type": "string"
+                    },
+                    "url_patterns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "trust_initial": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "classification": {
+                      "type": "string",
+                      "enum": [
+                        "trusted",
+                        "probationary",
+                        "unverified",
+                        "blocked"
+                      ]
+                    },
+                    "active": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "resource_limits": {
+            "type": "object",
+            "properties": {
+              "max_memory_mb": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "max_cpu_ms": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "max_concurrent_requests": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "rate_limit_per_minute": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "safety_rules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "https_only",
+                "respect_robots_txt",
+                "no_js_execution",
+                "input_sanitization",
+                "payload_limit",
+                "timeout_enforcement",
+                "no_dynamic_code",
+                "secret_detection",
+                "audit_logging"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "phases": {
+      "type": "object",
+      "description": "Pipeline phase definitions and their configurations",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["phase_id", "name", "agents"],
+        "properties": {
+          "phase_id": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "agents": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "description": "Agent IDs participating in this phase"
+            }
+          },
+          "execution_mode": {
+            "type": "string",
+            "enum": ["sequential", "parallel", "swarm"],
+            "default": "sequential"
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1000
+          },
+          "retry_policy": {
+            "type": "object",
+            "properties": {
+              "max_retries": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "backoff_multiplier": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "initial_delay_ms": {
+                "type": "integer",
+                "minimum": 100
+              },
+              "retryable_errors": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "FetchError",
+                    "ParseError",
+                    "ValidationError",
+                    "ConcurrencyError",
+                    "NetworkError"
+                  ]
+                }
+              }
+            }
+          },
+          "failure_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "revert",
+                "quarantine",
+                "retry",
+                "concurrency_abort",
+                "skipped_locked"
+              ]
+            }
+          },
+          "output_stage": {
+            "type": "string",
+            "enum": ["staging", "production", "both", "none"],
+            "default": "staging"
+          }
+        }
+      }
+    },
+
+    "task_decomposition": {
+      "type": "object",
+      "description": "Task decomposition patterns for breaking down complex tasks",
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["pattern_id", "strategy"],
+            "properties": {
+              "pattern_id": {
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "by_source",
+                  "by_domain",
+                  "by_batch",
+                  "by_priority",
+                  "by_capability",
+                  "hierarchical"
+                ]
+              },
+              "applies_to_phases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "max_subtasks": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "aggregation_method": {
+                "type": "string",
+                "enum": [
+                  "merge",
+                  "concat",
+                  "deduplicate",
+                  "vote",
+                  "average",
+                  "weighted"
+                ]
+              },
+              "config": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "default_pattern": {
+          "type": "string",
+          "description": "Default pattern ID to use"
+        }
+      }
+    },
+
+    "handoff_rules": {
+      "type": "object",
+      "description": "Rules governing agent handoffs between phases",
+      "required": ["transitions"],
+      "properties": {
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["from_phase", "to_phase", "trigger"],
+            "properties": {
+              "from_phase": {
+                "type": "string"
+              },
+              "to_phase": {
+                "type": "string"
+              },
+              "trigger": {
+                "type": "string",
+                "enum": [
+                  "complete",
+                  "success",
+                  "failure",
+                  "partial",
+                  "timeout",
+                  "manual"
+                ]
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "min_count",
+                        "max_count",
+                        "min_confidence",
+                        "no_errors",
+                        "all_valid",
+                        "custom"
+                      ]
+                    },
+                    "value": {},
+                    "expression": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "data_mapping": {
+                "type": "object",
+                "description": "How data flows from output to input",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "source_field": {
+                      "type": "string"
+                    },
+                    "target_field": {
+                      "type": "string"
+                    },
+                    "transform": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "map",
+                        "filter",
+                        "aggregate",
+                        "validate"
+                      ]
+                    }
+                  }
+                }
+              },
+              "handoff_agents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Agents that handle this specific transition"
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1000
+              },
+              "failure_action": {
+                "type": "string",
+                "enum": ["abort", "retry", "skip", "quarantine", "escalate"]
+              }
+            }
+          }
+        },
+        "default_failure_action": {
+          "type": "string",
+          "enum": ["abort", "retry", "skip", "quarantine", "escalate"],
+          "default": "retry"
+        },
+        "escalation_policy": {
+          "type": "object",
+          "properties": {
+            "escalation_threshold_minutes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "escalation_targets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "notification_channels": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["telegram", "slack", "github", "email", "webhook"]
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "parallel_execution_groups": {
+      "type": "object",
+      "description": "Configuration for parallel task execution",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["group_id", "agents"],
+            "properties": {
+              "group_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "agents": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "execution_strategy": {
+                "type": "string",
+                "enum": [
+                  "all_parallel",
+                  "race",
+                  "pipeline",
+                  "map_reduce",
+                  "swarm"
+                ],
+                "default": "all_parallel"
+              },
+              "sync_point": {
+                "type": "string",
+                "enum": ["before_next_phase", "immediate", "custom"],
+                "default": "before_next_phase"
+              },
+              "concurrency_limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "result_aggregation": {
+                "type": "string",
+                "enum": [
+                  "merge",
+                  "concat",
+                  "deduplicate",
+                  "vote",
+                  "average",
+                  "first",
+                  "last"
+                ],
+                "default": "merge"
+              },
+              "failure_mode": {
+                "type": "string",
+                "enum": ["fail_fast", "continue", "best_effort"],
+                "default": "continue"
+              },
+              "applies_to_phases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "max_global_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10
+        }
+      }
+    },
+
+    "web_research": {
+      "type": "object",
+      "description": "Web research integration configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agent IDs that perform web research"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["domain"],
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "rate_limit_rpm": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1000
+              },
+              "fetch_strategy": {
+                "type": "string",
+                "enum": ["direct", "cached", "proxied", "headless"]
+              },
+              "selectors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "extraction_patterns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["regex", "css", "xpath", "json"]
+                    }
+                  }
+                }
+              },
+              "trust_config": {
+                "type": "object",
+                "properties": {
+                  "initial_trust": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "classification": {
+                    "type": "string",
+                    "enum": ["trusted", "probationary", "unverified", "blocked"]
+                  },
+                  "adjustment_on_success": {
+                    "type": "number"
+                  },
+                  "adjustment_on_failure": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "extraction_pipeline": {
+          "type": "object",
+          "properties": {
+            "max_retries": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "timeout_per_source_ms": {
+              "type": "integer",
+              "minimum": 1000
+            },
+            "parallel_sources": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "validation_rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "rule": {
+                    "type": "string",
+                    "enum": ["required", "format", "range", "enum", "custom"]
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "caching": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ttl_seconds": {
+              "type": "integer",
+              "minimum": 60
+            },
+            "kv_namespace": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+
+    "quality_gates": {
+      "type": "object",
+      "description": "Quality gates and validation configuration",
+      "required": ["gates"],
+      "properties": {
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["gate_id", "name", "applies_to_phases"],
+            "properties": {
+              "gate_id": {
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "applies_to_phases": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "init",
+                    "discover",
+                    "normalize",
+                    "dedupe",
+                    "validate",
+                    "score",
+                    "stage",
+                    "publish",
+                    "verify",
+                    "finalize"
+                  ]
+                }
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "schema",
+                  "logic",
+                  "security",
+                  "performance",
+                  "data_quality",
+                  "custom"
+                ]
+              },
+              "validator_agent": {
+                "type": "string",
+                "description": "Agent responsible for this gate"
+              },
+              "auto_enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "blocking": {
+                "type": "boolean",
+                "default": true
+              },
+              "config": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "min_trust_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "min_confidence_score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "similarity_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "max_reward_value": {
+                    "type": "number"
+                  },
+                  "required_fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "custom_rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "failure_action": {
+                "type": "string",
+                "enum": ["block", "warn", "quarantine", "retry", "skip"],
+                "default": "block"
+              },
+              "reporting": {
+                "type": "object",
+                "properties": {
+                  "log_level": {
+                    "type": "string",
+                    "enum": ["debug", "info", "warn", "error"]
+                  },
+                  "metrics_enabled": {
+                    "type": "boolean"
+                  },
+                  "notifications_enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "validation_severity": {
+          "type": "string",
+          "enum": ["strict", "moderate", "lenient"],
+          "default": "strict"
+        },
+        "quarantine_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.3
+        }
+      }
+    },
+
+    "notifications": {
+      "type": "object",
+      "description": "Notification configuration for swarm events",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["channel_id", "type"],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "telegram",
+                  "slack",
+                  "github",
+                  "email",
+                  "webhook",
+                  "log"
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "config": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "phase_complete",
+                    "phase_error",
+                    "handoff_success",
+                    "handoff_failure",
+                    "quality_gate_pass",
+                    "quality_gate_fail",
+                    "high_value_deal",
+                    "trust_anomaly",
+                    "system_error",
+                    "recovery_action",
+                    "manual_intervention"
+                  ]
+                }
+              },
+              "severity_filter": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["info", "warning", "critical"]
+                }
+              }
+            }
+          }
+        },
+        "cooldown_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3600
+        }
+      }
+    },
+
+    "state_tracking": {
+      "type": "object",
+      "description": "Configuration for state tracking and persistence",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "kv_namespace": {
+          "type": "string",
+          "default": "DEALS_LOG"
+        },
+        "track_metrics": {
+          "type": "boolean",
+          "default": true
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30
+        },
+        "checkpoint_interval_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "default": 30000
+        }
+      }
+    },
+
+    "metrics": {
+      "type": "object",
+      "description": "Metrics collection configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "collectors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "pipeline_duration",
+              "phase_duration",
+              "agent_execution_time",
+              "deal_throughput",
+              "error_rate",
+              "quality_gate_pass_rate",
+              "trust_score_evolution",
+              "source_diversity"
+            ]
+          }
+        },
+        "prometheus_enabled": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

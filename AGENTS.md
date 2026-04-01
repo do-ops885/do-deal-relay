@@ -1,135 +1,141 @@
-# AGENTS.md - Deal Discovery System
+# AGENTS.md - Master Coordination Hub
 
-**Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.0
-**Phase**: Bootstrap
-**Status**: In Development
+**Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
+**Version**: 1.0.0
+**Architecture**: Agent-First CLI with swarm coordination
+**Status**: Active Development
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-npm install
-# Run quality gate (silent on success)
-./scripts/quality_gate.sh
-# Run tests
-npm test
-# Start development
-npm run dev
+npm install                    # Install dependencies
+./scripts/quality_gate.sh      # Validate all systems
+npm run test:ci                # Run test suite
+npm run dev                    # Start development
 ```
 
-## System Overview
+## Available Agents Matrix
 
-**Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
-**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
-**Infrastructure**: Cloudflare Workers + 5 KV namespaces
-**Schedule**: Every 6 hours
+| Agent      | CLI      | Context | Strengths                  | Sub-Agents | Skill Cmd |
+| ---------- | -------- | ------- | -------------------------- | ---------- | --------- |
+| **Claude** | `claude` | 200K    | Code, planning, file ops   | Yes        | Yes       |
+| **Gemini** | `gemini` | 1M      | Research, large context    | No         | No        |
+| **Qwen**   | `qwen`   | 128K    | TS/JS patterns, validation | No         | No        |
 
-See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
+See `CLAUDE.md`, `GEMINI.md`, `QWEN.md` for CLI-specific overrides.
+
+## Agent-First CLI Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Agent CLI  │────→│  AGENTS.md  │────→│ Skill System│
+│ (3 options) │     │ (this file) │     │ (.agents/)  │
+└─────────────┘     └─────────────┘     └─────────────┘
+         ↓                  ↓                  ↓
+   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+   │  Agent Spec │    │ Coordination│    │   Swarm     │
+   │ (CLAUDE.md) │    │  Protocol   │    │  Execution  │
+   │ (GEMINI.md) │    │             │    │             │
+   │  (QWEN.md)  │    │             │    │             │
+   └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+**Core Principle**: All agents read AGENTS.md first, then apply CLI-specific overrides.
+
+## Handoff Coordination Protocol
+
+**Trigger Conditions**: Context limit, agent switch, task completion, parallel need.
+
+**Handoff Steps**:
+
+1. Current agent writes `temp/handoff-*.md` with: task status (done/partial/blocked), key decisions, next steps, relevant file paths
+2. Update `agents-docs/coordination/handoff-log.jsonl`
+3. Next agent reads handoff file + AGENTS.md + its own spec
+4. Confirm understanding before proceeding
+
+**Blocker Escalation**: 30min stuck → Escalate to `agents-docs/coordination/blockers.md` with issue, attempted fixes, relevant code, hypothesis.
+
+See [agents-docs/coordination/](agents-docs/coordination/) for full protocol.
+
+## Swarm Coordination Patterns
+
+**Pattern 1: Research Swarm** (Gemini + Qwen) - Delegate web research tasks, aggregate in `temp/swarm-research-*.md`.
+
+**Pattern 2: Validation Pipeline** (Claude + Qwen) - Run all 9 gates in parallel, aggregate results, fail fast.
+
+**Pattern 3: Code Review Swarm** (Claude + Gemini) - Split by module (worker/, tests/, scripts/), each agent reviews + reports, consolidate findings.
+
+Load `skill parallel-execution` for implementation.
+
+## Web Research Integration
+
+**Sources**: ProductHunt, GitHub Trending, Hacker News, RSS feeds.
+
+**Research Command**:
+
+```bash
+skill goap-agent
+research-task: "Find 10 AI devtools launched this week"
+output: temp/research-*.md
+```
+
+**Integration Points**: Research → `temp/research-*.md` → Deal extraction pipeline → Update `worker/sources/`.
+
+See [agents-docs/RESEARCH.md](agents-docs/RESEARCH.md) for source specifications.
 
 ## Project Structure
 
-**IMPORTANT**: Only standard configuration files belong in root. All other files MUST use subfolders.
-
 ```
-├── .github/workflows/    # CI/CD workflows
-├── .agents/skills/       # Agent coordination skills
-├── agents-docs/          # System documentation
-├── docs/                 # API documentation
-├── plans/                # Execution plans
-├── scripts/              # Utility scripts
-├── temp/                 # Analysis reports & state (gitignored)
-├── tests/                # Test suite
-└── worker/               # Cloudflare Worker source
+├── CLAUDE.md, GEMINI.md, QWEN.md  # Agent CLI specs (root level)
+├── AGENTS.md                      # This coordination hub
+├── .agents/skills/                # Coordination skills
+├── agents-docs/                   # System documentation
+│   ├── coordination/              # Handoff logs, blockers
+│   ├── agents/                    # Agent specifications
+│   └── handoffs/                  # Handoff templates
+├── temp/                          # State, reports (gitignored)
+└── worker/                        # Cloudflare Worker source
 ```
 
 ### Root Directory Policy
 
-**Allowed in root** (standard project files only):
+**Allowed**: Standard project files only (package.json, tsconfig.json, wrangler.toml, README.md, LICENSE, VERSION, .gitignore).
 
-- `.gitignore` - Git ignore patterns
-- `package.json` - NPM manifest
-- `package-lock.json` - NPM lockfile
-- `tsconfig.json` - TypeScript config
-- `vitest.config.ts` - Test runner config
-- `wrangler.toml` - Cloudflare Workers config
-- `README.md` - Main project documentation
-- `VERSION` - Version file
-- `LICENSE` - License file
+**MUST use subfolders**: Docs → agents-docs/, Reports → temp/, Scripts → scripts/, Tests → tests/.
 
-**MUST use subfolders**:
+See [agents-docs/guard-rails.md](agents-docs/guard-rails.md) for complete rules.
 
-- Documentation → `docs/` or `agents-docs/`
-- Reports/status → `temp/`
-- Scripts → `scripts/`
-- Tests → `tests/`
-- Generated files → `temp/`
+## State Management
 
-See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rules.
+| File                                         | Purpose                            |
+| -------------------------------------------- | ---------------------------------- |
+| `temp/state.json`                            | Active agent status, current phase |
+| `temp/skills-lock.json`                      | External skill version tracking    |
+| `agents-docs/coordination/handoff-log.jsonl` | Handoff history                    |
+| `agents-docs/coordination/blockers.md`       | Escalated issues                   |
 
-## Reference
+## Quality Gates
 
-| Resource         | Location                                                           |
-| ---------------- | ------------------------------------------------------------------ |
-| System Reference | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
-| Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
-| Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
-| Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Execution Plan   | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
-| Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
-| API Docs         | [docs/API.md](docs/API.md)                                         |
-| Skills           | [.agents/skills/](.agents/skills/)                                 |
+Always run `./scripts/quality_gate.sh` before handoff or completion:
 
-## Skills
+1. TypeScript compilation
+2. Unit tests (>80% coverage)
+3. Validation gates
+4. Security checks
+5. Root directory organization
 
-**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`
+**Rule**: Silent on success, loud on failure.
 
-**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`
+## Next Steps & References
 
-Use: `skill <name>` to load guidance.
+| Resource              | Location                                                           |
+| --------------------- | ------------------------------------------------------------------ |
+| System Architecture   | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
+| Coordination Protocol | [agents-docs/coordination/](agents-docs/coordination/)             |
+| Guard Rails           | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
+| Execution Plan        | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
+| Skills Directory      | [.agents/skills/](.agents/skills/)                                 |
+| API Documentation     | [docs/API.md](docs/API.md)                                         |
+| Handoff Templates     | [agents-docs/handoffs/](agents-docs/handoffs/)                     |
 
-## Endpoints
-
-`/deals` · `/deals.json` · `/health` · `/metrics` · `/api/status` · `/api/log` · `/api/submit` · `/api/discover`
-
-See [docs/API.md](docs/API.md) for endpoint documentation.
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build TypeScript
-- `npm test` - Run tests in watch mode
-- `npm run test:ci` - Run tests once (for CI)
-- `npm run lint` - Type check
-- `npm run validate` - Run validation gates
-- `npm run format` - Format code with Prettier
-
-### Quality Gates
-
-Run `./scripts/quality_gate.sh` to execute all validation checks:
-
-- TypeScript compilation
-- Unit tests
-- Validation gates
-- Security checks
-- Root directory file organization (via `./scripts/check-root-files.sh`)
-
-## Active Agents
-
-See `temp/state.json` for current agent status and progress.
-
-| Agent               | Status  | Phase           | Responsibility      |
-| ------------------- | ------- | --------------- | ------------------- |
-| test-agent-v2       | pending | Test & Validate | Integration testing |
-| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
-| doc-agent           | pending | Test & Validate | Documentation       |
-| github-agent        | pending | Test & Validate | GitHub integration  |
-| browser-agent       | pending | Test & Validate | Browser testing     |
-
-## Notes
-
-- **Analysis Reports**: Generated reports and swarm analysis are stored in `temp/` (not tracked in git)
-- **State Tracking**: Agent progress and system state tracked in `temp/state.json`
-- **Skills Lock**: External skill versions tracked in `temp/skills-lock.json`
+**Active Agents**: See `temp/state.json` for current status and assignments.
