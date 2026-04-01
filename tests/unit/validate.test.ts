@@ -5,6 +5,14 @@ import {
 } from "../../worker/pipeline/validate";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
 
+// Cloudflare Workers KV namespace type
+type KVNamespace = {
+  get: <T>(key: string, type?: string) => Promise<T | null>;
+  put: (key: string, value: string) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  list?: () => Promise<{ keys: { name: string }[] }>;
+};
+
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
   source: {
@@ -54,11 +62,32 @@ describe("Validation Pipeline", () => {
   };
 
   const mockEnv = {
-    DEALS_PROD: {} as KVNamespace,
-    DEALS_STAGING: {} as KVNamespace,
-    DEALS_LOG: {} as KVNamespace,
-    DEALS_LOCK: {} as KVNamespace,
-    DEALS_SOURCES: {} as KVNamespace,
+    DEALS_PROD: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+    } as unknown as KVNamespace,
+    DEALS_STAGING: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+    } as unknown as KVNamespace,
+    DEALS_LOG: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+      list: async () => ({ keys: [] }),
+    } as unknown as KVNamespace,
+    DEALS_LOCK: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+    } as unknown as KVNamespace,
+    DEALS_SOURCES: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+    } as unknown as KVNamespace,
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
