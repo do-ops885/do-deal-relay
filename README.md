@@ -1,9 +1,8 @@
 # Deal Discovery System - Status
 
 **System**: In Development
-**Version**: 0.1.0-alpha
+**Version**: 0.1.0
 **Status**: Bootstrap Phase
-**Last Updated**: 2024-03-31
 
 ## Quick Start
 
@@ -43,14 +42,12 @@ curl https://your-worker.workers.dev/health
 curl https://your-worker.workers.dev/api/log
 ```
 
-### For Humans
+### Documentation
 
-- **Repository**: https://github.com/do-ops885/do-deal-relay
-- **Documentation**:
-  - [docs/AGENTS.md](docs/AGENTS.md) - System specs and architecture
-  - [docs/API.md](docs/API.md) - API reference
-  - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
-  - [docs/LEGAL_COMPLIANCE.md](docs/LEGAL_COMPLIANCE.md) - Legal requirements
+- [docs/AGENTS.md](docs/AGENTS.md) - System specs and architecture
+- [docs/API.md](docs/API.md) - API reference
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
+- [docs/LEGAL_COMPLIANCE.md](docs/LEGAL_COMPLIANCE.md) - Legal requirements
 - **Status Dashboard**: Check `/health` endpoint
 
 ## Architecture

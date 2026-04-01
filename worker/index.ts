@@ -390,7 +390,7 @@ async function handleSubmit(body: SubmitDealBody, env: Env): Promise<Response> {
     run_id: stagingSnapshot?.run_id || `manual-${Date.now()}`,
     trace_id: stagingSnapshot?.trace_id || `manual-${dealId}`,
     previous_hash: stagingSnapshot?.snapshot_hash || "",
-    schema_version: stagingSnapshot?.schema_version || "1.0.0",
+    schema_version: stagingSnapshot?.schema_version || CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
       active: deals.filter((d) => d.metadata.status === "active").length,
