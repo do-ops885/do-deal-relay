@@ -12,6 +12,8 @@ import {
   getRecentLogs,
   exportLogsAsJSONL,
 } from "./lib/logger";
+import { logger, setLogContext } from "./lib/global-logger";
+import { handleError } from "./lib/error-handler";
 import { notify } from "./notify";
 import type {
   Env,
@@ -32,6 +34,8 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    setLogContext({ component: "http", path, method: request.method });
 
     try {
       // Health check
@@ -85,24 +89,31 @@ export default {
       // 404
       return jsonResponse({ error: "Not found" }, 404);
     } catch (error) {
-      console.error("Request handler error:", error);
-      return jsonResponse({ error: "Internal server error" }, 500);
+      const err = handleError(error, { component: "http", path });
+      return jsonResponse(
+        { error: "Internal server error", class: err.errorClass },
+        500,
+      );
     }
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
-    console.log(`Scheduled event triggered at ${new Date().toISOString()}`);
+    logger.info("Scheduled event triggered", { component: "scheduler" });
 
     try {
       const result = await executePipeline(env);
 
       if (result.success) {
-        console.log("Pipeline completed successfully");
+        logger.info("Pipeline completed successfully", {
+          component: "scheduler",
+        });
       } else {
-        console.error(`Pipeline failed at ${result.phase}: ${result.error}`);
+        logger.error(`Pipeline failed at ${result.phase}: ${result.error}`, {
+          component: "scheduler",
+        });
       }
     } catch (error) {
-      console.error("Scheduled execution error:", error);
+      handleError(error, { component: "scheduler", phase: "init" });
 
       // Notify on critical failure
       await notify(env, {
