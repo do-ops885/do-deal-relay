@@ -274,3 +274,83 @@ Each lesson follows this structure:
 - **RULE**: Use `rg -l <script>` across codebase to verify active usage
 - **RULE**: Secret detection patterns must use full regex (e.g. `ghp_[a-zA-Z0-9]{36}`) not substrings
 - **RULE**: Version references must be kept in sync across config.ts, AGENTS.md, package.json
+
+### LESSON-016: CI/CD Environment Divergence
+
+**Date**: 2026-04-01
+**Component**: CI/CD / GitHub Actions
+
+**Issue**: Scripts that pass locally fail in CI with exit code 1, particularly quality_gate.sh and TruffleHog secret scanning.
+
+**Root Cause**:
+
+1. Quality gate script silent success detection different in CI (missing `set -e` error handling)
+2. TruffleHog needs explicit base/head commit refs (`--since-commit`, `--branch`)
+3. GitHub Actions checkout defaults to shallow clone (no full history for secret scanning)
+4. Token permissions not configured for rollback notifications (`actions: write` required)
+5. CodeQL requires explicit enabling in repository security settings
+
+**Solution**:
+
+- Add explicit `set -e` error handling in CI workflows
+- Configure checkout with `fetch-depth: 0` for full history
+- Add `permissions: actions: write` to workflow for notifications
+- Enable CodeQL in repository security settings
+- Pass explicit commit refs to TruffleHog in CI
+
+**Applied**: Pending workflow updates
+
+**Refs**: monitor-001, swarm-014
+
+### LESSON-017: Release Workflow Validation Success
+
+**Date**: 2026-04-01
+**Component**: Release / Version Management
+
+**Issue**: Needed to verify release script functionality and cross-file version synchronization.
+
+**Root Cause**: After deleting 9 unused scripts, needed to confirm remaining release infrastructure worked correctly.
+
+**Solution**: Version 0.1.1 successfully synchronized across 20 files using the release script. Guard rails audit logging confirmed functional. Release script works as designed.
+
+**Results**:
+
+- 20 files updated with synchronized version 0.1.1
+- VERSION file correctly reflects release
+- worker/config.ts, AGENTS.md, package.json all aligned
+- Guard rails audit trail captured all changes
+
+**Prevention**:
+
+- **RULE**: Run release script in dry-run mode first to preview changes
+- **RULE**: Always verify version synchronization across key files after release
+- **RULE**: Keep release script as single source of truth for version bumps
+- **RULE**: Use guard rails audit for change tracking across releases
+
+---
+
+## LEARNINGS Summary
+
+### Checklist: CI/CD Best Practices
+
+- [ ] Add `set -e` to all CI workflow shell scripts
+- [ ] Configure checkout with `fetch-depth: 0` for secret scanning
+- [ ] Add `permissions: actions: write` for rollback notifications
+- [ ] Enable CodeQL in repository settings before first run
+- [ ] Pass explicit commit refs to TruffleHog (`--since-commit`, `--branch`)
+- [ ] Test quality gates in both local and CI environments
+- [ ] Verify exit code handling matches between local and CI
+
+### Quick Reference: Local vs CI Differences
+
+| Aspect            | Local               | CI (GitHub Actions)           |
+| ----------------- | ------------------- | ----------------------------- |
+| Git history       | Full                | Shallow by default            |
+| Error handling    | Shell default       | Needs explicit `set -e`       |
+| Token permissions | User scopes         | Explicit `permissions:` block |
+| Secret scanning   | Auto-detect commits | Needs explicit refs           |
+| Notifications     | N/A                 | Requires `actions: write`     |
+
+---
+
+_Last Updated: 2026-04-01 | Total Lessons: 017_
