@@ -23,15 +23,12 @@ const NOTIFICATION_COOLDOWN_MS =
 export async function notify(
   env: Env,
   event: NotificationEvent,
-  force: boolean = false,
 ): Promise<boolean> {
-  // Check deduplication (unless forced)
-  if (!force) {
-    const shouldSend = await shouldSendNotification(env, event);
-    if (!shouldSend) {
-      console.log(`Notification deduped: ${event.type}`);
-      return false;
-    }
+  // Check deduplication
+  const shouldSend = await shouldSendNotification(env, event);
+  if (!shouldSend) {
+    console.log(`Notification deduped: ${event.type}`);
+    return false;
   }
 
   // Try Telegram first (if configured)
@@ -47,22 +44,16 @@ export async function notify(
     }
   }
 
-  // Fallback to GitHub Issues (only if configured)
-  if (env.GITHUB_TOKEN) {
-    try {
-      const issueNumber = await sendGitHubNotification(env, event);
-      await recordNotification(env, event);
-      console.log(`Created GitHub issue #${issueNumber} for ${event.type}`);
-      return true;
-    } catch (error) {
-      console.error("GitHub notification failed:", error);
-      return false;
-    }
+  // Fallback to GitHub Issues
+  try {
+    const issueNumber = await sendGitHubNotification(env, event);
+    await recordNotification(env, event);
+    console.log(`Created GitHub issue #${issueNumber} for ${event.type}`);
+    return true;
+  } catch (error) {
+    console.error("GitHub notification failed:", error);
+    return false;
   }
-
-  // No notification channels configured
-  console.log(`No notification channels configured for ${event.type}`);
-  return false;
 }
 
 /**
@@ -84,6 +75,7 @@ async function shouldSendNotification(
     const recent = history.filter(
       (h) =>
         h.type === event.type &&
+        h.source === (event.context?.source || "system") &&
         now - new Date(h.timestamp).getTime() < NOTIFICATION_COOLDOWN_MS,
     );
 
@@ -109,7 +101,7 @@ async function recordNotification(
 
     history.push({
       type: event.type,
-      source: "system",
+      source: (event.context?.source as string) || "system",
       timestamp: new Date().toISOString(),
     });
 
@@ -171,10 +163,6 @@ async function sendGitHubNotification(
   env: Env,
   event: NotificationEvent,
 ): Promise<number> {
-  if (!env.GITHUB_TOKEN) {
-    throw new Error("GITHUB_TOKEN not configured");
-  }
-
   const recentLogs = await getRecentLogs(env, 10);
 
   const details = {
@@ -186,13 +174,7 @@ async function sendGitHubNotification(
     },
   };
 
-  return createGitHubIssue(
-    env.GITHUB_REPO,
-    env.GITHUB_TOKEN,
-    event.type,
-    event.run_id,
-    details,
-  );
+  return createGitHubIssue(env.GITHUB_REPO, event.type, event.run_id, details);
 }
 
 /**
@@ -219,16 +201,12 @@ export async function notifyHighValueDeals(
   run_id: string,
 ): Promise<void> {
   for (const deal of deals) {
-    await notify(
-      env,
-      {
-        type: "high_value_deal",
-        severity: "info",
-        run_id,
-        message: `High-value deal discovered: ${deal.code} with reward $${deal.reward}`,
-        context: { code: deal.code, reward: deal.reward },
-      },
-      true,
-    ); // Force send to bypass cooldown
+    await notify(env, {
+      type: "high_value_deal",
+      severity: "info",
+      run_id,
+      message: `High-value deal discovered: ${deal.code} with reward $${deal.reward}`,
+      context: { code: deal.code, reward: deal.reward },
+    });
   }
 }
