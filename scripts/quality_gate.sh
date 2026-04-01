@@ -46,8 +46,8 @@ if [ -d ".claude" ]; then
     run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
 fi
 
-# Check 5: Git hooks installed
-if [ ! -f ".git/hooks/pre-commit" ]; then
+# Check 5: Git hooks installed (only check locally, not in CI)
+if [ -z "$CI" ] && [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
 fi
