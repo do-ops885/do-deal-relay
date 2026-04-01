@@ -1,7 +1,6 @@
 # AGENTS.md - Deal Discovery System
 
 > Single source of truth for all AI coding agents in this repository.
-> Supported by: Claude Code, Gemini CLI, OpenCode, Qwen Code, Windsurf, Cursor
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents  
 **Version**: 0.1.0  
@@ -181,8 +180,6 @@ Run `./scripts/setup-skills.sh` after cloning to create symlinks for Claude Code
 For sub-packages, place an additional `AGENTS.md` inside each sub-package. The agent reads the nearest file in the directory tree - closest one takes precedence.
 
 ## Development Notes
-
-⚠️ **NOT PRODUCTION READY** - This is v0.1.0-alpha in active development
 
 - All changes are staged for review
 - Full validation suite runs on every commit
