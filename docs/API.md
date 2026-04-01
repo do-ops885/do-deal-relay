@@ -16,7 +16,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -68,7 +68,7 @@ Get full snapshot with metadata.
 **Response:**
 ```json
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",

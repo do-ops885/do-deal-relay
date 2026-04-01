@@ -3,7 +3,7 @@
 > Single source of truth for all AI coding agents in this repository.
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents  
-**Version**: 0.1.0  
+**Version**: 0.1.1  
 **Phase**: Bootstrap  
 **Status**: In Development ⚠️ NOT PRODUCTION READY
 
