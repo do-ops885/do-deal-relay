@@ -287,19 +287,37 @@ export interface Env {
 
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
-  version: string;
   timestamp: string;
-  checks: {
-    kv_connection: boolean;
-    last_run_success: boolean;
-    snapshot_valid: boolean;
+  version: string;
+  components: {
+    kv_stores: {
+      deals_prod: boolean;
+      deals_staging: boolean;
+      deals_log: boolean;
+      deals_lock: boolean;
+      deals_sources: boolean;
+    };
+    pipeline: {
+      last_run: string;
+      last_success: boolean;
+      average_duration_ms: number;
+    };
+    external_services: {
+      github_api: boolean;
+      telegram_api?: boolean;
+    };
   };
-  last_run?: {
-    run_id: string;
-    timestamp: string;
-    duration_ms: number;
-    deals_count: number;
+  metrics: {
+    total_runs_24h: number;
+    success_rate_24h: number;
+    avg_deals_per_run: number;
   };
+}
+
+export interface HealthCheckResult {
+  status: "healthy" | "degraded" | "unhealthy";
+  components: HealthStatus["components"];
+  metrics: HealthStatus["metrics"];
 }
 
 export interface Metrics {

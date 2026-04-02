@@ -62,7 +62,6 @@ export async function publishSnapshot(
     // Step 3: Check if already published (idempotency)
     const alreadyCommitted = await isSnapshotCommitted(
       env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
       snapshot.snapshot_hash,
     );
 
@@ -78,22 +77,13 @@ export async function publishSnapshot(
     );
 
     // Step 5: Commit to GitHub
-    const commitSha = await commitSnapshot(
-      env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
-      publishedSnapshot,
-      {
-        total: publishedSnapshot.stats.total,
-        active: publishedSnapshot.stats.active,
-      },
-    );
+    const commitSha = await commitSnapshot(env.GITHUB_REPO, publishedSnapshot, {
+      total: publishedSnapshot.stats.total,
+      active: publishedSnapshot.stats.active,
+    });
 
     // Step 6: Verify commit
-    const verified = await verifyCommit(
-      env.GITHUB_REPO,
-      env.GITHUB_TOKEN,
-      commitSha,
-    );
+    const verified = await verifyCommit(env.GITHUB_REPO, commitSha);
     if (!verified) {
       throw new PipelineError(
         "PublishError",
@@ -151,15 +141,8 @@ export async function rollbackSnapshot(
  */
 async function verifyCommit(
   repo: string,
-  token: string,
   expectedSha: string,
 ): Promise<boolean> {
-  const { getRecentCommits } = await import("./lib/github");
-  const commits = await getRecentCommits(repo, token, CONFIG.SNAPSHOT_FILE, 1);
-
-  if (commits.length === 0) {
-    return false;
-  }
-
-  return commits[0].sha === expectedSha;
+  const { verifyCommit: verifyGitHubCommit } = await import("./lib/github");
+  return verifyGitHubCommit(repo, expectedSha);
 }

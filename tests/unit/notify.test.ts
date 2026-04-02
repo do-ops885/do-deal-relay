@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { notify, notifyHighValueDeals } from "../../worker/notify";
+import { setGitHubToken } from "../../worker/lib/github";
 import type { Env, NotificationEvent } from "../../worker/types";
 
 describe("Notification System", () => {
@@ -111,6 +112,7 @@ describe("Notification System", () => {
 
     it("should fallback to GitHub when Telegram not configured", async () => {
       mockEnv.GITHUB_TOKEN = "github-token";
+      setGitHubToken("github-token");
 
       fetchMock.mockResolvedValue({
         ok: true,

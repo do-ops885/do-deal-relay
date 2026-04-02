@@ -306,7 +306,6 @@ describe("Publish Module", () => {
 
       expect(github.commitSnapshot).toHaveBeenCalledWith(
         mockEnv.GITHUB_REPO,
-        mockEnv.GITHUB_TOKEN,
         expect.anything(),
         expect.objectContaining({ total: 10, active: 8 }),
       );
