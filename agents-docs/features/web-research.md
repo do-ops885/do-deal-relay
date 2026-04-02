@@ -103,6 +103,6 @@ Research → temp/research-*.md → Deal extraction pipeline → Update worker/s
 
 ## See Also
 
-- [RESEARCH.md](../RESEARCH.md) - Source specifications and research methodology
+- [URL Handling](../url-handling.md) - URL preservation rules
 - [API Documentation](../../docs/API.md) - Full API reference
 - [CLI Documentation](../../temp/analysis-cli.md) - CLI usage guide
