@@ -553,7 +553,7 @@ async function handleFailure(
     case "concurrency_abort":
       logger.warn("Handling concurrency abort");
       await notify(env, {
-        type: "system_error",
+        type: "concurrency_abort",
         severity: "warning",
         run_id: ctx.run_id,
         message: "Pipeline aborted due to concurrent execution",
