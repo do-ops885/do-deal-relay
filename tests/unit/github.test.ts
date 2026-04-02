@@ -7,6 +7,8 @@ import {
   getRecentCommits,
   isSnapshotCommitted,
   verifyCommit,
+  setGitHubToken,
+  resetGitHubToken,
 } from "../../worker/lib/github";
 import type { Snapshot } from "../../worker/types";
 
@@ -18,10 +20,12 @@ describe("GitHub Integration", () => {
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    setGitHubToken(TEST_TOKEN);
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    resetGitHubToken();
   });
 
   describe("getFileContent", () => {
@@ -31,7 +35,7 @@ describe("GitHub Integration", () => {
         json: async () => ({ content: btoa("file content"), sha: "abc123" }),
       });
 
-      const result = await getFileContent("owner/repo", "file.txt", TEST_TOKEN);
+      const result = await getFileContent("owner/repo", "file.txt");
 
       expect(result).toEqual({
         content: btoa("file content"),
@@ -45,11 +49,7 @@ describe("GitHub Integration", () => {
         ok: false,
       });
 
-      const result = await getFileContent(
-        "owner/repo",
-        "missing.txt",
-        TEST_TOKEN,
-      );
+      const result = await getFileContent("owner/repo", "missing.txt");
 
       expect(result).toBeNull();
     });
@@ -61,9 +61,9 @@ describe("GitHub Integration", () => {
         statusText: "Internal Server Error",
       });
 
-      await expect(
-        getFileContent("owner/repo", "file.txt", TEST_TOKEN),
-      ).rejects.toThrow("GitHub API error");
+      await expect(getFileContent("owner/repo", "file.txt")).rejects.toThrow(
+        "GitHub API error",
+      );
     });
 
     it("should use specified branch", async () => {
@@ -72,7 +72,7 @@ describe("GitHub Integration", () => {
         json: async () => ({ content: "", sha: "abc" }),
       });
 
-      await getFileContent("owner/repo", "file.txt", TEST_TOKEN, "develop");
+      await getFileContent("owner/repo", "file.txt", "develop");
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/contents/file.txt?ref=develop",
@@ -92,7 +92,6 @@ describe("GitHub Integration", () => {
         "owner/repo",
         "new-file.txt",
         "content",
-        TEST_TOKEN,
         "Create new file",
       );
 
@@ -116,7 +115,6 @@ describe("GitHub Integration", () => {
         "owner/repo",
         "existing.txt",
         "updated content",
-        TEST_TOKEN,
         "Update file",
         "main",
         "old-sha",
@@ -142,7 +140,7 @@ describe("GitHub Integration", () => {
         "owner/repo",
         "file.txt",
         "content",
-        TEST_TOKEN,
+
         "Message",
         "develop",
       );
@@ -161,7 +159,7 @@ describe("GitHub Integration", () => {
       });
 
       const content = "Test content with special chars: ñ é ü";
-      await commitFile("owner/repo", "file.txt", content, TEST_TOKEN, "Msg");
+      await commitFile("owner/repo", "file.txt", content, "Msg");
 
       const body = JSON.parse(
         (fetchMock.mock.calls[0] as unknown as [string, { body: string }])[1]
@@ -201,7 +199,7 @@ describe("GitHub Integration", () => {
         deals: [],
       };
 
-      const sha = await commitSnapshot("owner/repo", TEST_TOKEN, snapshot, {
+      const sha = await commitSnapshot("owner/repo", snapshot, {
         total: 10,
         active: 8,
       });
@@ -249,7 +247,7 @@ describe("GitHub Integration", () => {
         deals: [],
       };
 
-      await commitSnapshot("owner/repo", TEST_TOKEN, snapshot, {
+      await commitSnapshot("owner/repo", snapshot, {
         total: 5,
         active: 5,
       });
@@ -271,7 +269,6 @@ describe("GitHub Integration", () => {
 
       const issueNumber = await createGitHubIssue(
         "owner/repo",
-        TEST_TOKEN,
         "pipeline_failure",
         "run-789",
         {
@@ -304,7 +301,7 @@ describe("GitHub Integration", () => {
       });
 
       await expect(
-        createGitHubIssue("owner/repo", TEST_TOKEN, "error", "run-000", {
+        createGitHubIssue("owner/repo", "error", "run-000", {
           severity: "warning",
           message: "Test",
         }),
@@ -331,12 +328,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const commits = await getRecentCommits(
-        "owner/repo",
-        TEST_TOKEN,
-        "deals.json",
-        1,
-      );
+      const commits = await getRecentCommits("owner/repo", "deals.json", 1);
 
       expect(commits).toHaveLength(1);
       expect(commits[0].sha).toBe("commit-1");
@@ -349,7 +341,7 @@ describe("GitHub Integration", () => {
         json: async () => [],
       });
 
-      await getRecentCommits("owner/repo", TEST_TOKEN, "file.txt");
+      await getRecentCommits("owner/repo", "file.txt");
 
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining("per_page=10"),
@@ -363,11 +355,7 @@ describe("GitHub Integration", () => {
         status: 500,
       });
 
-      const commits = await getRecentCommits(
-        "owner/repo",
-        TEST_TOKEN,
-        "file.txt",
-      );
+      const commits = await getRecentCommits("owner/repo", "file.txt");
 
       expect(commits).toEqual([]);
     });
@@ -388,11 +376,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await isSnapshotCommitted(
-        "owner/repo",
-        TEST_TOKEN,
-        "abc123hash",
-      );
+      const result = await isSnapshotCommitted("owner/repo", "abc123hash");
 
       expect(result).toBe(true);
     });
@@ -411,11 +395,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await isSnapshotCommitted(
-        "owner/repo",
-        TEST_TOKEN,
-        "notfound",
-      );
+      const result = await isSnapshotCommitted("owner/repo", "notfound");
 
       expect(result).toBe(false);
     });
@@ -438,7 +418,7 @@ describe("GitHub Integration", () => {
 
       const result = await verifyCommit(
         "owner/repo",
-        TEST_TOKEN,
+
         "expected-sha",
       );
 
@@ -461,7 +441,7 @@ describe("GitHub Integration", () => {
 
       const result = await verifyCommit(
         "owner/repo",
-        TEST_TOKEN,
+
         "expected-sha",
       );
 
@@ -474,7 +454,7 @@ describe("GitHub Integration", () => {
         json: async () => [],
       });
 
-      const result = await verifyCommit("owner/repo", TEST_TOKEN, "sha");
+      const result = await verifyCommit("owner/repo", "sha");
 
       expect(result).toBe(false);
     });
