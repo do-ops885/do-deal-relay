@@ -9,6 +9,53 @@ Guard rails are automated safety checks that prevent the system from:
 - Producing inconsistent results
 - Violating security policies
 - Creating files in incorrect locations
+- **Exceeding code quality standards (NEW)**
+
+### Code Quality Guard Rails (NEW)
+
+**LINE COUNT LIMIT**: All source files must be ≤500 lines. Files exceeding this limit must be split.
+
+| File Type             | Max Lines | Enforcement |
+| --------------------- | --------- | ----------- |
+| TypeScript/JavaScript | 500       | FATAL       |
+| JSON (config)         | 1000      | WARNING     |
+| Markdown (docs)       | 1000      | WARNING     |
+
+#### Pre-Commit Line Count Check
+
+```bash
+# Check all staged files
+for file in $(git diff --cached --name-only | grep -E '\.(ts|js)$'); do
+  lines=$(wc -l < "$file")
+  if [ $lines -gt 500 ]; then
+    echo "ERROR: $file exceeds 500 lines ($lines lines)"
+    echo "Split this file into smaller modules"
+    exit 1
+  fi
+done
+```
+
+**SKILL EVALUATION**: All skills in `.agents/skills/` must pass evaluator checks.
+
+| Check      | Requirement                           | Enforcement |
+| ---------- | ------------------------------------- | ----------- |
+| Structure  | SKILL.md exists with frontmatter      | FATAL       |
+| Line Count | ≤250 lines                            | WARNING     |
+| Validation | Pass quick_validate.py                | FATAL       |
+| Symlinks   | Present in .claude/, .gemini/, .qwen/ | FATAL       |
+
+#### Skill Validation
+
+```bash
+# Validate all skills
+for skill in .agents/skills/*/; do
+  python3 .agents/skills/skill-creator/scripts/quick_validate.py "$skill"
+  if [ $? -ne 0 ]; then
+    echo "ERROR: Skill validation failed for $skill"
+    exit 1
+  fi
+done
+```
 
 ### Pre-Push Hook Guard Rails
 

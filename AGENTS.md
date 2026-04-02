@@ -1,9 +1,9 @@
 # AGENTS.md - Master Coordination Hub
 
 **Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems  
-**Version**: 0.1.1
+**Version**: 0.2.0  
 **Architecture**: Agent-First CLI with swarm coordination + Referral Management System  
-**Status**: Active Development - Referral System Implemented
+**Status**: Active Development - All Input Methods Implemented
 
 ## Quick Start
 
@@ -19,6 +19,23 @@ npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
 npx ts-node scripts/refcli.ts codes add --code ABC123 --url https://example.com/invite/ABC123 --domain example.com
 npx ts-node scripts/refcli.ts codes deactivate ABC123 --reason expired
 ```
+
+## Production Readiness Checklist
+
+- [x] All input methods implemented (CLI, API, Extension, Bot, Email, Webhook)
+- [ ] All source files < 500 lines (in progress)
+- [x] URL preservation verified (complete links always returned)
+- [x] GitHub Actions CI passing
+- [ ] All skills pass evaluator checks (in progress)
+- [ ] Security audit complete
+- [ ] Load testing complete
+
+## Code Quality Standards
+
+**Max 500 lines per source file** - Split files exceeding this limit  
+**Atomic commits only** - Each change is independently verifiable  
+**Skill evaluation required** - All skills must pass evaluator checks  
+**URL preservation enforced** - Complete URLs always preserved and returned
 
 ## URL Handling Rules (CRITICAL)
 
@@ -110,12 +127,12 @@ A swarm of 6 agents analyzed all possibilities for user input. **Results**:
 | --------------------- | ----------------------- | ---------------------------- | ----------------------------------------- |
 | **CLI**               | ✅ Implemented          | `temp/analysis-cli.md`       | oclif-based, auth, CRUD, import, research |
 | **Web UI/API**        | ✅ API Done, UI Planned | `temp/analysis-web-ui.md`    | React + Vite, JWT auth, dashboard         |
-| **Browser Extension** | 📋 Designed             | `temp/analysis-extension.md` | MV3, auto-detect, context menu            |
-| **Chat Bot**          | 📋 Designed             | `temp/analysis-chatbot.md`   | Telegram/Discord, slash commands          |
-| **Email Integration** | 📋 Designed             | `temp/analysis-email.md`     | Forward parsing, command emails           |
-| **Webhook/API**       | 📋 Designed             | `temp/analysis-webhook.md`   | HMAC signed, bidirectional sync           |
+| **Browser Extension** | ✅ Implemented          | `temp/analysis-extension.md` | MV3, auto-detect, context menu            |
+| **Chat Bot**          | ✅ Implemented          | `temp/analysis-chatbot.md`   | Telegram/Discord, slash commands          |
+| **Email Integration** | ✅ Implemented          | `temp/analysis-email.md`     | Forward parsing, command emails           |
+| **Webhook/API**       | ✅ Implemented          | `temp/analysis-webhook.md`   | HMAC signed, bidirectional sync           |
 
-**Recommendation**: Start with CLI + API (implemented), then add Extension (highest ROI), followed by Chat Bot.
+**All input methods are now implemented!** Focus on optimization and production readiness.
 
 ## Handoff Coordination Protocol
 
