@@ -1,7 +1,7 @@
 # Skill Authoring Guide
 
 **System**: Deal Discovery Relay Worker
-**Version**: 1.0.0
+**Version: 0.1.1
 **Last Updated**: 2026-04-01
 
 This guide covers creating, organizing, and maintaining skills for the agent system. Skills provide domain-specific capabilities accessible via the `skill` command.

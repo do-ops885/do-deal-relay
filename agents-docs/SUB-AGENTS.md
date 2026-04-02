@@ -1,7 +1,7 @@
 # Sub-Agent Context Isolation
 
 **System**: Deal Discovery Relay Worker
-**Version**: 1.0.0
+**Version: 0.1.1
 **Last Updated**: 2026-04-01
 
 This guide covers patterns for delegating tasks to sub-agents while maintaining clean context boundaries and preventing context window overflow.

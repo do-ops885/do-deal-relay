@@ -197,6 +197,7 @@ Guard rails are implemented in `worker/lib/guard-rails.ts` and enforced at:
 
 - **XSS Prevention**: Detects `<script>`, `javascript:`, `onerror=` patterns
 - **URL Validation**: Blocks dangerous schemes (javascript:, data:, vbscript:)
+- **URL Completeness**: Enforces complete URLs with protocol (see [url-handling.md](./url-handling.md))
 - **Control Character Detection**: Prevents injection of control chars
 
 #### Resource Guard Rails

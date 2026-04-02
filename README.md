@@ -87,7 +87,7 @@ curl https://your-worker.workers.dev/api/log
 - [ ] Configure GitHub integration
 - [ ] Set up Cloudflare Workers
 - [ ] Deploy to staging
-- [ ] Production release (v1.0.0)
+- [ ] Production release (v0.1.1)
 
 ## Current Configuration
 

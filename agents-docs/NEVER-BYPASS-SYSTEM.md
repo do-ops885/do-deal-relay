@@ -4,7 +4,7 @@
 
 **Date**: 2026-04-01  
 **Status**: Active  
-**Version**: 1.0.0
+**Version: 0.1.1
 
 ---
 
@@ -510,7 +510,7 @@ When in doubt:
 
 ---
 
-**Version**: 1.0.0  
+**Version: 0.1.1  
 **Last Updated**: 2026-04-01  
 **Maintainer**: Agent System  
 **Status**: Production

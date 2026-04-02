@@ -50,7 +50,7 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
+version: 0.1.1
 author: your-name
 tags: [tag1, tag2, tag3]
 ---

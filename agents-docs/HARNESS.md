@@ -1,7 +1,7 @@
 # Agent Harness System
 
 **System**: Deal Discovery Relay Worker
-**Version**: 1.0.0
+**Version: 0.1.1
 **Last Updated**: 2026-04-01
 
 The harness system orchestrates multiple AI agents, skills, and coordination patterns to enable autonomous deal discovery with the Cloudflare Workers infrastructure.

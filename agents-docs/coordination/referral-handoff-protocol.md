@@ -1,6 +1,6 @@
 # Referral System Handoff Coordination Protocol
 
-**Version**: 1.0.0  
+**Version: 0.1.1  
 **Date**: 2026-04-01  
 **Swarm**: referral-management-swarm
 

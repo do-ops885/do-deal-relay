@@ -96,7 +96,7 @@ minimum_pre_commit_version: "3.0.0"
 ```yaml
 repos:
   - repo: https://github.com/user/repo
-    rev: v1.0.0 # Tag, SHA, or branch
+    rev: v0.1.1 # Tag, SHA, or branch
     hooks:
       - id: hook-id
         name: Custom Name
