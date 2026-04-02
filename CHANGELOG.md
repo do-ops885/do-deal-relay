@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-04-02
+
+### Added
+
+- Issue tracking guidelines in AGENTS.md for future work management
+- Guidelines for creating GitHub issues for long-term enhancements
+- Label taxonomy for issue categorization (enhancement, low-priority, future, refactor, tech-debt)
+- Example gh CLI command for creating labeled issues
+- Comprehensive skill evaluation check across all 34 skills
+
+### Changed
+
+- AGENTS.md updated with "Issue Tracking for Future Work" section
+
 ## [Unreleased] - Planned for 0.2.0
 
 ### Added
