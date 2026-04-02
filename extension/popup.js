@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           img.width = 32;
           img.height = 32;
           img.style.borderRadius = "6px";
-          elements.favicon.innerHTML = "";
+          elements.favicon.textContent = "";
           elements.favicon.appendChild(img);
         } else {
           elements.favicon.textContent = "🌐";
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     // Clear existing content
-    elements.detectionList.innerHTML = "";
+    elements.detectionList.textContent = "";
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           : "none";
 
     // Clear existing content
-    elements.scanStatus.innerHTML = "";
+    elements.scanStatus.textContent = "";
 
     // Create indicator using DOM API
     const indicator = document.createElement("div");

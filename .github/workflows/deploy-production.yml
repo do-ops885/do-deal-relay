@@ -1,5 +1,8 @@
 name: Deploy - Production
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -16,7 +19,7 @@ on:
 permissions:
   contents: write
   issues: write
-  actions: read
+  actions: write
   checks: read
 
 concurrency:

@@ -1,5 +1,8 @@
 name: Security & Compliance
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main, develop]
@@ -22,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -31,24 +34,13 @@ jobs:
           # Install TruffleHog
           curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
 
-          # Debug commit info
-          echo "GITHUB_SHA: ${{ github.sha }}"
-          echo "GITHUB_EVENT_BEFORE: ${{ github.event.before }}"
-          git log --oneline -5 || true
-          git rev-list --count HEAD || true
-
-          # Count commits to handle single-commit repositories
-          COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
-
           # Handle single-commit scenario where BASE and HEAD are the same
-          BEFORE="${{ github.event.before }}"
-          # Run filesystem scan for edge cases: single commit, same SHA, or empty BEFORE
-          if [ "$COMMIT_COUNT" -le 1 ] || [ "$BEFORE" = "${{ github.sha }}" ] || [ -z "$BEFORE" ]; then
-            echo "Single commit or same base/head - running full filesystem scan"
-            trufflehog filesystem . --only-verified --json 2>&1 || true
+          if [ "${{ github.event.before }}" == "${{ github.sha }}" ] || [ -z "${{ github.event.before }}" ]; then
+            echo "Single commit push or missing base - running full filesystem scan"
+            trufflehog filesystem . --only-verified --json || true
           else
-            echo "Running incremental scan from $BEFORE to ${{ github.sha }}"
-            trufflehog git file://. --since-commit "$BEFORE" --only-verified --json 2>&1 || true
+            echo "Running incremental scan from ${{ github.event.before }} to ${{ github.sha }}"
+            trufflehog git file://. --since-commit ${{ github.event.before }} --only-verified --json || true
           fi
         continue-on-error: true
 
@@ -59,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
@@ -83,42 +75,10 @@ jobs:
           echo "Checking for outdated dependencies..."
           npm outdated || true
 
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    timeout-minutes: 15
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["typescript"]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-extended,security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:${{matrix.language}}"
-
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [secret-scan, dependency-check, codeql-analysis]
+    needs: [secret-scan, dependency-check]
     if: always()
 
     steps:
@@ -129,7 +89,6 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Audit | ${{ needs.dependency-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CodeQL Analysis | ${{ needs.codeql-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
 
           if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY

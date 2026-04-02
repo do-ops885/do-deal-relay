@@ -6,7 +6,6 @@ import {
   getStagingSnapshot,
 } from "../lib/storage";
 import {
-  appendLog,
   getRunLogs,
   getRecentLogs,
   exportLogsAsJSONL,
@@ -26,52 +25,12 @@ import { jsonResponse } from "./utils";
 
 /**
  * Core API Route Handlers
- *
- * Provides HTTP endpoints for:
- * - Health monitoring (/health)
- * - Prometheus metrics (/metrics)
- * - Deal retrieval (/deals, /deals.json)
- * - Pipeline control (/api/discover)
- * - Log access (/api/log)
- * - Manual deal submission (/api/submit)
- *
- * @module worker/routes/core
  */
 
-/**
- * Health check endpoint handler.
- *
- * Returns system health status based on:
- * - KV connection (can we read production snapshot?)
- * - Last run success (was the last pipeline run successful?)
- * - Snapshot validity (is the production snapshot valid?)
- *
- * Status codes:
- * - 200: Healthy (all checks pass)
- * - 503: Degraded (snapshot missing but KV accessible - expected for fresh deploys)
- *
- * @param env - Worker environment with KV bindings
- * @returns HTTP response with health status JSON
- * @example
- * Response when healthy:
- * ```json
- * {
- *   "status": "healthy",
- *   "version": "0.1.1",
- *   "timestamp": "2026-04-02T12:00:00Z",
- *   "checks": {
- *     "kv_connection": true,
- *     "last_run_success": true,
- *     "snapshot_valid": true
- *   }
- * }
- * ```
- */
 export async function handleHealth(env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const status = await getPipelineStatus(env);
 
-  // Calculate basic metrics
   const logs = await getRecentLogs(env, 100);
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
@@ -85,7 +44,7 @@ export async function handleHealth(env: Env): Promise<Response> {
     components: {
       kv_stores: {
         deals_prod: !!snapshot,
-        deals_staging: true, // Assume accessible if we can check
+        deals_staging: true,
         deals_log: true,
         deals_lock: !status.locked,
         deals_sources: true,
@@ -96,13 +55,13 @@ export async function handleHealth(env: Env): Promise<Response> {
         average_duration_ms: 0,
       },
       external_services: {
-        github_api: true, // Assume OK
+        github_api: true,
       },
     },
     metrics: {
       total_runs_24h: recentRuns,
       success_rate_24h: recentRuns > 0 ? successfulRuns / recentRuns : 0,
-      avg_deals_per_run: snapshot?.stats.active || 0,
+      avg_deals_per_run: snapshot?.stats?.active || 0,
     },
   };
 
@@ -110,30 +69,21 @@ export async function handleHealth(env: Env): Promise<Response> {
   return jsonResponse(health, statusCode);
 }
 
-/**
- * Prometheus-compatible metrics endpoint.
- *
- * Returns metrics in Prometheus exposition format for monitoring:
- * - deals_runs_total: Total number of discovery runs
- * - deals_publish_success_total: Successful publish operations
- * - deals_candidate_deals_total: Deals discovered (before validation)
- * - deals_valid_deals_total: Deals passing validation
- * - deals_duplicate_deals_total: Duplicates filtered out
- * - deals_active_deals: Current active deals in production
- *
- * @param env - Worker environment with KV bindings
- * @returns HTTP response with Prometheus text format metrics
- * @example
- * ```
- * # HELP deals_runs_total Total discovery runs
- * # TYPE deals_runs_total counter
- * deals_runs_total 42
- *
- * # HELP deals_active_deals Current active deals in production
- * deals_active_deals 156
- * ```
- */
-export async function handleMetrics(env: Env): Promise<Response> {
+export async function handleReady(env: Env): Promise<Response> {
+  const health = await handleHealth(env);
+  const body = (await health.json()) as HealthStatus;
+  const isReady = body.status === "healthy";
+  return jsonResponse({ ready: isReady, ...body }, isReady ? 200 : 503);
+}
+
+export async function handleLive(env: Env): Promise<Response> {
+  return jsonResponse({ alive: true, timestamp: new Date().toISOString() });
+}
+
+export async function handleMetrics(
+  env: Env,
+  format: string = "prometheus",
+): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const logs = await getRecentLogs(env, 1000);
 
@@ -144,6 +94,21 @@ export async function handleMetrics(env: Env): Promise<Response> {
   const candidates = logs.reduce((sum, l) => sum + (l.candidate_count || 0), 0);
   const valid = logs.reduce((sum, l) => sum + (l.valid_count || 0), 0);
   const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
+
+  if (format === "json") {
+    return jsonResponse({
+      summary: {
+        total_runs: runs,
+        successful_runs: successes,
+      },
+      deals: {
+        active: snapshot?.stats?.active || 0,
+        discovered_total: candidates,
+        validated_total: valid,
+        duplicate_total: duplicates,
+      },
+    });
+  }
 
   const metrics = `
 # HELP deals_runs_total Total discovery runs
@@ -163,7 +128,7 @@ deals_valid_deals_total ${valid}
 deals_duplicate_deals_total ${duplicates}
 
 # HELP deals_active_deals Current active deals in production
-deals_active_deals ${snapshot?.stats.active || 0}
+deals_active_deals ${snapshot?.stats?.active || 0}
 `.trim();
 
   return new Response(metrics, {
@@ -194,7 +159,6 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
   }
 
   let deals = snapshot.deals;
-
   deals = deals.filter((d) => d.metadata.status === "active");
 
   if (query.category) {
@@ -217,10 +181,7 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
   deals = deals.slice(0, query.limit);
 
   if (url.pathname === "/deals.json") {
-    return jsonResponse({
-      ...snapshot,
-      deals,
-    });
+    return jsonResponse({ ...snapshot, deals });
   }
 
   return jsonResponse(deals);
@@ -228,7 +189,6 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
 
 export async function handleDiscover(env: Env): Promise<Response> {
   const result = await executePipeline(env);
-
   if (result.success) {
     return jsonResponse({
       success: true,
@@ -280,9 +240,20 @@ export async function handleGetLogs(url: URL, env: Env): Promise<Response> {
 }
 
 export async function handleSubmit(
-  body: SubmitDealBody,
+  request: Request,
   env: Env,
 ): Promise<Response> {
+  const contentType = request.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    return jsonResponse({ error: "Content-Type must be application/json" }, 415);
+  }
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength) > 1024 * 1024) {
+    return jsonResponse({ error: "Request body too large" }, 413);
+  }
+
+  const body = (await request.json()) as SubmitDealBody;
   const validation = SubmitDealBodySchema.safeParse(body);
 
   if (!validation.success) {
@@ -355,9 +326,7 @@ export async function handleSubmit(
     },
   };
 
-  const deals = stagingSnapshot
-    ? [...stagingSnapshot.deals, newDeal]
-    : [newDeal];
+  const deals = stagingSnapshot ? [...stagingSnapshot.deals, newDeal] : [newDeal];
 
   const snapshotData = {
     version: stagingSnapshot?.version || CONFIG.VERSION,
@@ -369,8 +338,7 @@ export async function handleSubmit(
     stats: {
       total: deals.length,
       active: deals.filter((d) => d.metadata.status === "active").length,
-      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
-        .length,
+      quarantined: deals.filter((d) => d.metadata.status === "quarantined").length,
       rejected: deals.filter((d) => d.metadata.status === "rejected").length,
       duplicates: 0,
     },
