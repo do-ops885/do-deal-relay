@@ -46,6 +46,34 @@ npx ts-node scripts/cli/index.ts codes add --code ABC123 --url https://example.c
 **Blocker Escalation**: 30min stuck → Escalate to [blockers.md](agents-docs/coordination/blockers.md).  
 **Swarm Execution**: Load `skill parallel-execution` for parallel agent coordination.
 
+## Issue Tracking for Future Work
+
+When encountering improvements that are **not immediately required**:
+
+1. **Create GitHub Issues** for:
+   - Long-term enhancements
+   - Low priority improvements
+   - Future implementations
+   - Nice-to-have features
+   - Refactoring ideas
+
+2. **Label Issues** appropriately:
+   - `enhancement` - New features
+   - `low-priority` - Not urgent
+   - `future` - Deferred work
+   - `refactor` - Code improvements
+   - `tech-debt` - Technical debt
+
+3. **Example**:
+
+   ```bash
+   gh issue create --title "Refactor: Split worker/index.ts into smaller modules" \
+                   --body "File currently exceeds 500-line limit. Consider modularizing route handlers." \
+                   --label "refactor,low-priority"
+   ```
+
+4. **Continue Current Task**: Do not implement future work immediately unless explicitly requested.
+
 ## API Endpoints
 
 ```
