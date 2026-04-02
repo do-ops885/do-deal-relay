@@ -6,7 +6,6 @@ import {
   getStagingSnapshot,
 } from "../lib/storage";
 import {
-  appendLog,
   getRunLogs,
   getRecentLogs,
   exportLogsAsJSONL,
@@ -26,52 +25,12 @@ import { jsonResponse } from "./utils";
 
 /**
  * Core API Route Handlers
- *
- * Provides HTTP endpoints for:
- * - Health monitoring (/health)
- * - Prometheus metrics (/metrics)
- * - Deal retrieval (/deals, /deals.json)
- * - Pipeline control (/api/discover)
- * - Log access (/api/log)
- * - Manual deal submission (/api/submit)
- *
- * @module worker/routes/core
  */
 
-/**
- * Health check endpoint handler.
- *
- * Returns system health status based on:
- * - KV connection (can we read production snapshot?)
- * - Last run success (was the last pipeline run successful?)
- * - Snapshot validity (is the production snapshot valid?)
- *
- * Status codes:
- * - 200: Healthy (all checks pass)
- * - 503: Degraded (snapshot missing but KV accessible - expected for fresh deploys)
- *
- * @param env - Worker environment with KV bindings
- * @returns HTTP response with health status JSON
- * @example
- * Response when healthy:
- * ```json
- * {
- *   "status": "healthy",
- *   "version": "0.1.1",
- *   "timestamp": "2026-04-02T12:00:00Z",
- *   "checks": {
- *     "kv_connection": true,
- *     "last_run_success": true,
- *     "snapshot_valid": true
- *   }
- * }
- * ```
- */
 export async function handleHealth(env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const status = await getPipelineStatus(env);
 
-  // Calculate basic metrics
   const logs = await getRecentLogs(env, 100);
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
@@ -85,7 +44,7 @@ export async function handleHealth(env: Env): Promise<Response> {
     components: {
       kv_stores: {
         deals_prod: !!snapshot,
-        deals_staging: true, // Assume accessible if we can check
+        deals_staging: true,
         deals_log: true,
         deals_lock: !status.locked,
         deals_sources: true,
@@ -96,7 +55,7 @@ export async function handleHealth(env: Env): Promise<Response> {
         average_duration_ms: 0,
       },
       external_services: {
-        github_api: true, // Assume OK
+        github_api: true,
       },
     },
     metrics: {
@@ -121,9 +80,6 @@ export async function handleLive(env: Env): Promise<Response> {
   return jsonResponse({ alive: true, timestamp: new Date().toISOString() });
 }
 
-/**
- * Prometheus-compatible metrics endpoint.
- */
 export async function handleMetrics(
   env: Env,
   format: string = "prometheus",
@@ -203,7 +159,6 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
   }
 
   let deals = snapshot.deals;
-
   deals = deals.filter((d) => d.metadata.status === "active");
 
   if (query.category) {
@@ -226,10 +181,7 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
   deals = deals.slice(0, query.limit);
 
   if (url.pathname === "/deals.json") {
-    return jsonResponse({
-      ...snapshot,
-      deals,
-    });
+    return jsonResponse({ ...snapshot, deals });
   }
 
   return jsonResponse(deals);
@@ -237,7 +189,6 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
 
 export async function handleDiscover(env: Env): Promise<Response> {
   const result = await executePipeline(env);
-
   if (result.success) {
     return jsonResponse({
       success: true,
@@ -292,16 +243,11 @@ export async function handleSubmit(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  // Check Content-Type
   const contentType = request.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
-    return jsonResponse(
-      { error: "Content-Type must be application/json" },
-      415,
-    );
+    return jsonResponse({ error: "Content-Type must be application/json" }, 415);
   }
 
-  // Check body size (rough estimate via Content-Length)
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > 1024 * 1024) {
     return jsonResponse({ error: "Request body too large" }, 413);
@@ -380,9 +326,7 @@ export async function handleSubmit(
     },
   };
 
-  const deals = stagingSnapshot
-    ? [...stagingSnapshot.deals, newDeal]
-    : [newDeal];
+  const deals = stagingSnapshot ? [...stagingSnapshot.deals, newDeal] : [newDeal];
 
   const snapshotData = {
     version: stagingSnapshot?.version || CONFIG.VERSION,
@@ -394,8 +338,7 @@ export async function handleSubmit(
     stats: {
       total: deals.length,
       active: deals.filter((d) => d.metadata.status === "active").length,
-      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
-        .length,
+      quarantined: deals.filter((d) => d.metadata.status === "quarantined").length,
       rejected: deals.filter((d) => d.metadata.status === "rejected").length,
       duplicates: 0,
     },
