@@ -14,12 +14,10 @@ When the agent should perform actions, use a structured format:
 ## Actions to Take
 
 1. **Read file**: `/path/to/file`
-
    - Offset: 10
    - Limit: 50 lines
 
 2. **Edit file**: `/path/to/file`
-
    - Replace line 15: `old code` → `new code`
 
 3. **Run command**: `npm test`
@@ -239,7 +237,6 @@ Found 3 matches:
 ### Options Considered
 
 1. **PostgreSQL**
-
    - Pros: Mature, ACID compliant, great for relational data
    - Cons: Requires more setup, scaling complexity
    - Use case: Complex relationships, transactions

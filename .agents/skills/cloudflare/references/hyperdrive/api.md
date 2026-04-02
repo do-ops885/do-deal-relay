@@ -34,9 +34,10 @@ export default {
     });
     try {
       await client.connect();
-      const result = await client.query("SELECT * FROM users WHERE id = $1", [
-        123,
-      ]);
+      const result = await client.query(
+        "SELECT * FROM users WHERE id = $1",
+        [123],
+      );
       return Response.json(result.rows);
     } finally {
       await client.end();

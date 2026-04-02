@@ -2,7 +2,7 @@
 
 **Version: 0.1.1  
 **Date**: 2026-04-01  
-**Swarm**: referral-management-swarm
+**Swarm\*\*: referral-management-swarm
 
 ## Overview
 

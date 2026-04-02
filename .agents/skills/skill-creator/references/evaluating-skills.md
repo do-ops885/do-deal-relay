@@ -143,12 +143,10 @@ weighted_score = (
 ### Primary Metrics
 
 1. **Success Rate** (0-100%)
-
    - Critical for skill viability
    - Target: >90% for production skills
 
 2. **Mean Score** (0-5 scale)
-
    - Overall quality indicator
    - Target: >4.0 for production skills
 
@@ -159,12 +157,10 @@ weighted_score = (
 ### Secondary Metrics
 
 4. **Time to Complete** (seconds)
-
    - Efficiency measure
    - Compare against baseline
 
 5. **Token Usage** (tokens)
-
    - Cost efficiency
    - Track across test runs
 

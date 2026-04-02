@@ -56,7 +56,7 @@ Critical URL preservation rules. See [url-handling.md](agents-docs/url-handling.
 
 **Status**: CRITICAL  
 **Enforcement**: FATAL (violations block deployment)  
-**Version: 0.1.1
+\*\*Version: 0.1.1
 
 ## Overview
 
@@ -139,7 +139,7 @@ Quick rules: 500-line limit, atomic commits, skill evals, URL preservation.
 
 **Version: 0.1.1  
 **Status**: Active  
-**Enforcement**: FATAL on violations
+**Enforcement\*\*: FATAL on violations
 
 ## Core Rules
 
@@ -217,7 +217,7 @@ Methods: CLI, Web UI/API, Browser Extension, Chat Bot, Email, Webhook
 
 **Version: 0.1.1  
 **Status**: Complete  
-**Last Updated**: 2026-04-01
+**Last Updated\*\*: 2026-04-01
 
 ## Overview
 

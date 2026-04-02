@@ -18,7 +18,7 @@
 
 ```typescript
 const count = await stub.increment(); // RPC
-const count = await(await stub.fetch(req)).json(); // fetch()
+const count = await (await stub.fetch(req)).json(); // fetch()
 ```
 
 ## Sharding (High Throughput)

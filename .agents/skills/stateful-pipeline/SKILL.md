@@ -22,19 +22,17 @@ Build production-grade data processing pipelines with state management, failure 
 ## Quick Start
 
 ```typescript
-import { createPipeline, Phase } from 'stateful-pipeline';
+import { createPipeline, Phase } from "stateful-pipeline";
 
-const pipeline = createPipeline([
-  'discover',
-  'normalize',
-  'validate',
-  'publish'
-], {
-  maxRetries: 3,
-  onFailure: 'revert', // or 'quarantine', 'abort'
-  enableMetrics: true,
-  enableStructuredLogging: true
-});
+const pipeline = createPipeline(
+  ["discover", "normalize", "validate", "publish"],
+  {
+    maxRetries: 3,
+    onFailure: "revert", // or 'quarantine', 'abort'
+    enableMetrics: true,
+    enableStructuredLogging: true,
+  },
+);
 
 const result = await pipeline.execute(initialData);
 // result: { success: true, metrics: {...}, phases: [...] }
@@ -49,6 +47,7 @@ init → discover → normalize → dedupe → validate → score → stage → 
 ```
 
 Each phase:
+
 1. Receives context from previous phase
 2. Performs transformation/validation
 3. Updates context for next phase
@@ -74,6 +73,7 @@ if (error.retryable && retryCount < maxRetries) {
 ## Templates
 
 See `templates/` for:
+
 - `state-machine.ts` - Generic state machine implementation
 - `pipeline-context.ts` - Context management and data flow
 - `phase-handlers.ts` - Example phase implementations
@@ -81,6 +81,7 @@ See `templates/` for:
 ## Examples
 
 See `examples/` for:
+
 - `data-pipeline-example.ts` - ETL pipeline with 4 phases
 - `deal-processing-example.ts` - Multi-source deal ingestion
 

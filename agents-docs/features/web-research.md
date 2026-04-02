@@ -2,7 +2,7 @@
 
 **Feature**: Automated referral code discovery from web sources
 **Version: 0.1.1
-**Status**: Implemented
+**Status\*\*: Implemented
 
 ## Overview
 

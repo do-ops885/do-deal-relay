@@ -137,7 +137,7 @@ When moving content, always:
 
 **Version: 0.1.1  
 **Status**: Active  
-**Purpose**: [One-line description]
+**Purpose\*\*: [One-line description]
 
 ## Overview
 
@@ -160,7 +160,7 @@ When moving content, always:
 
 **Version: 0.1.1  
 **Status**: [Active/Planned/Deprecated]  
-**Last Updated**: [ISO date]
+**Last Updated\*\*: [ISO date]
 
 ## Overview
 

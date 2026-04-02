@@ -47,10 +47,7 @@ describe("GitHub Integration", () => {
         ok: false,
       });
 
-      const result = await getFileContent(
-        "owner/repo",
-        "missing.txt",
-      );
+      const result = await getFileContent("owner/repo", "missing.txt");
 
       expect(result).toBeNull();
     });
@@ -328,11 +325,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const commits = await getRecentCommits(
-        "owner/repo",
-        "deals.json",
-        1,
-      );
+      const commits = await getRecentCommits("owner/repo", "deals.json", 1);
 
       expect(commits).toHaveLength(1);
       expect(commits[0].sha).toBe("commit-1");
@@ -359,10 +352,7 @@ describe("GitHub Integration", () => {
         status: 500,
       });
 
-      const commits = await getRecentCommits(
-        "owner/repo",
-        "file.txt",
-      );
+      const commits = await getRecentCommits("owner/repo", "file.txt");
 
       expect(commits).toEqual([]);
     });
@@ -383,10 +373,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await isSnapshotCommitted(
-        "owner/repo",
-        "abc123hash",
-      );
+      const result = await isSnapshotCommitted("owner/repo", "abc123hash");
 
       expect(result).toBe(true);
     });
@@ -405,10 +392,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await isSnapshotCommitted(
-        "owner/repo",
-        "notfound",
-      );
+      const result = await isSnapshotCommitted("owner/repo", "notfound");
 
       expect(result).toBe(false);
     });
@@ -429,10 +413,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await verifyCommit(
-        "owner/repo",
-        "expected-sha",
-      );
+      const result = await verifyCommit("owner/repo", "expected-sha");
 
       expect(result).toBe(true);
     });
@@ -451,10 +432,7 @@ describe("GitHub Integration", () => {
         ],
       });
 
-      const result = await verifyCommit(
-        "owner/repo",
-        "expected-sha",
-      );
+      const result = await verifyCommit("owner/repo", "expected-sha");
 
       expect(result).toBe(false);
     });

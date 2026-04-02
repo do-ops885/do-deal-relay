@@ -14,11 +14,11 @@ Calculate and manage trust scores for data sources, with configurable factors an
 ## Quick Start
 
 ```typescript
-import { TrustModel, Source } from './trust-model';
+import { TrustModel, Source } from "./trust-model";
 
 const model = new TrustModel({
-  factors: ['reputation', 'freshness', 'consistency', 'volume'],
-  weights: { reputation: 0.4, freshness: 0.3, consistency: 0.2, volume: 0.1 }
+  factors: ["reputation", "freshness", "consistency", "volume"],
+  weights: { reputation: 0.4, freshness: 0.3, consistency: 0.2, volume: 0.1 },
 });
 
 const score = await model.score(source);
@@ -29,55 +29,61 @@ if (score.value >= 0.8) {
 
 ## Trust Factors
 
-| Factor | Description | Calculation |
-|--------|-------------|-------------|
-| Reputation | Historical accuracy | Correct / Total predictions |
-| Freshness | Data recency | 1 / (1 + age_hours) |
-| Consistency | Variance over time | std_dev / mean |
-| Volume | Sample size | min(actual / target, 1) |
-| Provenance | Source chain | Verified steps / Total steps |
-| Redundancy | Cross-validation | Agreeing sources / Total |
+| Factor      | Description         | Calculation                  |
+| ----------- | ------------------- | ---------------------------- |
+| Reputation  | Historical accuracy | Correct / Total predictions  |
+| Freshness   | Data recency        | 1 / (1 + age_hours)          |
+| Consistency | Variance over time  | std_dev / mean               |
+| Volume      | Sample size         | min(actual / target, 1)      |
+| Provenance  | Source chain        | Verified steps / Total steps |
+| Redundancy  | Cross-validation    | Agreeing sources / Total     |
 
 ## Scoring Methods
 
 **Weighted Average**:
+
 ```typescript
 const model = new TrustModel({
-  method: 'weighted',
-  weights: { reputation: 0.5, freshness: 0.3, consistency: 0.2 }
+  method: "weighted",
+  weights: { reputation: 0.5, freshness: 0.3, consistency: 0.2 },
 });
 ```
 
 **Minimum Threshold**:
+
 ```typescript
 const model = new TrustModel({
-  method: 'min',
-  thresholds: { reputation: 0.6, freshness: 0.5 }
+  method: "min",
+  thresholds: { reputation: 0.6, freshness: 0.5 },
 });
 ```
 
 **Bayesian**:
+
 ```typescript
 const model = new TrustModel({
-  method: 'bayesian',
+  method: "bayesian",
   prior: 0.5,
-  evidence: historicalData
+  evidence: historicalData,
 });
 ```
 
 ## Source Classification
 
 **High Trust (>= 0.8)**:
+
 - Verified sources
 - Long track record
 - Cross-validated
 
 **Medium Trust (0.5 - 0.8)**:
+
 - Established sources
 - Limited history
 - Some validation
 
 **Low Trust (< 0.5)**:
+
 - New sources
 - Unverified claims
 - High variance
@@ -88,7 +94,7 @@ const model = new TrustModel({
 const actions = new RiskActions({
   high: { autoProcess: true, alert: false },
   medium: { autoProcess: true, alert: true, review: true },
-  low: { autoProcess: false, alert: true, quarantine: true }
+  low: { autoProcess: false, alert: true, quarantine: true },
 });
 
 await actions.handle(score, data);
@@ -101,17 +107,17 @@ const registry = new SourceRegistry();
 
 // Register source
 await registry.register({
-  id: 'source-1',
-  name: 'Verified API',
-  tier: 'official',
-  verification: 'oauth'
+  id: "source-1",
+  name: "Verified API",
+  tier: "official",
+  verification: "oauth",
 });
 
 // Update metrics
-await registry.updateMetrics('source-1', {
+await registry.updateMetrics("source-1", {
   predictions: 100,
   correct: 95,
-  timestamp: Date.now()
+  timestamp: Date.now(),
 });
 ```
 
@@ -120,9 +126,9 @@ await registry.updateMetrics('source-1', {
 ```typescript
 const model = new TrustModel({
   decay: {
-    type: 'exponential',
-    halfLife: 86400 * 7  // 7 days
-  }
+    type: "exponential",
+    halfLife: 86400 * 7, // 7 days
+  },
 });
 // Older data contributes less to score
 ```
@@ -142,9 +148,15 @@ const score = await trustModel.score(source);
 const decision = riskEngine.decide(score);
 
 switch (decision.action) {
-  case 'accept': await save(data); break;
-  case 'review': await queueForReview(data); break;
-  case 'reject': await logRejection(data); break;
+  case "accept":
+    await save(data);
+    break;
+  case "review":
+    await queueForReview(data);
+    break;
+  case "reject":
+    await logRejection(data);
+    break;
 }
 ```
 
@@ -154,7 +166,7 @@ switch (decision.action) {
 interface TrustConfig {
   factors: string[];
   weights: Record<string, number>;
-  method: 'weighted' | 'min' | 'bayesian';
+  method: "weighted" | "min" | "bayesian";
   decay?: DecayConfig;
   thresholds: {
     high: number;

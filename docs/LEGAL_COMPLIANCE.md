@@ -345,19 +345,16 @@ export function privacySafeLog(entry: LogEntry): LogEntry {
 ### High-Risk Scenarios
 
 1. **Financial Products**
-
    - Higher disclosure requirements
    - Investment disclaimers needed
    - Not financial advice statements
 
 2. **Health Products**
-
    - FDA approval status
    - "Results may vary" disclaimers
    - Medical disclaimer
 
 3. **Subscription Services**
-
    - Auto-renewal disclosures
    - Cancellation terms
    - Trial period clarity

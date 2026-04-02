@@ -57,14 +57,12 @@ This document outlines the recommended GitHub repository settings for this proje
 **Required:**
 
 - [ ] **Require a pull request before merging**
-
   - Require approvals: 1
   - Dismiss stale PR approvals when new commits are pushed
   - Require review from Code Owners
   - Restrict who can dismiss PR reviews
 
 - [ ] **Require status checks to pass before merging**
-
   - Require branches to be up to date before merging
   - Status checks that are required:
     - `Build Check`
@@ -82,7 +80,6 @@ This document outlines the recommended GitHub repository settings for this proje
 - [ ] **Require signed commits** (optional)
 - [ ] **Require linear history** (if using rebase merge)
 - [ ] **Require deployments to succeed before merging**
-
   - `staging` environment
 
 - [ ] **Lock branch**: No

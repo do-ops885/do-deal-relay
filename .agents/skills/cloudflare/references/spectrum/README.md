@@ -22,14 +22,12 @@ Cloudflare Spectrum provides security and acceleration for ANY TCP or UDP-based 
 **What are you trying to do?**
 
 1. **Create/manage Spectrum app**
-
    - Via Dashboard → See [Cloudflare Dashboard](https://dash.cloudflare.com)
    - Via API → See [api.md](api.md) - REST endpoints
    - Via SDK → See [api.md](api.md) - TypeScript/Python/Go examples
    - Via IaC → See [configuration.md](configuration.md) - Terraform/Pulumi
 
 2. **Protect specific protocol**
-
    - SSH → See [patterns.md](patterns.md#1-ssh-server-protection)
    - Gaming (Minecraft, etc) → See [patterns.md](patterns.md#2-game-server)
    - MQTT/IoT → See [patterns.md](patterns.md#3-mqtt-broker)

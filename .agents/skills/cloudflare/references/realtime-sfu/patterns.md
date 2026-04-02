@@ -140,8 +140,7 @@ function updateStage(topSpeakers: string[]) {
   );
 
   toRemove.forEach((id) => {
-    pc
-      .getSenders()
+    pc.getSenders()
       .find((s) => s.track?.id === id)
       ?.track?.stop();
     activeSubscriptions.delete(id);

@@ -14,72 +14,75 @@ Reliable event notifications with HMAC signature verification and retry logic.
 ## Quick Start
 
 ```typescript
-import { WebhookSystem } from './webhook-system';
+import { WebhookSystem } from "./webhook-system";
 
 const webhooks = new WebhookSystem({
   secret: process.env.WEBHOOK_SECRET,
   retries: 3,
-  timeout: 5000
+  timeout: 5000,
 });
 
 // Send webhook
 await webhooks.send({
-  url: 'https://api.example.com/webhook',
-  event: 'deal.created',
-  payload: dealData
+  url: "https://api.example.com/webhook",
+  event: "deal.created",
+  payload: dealData,
 });
 ```
 
 ## Core Features
 
-| Feature | Description |
-|---------|-------------|
-| HMAC Signing | SHA-256 payload verification |
-| Retries | Exponential backoff with jitter |
-| Timeouts | Configurable per-endpoint |
-| Idempotency | Duplicate prevention |
-| Batch Delivery | Multiple events per request |
+| Feature        | Description                     |
+| -------------- | ------------------------------- |
+| HMAC Signing   | SHA-256 payload verification    |
+| Retries        | Exponential backoff with jitter |
+| Timeouts       | Configurable per-endpoint       |
+| Idempotency    | Duplicate prevention            |
+| Batch Delivery | Multiple events per request     |
 
 ## Sending Webhooks
 
 **Single Event**:
+
 ```typescript
 await webhooks.send({
   url: endpoint.url,
-  event: 'deal.created',
-  payload: { id: '123', value: 50000 },
-  headers: { 'X-Custom': 'value' }
+  event: "deal.created",
+  payload: { id: "123", value: 50000 },
+  headers: { "X-Custom": "value" },
 });
 ```
 
 **Batch Events**:
+
 ```typescript
 await webhooks.sendBatch({
   url: endpoint.url,
   events: [
-    { type: 'deal.created', payload: deal1 },
-    { type: 'deal.updated', payload: deal2 }
-  ]
+    { type: "deal.created", payload: deal1 },
+    { type: "deal.updated", payload: deal2 },
+  ],
 });
 ```
 
 ## Receiving Webhooks
 
 **Verify Signature**:
-```typescript
-import { verifyWebhook } from './webhook-system';
 
-app.post('/webhook', async (req) => {
+```typescript
+import { verifyWebhook } from "./webhook-system";
+
+app.post("/webhook", async (req) => {
   const isValid = verifyWebhook({
     secret: process.env.WEBHOOK_SECRET,
-    signature: req.headers['x-signature'],
-    payload: JSON.stringify(req.body)
+    signature: req.headers["x-signature"],
+    payload: JSON.stringify(req.body),
   });
 
-  if (!isValid) return new Response('Invalid', { status: 401 });
+  if (!isValid) return new Response("Invalid", { status: 401 });
 
   await processEvent(req.body);
-  return new Response('OK');
+  return new Response("OK");
 });
 ```
 
@@ -98,11 +101,11 @@ X-Webhook-Signature: t=1234567890,v1=abc123...
 const webhooks = new WebhookSystem({
   retries: {
     max: 5,
-    strategy: 'exponential',
+    strategy: "exponential",
     baseDelay: 1000,
     maxDelay: 60000,
-    jitter: true
-  }
+    jitter: true,
+  },
 });
 ```
 
@@ -110,12 +113,12 @@ const webhooks = new WebhookSystem({
 
 ```typescript
 const events = [
-  'deal.created',
-  'deal.updated',
-  'deal.expired',
-  'deal.matched',
-  'user.subscribed',
-  'system.alert'
+  "deal.created",
+  "deal.updated",
+  "deal.expired",
+  "deal.matched",
+  "user.subscribed",
+  "system.alert",
 ];
 ```
 
@@ -126,14 +129,14 @@ const subscriptions = new SubscriptionManager();
 
 // Subscribe
 await subscriptions.subscribe({
-  id: 'sub-1',
-  url: 'https://api.example.com/webhook',
-  events: ['deal.created', 'deal.updated'],
-  secret: generateSecret()
+  id: "sub-1",
+  url: "https://api.example.com/webhook",
+  events: ["deal.created", "deal.updated"],
+  secret: generateSecret(),
 });
 
 // Unsubscribe
-await subscriptions.unsubscribe('sub-1');
+await subscriptions.unsubscribe("sub-1");
 ```
 
 ## Delivery Status
@@ -143,7 +146,7 @@ interface Delivery {
   id: string;
   subscriptionId: string;
   event: string;
-  status: 'pending' | 'delivered' | 'failed';
+  status: "pending" | "delivered" | "failed";
   attempts: Attempt[];
   createdAt: number;
 }
@@ -171,19 +174,20 @@ function verifyWebhook({
   secret,
   signature,
   payload,
-  tolerance = 300  // 5 minutes
+  tolerance = 300, // 5 minutes
 }: VerifyOptions): boolean {
   const [t, v1] = parseSignature(signature);
 
   // Check timestamp
-  if (Math.abs(Date.now()/1000 - t) > tolerance) {
+  if (Math.abs(Date.now() / 1000 - t) > tolerance) {
     return false;
   }
 
   // Verify signature
-  const expected = crypto.createHmac('sha256', secret)
+  const expected = crypto
+    .createHmac("sha256", secret)
     .update(`${t}.${payload}`)
-    .digest('hex');
+    .digest("hex");
 
   return timingSafeEqual(v1, expected);
 }
