@@ -65,7 +65,7 @@ export async function executeReferralResearch(
   }
 
   // Research from requested sources
-  for (const sourceName of request.sources) {
+  for (const sourceName of request.sources || []) {
     if (sourceName === "all") continue;
 
     const source = RESEARCH_SOURCES.find((s) => s.name === sourceName);
@@ -87,7 +87,7 @@ export async function executeReferralResearch(
   }
 
   // If "all" sources requested, simulate comprehensive research
-  if (request.sources.includes("all")) {
+  if (request.sources?.includes("all")) {
     for (const source of RESEARCH_SOURCES) {
       if (!sourcesChecked.includes(source.name)) {
         sourcesChecked.push(source.name);

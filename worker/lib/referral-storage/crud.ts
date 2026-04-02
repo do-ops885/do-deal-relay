@@ -18,7 +18,7 @@ export async function storeReferralInput(
   env: Env,
   referral: ReferralInput,
 ): Promise<ReferralInput> {
-  const key = `${REFERRAL_KEYS.INPUT_PREFIX}${referral.id}`;
+  const key = `${REFERRAL_KEYS.INPUT_PREFIX}${referral.id || "unknown"}`;
 
   // Store the referral
   await env.DEALS_SOURCES.put(key, JSON.stringify(referral));
@@ -76,7 +76,7 @@ export async function updateReferralStatus(
   if (!referral) return null;
 
   const now = new Date().toISOString();
-  const oldStatus = referral.status;
+  const oldStatus = referral.status || "unknown";
 
   // Update referral
   referral.status = newStatus;
@@ -85,6 +85,7 @@ export async function updateReferralStatus(
     referral.deactivated_at = now;
     referral.deactivated_reason = reason;
     if (notes) {
+      referral.metadata = referral.metadata || {};
       referral.metadata.notes = notes;
     }
   }
@@ -93,12 +94,12 @@ export async function updateReferralStatus(
   await storeReferralInput(env, referral);
 
   // Update status lists
-  await updateStatusLists(env, id, oldStatus, newStatus);
+  await updateStatusLists(env, id, oldStatus || "unknown", newStatus);
 
   // Log the change
   await logReferralChange(env, {
     referral_id: id,
-    code: referral.code,
+    code: referral.code || "",
     change_type: "status_update",
     old_value: oldStatus,
     new_value: newStatus,
@@ -134,12 +135,12 @@ export async function deactivateReferral(
   }
 
   await storeReferralInput(env, referral);
-  await updateStatusLists(env, referral.id, "active", "inactive");
+  await updateStatusLists(env, referral.id || "", "active", "inactive");
 
   // Log deactivation
   await logReferralChange(env, {
-    referral_id: referral.id,
-    code: referral.code,
+    referral_id: referral.id || "",
+    code: referral.code || "",
     change_type: "deactivation",
     old_value: "active",
     new_value: "inactive",
@@ -171,13 +172,13 @@ export async function reactivateReferral(
   referral.deactivated_reason = undefined;
 
   await storeReferralInput(env, referral);
-  await updateStatusLists(env, referral.id, oldStatus, "active");
+  await updateStatusLists(env, referral.id || "", oldStatus || "unknown", "active");
 
   await logReferralChange(env, {
-    referral_id: referral.id,
-    code: referral.code,
+    referral_id: referral.id || "",
+    code: referral.code || "",
     change_type: "reactivation",
-    old_value: oldStatus,
+    old_value: oldStatus || "unknown",
     new_value: "active",
     notes,
     timestamp: now,

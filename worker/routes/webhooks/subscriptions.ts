@@ -38,9 +38,9 @@ async function validateApiKey(request: Request, env: Env): Promise<boolean> {
     return false;
   }
 
-  // Get allowed API keys from environment
-  const allowedKeys =
-    env.WEBHOOK_API_KEYS?.split(",").map((k: string) => k.trim()) || [];
+  // Get allowed API keys from KV store
+  const keysData = await env.WEBHOOK_API_KEYS?.get("api-keys");
+  const allowedKeys = keysData ? (JSON.parse(keysData) as string[]) : [];
 
   // In production, use constant-time comparison to prevent timing attacks
   return allowedKeys.includes(apiKey);

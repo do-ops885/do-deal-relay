@@ -88,20 +88,20 @@ export async function searchReferrals(
   // Apply filters
   if (filters.domain) {
     referrals = referrals.filter(
-      (r) => r.domain.toLowerCase() === filters.domain!.toLowerCase(),
+      (r) => (r.domain || "").toLowerCase() === filters.domain!.toLowerCase(),
     );
   }
 
   if (filters.category) {
     referrals = referrals.filter((r: ReferralInput) =>
-      r.metadata.category.some(
+      (r.metadata?.category || []).some(
         (c: string) => c.toLowerCase() === filters.category!.toLowerCase(),
       ),
     );
   }
 
   if (filters.source && filters.source !== "all") {
-    referrals = referrals.filter((r) => r.source === filters.source);
+    referrals = referrals.filter((r) => (r.source || "") === filters.source);
   }
 
   const total = referrals.length;
@@ -150,31 +150,35 @@ export async function getLatestResearch(
  */
 export function referralToDeal(referral: ReferralInput): Omit<Deal, "id"> {
   const now = new Date().toISOString();
+  const metadata = referral.metadata || {};
+  const domain = referral.domain || "unknown";
 
   return {
     source: {
       url: referral.url,
-      domain: referral.domain,
-      discovered_at: referral.submitted_at,
-      trust_score: referral.metadata.confidence_score,
+      domain: domain,
+      discovered_at: referral.submitted_at || now,
+      trust_score: metadata.confidence_score ?? 0.5,
     },
-    title: referral.metadata.title || `${referral.domain} Referral`,
+    title: metadata.title || `${domain} Referral`,
     description:
-      referral.metadata.description || `Referral code for ${referral.domain}`,
+      metadata.description || `Referral code for ${domain}`,
     code: referral.code,
     url: referral.url,
     reward: {
       type:
-        referral.metadata.reward_type === "unknown"
+        metadata.reward_type === "unknown" || !metadata.reward_type
           ? "cash"
-          : referral.metadata.reward_type,
-      value: referral.metadata.reward_value || 0,
-      currency: referral.metadata.currency,
-      description: referral.metadata.reward_value
-        ? `${referral.metadata.reward_value} ${referral.metadata.currency || ""}`
+          : (metadata.reward_type as "cash" | "credit" | "percent" | "item"),
+      value: metadata.reward_value
+        ? parseFloat(String(metadata.reward_value))
+        : 0,
+      currency: (metadata.currency as string | undefined) || "USD",
+      description: metadata.reward_value
+        ? `${metadata.reward_value} ${(metadata.currency as string | undefined) || ""}`
         : undefined,
     },
-    requirements: referral.metadata.requirements,
+    requirements: metadata.requirements || [],
     expiry: {
       date: referral.expires_at,
       confidence: 0.5,
@@ -182,12 +186,12 @@ export function referralToDeal(referral: ReferralInput): Omit<Deal, "id"> {
     },
     metadata: {
       category:
-        referral.metadata.category.length > 0
-          ? referral.metadata.category
+        (metadata.category || []).length > 0
+          ? (metadata.category as string[])
           : ["general"],
-      tags: [...referral.metadata.tags, "referral", referral.domain],
+      tags: [...(metadata.tags || []), "referral", domain],
       normalized_at: now,
-      confidence_score: referral.metadata.confidence_score,
+      confidence_score: metadata.confidence_score ?? 0.5,
       status: referral.status === "active" ? "active" : "quarantined",
     },
   };
@@ -207,7 +211,7 @@ export async function getActiveReferralsAsDeals(env: Env): Promise<Deal[]> {
   for (const referral of activeReferrals) {
     const dealBase = referralToDeal(referral);
     // Generate deal ID from referral
-    const dealId = `ref-${referral.domain}-${referral.code}-${Date.now()}`;
+    const dealId = `ref-${referral.domain || "unknown"}-${referral.code || "nocode"}-${Date.now()}`;
     deals.push({ ...dealBase, id: dealId } as Deal);
   }
 
@@ -225,8 +229,10 @@ export async function deactivateExpiredReferrals(env: Env): Promise<number> {
   for (const referral of activeReferrals) {
     if (referral.expires_at && new Date(referral.expires_at) < now) {
       const { updateReferralStatus } = await import("./crud");
-      await updateReferralStatus(env, referral.id, "expired", "expired");
-      deactivatedCount++;
+      if (referral.id) {
+        await updateReferralStatus(env, referral.id, "expired", "expired");
+        deactivatedCount++;
+      }
     }
   }
 

@@ -33,7 +33,7 @@ export async function updateReferralIndices(
       codeIndexKey,
       "json",
     )) || {};
-  codeIndex[referral.code.toLowerCase()] = referral.id;
+  codeIndex[referral.code?.toLowerCase() || ""] = referral.id || "";
   await env.DEALS_SOURCES.put(codeIndexKey, JSON.stringify(codeIndex));
 
   // Update domain index
@@ -43,11 +43,13 @@ export async function updateReferralIndices(
       domainIndexKey,
       "json",
     )) || {};
-  if (!domainIndex[referral.domain]) {
-    domainIndex[referral.domain] = [];
+  const domain = referral.domain || "unknown";
+  const referralId = referral.id || "unknown";
+  if (!domainIndex[domain]) {
+    domainIndex[domain] = [];
   }
-  if (!domainIndex[referral.domain].includes(referral.id)) {
-    domainIndex[referral.domain].push(referral.id);
+  if (!domainIndex[domain].includes(referralId)) {
+    domainIndex[domain].push(referralId);
   }
   await env.DEALS_SOURCES.put(domainIndexKey, JSON.stringify(domainIndex));
 }

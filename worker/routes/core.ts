@@ -5,11 +5,7 @@ import {
   writeStagingSnapshot,
   getStagingSnapshot,
 } from "../lib/storage";
-import {
-  getRunLogs,
-  getRecentLogs,
-  exportLogsAsJSONL,
-} from "../lib/logger";
+import { getRunLogs, getRecentLogs, exportLogsAsJSONL } from "../lib/logger";
 import { generateDealId } from "../lib/crypto";
 import { CONFIG } from "../config";
 import { handleError } from "../lib/error-handler";
@@ -41,6 +37,11 @@ export async function handleHealth(env: Env): Promise<Response> {
     status: snapshot ? "healthy" : "degraded",
     timestamp: new Date().toISOString(),
     version: CONFIG.VERSION,
+    checks: {
+      kv_connection: !!snapshot,
+      last_run_success: !!status.last_run,
+      snapshot_valid: !!snapshot,
+    },
     components: {
       kv_stores: {
         deals_prod: !!snapshot,
@@ -245,7 +246,10 @@ export async function handleSubmit(
 ): Promise<Response> {
   const contentType = request.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
-    return jsonResponse({ error: "Content-Type must be application/json" }, 415);
+    return jsonResponse(
+      { error: "Content-Type must be application/json" },
+      415,
+    );
   }
 
   const contentLength = request.headers.get("content-length");
@@ -326,7 +330,9 @@ export async function handleSubmit(
     },
   };
 
-  const deals = stagingSnapshot ? [...stagingSnapshot.deals, newDeal] : [newDeal];
+  const deals = stagingSnapshot
+    ? [...stagingSnapshot.deals, newDeal]
+    : [newDeal];
 
   const snapshotData = {
     version: stagingSnapshot?.version || CONFIG.VERSION,
@@ -338,7 +344,8 @@ export async function handleSubmit(
     stats: {
       total: deals.length,
       active: deals.filter((d) => d.metadata.status === "active").length,
-      quarantined: deals.filter((d) => d.metadata.status === "quarantined").length,
+      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
+        .length,
       rejected: deals.filter((d) => d.metadata.status === "rejected").length,
       duplicates: 0,
     },
