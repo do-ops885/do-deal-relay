@@ -269,12 +269,15 @@ export interface Env {
   DEALS_LOG: KVNamespace;
   DEALS_LOCK: KVNamespace;
   DEALS_SOURCES: KVNamespace;
+  DEALS_REFERRALS?: KVNamespace;
+  DEALS_WEBHOOKS?: KVNamespace;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
+  EMAIL_WEBHOOK_SECRET?: string;
 }
 
 // ============================================================================

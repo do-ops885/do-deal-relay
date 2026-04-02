@@ -29,6 +29,12 @@ import {
 import { logger, setLogContext } from "./lib/global-logger";
 import { handleError } from "./lib/error-handler";
 import { notify } from "./notify";
+import { handleWebhookRoutes } from "./routes/webhooks";
+import {
+  handleEmailIncoming,
+  handleEmailParse,
+  handleEmailHelp,
+} from "./routes/email";
 import type {
   Env,
   GetDealsQuery,
@@ -156,6 +162,25 @@ export default {
       if (path.startsWith("/api/research/") && request.method === "GET") {
         const domain = path.replace("/api/research/", "").split("/")[0];
         return handleGetResearchResults(domain, env);
+      }
+
+      // Webhook routes
+      if (path.startsWith("/webhooks/")) {
+        const webhookResponse = await handleWebhookRoutes(request, env, path);
+        if (webhookResponse) return webhookResponse;
+      }
+
+      // Email routes
+      if (path === "/api/email/incoming" && request.method === "POST") {
+        return handleEmailIncoming(request, env);
+      }
+
+      if (path === "/api/email/parse" && request.method === "POST") {
+        return handleEmailParse(request, env);
+      }
+
+      if (path === "/api/email/help" && request.method === "GET") {
+        return handleEmailHelp();
       }
 
       // 404
