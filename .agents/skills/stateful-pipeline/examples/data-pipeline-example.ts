@@ -1,8 +1,8 @@
-import { createPipeline } from "../templates/state-machine";
+import { createPipeline } from '../templates/state-machine';
 
 /**
  * Example: Data ETL Pipeline
- *
+ * 
  * Demonstrates a 4-phase pipeline for extracting, transforming,
  * validating, and loading data.
  */
@@ -33,37 +33,44 @@ interface PipelineOutput {
   };
 }
 
-async function runDataPipeline(input: PipelineInput): Promise<void> {
+async function runDataPipeline(
+  input: PipelineInput
+): Promise<void> {
   const pipeline = createPipeline<PipelineInput, PipelineOutput>(
-    ["extract", "transform", "validate", "load"],
+    [
+      'extract',
+      'transform',
+      'validate',
+      'load'
+    ],
     {
       maxRetries: 3,
-      onFailure: "revert",
+      onFailure: 'revert',
       enableMetrics: true,
-      enableStructuredLogging: true,
-    },
+      enableStructuredLogging: true
+    }
   );
 
   const result = await pipeline.execute(input);
 
   if (result.success) {
-    console.log("Pipeline completed successfully");
-    console.log("Output:", result.data);
-    console.log("Metrics:", result.metrics);
-    console.log("Duration:", result.duration, "ms");
+    console.log('Pipeline completed successfully');
+    console.log('Output:', result.data);
+    console.log('Metrics:', result.metrics);
+    console.log('Duration:', result.duration, 'ms');
   } else {
-    console.error("Pipeline failed:", result.error);
-    console.error("Failure path:", result.failurePath);
+    console.error('Pipeline failed:', result.error);
+    console.error('Failure path:', result.failurePath);
   }
 }
 
 // Example usage
 const exampleInput: PipelineInput = {
-  source: "api-endpoint",
+  source: 'api-endpoint',
   records: [
-    { id: "1", raw: "name1|value1" },
-    { id: "2", raw: "name2|value2" },
-  ],
+    { id: '1', raw: 'name1|value1' },
+    { id: '2', raw: 'name2|value2' }
+  ]
 };
 
 // Run the pipeline
@@ -71,7 +78,7 @@ runDataPipeline(exampleInput).catch(console.error);
 
 /**
  * Example Output:
- *
+ * 
  * Pipeline completed successfully
  * Output: {
  *   records: [

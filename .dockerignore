@@ -1,0 +1,71 @@
+# Docker Ignore Patterns for AI Agent Projects
+# Prevents unnecessary files from being included in Docker builds
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies (installed in container)
+node_modules/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+*.test.ts
+*.spec.ts
+tests/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Agent specific
+state.json
+.agents/state/
+temp/BIDIRECTIONAL_*
+temp/SWARM_*

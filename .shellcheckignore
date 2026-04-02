@@ -1,0 +1,16 @@
+# ShellCheck Ignore Configuration
+# Shell script linting exclusions
+
+# External scripts
+vendor/
+node_modules/
+
+# Generated scripts
+*.generated.sh
+
+# Third-party
+third_party/
+
+# Backup files
+*.bak
+*.backup

@@ -11,7 +11,6 @@ The stateful-pipeline skill provides three failure handling strategies:
 ## Revert Strategy
 
 ### When to Use
-
 - Critical data integrity requirements
 - Partial updates would leave system inconsistent
 - Transaction-like semantics needed
@@ -20,7 +19,7 @@ The stateful-pipeline skill provides three failure handling strategies:
 
 ```typescript
 const pipeline = createPipeline(phases, {
-  onFailure: "revert",
+  onFailure: 'revert'
 });
 
 // On failure:
@@ -34,12 +33,14 @@ const pipeline = createPipeline(phases, {
 
 ```typescript
 async function publishToDatabase(data) {
-  const pipeline = createPipeline(
-    ["validate", "begin_transaction", "insert_records", "commit"],
-    {
-      onFailure: "revert",
-    },
-  );
+  const pipeline = createPipeline([
+    'validate',
+    'begin_transaction',
+    'insert_records',
+    'commit'
+  ], {
+    onFailure: 'revert'
+  });
 
   // If 'insert_records' fails:
   // 1. Transaction is rolled back
@@ -51,7 +52,6 @@ async function publishToDatabase(data) {
 ## Quarantine Strategy
 
 ### When to Use
-
 - Non-critical data quality issues
 - Can continue with clean subset
 - Want to flag for later review
@@ -60,7 +60,7 @@ async function publishToDatabase(data) {
 
 ```typescript
 const pipeline = createPipeline(phases, {
-  onFailure: "quarantine",
+  onFailure: 'quarantine'
 });
 
 // On failure:
@@ -74,8 +74,12 @@ const pipeline = createPipeline(phases, {
 
 ```typescript
 async function importRecords(records) {
-  const pipeline = createPipeline(["parse", "validate", "insert"], {
-    onFailure: "quarantine",
+  const pipeline = createPipeline([
+    'parse',
+    'validate',
+    'insert'
+  ], {
+    onFailure: 'quarantine'
   });
 
   // Invalid records are quarantined
@@ -87,7 +91,6 @@ async function importRecords(records) {
 ## Concurrency Abort Strategy
 
 ### When to Use
-
 - Detected concurrent modification
 - Distributed locking conflict
 - Idempotency check failed
@@ -96,7 +99,7 @@ async function importRecords(records) {
 
 ```typescript
 const pipeline = createPipeline(phases, {
-  onFailure: "concurrency_abort",
+  onFailure: 'concurrency_abort'
 });
 
 // On conflict:

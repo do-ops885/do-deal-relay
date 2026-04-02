@@ -1,6 +1,6 @@
 /**
  * Pipeline Context Management
- *
+ * 
  * Maintains state across pipeline phases with:
  * - Data transformation tracking
  * - Error accumulation
@@ -12,19 +12,19 @@ export interface PipelineContext<TInput, TOutput = TInput> {
   // Core data
   input: TInput;
   output?: TOutput;
-
+  
   // Phase tracking
   currentPhase: string;
   completedPhases: string[];
   phaseData: Map<string, PhaseData>;
-
+  
   // Error handling
   errors: PhaseError[];
   retryCount: number;
-
+  
   // Rollback support
   snapshots: Snapshot<TOutput>[];
-
+  
   // Observability
   startTime: number;
   phaseStartTime: number;
@@ -53,30 +53,31 @@ interface Snapshot<T> {
 
 export function createContext<TInput>(
   input: TInput,
-  options: ContextOptions = {},
+  options: ContextOptions = {}
 ): PipelineContext<TInput> {
-  const { enableSnapshots = true, metadata = {} } = options;
+  const {
+    enableSnapshots = true,
+    metadata = {}
+  } = options;
 
   return {
     input,
-    currentPhase: "init",
+    currentPhase: 'init',
     completedPhases: [],
     phaseData: new Map(),
     errors: [],
     retryCount: 0,
-    snapshots: enableSnapshots
-      ? []
-      : (undefined as unknown as Snapshot<never>[]),
+    snapshots: enableSnapshots ? [] : undefined as unknown as Snapshot<never>[],
     startTime: Date.now(),
     phaseStartTime: Date.now(),
-    metadata: new Map(Object.entries(metadata)),
+    metadata: new Map(Object.entries(metadata))
   };
 }
 
 export function transitionPhase<T>(
   ctx: PipelineContext<T>,
   newPhase: string,
-  data?: T,
+  data?: T
 ): void {
   // Complete current phase
   const currentData = ctx.phaseData.get(ctx.currentPhase);
@@ -89,7 +90,7 @@ export function transitionPhase<T>(
     ctx.snapshots.push({
       phase: ctx.currentPhase,
       data,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
   }
 
@@ -105,19 +106,19 @@ export function transitionPhase<T>(
 export function recordError<T>(
   ctx: PipelineContext<T>,
   error: Error,
-  retryable: boolean = false,
+  retryable: boolean = false
 ): void {
   ctx.errors.push({
     phase: ctx.currentPhase,
     error,
     timestamp: Date.now(),
-    retryable,
+    retryable
   });
 }
 
 export function getLastSnapshot<T>(
   ctx: PipelineContext<T>,
-  phase?: string,
+  phase?: string
 ): T | undefined {
   if (!ctx.snapshots || ctx.snapshots.length === 0) {
     return undefined;
@@ -127,7 +128,7 @@ export function getLastSnapshot<T>(
     const snapshot = ctx.snapshots
       .slice()
       .reverse()
-      .find((s) => s.phase === phase);
+      .find(s => s.phase === phase);
     return snapshot?.data as T;
   }
 
@@ -137,14 +138,14 @@ export function getLastSnapshot<T>(
 export function setMetadata<T>(
   ctx: PipelineContext<T>,
   key: string,
-  value: unknown,
+  value: unknown
 ): void {
   ctx.metadata.set(key, value);
 }
 
 export function getMetadata<T>(
   ctx: PipelineContext<unknown>,
-  key: string,
+  key: string
 ): T | undefined {
   return ctx.metadata.get(key) as T;
 }

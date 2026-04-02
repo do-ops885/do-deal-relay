@@ -306,6 +306,8 @@ function parseHTMLContent(
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+  const expiryPattern =
+    /(?:expires?|valid until|ends?|deadline)[:\s,]+([A-Za-z]{3,10}\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/gi;
 
   // Extract codes
   let match;
@@ -322,6 +324,15 @@ function parseHTMLContent(
       .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
 
+    // Find expiry date
+    const expiryMatch = content
+      .slice(Math.max(0, match.index - 500), match.index + 500)
+      .match(expiryPattern);
+
+    const expiry_date = expiryMatch
+      ? normalizeExtractedDate(expiryMatch[1])
+      : undefined;
+
     deals.push({
       code,
       url: urlMatch ? urlMatch[0] : `https://${source.domain}/invite/${code}`,
@@ -337,6 +348,7 @@ function parseHTMLContent(
         : 0,
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+      expiry_date,
     });
   }
 
@@ -435,6 +447,17 @@ async function buildDeal(
       status: "active",
     },
   };
+}
+
+/**
+ * Normalize extracted date string to ISO format
+ */
+function normalizeExtractedDate(dateStr: string): string | undefined {
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+  return undefined;
 }
 
 /**

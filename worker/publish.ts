@@ -21,16 +21,6 @@ export async function publishSnapshot(
   success: boolean;
   commitSha?: string;
 }> {
-  // Validate GitHub token is configured
-  if (!env.GITHUB_TOKEN) {
-    throw new PipelineError(
-      "PublishError",
-      "GITHUB_TOKEN not configured",
-      "publish",
-      false,
-    );
-  }
-
   try {
     // Step 1: Verify staging exists and matches
     const { getStagingSnapshot } = await import("./lib/storage");
@@ -123,13 +113,29 @@ export async function rollbackSnapshot(
   previousSnapshot: Snapshot,
 ): Promise<void> {
   try {
+    const { revertProduction, getProductionSnapshot } =
+      await import("./lib/storage");
     await revertProduction(env, previousSnapshot);
-    console.log(`Rolled back to snapshot ${previousSnapshot.snapshot_hash}`);
+
+    // Verify rollback succeeded
+    const verified = await getProductionSnapshot(env);
+    if (verified?.snapshot_hash !== previousSnapshot.snapshot_hash) {
+      throw new PipelineError(
+        "PublishError",
+        `Rollback verification failed: expected ${previousSnapshot.snapshot_hash}, got ${verified?.snapshot_hash}`,
+        "publish",
+        false,
+      );
+    }
+
+    console.log(
+      `Rolled back to snapshot ${previousSnapshot.snapshot_hash} (verified)`,
+    );
   } catch (error) {
     console.error("Rollback failed:", error);
     throw new PipelineError(
       "PublishError",
-      `Rollback failed: ${(error as Error).message}`,
+      (error as Error).message,
       "publish",
       false,
     );
@@ -143,6 +149,12 @@ async function verifyCommit(
   repo: string,
   expectedSha: string,
 ): Promise<boolean> {
-  const { verifyCommit: verifyGitHubCommit } = await import("./lib/github");
-  return verifyGitHubCommit(repo, expectedSha);
+  const { getRecentCommits } = await import("./lib/github");
+  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
+
+  if (commits.length === 0) {
+    return false;
+  }
+
+  return commits[0].sha === expectedSha;
 }

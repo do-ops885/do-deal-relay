@@ -82,6 +82,50 @@ export const DEFAULT_SOURCES = [
     classification: "probationary" as const,
     active: true,
   },
+  {
+    domain: "robinhood.com",
+    url_patterns: ["/referral/*", "/invite/*"],
+    selectors: {
+      code: "[data-code], .referral-code",
+      reward: ".reward-value",
+    },
+    trust_initial: 0.8,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "webull.com",
+    url_patterns: ["/activity/invite/*"],
+    selectors: {
+      code: ".invite-code, [data-invite]",
+      reward: ".bonus-amount",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "public.com",
+    url_patterns: ["/referral/*"],
+    selectors: {
+      code: ".ref-code",
+      reward: ".stock-value",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "moomoo.com",
+    url_patterns: ["/invite/*", "/referral/*"],
+    selectors: {
+      code: ".invite-code, [data-invite-code]",
+      reward: ".bonus-value",
+    },
+    trust_initial: 0.7,
+    classification: "probationary" as const,
+    active: true,
+  },
 ];
 
 // ============================================================================

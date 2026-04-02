@@ -8,43 +8,16 @@ import {
   createStagingSnapshotCache,
 } from "./cache";
 
-/**
- * KV Storage Abstraction Layer with Caching
- *
- * Provides type-safe operations for Cloudflare KV storage across multiple namespaces:
- * - DEALS_PROD: Production snapshots and metadata
- * - DEALS_STAGING: Staging area for pre-publish validation
- * - DEALS_SOURCES: Source registry and trust scores
- *
- * All operations use JSON serialization and include error handling to prevent
- * KV read failures from crashing the pipeline.
- *
- * Includes KV-based caching layer for improved performance on frequently
- * accessed data like production snapshots and source registry.
- *
- * @module worker/lib/storage
- */
+// ============================================================================
+// KV Storage Abstraction Layer with Caching
+// ============================================================================
 
 const SNAPSHOT_CACHE_KEY = "production_snapshot";
 const STAGING_SNAPSHOT_CACHE_KEY = "staging_snapshot";
 const SOURCE_REGISTRY_CACHE_KEY = "registry";
 
 /**
- * Retrieves the current production snapshot from KV storage (with caching).
- *
- * The production snapshot contains all active deals and serves as the
- * source of truth for the /deals API endpoint. Uses KV-based caching
- * to reduce read latency for frequently accessed data.
- *
- * @param env - Worker environment with KV bindings
- * @returns The production snapshot, or null if not found or on error
- * @example
- * ```typescript
- * const snapshot = await getProductionSnapshot(env);
- * if (snapshot) {
- *   console.log(`Found ${snapshot.deals.length} deals`);
- * }
- * ```
+ * Get production snapshot (with caching)
  */
 export async function getProductionSnapshot(
   env: Env,
@@ -77,17 +50,7 @@ export async function getProductionSnapshot(
 }
 
 /**
- * Retrieves the staging snapshot from KV storage (with caching).
- *
- * Staging snapshots are used for the two-phase publish process:
- * 1. Write to staging
- * 2. Validate staging contents
- * 3. Promote to production (atomic)
- *
- * Uses separate cache namespace for staging data.
- *
- * @param env - Worker environment with KV bindings
- * @returns The staging snapshot, or null if not found or on error
+ * Get staging snapshot (with caching)
  */
 export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
   try {
@@ -118,25 +81,7 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
 }
 
 /**
- * Writes a snapshot to the staging KV namespace (with cache invalidation).
- *
- * Automatically generates a SHA-256 hash of the deals array for integrity
- * verification during the promotion process. Validates the snapshot against
- * the SnapshotSchema before writing. Invalidates staging cache on write.
- *
- * @param env - Worker environment with KV bindings
- * @param snapshot - Snapshot data (without hash - hash is auto-generated)
- * @returns The complete snapshot with generated hash
- * @throws Error if snapshot validation fails
- * @example
- * ```typescript
- * const snapshot = await writeStagingSnapshot(env, {
- *   version: "0.1.1",
- *   deals: normalizedDeals,
- *   stats: { total: 10, active: 8, quarantined: 2, rejected: 0, duplicates: 0 },
- *   // ... other fields
- * });
- * ```
+ * Write snapshot to staging (candidate)
  */
 export async function writeStagingSnapshot(
   env: Env,
@@ -159,35 +104,15 @@ export async function writeStagingSnapshot(
     JSON.stringify(fullSnapshot),
   );
 
-  // Invalidate staging cache
+  // Update cache
   const cache = createStagingSnapshotCache(env);
-  await cache.delete(STAGING_SNAPSHOT_CACHE_KEY);
+  await cache.set(STAGING_SNAPSHOT_CACHE_KEY, fullSnapshot);
 
   return fullSnapshot;
 }
 
 /**
- * Atomically promotes a staging snapshot to production (with cache invalidation).
- *
- * Implements hash chain verification to ensure consistency:
- * - Verifies that staging.previous_hash matches expectedPreviousHash
- * - Prevents race conditions where production was modified after staging
- *
- * Invalidates both production and staging caches after successful promotion.
- *
- * @param env - Worker environment with KV bindings
- * @param expectedPreviousHash - The hash we expect to see in production
- * @returns The promoted snapshot (now in production)
- * @throws Error if staging not found or hash chain is broken
- * @example
- * ```typescript
- * const prod = await getProductionSnapshot(env);
- * const prodHash = prod?.snapshot_hash || "";
- *
- * // ... create and write staging snapshot ...
- *
- * await promoteToProduction(env, prodHash);
- * ```
+ * Promote staging to production (atomic operation)
  */
 export async function promoteToProduction(
   env: Env,
@@ -215,18 +140,22 @@ export async function promoteToProduction(
     JSON.stringify(staging),
   );
 
-  // Invalidate production cache
-  const cache = createSnapshotCache(env);
-  await cache.delete(SNAPSHOT_CACHE_KEY);
+  // Update production cache
+  const prodCache = createSnapshotCache(env);
+  await prodCache.set(SNAPSHOT_CACHE_KEY, staging);
 
-  // Clear staging (optional - keeps history)
-  // await env.DEALS_STAGING.delete(CONFIG.KV_KEYS.STAGING_SNAPSHOT);
+  // Clear staging after successful promotion
+  await env.DEALS_STAGING.delete(CONFIG.KV_KEYS.STAGING_SNAPSHOT);
+
+  // Clear staging cache
+  const stagingCache = createStagingSnapshotCache(env);
+  await stagingCache.delete(STAGING_SNAPSHOT_CACHE_KEY);
 
   return staging;
 }
 
 /**
- * Revert production to previous state (with cache invalidation).
+ * Revert production to previous state
  */
 export async function revertProduction(
   env: Env,
@@ -237,9 +166,9 @@ export async function revertProduction(
     JSON.stringify(previousSnapshot),
   );
 
-  // Invalidate production cache
+  // Update cache
   const cache = createSnapshotCache(env);
-  await cache.delete(SNAPSHOT_CACHE_KEY);
+  await cache.set(SNAPSHOT_CACHE_KEY, previousSnapshot);
 }
 
 /**
@@ -261,19 +190,19 @@ export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
       "json",
     );
 
-    // Cache if found
-    if (data) {
-      await cache.set(SOURCE_REGISTRY_CACHE_KEY, data);
-    }
+    const registry = data || [];
 
-    return data || [];
+    // Cache the result
+    await cache.set(SOURCE_REGISTRY_CACHE_KEY, registry);
+
+    return registry;
   } catch {
     return [];
   }
 }
 
 /**
- * Update source registry (with cache invalidation)
+ * Update source registry (invalidates cache)
  */
 export async function updateSourceRegistry(
   env: Env,
@@ -281,7 +210,7 @@ export async function updateSourceRegistry(
 ): Promise<void> {
   await env.DEALS_SOURCES.put("registry", JSON.stringify(sources));
 
-  // Invalidate source cache
+  // Invalidate cache
   const cache = createSourceCache(env);
   await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
 }
@@ -298,7 +227,7 @@ export async function getSourceConfig(
 }
 
 /**
- * Update source trust score (with cache invalidation)
+ * Update source trust score (invalidates cache)
  */
 export async function updateSourceTrust(
   env: Env,
@@ -313,12 +242,16 @@ export async function updateSourceTrust(
       0,
       Math.min(1, source.trust_initial + adjustment),
     );
-    await updateSourceRegistry(env, registry);
+    await env.DEALS_SOURCES.put("registry", JSON.stringify(registry));
+
+    // Invalidate cache
+    const cache = createSourceCache(env);
+    await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
   }
 }
 
 /**
- * Record validation result for source (with cache invalidation)
+ * Record validation result for source (invalidates cache)
  */
 export async function recordSourceValidation(
   env: Env,
@@ -336,7 +269,11 @@ export async function recordSourceValidation(
       source.validation_failure_count =
         (source.validation_failure_count || 0) + 1;
     }
-    await updateSourceRegistry(env, registry);
+    await env.DEALS_SOURCES.put("registry", JSON.stringify(registry));
+
+    // Invalidate cache
+    const cache = createSourceCache(env);
+    await cache.delete(SOURCE_REGISTRY_CACHE_KEY);
   }
 }
 
@@ -427,8 +364,4 @@ export async function clearStaging(env: Env): Promise<void> {
   for (const key of list.keys) {
     await env.DEALS_STAGING.delete(key.name);
   }
-
-  // Invalidate staging cache
-  const cache = createStagingSnapshotCache(env);
-  await cache.delete(STAGING_SNAPSHOT_CACHE_KEY);
 }

@@ -27,15 +27,12 @@ const NOTIFICATION_COOLDOWN_MS =
 export async function notify(
   env: Env,
   event: NotificationEvent,
-  force: boolean = false,
 ): Promise<boolean> {
-  // Check deduplication (unless forced)
-  if (!force) {
-    const shouldSend = await shouldSendNotification(env, event);
-    if (!shouldSend) {
-      console.log(`Notification deduped: ${event.type}`);
-      return false;
-    }
+  // Check deduplication
+  const shouldSend = await shouldSendNotification(env, event);
+  if (!shouldSend) {
+    console.log(`Notification deduped: ${event.type}`);
+    return false;
   }
 
   // Try Telegram first (if configured)
@@ -51,22 +48,16 @@ export async function notify(
     }
   }
 
-  // Fallback to GitHub Issues (only if configured)
-  if (env.GITHUB_TOKEN) {
-    try {
-      const issueNumber = await sendGitHubNotification(env, event);
-      await recordNotification(env, event);
-      console.log(`Created GitHub issue #${issueNumber} for ${event.type}`);
-      return true;
-    } catch (error) {
-      console.error("GitHub notification failed:", error);
-      return false;
-    }
+  // Fallback to GitHub Issues
+  try {
+    const issueNumber = await sendGitHubNotification(env, event);
+    await recordNotification(env, event);
+    console.log(`Created GitHub issue #${issueNumber} for ${event.type}`);
+    return true;
+  } catch (error) {
+    console.error("GitHub notification failed:", error);
+    return false;
   }
-
-  // No notification channels configured
-  console.log(`No notification channels configured for ${event.type}`);
-  return false;
 }
 
 /**
@@ -137,8 +128,9 @@ async function sendTelegramNotification(
     return false;
   }
 
-  const emoji = getSeverityEmoji(event.severity);
-  const message = `${emoji} **${event.type}**
+  const emoji = getTypeEmoji(event.type);
+  const severityEmoji = getSeverityEmoji(event.severity);
+  const message = `${emoji} ${severityEmoji} **${event.type}**
 
 **Severity:** ${event.severity}
 **Run ID:** ${event.run_id}
@@ -188,10 +180,6 @@ async function sendGitHubNotification(
   env: Env,
   event: NotificationEvent,
 ): Promise<number> {
-  if (!env.GITHUB_TOKEN) {
-    throw new Error("GITHUB_TOKEN not configured");
-  }
-
   const recentLogs = await getRecentLogs(env, 10);
 
   const details = {
@@ -222,6 +210,32 @@ function getSeverityEmoji(severity: NotificationEvent["severity"]): string {
 }
 
 /**
+ * Get emoji for notification type
+ */
+function getTypeEmoji(type: NotificationEvent["type"]): string {
+  switch (type) {
+    case "deal_expiring":
+      return "⏰";
+    case "deal_expired":
+      return "🚫";
+    case "high_value_deal":
+      return "💰";
+    case "system_error":
+      return "💥";
+    case "checks_failed":
+      return "❌";
+    case "publish_incomplete":
+      return "⚠️";
+    case "trust_anomaly":
+      return "🔍";
+    case "concurrency_abort":
+      return "🚦";
+    default:
+      return "ℹ️";
+  }
+}
+
+/**
  * Check for high-value deals and notify
  */
 export async function notifyHighValueDeals(
@@ -230,16 +244,12 @@ export async function notifyHighValueDeals(
   run_id: string,
 ): Promise<void> {
   for (const deal of deals) {
-    await notify(
-      env,
-      {
-        type: "high_value_deal",
-        severity: "info",
-        run_id,
-        message: `High-value deal discovered: ${deal.code} with reward $${deal.reward}`,
-        context: { code: deal.code, reward: deal.reward },
-      },
-      true,
-    ); // Force send to bypass cooldown
+    await notify(env, {
+      type: "high_value_deal",
+      severity: "info",
+      run_id,
+      message: `High-value deal discovered: ${deal.code} with reward $${deal.reward}`,
+      context: { code: deal.code, reward: deal.reward },
+    });
   }
 }

@@ -1,10 +1,6 @@
 ---
 name: structured-logging
 description: Correlation ID logging for distributed tracing. Use for request tracking, context propagation, log aggregation, and debugging across service boundaries.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
 ---
 
 # Structured Logging
@@ -14,70 +10,66 @@ Trace requests across services with correlation IDs and structured log entries.
 ## Quick Start
 
 ```typescript
-import { Logger } from "./structured-logging";
+import { Logger } from './structured-logging';
 
 const logger = new Logger({
   correlationId: generateId(),
-  service: "deal-processor",
+  service: 'deal-processor'
 });
 
-logger.info("Processing deal", { dealId: "123", value: 50000 });
+logger.info('Processing deal', { dealId: '123', value: 50000 });
 // {"level":"info","time":"2024-01-15T...","correlationId":"abc123",
 //  "service":"deal-processor","msg":"Processing deal","dealId":"123","value":50000}
 ```
 
 ## Core Concepts
 
-| Concept        | Description                    |
-| -------------- | ------------------------------ |
+| Concept | Description |
+|---------|-------------|
 | Correlation ID | Traces request across services |
-| Trace ID       | Distributed trace identifier   |
-| Span ID        | Operation within trace         |
-| Context        | Shared attributes across logs  |
+| Trace ID | Distributed trace identifier |
+| Span ID | Operation within trace |
+| Context | Shared attributes across logs |
 
 ## Usage
 
 **Basic Logging**:
-
 ```typescript
 const logger = new Logger({
-  service: "api-gateway",
-  level: "info",
+  service: 'api-gateway',
+  level: 'info'
 });
 
-logger.debug("Debug info"); // Hidden (level=info)
-logger.info("Request received");
-logger.warn("Rate limit approaching");
-logger.error("Database connection failed", { error });
+logger.debug('Debug info');      // Hidden (level=info)
+logger.info('Request received');
+logger.warn('Rate limit approaching');
+logger.error('Database connection failed', { error });
 ```
 
 **With Correlation**:
-
 ```typescript
 // On request entry
-const correlationId = req.headers["x-correlation-id"] || generateId();
-const logger = new Logger({ correlationId, service: "api" });
+const correlationId = req.headers['x-correlation-id'] || generateId();
+const logger = new Logger({ correlationId, service: 'api' });
 
 // Pass to downstream
-await fetch("http://service-b/api", {
-  headers: { "x-correlation-id": correlationId },
+await fetch('http://service-b/api', {
+  headers: { 'x-correlation-id': correlationId }
 });
 ```
 
 **Child Loggers**:
-
 ```typescript
-const child = logger.child({ component: "database" });
-child.info("Query executed", { rows: 10 });
+const child = logger.child({ component: 'database' });
+child.info('Query executed', { rows: 10 });
 // Adds component: database to all logs
 ```
 
 ## Context Propagation
 
 **Async Context**:
-
 ```typescript
-import { AsyncLocalStorage } from "async_hooks";
+import { AsyncLocalStorage } from 'async_hooks';
 
 const asyncStorage = new AsyncLocalStorage<Logger>();
 
@@ -89,23 +81,21 @@ app.use((req, res, next) => {
 
 // Anywhere in call stack
 const logger = asyncStorage.getStore();
-logger.info("Doing work");
+logger.info('Doing work');
 ```
 
 **Manual Pass**:
-
 ```typescript
 async function processDeal(deal: Deal, logger: Logger) {
-  logger.info("Processing", { dealId: deal.id });
+  logger.info('Processing', { dealId: deal.id });
   // Pass to helpers
-  await validateDeal(deal, logger.child({ step: "validate" }));
+  await validateDeal(deal, logger.child({ step: 'validate' }));
 }
 ```
 
 ## Output Format
 
 **JSON (default)**:
-
 ```json
 {
   "level": "info",
@@ -121,11 +111,10 @@ async function processDeal(deal: Deal, logger: Logger) {
 ```
 
 **Pretty (dev)**:
-
 ```typescript
 const logger = new Logger({
-  format: "pretty",
-  colorize: true,
+  format: 'pretty',
+  colorize: true
 });
 // [10:30:00] INFO: Deal processed (dealId=deal-123, durationMs=150)
 ```
@@ -134,10 +123,10 @@ const logger = new Logger({
 
 ```typescript
 const logger = new Logger({
-  redact: ["password", "token", "apiKey", "*.secret"],
+  redact: ['password', 'token', 'apiKey', '*.secret']
 });
 
-logger.info("Login", { user: "john", password: "hunter2" });
+logger.info('Login', { user: 'john', password: 'hunter2' });
 // {"user":"john","password":"[REDACTED]"}
 ```
 
@@ -146,28 +135,27 @@ logger.info("Login", { user: "john", password: "hunter2" });
 ```typescript
 const logger = new Logger({
   sample: {
-    info: 1.0, // 100%
-    debug: 0.1, // 10%
-    trace: 0.01, // 1%
-  },
+    info: 1.0,     // 100%
+    debug: 0.1,    // 10%
+    trace: 0.01    // 1%
+  }
 });
 ```
 
 ## Integrations
 
 **Cloudflare Workers**:
-
 ```typescript
 export default {
   async fetch(req, env) {
     const logger = new Logger({
-      correlationId: req.headers.get("x-correlation-id") || crypto.randomUUID(),
+      correlationId: req.headers.get('x-correlation-id') || crypto.randomUUID()
     });
-
-    logger.info("Request", { url: req.url });
-
-    return new Response("OK");
-  },
+    
+    logger.info('Request', { url: req.url });
+    
+    return new Response('OK');
+  }
 };
 ```
 
@@ -176,13 +164,13 @@ export default {
 ```typescript
 interface LoggerConfig {
   service: string;
-  level: "trace" | "debug" | "info" | "warn" | "error";
+  level: 'trace' | 'debug' | 'info' | 'warn' | 'error';
   correlationId?: string;
   traceId?: string;
-  format: "json" | "pretty";
+  format: 'json' | 'pretty';
   redact?: string[];
   sample?: Record<string, number>;
-  destination?: "stdout" | "file" | WritableStream;
+  destination?: 'stdout' | 'file' | WritableStream;
 }
 ```
 

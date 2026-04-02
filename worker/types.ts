@@ -55,6 +55,27 @@ export type DealMetadata = z.infer<typeof DealMetadataSchema>;
 export type Deal = z.infer<typeof DealSchema>;
 
 // ============================================================================
+// Expiring Deal Types
+// ============================================================================
+
+export interface ExpiringDeal {
+  deal: Deal;
+  daysUntilExpiry: number;
+  notificationWindow: "7d" | "30d" | "90d";
+}
+
+// ============================================================================
+// Deal Category Types
+// ============================================================================
+
+export interface DealCategory {
+  primary: "finance" | "crypto" | "shopping" | "travel" | "gaming" | "other";
+  subcategories: string[];
+  tags: string[];
+  confidence: number; // 0-1
+}
+
+// ============================================================================
 // Snapshot Schema
 // ============================================================================
 
@@ -233,6 +254,23 @@ export const GetDealsQuerySchema = z.object({
   category: z.string().optional(),
   min_reward: z.coerce.number().optional(),
   limit: z.coerce.number().int().min(1).max(1000).default(100),
+  sortBy: z
+    .enum(["confidence", "value", "recency", "trust", "expiry"])
+    .optional(),
+  order: z.enum(["asc", "desc"]).optional(),
+  minConfidence: z.coerce.number().min(0).max(1).optional(),
+  maxAge: z.coerce.number().int().min(1).optional(),
+});
+
+export const RankingQuerySchema = z.object({
+  sortBy: z
+    .enum(["confidence", "value", "recency", "trust", "expiry"])
+    .default("confidence"),
+  order: z.enum(["asc", "desc"]).default("desc"),
+  category: z.string().optional(),
+  minConfidence: z.coerce.number().min(0).max(1).optional(),
+  maxAge: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(1000).default(100),
 });
 
 export const SubmitDealBodySchema = z.object({
@@ -244,6 +282,7 @@ export const SubmitDealBodySchema = z.object({
 
 export type GetDealsQuery = z.infer<typeof GetDealsQuerySchema>;
 export type SubmitDealBody = z.infer<typeof SubmitDealBodySchema>;
+export type RankingQuery = z.infer<typeof RankingQuerySchema>;
 
 // ============================================================================
 // Environment Types
@@ -256,7 +295,9 @@ export interface NotificationEvent {
     | "concurrency_abort"
     | "high_value_deal"
     | "trust_anomaly"
-    | "system_error";
+    | "system_error"
+    | "deal_expiring"
+    | "deal_expired";
   severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;

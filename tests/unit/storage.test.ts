@@ -53,13 +53,13 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
-  version: "0.1.2",
+  version: "0.1.1",
   generated_at: "2024-03-31T00:00:00Z",
   run_id: "test-run",
   trace_id: "test-trace",
   snapshot_hash: "abc123",
   previous_hash: "xyz789",
-  schema_version: "0.1.2",
+  schema_version: "0.1.1",
   stats: {
     total: 1,
     active: 1,
@@ -215,13 +215,12 @@ describe("Storage Layer", () => {
 
     it("should validate snapshot before writing", async () => {
       const invalidSnapshot = {
-        version: "0.1.2",
+        version: "1.0.0",
         generated_at: "2024-03-31T00:00:00Z",
-        run_id: "test-run",
-        trace_id: "test-trace",
-        snapshot_hash: "abc123",
+        run_id: "test",
+        trace_id: "test",
         previous_hash: "",
-        schema_version: "0.1.2",
+        schema_version: "1.0.0",
         stats: {
           total: 0,
           active: 0,
@@ -243,8 +242,7 @@ describe("Storage Layer", () => {
 
       await clearStaging(mockEnv);
 
-      // 2 deletes for the keys + 1 for cache invalidation
-      expect(mockEnv.DEALS_STAGING.delete).toHaveBeenCalledTimes(3);
+      expect(mockEnv.DEALS_STAGING.delete).toHaveBeenCalledTimes(2);
     });
   });
 
