@@ -113,9 +113,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.pageUrl.textContent = "Invalid URL";
     }
 
-    // Try to get favicon
+    // Try to get favicon - using DOM API to prevent XSS
     if (tab.favIconUrl) {
-      elements.favicon.innerHTML = `<img src="${tab.favIconUrl}" width="32" height="32" style="border-radius: 6px;">`;
+      // Validate URL before using
+      try {
+        const faviconUrl = new URL(tab.favIconUrl);
+        // Only allow http and https protocols
+        if (
+          faviconUrl.protocol === "http:" ||
+          faviconUrl.protocol === "https:"
+        ) {
+          const img = document.createElement("img");
+          img.src = faviconUrl.href;
+          img.width = 32;
+          img.height = 32;
+          img.style.borderRadius = "6px";
+          elements.favicon.innerHTML = "";
+          elements.favicon.appendChild(img);
+        } else {
+          elements.favicon.textContent = "🌐";
+        }
+      } catch {
+        elements.favicon.textContent = "🌐";
+      }
     } else {
       elements.favicon.textContent = "🌐";
     }
@@ -176,33 +196,48 @@ document.addEventListener("DOMContentLoaded", async () => {
       `${detections.length} referral code${detections.length > 1 ? "s" : ""} found`,
     );
 
-    elements.detectionList.innerHTML = detections
-      .map(
-        (d, i) => `
-      <div class="detection-item" data-index="${i}">
-        <div class="detection-info">
-          <span class="code-value">${d.code}</span>
-          <span class="code-source">${d.source.replace("_", " ")}</span>
-        </div>
-        <span class="confidence">${Math.round(d.confidence * 100)}%</span>
-      </div>
-    `,
-      )
-      .join("");
+    // Clear existing content
+    elements.detectionList.innerHTML = "";
 
-    // Selection handling
-    elements.detectionList
-      .querySelectorAll(".detection-item")
-      .forEach((item) => {
-        item.addEventListener("click", () => {
-          elements.detectionList
-            .querySelectorAll(".detection-item")
-            .forEach((el) => el.classList.remove("selected"));
-          item.classList.add("selected");
-          state.selectedDetection =
-            state.detections[parseInt(item.dataset.index)];
-        });
+    // Build detection items using DOM API to prevent XSS
+    detections.forEach((d, i) => {
+      const item = document.createElement("div");
+      item.className = "detection-item";
+      item.dataset.index = i.toString();
+
+      const info = document.createElement("div");
+      info.className = "detection-info";
+
+      const codeValue = document.createElement("span");
+      codeValue.className = "code-value";
+      codeValue.textContent = d.code;
+
+      const codeSource = document.createElement("span");
+      codeSource.className = "code-source";
+      codeSource.textContent = d.source.replace("_", " ");
+
+      info.appendChild(codeValue);
+      info.appendChild(codeSource);
+
+      const confidence = document.createElement("span");
+      confidence.className = "confidence";
+      confidence.textContent = `${Math.round(d.confidence * 100)}%`;
+
+      item.appendChild(info);
+      item.appendChild(confidence);
+
+      // Selection handling
+      item.addEventListener("click", () => {
+        elements.detectionList
+          .querySelectorAll(".detection-item")
+          .forEach((el) => el.classList.remove("selected"));
+        item.classList.add("selected");
+        state.selectedDetection =
+          state.detections[parseInt(item.dataset.index)];
       });
+
+      elements.detectionList.appendChild(item);
+    });
 
     // Auto-select first detection
     if (detections.length > 0) {
@@ -226,10 +261,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         : status === "scanning"
           ? "scanning"
           : "none";
-    elements.scanStatus.innerHTML = `
-      <div class="status-indicator ${indicatorClass}"></div>
-      <span class="status-text">${text}</span>
-    `;
+
+    // Clear existing content
+    elements.scanStatus.innerHTML = "";
+
+    // Create indicator using DOM API
+    const indicator = document.createElement("div");
+    indicator.className = `status-indicator ${indicatorClass}`;
+
+    const statusText = document.createElement("span");
+    statusText.className = "status-text";
+    statusText.textContent = text;
+
+    elements.scanStatus.appendChild(indicator);
+    elements.scanStatus.appendChild(statusText);
   }
 
   // ============================================================================

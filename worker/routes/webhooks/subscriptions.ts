@@ -23,15 +23,57 @@ import {
 } from "./types";
 
 // ============================================================================
-// Subscription Management
+// API Key Authentication
 // ============================================================================
+
+/**
+ * Validate API key from request header
+ * Expects header: X-API-Key: <api_key>
+ * API keys are stored in env.WEBHOOK_API_KEYS as comma-separated list
+ */
+async function validateApiKey(request: Request, env: Env): Promise<boolean> {
+  const apiKey = request.headers.get("X-API-Key");
+
+  if (!apiKey) {
+    return false;
+  }
+
+  // Get allowed API keys from environment
+  const allowedKeys =
+    env.WEBHOOK_API_KEYS?.split(",").map((k: string) => k.trim()) || [];
+
+  // In production, use constant-time comparison to prevent timing attacks
+  return allowedKeys.includes(apiKey);
+}
+
+/**
+ * Middleware to require API key authentication
+ */
+async function requireAuth(
+  request: Request,
+  env: Env,
+): Promise<Response | null> {
+  const isValid = await validateApiKey(request, env);
+
+  if (!isValid) {
+    return jsonResponse(
+      { error: "Unauthorized. Valid X-API-Key header required." },
+      401,
+    );
+  }
+
+  return null; // Authentication successful
+}
 
 export async function handleSubscribe(
   request: Request,
   env: Env,
 ): Promise<Response> {
   try {
-    // TODO: Add API key authentication
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const body = (await request.json()) as SubscribeRequest;
 
     // Validate required fields
@@ -110,6 +152,10 @@ export async function handleUnsubscribe(
   env: Env,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const body = (await request.json()) as { subscription_id: string };
 
     if (!body.subscription_id) {
@@ -183,6 +229,10 @@ export async function handleCreatePartner(
   env: Env,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const body = (await request.json()) as CreatePartnerRequest;
 
     if (!body.name) {

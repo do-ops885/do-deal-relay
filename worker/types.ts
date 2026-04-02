@@ -278,6 +278,7 @@ export interface Env {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
+  WEBHOOK_API_KEYS?: string; // Comma-separated list of allowed API keys
 }
 
 // ============================================================================
