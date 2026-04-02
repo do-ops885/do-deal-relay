@@ -296,6 +296,28 @@ export interface HealthStatus {
     last_run_success: boolean;
     snapshot_valid: boolean;
   };
+  components?: {
+    kv_stores: {
+      deals_prod: boolean;
+      deals_staging: boolean;
+      deals_log: boolean;
+      deals_lock: boolean;
+      deals_sources: boolean;
+    };
+    pipeline: {
+      last_run: string;
+      last_success: boolean;
+      average_duration_ms: number;
+    };
+    external_services: {
+      github_api: boolean;
+    };
+  };
+  metrics?: {
+    total_runs_24h: number;
+    success_rate_24h: number;
+    avg_deals_per_run: number;
+  };
   last_run?: {
     run_id: string;
     timestamp: string;
@@ -347,11 +369,30 @@ export interface ReferralInput {
   id?: string;
   url: string;
   code: string;
+  domain?: string;
   description?: string;
   reward?: string;
   expiry_date?: string;
   source?: string;
-  metadata?: Record<string, unknown>;
+  status?: string;
+  submitted_at?: string;
+  submitted_by?: string;
+  expires_at?: string;
+  deactivated_at?: string;
+  deactivated_reason?: string;
+  related_codes?: string[];
+  metadata?: {
+    title?: string;
+    description?: string;
+    reward_type?: string;
+    reward_value?: string;
+    category?: string[];
+    tags?: string[];
+    requirements?: string[];
+    confidence_score?: number;
+    notes?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface ReferralDeactivateBody {
@@ -383,12 +424,9 @@ export interface WebResearchRequest {
 }
 
 export interface ExpiringDeal {
-  id: string;
-  code: string;
-  url: string;
-  title?: string;
-  expiry_date: string;
-  days_remaining: number;
+  deal: Deal;
+  daysUntilExpiry: number;
+  notificationWindow: "7d" | "30d" | "90d";
 }
 
 // Schemas
