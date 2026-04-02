@@ -385,41 +385,65 @@ export interface ReferralInput {
     title?: string;
     description?: string;
     reward_type?: string;
-    reward_value?: string;
+    reward_value?: string | number;
     category?: string[];
     tags?: string[];
     requirements?: string[];
     confidence_score?: number;
     notes?: string;
+    research_sources?: string[];
     [key: string]: unknown;
+  };
+  validation?: {
+    last_validated?: string;
+    is_valid?: boolean;
+    checked_urls?: string[];
   };
 }
 
 export interface ReferralDeactivateBody {
   id: string;
   reason?: string;
+  replaced_by?: string;
+  notes?: string;
 }
 
 export interface ReferralSearchQuery {
   q?: string;
+  domain?: string;
+  status?: "active" | "inactive" | "expired" | "all";
+  category?: string;
   source?: string;
   active_only?: boolean;
   limit?: number;
+  offset?: number;
 }
 
 export interface ReferralResearchResult {
-  url: string;
-  code?: string;
-  description?: string;
-  reward?: string;
-  expiry_date?: string;
-  confidence: number;
-  source: string;
+  query: string;
+  domain: string;
+  discovered_codes: Array<{
+    code: string;
+    url: string;
+    source: string;
+    discovered_at: string;
+    reward_summary?: string;
+    confidence: number;
+  }>;
+  research_metadata: {
+    sources_checked: string[];
+    search_queries: string[];
+    research_duration_ms: number;
+    agent_id: string;
+  };
 }
 
 export interface WebResearchRequest {
   query: string;
   url?: string;
+  domain?: string;
+  depth?: "quick" | "thorough" | "deep";
+  sources?: string[];
   max_results?: number;
 }
 
@@ -444,17 +468,26 @@ export const ReferralInputSchema = z.object({
 export const ReferralDeactivateBodySchema = z.object({
   id: z.string(),
   reason: z.string().optional(),
+  replaced_by: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export const ReferralSearchQuerySchema = z.object({
   q: z.string().optional(),
+  domain: z.string().optional(),
+  status: z.enum(["active", "inactive", "expired", "all"]).optional(),
+  category: z.string().optional(),
   source: z.string().optional(),
   active_only: z.boolean().optional(),
   limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 
 export const WebResearchRequestSchema = z.object({
   query: z.string(),
   url: z.string().url().optional(),
-  max_results: z.number().int().min(1).max(10).optional(),
+  domain: z.string().optional(),
+  depth: z.enum(["quick", "thorough", "deep"]).optional(),
+  sources: z.array(z.string()).optional(),
+  max_results: z.number().int().min(1).max(100).optional(),
 });
