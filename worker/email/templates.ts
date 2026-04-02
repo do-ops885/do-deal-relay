@@ -67,10 +67,10 @@ export function createSuccessConfirmation(
     <div class="header">
       <h1>✓ Referral Added</h1>
     </div>
-    
+
     <div class="content">
       <p>Your <strong>${service}</strong> referral has been successfully added!</p>
-      
+
       ${
         code
           ? `
@@ -81,7 +81,7 @@ export function createSuccessConfirmation(
       `
           : ""
       }
-      
+
       ${
         url
           ? `
@@ -92,7 +92,7 @@ export function createSuccessConfirmation(
       `
           : ""
       }
-      
+
       ${
         reward
           ? `
@@ -103,7 +103,7 @@ export function createSuccessConfirmation(
       `
           : ""
       }
-      
+
       ${
         expiry
           ? `
@@ -114,10 +114,10 @@ export function createSuccessConfirmation(
       `
           : ""
       }
-      
+
       <p class="confidence">Extraction confidence: ${confidence}%</p>
     </div>
-    
+
     <div class="footer">
       <p>Reply with <strong>DEACTIVATE ${service}</strong> to mark this code as inactive.</p>
       <p>— Do-Deal Referral System</p>
@@ -171,28 +171,28 @@ Reply with REACTIVATE ${service} to reactivate this code.
     <div class="header">
       <h1>✓ Referral Deactivated</h1>
     </div>
-    
+
     <div class="content">
       <p>Your <strong>${service}</strong> referral has been deactivated.</p>
-      
+
       <div class="detail">
         <span class="label">Service:</span>
         <span>${service}</span>
       </div>
-      
+
       <div class="detail">
         <span class="label">Code:</span>
         <span style="font-family: monospace;">${code}</span>
       </div>
-      
+
       <div class="detail">
         <span class="label">Reason:</span>
         <span>${reason}</span>
       </div>
-      
+
       <p style="margin-top: 15px; color: #666;">This code will no longer appear in search results.</p>
     </div>
-    
+
     <div class="footer">
       <p>Reply with <strong>REACTIVATE ${service}</strong> to reactivate this code.</p>
       <p>— Do-Deal Referral System</p>
@@ -256,10 +256,10 @@ export function createSearchResultsEmail(
       <h1>🔍 Search Results</h1>
       <p>Query: "${query}"</p>
     </div>
-    
+
     <div class="content">
       <p>Found <strong>${total}</strong> referral${total !== 1 ? "s" : ""}:</p>
-      
+
       ${results
         .map(
           (r, i) => `
@@ -283,7 +283,7 @@ export function createSearchResultsEmail(
         )
         .join("")}
     </div>
-    
+
     <div class="footer">
       <p>— Do-Deal Referral System</p>
     </div>
@@ -342,14 +342,14 @@ export function createErrorEmail(
     <div class="header">
       <h1>⚠️ Processing Error</h1>
     </div>
-    
+
     <div class="content">
       <p>We couldn't automatically process your email.</p>
-      
+
       <div class="error">
         <strong>Error:</strong> ${errorMessage}
       </div>
-      
+
       ${
         suggestions && suggestions.length > 0
           ? `
@@ -362,10 +362,10 @@ export function createErrorEmail(
       `
           : ""
       }
-      
+
       <p>Please try again with a clearer format, or contact support.</p>
     </div>
-    
+
     <div class="footer">
       <p>— Do-Deal Referral System</p>
     </div>
@@ -445,17 +445,17 @@ IMPORTANT: Always include complete URLs (e.g., https://picnic.app/de/freunde-rab
     <div class="header">
       <h1>📧 Email Commands Help</h1>
     </div>
-    
+
     <div class="content">
       <div class="section">
         <div class="section-title">FORWARD REFERRAL EMAILS</div>
         <p>Simply forward any referral email to: <code>referrals@do-deal.app</code></p>
         <p>We'll automatically extract the code and add it to your collection.</p>
       </div>
-      
+
       <div class="section">
         <div class="section-title">COMMANDS</div>
-        
+
         <div class="command">
           <strong>ADD</strong> - Add a referral manually<br>
           <span class="to">To: add@do-deal.app</span><br>
@@ -466,32 +466,32 @@ Link: [Full Referral URL]
 Reward: [Optional]
 Expires: [Optional]</pre>
         </div>
-        
+
         <div class="command">
           <strong>DEACTIVATE</strong> - Mark code as inactive<br>
           <span class="to">To: deactivate@do-deal.app</span><br>
           Subject: [Service Name] [Code]
         </div>
-        
+
         <div class="command">
           <strong>SEARCH</strong> - Find referrals<br>
           <span class="to">To: search@do-deal.app</span><br>
           Subject: [Search query]
         </div>
-        
+
         <div class="command">
           <strong>DIGEST</strong> - Get summary<br>
           <span class="to">To: digest@do-deal.app</span><br>
           Subject: [daily|weekly|monthly]
         </div>
       </div>
-      
+
       <div class="important">
         <strong>Important:</strong> Always include <strong>complete URLs</strong><br>
         Example: <code>https://picnic.app/de/freunde-rabatt/DOMI6869</code>
       </div>
     </div>
-    
+
     <div class="footer">
       <p>— Do-Deal Referral System</p>
     </div>
@@ -546,16 +546,16 @@ We'll add it to your collection once received.
     <div class="header">
       <h1>⚠️ Manual Review Needed</h1>
     </div>
-    
+
     <div class="content">
       <p>We received your forwarded email but couldn't automatically extract a referral code.</p>
-      
+
       <div class="original">
         Original email: "${originalSubject}"
       </div>
-      
+
       <p>Please reply with the following information:</p>
-      
+
       <div class="form">
         <div class="form-line">Service: [Service Name, e.g., Picnic, Uber]</div>
         <div class="form-line">Code: [Referral Code]</div>
@@ -563,10 +563,10 @@ We'll add it to your collection once received.
         <div class="form-line">Reward: [What do you get?]</div>
         <div class="form-line">Expires: [Expiry date if known]</div>
       </div>
-      
+
       <p>We'll add it to your collection once received.</p>
     </div>
-    
+
     <div class="footer">
       <p>— Do-Deal Referral System</p>
     </div>
