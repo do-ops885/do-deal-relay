@@ -256,7 +256,9 @@ export interface NotificationEvent {
     | "concurrency_abort"
     | "high_value_deal"
     | "trust_anomaly"
-    | "system_error";
+    | "system_error"
+    | "deal_expiring"
+    | "deal_expired";
   severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;
@@ -269,12 +271,16 @@ export interface Env {
   DEALS_LOG: KVNamespace;
   DEALS_LOCK: KVNamespace;
   DEALS_SOURCES: KVNamespace;
+  DEALS_DB?: D1Database;
+  DEALS_WEBHOOKS?: KVNamespace;
+  WEBHOOK_API_KEYS?: KVNamespace;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
+  EMAIL_WEBHOOK_SECRET?: string;
 }
 
 // ============================================================================
@@ -332,3 +338,85 @@ export interface GOAPAction {
   effects: Partial<WorldState>;
   cost: number;
 }
+
+// ============================================================================
+// Referral System Types
+// ============================================================================
+
+export interface ReferralInput {
+  id?: string;
+  url: string;
+  code: string;
+  description?: string;
+  reward?: string;
+  expiry_date?: string;
+  source?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ReferralDeactivateBody {
+  id: string;
+  reason?: string;
+}
+
+export interface ReferralSearchQuery {
+  q?: string;
+  source?: string;
+  active_only?: boolean;
+  limit?: number;
+}
+
+export interface ReferralResearchResult {
+  url: string;
+  code?: string;
+  description?: string;
+  reward?: string;
+  expiry_date?: string;
+  confidence: number;
+  source: string;
+}
+
+export interface WebResearchRequest {
+  query: string;
+  url?: string;
+  max_results?: number;
+}
+
+export interface ExpiringDeal {
+  id: string;
+  code: string;
+  url: string;
+  title?: string;
+  expiry_date: string;
+  days_remaining: number;
+}
+
+// Schemas
+export const ReferralInputSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().url(),
+  code: z.string().min(1),
+  description: z.string().optional(),
+  reward: z.string().optional(),
+  expiry_date: z.string().datetime().optional(),
+  source: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const ReferralDeactivateBodySchema = z.object({
+  id: z.string(),
+  reason: z.string().optional(),
+});
+
+export const ReferralSearchQuerySchema = z.object({
+  q: z.string().optional(),
+  source: z.string().optional(),
+  active_only: z.boolean().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
+export const WebResearchRequestSchema = z.object({
+  query: z.string(),
+  url: z.string().url().optional(),
+  max_results: z.number().int().min(1).max(10).optional(),
+});
