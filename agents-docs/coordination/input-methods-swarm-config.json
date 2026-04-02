@@ -1,0 +1,422 @@
+{
+  "$schema": "./swarm-config.schema.json",
+  "version": "1.0.0",
+  "swarm_id": "input-methods-swarm",
+  "name": "Input Methods Implementation Swarm",
+  "description": "Multi-agent swarm for implementing Browser Extension, Chat Bot, Email, and Webhook input methods",
+
+  "system_context": {
+    "environment": "production",
+    "base_project": "do-deal-relay",
+    "existing_components": [
+      "CLI (scripts/refcli.ts)",
+      "REST API (worker/index.ts)",
+      "Referral Storage (worker/lib/referral-storage.ts)",
+      "Research Agent (worker/lib/research-agent.ts)"
+    ],
+    "target_components": [
+      "Browser Extension",
+      "Chat Bot (Telegram/Discord)",
+      "Email Integration",
+      "Webhook System"
+    ]
+  },
+
+  "agents": {
+    "extension-agent": {
+      "agent_id": "extension-agent",
+      "name": "Browser Extension Implementation Agent",
+      "type": "feature",
+      "subtype": "extension_developer",
+      "description": "Implements Chrome/Firefox/Safari extension for auto-detecting and capturing referral codes",
+      "version": "1.0.0",
+      "status": "ready",
+      "capabilities": [
+        "browser_extension_development",
+        "content_script_injection",
+        "dom_parsing",
+        "pattern_recognition",
+        "api_integration"
+      ],
+      "inputs": ["ExtensionManifest", "ContentScript", "PopupUI"],
+      "outputs": ["ExtensionPackage", "Documentation"],
+      "dependencies": ["api-interface-agent"],
+      "config": {
+        "browsers": ["chrome", "firefox", "safari"],
+        "manifest_version": 3,
+        "auto_detect": true,
+        "confidence_threshold": 0.7
+      }
+    },
+
+    "bot-agent": {
+      "agent_id": "bot-agent",
+      "name": "Chat Bot Implementation Agent",
+      "type": "feature",
+      "subtype": "bot_developer",
+      "description": "Implements Telegram and Discord bots for conversational referral management",
+      "version": "1.0.0",
+      "status": "ready",
+      "capabilities": [
+        "telegram_bot_development",
+        "discord_bot_development",
+        "command_parsing",
+        "conversation_state_management",
+        "api_integration"
+      ],
+      "inputs": ["BotCommands", "MessageHandlers", "ConversationFlows"],
+      "outputs": ["BotImplementation", "Documentation"],
+      "dependencies": ["api-interface-agent"],
+      "config": {
+        "platforms": ["telegram", "discord"],
+        "command_prefix": "/",
+        "rate_limit": 30,
+        "max_message_length": 4096
+      }
+    },
+
+    "email-agent": {
+      "agent_id": "email-agent",
+      "name": "Email Integration Implementation Agent",
+      "type": "feature",
+      "subtype": "email_processor",
+      "description": "Implements email parsing for forwarded referral emails and command emails",
+      "version": "1.0.0",
+      "status": "ready",
+      "capabilities": [
+        "email_parsing",
+        "html_extraction",
+        "pattern_matching",
+        "auto_reply",
+        "api_integration"
+      ],
+      "inputs": ["EmailPayload", "ParsingRules", "ServicePatterns"],
+      "outputs": ["EmailHandler", "ExtractionPatterns", "Documentation"],
+      "dependencies": ["api-interface-agent"],
+      "config": {
+        "providers": ["cloudflare_email_workers", "imap", "webhook"],
+        "security_validation": ["dkim", "spf"],
+        "extraction_confidence": 0.8
+      }
+    },
+
+    "webhook-agent": {
+      "agent_id": "webhook-agent",
+      "name": "Webhook System Implementation Agent",
+      "type": "feature",
+      "subtype": "webhook_developer",
+      "description": "Implements incoming and outgoing webhook system for partner integrations",
+      "version": "1.0.0",
+      "status": "ready",
+      "capabilities": [
+        "webhook_endpoint_development",
+        "hmac_verification",
+        "event_routing",
+        "retry_logic",
+        "bidirectional_sync"
+      ],
+      "inputs": ["WebhookPayload", "EventTypes", "PartnerConfig"],
+      "outputs": ["WebhookEndpoints", "SDK", "Documentation"],
+      "dependencies": ["api-interface-agent"],
+      "config": {
+        "signature_method": "hmac-sha256",
+        "retry_policy": "exponential_backoff",
+        "max_retries": 5,
+        "timeout_ms": 30000
+      }
+    },
+
+    "api-interface-agent": {
+      "agent_id": "api-interface-agent",
+      "name": "API Interface Agent",
+      "type": "coordination",
+      "subtype": "api_handler",
+      "description": "Ensures all input methods integrate correctly with existing REST API",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "api_integration",
+        "validation",
+        "error_handling",
+        "documentation"
+      ],
+      "inputs": ["IntegrationRequest"],
+      "outputs": ["IntegrationResult", "APIDocumentation"]
+    },
+
+    "validation-agent": {
+      "agent_id": "validation-agent",
+      "name": "Cross-Platform Validation Agent",
+      "type": "validation",
+      "subtype": "tester",
+      "description": "Validates all input methods work correctly and handle edge cases",
+      "version": "1.0.0",
+      "status": "ready",
+      "capabilities": [
+        "test_execution",
+        "cross_platform_validation",
+        "edge_case_testing",
+        "security_testing"
+      ],
+      "inputs": ["TestScenarios", "PlatformImplementations"],
+      "outputs": ["TestResults", "ValidationReport"]
+    },
+
+    "synthesis-agent": {
+      "agent_id": "synthesis-agent",
+      "name": "Result Synthesis Agent",
+      "type": "coordination",
+      "subtype": "aggregator",
+      "description": "Aggregates results from all implementation agents and maintains system state",
+      "version": "1.0.0",
+      "status": "active",
+      "capabilities": [
+        "state_management",
+        "result_aggregation",
+        "metrics_collection",
+        "documentation_synthesis"
+      ],
+      "inputs": ["ImplementationResults", "TestResults"],
+      "outputs": ["FinalReport", "UpdatedDocumentation"]
+    }
+  },
+
+  "phases": {
+    "setup": {
+      "phase_id": "setup",
+      "name": "Setup & Analysis",
+      "description": "Analyze existing codebase and setup coordination infrastructure",
+      "agents": ["api-interface-agent", "synthesis-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 30000,
+      "output_stage": "staging"
+    },
+
+    "implementation": {
+      "phase_id": "implementation",
+      "name": "Parallel Implementation",
+      "description": "Implement Browser Extension, Chat Bot, Email, and Webhook in parallel",
+      "agents": [
+        "extension-agent",
+        "bot-agent",
+        "email-agent",
+        "webhook-agent"
+      ],
+      "execution_mode": "parallel",
+      "timeout_ms": 120000,
+      "parallel_groups": {
+        "group_id": "implementations",
+        "concurrency_limit": 4,
+        "failure_mode": "continue",
+        "sync_point": "before_validation"
+      },
+      "output_stage": "staging"
+    },
+
+    "integration": {
+      "phase_id": "integration",
+      "name": "API Integration",
+      "description": "Integrate all implementations with existing REST API",
+      "agents": ["api-interface-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 60000,
+      "output_stage": "staging"
+    },
+
+    "validation": {
+      "phase_id": "validation",
+      "name": "Cross-Platform Validation",
+      "description": "Test all implementations across platforms and edge cases",
+      "agents": ["validation-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 90000,
+      "output_stage": "staging"
+    },
+
+    "synthesis": {
+      "phase_id": "synthesis",
+      "name": "Result Synthesis",
+      "description": "Aggregate results, update documentation, finalize system",
+      "agents": ["synthesis-agent"],
+      "execution_mode": "sequential",
+      "timeout_ms": 30000,
+      "output_stage": "production"
+    }
+  },
+
+  "handoff_rules": {
+    "transitions": [
+      {
+        "from_phase": "setup",
+        "to_phase": "implementation",
+        "trigger": "complete",
+        "conditions": [{ "type": "all_complete" }],
+        "data_mapping": {
+          "api_specification": {
+            "source_field": "api_documentation",
+            "target_field": "integration_requirements",
+            "transform": "identity"
+          }
+        },
+        "timeout_ms": 120000,
+        "failure_action": "retry"
+      },
+      {
+        "from_phase": "implementation",
+        "to_phase": "integration",
+        "trigger": "complete",
+        "conditions": [
+          { "type": "min_count", "value": 3 },
+          { "type": "no_critical_failures" }
+        ],
+        "data_mapping": {
+          "implementations": {
+            "source_field": "completed_implementations",
+            "target_field": "integration_targets",
+            "transform": "identity"
+          }
+        },
+        "timeout_ms": 60000,
+        "failure_action": "continue_with_partial"
+      },
+      {
+        "from_phase": "integration",
+        "to_phase": "validation",
+        "trigger": "complete",
+        "conditions": [{ "type": "all_validated" }],
+        "timeout_ms": 90000,
+        "failure_action": "retry"
+      },
+      {
+        "from_phase": "validation",
+        "to_phase": "synthesis",
+        "trigger": "complete",
+        "conditions": [{ "type": "no_blocking_failures" }],
+        "timeout_ms": 30000,
+        "failure_action": "escalate"
+      }
+    ],
+    "default_failure_action": "retry",
+    "escalation_policy": {
+      "escalation_threshold_minutes": 30,
+      "escalation_targets": ["synthesis-agent"],
+      "notification_channels": ["webhook", "log"]
+    }
+  },
+
+  "parallel_execution_groups": {
+    "groups": [
+      {
+        "group_id": "implementations",
+        "name": "Implementation Agents Group",
+        "description": "All four input method implementations in parallel",
+        "agents": [
+          "extension-agent",
+          "bot-agent",
+          "email-agent",
+          "webhook-agent"
+        ],
+        "execution_strategy": "all_parallel",
+        "sync_point": "before_integration",
+        "concurrency_limit": 4,
+        "result_aggregation": "collect_all",
+        "failure_mode": "continue",
+        "applies_to_phases": ["implementation"]
+      }
+    ],
+    "max_global_concurrency": 6
+  },
+
+  "quality_gates": {
+    "gates": [
+      {
+        "gate_id": "api_integration_check",
+        "name": "API Integration Check",
+        "applies_to_phases": ["integration"],
+        "type": "integration",
+        "validator_agent": "api-interface-agent",
+        "auto_enabled": true,
+        "blocking": true,
+        "config": {
+          "required_endpoints": [
+            "/api/referrals",
+            "/api/referrals/:code",
+            "/api/referrals/:code/deactivate"
+          ]
+        },
+        "failure_action": "block"
+      },
+      {
+        "gate_id": "cross_platform_test",
+        "name": "Cross-Platform Test Suite",
+        "applies_to_phases": ["validation"],
+        "type": "test",
+        "validator_agent": "validation-agent",
+        "auto_enabled": true,
+        "blocking": false,
+        "config": {
+          "min_coverage": 80,
+          "platforms": ["extension", "bot", "email", "webhook"]
+        },
+        "failure_action": "warn"
+      },
+      {
+        "gate_id": "url_preservation_check",
+        "name": "URL Preservation Check",
+        "applies_to_phases": ["implementation", "integration"],
+        "type": "logic",
+        "validator_agent": "validation-agent",
+        "auto_enabled": true,
+        "blocking": true,
+        "config": {
+          "test_urls": [
+            "https://picnic.app/de/freunde-rabatt/DOMI6869",
+            "https://www.trading212.com/invite/ABCDEF"
+          ],
+          "must_preserve_path": true
+        },
+        "failure_action": "block"
+      }
+    ],
+    "validation_severity": "strict",
+    "quarantine_threshold": 0.3
+  },
+
+  "notifications": {
+    "channels": [
+      {
+        "channel_id": "webhook",
+        "type": "webhook",
+        "enabled": true,
+        "config": {
+          "url_env": "SWARM_WEBHOOK_URL",
+          "secret_env": "SWARM_WEBHOOK_SECRET"
+        },
+        "events": [
+          "phase_complete",
+          "phase_error",
+          "handoff_success",
+          "handoff_failure"
+        ],
+        "severity_filter": ["info", "warning", "critical"]
+      },
+      {
+        "channel_id": "log",
+        "type": "log",
+        "enabled": true,
+        "config": {},
+        "events": ["phase_complete", "phase_error"],
+        "severity_filter": ["info", "warning", "critical"]
+      }
+    ],
+    "cooldown_seconds": 3600
+  },
+
+  "state_tracking": {
+    "enabled": true,
+    "kv_namespace": "DEALS_LOG",
+    "track_metrics": true,
+    "retention_days": 30,
+    "checkpoint_interval_ms": 30000
+  }
+}

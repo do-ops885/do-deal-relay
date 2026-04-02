@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Referral Capture</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 380px;
+        min-height: 450px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #1e293b;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 16px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+      }
+
+      .header h1 {
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+      }
+
+      .header .subtitle {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+      }
+
+      .section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .current-page {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .favicon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .page-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .page-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .page-url {
+        font-size: 12px;
+        color: #64748b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: "Courier New", monospace;
+      }
+
+      .scan-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .status-indicator.found {
+        background: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        animation: pulse 2s infinite;
+      }
+
+      .status-indicator.none {
+        background: #94a3b8;
+      }
+
+      .status-indicator.scanning {
+        background: #f59e0b;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .status-text {
+        color: #475569;
+      }
+
+      .detection-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .detection-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .detection-item:hover {
+        border-color: #6366f1;
+        background: #eef2ff;
+      }
+
+      .detection-item.selected {
+        border-color: #4f46e5;
+        background: #eef2ff;
+      }
+
+      .detection-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .code-value {
+        font-family: "Courier New", monospace;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 1px;
+      }
+
+      .code-source {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: capitalize;
+      }
+
+      .confidence {
+        font-size: 11px;
+        color: #22c55e;
+        font-weight: 500;
+        background: #f0fdf4;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+      }
+
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      .manual-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-family: "Courier New", monospace;
+        transition: border-color 0.2s;
+      }
+
+      .manual-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+      }
+
+      .manual-input::placeholder {
+        color: #94a3b8;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 24px 12px;
+        color: #64748b;
+      }
+
+      .empty-state-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      .empty-state-text {
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #4f46e5;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .footer {
+        padding: 12px 16px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+      }
+
+      .footer-link {
+        font-size: 12px;
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .footer-link:hover {
+        text-decoration: underline;
+      }
+
+      .settings-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: #94a3b8;
+        font-size: 18px;
+        transition: color 0.2s;
+      }
+
+      .settings-btn:hover {
+        color: #4f46e5;
+      }
+
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 10000;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .toast.success {
+        background: #22c55e;
+      }
+
+      .toast.error {
+        background: #ef4444;
+      }
+
+      .settings-panel {
+        display: none;
+      }
+
+      .settings-panel.active {
+        display: block;
+      }
+
+      .settings-field {
+        margin-bottom: 12px;
+      }
+
+      .settings-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 6px;
+      }
+
+      .settings-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+      }
+
+      .settings-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🎁 Referral Capture</h1>
+      <div class="subtitle">One-click code capture</div>
+    </div>
+
+    <div class="content">
+      <!-- Current Page Section -->
+      <div class="section">
+        <div class="section-title">📄 Current Page</div>
+        <div class="current-page">
+          <div class="favicon" id="favicon">🌐</div>
+          <div class="page-info">
+            <div class="page-title" id="page-title">Loading...</div>
+            <div class="page-url" id="page-url">...</div>
+          </div>
+        </div>
+
+        <div class="scan-status" id="scan-status">
+          <div class="status-indicator scanning"></div>
+          <span class="status-text">Scanning for referral codes...</span>
+        </div>
+      </div>
+
+      <!-- Detected Codes Section -->
+      <div class="section" id="detections-section" style="display: none">
+        <div class="section-title">🎯 Detected Codes</div>
+        <div class="detection-list" id="detection-list"></div>
+        <button
+          class="btn btn-primary"
+          id="capture-btn"
+          style="margin-top: 12px"
+        >
+          ✨ Capture Selected
+        </button>
+      </div>
+
+      <!-- Manual Entry Section -->
+      <div class="section" id="manual-section">
+        <div class="section-title">✏️ Manual Entry</div>
+        <input
+          type="text"
+          class="manual-input"
+          id="manual-code"
+          placeholder="Enter referral code..."
+        />
+        <button class="btn btn-secondary" id="manual-btn">
+          Add Code Manually
+        </button>
+      </div>
+
+      <!-- Settings Panel (hidden by default) -->
+      <div class="section settings-panel" id="settings-panel">
+        <div class="section-title">⚙️ Settings</div>
+        <div class="settings-field">
+          <label class="settings-label">API Endpoint</label>
+          <input
+            type="text"
+            class="settings-input"
+            id="api-endpoint"
+            placeholder="https://your-worker.workers.dev"
+          />
+        </div>
+        <button class="btn btn-secondary" id="save-settings-btn">
+          Save Settings
+        </button>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="section" id="stats-section">
+        <div class="section-title">📊 Your Stats</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-captured">0</div>
+            <div class="stat-label">Captured</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-submitted">0</div>
+            <div class="stat-label">Submitted</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-success">0</div>
+            <div class="stat-label">Success</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="#" class="footer-link" id="settings-link">Settings</a>
+      <button class="settings-btn" id="refresh-btn">🔄</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
