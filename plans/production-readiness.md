@@ -10,6 +10,42 @@ This plan tracks all warnings, issues, and incomplete items required for product
 
 ---
 
+## Deployment Status
+
+**Last Deploy Attempt**: 2026-04-02
+**Status**: Partial Success
+
+### What Worked
+
+- ✅ Pre-deploy validation passed
+- ✅ Cloudflare deploy succeeded (wrangler.toml fix worked)
+- ✅ Worker is deployed and running
+
+### Current Issue
+
+- ❌ Smoke tests failing due to empty KV namespace
+- ❌ Health check returns 503 (no production snapshot in KV)
+
+### Solution (from LESSON-014)
+
+Initialize production KV with seed data:
+
+```bash
+# Get the namespace ID from wrangler.toml (DEALS_PROD)
+# Then run:
+wrangler kv key put --namespace-id=23ee9b8c9e2748e5880f476b8b57a524 "snapshot:prod" '{"version":"0.1.1","deals":[],"stats":{"total":0,"active":0}}'
+```
+
+Or trigger initial discovery:
+
+```bash
+curl -X POST https://do-deal-relay.<account-id>.workers.dev/api/discover
+```
+
+**Note**: This is documented in LESSON-014 as expected behavior for fresh deployments. The "degraded" health status resolves after first snapshot is created.
+
+---
+
 ## Security Audit (PENDING)
 
 ### Current Status: Not Started
