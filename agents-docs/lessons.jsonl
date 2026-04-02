@@ -1,0 +1,17 @@
+{
+  "lesson_id": "LESSON-1775130739",
+  "timestamp": "2026-04-02T11:52:19Z",
+  "error_type": "version_mismatch",
+  "severity": "HIGH",
+  "context": "71 files claimed v1.0.0 but VERSION file shows 0.1.1",
+  "evidence": {
+    "description": "474 files checked, 71 had v1.0.0 from template"
+  },
+  "fix_applied": "Ran verify_version_consistency.sh --fix to update all to 0.1.1",
+  "prevention": {
+    "immediate": "Add version check to CI and skill template",
+    "long_term": "Add to CI verification"
+  },
+  "tags": ["version_mismatch"],
+  "confidence": "HIGH"
+}
