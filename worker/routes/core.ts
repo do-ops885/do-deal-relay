@@ -24,10 +24,49 @@ import type {
 import { GetDealsQuerySchema, SubmitDealBodySchema } from "../types";
 import { jsonResponse } from "./utils";
 
-// ============================================================================
-// Core Route Handlers
-// ============================================================================
+/**
+ * Core API Route Handlers
+ *
+ * Provides HTTP endpoints for:
+ * - Health monitoring (/health)
+ * - Prometheus metrics (/metrics)
+ * - Deal retrieval (/deals, /deals.json)
+ * - Pipeline control (/api/discover)
+ * - Log access (/api/log)
+ * - Manual deal submission (/api/submit)
+ *
+ * @module worker/routes/core
+ */
 
+/**
+ * Health check endpoint handler.
+ *
+ * Returns system health status based on:
+ * - KV connection (can we read production snapshot?)
+ * - Last run success (was the last pipeline run successful?)
+ * - Snapshot validity (is the production snapshot valid?)
+ *
+ * Status codes:
+ * - 200: Healthy (all checks pass)
+ * - 503: Degraded (snapshot missing but KV accessible - expected for fresh deploys)
+ *
+ * @param env - Worker environment with KV bindings
+ * @returns HTTP response with health status JSON
+ * @example
+ * Response when healthy:
+ * ```json
+ * {
+ *   "status": "healthy",
+ *   "version": "0.1.1",
+ *   "timestamp": "2026-04-02T12:00:00Z",
+ *   "checks": {
+ *     "kv_connection": true,
+ *     "last_run_success": true,
+ *     "snapshot_valid": true
+ *   }
+ * }
+ * ```
+ */
 export async function handleHealth(env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const status = await getPipelineStatus(env);
@@ -55,6 +94,29 @@ export async function handleHealth(env: Env): Promise<Response> {
   return jsonResponse(health, statusCode);
 }
 
+/**
+ * Prometheus-compatible metrics endpoint.
+ *
+ * Returns metrics in Prometheus exposition format for monitoring:
+ * - deals_runs_total: Total number of discovery runs
+ * - deals_publish_success_total: Successful publish operations
+ * - deals_candidate_deals_total: Deals discovered (before validation)
+ * - deals_valid_deals_total: Deals passing validation
+ * - deals_duplicate_deals_total: Duplicates filtered out
+ * - deals_active_deals: Current active deals in production
+ *
+ * @param env - Worker environment with KV bindings
+ * @returns HTTP response with Prometheus text format metrics
+ * @example
+ * ```
+ * # HELP deals_runs_total Total discovery runs
+ * # TYPE deals_runs_total counter
+ * deals_runs_total 42
+ *
+ * # HELP deals_active_deals Current active deals in production
+ * deals_active_deals 156
+ * ```
+ */
 export async function handleMetrics(env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const logs = await getRecentLogs(env, 1000);

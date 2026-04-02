@@ -3,12 +3,35 @@ import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { generateSnapshotHash } from "./crypto";
 
-// ============================================================================
-// KV Storage Abstraction Layer
-// ============================================================================
+/**
+ * KV Storage Abstraction Layer
+ *
+ * Provides type-safe operations for Cloudflare KV storage across multiple namespaces:
+ * - DEALS_PROD: Production snapshots and metadata
+ * - DEALS_STAGING: Staging area for pre-publish validation
+ * - DEALS_SOURCES: Source registry and trust scores
+ *
+ * All operations use JSON serialization and include error handling to prevent
+ * KV read failures from crashing the pipeline.
+ *
+ * @module worker/lib/storage
+ */
 
 /**
- * Get production snapshot
+ * Retrieves the current production snapshot from KV storage.
+ *
+ * The production snapshot contains all active deals and serves as the
+ * source of truth for the /deals API endpoint.
+ *
+ * @param env - Worker environment with KV bindings
+ * @returns The production snapshot, or null if not found or on error
+ * @example
+ * ```typescript
+ * const snapshot = await getProductionSnapshot(env);
+ * if (snapshot) {
+ *   console.log(`Found ${snapshot.deals.length} deals`);
+ * }
+ * ```
  */
 export async function getProductionSnapshot(
   env: Env,
@@ -26,7 +49,15 @@ export async function getProductionSnapshot(
 }
 
 /**
- * Get staging snapshot
+ * Retrieves the staging snapshot from KV storage.
+ *
+ * Staging snapshots are used for the two-phase publish process:
+ * 1. Write to staging
+ * 2. Validate staging contents
+ * 3. Promote to production (atomic)
+ *
+ * @param env - Worker environment with KV bindings
+ * @returns The staging snapshot, or null if not found or on error
  */
 export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
   try {
@@ -42,7 +73,25 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
 }
 
 /**
- * Write snapshot to staging (candidate)
+ * Writes a snapshot to the staging KV namespace.
+ *
+ * Automatically generates a SHA-256 hash of the deals array for integrity
+ * verification during the promotion process. Validates the snapshot against
+ * the SnapshotSchema before writing.
+ *
+ * @param env - Worker environment with KV bindings
+ * @param snapshot - Snapshot data (without hash - hash is auto-generated)
+ * @returns The complete snapshot with generated hash
+ * @throws Error if snapshot validation fails
+ * @example
+ * ```typescript
+ * const snapshot = await writeStagingSnapshot(env, {
+ *   version: "0.1.1",
+ *   deals: normalizedDeals,
+ *   stats: { total: 10, active: 8, quarantined: 2, rejected: 0, duplicates: 0 },
+ *   // ... other fields
+ * });
+ * ```
  */
 export async function writeStagingSnapshot(
   env: Env,
@@ -69,7 +118,25 @@ export async function writeStagingSnapshot(
 }
 
 /**
- * Promote staging to production (atomic operation)
+ * Atomically promotes a staging snapshot to production.
+ *
+ * Implements hash chain verification to ensure consistency:
+ * - Verifies that staging.previous_hash matches expectedPreviousHash
+ * - Prevents race conditions where production was modified after staging
+ *
+ * @param env - Worker environment with KV bindings
+ * @param expectedPreviousHash - The hash we expect to see in production
+ * @returns The promoted snapshot (now in production)
+ * @throws Error if staging not found or hash chain is broken
+ * @example
+ * ```typescript
+ * const prod = await getProductionSnapshot(env);
+ * const prodHash = prod?.snapshot_hash || "";
+ *
+ * // ... create and write staging snapshot ...
+ *
+ * await promoteToProduction(env, prodHash);
+ * ```
  */
 export async function promoteToProduction(
   env: Env,
