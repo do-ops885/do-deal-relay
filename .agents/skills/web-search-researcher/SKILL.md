@@ -1,152 +1,205 @@
 ---
 name: web-search-researcher
-description: "Research topics using web search. Use when gathering information about companies, technologies, market trends, or validating deal signals."
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
+description: Research topics using web search to find accurate, current information. Use when you need modern information, official documentation, best practices, or technical solutions beyond training data.
 ---
 
-# Web Search Researcher
+# Web Search Research
 
-Conduct systematic web research to gather intelligence on companies, technologies, markets, and opportunities for deal discovery.
+Find accurate, relevant information from web sources.
 
-## When To Use
+## When to Use
 
-- Validating a potential deal or opportunity
-- Researching company background and team
-- Analyzing market trends and competition
-- Gathering data for deal scoring
-- Cross-referencing claims in deal proposals
-- Due diligence before outreach
+- Modern information not in training data
+- Official documentation for APIs/libraries
+- Best practices and recommendations
+- Technical solutions
+- Technology comparisons
 
-## Required Inputs
+## Date Context
 
-```text
-QUERY: What to research
-CONTEXT: Why this matters (deal validation, competitive analysis, etc.)
-DEPTH: (quick/thorough/deep-dive)
-SOURCES: Preferred sources (news, linkedin, crunchbase, etc.)
+**CRITICAL**: Check `<env>` for current date.
+- Include current year in searches
+- Evaluate freshness (12-18 months = recent)
+
+## Core Process
+
+### 1. Analyze Query
+Identify key terms, source types, search angles.
+
+### 2. Strategic Searches
+- Start broad, refine
+- Multiple variations
+- Site-specific searches
+
+### 3. Fetch Content
+- WebFetch promising results
+- Prioritize official docs
+- Note publication dates
+
+### 4. Synthesize
+- Organize by relevance
+- Include quotes with links
+- Note gaps/conflicts
+
+## Search Strategies
+
+### API Documentation
+```
+"[library] official docs [feature]"
+site:docs.stripe.com webhook
 ```
 
-## Research Workflow
-
-### 1. Query Construction
-
-| Goal                  | Query Pattern                             |
-| --------------------- | ----------------------------------------- |
-| Company background    | `"{company}" founded funding team`        |
-| Market analysis       | `{market} market size growth 2024`        |
-| Competitive landscape | `{product} alternatives competitors`      |
-| Technology validation | `{technology} reviews case studies`       |
-| Team research         | `"{founder}" linkedin previous companies` |
-| Recent news           | `"{company}" news 2024`                   |
-
-See [references/search-operators.md](references/search-operators.md) for advanced operators.
-
-### 2. Source Prioritization
-
-**Tier 1 (High Trust):** Official websites, SEC filings, Crunchbase, LinkedIn, GitHub
-
-**Tier 2 (Medium Trust):** Tech news, industry publications, press releases, podcasts
-
-**Tier 3 (Verify Before Using):** Social media, forums, blogs, anonymous sources
-
-See [references/sources/trust-ratings.md](references/sources/trust-ratings.md) for complete ratings.
-
-### 3. Information Extraction
-
-Use templates from [references/templates/research-templates.md](references/templates/research-templates.md):
-
-- **Company Template**: Basics, funding, team, product, market, red flags
-- **Technology Template**: Overview, technical analysis, market position, community signals
-- **Market Analysis Template**: Market size, competitive landscape, trends
-
-### 4. Validation & Cross-Reference
-
-**Always Verify:**
-
-1. Claims: Find proof for stated metrics
-2. Numbers: Check multiple sources for valuations
-3. Timeline: Verify actual launch dates
-4. Attribution: Confirm credibility of sources
-
-| Confidence | Criteria                                   |
-| ---------- | ------------------------------------------ |
-| **High**   | Multiple Tier 1 sources confirm            |
-| **Medium** | One Tier 1 + supporting Tier 2             |
-| **Low**    | Only Tier 2/3 sources, or conflicting info |
-| **Verify** | Single source, or needs confirmation       |
-
-## Research Outputs
-
-**Save To:**
-
-- `temp/research/YYYY-MM-DD-{company}.md` - Full research notes
-- `deals/active/{company}.md` - Validated deals with scores
-- `deals/rejected/{company}.md` - Rejected (with reasons)
-
-**Naming Convention:** `{status}-{company}-{YYYYMMDD}.md`
-
-Examples:
-
-- `active-coderabbit-20250121.md`
-- `rejected-slowai-20250121.md` (reason: no funding, low traction)
-- `pending-futureco-20250121.md` (waiting: team verification)
-
-## Integration with Other Agents
-
-**Research-to-Deal Pipeline:**
-
+### Best Practices
 ```
-Signal → Research → Validation → Deal Score
-   ↓         ↓           ↓            ↓
-ProductHunt  Company   Funding     8.5/10
-Trending     info      verify      Priority: High
+"Rust async" best practices 2026
 ```
 
-**Research Commands:**
-
-```bash
-npm run research:company -- "StartupName" --depth=quick
-npm run research:company -- "StartupName" --depth=thorough --output=./deals/startupname.md
-npm run research:market -- "AI code review tools" --competitors="CodeRabbit,Codeium,Copilot"
-npm run research:batch -- --input=./signals/this-week.json --output=./deals/
+### Technical Solutions
+```
+"tokio panic" redb write
+site:github.com tokio spawn_blocking
 ```
 
-See [references/automation-patterns.md](references/automation-patterns.md) for automation patterns and Durable Object queue implementation.
+### Comparisons
+```
+"redb vs sled" performance
+```
 
-## Quality Standards
+## Progressive Strategy
 
-### Research Checklist
+**Round 1 (5 min)**: 1-2 broad searches. If official docs → stop.
 
-- [ ] Company basics confirmed (founded, location, size)
-- [ ] Funding history documented with sources
-- [ ] Team background researched (at least founders)
-- [ ] Product/technology understood
-- [ ] Market context established
-- [ ] Competitors identified
-- [ ] Red flags noted (if any)
-- [ ] All claims have source URLs
-- [ ] Confidence level assigned
+**Round 2 (10 min)**: 2-3 specific searches, fetch 2-3 sources. If consensus → stop.
 
-### Anti-Patterns
+**Round 3 (15 min)**: Fill gaps, synthesize.
 
-**Don't:**
+**Rule**: Most complete in Round 2.
 
-- Copy-paste marketing language without context
-- Report unverified claims as facts
-- Skip negative information
-- Research without a clear goal
-- Let research expire without timestamps
+## Source Priority
 
-## References
+**⭐⭐⭐ Fetch First**: Official docs, GitHub maintainers, recent experts
 
-- [references/search-operators.md](references/search-operators.md) - Complete search operator reference
-- [references/sources/trust-ratings.md](references/sources/trust-ratings.md) - Source reliability ratings
-- [references/templates/research-templates.md](references/templates/research-templates.md) - Research templates
-- [references/automation-patterns.md](references/automation-patterns.md) - Automation patterns
+**⭐⭐ Fetch If Needed**: Expert blogs, high-vote SO, conference talks
 
-## Version History
+**⭐ Skip**: Generic tutorials, old posts, no author
 
-- 1.0.0 (2025-01-21) - Initial release with deal discovery research patterns
+**🚫 Never**: AI farms, aggregators
+
+## Search Operators
+
+| Operator | Example |
+|----------|---------|
+| `"exact"` | `"async runtime"` |
+| `-term` | `rust -game` |
+| `site:` | `site:docs.rs` |
+| `after:` | `async after:2024` |
+
+## Output Format
+
+```markdown
+## Summary
+[2-3 sentences]
+
+## Findings
+
+### [Source 1]
+**Source**: [Link]
+**Key Info**:
+- Quote/finding
+
+### [Source 2]
+**Source**: [Link]
+**Key Info**:
+- Finding
+
+## Resources
+- [Link] - Description
+
+## Gaps
+[What not found]
+```
+
+## Quality Guidelines
+
+- **Accuracy**: Quote with links
+- **Relevance**: Focus on query
+- **Currency**: Note dates, prefer recent
+- **Authority**: Official first
+- **Transparency**: Note gaps/conflicts
+
+## Depth Levels
+
+| Level | Time | Use For |
+|-------|------|---------|
+| Quick | 15-20min | Simple facts |
+| Standard | 30-45min | Best practices |
+| Deep | 60-90min | Architecture |
+| Exhaustive | 2+hr | Critical |
+
+**Rule**: Set timer, synthesize when expires.
+
+## Workflow
+
+1. **Plan**: Query, concepts, searches
+2. **Execute**: Run searches, identify URLs
+3. **Fetch**: WebFetch 3-5 sources
+4. **Synthesize**: Organize, use format
+5. **Evaluate**: Stop if consensus, official found
+6. **Report**: Present with limitations
+
+## Examples
+
+### API Research
+**Query**: "Stripe webhook signature"
+**Searches**: Official docs, site:stripe.com
+**Output**: Docs link, code example
+
+### Best Practices
+**Query**: "Rust async error handling"
+**Searches**: "best practices 2026", site:blog.rust-lang.org
+**Output**: Official book, expert blogs
+
+### Problem Solving
+**Query**: "Tokio blocking redb"
+**Searches**: "tokio blocking", site:github.com
+**Output**: spawn_blocking solution
+
+## Integration
+
+- **feature-implement**: Research before
+- **debug-troubleshoot**: Find patterns
+- **web-doc-resolver**: Fetch URLs
+
+## Best Practices
+
+### DO:
+✓ Check date context
+✓ Use current year
+✓ Specific terms
+✓ Official docs first
+✓ Cross-reference
+✓ Provide links
+
+### DON'T:
+✗ Stop at first result
+✗ Trust unverified
+✗ Ignore dates
+✗ Omit attribution
+
+## Troubleshooting
+
+**Poor results**: Refine terms, try keywords, site-specific
+
+**Outdated**: Add year, check changelog
+
+**Conflicting**: Check dates, authority, note all
+
+**None**: Broaden, alternatives, report gap
+
+## Summary
+
+Analyze, Search strategically, Fetch authoritative, Synthesize with attribution.
+
+## Reference Files
+
+- **[reference/guide.md](reference/guide.md)** - Complete guide with strategies, rounds, operators, depth levels, workflow, and examples

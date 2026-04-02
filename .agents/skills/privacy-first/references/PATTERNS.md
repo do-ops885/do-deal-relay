@@ -3,29 +3,27 @@
 ## Regex Patterns
 
 ### Basic Email
-
 ```
 [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
 ```
 
 ### Common TLDs (stricter)
-
 ```
 [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|io|net|edu|gov|co)
 ```
 
 ## File Extensions to Scan
 
-| Extension        | Priority | Notes           |
-| ---------------- | -------- | --------------- |
-| `.py`            | High     | Code files      |
-| `.toml`          | High     | Config/metadata |
-| `.yaml` / `.yml` | High     | CI/CD configs   |
-| `.json`          | High     | Package configs |
-| `.md`            | High     | Documentation   |
-| `.js` / `.ts`    | Medium   | Frontend code   |
-| `.rs`            | Medium   | Rust code       |
-| `.go`            | Medium   | Go code         |
+| Extension | Priority | Notes |
+|-----------|----------|-------|
+| `.py` | High | Code files |
+| `.toml` | High | Config/metadata |
+| `.yaml` / `.yml` | High | CI/CD configs |
+| `.json` | High | Package configs |
+| `.md` | High | Documentation |
+| `.js` / `.ts` | Medium | Frontend code |
+| `.rs` | Medium | Rust code |
+| `.go` | Medium | Go code |
 
 ## Exclusion Patterns
 
@@ -57,15 +55,15 @@ target/
 
 Replace these patterns when found:
 
-| Pattern               | Replace With       |
-| --------------------- | ------------------ |
-| `support@*`           | GitHub Issues link |
-| `contact@*`           | GitHub Issues link |
-| `help@*`              | GitHub Issues link |
-| `info@*`              | GitHub Issues link |
-| `email = "..."`       | Remove field       |
-| `Author: ... <email>` | `Author: ...`      |
-| `mailto:user@*`       | GitHub Issues link |
+| Pattern | Replace With |
+|---------|--------------|
+| `support@*` | GitHub Issues link |
+| `contact@*` | GitHub Issues link |
+| `help@*` | GitHub Issues link |
+| `info@*` | GitHub Issues link |
+| `email = "..."` | Remove field |
+| `Author: ... <email>` | `Author: ...` |
+| `mailto:user@*` | GitHub Issues link |
 
 ## Quick Validation Command
 

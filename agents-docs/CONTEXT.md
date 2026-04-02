@@ -1,20 +1,18 @@
 # Context Management and Back-Pressure
 
-**System**: Deal Discovery Relay Worker
-**Version**: 0.1.2
-\*\*Last Updated\*\*: 2026-04-01
+**Reference doc** - loaded on demand, not by default.
 
-This guide covers context window management, back-pressure patterns, and strategies for handling large inputs in the deal discovery system.
+> Systematically managing what enters the context window to maximize reliability and minimize cost.
 
 ## Context Window Overview
 
-AI agents have finite context windows. Effective management is critical for handling large discovery pipelines.
+AI agents have finite context windows. Effective management is critical for handling large tasks.
 
-| Agent  | Context Window | Optimal Use                           |
-| ------ | -------------- | ------------------------------------- |
-| Claude | 200K tokens    | Complex code, multi-file coordination |
-| Gemini | 1M tokens      | Large document analysis, research     |
-| Qwen   | 128K tokens    | Focused TS/JS tasks, validation       |
+| Agent | Context Window | Optimal Use |
+|-------|---------------|-------------|
+| Claude | 200K tokens | Complex code, multi-file coordination |
+| Gemini | 1M tokens | Large document analysis, research |
+| Qwen | 128K tokens | Focused TS/JS tasks, validation |
 
 ## Token Budgeting
 
@@ -22,14 +20,14 @@ AI agents have finite context windows. Effective management is critical for hand
 
 For a 200K context window:
 
-| Category        | Tokens | Percentage | Purpose                     |
-| --------------- | ------ | ---------- | --------------------------- |
-| System prompt   | 2K     | 1%         | Agent identity, constraints |
-| AGENTS.md       | 3K     | 1.5%       | Coordination protocol       |
-| Skill content   | 10K    | 5%         | Loaded skills               |
-| Handoff context | 5K     | 2.5%       | Previous agent outputs      |
-| Source files    | 100K   | 50%        | Code being modified         |
-| Output buffer   | 80K    | 40%        | Response generation         |
+| Category | Tokens | Percentage | Purpose |
+|----------|--------|------------|---------|
+| System prompt | 2K | 1% | Agent identity, constraints |
+| AGENTS.md | 3K | 1.5% | Coordination protocol |
+| Skill content | 10K | 5% | Loaded skills |
+| Handoff context | 5K | 2.5% | Previous agent outputs |
+| Source files | 100K | 50% | Code being modified |
+| Output buffer | 80K | 40% | Response generation |
 
 ### Dynamic Adjustment
 
@@ -64,12 +62,12 @@ function calculateBudget(files: File[]): ContextBudget {
 Break large tasks into manageable chunks:
 
 ```
-Large Input (10,000 deals)
-├─→ Chunk 1 (Deals 1-100)
+Large Input (10,000 items)
+├─→ Chunk 1 (Items 1-100)
 │   └─→ Process
-├─→ Chunk 2 (Deals 101-200)
+├─→ Chunk 2 (Items 101-200)
 │   └─→ Process
-├─→ Chunk 3 (Deals 201-300)
+├─→ Chunk 3 (Items 201-300)
 │   └─→ Process
 └─→ ... (continue)
 ```
@@ -147,7 +145,7 @@ Sliding window for time-series or sequential data:
 ```typescript
 interface WindowConfig {
   size: number;
-  overlap: number; // Tokens to overlap between windows
+  overlap: number; // Items to overlap between windows
 }
 
 function* slidingWindows<T>(items: T[], config: WindowConfig): Generator<T[]> {
@@ -158,9 +156,9 @@ function* slidingWindows<T>(items: T[], config: WindowConfig): Generator<T[]> {
   }
 }
 
-// Usage: Process deals with context overlap
-for (const window of slidingWindows(deals, { size: 100, overlap: 10 })) {
-  // Last 10 deals from previous window provide context
+// Usage: Process items with context overlap
+for (const window of slidingWindows(items, { size: 100, overlap: 10 })) {
+  // Last 10 items from previous window provide context
   await analyzeWithContext(window);
 }
 ```
@@ -175,19 +173,19 @@ interface StreamConfig {
   lowWaterMark: number; // Resume threshold
 }
 
-class DealStream {
-  private buffer: Deal[] = [];
+class ItemStream {
+  private buffer: Item[] = [];
   private paused = false;
 
   constructor(private config: StreamConfig) {}
 
-  async write(deal: Deal): Promise<void> {
+  async write(item: Item): Promise<void> {
     if (this.buffer.length >= this.config.highWaterMark) {
       this.paused = true;
       await this.drain();
     }
 
-    this.buffer.push(deal);
+    this.buffer.push(item);
   }
 
   private async drain(): Promise<void> {
@@ -206,11 +204,11 @@ class DealStream {
 
 When files exceed safe thresholds:
 
-| File Size     | Action                      |
-| ------------- | --------------------------- |
-| <100 lines    | Include full content        |
+| File Size | Action |
+|-----------|--------|
+| <100 lines | Include full content |
 | 100-500 lines | Include with summary header |
-| >500 lines    | Split into focused files    |
+| >500 lines | Split into focused files |
 
 ### Progressive File Loading
 
@@ -286,111 +284,50 @@ ${s.keyFunctions.map((f) => `- ${f.name}: ${f.purpose}`).join("\n")}
 `;
 ```
 
-## Context Pruning
+## Context Hygiene
 
-### Selective Loading
+- `/clear` between unrelated tasks
+- `Glob`/`Grep` instead of reading whole files
+- Sub-agents for research (noise stays in their window)
+- Load skills progressively - not at session start
+- Prefer CLI tools over MCP servers for well-known services
 
-Load only what's needed for the current task:
+## Skills Architecture (Progressive Disclosure)
 
-```typescript
-const filePriorities: Record<string, string[]> = {
-  discovery: [
-    "worker/pipeline/discover.ts",
-    "worker/lib/sources.ts",
-    "worker/types.ts",
-  ],
-  validation: [
-    "worker/pipeline/validate.ts",
-    "worker/lib/validation.ts",
-    "worker/types.ts",
-  ],
-  scoring: [
-    "worker/pipeline/score.ts",
-    "worker/lib/scoring.ts",
-    "worker/types.ts",
-  ],
-};
-
-function getRelevantFiles(task: string): string[] {
-  return filePriorities[task] || [];
-}
+```
+AGENTS.md (concise, universal)
+  +-- agents-docs/ (detailed reference, loaded on demand)
+       +-- Skills with SKILL.md (loaded when agent needs them)
+            +-- reference/ within each skill (read only what is needed)
 ```
 
-### Skill Lazy Loading
+All skills are canonical in `.agents/skills/`.
+Claude Code, Gemini CLI, and Qwen Code use symlinks (`.claude/skills/`, `.gemini/skills/`, `.qwen/skills/`);
+OpenCode reads directly from `.agents/skills/`.
+Run `./scripts/setup-skills.sh` to create symlinks for Claude Code, Gemini CLI, and Qwen Code.
 
-Don't load all skills upfront:
+## Back-Pressure Priority Order
 
-```typescript
-class SkillManager {
-  private loadedSkills: Set<string> = new Set();
+Implement from top down:
 
-  async load(skill: string): Promise<void> {
-    if (this.loadedSkills.has(skill)) return;
+1. **Typechecks / build** - fast, deterministic, catches structural errors instantly
+2. **Unit tests** - validates logic
+3. **Integration tests** - validates system behavior
+4. **Lint / format** - enforces style
+5. **Coverage reporting** - surface drops via hook
+6. **UI/browser testing** - Playwright, agent-browser
 
-    const skillContent = await fetchSkill(skill);
-    const tokens = estimateTokens(skillContent);
+**Critical:** All verification must be context-efficient.
+Swallow passing output - surface only failures.
 
-    if (this.getUsedTokens() + tokens > this.budget.skillLimit) {
-      // Unload least recently used skill
-      this.unloadLRU();
-    }
+## Anti-Patterns
 
-    this.loadedSkills.add(skill);
-    this.activeSkills.set(skill, skillContent);
-  }
-
-  unloadLRU(): void {
-    const lru = this.skillLRU.shift();
-    if (lru) {
-      this.loadedSkills.delete(lru);
-      this.activeSkills.delete(lru);
-    }
-  }
-}
-```
-
-### Conversation Truncation
-
-For long-running conversations:
-
-```typescript
-interface Message {
-  role: "system" | "user" | "assistant";
-  content: string;
-  importance: number; // 1-10, for pruning decisions
-  timestamp: number;
-}
-
-function pruneConversation(messages: Message[], maxTokens: number): Message[] {
-  // Always keep system message
-  const systemMessages = messages.filter((m) => m.role === "system");
-
-  // Sort by importance (desc), then recency (desc)
-  const otherMessages = messages
-    .filter((m) => m.role !== "system")
-    .sort((a, b) => {
-      if (a.importance !== b.importance) {
-        return b.importance - a.importance;
-      }
-      return b.timestamp - a.timestamp;
-    });
-
-  // Keep messages until budget exhausted
-  const pruned: Message[] = [...systemMessages];
-  let usedTokens = countTokens(systemMessages);
-
-  for (const msg of otherMessages) {
-    const msgTokens = estimateTokens(msg.content);
-    if (usedTokens + msgTokens > maxTokens) break;
-
-    pruned.push(msg);
-    usedTokens += msgTokens;
-  }
-
-  // Re-sort by timestamp for output
-  return pruned.sort((a, b) => a.timestamp - b.timestamp);
-}
-```
+- Running the full test suite after every change
+- Reading large file trees into context
+- Installing many MCP servers just in case
+- One very long session for a multi-day project
+- Using larger context windows as a substitute for context isolation
+- Auto-generating AGENTS.md (hurts performance; always human-written)
 
 ## Monitoring and Alerts
 
@@ -419,95 +356,7 @@ class ContextMonitor {
 }
 ```
 
-### Adaptive Throttling
-
-```typescript
-class AdaptiveThrottler {
-  private tokenRate: number = 0;
-  private lastCheck: number = Date.now();
-
-  async throttleIfNeeded(tokens: number): Promise<void> {
-    this.tokenRate = this.tokenRate * 0.9 + tokens * 0.1;
-
-    // If rate is high, add delays
-    if (this.tokenRate > 50000) {
-      const delay = Math.min(5000, (this.tokenRate - 50000) / 10);
-      await sleep(delay);
-    }
-  }
-}
-```
-
-## Best Practices
-
-### 1. Measure First
-
-```bash
-# Estimate file sizes
-wc -l worker/**/*.ts
-
-# Estimate skill sizes
-wc -l .agents/skills/*/*.md
-```
-
-### 2. Set Limits
-
-```typescript
-const CONTEXT_LIMITS = {
-  maxFileLines: 500,
-  maxFilesPerTask: 10,
-  maxSkillsLoaded: 5,
-  maxChunkSize: 100,
-  outputBuffer: 80000,
-};
-```
-
-### 3. Fail Gracefully
-
-```typescript
-function loadFileSafely(path: string): File | Summary {
-  try {
-    const content = readFile(path);
-    const lines = content.split("\n").length;
-
-    if (lines > CONTEXT_LIMITS.maxFileLines) {
-      return createSummary({ path, content });
-    }
-
-    return { path, content };
-  } catch (error) {
-    return { path, error: "Failed to load", summary: true };
-  }
-}
-```
-
-### 4. Use Streaming for Large Outputs
-
-```typescript
-async function* streamLargeOutput(
-  generator: () => AsyncIterable<string>,
-): AsyncIterable<string> {
-  let buffer = "";
-
-  for await (const chunk of generator()) {
-    buffer += chunk;
-
-    // Yield complete lines
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || ""; // Keep incomplete line
-
-    for (const line of lines) {
-      yield line + "\n";
-    }
-  }
-
-  if (buffer) yield buffer;
-}
-```
-
-## Quick Reference
-
-### Token Estimation
+## Token Estimation
 
 ```typescript
 // Rough estimation (4 chars ≈ 1 token for English)
@@ -523,12 +372,12 @@ function estimateCodeTokens(code: string): number {
 
 ### File Size Guidelines
 
-| Lines   | Strategy                   |
-| ------- | -------------------------- |
-| <100    | Full content               |
-| 100-300 | Full + structure comment   |
-| 300-500 | Summary + key functions    |
-| >500    | Summary only, link to file |
+| Lines | Strategy |
+|-------|----------|
+| <100 | Full content |
+| 100-300 | Full + structure comment |
+| 300-500 | Summary + key functions |
+| >500 | Summary only, link to file |
 
 ### Context Checklist
 

@@ -1,127 +1,47 @@
 #!/usr/bin/env bash
-# Setup Skills - Creates symlinks for all agent CLI skill directories
-# Creates .claude/skills/, .gemini/skills/, .qwen/skills/ symlinks to ../../.agents/skills/
-
+# Creates symlinks from CLI-specific folders -> .agents/skills/ (canonical source)
+# Run once after cloning: ./scripts/setup-skills.sh
+# Note: OpenCode reads skills directly from .agents/skills/ - no symlinks needed.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SKILLS_SOURCE="${ROOT_DIR}/.agents/skills"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+SKILLS_SRC="$REPO_ROOT/.agents/skills"
 
-# Agent directories to set up
-AGENTS=(".claude" ".gemini" ".qwen")
+# CLI folders that should contain symlinks to canonical skills
+# (OpenCode reads directly from .agents/skills/ - not included here)
+CLI_SKILL_DIRS=(
+  ".claude/skills"
+  ".gemini/skills"
+)
 
-ERRORS=()
-CREATED=()
-SKIPPED=()
-
-echo "🔧 Setting up skill symlinks..."
-echo ""
-
-# Verify skills source directory exists
-if [[ ! -d "$SKILLS_SOURCE" ]]; then
-    echo "❌ Skills source directory not found: $SKILLS_SOURCE"
-    exit 1
+if [ ! -d "$SKILLS_SRC" ]; then
+  echo "No skills found at .agents/skills/ - nothing to symlink."
+  exit 0
 fi
 
-# Get list of available skills
-mapfile -t SKILLS < <(find "$SKILLS_SOURCE" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)
+echo "Setting up skill symlinks from .agents/skills/..."
 
-if [[ ${#SKILLS[@]} -eq 0 ]]; then
-    echo "⚠️  No skills found in $SKILLS_SOURCE"
-    exit 0
-fi
+for cli_dir in "${CLI_SKILL_DIRS[@]}"; do
+  target_dir="$REPO_ROOT/$cli_dir"
+  mkdir -p "$target_dir"
 
-echo "Found ${#SKILLS[@]} skills in .agents/skills/"
-echo ""
+  for skill_path in "$SKILLS_SRC"/*/; do
+    [ -d "$skill_path" ] || continue
+    skill_name="$(basename "$skill_path")"
+    link="$target_dir/$skill_name"
+    # Relative path from CLI dir back to .agents/skills
+    rel="$(realpath --relative-to="$target_dir" "$skill_path")"
 
-# Process each agent directory
-for agent in "${AGENTS[@]}"; do
-    agent_dir="${ROOT_DIR}/${agent}"
-    skills_dir="${agent_dir}/skills"
-
-    echo "📁 Setting up ${agent}/skills/..."
-
-    # Create agent directory if it doesn't exist
-    if [[ ! -d "$agent_dir" ]]; then
-        mkdir -p "$agent_dir"
-        echo "  ✓ Created directory: ${agent}/"
+    if [ -L "$link" ]; then
+      echo "  skip (exists): $cli_dir/$skill_name"
+    elif [ -d "$link" ]; then
+      echo "  WARN: real dir exists at $cli_dir/$skill_name - skipping"
+    else
+      ln -s "$rel" "$link"
+      echo "  linked: $cli_dir/$skill_name -> $rel"
     fi
-
-    # Create skills subdirectory if it doesn't exist
-    if [[ ! -d "$skills_dir" ]]; then
-        mkdir -p "$skills_dir"
-        echo "  ✓ Created directory: ${agent}/skills/"
-    fi
-
-    # Create symlinks for each skill
-    for skill in "${SKILLS[@]}"; do
-        target="../../.agents/skills/${skill}"
-        link_path="${skills_dir}/${skill}"
-        rel_target="../../.agents/skills/${skill}"
-
-        # Check if symlink already exists and is valid
-        if [[ -L "$link_path" ]]; then
-            if [[ -e "$link_path" ]]; then
-                # Valid symlink exists
-                current_target=$(readlink "$link_path")
-                if [[ "$current_target" == "$rel_target" ]]; then
-                    SKIPPED+=("${agent}/skills/${skill}")
-                    continue
-                else
-                    # Wrong target, remove and recreate
-                    rm "$link_path"
-                fi
-            else
-                # Broken symlink, remove it
-                rm "$link_path"
-            fi
-        elif [[ -e "$link_path" ]]; then
-            # Something else exists (file or directory), error
-            ERRORS+=("${agent}/skills/${skill} already exists and is not a symlink")
-            continue
-        fi
-
-        # Create the symlink
-        if ln -s "$rel_target" "$link_path" 2>/dev/null; then
-            CREATED+=("${agent}/skills/${skill}")
-        else
-            ERRORS+=("Failed to create symlink: ${agent}/skills/${skill}")
-        fi
-    done
-
-echo ""
+  done
 done
 
-# Summary
-echo "📊 Summary"
-echo "=========="
 echo ""
-
-if [[ ${#CREATED[@]} -gt 0 ]]; then
-    echo "✅ Created ${#CREATED[@]} symlinks:"
-    for item in "${CREATED[@]}"; do
-        echo "  + $item"
-    done
-    echo ""
-fi
-
-if [[ ${#SKIPPED[@]} -gt 0 ]]; then
-    echo "⏭️  Skipped ${#SKIPPED[@]} existing valid symlinks:"
-    for item in "${SKIPPED[@]}"; do
-        echo "  • $item"
-    done
-    echo ""
-fi
-
-if [[ ${#ERRORS[@]} -gt 0 ]]; then
-    echo "❌ Errors (${#ERRORS[@]}):"
-    for error in "${ERRORS[@]}"; do
-        echo "  ✗ $error"
-    done
-    echo ""
-    exit 1
-fi
-
-echo "✅ All skill symlinks are set up correctly!"
-exit 0
+echo "Skill symlinks created. Run scripts/validate-skills.sh to verify."

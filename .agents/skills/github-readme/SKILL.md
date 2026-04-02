@@ -1,240 +1,212 @@
 ---
 name: github-readme
-description: "Create human-focused, well-structured README.md files for projects. Use when generating or updating project documentation, creating user-facing docs, or establishing project identity."
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
+description: Create human-focused GitHub README.md files with 2026 best practices. Use when creating new projects, improving documentation, adding quick start guides, writing contribution guidelines, or making repositories more discoverable and user-friendly.
 ---
 
 # GitHub README Creator
 
-Create human-friendly README.md files that communicate project value clearly to human developers, contributors, and users.
+Expert skill for crafting human-focused README.md files that prioritize clarity, discoverability, and developer experience following 2026 best practices.
 
-## When To Use
+## Quick Start Checklist
 
-- Starting a new project and need a README
-- Updating outdated or incomplete project documentation
-- Reorganizing project docs for clarity
-- Creating README for open source release
-- Adding sections to existing README (badges, quickstart, examples)
-
-## Required Inputs
-
-```text
-PROJECT_NAME: The name of the project or repository
-PROJECT_TYPE: (lib/app/cli/service/extension/other)
-PURPOSE: One-sentence description of what it does
 ```
+README Quality Checklist:
+- [ ] Project name and tagline (5-second understanding)
+- [ ] Visual element (badge, diagram, or screenshot)
+- [ ] Quick start (under 2 minutes)
+- [ ] Clear "What is this?" section
+- [ ] Installation instructions
+- [ ] Basic usage example
+- [ ] Link to full documentation
+- [ ] Contribution guidelines
+- [ ] License and credits
+- [ ] Accessibility check (screen reader friendly)
+```
+
+## When to Use
+
+Use this skill when you need to:
+- Create a new README.md for a project
+- Improve existing repository documentation
+- Add quick start guides for new users
+- Write contribution guidelines
+- Make projects more discoverable on GitHub
+- Add badges, diagrams, or visual elements
+
+## Core Principles (2026 Best Practices)
+
+### 1. Human-First Design
+
+Write for humans, not search engines or bots. Use conversational tone, avoid unexplained jargon, and answer "Why should I care?" in the first 10 seconds.
+
+### 2. 5-Second Rule
+
+Reader must understand project purpose within 5 seconds:
+```markdown
+# Project Name
+
+One-sentence tagline explaining what this does and why it matters.
+
+[Visual: Badge | Screenshot | Diagram]
+
+Quick links: [Docs](link) | [Examples](link) | [Issues](link)
+```
+
+### 3. Progressive Disclosure
+
+Layer information from simple to complex:
+1. **Surface** (5 seconds): Name, tagline, visual
+2. **Quick Start** (2 minutes): Install and run
+3. **Core Concepts** (10 minutes): How it works
+4. **Deep Dive** (30+ minutes): Architecture, API, advanced
+5. **Reference**: Full documentation links
+
+### 4. Accessibility First
+
+Requirements:
+- Alt text for all images: `![Description](url)`
+- Semantic headings (H1 → H2 → H3, not skipped)
+- Descriptive link text (not "click here")
+- Screen reader friendly emoji use (sparingly)
 
 ## README Structure Template
 
-### Standard Sections
-
-````markdown
+```markdown
 # Project Name
 
-[![Build Status](badge-url)](link)
-[![License](badge-url)](link)
+[Clear one-sentence tagline]
 
-> One-sentence description that captures the essence
+[Visual: Badges, screenshot, or architecture diagram]
 
-## Quick Start
+**Quick Links**: [Documentation](link) · [Examples](link) · [API Reference](link) · [Issues](link)
 
+---
+
+## What Is This?
+
+[2-3 sentence explanation in plain language]
+
+**Key Features**:
+- ✓ Feature 1 (benefit-focused)
+- ✓ Feature 2
+- ✓ Feature 3
+
+## Quick Start (2 Minutes)
+
+### Prerequisites
+- List required tools/versions
+
+### Installation
 ```bash
-npm install your-project
-npx your-project --help
+command install project-name
 ```
-````
 
-## Features
-
-- Feature 1: Brief description
-- Feature 2: Brief description
-- Feature 3: Brief description
-
-## Installation
-
+### First Usage
 ```bash
-# npm
-npm install your-project
-
-# yarn
-yarn add your-project
+project-name --help
 ```
 
-## Usage
+## Core Concepts
 
-### Basic Example
+[Brief explanation of 3-5 key concepts]
 
-```javascript
-const lib = require("your-project");
-lib.run();
-```
+## Usage Examples
 
-### Advanced Usage
+[Show 3-5 common use cases with code]
 
-Show more complex scenarios
+## Documentation
 
-## Configuration
-
-Describe configuration options
-
-## API Reference
-
-Link to detailed API docs or include basic methods
+- 📚 **[Full Documentation](link)** - Complete guides
+- 📖 **[API Reference](link)** - API documentation
+- 🧪 **[Examples](link)** - Working code examples
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md)
+We welcome contributions! See [Contributing Guide](CONTRIBUTING.md).
 
 ## License
 
-[MIT](./LICENSE)
-
+This project is licensed under the [MIT License](LICENSE).
 ```
 
-## Writing Principles
+## Writing Style Guidelines
 
-### 1. Human-First Language
+### Tone
+- **Friendly**: Use "you" and "we"
+- **Confident**: State capabilities clearly
+- **Humble**: Acknowledge limitations
 
-**Good:**
-- "Deploy your Workers in seconds"
-- "Find deals before they go viral"
-- "One command to start"
+### Sentence Structure
+- **Short**: 15-20 words maximum
+- **Active voice**: "This tool generates" not "README is generated"
+- **Parallel structure**: Keep list items grammatically consistent
 
-**Bad:**
-- "This module provides functionality for..."
-- "Implementation of algorithm X..."
+### Code Examples
+- **Annotated**: Add comments explaining non-obvious parts
+- **Complete**: Copy-paste should work
+- **Tested**: Verify examples actually work
 
-### 2. Progressive Disclosure
+## Accessibility Checklist
 
-Structure information from most to least important:
-1. What is it? (1 sentence)
-2. How do I try it? (Quick start)
-3. How does it work? (Usage)
-4. Tell me more (API, config, internals)
+Before publishing, verify:
+- [ ] All images have descriptive alt text
+- [ ] Headings are in logical order (H1 → H2 → H3)
+- [ ] Links have descriptive text (not "click here")
+- [ ] Color is not the only way information is conveyed
+- [ ] Code blocks have language specified
 
-### 3. Show, Don't Tell
+## Quality Gate
 
-**Bad:**
-```
-
-This tool can fetch data from multiple sources.
-
-````
-
-**Good:**
-```bash
-$ deal-finder --source producthunt --days 7
-Found 12 AI tools launched this week:
-1. AI Image Generator - 500 upvotes
-2. Code Review Bot - 342 upvotes
-...
-````
-
-### 4. Badges That Matter
-
-Include only relevant badges:
-
-- Build status (CI/CD)
-- Version
-- License
-- Coverage (if >70%)
-- Downloads (if published)
-
-### 5. Clear Installation Path
-
-```bash
-# Step 1: Install
-npm install -g deal-finder
-
-# Step 2: Configure (if needed)
-deal-finder init
-
-# Step 3: Run
-deal-finder scan --sources producthunt
-```
-
-## Deal Discovery Context
-
-When creating READMEs for deal discovery projects:
-
-### Highlight Value Proposition
+Run this checklist before merging README changes:
 
 ```markdown
-# Deal Discovery Relay
-
-> Autonomous deal discovery with AI-powered research coordination
-
-## Why This Exists
-
-Finding great deals requires monitoring multiple sources 24/7.
-This agent system:
-
-- Watches 10+ sources continuously
-- Uses AI to extract deal signals
-- Coordinates multiple research agents
-- Delivers ranked opportunities to your inbox
+README Quality Gate:
+- [ ] 5-second test: Can stranger understand purpose?
+- [ ] Quick start works end-to-end (tested)
+- [ ] All links functional
+- [ ] All images have alt text
+- [ ] Headings are hierarchical
+- [ ] Code examples are tested and current
+- [ ] Mobile-friendly (preview on phone)
 ```
 
-### Show Multi-Agent Architecture
+## Common Anti-Patterns
 
-Use a diagram or list to explain how agents work together:
+### ❌ Wall of Text
+Avoid long paragraphs. Use bullet points and short sections.
 
-```markdown
-## Architecture
-```
+### ❌ Assumed Knowledge
+Include prerequisites and link to installation guides.
 
-[Research Agents] → [Deal Extractor] → [Ranker] → [Notifier]
-↓ ↓ ↓ ↓
-ProductHunt Deal Objects ML Score Email/Slack
-GitHub Trending Validation Priority Webhook
-Hacker News
+### ❌ Broken Links
+Use relative links for internal files. Test all external links.
 
-```
+### ❌ Outdated Information
+Add "Last updated: YYYY-MM" badge. Update screenshots when UI changes.
 
-```
+## Integration with Other Skills
 
-### Document Agent CLI
+- **skill-creator**: Use when creating documentation skills
+- **shell-script-quality**: Apply quality patterns to README scripts
+- **web-search-researcher**: Research best practices and competitor READMEs
+- **iterative-refinement**: Improve README through multiple passes
 
-```markdown
-## Agent Commands
+## Summary
 
-| Command            | Description            |
-| ------------------ | ---------------------- |
-| `npm run research` | Run research swarm     |
-| `npm run validate` | Validate deal pipeline |
-| `npm run notify`   | Send notifications     |
-```
+Creating effective README files:
+1. **Human-First**: Write for people, not bots
+2. **5-Second Rule**: Clear purpose immediately
+3. **Quick Start**: Get running in 2 minutes
+4. **Progressive Disclosure**: Simple → complex
+5. **Accessibility**: Screen reader friendly
+6. **Visual**: Badges, diagrams, screenshots
+7. **Examples**: Show, don't tell
+8. **Links**: Point to deeper documentation
+9. **Contributing**: Make it easy to help
+10. **Maintain**: Keep current and accurate
 
-## References
+A great README is the single most important factor in project adoption and contributor engagement.
 
-- [references/section-templates.md](references/section-templates.md) - Reusable section templates
-- [references/badges-guide.md](references/badges-guide.md) - Badge services and formatting
-- [references/examples/](references/examples/) - Example READMEs for different project types
+## Reference Files
 
-## Quality Checklist
-
-Before finalizing a README:
-
-- [ ] One-sentence description captures the essence
-- [ ] Quick start works with copy-paste
-- [ ] Installation steps are complete
-- [ ] Examples show real usage, not placeholders
-- [ ] All links work (use `markdown-link-check`)
-- [ ] Badges render correctly
-- [ ] License is specified
-- [ ] Contributing section exists (even if it links elsewhere)
-
-## Output Format
-
-When generating a README, return:
-
-1. The complete markdown content
-2. A checklist of what's included
-3. Suggestions for additional sections if needed
-
-## Version History
-
-- 1.0.0 (2025-01-21) - Initial release with deal discovery context
+- **[reference/guide.md](reference/guide.md)** - Complete section-by-section guidance, detailed examples, templates for different project types, writing style deep dive, accessibility checklist, SEO tips, multilingual READMEs, anti-patterns, testing methods, and maintenance guide

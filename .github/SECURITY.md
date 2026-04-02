@@ -1,75 +1,51 @@
 # Security Policy
 
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| main    | :white_check_mark: |
-| < main  | :x:                |
-
-Only the `main` branch is actively supported with security updates. Please ensure you are running the latest version.
-
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security issue, please report it responsibly.
+**We appreciate your help in responsibly disclosing security vulnerabilities.** To ensure they can be fixed before public disclosure, please **do not report them through public channels** like issues, discussions, or pull requests.
 
-### How to Report
+### Private Vulnerability Reporting
 
-**Use GitHub Private Security Advisories**: Please submit vulnerability reports via [GitHub Security Advisories](https://github.com/OWNER/REPO/security/advisories/new) rather than public issues.
+If you discover a security vulnerability, please report it directly to us via **GitHub's private security advisory feature**. This allows us to discuss, fix, and publish the vulnerability in a private space.
 
-### What to Include
+1.  **Navigate to the "Security" tab** in this repository.
+2.  Click on **"Security advisories"**.
+3.  Click the **"New draft security advisory"** button to start the process[citation:3].
 
-When reporting a vulnerability, please provide:
+You can collaborate with our maintainers in the private draft advisory to discuss the finding and develop a patch[citation:1][citation:2].
 
-- **Description**: Clear description of the vulnerability
-- **Affected Components**: Specific files, modules, or services impacted
-- **Reproduction Steps**: Step-by-step instructions to reproduce the issue
-- **Impact Assessment**: Potential security implications
-- **Suggested Fix**: If you have recommendations for remediation
+## Best Practices for Writing a Security Advisory
 
-### Response Process
+To help us process the advisory efficiently and get it reviewed by GitHub, please provide the following information in a clear and standard format[citation:1]:
 
-1. **Acknowledgment**: We will acknowledge receipt within 48 hours
-2. **Assessment**: We will evaluate severity and impact within 5 business days
-3. **Fix Development**: We will work on a fix for confirmed vulnerabilities
-4. **Disclosure**: Coordinated disclosure timeline will be agreed upon with the reporter
+*   **Ecosystem:** Specify the package ecosystem (e.g., npm, PyPI, Go).
+*   **Package name:** Provide the name of the affected package.
+*   **Affected versions:** Clearly define the range of vulnerable versions using supported operators.
+
+### Guidelines for Affected Versions
+
+Please use the following syntax to describe which versions are affected[citation:1]:
+
+*   **Supported operators:** `=`, `<=`, `<`, `>=`
+*   **Specifying a range:** `>= lower_bound, < upper_bound` (e.g., `>= 1.2.0, < 1.2.5`)
+*   **Single version:** `= 1.2.3`
+*   **All versions up to:** `< 1.2.3` or `<= 1.2.3`
+
+**Example:**
+- Vulnerable Version Range: `>= 1.0.0, < 1.5.2`
+- Patched Version: `1.5.2`
+
+## What to Expect
+
+After you submit a draft advisory:
+- Our maintainers will be notified and will review the report.
+- We may collaborate with you in the draft advisory to understand and fix the issue.
+- Once a fix is ready and the advisory is finalized, we will publish it to inform the community and may request a CVE from GitHub[citation:3].
 
 ## Scope
 
-The following components are in scope for security reporting:
+Please report any vulnerability that could potentially impact the security of this project's users or systems.
 
-### Infrastructure & Platform
+---
 
-- Cloudflare Workers runtime and execution environment
-- KV storage access patterns and data handling
-- Webhook endpoints and payload processing
-
-### Application Components
-
-- 9-agent pipeline orchestration system
-- Deal discovery and extraction agents
-- Data processing and validation workers
-- API endpoints and authentication flows
-
-### Data Handling
-
-- Deal data storage and transmission
-- Source API integrations (ProductHunt, GitHub, Hacker News, RSS feeds)
-- Inter-agent communication protocols
-- Temporary state files and handoff data
-
-### Out of Scope
-
-- Third-party dependencies (report to respective projects)
-- Infrastructure outside Cloudflare Workers platform
-- Social engineering attacks
-
-## Security Best Practices
-
-This project follows these security principles:
-
-- No secrets in code or environment variables in repository
-- All bindings managed through Wrangler configuration
-- Input validation on all external data sources
-- Rate limiting on webhook and API endpoints
-- Minimal privilege principle for storage access
+Thank you for helping to keep our project and its users safe.

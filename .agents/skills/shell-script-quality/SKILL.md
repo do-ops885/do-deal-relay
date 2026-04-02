@@ -1,158 +1,230 @@
 ---
 name: shell-script-quality
-description: "Lint, test, and ensure quality of shell scripts. Use when writing bash scripts, reviewing shell code, or establishing CI/CD shell script validation."
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
+description: Lint and test shell scripts using ShellCheck and BATS. Use when checking bash/sh scripts for errors, writing shell script tests, fixing ShellCheck warnings, setting up CI/CD for shell scripts, or improving bash code quality.
 ---
 
 # Shell Script Quality
 
-Ensure shell scripts are robust, portable, and maintainable through linting, testing, and best practices.
-
-## When To Use
-
-- Writing new shell scripts (`.sh`, `.bash`)
-- Reviewing existing scripts for quality issues
-- Setting up CI/CD pipeline for script validation
-- Debugging shell script failures
-- Converting complex scripts to safer alternatives
-
-## Required Inputs
-
-```text
-SCRIPT_PATH: Path to shell script to validate
-MODE: (lint/test/review/fix)
-```
+Comprehensive shell script linting and testing using ShellCheck and BATS with 2025 best practices.
 
 ## Quick Start
 
-```bash
-# Lint a script
-shellcheck your-script.sh
+Copy this workflow checklist and track your progress:
 
-# Syntax check only
-bash -n your-script.sh
-
-# Run with tracing
-bash -x your-script.sh
-
-# Auto-fix where possible
-shellcheck --format=diff your-script.sh | patch -p1
+```
+Shell Script Quality Workflow:
+- [ ] Step 1: Lint with ShellCheck
+- [ ] Step 2: Fix reported issues
+- [ ] Step 3: Write BATS tests
+- [ ] Step 4: Verify tests pass
+- [ ] Step 5: Integrate into CI/CD
 ```
 
-## Quality Workflow
+## Core Workflow
 
-### 1. Lint with ShellCheck
-
-```bash
-shellcheck your-script.sh
-```
-
-**Common Issues:**
-
-| Issue                | Code   | Severity |
-| -------------------- | ------ | -------- |
-| Unquoted variables   | SC2086 | Warning  |
-| Missing shebang      | SC2148 | Error    |
-| cd without check     | SC2164 | Warning  |
-| Unused variables     | SC2034 | Info     |
-| Command substitution | SC2006 | Style    |
-
-### 2. Test Script Execution
+### Step 1: Lint with ShellCheck
 
 ```bash
-bash -n your-script.sh      # Syntax check
-bash -x your-script.sh      # Trace mode
+# Lint single file
+shellcheck script.sh
+
+# Lint all scripts
+find scripts -name "*.sh" -exec shellcheck {} +
+
+# Use config file if present
+shellcheck -x script.sh
 ```
 
-### 3. Set Strict Mode
+**Common fixes**: See [SHELLCHECK.md](SHELLCHECK.md) for fix patterns
+
+### Step 2: Fix Reported Issues
+
+Apply fixes for common warnings:
+- SC2086: Quote variables: `"$var"` not `$var`
+- SC2155: Separate declaration and assignment
+- SC2181: Check exit code directly with `if ! command`
+
+**For detailed fixes**: See [SHELLCHECK.md](SHELLCHECK.md)
+
+### Step 3: Write BATS Tests
+
+```bash
+#!/usr/bin/env bats
+
+setup() {
+    source "$BATS_TEST_DIRNAME/../scripts/example.sh"
+}
+
+@test "function succeeds with valid input" {
+    run example_function "test"
+    [ "$status" -eq 0 ]
+    [ -n "$output" ]
+}
+
+@test "function fails with invalid input" {
+    run example_function ""
+    [ "$status" -ne 0 ]
+    [[ "$output" =~ "ERROR" ]]
+}
+```
+
+**Test patterns**: See [BATS.md](BATS.md) for comprehensive testing guide
+
+### Step 4: Run Tests
+
+```bash
+# Run all tests
+bats tests/
+
+# Run with verbose output
+bats -t tests/
+
+# Run specific file
+bats tests/example.bats
+```
+
+**If tests fail**: Review error output, fix issues, re-run validation
+
+### Step 5: CI/CD Integration
+
+**GitHub Actions**: See [CI-CD.md](CI-CD.md) for complete workflows
+
+Quick integration:
+```yaml
+- name: ShellCheck
+  uses: ludeeus/action-shellcheck@master
+- name: Run BATS
+  run: |
+    sudo apt-get install -y bats
+    bats tests/
+```
+
+## Script Template
+
+Use this template for new scripts:
 
 ```bash
 #!/bin/bash
 set -euo pipefail
-# -e: Exit on error
-# -u: Error on unset variables
-# -o pipefail: Catch errors in pipelines
-```
 
-### 4. Validate Portability
+# Script directory (portable)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-```bash
-checkbashisms your-script.sh    # Check bashisms (POSIX sh)
-dash your-script.sh             # Test with POSIX sh
-```
+# Error handler
+error_exit() {
+    echo "ERROR: $1" >&2
+    exit "${2:-1}"
+}
 
-## Best Practices
+# Main function
+main() {
+    [[ $# -lt 1 ]] && {
+        echo "Usage: $0 <argument>" >&2
+        exit 1
+    }
 
-### Always Use Shebang
+    # Your logic here
+}
 
-```bash
-#!/bin/bash
-# or
-#!/bin/sh  # For POSIX-compliant scripts
-```
-
-### Quote All Variables
-
-```bash
-rm -rf "$DIR/$FILE"     # Good
-rm -rf $DIR/$FILE       # Bad - dangerous if spaces
-```
-
-### Check Command Results
-
-```bash
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed"
-    exit 1
+# Run if executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
 fi
 ```
 
-### Use Functions for Modularity
+## Installation
 
+**ShellCheck**:
 ```bash
-#!/bin/bash
-set -euo pipefail
-
-main() {
-    validate_inputs "$@"
-    process_data
-    output_results
-}
-
-validate_inputs() {
-    [[ $# -gt 0 ]] || { echo "Usage: $0 <input>"; exit 1; }
-}
-
-main "$@"
+brew install shellcheck         # macOS
+sudo apt-get install shellcheck # Linux
 ```
 
-### Handle Errors Gracefully
-
+**BATS**:
 ```bash
-cleanup() { rm -f "$TEMP_FILE"; }
-trap cleanup EXIT
+brew install bats-core          # macOS
+sudo apt-get install bats       # Linux
 ```
 
-## Quick Fixes
+## Configuration
 
-| Problem | Quick Fix                                          |
-| ------- | -------------------------------------------------- |
-| SC2086  | `"$variable"`                                      |
-| SC2006  | `$(cmd)` instead of `\`cmd\``                      |
-| SC2164  | `cd dir \|\| exit`                                 |
-| SC2181  | `if cmd; then` instead of `cmd; if [[ $? -eq 0 ]]` |
-| SC2230  | `command -v` instead of `which`                    |
+**.shellcheckrc** in project root:
+```bash
+shell=bash
+disable=SC1090
+enable=all
+source-path=SCRIPTDIR
+```
 
-## References
+**For configuration details**: See [CONFIG.md](CONFIG.md)
 
-- [references/examples.md](references/examples.md) - Extended examples, CI/CD templates, testing patterns
-- [references/shellcheck-codes.md](references/shellcheck-codes.md) - Common ShellCheck codes and fixes
-- [references/bash-best-practices.md](references/bash-best-practices.md) - Bash-specific patterns
-- [references/posix-portability.md](references/posix-portability.md) - POSIX sh portability guide
+## Testing Claude Code Plugins
 
-## Version History
+**Test scripts using CLAUDE_PLUGIN_ROOT**:
+```bash
+@test "plugin script works" {
+    export CLAUDE_PLUGIN_ROOT="$BATS_TEST_DIRNAME/.."
+    run bash "$CLAUDE_PLUGIN_ROOT/scripts/search.sh" "query"
+    [ "$status" -eq 0 ]
+}
+```
 
-- 1.0.0 (2025-01-21) - Initial release
+**Test hooks with JSON**:
+```bash
+@test "hook provides suggestions" {
+    local input='{"tool":"Edit","params":{"file_path":"test.txt"}}'
+    run bash "$HOOK_DIR/pre-edit.sh" <<< "$input"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq empty
+}
+```
+
+**More plugin patterns**: See [PATTERNS.md](PATTERNS.md)
+
+## Troubleshooting
+
+**ShellCheck**:
+- SC1090 warnings: Add `# shellcheck source=path/to/file.sh`
+- False positives: Use `# shellcheck disable=SCxxxx`
+
+**BATS**:
+- Tests interfere: Ensure proper `teardown()` cleanup
+- Can't source script: Add main execution guard
+- Path issues: Use `$BATS_TEST_DIRNAME` for relative paths
+
+**Detailed troubleshooting**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+## Validation Loop Pattern
+
+For quality-critical operations:
+
+1. Make changes to script
+2. **Validate immediately**: `shellcheck script.sh`
+3. If validation fails:
+   - Review error messages carefully
+   - Fix the issues
+   - Run validation again
+4. **Only proceed when validation passes**
+5. Run tests: `bats tests/script.bats`
+6. If tests fail, return to step 1
+
+## Reference Files
+
+- **[SHELLCHECK.md](SHELLCHECK.md)** - Complete ShellCheck guide and fix patterns
+- **[BATS.md](BATS.md)** - BATS testing comprehensive guide
+- **[CI-CD.md](CI-CD.md)** - GitHub Actions, GitLab CI, pre-commit hooks
+- **[PATTERNS.md](PATTERNS.md)** - Common patterns and examples
+- **[CONFIG.md](CONFIG.md)** - Configuration and setup details
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
+
+## Quick Quality Check
+
+Run this command for complete validation:
+
+```bash
+# Check everything
+find scripts -name "*.sh" -exec shellcheck {} + && bats tests/
+
+# Or use quality check script
+bash scripts/check-quality.sh
+```

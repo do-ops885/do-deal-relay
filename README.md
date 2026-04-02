@@ -1,193 +1,172 @@
-# Deal Discovery System
+# GitHub Template AI Agents
 
-**System**: Production Ready  
-**Version: 0.1.2  
-**Status**: Stable (259 tests passing)  
-**Deployment**: Cloudflare Workers
+> Production-ready template for AI agent-powered development with Claude Code, Gemini CLI, OpenCode, Qwen Code, and more.
 
-## Quick Start
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Template Version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+**Quick Links**: [Quick Start](#-quick-start) · [Documentation](#-documentation) · [Contributing](#-contributing)
+
+---
+
+## What Is This?
+
+A unified harness for AI coding agents that provides consistent workflows across Claude Code, Gemini CLI, OpenCode, Qwen Code, Windsurf, Cursor, and Copilot Chat. Built for teams who want to scale AI-assisted development with quality gates, skills, and sub-agent patterns.
+
+**Key Features**:
+- ✓ **Multi-Agent Support**: Works with 6+ AI coding tools simultaneously
+- ✓ **Skills System**: Reusable knowledge modules in canonical location
+- ✓ **Quality Gates**: Automatic lint, test, format before commits
+- ✓ **Context Discipline**: Prevents context rot with sub-agents and hooks
+- ✓ **Dependabot Integration**: Automated security and version updates
+
+## Quick Start (2 Minutes)
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- npm or yarn
-- Wrangler CLI (`npm install -g wrangler`)
+- One or more AI coding CLI tools ([Claude Code](https://claude.ai/code), [Gemini CLI](https://gemini.google.com), [OpenCode](https://opencode.ai), [Qwen Code](https://github.com/QwenLM/Qwen-Coder))
+- Git 2.30+ ([install](https://git-scm.com))
+
+### Installation
+
+```bash
+# Use this template on GitHub, then clone
+git clone https://github.com/your-org/your-project.git
+cd your-project
+```
 
 ### Setup
 
 ```bash
-# Install dependencies
-npm install
+# Create skill symlinks (run once)
+./scripts/setup-skills.sh
 
-# Run tests
-npm test
-
-# Deploy locally
-npm run dev
-
-# Deploy to production
-npm run deploy
+# Install git pre-commit hook
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 ```
 
-### For AI Agents
+### Verify
 
 ```bash
-# Get all active deals
-curl https://your-worker.workers.dev/deals
-
-# Get full snapshot
-curl https://your-worker.workers.dev/deals.json
-
-# Check health
-curl https://your-worker.workers.dev/health
-
-# Get Prometheus metrics
-curl https://your-worker.workers.dev/metrics
-
-# Get recent logs
-curl https://your-worker.workers.dev/api/log
+./scripts/validate-skills.sh
 ```
 
-### Documentation
-
-- [AGENTS.md](AGENTS.md) - Agent coordination and system specs
-- [QUICKSTART.md](QUICKSTART.md) - 5-minute getting started guide
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [SECURITY.md](SECURITY.md) - Security policy
-- [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) - System architecture
-- **Status Dashboard**: Check `/health` endpoint
-
-## Architecture
-
-**Status**: Production-ready with comprehensive test coverage
-
+Expected output:
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Discovery  │────▶│  Validation │────▶│   Publish   │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │
-       ▼                   ▼                   ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Sources    │     │  9 Gates    │     │  GitHub     │
-└─────────────┘     └─────────────┘     └─────────────┘
+✓ All skill symlinks intact
+✓ SKILL.md files valid
 ```
 
-### Input Methods
+## Core Concepts
 
-- **API** - REST endpoints for deal management
-- **CLI** - TypeScript CLI for administration
-- **Browser Extension** - Chrome extension for capturing referrals
-- **Discord Bot** - Community deal submission
-- **Telegram Bot** - Alternative chat interface
-- **Email** - Ingestion via email parsing
-- **Webhooks** - Partner integrations
+### Single Source of Truth
 
-### Pipeline Phases
+All agents read from `AGENTS.md` - CLI-specific files (`.claude.md`, `.gemini.md`) contain only overrides.
 
-1. **Discover** - Crawl configured sources for new deals
-2. **Normalize** - Standardize deal format and metadata
-3. **Dedupe** - Filter duplicates by code + source
-4. **Validate** - 9 validation gates for quality
-5. **Score** - Calculate trust and value scores
-6. **Stage** - Prepare atomic snapshot
-7. **Publish** - Two-phase commit (staging → production)
-8. **Verify** - Post-publish validation
-9. **Finalize** - Complete and notify
+```
+AGENTS.md → Single source of truth
+├── CLAUDE.md → Overrides only (@AGENTS.md)
+├── GEMINI.md → Overrides only (@AGENTS.md)
+└── opencode.json → Configuration
+```
 
-## Current Configuration
+### Skills with Progressive Disclosure
 
-- **Cron Schedule**: Every 6 hours
-- **KV Namespaces**: 7 (PROD, STAGING, LOG, LOCK, SOURCES, REFERRALS, WEBHOOKS)
-- **Max Deals**: 1000 per run
-- **Trust Threshold**: 0.3
-- **High Value**: > $100
-- **Test Coverage**: 259 tests, 100% passing
-- **API Authentication**: API key auth for administrative endpoints
+Skills live canonically in `.agents/skills/`. Claude Code, Gemini CLI, and Qwen Code use
+symlinks; OpenCode reads directly from `.agents/skills/`:
 
-## Development Roadmap
+```
+.agents/skills/           # Canonical source (single location)
+├── task-decomposition/
+├── shell-script-quality/
+└── github-readme/
 
-### ✅ Phase 1: Bootstrap (Completed)
+.claude/skills/           # Symlinks → ../../.agents/skills/
+.gemini/skills/           # Symlinks → ../../.agents/skills/
+.qwen/skills/             # Symlinks → ../../.agents/skills/
+```
 
-- [x] Core pipeline implementation
-- [x] KV storage layer
-- [x] TypeScript type system
-- [x] Basic test infrastructure
+### Sub-Agent Patterns
 
-### ✅ Phase 2: Test & Validation (Completed)
+Delegate isolated tasks to sub-agents for context isolation:
 
-- [x] 259 comprehensive tests
-- [x] All validation gates passing
-- [x] Quality gate automation
-- [x] CI/CD pipeline
+```mermaid
+graph LR
+    A[Main Agent] --> B[Sub-Agent 1]
+    A --> C[Sub-Agent 2]
+    B --> D[Task Complete]
+    C --> E[Task Complete]
+    D --> F[Synthesize]
+    E --> F
+```
 
-### ✅ Phase 3: Production Readiness (Completed)
+## Usage Examples
 
-- [x] GitHub integration
-- [x] Cloudflare Workers deployment
-- [x] Security audit (XSS fixes, API auth)
-- [x] Multi-agent skill system
-- [x] Complete input methods (API, CLI, Extension, Bot, Email, Webhook)
+### Basic: Run with Claude Code
 
-### 🚧 Phase 4: Enhancement (In Progress)
+```bash
+claude "Implement user authentication with OAuth2"
+```
 
-- [ ] Load testing suite
-- [ ] Performance optimization
-- [ ] Advanced analytics dashboard
-- [ ] Machine learning for deal scoring
+### Advanced: Multi-Agent Coordination
 
-## Agent Tools / API Endpoints
+```bash
+# Main agent decomposes task, delegates to sub-agents
+claude "/task-decomposition Implement the new API endpoint"
+```
 
-- `GET /deals` - Retrieve active deals with filtering
-- `GET /deals.json` - Get full snapshot with metadata
-- `GET /api/referrals` - List referral codes with search
-- `POST /api/referrals` - Create new referral
-- `GET /api/referrals/:code` - Get specific referral
-- `POST /api/referrals/:code/deactivate` - Deactivate referral
-- `POST /api/discover` - Trigger discovery pipeline
-- `GET /api/status` - Pipeline status
-- `GET /api/log` - Recent pipeline logs
-- `POST /api/submit` - Submit new deal
-- `GET /health` - System health check
-- `GET /metrics` - Prometheus-compatible metrics
+### Quality Gate (Automatic)
 
-## Available Scripts
+```bash
+# Pre-commit hook runs automatically
+git commit -m "feat: add user registration"
 
-- `./scripts/quality_gate.sh` - Run all validation gates
-- `./scripts/validate-codes.sh` - Validate deal codes
-- `./scripts/setup-skills.sh` - Setup agent skills
+# Or run manually
+./scripts/quality_gate.sh
+```
 
-## Skills System
+## Documentation
 
-The project uses a comprehensive skill system in `.agents/skills/`:
+- 📚 **[AGENTS.md](AGENTS.md)** - Main agent instructions (single source of truth)
+- 📖 **[Quick Start](QUICKSTART.md)** - 5-minute setup guide
+- 🏗️ **[Harness Overview](agents-docs/HARNESS.md)** - Architecture and patterns
+- 🪝 **[Skills Guide](agents-docs/SKILLS.md)** - Creating reusable skills
+- 🤖 **[Sub-Agents](agents-docs/SUB-AGENTS.md)** - Context isolation patterns
+- 🔧 **[Hooks](agents-docs/HOOKS.md)** - Pre/post tool hooks
+- 📊 **[Context](agents-docs/CONTEXT.md)** - Back-pressure mechanisms
+- 🔄 **[Migration](MIGRATION.md)** - Adopting in existing projects
 
-- **Agent Coordination**: `agent-coordination`, `parallel-execution`, `goap-agent`
-- **Cloudflare**: `cloudflare`, `wrangler`, `durable-objects`, `workers-best-practices`
-- **Security**: `guard-rails`, `privacy-first`, `validation-gates`
-- **Development**: `pre-commit`, `skill-creator`, `shell-script-quality`
+## Available Skills
 
-See `.agents/skills/README.md` for the full catalog.
+| Skill | Description |
+|---|---|
+| [`task-decomposition`](.agents/skills/task-decomposition/) | Break complex tasks into atomic goals |
+| [`shell-script-quality`](.agents/skills/shell-script-quality/) | Lint/test shell scripts (ShellCheck + BATS) |
+| [`github-readme`](.agents/skills/github-readme/) | Create human-focused README.md files |
+| [`parallel-execution`](.agents/skills/parallel-execution/) | Coordinate parallel agent execution |
+| [`iterative-refinement`](.agents/skills/iterative-refinement/) | Progressive improvement loops |
+| [`agent-coordination`](.agents/skills/agent-coordination/) | Multi-agent orchestration patterns |
+| [`goap-agent`](.agents/skills/goap-agent/) | Goal-oriented action planning |
+| [`web-search-researcher`](.agents/skills/web-search-researcher/) | Web research and synthesis |
 
-## Safety Features
+## Contributing
 
-- Two-phase publish (staging → production)
-- 9 validation gates
-- Distributed locking
-- Idempotency checks
-- Automatic rollback
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for:
+- Development environment setup
+- Good first issues
+- Code style and testing requirements
+- Pull request process
 
-## Monitoring
+## Community
 
-Check `/metrics` for:
+- 🐛 [Issue Tracker](https://github.com/d-o-hub/github-template-ai-agents/issues) - Report bugs
+- 📝 [Discussions](https://github.com/d-o-hub/github-template-ai-agents/discussions) - Ask questions
 
-- Total runs
-- Success rate
-- Deal counts
-- Validation failures
+## License
 
-## Support
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
 
-For issues:
+---
 
-1. Check `/health` endpoint
-2. Review logs via `/api/log`
-3. Open GitHub Issue with trace_id
+**Built with AI agents. Maintained by humans.**

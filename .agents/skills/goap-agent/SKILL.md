@@ -1,10 +1,6 @@
 ---
 name: goap-agent
 description: Invoke for complex multi-step tasks requiring intelligent planning and multi-agent coordination. Use when tasks need decomposition, dependency mapping, parallel/sequential/swarm/iterative execution strategies, or coordination of multiple specialized agents with quality gates.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
 ---
 
 # GOAP Agent Skill: Goal-Oriented Action Planning
@@ -21,7 +17,6 @@ Always use the plans/ folder for all files.
 ## When to Use This Skill
 
 Use this skill when facing:
-
 - **Complex Multi-Step Tasks**: Tasks requiring 5+ distinct steps
 - **Cross-Domain Problems**: Issues spanning multiple areas
 - **Optimization Opportunities**: Tasks benefiting from parallel execution
@@ -53,7 +48,6 @@ Use **task-decomposition** skill:
 
 ```markdown
 ### Sub-Goals
-
 1. [Component 1] - Priority: P0, Deps: none
 2. [Component 2] - Priority: P1, Deps: Component 1
 ```
@@ -62,24 +56,24 @@ Principles: Atomic, Testable, Independent, Assigned
 
 ## Phase 3: Strategy Selection
 
-| Strategy   | When               | Speed |
-| ---------- | ------------------ | ----- |
-| Parallel   | Independent tasks  | Nx    |
-| Sequential | Dependent tasks    | 1x    |
-| Swarm      | Many similar tasks | ~Nx   |
-| Hybrid     | Mixed requirements | 2-4x  |
+| Strategy | When | Speed |
+|----------|------|-------|
+| Parallel | Independent tasks | Nx |
+| Sequential | Dependent tasks | 1x |
+| Swarm | Many similar tasks | ~Nx |
+| Hybrid | Mixed requirements | 2-4x |
 
 See **[execution-strategies.md](execution-strategies.md)** for details.
 
 ## Phase 4: Agent Assignment
 
-| Agent               | Best For          |
-| ------------------- | ----------------- |
+| Agent | Best For |
+|-------|----------|
 | feature-implementer | New functionality |
-| debugger            | Bug fixes         |
-| test-runner         | Test validation   |
-| refactorer          | Code improvements |
-| code-reviewer       | Quality assurance |
+| debugger | Bug fixes |
+| test-runner | Test validation |
+| refactorer | Code improvements |
+| code-reviewer | Quality assurance |
 
 ## Phase 5: Execution Planning
 
@@ -90,7 +84,6 @@ See **[execution-strategies.md](execution-strategies.md)** for details.
 - Quality Gates: [N checkpoints]
 
 ### Phase 1
-
 - Tasks: [List]
 - Quality Gate: [Criteria]
 ```
@@ -126,14 +119,12 @@ See **[execution-strategies.md](execution-strategies.md)** for details.
 ## Best Practices
 
 ### DO:
-
 ✓ Break tasks into atomic units
 ✓ Define clear quality gates
 ✓ Match agents to requirements
 ✓ Monitor and validate incrementally
 
 ### DON'T:
-
 ✗ Create monolithic tasks
 ✗ Skip quality gates
 ✗ Assume independence without verification

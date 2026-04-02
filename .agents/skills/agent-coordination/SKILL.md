@@ -1,10 +1,6 @@
 ---
 name: agent-coordination
 description: Coordinate multiple agents for software development across any language. Use for parallel execution of independent tasks, sequential chains with dependencies, swarm analysis from multiple perspectives, or iterative refinement loops. Handles Python, JavaScript, Java, Go, Rust, C#, and other languages.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
 ---
 
 # Agent Coordination
@@ -16,23 +12,23 @@ Coordinate multiple agents efficiently for complex development tasks across any 
 Choose your coordination strategy:
 
 **Parallel** - Independent tasks → See [PARALLEL.md](PARALLEL.md)
-**Sequential** - Dependent tasks → See [SEQUENTIAL.md](SEQUENTIAL.md)
+**Sequential** - Dependent tasks → See [SEQUENTIAL.md](SEQUENTIAL.md)  
 **Swarm** - Multi-perspective analysis → See [SWARM.md](SWARM.md)
 **Hybrid** - Multi-phase workflows → See [HYBRID.md](HYBRID.md)
 **Iterative** - Progressive refinement → See [ITERATIVE.md](ITERATIVE.md)
 
 ## Available Agents
 
-| Agent                 | Best For                            |
-| --------------------- | ----------------------------------- |
-| code-reviewer         | Quality assessment, standards       |
-| test-runner           | Execute tests, verify functionality |
-| feature-implementer   | Build new capabilities              |
-| refactorer            | Improve existing code               |
-| debugger              | Diagnose and fix issues             |
-| security-auditor      | Find vulnerabilities                |
-| performance-optimizer | Speed and efficiency                |
-| loop-agent            | Orchestrate iterations              |
+| Agent | Best For |
+|-------|----------|
+| code-reviewer | Quality assessment, standards |
+| test-runner | Execute tests, verify functionality |
+| feature-implementer | Build new capabilities |
+| refactorer | Improve existing code |
+| debugger | Diagnose and fix issues |
+| security-auditor | Find vulnerabilities |
+| performance-optimizer | Speed and efficiency |
+| loop-agent | Orchestrate iterations |
 
 ## Basic Workflow
 
@@ -45,7 +41,6 @@ Choose your coordination strategy:
 ## Language Support
 
 This coordination skill works with:
-
 - Python (Django, Flask, FastAPI)
 - JavaScript/TypeScript (Node.js, React, Vue)
 - Java (Spring, Jakarta EE)
@@ -56,7 +51,6 @@ This coordination skill works with:
 ## Common Patterns
 
 **Analysis + Execution**:
-
 ```
 1. Swarm analysis (parallel agents gather insights)
 2. Sequential execution (apply findings)
@@ -64,7 +58,6 @@ This coordination skill works with:
 ```
 
 **Test-Driven Workflow**:
-
 ```
 1. test-runner: Run existing tests
 2. feature-implementer: Add functionality
@@ -73,7 +66,6 @@ This coordination skill works with:
 ```
 
 **Performance Optimization**:
-
 ```
 Loop with performance-optimizer until:
 - Metrics meet targets
@@ -84,7 +76,6 @@ Loop with performance-optimizer until:
 ## Quality Gates
 
 Between each phase, verify:
-
 - Code compiles/parses correctly
 - Tests pass with adequate coverage
 - Security scans clean

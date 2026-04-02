@@ -1,110 +1,84 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this template will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.2] - 2026-04-02
+## [Unreleased]
 
-### Added
-
-- Issue tracking guidelines in AGENTS.md for future work management
-- Guidelines for creating GitHub issues for long-term enhancements
-- Label taxonomy for issue categorization (enhancement, low-priority, future, refactor, tech-debt)
-- Example gh CLI command for creating labeled issues
-- Comprehensive skill evaluation check across all 34 skills
-
-### Changed
-
-- AGENTS.md updated with "Issue Tracking for Future Work" section
-
-## [Unreleased] - Planned for 0.2.0
-
-### Added
-
-- Referral management system with full URL preservation
-- CLI tool (refcli) for referral code management with smart-add capability
-- Browser Extension for auto-detecting referral codes (Chrome/Firefox/Safari)
-- Chat Bot integration (Telegram/Discord) for conversational referral management
-- Email integration with parsing for forwarded referral emails
-- Webhook system with HMAC signature verification for partner integrations
-- Web research agent for discovering referral codes across ProductHunt, GitHub, HN, Reddit
-- Swarm coordination configuration for multi-agent input method implementation
-- Handoff protocol documentation for agent coordination
-- URL preservation validation script for testing complete link handling
-- Circuit breaker, cache, and metrics utility modules
-- Production readiness checklist to AGENTS.md
-- Code quality standards (max 500 lines per file, skill evaluation requirements)
-
-### Changed
-
-- AGENTS.md updated with URL handling rules (complete link preservation)
-- Guard rails documentation updated with code quality standards
-- Version preparation for 0.2.0 reflecting referral system completion
-- All input method statuses updated to "Implemented" in documentation
+## [0.2.0] - 2026-03-15
 
 ### Fixed
-
-- Missing module references (circuit-breaker, cache, metrics) causing TypeScript errors
-- API responses now include full URL field in all referral endpoints
-- Skill validation errors for refcli skill
-
-## [0.1.1] - 2026-04-01
-
-### Added
-
-- GitHub Actions CI workflow with 8 parallel jobs
-- Never-Bypass Validation System for git hooks with audit logging
-- Pre-commit hook with guard rails (9 validation gates)
-- Pre-push hook with quality checks
-- Interactive main branch confirmation with Y/n prompt
-- Global logger and error handler modules for consistent logging
-- Skill evaluator framework for testing all 17 system skills
-- Multi-agent infrastructure integration from github-template-ai-agents
-- Pre-commit agent skill with examples and helper scripts
-- Guard rail bypass policy documentation
+- GitHub Actions workflows using non-existent action versions (checkout@v5, setup-python@v6)
+- yaml-lint.yml using unstable actionlint version tag
+- ci-and-labels.yml using deprecated actions-rust-lang action
+- gh-labels-creator.sh interactive prompt blocking CI execution
+- Inconsistent branch references between workflow files
+- Documentation inconsistencies across multiple files
 
 ### Changed
-
-- Documentation synchronized across README, QUICKSTART, and CONTRIBUTING
-- Guard rails audit completed with bypass prevention policy
-- Version standardized to 0.1.1 across all files
-- LESSONS.md reduced noise and updated stale references
-- Test suite improved with proper vitest mocks
-- Secret detection exclusions for .agents/skills directory
-
-### Fixed
-
-- 7 pre-existing test failures in publish and scheduled modules
-- Validation false positives and version mismatch issues
-- CI workflow shallow clone issue (fetch-depth fix)
-- Pre-commit prettier file pattern for atomic matching
-
-### Removed
-
-- 9 dead scripts with no active references
-- CI trigger files (temporary workflow triggers)
-
-### Security
-
-- Bypass prevention with audit logging to .agents/bypass-audit.log
-- Secret detection in commits with gitleaks pattern matching
-- Critical error non-bypassable protection (5 mandatory gates)
-- Local secret patterns excluded from detection
-
-## [0.1.0] - 2026-03-15
+- Standardized action versions to stable releases (checkout@v4, setup-python@v5)
+- Replaced deprecated rust-toolchain action with dtolnay/rust-toolchain@stable
+- Added --ci flag support to gh-labels-creator.sh for non-interactive CI runs
+- Updated README.md version badge to 0.2.0
+- Updated all documentation to reference Qwen Code support
+- Improved CONTRIBUTING.md with comprehensive guide
+- Cleaned up AGENTS_REGISTRY.md formatting
 
 ### Added
+- develop branch support in ci-and-labels.yml workflow
+- .qwen/skills/ symlinks for Qwen Code support
+- .github/dependabot.yml with 2026 best practices:
+  - GitHub Actions weekly updates (grouped)
+  - Docker weekly updates (exclude pre-releases)
+  - Terraform monthly updates (grouped providers)
+  - Docker Compose and pre-commit monthly updates
+- Dependabot security updates auto-merge support
+- OpenCode agent format documentation in SUB-AGENTS.md
+- Supported AI Agents table in HARNESS.md
 
-- Initial project structure
-- Cloudflare Worker foundation
-- Deal discovery system architecture
-- Agent coordination framework
-- Basic CI/CD pipeline
-- Documentation foundation
+## [0.1.0] - 2026-03-14
 
-### Security
+### Added
+- Initial template release
+- Core skills:
+  - `task-decomposition` - Break complex tasks into atomic goals
+  - `code-quality` - Code review and quality checks
+  - `test-runner` - Execute and manage tests
+  - `shell-script-quality` - ShellCheck + BATS for shell scripts
+  - `parallel-execution` - Coordinate parallel agent execution
+  - `iterative-refinement` - Progressive improvement loops
+  - `agent-coordination` - Multi-agent orchestration
+  - `goap-agent` - Goal-oriented action planning
+  - `web-search-researcher` - Web research and synthesis
+- Sub-agents:
+  - `goap-agent` - Complex planning & coordination
+  - `loop-agent` - Iterative refinement workflows
+  - `analysis-swarm` - Multi-perspective code analysis
+  - `agent-creator` - Scaffold new sub-agent definitions
+- Scripts:
+  - `setup-skills.sh` - Create symlinks for CLI tools
+  - `validate-skills.sh` - Validate skill symlinks
+  - `quality_gate.sh` - Multi-language quality gate
+  - `pre-commit-hook.sh` - Git pre-commit integration
+  - `gh-labels-creator.sh` - Initialize GitHub labels
+- Documentation:
+  - `AGENTS.md` - Single source of truth
+  - `agents-docs/HARNESS.md` - Harness engineering overview
+  - `agents-docs/SKILLS.md` - Skill authoring guide
+  - `agents-docs/SUB-AGENTS.md` - Context isolation patterns
+  - `agents-docs/HOOKS.md` - Hook configuration
+  - `agents-docs/CONTEXT.md` - Context engineering & back-pressure
+- CLI support:
+  - Claude Code (`.claude/`)
+  - Gemini CLI (`.gemini/`)
+  - OpenCode (`.opencode/`)
 
-- Basic secret detection patterns
-- Agent authentication system
+### Changed
+- Skills use canonical source in `.agents/skills/` with symlinks
+- Quality gate exits with code 2 to surface errors to agent
+- Progressive disclosure for skills (load on demand)
+
+[Unreleased]: https://github.com/your-org/github-template-ai-agents/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/your-org/github-template-ai-agents/releases/tag/v0.1.0

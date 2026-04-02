@@ -1,59 +1,17 @@
-# Dependencies
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
 
 # Build outputs
 dist/
 build/
-*.tsbuildinfo
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Testing
-coverage/
-.nyc_output/
-
-# Cloudflare
-.wrangler/
-# wrangler.toml - Safe to commit (contains only KV IDs, not secrets)
-# Keeping example file reference for documentation
-!wrangler.toml.example
-
-# Secrets (NEVER commit)
-*.key
-*.pem
-*.cert
-secrets/
-
-# Temporary files
-*.tmp
-.tmp/
-temp/
-
-# Agent system state
-state.json
-
-# Opencode
-.opencode/

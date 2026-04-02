@@ -2,74 +2,38 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| main    | :white_check_mark: |
-| < main  | :x:                |
+Security fixes are applied to the latest release on the `main` branch only.
 
-Only the `main` branch is actively supported with security updates. Please ensure you are running the latest version.
+| Version | Supported |
+| ------- | --------- |
+| latest (`main`) | ✅ |
+| older releases  | ❌ |
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security issue, please report it responsibly.
+**Do not report security vulnerabilities through public issues, pull requests,
+or discussions.**
 
-### How to Report
+Use [GitHub Private Security Advisories][advisory] to report vulnerabilities
+privately to the maintainers.
 
-**Use GitHub Private Security Advisories**: Please submit vulnerability reports via [GitHub Security Advisories](https://github.com/OWNER/REPO/security/advisories/new) rather than public issues.
+[advisory]: ../../security/advisories/new
 
-### What to Include
+### What to include
 
-When reporting a vulnerability, please provide:
+- A clear description of the vulnerability and its potential impact
+- Affected file(s), component(s), or configuration(s)
+- Step-by-step reproduction instructions or a proof-of-concept
+- Suggested mitigations or patches, if available
 
-- **Description**: Clear description of the vulnerability
-- **Affected Components**: Specific files, modules, or services impacted
-- **Reproduction Steps**: Step-by-step instructions to reproduce the issue
-- **Impact Assessment**: Potential security implications
-- **Suggested Fix**: If you have recommendations for remediation
+### Response process
 
-### Response Process
-
-1. **Acknowledgment**: We will acknowledge receipt within 48 hours
-2. **Assessment**: We will evaluate severity and impact within 5 business days
-3. **Fix Development**: We will work on a fix for confirmed vulnerabilities
-4. **Disclosure**: Coordinated disclosure timeline will be agreed upon with the reporter
+1. **Acknowledgement** — as soon as possible
+2. **Assessment** — severity and scope evaluation with progress updates
+3. **Fix & disclosure** — coordinated release and public advisory upon resolution
 
 ## Scope
 
-The following components are in scope for security reporting:
-
-### Infrastructure & Platform
-
-- Cloudflare Workers runtime and execution environment
-- KV storage access patterns and data handling
-- Webhook endpoints and payload processing
-
-### Application Components
-
-- 9-agent pipeline orchestration system
-- Deal discovery and extraction agents
-- Data processing and validation workers
-- API endpoints and authentication flows
-
-### Data Handling
-
-- Deal data storage and transmission
-- Source API integrations (ProductHunt, GitHub, Hacker News, RSS feeds)
-- Inter-agent communication protocols
-- Temporary state files and handoff data
-
-### Out of Scope
-
-- Third-party dependencies (report to respective projects)
-- Infrastructure outside Cloudflare Workers platform
-- Social engineering attacks
-
-## Security Best Practices
-
-This project follows these security principles:
-
-- No secrets in code or environment variables in repository
-- All bindings managed through Wrangler configuration
-- Input validation on all external data sources
-- Rate limiting on webhook and API endpoints
-- Minimal privilege principle for storage access
+This policy covers the source code, workflows, scripts, and configuration files
+in this repository. It does not cover vulnerabilities in third-party
+dependencies or external services — please report those upstream.

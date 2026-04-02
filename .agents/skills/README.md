@@ -1,107 +1,47 @@
-# .agents/skills/ - Agent Skills Library
+# .agents/skills/ - Canonical Skill Source
 
-This directory contains specialized skills for coordinating AI agents in the deal discovery system.
+This is the **single canonical location** for all skills in this repository.
 
-## Skills Overview
-
-| Skill                 | Description                                                                         | Impact                                            |
-| --------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `agent-coordination/` | Multi-agent orchestration patterns (hybrid, iterative, parallel, sequential, swarm) | **Critical** - Matches your 9-agent state machine |
-| `goap-agent/`         | Goal-Oriented Action Planning for complex tasks                                     | **Critical** - Formalizes your state machine      |
-| `task-decomposition/` | Break complex tasks into manageable steps                                           | **High** - Helps implement checklist              |
-| `parallel-execution/` | Parallel task execution patterns                                                    | **High** - Speeds discovery phase                 |
-
-## External Cloudflare Skills (Installed)
-
-**Platform Skills** (global install at `~/.agents/skills/`):
-
-| Skill                     | Purpose                                                            | Status       |
-| ------------------------- | ------------------------------------------------------------------ | ------------ |
-| `cloudflare/`             | Comprehensive platform (Workers, Pages, KV, R1, R2, AI, Vectorize) | ✅ Installed |
-| `agents-sdk/`             | Building stateful AI agents with state, scheduling, RPC, MCP       | ✅ Installed |
-| `durable-objects/`        | Stateful coordination, RPC, SQLite, alarms, WebSockets             | ✅ Installed |
-| `wrangler/`               | Deploying and managing Workers, KV, R2, D1, Vectorize              | ✅ Installed |
-| `workers-best-practices/` | Core Web Vitals, performance optimization                          | ✅ Installed |
-
-**MCP Servers** (available via Cloudflare plugin):
-
-- `cloudflare-docs` - Up-to-date Cloudflare documentation
-- `cloudflare-bindings` - Build Workers with storage/AI/compute
-- `cloudflare-builds` - Workers build insights
-- `cloudflare-observability` - Debug logs and analytics
-
-## Quick Reference
-
-### For Deal Discovery System
-
-**State Machine Coordination** (Your 9-gate flow):
-
-- See `agent-coordination/SEQUENTIAL.md` - Your init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize flow
-- See `goap-agent/execution-strategies.md` - Strategy selection for mixed parallel/sequential work
-
-**Multi-Source Discovery**:
-
-- See `agent-coordination/PARALLEL.md` - Run multiple discovery agents simultaneously
-- See `agent-coordination/SWARM.md` - Analyze deals from multiple perspectives
-
-**Quality Gates** (Your 9 validation gates):
-
-- See `agent-coordination/HYBRID.md` - Multi-phase workflows with gates
-- See `agent-coordination/ITERATIVE.md` - Progressive refinement until criteria met
-
-**Implementation**:
-
-- See `task-decomposition/SKILL.md` - Break down your 10-item checklist
-- See `goap-agent/SKILL.md` - Planning methodology
-
-**Cloudflare Platform**:
-
-- Load: `skill cloudflare` - Platform knowledge
-- Load: `skill agents-sdk` - Agent development
-- Load: `skill wrangler` - Deployment help
-- Load: `skill durable-objects` - State coordination
-
-## Usage
-
-Each skill contains:
-
-- `SKILL.md` - Main documentation and quick start
-- Additional `.md` files - Detailed patterns and strategies
-
-Load a skill using:
+Claude Code, Gemini CLI, and Qwen Code use symlinks; OpenCode reads directly from `.agents/skills/`:
 
 ```
-skill agent-coordination
-skill goap-agent
-skill task-decomposition
-skill parallel-execution
-skill cloudflare
-skill agents-sdk
-skill wrangler
+.claude/skills/<name>      -> ../../.agents/skills/<name>
+.gemini/skills/<name>      -> ../../.agents/skills/<name>
+.qwen/skills/<name>        -> ../../.agents/skills/<name>
 ```
 
-## Installation
+## Setup
 
-### Local Skills (This Directory)
-
-These are project-specific coordination skills already present in `.agents/skills/`.
-
-### External Skills (Cloudflare Platform)
-
-Installed globally at user level:
+After cloning, run once to create all symlinks:
 
 ```bash
-npx skills add https://github.com/cloudflare/skills
+./scripts/setup-skills.sh
 ```
 
-Installs to:
+Validate symlinks are intact:
 
-- GitHub Copilot: `~/.github/skills/`
-- OpenCode: `~/.config/opencode/skills/`
-- Cursor: `~/.cursor/skills/`
+```bash
+./scripts/validate-skills.sh
+```
 
-## Source
+## Adding a New Skill
 
-Local skills adapted from [github-template-ai-agents](https://github.com/d-o-hub/github-template-ai-agents/tree/main/.agents/skills) for this deal discovery system.
+1. Create `.agents/skills/<skill-name>/SKILL.md` (see `agents-docs/SKILLS.md`)
+2. Add `reference/` folder for detailed content (optional)
+3. Run `./scripts/setup-skills.sh` to create symlinks for all CLI tools
+4. The skill is now available in Claude Code, OpenCode, Gemini CLI, and Qwen Code
 
-Cloudflare skills from [cloudflare/skills](https://github.com/cloudflare/skills).
+## Skills in This Repository
+
+| Skill | Description |
+|---|---|
+| [`agent-coordination/`](agent-coordination/) | Multi-agent orchestration patterns (hybrid, iterative, parallel, sequential, swarm) |
+| [`github-readme/`](github-readme/) | Create human-focused GitHub README.md files with 2026 best practices |
+| [`goap-agent/`](goap-agent/) | Goal-Oriented Action Planning agent execution strategies |
+| [`iterative-refinement/`](iterative-refinement/) | Iterative code improvement patterns with validation loops |
+| [`parallel-execution/`](parallel-execution/) | Parallel task execution patterns |
+| [`shell-script-quality/`](shell-script-quality/) | Shell script linting (ShellCheck) and testing (BATS) |
+| [`skill-creator/`](skill-creator/) | Create new skills with proper structure and best practices |
+| [`task-decomposition/`](task-decomposition/) | Break complex tasks into manageable steps |
+| [`web-doc-resolver/`](web-doc-resolver/) | Resolve and fetch web documentation with cascade fallback |
+| [`web-search-researcher/`](web-search-researcher/) | Research topics using web search with systematic methodology |

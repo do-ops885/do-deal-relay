@@ -1,0 +1,141 @@
+name: CI + Labels Setup
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  labels:
+    name: Initialize GitHub Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure script is executable
+        run: chmod +x scripts/gh-labels-creator.sh
+
+      - name: Run label initialization
+        run: ./scripts/gh-labels-creator.sh --ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-skills:
+    name: Validate Skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup skills
+        run: ./scripts/setup-skills.sh
+
+      - name: Validate skills
+        run: ./scripts/validate-skills.sh
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: validate-skills
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (if package.json exists)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+        if: hashFiles('package.json') != ''
+
+      - name: Setup Rust (if Cargo.toml exists)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+        if: hashFiles('Cargo.toml') != ''
+
+      - name: Setup Python (if requirements.txt or pyproject.toml exists)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+
+      - name: Setup Go (if go.mod exists)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+        if: hashFiles('go.mod') != ''
+
+      - name: Install dependencies (Node)
+        run: npm ci
+        if: hashFiles('package.json') != ''
+
+      - name: Install dependencies (Python)
+        run: |
+          pip install ruff black pytest
+        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+
+      - name: Run quality gate
+        run: ./scripts/quality_gate.sh
+        env:
+          SKIP_TESTS: true  # Skip tests in CI, run separately
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (if package.json exists)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+        if: hashFiles('package.json') != ''
+
+      - name: Setup Rust (if Cargo.toml exists)
+        uses: dtolnay/rust-toolchain@stable
+        if: hashFiles('Cargo.toml') != ''
+
+      - name: Setup Python (if requirements.txt or pyproject.toml exists)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+
+      - name: Setup Go (if go.mod exists)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+        if: hashFiles('go.mod') != ''
+
+      - name: Install dependencies (Node)
+        run: npm ci
+        if: hashFiles('package.json') != ''
+
+      - name: Install dependencies (Python)
+        run: pip install -r requirements.txt
+        if: hashFiles('requirements.txt') != ''
+
+      - name: Run tests (Node)
+        run: npm test
+        if: hashFiles('package.json') != ''
+
+      - name: Run tests (Rust)
+        run: cargo test --lib
+        if: hashFiles('Cargo.toml') != ''
+
+      - name: Run tests (Python)
+        run: pytest tests/ -v
+        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+
+      - name: Run tests (Go)
+        run: go test ./...
+        if: hashFiles('go.mod') != ''

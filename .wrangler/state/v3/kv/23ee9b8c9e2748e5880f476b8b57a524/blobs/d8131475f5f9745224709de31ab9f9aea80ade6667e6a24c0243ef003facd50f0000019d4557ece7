@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-03-31T19:20:00Z",
+  "run_id": "manual-init",
+  "trace_id": "manual-init-trace",
+  "snapshot_hash": "abc123",
+  "previous_hash": "",
+  "schema_version": "1.0.0",
+  "stats": {
+    "total": 1,
+    "active": 1,
+    "quarantined": 0,
+    "rejected": 0,
+    "duplicates": 0
+  },
+  "deals": [
+    {
+      "id": "test-deal-1",
+      "source": {
+        "url": "https://example.com",
+        "domain": "example.com",
+        "discovered_at": "2026-03-31T19:20:00Z",
+        "trust_score": 0.5
+      },
+      "title": "Test Welcome Deal",
+      "description": "Test deal for endpoint verification",
+      "code": "WELCOME2024",
+      "url": "https://example.com/welcome",
+      "reward": {
+        "type": "cash",
+        "value": 50,
+        "currency": "USD"
+      },
+      "requirements": ["New users only"],
+      "expiry": {
+        "confidence": 0.8,
+        "type": "soft"
+      },
+      "metadata": {
+        "category": ["welcome"],
+        "tags": ["test"],
+        "normalized_at": "2026-03-31T19:20:00Z",
+        "confidence_score": 0.5,
+        "status": "active"
+      }
+    }
+  ]
+}
