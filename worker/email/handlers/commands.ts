@@ -174,7 +174,7 @@ export async function handleDeactivateCommand(
   });
 
   const template = createDeactivationConfirmation(
-    referral.domain,
+    referral.domain || "Unknown",
     referral.code,
     command.reason || "User request",
   );
@@ -221,8 +221,8 @@ export async function handleSearchCommand(
   const searchResults = referrals.map((r) => ({
     code: r.code,
     url: r.url,
-    domain: r.domain,
-    status: r.status,
+    domain: r.domain || "Unknown",
+    status: r.status || "unknown",
   }));
 
   const template = createSearchResultsEmail(query, searchResults);
@@ -258,7 +258,7 @@ export async function handleDigestCommand(
     lines.push(`${i + 1}. ${r.domain}`);
     lines.push(`   Code: ${r.code}`);
     lines.push(`   URL: ${r.url}`);
-    if (r.metadata.reward_value) {
+    if (r.metadata?.reward_value) {
       lines.push(`   Reward: ${r.metadata.reward_value}`);
     }
     lines.push("");
@@ -293,7 +293,7 @@ export async function handleDigestCommand(
         <strong>${r.domain}</strong><br>
         Code: ${r.code}<br>
         URL: <a href="${r.url}">${r.url}</a><br>
-        ${r.metadata.reward_value ? `Reward: ${r.metadata.reward_value}` : ""}
+        ${r.metadata?.reward_value ? `Reward: ${r.metadata.reward_value}` : ""}
       </div>
       `,
         )
