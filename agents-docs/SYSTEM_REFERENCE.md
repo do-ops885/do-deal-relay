@@ -189,7 +189,7 @@ Use: `skill <name>` to load platform guidance.
 
 ## Related Documentation
 
-- [Architecture Overview](../docs/AGENTS.md)
+- [Architecture Overview](../AGENTS.md)
 - [Agent Specs](../agents-docs/agents/) - Individual agent docs
 - [Guard Rails](../agents-docs/guard-rails.md) - Security
 - [Coordination](../agents-docs/coordination/) - State tracking

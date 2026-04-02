@@ -67,6 +67,6 @@ Log of continuous verification loop iterations. Used for:
 
 ## Related Documentation
 
-- [Handoff Protocol](./handoff-log.jsonl) - Coordination protocol
+- [Handoff Protocol](./handoff-protocol.md) - Coordination protocol
 - [Blockers](./blockers.md) - Escalation process
 - [AGENTS.md](../AGENTS.md) - Master coordination hub
