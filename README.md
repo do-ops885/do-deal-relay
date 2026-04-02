@@ -1,7 +1,7 @@
 # Deal Discovery System
 
 **System**: Production Ready  
-**Version**: 0.1.1  
+**Version: 0.1.2  
 **Status**: Stable (259 tests passing)  
 **Deployment**: Cloudflare Workers
 
