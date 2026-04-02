@@ -37,7 +37,8 @@ coverage/
 
 # Cloudflare
 .wrangler/
-wrangler.toml
+# wrangler.toml - Safe to commit (contains only KV IDs, not secrets)
+# Keeping example file reference for documentation
 !wrangler.toml.example
 
 # Secrets (NEVER commit)

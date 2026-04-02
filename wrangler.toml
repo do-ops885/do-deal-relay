@@ -1,0 +1,58 @@
+name = "do-deal-relay"
+main = "worker/index.ts"
+compatibility_date = "2026-03-31"
+
+[triggers]
+crons = ["0 */6 * * *", "0 9 * * *"]  # Discovery every 6h, expiry check at 9am
+
+[[kv_namespaces]]
+binding = "DEALS_PROD"
+id = "23ee9b8c9e2748e5880f476b8b57a524"
+
+[[kv_namespaces]]
+binding = "DEALS_STAGING"
+id = "b0db85b92fae45c1895152737ab72649"
+
+[[kv_namespaces]]
+binding = "DEALS_LOG"
+id = "1f1a901fd6fb4dffbdcc86aa4a914ba8"
+
+[[kv_namespaces]]
+binding = "DEALS_LOCK"
+id = "e3ab520eafd5430ab72978e78bdd257e"
+
+[[kv_namespaces]]
+binding = "DEALS_SOURCES"
+id = "be3c0fc148b749b49a59aa7cfa23e3ac"
+
+[vars]
+ENVIRONMENT = "production"
+GITHUB_REPO = "do-ops885/do-deal-relay"
+NOTIFICATION_THRESHOLD = "100"
+
+[env.staging]
+name = "do-deal-relay-staging"
+[env.staging.vars]
+ENVIRONMENT = "staging"
+GITHUB_REPO = "do-ops885/do-deal-relay"
+NOTIFICATION_THRESHOLD = "100"
+
+[[env.staging.kv_namespaces]]
+binding = "DEALS_PROD"
+id = "23ee9b8c9e2748e5880f476b8b57a524"
+
+[[env.staging.kv_namespaces]]
+binding = "DEALS_STAGING"
+id = "b0db85b92fae45c1895152737ab72649"
+
+[[env.staging.kv_namespaces]]
+binding = "DEALS_LOG"
+id = "1f1a901fd6fb4dffbdcc86aa4a914ba8"
+
+[[env.staging.kv_namespaces]]
+binding = "DEALS_LOCK"
+id = "e3ab520eafd5430ab72978e78bdd257e"
+
+[[env.staging.kv_namespaces]]
+binding = "DEALS_SOURCES"
+id = "be3c0fc148b749b49a59aa7cfa23e3ac"
