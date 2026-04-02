@@ -1,0 +1,118 @@
+{
+  "swarm_name": "agents-update-optimization-swarm",
+  "version": "1.0.0",
+  "description": "Parallel agent configuration for AGENTS.md optimization",
+  "agents": [
+    {
+      "id": "agent-1-coordination",
+      "name": "Coordination & Checklists Agent",
+      "task": "Migrate Production Readiness Checklist and Tracking Warnings sections",
+      "target_files": ["agents-docs/coordination/production-readiness.md"],
+      "source_sections": [
+        "Production Readiness Checklist",
+        "Tracking Warnings and Issues"
+      ],
+      "priority": "high",
+      "estimated_lines": 26
+    },
+    {
+      "id": "agent-2-quality",
+      "name": "Quality Standards Agent",
+      "task": "Migrate Code Quality Standards and Quality Gates sections",
+      "target_files": ["agents-docs/quality-standards.md"],
+      "source_sections": ["Code Quality Standards", "Quality Gates"],
+      "priority": "high",
+      "estimated_lines": 16
+    },
+    {
+      "id": "agent-3-url",
+      "name": "URL Handling Agent",
+      "task": "Migrate URL Handling Rules section (CRITICAL)",
+      "target_files": ["agents-docs/url-handling.md"],
+      "source_sections": ["URL Handling Rules"],
+      "priority": "critical",
+      "estimated_lines": 46
+    },
+    {
+      "id": "agent-4-referral",
+      "name": "Referral System Agent",
+      "task": "Migrate Referral System and Input Methods sections",
+      "target_files": [
+        "agents-docs/features/referral-system.md",
+        "agents-docs/features/input-methods.md"
+      ],
+      "source_sections": [
+        "Recent Updates: Referral Management System",
+        "User Input Methods Analysis"
+      ],
+      "priority": "medium",
+      "estimated_lines": 45
+    },
+    {
+      "id": "agent-5-handoff",
+      "name": "Handoff & Swarm Agent",
+      "task": "Migrate Handoff Coordination and Swarm Coordination sections",
+      "target_files": [
+        "agents-docs/coordination/handoff-protocol.md",
+        "agents-docs/coordination/swarm-patterns.md"
+      ],
+      "source_sections": [
+        "Handoff Coordination Protocol",
+        "Swarm Coordination Patterns"
+      ],
+      "priority": "high",
+      "estimated_lines": 80
+    },
+    {
+      "id": "agent-6-research",
+      "name": "Web Research Agent",
+      "task": "Migrate Web Research Integration section",
+      "target_files": ["agents-docs/features/web-research.md"],
+      "source_sections": ["Web Research Integration"],
+      "priority": "medium",
+      "estimated_lines": 26
+    },
+    {
+      "id": "agent-7-structure",
+      "name": "Structure & State Agent",
+      "task": "Migrate Project Structure and State Management sections",
+      "target_files": [
+        "agents-docs/PROJECT_STRUCTURE.md",
+        "agents-docs/coordination/state-management.md"
+      ],
+      "source_sections": ["Project Structure", "State Management"],
+      "priority": "high",
+      "estimated_lines": 43
+    }
+  ],
+  "coordination": {
+    "mode": "parallel",
+    "sync_point": "after_all_agents_complete",
+    "parent_agent": {
+      "id": "synthesis-agent",
+      "task": "Create optimized AGENTS.md from agent outputs",
+      "dependencies": [
+        "agent-1",
+        "agent-2",
+        "agent-3",
+        "agent-4",
+        "agent-5",
+        "agent-6",
+        "agent-7"
+      ]
+    }
+  },
+  "quality_gates": {
+    "pre_migration": [
+      "Verify AGENTS.md exists",
+      "Check line count > 140",
+      "Verify agents-docs/ directory exists"
+    ],
+    "post_migration": [
+      "Verify AGENTS.md ≤ 140 lines",
+      "Verify all destination files created",
+      "Verify no content lost",
+      "Verify cross-references valid"
+    ]
+  }
+}

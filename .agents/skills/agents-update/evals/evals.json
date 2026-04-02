@@ -1,0 +1,83 @@
+{
+  "skill_name": "agents-update",
+  "version": "1.0.0",
+  "description": "Evaluations for agents-update skill - AGENTS.md optimization",
+  "evals": [
+    {
+      "id": "structure_check",
+      "prompt": "Check if agents-update skill has required files: SKILL.md, tests/test_skill.sh, and evals/evals.json",
+      "expected_output": "All required files exist in .agents/skills/agents-update/",
+      "type": "automated",
+      "command": "test -f .agents/skills/agents-update/SKILL.md && test -f .agents/skills/agents-update/tests/test_skill.sh && test -f .agents/skills/agents-update/evals/evals.json",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "frontmatter_validation",
+      "prompt": "Verify SKILL.md has valid frontmatter with name, description, and version fields",
+      "expected_output": "Frontmatter contains all required fields: name, description, version",
+      "type": "automated",
+      "command": "grep -q '^name: agents-update' .agents/skills/agents-update/SKILL.md && grep -q '^description:' .agents/skills/agents-update/SKILL.md && grep -q '^version:' .agents/skills/agents-update/SKILL.md",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "line_count_check",
+      "prompt": "Check that SKILL.md is under 250 lines",
+      "expected_output": "SKILL.md has 249 or fewer lines",
+      "type": "automated",
+      "command": "lines=$(wc -l < .agents/skills/agents-update/SKILL.md) && test $lines -le 250",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "section_mapping_present",
+      "prompt": "Verify section mapping table exists in SKILL.md",
+      "expected_output": "Section Mapping section is documented with table",
+      "type": "automated",
+      "command": "grep -q '## Section Mapping' .agents/skills/agents-update/SKILL.md",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "workflow_documented",
+      "prompt": "Check that Workflow and Quality Gates sections exist",
+      "expected_output": "Both Workflow and Quality Gates sections are present",
+      "type": "automated",
+      "command": "grep -q '## Workflow' .agents/skills/agents-update/SKILL.md && grep -q '## Quality Gates' .agents/skills/agents-update/SKILL.md",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "code_examples_present",
+      "prompt": "Verify skill has code examples in markdown blocks",
+      "expected_output": "At least one code block exists in SKILL.md",
+      "type": "automated",
+      "command": "count=$(grep -c '```' .agents/skills/agents-update/SKILL.md || echo 0) && test $count -gt 0",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "real_usage_agents_md",
+      "prompt": "Apply skill to optimize AGENTS.md and verify results are under 140 lines with proper cross-references",
+      "expected_output": "AGENTS.md is optimized to 72 lines with 15 cross-references to agents-docs/",
+      "type": "manual",
+      "criteria": [
+        "AGENTS.md line count reduced to ≤140 lines",
+        "All migrated sections have destination files",
+        "No content lost in migration",
+        "Cross-references remain valid",
+        "AGENTS.md still functional as quick reference"
+      ],
+      "weight": 40
+    }
+  ],
+  "scoring": {
+    "pass_threshold": 80,
+    "weights": {
+      "automated": 60,
+      "manual": 40
+    }
+  },
+  "test_command": "bash .agents/skills/agents-update/tests/test_skill.sh"
+}
