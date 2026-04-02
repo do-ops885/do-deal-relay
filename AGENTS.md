@@ -145,11 +145,36 @@ A swarm of 6 agents analyzed all possibilities for user input. **Results**:
 3. Next agent reads handoff file + AGENTS.md + its own spec
 4. Confirm understanding before proceeding
 
+**Context Window Management (CRITICAL)**:
+
+To prevent context overflow, always delegate to sub-agents with isolated, focused contexts:
+
+| Context Used      | Action                                    |
+| ----------------- | ----------------------------------------- |
+| <20% (healthy)    | Continue in current agent                 |
+| 20-50% (elevated) | Consider task delegation                  |
+| >50% (critical)   | Delegate to focused sub-agent immediately |
+
+**Delegation Pattern**:
+
+```
+Parent Agent
+├─→ Create handoff: temp/handoff-parent-sub.md
+├─→ Delegate to Sub-Agent A (isolated context)
+│   └─→ Sub-Agent A executes with <5 files
+│   └─→ Sub-Agent A writes handoff result
+├─→ Delegate to Sub-Agent B (isolated context)
+│   └─→ Sub-Agent B executes with <5 files
+│   └─→ Sub-Agent B writes handoff result
+└─→ Aggregate results from handoffs
+```
+
 **Blocker Escalation**: 30min stuck → Escalate to `agents-docs/coordination/blockers.md` with issue, attempted fixes, relevant code, hypothesis.
 
 **Referral-Specific Handoffs**: See [agents-docs/coordination/referral-handoff-protocol.md](agents-docs/coordination/referral-handoff-protocol.md)
 
 See [agents-docs/coordination/](agents-docs/coordination/) for full protocol.
+See [agents-docs/SUB-AGENTS.md](agents-docs/SUB-AGENTS.md) for sub-agent patterns.
 
 ## Swarm Coordination Patterns
 
@@ -164,6 +189,29 @@ See [agents-docs/coordination/](agents-docs/coordination/) for full protocol.
 - Parallel: 6 interface agents (CLI, API, Extension, Bot, Email, Webhook)
 - Sequential: Ingestion → Research → Validation → Deactivation → Synthesis
 - Quality Gates: Schema validation, duplicate check, trust score
+
+**Pattern 5: Continuous Verification Loop**
+
+For complex tasks requiring iterative refinement:
+
+```
+Loop Until All Pass:
+├─→ Spawn swarm of 3+ agents (different perspectives)
+├─→ Each agent verifies and evaluates independently
+├─→ Check for consensus (2 of 3 agree)
+├─→ If consensus: BREAK loop, return result
+├─→ If disagreement: Analyze conflicts, refine task
+├─→ Create handoff with refined requirements
+└─→ Loop again with fresh agents (prevent context bloat)
+```
+
+**Loop Requirements**:
+
+1. Always use fresh agents in each iteration (no context carry-over)
+2. Handoff documents carry state between iterations
+3. Stop when all agents agree or max iterations reached (5)
+4. Keep each agent's context under 50% by limiting files (<5 per agent)
+5. Log each iteration to `temp/swarm-loop-log.jsonl`
 
 Load `skill parallel-execution` for implementation.
 
