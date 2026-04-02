@@ -74,57 +74,7 @@ npx ts-node scripts/eval-skill.ts --all
 
 Complete URLs must always be preserved and returned. Never truncate or shorten URLs.
 
----
-
-## URL Handling Rules (CRITICAL)
-
-### 1. Always Preserve Complete Links (Input)
-
-When adding referral codes, **ALWAYS use the COMPLETE link** as provided by the user:
-
-```bash
-# CORRECT: Full link preserved
-npx ts-node scripts/cli/index.ts codes smart-add https://picnic.app/de/freunde-rabatt/DOMI6869
-
-# WRONG: Never use partial URLs
-npx ts-node scripts/cli/index.ts codes smart-add picnic.app/DOMI6869  # NEVER DO THIS
-```
-
-### 2. Full URL Always Returned (Output)
-
-When querying the system, the **COMPLETE URL is always returned** in the `url` field:
-
-```json
-{
-  "referral": {
-    "id": "ref-abc123",
-    "code": "DOMI6869",
-    "url": "https://picnic.app/de/freunde-rabatt/DOMI6869",
-    "domain": "picnic.app"
-  }
-}
-```
-
-**All API endpoints return full URLs:**
-
-| Endpoint                               | URL Field                            |
-| -------------------------------------- | ------------------------------------ |
-| `GET /api/referrals`                   | List includes complete `url` field   |
-| `GET /api/referrals/:code`             | Returns full `url`                   |
-| `POST /api/referrals`                  | Created referral includes full `url` |
-| `POST /api/referrals/:code/deactivate` | Returns full `url`                   |
-| `POST /api/referrals/:code/reactivate` | Returns full `url`                   |
-
-### 3. Agent Communication
-
-When one agent queries the system and shares results with other agents, **the full URL must always be included**:
-
-```
-Agent A: Query system for picnic.app referrals
-System: Returns { url: "https://picnic.app/de/freunde-rabatt/DOMI6869", ... }
-Agent A: Shares with Agent B
-Agent B: Receives FULL URL, not shortened version
-```
+For detailed URL handling rules, see [URL Handling](./url-handling.md).
 
 ---
 
