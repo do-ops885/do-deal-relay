@@ -1,8 +1,9 @@
-# Deal Discovery System - Status
+# Deal Discovery System
 
-**System**: In Development
-**Version**: 0.1.1
-**Status**: Bootstrap Phase
+**System**: Production Ready  
+**Version**: 0.1.1  
+**Status**: Stable (259 tests passing)  
+**Deployment**: Cloudflare Workers
 
 ## Quick Start
 
@@ -11,7 +12,6 @@
 - Node.js >= 18.0.0
 - npm or yarn
 - Wrangler CLI (`npm install -g wrangler`)
-- Cloudflare Skills (`npx skills add https://github.com/cloudflare/skills`)
 
 ### Setup
 
@@ -24,6 +24,9 @@ npm test
 
 # Deploy locally
 npm run dev
+
+# Deploy to production
+npm run deploy
 ```
 
 ### For AI Agents
@@ -37,6 +40,9 @@ curl https://your-worker.workers.dev/deals.json
 
 # Check health
 curl https://your-worker.workers.dev/health
+
+# Get Prometheus metrics
+curl https://your-worker.workers.dev/metrics
 
 # Get recent logs
 curl https://your-worker.workers.dev/api/log
@@ -53,7 +59,7 @@ curl https://your-worker.workers.dev/api/log
 
 ## Architecture
 
-**Status**: In design/implementation phase. Not yet deployed.
+**Status**: Production-ready with comprehensive test coverage
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -66,42 +72,83 @@ curl https://your-worker.workers.dev/api/log
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-## Development Roadmap
+### Input Methods
 
-### Phase 1: Bootstrap (Current - v0.1.1)
+- **API** - REST endpoints for deal management
+- **CLI** - TypeScript CLI for administration
+- **Browser Extension** - Chrome extension for capturing referrals
+- **Discord Bot** - Community deal submission
+- **Telegram Bot** - Alternative chat interface
+- **Email** - Ingestion via email parsing
+- **Webhooks** - Partner integrations
 
-- [ ] Fix test infrastructure
-- [ ] Install missing dependencies
-- [ ] Validate core types
-- [ ] Basic KV storage layer
+### Pipeline Phases
 
-### Phase 2: Test & Validate
-
-- [ ] Write comprehensive tests
-- [ ] Run validation gates
-- [ ] Fix failing checks
-- [ ] Achieve >80% coverage
-
-### Phase 3: Deploy
-
-- [ ] Configure GitHub integration
-- [ ] Set up Cloudflare Workers
-- [ ] Deploy to staging
-- [ ] Production release (v0.1.1)
+1. **Discover** - Crawl configured sources for new deals
+2. **Normalize** - Standardize deal format and metadata
+3. **Dedupe** - Filter duplicates by code + source
+4. **Validate** - 9 validation gates for quality
+5. **Score** - Calculate trust and value scores
+6. **Stage** - Prepare atomic snapshot
+7. **Publish** - Two-phase commit (staging → production)
+8. **Verify** - Post-publish validation
+9. **Finalize** - Complete and notify
 
 ## Current Configuration
 
 - **Cron Schedule**: Every 6 hours
-- **KV Namespaces**: 5 (PROD, STAGING, LOG, LOCK, SOURCES)
+- **KV Namespaces**: 7 (PROD, STAGING, LOG, LOCK, SOURCES, REFERRALS, WEBHOOKS)
 - **Max Deals**: 1000 per run
 - **Trust Threshold**: 0.3
 - **High Value**: > $100
+- **Test Coverage**: 259 tests, 100% passing
+- **API Authentication**: API key auth for administrative endpoints
 
-## Agent Tools
+## Development Roadmap
 
-- `get_deals` - Retrieve active deals
-- `get_deal_by_code` - Find specific code
-- `submit_deal` - Submit new discovery
+### ✅ Phase 1: Bootstrap (Completed)
+
+- [x] Core pipeline implementation
+- [x] KV storage layer
+- [x] TypeScript type system
+- [x] Basic test infrastructure
+
+### ✅ Phase 2: Test & Validation (Completed)
+
+- [x] 259 comprehensive tests
+- [x] All validation gates passing
+- [x] Quality gate automation
+- [x] CI/CD pipeline
+
+### ✅ Phase 3: Production Readiness (Completed)
+
+- [x] GitHub integration
+- [x] Cloudflare Workers deployment
+- [x] Security audit (XSS fixes, API auth)
+- [x] Multi-agent skill system
+- [x] Complete input methods (API, CLI, Extension, Bot, Email, Webhook)
+
+### 🚧 Phase 4: Enhancement (In Progress)
+
+- [ ] Load testing suite
+- [ ] Performance optimization
+- [ ] Advanced analytics dashboard
+- [ ] Machine learning for deal scoring
+
+## Agent Tools / API Endpoints
+
+- `GET /deals` - Retrieve active deals with filtering
+- `GET /deals.json` - Get full snapshot with metadata
+- `GET /api/referrals` - List referral codes with search
+- `POST /api/referrals` - Create new referral
+- `GET /api/referrals/:code` - Get specific referral
+- `POST /api/referrals/:code/deactivate` - Deactivate referral
+- `POST /api/discover` - Trigger discovery pipeline
+- `GET /api/status` - Pipeline status
+- `GET /api/log` - Recent pipeline logs
+- `POST /api/submit` - Submit new deal
+- `GET /health` - System health check
+- `GET /metrics` - Prometheus-compatible metrics
 
 ## Available Scripts
 
