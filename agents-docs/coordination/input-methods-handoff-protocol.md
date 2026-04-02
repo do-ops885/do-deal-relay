@@ -33,8 +33,8 @@ This document defines the handoff coordination protocol for implementing the rem
 
 **Tasks:**
 
-1. Read existing API documentation (`worker/index.ts`, `docs/API.md`)
-2. Analyze current referral storage (`worker/lib/referral-storage.ts`)
+1. Read existing API documentation (`worker/routes/`, `docs/API.md`)
+2. Analyze current referral storage (`worker/lib/referral-storage/`)
 3. Document integration points
 4. Create handoff template
 

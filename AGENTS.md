@@ -1,7 +1,7 @@
 # AGENTS.md - Master Coordination Hub
 
 **Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
-**Version**: 0.2.0
+**Version**: 0.1.1
 **Architecture**: Agent-First CLI with swarm coordination + Referral Management System
 **Status**: Active Development - All Input Methods Implemented
 
@@ -14,19 +14,19 @@ npm run test:ci                # Run test suite
 npm run dev                    # Start development
 
 # CLI Tool for Referral Management
-npx ts-node scripts/refcli.ts --help
-npx ts-node scripts/refcli.ts auth login --endpoint http://localhost:8787
-npx ts-node scripts/refcli.ts codes add --code ABC123 --url https://example.com/invite/ABC123 --domain example.com
-npx ts-node scripts/refcli.ts codes deactivate ABC123 --reason expired
+npx ts-node scripts/cli/index.ts --help
+npx ts-node scripts/cli/index.ts auth login --endpoint http://localhost:8787
+npx ts-node scripts/cli/index.ts codes add --code ABC123 --url https://example.com/invite/ABC123 --domain example.com
+npx ts-node scripts/cli/index.ts codes deactivate ABC123 --reason expired
 ```
 
 ## Production Readiness Checklist
 
 - [x] All input methods implemented (CLI, API, Extension, Bot, Email, Webhook)
-- [ ] All source files < 500 lines (in progress)
+- [x] All source files < 500 lines (completed)
 - [x] URL preservation verified (complete links always returned)
 - [x] GitHub Actions CI passing
-- [ ] All skills pass evaluator checks (in progress)
+- [x] All skills pass evaluator checks (completed)
 - [ ] Security audit complete
 - [ ] Load testing complete
 
@@ -97,15 +97,15 @@ Agent B: Receives FULL URL, not shortened version
 
 ### New Components
 
-| Component        | Location                                                | Purpose                          |
-| ---------------- | ------------------------------------------------------- | -------------------------------- |
-| Referral Types   | `worker/types.ts`                                       | ReferralInput, Research schemas  |
-| Referral Storage | `worker/lib/referral-storage.ts`                        | CRUD, search, deactivate         |
-| Research Agent   | `worker/lib/research-agent.ts`                          | Web discovery of codes           |
-| API Endpoints    | `worker/index.ts`                                       | REST API for referral management |
-| CLI Tool         | `scripts/refcli.ts`                                     | Command-line interface           |
-| Swarm Config     | `agents-docs/coordination/referral-swarm-config.json`   | Agent orchestration              |
-| Handoff Protocol | `agents-docs/coordination/referral-handoff-protocol.md` | Coordination rules               |
+| Component        | Location                                                     | Purpose                          |
+| ---------------- | ------------------------------------------------------------ | -------------------------------- |
+| Referral Types   | `worker/types.ts`                                            | ReferralInput, Research schemas  |
+| Referral Storage | `worker/lib/referral-storage/`                               | CRUD, search, deactivate         |
+| Research Agent   | `worker/lib/research-agent/`                                 | Web discovery of codes           |
+| API Endpoints    | `worker/routes/`                                             | REST API for referral management |
+| CLI Tool         | `scripts/cli/`                                               | Command-line interface           |
+| Swarm Config     | `agents-docs/coordination/input-methods-swarm-config.json`   | Agent orchestration              |
+| Handoff Protocol | `agents-docs/coordination/input-methods-handoff-protocol.md` | Coordination rules               |
 
 ### API Endpoints (New)
 
@@ -238,7 +238,7 @@ output: temp/research-*.md
 
 **Integration Points**: Research → `temp/research-*.md` → Deal extraction pipeline → Update `worker/sources/`.
 
-**Research Agent**: `worker/lib/research-agent.ts` - Multi-source discovery, confidence scoring, result storage.
+**Research Agent**: `worker/lib/research-agent/` - Multi-source discovery, confidence scoring, result storage.
 
 See [agents-docs/RESEARCH.md](agents-docs/RESEARCH.md) for source specifications.
 
@@ -256,13 +256,16 @@ See [agents-docs/RESEARCH.md](agents-docs/RESEARCH.md) for source specifications
 │   ├── analysis-*.md              # Swarm analysis results
 │   └── research-*.md              # Web research results
 ├── scripts/                       # CLI tools
-│   └── refcli.ts                  # Referral management CLI
+│   ├── cli/                       # Modular CLI implementation
+│   ├── quality_gate.sh            # Quality validation
+│   └── validate-codes.sh          # Code validation
 ├── worker/                        # Cloudflare Worker source
 │   ├── lib/
-│   │   ├── referral-storage.ts    # Referral CRUD operations
-│   │   └── research-agent.ts      # Web research implementation
-│   ├── types.ts                   # ReferralInput, Research schemas
-│   └── index.ts                   # API endpoints
+│   │   ├── referral-storage/      # Referral CRUD operations
+│   │   └── research-agent/        # Web research implementation
+│   ├── routes/                    # API route handlers
+│   ├── email/                     # Email integration
+│   └── types.ts                   # ReferralInput, Research schemas
 └── docs/                          # Documentation
     └── API.md                     # API documentation
 ```

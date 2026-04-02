@@ -363,12 +363,14 @@ _Last Updated: 2026-04-01 | Total Lessons: 017_
 **Issue**: PR #4 had 15 commits mixing bug fixes, features, skills, infrastructure. CI failures blocked entire PR. Couldn't merge valuable parts separately.
 
 **Root Cause**:
+
 - Mixed concerns in single PR
 - Test debt in some commits blocked all others
 - Merge conflicts after main branch advanced
 - Skills already extracted separately caused duplication
 
 **Solution**:
+
 - Decompose large PRs into focused PRs by concern:
   - Bug fixes only (fix/critical-swarm-bugs)
   - Feature additions only (feat/performance-observability)
@@ -378,11 +380,13 @@ _Last Updated: 2026-04-01 | Total Lessons: 017_
 - Extract value from failing PRs by cherry-picking to clean branches
 
 **Applied**:
+
 - PR #4 skills → PR #6 (merged cleanly)
 - PR #4 bug fixes → fix/critical-swarm-bugs (PR #7)
 - PR #4 features → feat/performance-observability (PR #8)
 
-**Prevention**: 
+**Prevention**:
+
 - Create focused PRs from the start
 - Maximum 3-5 commits per PR
 - Single concern per PR
@@ -396,12 +400,14 @@ _Last Updated: 2026-04-01 | Total Lessons: 017_
 
 **Issue**: PR #4 failed 4 CI jobs (Quality Gate, Unit Tests, CI Summary, CodeQL). Valuable work was trapped in failing PR.
 
-**Root Cause**: 
+**Root Cause**:
+
 - Pre-existing test failures unrelated to PR changes
 - CI environment differences from local
 - Monolithic PR meant all-or-nothing merge
 
 **Solution** - 6-Step Recovery:
+
 1. **Analyze**: What's valuable vs what's broken
 2. **Extract**: Create clean branches for valuable parts
 3. **Cherry-pick**: Move good commits to clean history
@@ -410,12 +416,14 @@ _Last Updated: 2026-04-01 | Total Lessons: 017_
 6. **Merge**: Focused PRs pass CI and merge cleanly
 
 **Applied**:
+
 - Analyzed PR #4 commits (temp/pr-4-analysis.md)
 - Extracted 3 clean branches from messy PR
 - All 3 extractions pass quality gates
 - Closed PR #4 with comprehensive documentation
 
 **Prevention**:
+
 - Don't force-merge failing PRs
 - Use git cherry-pick to salvage good commits
 - Create extraction branches early when PR goes red
@@ -433,3 +441,75 @@ _Last Updated: 2026-04-01 | Total Lessons: 017_
 - [ ] Document PR closures with extraction references
 - [ ] Update LESSONS.md with PR process insights
 
+---
+
+## LESSON-020: File Size Management and Modular Architecture
+
+**Date**: 2026-04-02
+**Component**: Project Structure / Code Quality
+
+**Issue**: Multiple source files exceeded 500 lines, violating the project's code quality standards. Monolithic files were becoming difficult to maintain, test, and review.
+
+**Root Cause**:
+
+- Feature accumulation over time without refactoring
+- No automated enforcement of file size limits
+- Lack of modular architecture patterns
+
+**Files Affected**:
+
+- `worker/index.ts` (942 lines)
+- `worker/lib/webhook-handler.ts` (1214 lines)
+- `bot/discord/index.ts` (788 lines)
+- `bot/commands.ts` (709 lines)
+- `worker/email/handler.ts` (693 lines)
+- `worker/email/templates.ts` (609 lines)
+- `worker/email/patterns.ts` (569 lines)
+- `worker/routes/webhooks.ts` (586 lines)
+- `scripts/refcli.ts` (633 lines)
+- `worker/lib/referral-storage.ts` (503 lines)
+- `worker/lib/research-agent.ts` (563 lines)
+
+**Solution**:
+
+Split all files exceeding 500 lines into focused modules:
+
+| Original File                    | New Structure                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| `worker/index.ts`                | `worker/routes/core.ts`, `worker/routes/referrals.ts`, `worker/routes/utils.ts` |
+| `worker/lib/webhook-handler.ts`  | `worker/lib/webhook/` (5 modules)                                               |
+| `bot/discord/index.ts`           | `bot/discord/` (7 modules)                                                      |
+| `bot/commands.ts`                | `bot/commands/` (6 modules)                                                     |
+| `scripts/refcli.ts`              | `scripts/cli/` (9 modules)                                                      |
+| `worker/email/`                  | `worker/email/handlers/`, `worker/email/templates/`, `worker/email/patterns/`   |
+| `worker/lib/referral-storage.ts` | `worker/lib/referral-storage/` (4 modules)                                      |
+| `worker/lib/research-agent.ts`   | `worker/lib/research-agent/` (4 modules)                                        |
+
+**Results**:
+
+- All 33 source files now under 500 lines
+- Improved code maintainability and testability
+- Better separation of concerns
+- Clearer module boundaries
+- Maintained backward compatibility via thin wrapper files
+
+**Prevention**:
+
+- **RULE**: All source files must be ≤500 lines (enforced in pre-commit hook)
+- **RULE**: Split by responsibility (types, CRUD, search, handlers)
+- **RULE**: Use index.ts for clean re-exports
+- **RULE**: Keep thin wrappers for backward compatibility during transitions
+- **RULE**: Update all documentation references when moving files
+
+**Applied**:
+
+- 11 files split into 55+ focused modules
+- All guard rails passing
+- CI/CD workflows updated
+- Documentation synchronized (AGENTS.md, LESSONS.md, skill references)
+
+---
+
+_LEarn from experience. Update this file with every significant insight._
+
+_Last Updated: 2026-04-02 | Total Lessons: 020_

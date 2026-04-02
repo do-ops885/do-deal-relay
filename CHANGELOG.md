@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2026-04-02
+## [Unreleased] - Planned for 0.2.0
 
 ### Added
 
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - AGENTS.md updated with URL handling rules (complete link preservation)
 - Guard rails documentation updated with code quality standards
-- Version bumped to 0.2.0 reflecting referral system completion
+- Version preparation for 0.2.0 reflecting referral system completion
 - All input method statuses updated to "Implemented" in documentation
 
 ### Fixed
