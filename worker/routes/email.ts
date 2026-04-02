@@ -100,9 +100,9 @@ export async function handleEmailParse(
       );
     }
 
-    // Import extraction function
-    const { extractReferralFromEmail, parseCommand } =
-      await import("../email/extraction");
+    // Import extraction and command parsing functions
+    const { extractReferralFromEmail } = await import("../email/extraction");
+    const { parseCommand } = await import("../email/patterns/index");
 
     const email = {
       from: body.from,
