@@ -153,18 +153,18 @@ CHANGELOG.md        # Changelog for releases
 
 #### Required Subfolder Usage
 
-| File Type      | Destination               | Examples                             |
-| -------------- | ------------------------- | ------------------------------------ |
-| Documentation  | `docs/` or `agents-docs/` | System docs, API docs                |
-| Reports/Status | `temp/`                   | Deployment reports, readiness checks |
-| Agent Status   | `temp/`                   | state.json, progress files           |
-| Logs           | `temp/`                   | Generated logs                       |
-| Analysis       | `temp/`                   | Swarm analysis, generated reports    |
-| Scripts        | `scripts/`                | Shell scripts, utilities             |
-| Tests          | `tests/`                  | Test files                           |
-| Source Code    | `worker/`                 | Worker implementation                |
-| Plans          | `plans/`                  | Execution plans                      |
-| Skills         | `.agents/skills/`         | Agent coordination                   |
+| File Type      | Destination               | Examples                                                      |
+| -------------- | ------------------------- | ------------------------------------------------------------- |
+| Documentation  | `docs/` or `agents-docs/` | System docs, API docs                                         |
+| Reports/Status | `temp/`                   | Deployment reports, readiness checks                          |
+| Agent Status   | `temp/`                   | state.json, progress files                                    |
+| Logs           | `temp/`                   | Generated logs                                                |
+| Analysis       | `temp/`                   | Swarm analysis, generated reports                             |
+| Scripts        | `scripts/`                | Shell scripts, utilities                                      |
+| Tests          | `tests/`                  | Test files                                                    |
+| Source Code    | `worker/`                 | Worker implementation                                         |
+| Plans          | `plans/`                  | Execution plans, warning/issue tracking, production readiness |
+| Skills         | `.agents/skills/`         | Agent coordination                                            |
 
 #### Enforcement Rules
 

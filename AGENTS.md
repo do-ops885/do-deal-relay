@@ -27,8 +27,25 @@ npx ts-node scripts/cli/index.ts codes deactivate ABC123 --reason expired
 - [x] URL preservation verified (complete links always returned)
 - [x] GitHub Actions CI passing
 - [x] All skills pass evaluator checks (completed)
-- [ ] Security audit complete
-- [ ] Load testing complete
+- [ ] Security audit complete (see `plans/production-readiness.md`)
+- [ ] Load testing complete (see `plans/production-readiness.md`)
+
+## Tracking Warnings and Issues
+
+**All warnings, TODOs, and issues must be tracked in `plans/` directory:**
+
+1. When validation gates emit warnings (TODO/FIXME, security issues, HTTP URLs, etc.)
+2. Create or update appropriate plan file in `plans/`
+3. Document: issue, impact, solution, priority, assigned agent, ETA
+4. Reference the plan file in AGENTS.md checklist items
+
+**Example Plan Files:**
+
+- `plans/production-readiness.md` - Security audit, load testing, warnings
+- `plans/github-automation-plan.md` - GitHub Actions improvements
+- `plans/<feature>-plan.md` - Feature-specific implementation plans
+
+See `plans/production-readiness.md` for current tracking of all warnings and pending items.
 
 ## Code Quality Standards
 

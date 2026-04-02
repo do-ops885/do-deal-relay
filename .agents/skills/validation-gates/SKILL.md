@@ -14,7 +14,7 @@ Implement progressive quality assurance through configurable validation gates.
 ## Quick Start
 
 ```typescript
-import { ValidationPipeline, Gate } from './validation-gates';
+import { ValidationPipeline, Gate } from "./validation-gates";
 
 const pipeline = new ValidationPipeline([
   Gate.syntax(),
@@ -28,18 +28,18 @@ const result = await pipeline.run(code);
 
 ## Gate Types
 
-| Gate | Purpose | Config Options |
-|------|---------|----------------|
-| syntax | Code compilation/parsing | language, strict |
-| lint | Style enforcement | rules, fix |
-| tests | Test execution | coverage, timeout |
-| security | Vulnerability scan | level, ignore |
-| performance | Speed benchmarks | threshold, metrics |
-| integration | System tests | endpoints, data |
-| docs | Documentation check | required, paths |
-| deps | Dependency audit | outdated, vulns |
-| size | Bundle size check | maxBytes, gzip |
-| final | Pre-deployment | all-pass |
+| Gate        | Purpose                  | Config Options     |
+| ----------- | ------------------------ | ------------------ |
+| syntax      | Code compilation/parsing | language, strict   |
+| lint        | Style enforcement        | rules, fix         |
+| tests       | Test execution           | coverage, timeout  |
+| security    | Vulnerability scan       | level, ignore      |
+| performance | Speed benchmarks         | threshold, metrics |
+| integration | System tests             | endpoints, data    |
+| docs        | Documentation check      | required, paths    |
+| deps        | Dependency audit         | outdated, vulns    |
+| size        | Bundle size check        | maxBytes, gzip     |
+| final       | Pre-deployment           | all-pass           |
 
 ## The 10-Gate System
 
@@ -58,20 +58,23 @@ const result = await pipeline.run(code);
 ## Usage Patterns
 
 **Sequential Gates** (default):
+
 ```typescript
-const pipeline = new ValidationPipeline(gates, { mode: 'sequential' });
+const pipeline = new ValidationPipeline(gates, { mode: "sequential" });
 // Stops on first failure
 ```
 
 **Parallel Gates**:
+
 ```typescript
-const pipeline = new ValidationPipeline(gates, { mode: 'parallel' });
+const pipeline = new ValidationPipeline(gates, { mode: "parallel" });
 // Runs all, reports all failures
 ```
 
 **Conditional Gates**:
+
 ```typescript
-Gate.tests({ runIf: (ctx) => ctx.hasTests })
+Gate.tests({ runIf: (ctx) => ctx.hasTests });
 ```
 
 ## Configuration
@@ -80,9 +83,9 @@ Gate.tests({ runIf: (ctx) => ctx.hasTests })
 interface GateConfig {
   name: string;
   enabled: boolean;
-  required: boolean;      // Fail pipeline if this gate fails
-  timeout: number;        // ms
-  retry: number;          // Retry attempts
+  required: boolean; // Fail pipeline if this gate fails
+  timeout: number; // ms
+  retry: number; // Retry attempts
   condition?: (ctx) => boolean;
 }
 ```
@@ -110,6 +113,30 @@ interface ValidationResult {
 2. **Required vs Optional** - Only block on critical gates
 3. **Caching** - Cache results of unchanged files
 4. **Incremental** - Run only affected gates on partial changes
+5. **Track warnings** - Document all warnings in `plans/` directory:
+   - Gate 6 (TODO/FIXME): Create plan entry for each finding
+   - Gate 7 (Wrangler Config): Document configuration issues
+   - Gate 9 (Security): Create security audit plan for warnings
+   - Update plans with resolution status
+
+## Warning Tracking
+
+When gates emit warnings (not errors), they must be tracked:
+
+```typescript
+// Example: Gate 6 finds TODO comments
+const todoResult = await Gate.todoCheck().run(files);
+if (todoResult.warnings.length > 0) {
+  await createPlanEntry({
+    file: "plans/code-cleanup.md",
+    issue: `${todoResult.warnings.length} TODO/FIXME comments found`,
+    priority: "low",
+    eta: "2026-04-05",
+  });
+}
+```
+
+See `plans/production-readiness.md` for current warning tracking.
 
 ## Integration
 
