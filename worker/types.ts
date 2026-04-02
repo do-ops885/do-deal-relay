@@ -264,6 +264,7 @@ export interface NotificationEvent {
 }
 
 export interface Env {
+  // KV Namespaces
   DEALS_PROD: KVNamespace;
   DEALS_STAGING: KVNamespace;
   DEALS_LOG: KVNamespace;
@@ -271,6 +272,11 @@ export interface Env {
   DEALS_SOURCES: KVNamespace;
   DEALS_REFERRALS?: KVNamespace;
   DEALS_WEBHOOKS?: KVNamespace;
+
+  // D1 Database (EU AI Act logging + advanced queries)
+  DEALS_DB?: D1Database;
+
+  // Environment & Config
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;

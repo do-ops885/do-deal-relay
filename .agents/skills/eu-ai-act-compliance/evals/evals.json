@@ -1,0 +1,54 @@
+{
+  "skill": "eu-ai-act-compliance",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": "eu-ai-act-001",
+      "name": "Basic logging implementation",
+      "prompt": "Show me how to implement EU AI Act Article 12 logging for a deal discovery AI system",
+      "expected_output": "Should demonstrate: 1) AIActLogger initialization with systemId, providerName, riskClassification, 2) logOperation with inputData (source, hash, description), outputData (result, confidence), 3) Retention period of at least 180 days, 4) Data protection compliance fields",
+      "assertions": [
+        "Output includes AIActLogger class or equivalent",
+        "Shows logOperation method with required fields",
+        "Mention retention period of 180 days (6 months)",
+        "Includes system identification (systemId, providerName)"
+      ]
+    },
+    {
+      "id": "eu-ai-act-002",
+      "name": "Transparency disclosure (Article 50.1)",
+      "prompt": "How do I implement AI interaction disclosure for users under EU AI Act Article 50.1?",
+      "expected_output": "Should provide: 1) Clear disclosure text template, 2) Display at first interaction requirement, 3) Accessibility considerations, 4) Provider contact information",
+      "assertions": [
+        "Disclosure mentions AI system",
+        "Includes provider contact information",
+        "Mentions first interaction requirement",
+        "References Article 50.1 or EU AI Act"
+      ]
+    },
+    {
+      "id": "eu-ai-act-003",
+      "name": "Human oversight logging (Article 14)",
+      "prompt": "Show me how to log human oversight actions for a high-risk AI system",
+      "expected_output": "Should demonstrate: 1) Human reviewer identification (reviewerId, reviewerRole), 2) Decision type (approved/rejected/overridden), 3) Timestamp of oversight, 4) Connection to original AI operation",
+      "assertions": [
+        "Includes humanOversight structure",
+        "Shows reviewerId and reviewerRole",
+        "Demonstrates decision logging",
+        "Links to original operation"
+      ]
+    },
+    {
+      "id": "eu-ai-act-004",
+      "name": "Risk classification guidance",
+      "prompt": "Help me determine if my deal discovery AI system is high-risk under EU AI Act",
+      "expected_output": "Should provide: 1) Annex III analysis, 2) Limited vs high-risk criteria, 3) Decision flowchart or logic, 4) Next steps based on classification",
+      "assertions": [
+        "Mentions Annex III use cases",
+        "Explains limited vs high-risk",
+        "Provides decision criteria",
+        "Suggests appropriate compliance level"
+      ]
+    }
+  ]
+}

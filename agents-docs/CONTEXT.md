@@ -1,8 +1,8 @@
 # Context Management and Back-Pressure
 
 **System**: Deal Discovery Relay Worker
-**Version: 0.1.1
-**Last Updated\*\*: 2026-04-01
+**Version**: 0.1.2
+\*\*Last Updated\*\*: 2026-04-01
 
 This guide covers context window management, back-pressure patterns, and strategies for handling large inputs in the deal discovery system.
 

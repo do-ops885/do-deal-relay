@@ -2,6 +2,8 @@ import type { Env } from "../types";
 import { processEmail, emailWorkerHandler } from "../email/handler";
 import { createHelpEmail } from "../email/templates";
 import { logger } from "../lib/global-logger";
+import { verifyHmacSignature, parseSignatureHeader } from "../lib/hmac";
+import { unauthorizedResponse, errorResponse, jsonResponse } from "./utils";
 
 // ============================================================================
 // Email API Routes
@@ -10,19 +12,59 @@ import { logger } from "../lib/global-logger";
 // GET /api/email/help - Get help email content
 // ============================================================================
 
+/**
+ * Verify webhook signature for email endpoints
+ */
+async function verifyEmailWebhook(
+  request: Request,
+  secret: string,
+): Promise<{ valid: boolean; error?: string }> {
+  const signatureHeader = request.headers.get("x-webhook-signature");
+  const timestampHeader = request.headers.get("x-webhook-timestamp");
+
+  if (!signatureHeader || !timestampHeader) {
+    return { valid: false, error: "Missing signature or timestamp headers" };
+  }
+
+  const parsed = parseSignatureHeader(signatureHeader);
+  if (!parsed) {
+    return { valid: false, error: "Invalid signature header format" };
+  }
+
+  const body = await request.clone().text();
+  const timestamp = parseInt(timestampHeader, 10);
+
+  if (isNaN(timestamp)) {
+    return { valid: false, error: "Invalid timestamp" };
+  }
+
+  const result = await verifyHmacSignature(
+    body,
+    parsed.signature,
+    secret,
+    timestamp,
+  );
+  return result;
+}
+
 export async function handleEmailIncoming(
   request: Request,
   env: Env,
 ): Promise<Response> {
   try {
-    // Verify webhook signature if configured
-    const signature = request.headers.get("x-webhook-signature");
-    if (env.EMAIL_WEBHOOK_SECRET && signature) {
-      // In production, verify HMAC signature
-      // const isValid = await verifyWebhookSignature(request, env.EMAIL_WEBHOOK_SECRET);
-      // if (!isValid) {
-      //   return jsonResponse({ error: "Invalid signature" }, 401);
-      // }
+    // Verify webhook signature if configured (CRITICAL SECURITY FIX)
+    if (env.EMAIL_WEBHOOK_SECRET) {
+      const verification = await verifyEmailWebhook(
+        request,
+        env.EMAIL_WEBHOOK_SECRET,
+      );
+      if (!verification.valid) {
+        logger.warn("Email webhook signature verification failed", {
+          component: "email-api",
+          error: verification.error,
+        });
+        return unauthorizedResponse("Invalid webhook signature");
+      }
     }
 
     // Parse email from request body
@@ -37,10 +79,13 @@ export async function handleEmailIncoming(
 
     // Validate required fields
     if (!body.from || !body.to || !body.subject) {
-      return jsonResponse(
-        { error: "Missing required fields: from, to, subject" },
-        400,
-      );
+      return errorResponse("Missing required fields: from, to, subject", 400);
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.from)) {
+      return errorResponse("Invalid from email format", 400);
     }
 
     // Process the email
@@ -70,10 +115,9 @@ export async function handleEmailIncoming(
     logger.error(`Email incoming error: ${(error as Error).message}`, {
       component: "email-api",
     });
-    return jsonResponse(
-      { error: "Failed to process email", message: (error as Error).message },
-      500,
-    );
+    return errorResponse("Failed to process email", 500, {
+      message: (error as Error).message,
+    });
   }
 }
 
@@ -94,10 +138,7 @@ export async function handleEmailParse(
     };
 
     if (!body.from || !body.subject) {
-      return jsonResponse(
-        { error: "Missing required fields: from, subject" },
-        400,
-      );
+      return errorResponse("Missing required fields: from, subject", 400);
     }
 
     // Import extraction and command parsing functions
@@ -132,10 +173,9 @@ export async function handleEmailParse(
     logger.error(`Email parse error: ${(error as Error).message}`, {
       component: "email-api",
     });
-    return jsonResponse(
-      { error: "Failed to parse email", message: (error as Error).message },
-      500,
-    );
+    return errorResponse("Failed to parse email", 500, {
+      message: (error as Error).message,
+    });
   }
 }
 
@@ -168,18 +208,4 @@ export async function handleEmailWorker(
   env: Env,
 ): Promise<void> {
   await emailWorkerHandler(message, env);
-}
-
-// ============================================================================
-// Utility
-// ============================================================================
-
-function jsonResponse(data: unknown, status: number = 200): Response {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
 }

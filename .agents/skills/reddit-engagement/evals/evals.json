@@ -1,0 +1,57 @@
+{
+  "skill": "reddit-engagement",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": "reddit-001",
+      "name": "Community risk assessment",
+      "prompt": "Analyze the risk level of r/AI_Agents for promoting an AI agent project",
+      "expected_output": "Should provide: 1) Risk level (low/medium/high), 2) Reasons for assessment, 3) Anti-AI sentiment check, 4) Malicious actor check, 5) Recommendation",
+      "assertions": [
+        "Provides specific risk level",
+        "Mentions anti-AI sentiment analysis",
+        "Includes malicious actor assessment",
+        "Gives clear recommendation"
+      ]
+    },
+    {
+      "id": "reddit-002",
+      "name": "Safe engagement strategy",
+      "prompt": "Create a 90-day engagement strategy for promoting an AI project on Reddit",
+      "expected_output": "Should include: 1) Phase 1 (karma building - no promo), 2) Phase 2 (value-first mentions), 3) Phase 3 (strategic promotion), 4) Target communities, 5) Content types",
+      "assertions": [
+        "Includes 3 phases of engagement",
+        "Phase 1 has ZERO promotional activity",
+        "Mentions karma requirements (100-500+)",
+        "Specifies 9:1 or better ratio",
+        "Identifies safe target communities"
+      ]
+    },
+    {
+      "id": "reddit-003",
+      "name": "Value-first comment pattern",
+      "prompt": "Show me how to respond to someone asking about deal discovery methods",
+      "expected_output": "Should demonstrate: 1) Multiple options presented, 2) Honest trade-offs, 3) Product mentioned as ONE solution, 4) Disclosure included, 5) Helpful tone",
+      "assertions": [
+        "Presents multiple solutions",
+        "Mentions product as one option",
+        "Includes clear disclosure",
+        "Tone is helpful not salesy",
+        "Explains trade-offs honestly"
+      ]
+    },
+    {
+      "id": "reddit-004",
+      "name": "Pre-posting checklist",
+      "prompt": "What should I check before posting about my AI project on Reddit?",
+      "expected_output": "Should include: 1) Account age check, 2) Karma requirements, 3) Community rules review, 4) Risk assessment, 5) Content preparation, 6) Disclosure readiness",
+      "assertions": [
+        "Mentions 90+ day account age",
+        "Specifies 500+ karma",
+        "Includes community rules check",
+        "Requires risk assessment",
+        "Mentions disclosure requirement"
+      ]
+    }
+  ]
+}
