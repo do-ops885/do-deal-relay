@@ -51,6 +51,13 @@ export function setGitHubToken(token: string): void {
 }
 
 /**
+ * Reset GitHub token (for testing)
+ */
+export function resetGitHubToken(): void {
+  githubToken = undefined;
+}
+
+/**
  * Get GitHub API base URL and headers
  */
 function getGitHubConfig() {

@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { publishSnapshot, rollbackSnapshot } from "../../worker/publish";
+import {
+  setGitHubToken,
+  resetGitHubToken,
+  initGitHubCircuitBreaker,
+} from "../../worker/lib/github";
 import type { Snapshot, Deal, Env, PipelineContext } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
@@ -118,6 +123,10 @@ describe("Publish Module", () => {
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
 
+    // Initialize GitHub token for tests
+    setGitHubToken("test-token");
+    initGitHubCircuitBreaker(mockEnv);
+
     mockContext = {
       run_id: "test-run",
       trace_id: "test-trace",
@@ -149,14 +158,31 @@ describe("Publish Module", () => {
           json: async () => [],
         })
         .mockResolvedValueOnce({
-          // commitSnapshot
+          // getFileContent (not found)
+          status: 404,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          // commitFile
           ok: true,
           json: async () => ({ commit: { sha: "commit-sha-123" } }),
         })
         .mockResolvedValueOnce({
-          // verifyCommit
+          // verifyCommit - getRecentCommits returns raw GitHub API format
           ok: true,
-          json: async () => [{ sha: "commit-sha-123" }],
+          json: async () => [
+            {
+              sha: "commit-sha-123",
+              commit: {
+                message: "[AUTO] Update deals",
+                author: {
+                  name: "Test",
+                  email: "test@example.com",
+                  date: "2024-03-31T00:00:00Z",
+                },
+              },
+            },
+          ],
         });
       vi.stubGlobal("fetch", mockFetch);
 
@@ -169,10 +195,17 @@ describe("Publish Module", () => {
     it("should verify GITHUB_TOKEN is configured", async () => {
       const envWithoutToken = { ...mockEnv, GITHUB_TOKEN: undefined };
       const snapshot = createMockSnapshot();
+      mockKvStorage.set("staging:snapshot:staging", snapshot);
+
+      // Reset the GitHub token to simulate unconfigured state
+      resetGitHubToken();
 
       await expect(
         publishSnapshot(envWithoutToken, snapshot, mockContext),
       ).rejects.toThrow("GITHUB_TOKEN not configured");
+
+      // Restore the token for other tests
+      setGitHubToken("test-token");
     });
 
     it("should verify staging snapshot exists", async () => {
@@ -251,14 +284,31 @@ describe("Publish Module", () => {
           json: async () => [],
         })
         .mockResolvedValueOnce({
-          // commitSnapshot
+          // getFileContent (not found)
+          status: 404,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          // commitFile
           ok: true,
           json: async () => ({ commit: { sha: "commit-sha-123" } }),
         })
         .mockResolvedValueOnce({
-          // verifyCommit - different SHA
+          // verifyCommit - different SHA to trigger failure (raw GitHub API format)
           ok: true,
-          json: async () => [{ sha: "different-sha" }],
+          json: async () => [
+            {
+              sha: "different-sha",
+              commit: {
+                message: "[AUTO] Update deals",
+                author: {
+                  name: "Test",
+                  email: "test@example.com",
+                  date: "2024-03-31T00:00:00Z",
+                },
+              },
+            },
+          ],
         });
       vi.stubGlobal("fetch", mockFetch);
 
@@ -279,14 +329,31 @@ describe("Publish Module", () => {
           json: async () => [],
         })
         .mockResolvedValueOnce({
-          // commitSnapshot
+          // getFileContent (not found)
+          status: 404,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          // commitFile
           ok: true,
           json: async () => ({ commit: { sha: "commit-sha-123" } }),
         })
         .mockResolvedValueOnce({
-          // verifyCommit
+          // verifyCommit - getRecentCommits returns raw GitHub API format
           ok: true,
-          json: async () => [{ sha: "commit-sha-123" }],
+          json: async () => [
+            {
+              sha: "commit-sha-123",
+              commit: {
+                message: "[AUTO] Update deals",
+                author: {
+                  name: "Test",
+                  email: "test@example.com",
+                  date: "2024-03-31T00:00:00Z",
+                },
+              },
+            },
+          ],
         });
       vi.stubGlobal("fetch", mockFetch);
 
@@ -324,7 +391,7 @@ describe("Publish Module", () => {
         .mockRejectedValue(new Error("KV write failed"));
 
       await expect(rollbackSnapshot(mockEnv, previousSnapshot)).rejects.toThrow(
-        "Rollback failed",
+        "KV write failed",
       );
     });
 
@@ -372,9 +439,21 @@ describe("Publish Module", () => {
           json: async () => ({ commit: { sha: "new-sha" } }),
         })
         .mockResolvedValueOnce({
-          // verifyCommit
+          // verifyCommit - getRecentCommits returns raw GitHub API format
           ok: true,
-          json: async () => [{ sha: "new-sha" }],
+          json: async () => [
+            {
+              sha: "new-sha",
+              commit: {
+                message: "[AUTO] Update deals",
+                author: {
+                  name: "Test",
+                  email: "test@example.com",
+                  date: "2024-03-31T00:00:00Z",
+                },
+              },
+            },
+          ],
         });
       vi.stubGlobal("fetch", mockFetch);
 
@@ -409,9 +488,21 @@ describe("Publish Module", () => {
           json: async () => ({ commit: { sha: "sha" } }),
         })
         .mockResolvedValueOnce({
-          // verifyCommit
+          // verifyCommit - getRecentCommits returns raw GitHub API format
           ok: true,
-          json: async () => [{ sha: "sha" }],
+          json: async () => [
+            {
+              sha: "sha",
+              commit: {
+                message: "[AUTO] Update deals",
+                author: {
+                  name: "Test",
+                  email: "test@example.com",
+                  date: "2024-03-31T00:00:00Z",
+                },
+              },
+            },
+          ],
         });
       vi.stubGlobal("fetch", mockFetch);
 

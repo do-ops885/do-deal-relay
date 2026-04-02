@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { executePipeline, getPipelineStatus } from "../../worker/state-machine";
+import {
+  setGitHubToken,
+  initGitHubCircuitBreaker,
+} from "../../worker/lib/github";
 import type { Deal, PipelineContext, Env, Snapshot } from "../../worker/types";
 import { PipelineError } from "../../worker/types";
 
@@ -139,8 +143,13 @@ describe("State Machine", () => {
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
+      GITHUB_TOKEN: "test-token",
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
+
+    // Initialize GitHub token for tests
+    setGitHubToken("test-token");
+    initGitHubCircuitBreaker(mockEnv);
   });
 
   afterEach(() => {

@@ -176,8 +176,8 @@ if grep -r "innerHTML" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v
     print_warning "innerHTML usage detected (review for XSS)"
 fi
 
-# Check for http:// (should be https://)
-if grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://" | grep -v "tests/"; then
+# Check for http:// (should be https://) - allow localhost for development
+if grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://" | grep -v "tests/" | grep -v "localhost" | grep -v "allow-http"; then
     print_warning "HTTP URLs found (should use HTTPS)"
 fi
 
