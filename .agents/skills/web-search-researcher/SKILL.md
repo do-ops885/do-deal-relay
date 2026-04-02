@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: d-oit
-tags: [research, web-search, information-gathering, validation, due-diligence]
 ---
 
 # Web Search Researcher

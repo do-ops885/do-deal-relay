@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: d-oit
-tags: [skills, development, evaluation]
 ---
 
 # skill-creator

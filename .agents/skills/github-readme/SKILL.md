@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: d-oit
-tags: [documentation, readme, github, human-facing]
 ---
 
 # GitHub README Creator

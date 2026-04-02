@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: d-oit
-tags: [quality, review, ai-detection, code-standards, anti-patterns]
 ---
 
 # Anti-AI-Slop

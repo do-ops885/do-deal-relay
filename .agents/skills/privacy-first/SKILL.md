@@ -4,13 +4,10 @@ description: >
   Prevent email addresses and personal data from entering the codebase.
   Use when user asks to "prevent emails", "remove personal data", "privacy check",
   "no email", or when writing/ editing any code, config, or documentation files.
-license: MIT
-compatibility: Works with Claude Code, OpenCode, and similar agents. No external dependencies.
 metadata:
-  author: d-oit
-  version: "1.0"
-  project: do-web-doc-resolver
-  tags: privacy security email lint quality personal-data
+  author: do-ops
+  version: "1.0.0"
+  spec: "agentskills.io"
 ---
 
 # Privacy First

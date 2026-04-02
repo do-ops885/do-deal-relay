@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: do-deal-relay
-tags: [cli, referral, cloudflare, wrangler]
 ---
 
 # Skill: refcli - Referral Management CLI

@@ -5,9 +5,6 @@ metadata:
   version: "1.0.0"
   author: do-ops
   spec: "agentskills.io"
-version: 1.0.0
-author: d-oit
-tags: [shell, bash, linting, testing, quality, scripts]
 ---
 
 # Shell Script Quality
