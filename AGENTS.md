@@ -1,8 +1,8 @@
 # AGENTS.md - Master Coordination Hub
 
-**Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems  
-**Version**: 0.2.0  
-**Architecture**: Agent-First CLI with swarm coordination + Referral Management System  
+**Goal**: Autonomous deal discovery with coordinated multi-agent CLI systems
+**Version**: 0.2.0
+**Architecture**: Agent-First CLI with swarm coordination + Referral Management System
 **Status**: Active Development - All Input Methods Implemented
 
 ## Quick Start
@@ -32,9 +32,9 @@ npx ts-node scripts/refcli.ts codes deactivate ABC123 --reason expired
 
 ## Code Quality Standards
 
-**Max 500 lines per source file** - Split files exceeding this limit  
-**Atomic commits only** - Each change is independently verifiable  
-**Skill evaluation required** - All skills must pass evaluator checks  
+**Max 500 lines per source file** - Split files exceeding this limit
+**Atomic commits only** - Each change is independently verifiable
+**Skill evaluation required** - All skills must pass evaluator checks
 **URL preservation enforced** - Complete URLs always preserved and returned
 
 ## URL Handling Rules (CRITICAL)
