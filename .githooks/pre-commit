@@ -100,8 +100,13 @@ SECRET_PATTERNS=(
 )
 
 for file in $FILES; do
-    # Skip binary files and large files
+    # Skip binary files, large files, and lock files
     if [ -f "$file" ] && [ ! -d "$file" ]; then
+        # Skip package-lock.json and other lock files (they contain hashes that look like secrets)
+        if [[ "$file" == "package-lock.json" ]] || [[ "$file" == "*.lock" ]] || [[ "$file" == "yarn.lock" ]]; then
+            continue
+        fi
+        
         # Check file size (skip files > 1MB)
         filesize=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo 0)
         if [ "$filesize" -lt 1048576 ]; then
