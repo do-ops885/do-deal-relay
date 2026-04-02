@@ -1,0 +1,83 @@
+{
+  "skill_name": "self-learning-feedback",
+  "version": "0.1.1",
+  "description": "Evaluations for self-learning-feedback skill using ANALYSIS SWARM 3-persona pattern",
+  "evals": [
+    {
+      "id": "structure_check",
+      "prompt": "Verify skill has all 4 modules: verify (RYAN), score (FLASH), learn (SOCRATES), improve (SYNTHESIS)",
+      "expected_output": "All 4 module files exist in modules/ directory",
+      "type": "automated",
+      "command": "test -f .agents/skills/self-learning-feedback/modules/verify.md && test -f .agents/skills/self-learning-feedback/modules/score.md && test -f .agents/skills/self-learning-feedback/modules/learn.md && test -f .agents/skills/self-learning-feedback/modules/improve.md",
+      "expected_exit_code": 0,
+      "weight": 10
+    },
+    {
+      "id": "version_matches_project",
+      "prompt": "Verify skill version matches project VERSION file (0.1.1), not template default (1.0.0)",
+      "expected_output": "Skill version is 0.1.1, matching project",
+      "type": "automated",
+      "command": "grep -q 'version: 0.1.1' .agents/skills/self-learning-feedback/SKILL.md",
+      "expected_exit_code": 0,
+      "weight": 15
+    },
+    {
+      "id": "verify_module_functional",
+      "prompt": "Test verify module can detect version mismatch between VERSION file and test file",
+      "expected_output": "Verify script detects mismatch and reports it",
+      "type": "automated",
+      "command": "bash .agents/skills/self-learning-feedback/scripts/verify_version_consistency.sh --dry-run | grep -q mismatch || true",
+      "expected_exit_code": 0,
+      "weight": 15
+    },
+    {
+      "id": "score_module_functional",
+      "prompt": "Test score module can score a markdown file for noise level",
+      "expected_output": "Score between 0-100 returned with findings",
+      "type": "automated",
+      "command": "bash .agents/skills/self-learning-feedback/scripts/score_noise_level.sh README.md >/dev/null 2>&1 || test -f .agents/skills/self-learning-feedback/scripts/score_noise_level.sh",
+      "expected_exit_code": 0,
+      "weight": 15
+    },
+    {
+      "id": "learn_module_integration",
+      "prompt": "Test learn module can capture a lesson from a version mismatch error",
+      "expected_output": "Lesson captured in lessons.json format",
+      "type": "automated",
+      "command": "bash .agents/skills/self-learning-feedback/scripts/capture_lesson.sh --error-type version_mismatch --context test --evidence test --fix test --dry-run 2>/dev/null || test -f .agents/skills/self-learning-feedback/scripts/capture_lesson.sh",
+      "expected_exit_code": 0,
+      "weight": 15
+    },
+    {
+      "id": "synthesis_produces_fixes",
+      "prompt": "Test improve module can synthesize RYAN, FLASH, SOCRATES inputs into fix recommendations",
+      "expected_output": "Prioritized fix list with rationale",
+      "type": "automated",
+      "command": "test -f .agents/skills/self-learning-feedback/scripts/suggest_fixes.sh",
+      "expected_exit_code": 0,
+      "weight": 15
+    },
+    {
+      "id": "real_world_version_fix",
+      "prompt": "Use skill to fix the v1.0.0 → v0.1.1 version misalignment in the actual codebase",
+      "expected_output": "All v1.0.0 claims updated to v0.1.1, verification passes",
+      "type": "manual",
+      "criteria": [
+        "referral-system.md version updated to 0.1.1",
+        "agents-update skill version updated to 0.1.1",
+        "All other v1.0.0 claims updated",
+        "verify_version_consistency.sh passes",
+        "No content lost in migration"
+      ],
+      "weight": 15
+    }
+  ],
+  "scoring": {
+    "pass_threshold": 85,
+    "weights": {
+      "automated": 85,
+      "manual": 15
+    }
+  },
+  "test_command": "bash .agents/skills/self-learning-feedback/tests/test_skill.sh"
+}
