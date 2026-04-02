@@ -31,13 +31,24 @@ jobs:
           # Install TruffleHog
           curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
 
+          # Debug commit info
+          echo "GITHUB_SHA: ${{ github.sha }}"
+          echo "GITHUB_EVENT_BEFORE: ${{ github.event.before }}"
+          git log --oneline -5 || true
+          git rev-list --count HEAD || true
+
+          # Count commits to handle single-commit repositories
+          COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+
           # Handle single-commit scenario where BASE and HEAD are the same
-          if [ "${{ github.event.before }}" == "${{ github.sha }}" ] || [ -z "${{ github.event.before }}" ]; then
-            echo "Single commit push or missing base - running full filesystem scan"
-            trufflehog filesystem . --only-verified --json || true
+          BEFORE="${{ github.event.before }}"
+          # Run filesystem scan for edge cases: single commit, same SHA, or empty BEFORE
+          if [ "$COMMIT_COUNT" -le 1 ] || [ "$BEFORE" = "${{ github.sha }}" ] || [ -z "$BEFORE" ]; then
+            echo "Single commit or same base/head - running full filesystem scan"
+            trufflehog filesystem . --only-verified --json 2>&1 || true
           else
-            echo "Running incremental scan from ${{ github.event.before }} to ${{ github.sha }}"
-            trufflehog git file://. --since-commit ${{ github.event.before }} --only-verified --json || true
+            echo "Running incremental scan from $BEFORE to ${{ github.sha }}"
+            trufflehog git file://. --since-commit "$BEFORE" --only-verified --json 2>&1 || true
           fi
         continue-on-error: true
 
