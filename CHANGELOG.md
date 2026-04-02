@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-02
+
+### Added
+
+- Referral management system with full URL preservation
+- CLI tool (refcli) for referral code management with smart-add capability
+- Browser Extension for auto-detecting referral codes (Chrome/Firefox/Safari)
+- Chat Bot integration (Telegram/Discord) for conversational referral management
+- Email integration with parsing for forwarded referral emails
+- Webhook system with HMAC signature verification for partner integrations
+- Web research agent for discovering referral codes across ProductHunt, GitHub, HN, Reddit
+- Swarm coordination configuration for multi-agent input method implementation
+- Handoff protocol documentation for agent coordination
+- URL preservation validation script for testing complete link handling
+- Circuit breaker, cache, and metrics utility modules
+- Production readiness checklist to AGENTS.md
+- Code quality standards (max 500 lines per file, skill evaluation requirements)
+
+### Changed
+
+- AGENTS.md updated with URL handling rules (complete link preservation)
+- Guard rails documentation updated with code quality standards
+- Version bumped to 0.2.0 reflecting referral system completion
+- All input method statuses updated to "Implemented" in documentation
+
+### Fixed
+
+- Missing module references (circuit-breaker, cache, metrics) causing TypeScript errors
+- API responses now include full URL field in all referral endpoints
+- Skill validation errors for refcli skill
+
 ## [0.1.1] - 2026-04-01
 
 ### Added
