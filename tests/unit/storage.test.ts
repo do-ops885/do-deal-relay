@@ -53,13 +53,13 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
-  version: "0.1.1",
+  version: "0.1.0",
   generated_at: "2024-03-31T00:00:00Z",
   run_id: "test-run",
   trace_id: "test-trace",
   snapshot_hash: "abc123",
   previous_hash: "xyz789",
-  schema_version: "0.1.1",
+  schema_version: "0.1.0",
   stats: {
     total: 1,
     active: 1,
@@ -151,9 +151,6 @@ describe("Storage Layer", () => {
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(`sources:${key}`, value);
         }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`sources:${key}`);
-        }),
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -215,12 +212,13 @@ describe("Storage Layer", () => {
 
     it("should validate snapshot before writing", async () => {
       const invalidSnapshot = {
-        version: "1.0.0",
+        version: "0.1.0",
         generated_at: "2024-03-31T00:00:00Z",
-        run_id: "test",
-        trace_id: "test",
+        run_id: "test-run",
+        trace_id: "test-trace",
+        snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "1.0.0",
+        schema_version: "0.1.0",
         stats: {
           total: 0,
           active: 0,
@@ -372,10 +370,9 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      // Get the last put call (the actual registry update, not the cache)
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      // Get the updated registry from the mock put call
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(0.7);
     });
@@ -391,9 +388,8 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
     });
@@ -407,9 +403,8 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", true);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_success_count).toBe(1);
     });
@@ -423,14 +418,13 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", false);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_failure_count).toBe(1);
     });
 
-    it("should clamp trust score to valid range (duplicate)", async () => {
+    it("should clamp trust score to valid range", async () => {
       const sources = [
         createMockSource({ domain: "test.com", trust_initial: 0.9 }),
       ];
@@ -441,14 +435,13 @@ describe("Storage Layer", () => {
 
       await updateSourceTrust(mockEnv, "test.com", 0.2);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
     });
 
-    it("should record successful validation (duplicate)", async () => {
+    it("should record successful validation", async () => {
       const sources = [createMockSource({ domain: "test.com" })];
       mockKvStorage.set(
         "sources:registry",
@@ -457,14 +450,13 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", true);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_success_count).toBe(1);
     });
 
-    it("should record failed validation (duplicate)", async () => {
+    it("should record failed validation", async () => {
       const sources = [createMockSource({ domain: "test.com" })];
       mockKvStorage.set(
         "sources:registry",
@@ -473,9 +465,8 @@ describe("Storage Layer", () => {
 
       await recordSourceValidation(mockEnv, "test.com", false);
 
-      const putCalls = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls;
-      const putCall = putCalls[putCalls.length - 1];
+      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
+        .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_failure_count).toBe(1);
     });

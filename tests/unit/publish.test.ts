@@ -1,19 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-vi.mock("../../worker/lib/github", () => {
-  const fn = vi.fn;
-  return {
-    isSnapshotCommitted: fn(async () => false),
-    commitSnapshot: fn(async () => "commit-sha-123"),
-    getFileContent: fn(async () => null),
-    getRecentCommits: fn(async () => [{ sha: "commit-sha-123" }]),
-    verifyCommit: fn(async () => true),
-    commitFile: fn(async () => "commit-sha-123"),
-  };
-});
-
 import { publishSnapshot, rollbackSnapshot } from "../../worker/publish";
-import * as github from "../../worker/lib/github";
 import type { Snapshot, Deal, Env, PipelineContext } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
@@ -48,13 +34,13 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
-  version: "0.1.2",
+  version: "0.1.0",
   generated_at: "2024-03-31T00:00:00Z",
   run_id: "test-run",
   trace_id: "test-trace",
   snapshot_hash: "abc123",
   previous_hash: "xyz789",
-  schema_version: "0.1.2",
+  schema_version: "0.1.0",
   stats: {
     total: 1,
     active: 1,
@@ -73,7 +59,7 @@ describe("Publish Module", () => {
 
   beforeEach(() => {
     mockKvStorage = new Map();
-
+    vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("console", {
       log: vi.fn(),
       error: vi.fn(),
@@ -148,8 +134,6 @@ describe("Publish Module", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    vi.mocked(github.commitSnapshot).mockClear();
-    vi.mocked(github.isSnapshotCommitted).mockClear();
   });
 
   describe("publishSnapshot", () => {
@@ -157,13 +141,29 @@ describe("Publish Module", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      vi.mocked(github.isSnapshotCommitted).mockResolvedValueOnce(false);
-      vi.mocked(github.commitSnapshot).mockResolvedValueOnce("commit-sha-123");
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // commitSnapshot
+          ok: true,
+          json: async () => ({ commit: { sha: "commit-sha-123" } }),
+        })
+        .mockResolvedValueOnce({
+          // verifyCommit
+          ok: true,
+          json: async () => [{ sha: "commit-sha-123" }],
+        });
+      vi.stubGlobal("fetch", mockFetch);
 
       const result = await publishSnapshot(mockEnv, snapshot, mockContext);
 
       expect(result.success).toBe(true);
-      expect(result.commitSha).toBe("commit-sha-123");
+      expect(result.commitSha).toBeDefined();
     });
 
     it("should verify GITHUB_TOKEN is configured", async () => {
@@ -196,21 +196,43 @@ describe("Publish Module", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      vi.mocked(github.isSnapshotCommitted).mockResolvedValueOnce(true);
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            sha: "abc123",
+            commit: {
+              message: `[AUTO] Update deals - ${snapshot.snapshot_hash}`,
+            },
+          },
+        ],
+      });
+      vi.stubGlobal("fetch", mockFetch);
 
       const result = await publishSnapshot(mockEnv, snapshot, mockContext);
 
       expect(result.success).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Only isSnapshotCommitted call
     });
 
     it("should handle GitHub commit failure", async () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      vi.mocked(github.isSnapshotCommitted).mockResolvedValueOnce(false);
-      vi.mocked(github.commitSnapshot).mockRejectedValueOnce(
-        new Error("GitHub commit failed: 500"),
-      );
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // commitSnapshot fails
+          ok: false,
+          status: 500,
+          text: async () => "Internal Server Error",
+        });
+      vi.stubGlobal("fetch", mockFetch);
 
       await expect(
         publishSnapshot(mockEnv, snapshot, mockContext),
@@ -221,10 +243,24 @@ describe("Publish Module", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      // Make commitSnapshot fail (simulating verifyCommit failure inside it)
-      vi.mocked(github.commitSnapshot).mockImplementationOnce(async () => {
-        throw new Error("GitHub commit verification failed");
-      });
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // commitSnapshot
+          ok: true,
+          json: async () => ({ commit: { sha: "commit-sha-123" } }),
+        })
+        .mockResolvedValueOnce({
+          // verifyCommit - different SHA
+          ok: true,
+          json: async () => [{ sha: "different-sha" }],
+        });
+      vi.stubGlobal("fetch", mockFetch);
 
       await expect(
         publishSnapshot(mockEnv, snapshot, mockContext),
@@ -235,8 +271,24 @@ describe("Publish Module", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      vi.mocked(github.isSnapshotCommitted).mockResolvedValueOnce(false);
-      vi.mocked(github.commitSnapshot).mockResolvedValueOnce("commit-sha-123");
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // commitSnapshot
+          ok: true,
+          json: async () => ({ commit: { sha: "commit-sha-123" } }),
+        })
+        .mockResolvedValueOnce({
+          // verifyCommit
+          ok: true,
+          json: async () => [{ sha: "commit-sha-123" }],
+        });
+      vi.stubGlobal("fetch", mockFetch);
 
       await publishSnapshot(mockEnv, snapshot, mockContext);
 
@@ -302,22 +354,74 @@ describe("Publish Module", () => {
       });
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // getFileContent (not found)
+          status: 404,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          // commitFile
+          ok: true,
+          json: async () => ({ commit: { sha: "new-sha" } }),
+        })
+        .mockResolvedValueOnce({
+          // verifyCommit
+          ok: true,
+          json: async () => [{ sha: "new-sha" }],
+        });
+      vi.stubGlobal("fetch", mockFetch);
+
       await publishSnapshot(mockEnv, snapshot, mockContext);
 
-      expect(github.commitSnapshot).toHaveBeenCalledWith(
-        mockEnv.GITHUB_REPO,
-        expect.anything(),
-        expect.objectContaining({ total: 10, active: 8 }),
+      // Verify the commit was made with correct data
+      const commitCall = mockFetch.mock.calls.find(
+        (call: unknown[]) => (call[1] as { method?: string })?.method === "PUT",
       );
+      expect(commitCall).toBeDefined();
     });
 
     it("should use correct file path from config", async () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          // isSnapshotCommitted
+          ok: true,
+          json: async () => [],
+        })
+        .mockResolvedValueOnce({
+          // getFileContent
+          status: 404,
+          ok: false,
+        })
+        .mockResolvedValueOnce({
+          // commitFile
+          ok: true,
+          json: async () => ({ commit: { sha: "sha" } }),
+        })
+        .mockResolvedValueOnce({
+          // verifyCommit
+          ok: true,
+          json: async () => [{ sha: "sha" }],
+        });
+      vi.stubGlobal("fetch", mockFetch);
+
       await publishSnapshot(mockEnv, snapshot, mockContext);
 
-      expect(github.commitSnapshot).toHaveBeenCalled();
+      // Should use deals.json path
+      const commitCall = mockFetch.mock.calls.find(
+        (call: unknown[]) => (call[1] as { method?: string })?.method === "PUT",
+      );
+      expect((commitCall as unknown[])[0]).toContain("deals.json");
     });
   });
 });

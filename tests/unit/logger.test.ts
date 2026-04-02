@@ -315,12 +315,12 @@ describe("Logger", () => {
     it("should record versions", () => {
       const builder = createLogBuilder("run-1", "trace-1")
         .phase("publish")
-        .versions("0.1.1", "0.1.1");
+        .versions("0.1.0", "0.1.0");
 
       const entry = builder.build();
 
-      expect(entry.validator_versions).toBe("0.1.1");
-      expect(entry.schema_version).toBe("0.1.1");
+      expect(entry.validator_versions).toBe("0.1.0");
+      expect(entry.schema_version).toBe("0.1.0");
     });
 
     it("should record notification status", () => {

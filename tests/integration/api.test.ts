@@ -34,13 +34,13 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
-  version: "0.1.2",
+  version: "0.1.0",
   generated_at: "2024-03-31T00:00:00Z",
   run_id: "test-run",
   trace_id: "test-trace",
   snapshot_hash: "abc123",
   previous_hash: "xyz789",
-  schema_version: "0.1.2",
+  schema_version: "0.1.0",
   stats: {
     total: 1,
     active: 1,
@@ -134,31 +134,27 @@ describe("API Endpoints", () => {
 
   describe("GET /health", () => {
     it("should return 200 when system is healthy", async () => {
-      // Mock all KV stores to be accessible
-      mockEnv.DEALS_PROD.get = vi.fn(async () => "test");
-      mockEnv.DEALS_STAGING.get = vi.fn(async () => "test");
+      const snapshot = createMockSnapshot();
+      mockKvStorage.set("prod:snapshot:prod", snapshot);
 
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv);
 
-      // Response could be 200 (healthy) or 503 (degraded) depending on pipeline status
-      expect([200, 503]).toContain(response.status);
+      expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body.status).toBeDefined();
+      expect(body.status).toBe("healthy");
       expect(body.version).toBeDefined();
       expect(body.timestamp).toBeDefined();
+      expect(body.checks.kv_connection).toBe(true);
     });
 
-    it("should return appropriate status when KV is not accessible", async () => {
-      // Mock KV to return null (simulating connection failure)
-      mockEnv.DEALS_PROD.get = vi.fn(async () => null);
-      mockEnv.DEALS_STAGING.get = vi.fn(async () => null);
-
+    it("should return 503 when snapshot is missing", async () => {
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv);
 
-      // Should return 500 or 503 when KV is down
-      expect([500, 503]).toContain(response.status);
+      expect(response.status).toBe(503);
+      const body = await response.json();
+      expect(body.status).toBe("degraded");
     });
 
     it("should include CORS headers", async () => {

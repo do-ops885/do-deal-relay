@@ -34,13 +34,13 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
-  version: "0.1.2",
+  version: "0.1.0",
   generated_at: "2024-03-31T00:00:00Z",
   run_id: "test-run",
   trace_id: "test-trace",
   snapshot_hash: "abc123",
   previous_hash: "xyz789",
-  schema_version: "0.1.2",
+  schema_version: "0.1.0",
   stats: {
     total: 1,
     active: 1,
@@ -136,13 +136,9 @@ describe("State Machine", () => {
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(`sources:${key}`, value);
         }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`sources:${key}`);
-        }),
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
-      GITHUB_TOKEN: "test-token",
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
   });
