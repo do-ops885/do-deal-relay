@@ -47,32 +47,9 @@
 
 ## Root Directory Policy
 
-**CRITICAL**: Only standard project files belong in root:
+**CRITICAL**: Only standard project files belong in root. All other files MUST use appropriate subfolders.
 
-### Allowed in Root
-
-- `package.json` - NPM manifest
-- `package-lock.json` - NPM lockfile
-- `tsconfig.json` - TypeScript config
-- `vitest.config.ts` - Test runner config
-- `wrangler.toml` - Cloudflare Workers config
-- `README.md` - Main project documentation
-- `LICENSE` - License file
-- `VERSION` - Version file
-- `CHANGELOG.md` - Version history
-- `.gitignore` - Git ignore patterns
-
-### Required Subfolder Usage
-
-**ALL other files MUST use appropriate subfolders**:
-
-| Content Type  | Target Location           |
-| ------------- | ------------------------- |
-| Documentation | `agents-docs/` or `docs/` |
-| Reports/State | `temp/`                   |
-| Scripts/Tools | `scripts/`                |
-| Tests         | `tests/`                  |
-| Source Code   | `worker/`                 |
+For the complete policy including allowed files, required subfolders, and enforcement rules, see [Guard Rails](./guard-rails.md) - File Organization Guard Rails section.
 
 ## Related Documentation
 
