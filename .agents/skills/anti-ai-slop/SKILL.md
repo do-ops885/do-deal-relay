@@ -15,6 +15,7 @@ Detect and prevent low-quality AI-generated code, content, and outputs that lack
 - Reviewing AI-generated code, docs, or research before committing
 - Checking for repetitive AI patterns and establishing standards
 - Auditing codebase for low-quality AI content
+- Writing changelogs or documentation to avoid clichés
 
 ## Required Inputs
 
@@ -23,6 +24,47 @@ CONTENT: Code, text, or output to review
 TYPE: (code/docs/config/tests/other)
 STANDARD: Acceptable quality threshold
 ```
+
+## Prohibited AI-Slop Words
+
+Avoid these vague, overused terms in all documentation:
+
+| Slop Word        | Replace With                                 |
+| ---------------- | -------------------------------------------- |
+| new              | specific version number or "added"           |
+| enhanced         | specific improvement (faster, smaller, etc.) |
+| leverage         | "use" or specific action                     |
+| robust           | specific resilience measure                  |
+| seamless         | specific integration detail                  |
+| cutting-edge     | specific technology or version               |
+| innovative       | specific differentiator                      |
+| revolutionary    | specific breakthrough                        |
+| next-generation  | specific version or upgrade                  |
+| state-of-the-art | specific capability                          |
+| transformative   | specific measurable change                   |
+| groundbreaking   | specific achievement                         |
+| best-in-class    | specific metric or comparison                |
+| world-class      | specific standard met                        |
+| unparalleled     | specific unique feature                      |
+| unmatched        | specific comparison data                     |
+| superior         | specific advantage                           |
+| optimized        | specific measurable improvement              |
+| streamlined      | specific simplification                      |
+| comprehensive    | specific coverage detail                     |
+| holistic         | specific integrated approach                 |
+| end-to-end       | specific workflow coverage                   |
+| turnkey          | specific setup steps                         |
+| out-of-the-box   | specific default behavior                    |
+| user-friendly    | specific usability improvement               |
+| intuitive        | specific design decision                     |
+| powerful         | specific capability metric                   |
+| flexible         | specific configuration option                |
+| scalable         | specific performance at scale                |
+| efficient        | specific resource reduction                  |
+| advanced         | specific technical detail                    |
+| modern           | specific current standard                    |
+| sleek            | specific design element                      |
+| elegant          | specific implementation choice               |
 
 ## Quick Detection Patterns
 
@@ -37,11 +79,12 @@ STANDARD: Acceptable quality threshold
 
 ### Content Slop Markers
 
-| Pattern           | Slop Example                       | Better                           |
-| ----------------- | ---------------------------------- | -------------------------------- |
-| Fluffy intros     | "In today's fast-paced world..."   | Specific problem + solution      |
-| Vague lists       | "Easy to use, Fast, Great support" | Quantified benefits with context |
-| Boilerplate steps | "1. Install 2. Configure 3. Run"   | Exact commands with real values  |
+| Pattern           | Slop Example                       | Better                                 |
+| ----------------- | ---------------------------------- | -------------------------------------- |
+| Fluffy intros     | "In today's fast-paced world..."   | Specific problem + solution            |
+| Vague lists       | "Easy to use, Fast, Great support" | Quantified benefits with context       |
+| Boilerplate steps | "1. Install 2. Configure 3. Run"   | Exact commands with real values        |
+| Slop words        | "New enhanced robust feature"      | "Added caching reduces latency by 40%" |
 
 ## Quality Checklist
 
@@ -60,6 +103,7 @@ STANDARD: Acceptable quality threshold
 - [ ] Examples use real data, not foo/bar/baz
 - [ ] Installation steps are complete and tested
 - [ ] API docs have request/response examples
+- [ ] No prohibited slop words used
 
 ### Research Output Standards
 
@@ -103,6 +147,30 @@ Found {{count}} relevant items. {{brief_why_they_matter}}.
 Saved to: {{file_path}}
 ```
 
+## Changelog Entry Standards
+
+```markdown
+### Added
+
+- Specific feature with measurable outcome
+- Exact capability with version reference
+
+### Changed
+
+- Specific behavior from X to Y
+- Measurable improvement (percentage, time, size)
+
+### Fixed
+
+- Specific bug with root cause
+- Exact error condition resolved
+
+### Security
+
+- Specific vulnerability addressed
+- Exact protection implemented
+```
+
 ## Manual Review Prompts
 
 Ask yourself:
@@ -112,6 +180,7 @@ Ask yourself:
 3. Are there numbers/metrics or just adjectives?
 4. Would a human expert write it this way?
 5. Is there a clear next action?
+6. Have I used any prohibited slop words?
 
 ## References
 
