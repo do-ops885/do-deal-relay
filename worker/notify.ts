@@ -80,10 +80,11 @@ async function shouldSendNotification(
       )) || [];
     const now = new Date().getTime();
 
-    // Check for recent notifications of same type
+    // Check for recent notifications of same type and source
     const recent = history.filter(
       (h) =>
         h.type === event.type &&
+        h.source === (event.context?.source || "system") &&
         now - new Date(h.timestamp).getTime() < NOTIFICATION_COOLDOWN_MS,
     );
 
@@ -109,7 +110,7 @@ async function recordNotification(
 
     history.push({
       type: event.type,
-      source: "system",
+      source: (event.context?.source as string) || "system",
       timestamp: new Date().toISOString(),
     });
 
