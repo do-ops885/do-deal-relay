@@ -20,12 +20,11 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240320.1",
-    "miniflare": "^3.20240320.0",
+    "@cloudflare/workers-types": "^4.20260402.1",
+    "miniflare": "^4.20260401.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.3",
-    "vitest": "^1.4.0",
-    "vitest-environment-miniflare": "^2.14.4",
+    "vitest": "^4.1.2",
     "wrangler": "^4.79.0"
   },
   "engines": {
