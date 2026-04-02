@@ -243,7 +243,8 @@ describe("Storage Layer", () => {
 
       await clearStaging(mockEnv);
 
-      expect(mockEnv.DEALS_STAGING.delete).toHaveBeenCalledTimes(2);
+      // 2 deletes for the keys + 1 for cache invalidation
+      expect(mockEnv.DEALS_STAGING.delete).toHaveBeenCalledTimes(3);
     });
   });
 

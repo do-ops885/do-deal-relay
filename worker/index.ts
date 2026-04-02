@@ -91,6 +91,21 @@ export default {
       }
 
       if (path === "/api/submit" && request.method === "POST") {
+        // Check Content-Type
+        const contentType = request.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          return jsonResponse(
+            { error: "Content-Type must be application/json" },
+            415,
+          );
+        }
+
+        // Check body size (rough estimate via Content-Length)
+        const contentLength = request.headers.get("content-length");
+        if (contentLength && parseInt(contentLength) > 1024 * 1024) {
+          return jsonResponse({ error: "Request body too large" }, 413);
+        }
+
         const body = await request.json();
         return handleSubmit(body as SubmitDealBody, env);
       }
