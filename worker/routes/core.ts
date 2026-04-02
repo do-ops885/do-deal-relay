@@ -102,7 +102,7 @@ export async function handleHealth(env: Env): Promise<Response> {
     metrics: {
       total_runs_24h: recentRuns,
       success_rate_24h: recentRuns > 0 ? successfulRuns / recentRuns : 0,
-      avg_deals_per_run: snapshot?.stats.active || 0,
+      avg_deals_per_run: snapshot?.stats?.active || 0,
     },
   };
 
@@ -110,30 +110,24 @@ export async function handleHealth(env: Env): Promise<Response> {
   return jsonResponse(health, statusCode);
 }
 
+export async function handleReady(env: Env): Promise<Response> {
+  const health = await handleHealth(env);
+  const body = (await health.json()) as HealthStatus;
+  const isReady = body.status === "healthy";
+  return jsonResponse({ ready: isReady, ...body }, isReady ? 200 : 503);
+}
+
+export async function handleLive(env: Env): Promise<Response> {
+  return jsonResponse({ alive: true, timestamp: new Date().toISOString() });
+}
+
 /**
  * Prometheus-compatible metrics endpoint.
- *
- * Returns metrics in Prometheus exposition format for monitoring:
- * - deals_runs_total: Total number of discovery runs
- * - deals_publish_success_total: Successful publish operations
- * - deals_candidate_deals_total: Deals discovered (before validation)
- * - deals_valid_deals_total: Deals passing validation
- * - deals_duplicate_deals_total: Duplicates filtered out
- * - deals_active_deals: Current active deals in production
- *
- * @param env - Worker environment with KV bindings
- * @returns HTTP response with Prometheus text format metrics
- * @example
- * ```
- * # HELP deals_runs_total Total discovery runs
- * # TYPE deals_runs_total counter
- * deals_runs_total 42
- *
- * # HELP deals_active_deals Current active deals in production
- * deals_active_deals 156
- * ```
  */
-export async function handleMetrics(env: Env): Promise<Response> {
+export async function handleMetrics(
+  env: Env,
+  format: string = "prometheus",
+): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
   const logs = await getRecentLogs(env, 1000);
 
@@ -144,6 +138,21 @@ export async function handleMetrics(env: Env): Promise<Response> {
   const candidates = logs.reduce((sum, l) => sum + (l.candidate_count || 0), 0);
   const valid = logs.reduce((sum, l) => sum + (l.valid_count || 0), 0);
   const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
+
+  if (format === "json") {
+    return jsonResponse({
+      summary: {
+        total_runs: runs,
+        successful_runs: successes,
+      },
+      deals: {
+        active: snapshot?.stats?.active || 0,
+        discovered_total: candidates,
+        validated_total: valid,
+        duplicate_total: duplicates,
+      },
+    });
+  }
 
   const metrics = `
 # HELP deals_runs_total Total discovery runs
@@ -163,7 +172,7 @@ deals_valid_deals_total ${valid}
 deals_duplicate_deals_total ${duplicates}
 
 # HELP deals_active_deals Current active deals in production
-deals_active_deals ${snapshot?.stats.active || 0}
+deals_active_deals ${snapshot?.stats?.active || 0}
 `.trim();
 
   return new Response(metrics, {
@@ -280,9 +289,25 @@ export async function handleGetLogs(url: URL, env: Env): Promise<Response> {
 }
 
 export async function handleSubmit(
-  body: SubmitDealBody,
+  request: Request,
   env: Env,
 ): Promise<Response> {
+  // Check Content-Type
+  const contentType = request.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    return jsonResponse(
+      { error: "Content-Type must be application/json" },
+      415,
+    );
+  }
+
+  // Check body size (rough estimate via Content-Length)
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength) > 1024 * 1024) {
+    return jsonResponse({ error: "Request body too large" }, 413);
+  }
+
+  const body = (await request.json()) as SubmitDealBody;
   const validation = SubmitDealBodySchema.safeParse(body);
 
   if (!validation.success) {
