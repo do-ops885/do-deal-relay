@@ -55,27 +55,6 @@ export type DealMetadata = z.infer<typeof DealMetadataSchema>;
 export type Deal = z.infer<typeof DealSchema>;
 
 // ============================================================================
-// Expiring Deal Types
-// ============================================================================
-
-export interface ExpiringDeal {
-  deal: Deal;
-  daysUntilExpiry: number;
-  notificationWindow: "7d" | "30d" | "90d";
-}
-
-// ============================================================================
-// Deal Category Types
-// ============================================================================
-
-export interface DealCategory {
-  primary: "finance" | "crypto" | "shopping" | "travel" | "gaming" | "other";
-  subcategories: string[];
-  tags: string[];
-  confidence: number; // 0-1
-}
-
-// ============================================================================
 // Snapshot Schema
 // ============================================================================
 
@@ -254,23 +233,6 @@ export const GetDealsQuerySchema = z.object({
   category: z.string().optional(),
   min_reward: z.coerce.number().optional(),
   limit: z.coerce.number().int().min(1).max(1000).default(100),
-  sortBy: z
-    .enum(["confidence", "value", "recency", "trust", "expiry"])
-    .optional(),
-  order: z.enum(["asc", "desc"]).optional(),
-  minConfidence: z.coerce.number().min(0).max(1).optional(),
-  maxAge: z.coerce.number().int().min(1).optional(),
-});
-
-export const RankingQuerySchema = z.object({
-  sortBy: z
-    .enum(["confidence", "value", "recency", "trust", "expiry"])
-    .default("confidence"),
-  order: z.enum(["asc", "desc"]).default("desc"),
-  category: z.string().optional(),
-  minConfidence: z.coerce.number().min(0).max(1).optional(),
-  maxAge: z.coerce.number().int().min(1).optional(),
-  limit: z.coerce.number().int().min(1).max(1000).default(100),
 });
 
 export const SubmitDealBodySchema = z.object({
@@ -282,7 +244,6 @@ export const SubmitDealBodySchema = z.object({
 
 export type GetDealsQuery = z.infer<typeof GetDealsQuerySchema>;
 export type SubmitDealBody = z.infer<typeof SubmitDealBodySchema>;
-export type RankingQuery = z.infer<typeof RankingQuerySchema>;
 
 // ============================================================================
 // Environment Types
@@ -295,9 +256,7 @@ export interface NotificationEvent {
     | "concurrency_abort"
     | "high_value_deal"
     | "trust_anomaly"
-    | "system_error"
-    | "deal_expiring"
-    | "deal_expired";
+    | "system_error";
   severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;
@@ -305,27 +264,17 @@ export interface NotificationEvent {
 }
 
 export interface Env {
-  // KV Namespaces
   DEALS_PROD: KVNamespace;
   DEALS_STAGING: KVNamespace;
   DEALS_LOG: KVNamespace;
   DEALS_LOCK: KVNamespace;
   DEALS_SOURCES: KVNamespace;
-  DEALS_REFERRALS?: KVNamespace;
-  DEALS_WEBHOOKS?: KVNamespace;
-
-  // D1 Database (EU AI Act logging + advanced queries)
-  DEALS_DB?: D1Database;
-
-  // Environment & Config
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
-  EMAIL_WEBHOOK_SECRET?: string;
-  WEBHOOK_API_KEYS?: string; // Comma-separated list of allowed API keys
 }
 
 // ============================================================================
@@ -334,37 +283,19 @@ export interface Env {
 
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
-  timestamp: string;
   version: string;
-  components: {
-    kv_stores: {
-      deals_prod: boolean;
-      deals_staging: boolean;
-      deals_log: boolean;
-      deals_lock: boolean;
-      deals_sources: boolean;
-    };
-    pipeline: {
-      last_run: string;
-      last_success: boolean;
-      average_duration_ms: number;
-    };
-    external_services: {
-      github_api: boolean;
-      telegram_api?: boolean;
-    };
+  timestamp: string;
+  checks: {
+    kv_connection: boolean;
+    last_run_success: boolean;
+    snapshot_valid: boolean;
   };
-  metrics: {
-    total_runs_24h: number;
-    success_rate_24h: number;
-    avg_deals_per_run: number;
+  last_run?: {
+    run_id: string;
+    timestamp: string;
+    duration_ms: number;
+    deals_count: number;
   };
-}
-
-export interface HealthCheckResult {
-  status: "healthy" | "degraded" | "unhealthy";
-  components: HealthStatus["components"];
-  metrics: HealthStatus["metrics"];
 }
 
 export interface Metrics {
@@ -377,125 +308,6 @@ export interface Metrics {
   deals_fetch_latency_ms: number;
   deals_validator_failures_total: number;
 }
-
-// ============================================================================
-// Referral Input Management Schema
-// ============================================================================
-
-export const ReferralInputSchema = z.object({
-  id: z.string(),
-  code: z.string().min(1).max(100),
-  url: z.string().url(),
-  domain: z.string().min(1),
-  source: z.enum(["manual", "web_research", "api", "discovered"]),
-  status: z.enum(["active", "inactive", "expired", "quarantined"]),
-  submitted_at: z.string().datetime(),
-  submitted_by: z.string().optional(),
-  expires_at: z.string().datetime().optional(),
-  deactivated_at: z.string().datetime().optional(),
-  deactivated_reason: z
-    .enum(["user_request", "expired", "invalid", "violation", "replaced"])
-    .optional(),
-  metadata: z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    reward_type: z.enum(["cash", "credit", "percent", "item", "unknown"]),
-    reward_value: z.union([z.number(), z.string()]).optional(),
-    currency: z.string().optional(),
-    category: z.array(z.string()).default([]),
-    tags: z.array(z.string()).default([]),
-    requirements: z.array(z.string()).default([]),
-    research_sources: z.array(z.string()).optional(),
-    confidence_score: z.number().min(0).max(1).default(0.5),
-    notes: z.string().optional(),
-  }),
-  validation: z
-    .object({
-      last_validated: z.string().datetime().optional(),
-      is_valid: z.boolean().optional(),
-      validation_errors: z.array(z.string()).optional(),
-      checked_urls: z.array(z.string()).optional(),
-    })
-    .optional(),
-  related_codes: z.array(z.string()).optional(), // For tracking variations
-});
-
-export const ReferralResearchResultSchema = z.object({
-  query: z.string(),
-  domain: z.string(),
-  discovered_codes: z.array(
-    z.object({
-      code: z.string(),
-      url: z.string().url(),
-      source: z.string(),
-      discovered_at: z.string().datetime(),
-      reward_summary: z.string().optional(),
-      confidence: z.number().min(0).max(1),
-    }),
-  ),
-  research_metadata: z.object({
-    sources_checked: z.array(z.string()),
-    search_queries: z.array(z.string()),
-    research_duration_ms: z.number(),
-    agent_id: z.string(),
-  }),
-});
-
-export const ReferralDeactivateBodySchema = z.object({
-  code: z.string().min(1),
-  reason: z.enum([
-    "user_request",
-    "expired",
-    "invalid",
-    "violation",
-    "replaced",
-  ]),
-  replaced_by: z.string().optional(), // New code that replaces this one
-  notes: z.string().optional(),
-});
-
-export const ReferralSearchQuerySchema = z.object({
-  domain: z.string().optional(),
-  status: z
-    .enum(["active", "inactive", "expired", "quarantined", "all"])
-    .default("all"),
-  category: z.string().optional(),
-  source: z
-    .enum(["manual", "web_research", "api", "discovered", "all"])
-    .default("all"),
-  limit: z.coerce.number().int().min(1).max(1000).default(100),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-export const WebResearchRequestSchema = z.object({
-  query: z.string().min(1),
-  domain: z.string().optional(),
-  depth: z.enum(["quick", "thorough", "deep"]).default("thorough"),
-  sources: z
-    .array(
-      z.enum([
-        "producthunt",
-        "github",
-        "hackernews",
-        "reddit",
-        "twitter",
-        "company_site",
-        "all",
-      ]),
-    )
-    .default(["all"]),
-  max_results: z.coerce.number().int().min(1).max(100).default(20),
-});
-
-export type ReferralInput = z.infer<typeof ReferralInputSchema>;
-export type ReferralResearchResult = z.infer<
-  typeof ReferralResearchResultSchema
->;
-export type ReferralDeactivateBody = z.infer<
-  typeof ReferralDeactivateBodySchema
->;
-export type ReferralSearchQuery = z.infer<typeof ReferralSearchQuerySchema>;
-export type WebResearchRequest = z.infer<typeof WebResearchRequestSchema>;
 
 // ============================================================================
 // GOAP World State

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,17 +22,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Setup wrangler.toml for CI
-        run: bash scripts/generate-wrangler-ci.sh
+        run: npm install
 
       - name: Run Quality Gate
         run: ./scripts/quality_gate.sh
@@ -48,14 +45,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npx tsc --noEmit
@@ -71,14 +68,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         run: npm run test:ci
@@ -104,17 +101,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Setup wrangler.toml for CI
-        run: bash scripts/generate-wrangler-ci.sh
+        run: npm install
 
       - name: Run validation script
         run: ./scripts/validate-codes.sh
@@ -131,48 +125,20 @@ jobs:
           fetch-depth: 0
 
       - name: Secret Detection - TruffleHog
-        run: |
-          # Install TruffleHog
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-
-          # Handle single-commit scenario where BASE and HEAD are the same
-          if [ "${{ github.event.before }}" == "${{ github.sha }}" ] || [ -z "${{ github.event.before }}" ]; then
-            echo "Single commit push or missing base - running full filesystem scan"
-            trufflehog filesystem . --only-verified --json || true
-          else
-            echo "Running incremental scan from ${{ github.event.before }} to ${{ github.sha }}"
-            trufflehog git file://. --since-commit ${{ github.event.before }} --only-verified --json || true
-          fi
-        continue-on-error: true
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
 
       - name: Check for hardcoded secrets
         run: |
-          # Check for actual secret patterns (not variable names or type definitions)
-          # Excludes:
-          #   - TypeScript type annotations (e.g., "secret: string")
-          #   - Interface property definitions (e.g., "secret: string,")
-          #   - Object property access (e.g., "config.secret")
-          #   - Template literals with variables (e.g., "apikey:${var}")
-          #   - Function parameters and comments
-          if grep -rE "api[_-]?key\s*[=:]\s*[\"'][^${}]" \
-              --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | \
-              grep -v "node_modules\|\.env\|test\|example\|\.d\.ts" | \
-              grep -vE "secret:\s*(string|boolean|number)\b|:\s*string[,;]?$|\w+\.secret\b|apikey:\$\{|// .*secret|/\* .*secret" | \
-              head -20; then
+          # Check for common secret patterns
+          if grep -r "api[_-]key\|apikey\|password\|secret" --include="*.ts" --include="*.js" --include="*.json" . | grep -v "node_modules\|\.env\|test\|example" | grep -v "// " | head -20; then
             echo "Potential secrets found in code. Please review."
             exit 1
           fi
-
-          # Check for high-entropy secret patterns (GitHub tokens, API keys)
-          if grep -rE "ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{48}|sk_live_[a-zA-Z0-9]{24,}|sk_test_[a-zA-Z0-9]{24,}|AKIA[0-9A-Z]{16}" \
-              --include="*.ts" --include="*.js" --include="*.json" --include="*.yml" --include="*.yaml" . 2>/dev/null | \
-              grep -v "node_modules\|\.env\|test\|example" | \
-              head -20; then
-            echo "High-entropy secrets found in code. Immediate review required."
-            exit 1
-          fi
-
-          echo "No hardcoded secrets detected."
         continue-on-error: true
 
   lint:
@@ -186,14 +152,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Check formatting
         run: npx prettier --check .
@@ -213,14 +179,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: "20"
+          # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build TypeScript
         run: npm run build

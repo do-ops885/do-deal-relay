@@ -18,7 +18,9 @@
         "has_references": true,
         "has_scripts": false
       },
-      "errors": ["SKILL.md exceeds 250 lines (754)"],
+      "errors": [
+        "SKILL.md exceeds 250 lines (754)"
+      ],
       "warnings": [
         "Missing section: ## Overview",
         "Missing section: ## Quick Start",
@@ -41,7 +43,9 @@
         "has_test_script": true,
         "tests_passed": false
       },
-      "errors": ["Tests failed: "],
+      "errors": [
+        "Tests failed: "
+      ],
       "warnings": [
         "Missing section: ## Overview",
         "No examples directory",
@@ -61,7 +65,9 @@
         "has_references": true,
         "has_scripts": false
       },
-      "errors": ["SKILL.md exceeds 250 lines (271)"],
+      "errors": [
+        "SKILL.md exceeds 250 lines (271)"
+      ],
       "warnings": [
         "Missing section: ## Overview",
         "No examples directory",
@@ -232,7 +238,10 @@
         "has_test_script": false
       },
       "errors": [],
-      "warnings": ["No examples directory", "No test.py script found"]
+      "warnings": [
+        "No examples directory",
+        "No test.py script found"
+      ]
     },
     "task-decomposition": {
       "name": "task-decomposition",
@@ -314,7 +323,9 @@
         "has_references": false,
         "has_scripts": false
       },
-      "errors": ["SKILL.md exceeds 250 lines (877)"],
+      "errors": [
+        "SKILL.md exceeds 250 lines (877)"
+      ],
       "warnings": [
         "Missing section: ## Overview",
         "No examples directory",

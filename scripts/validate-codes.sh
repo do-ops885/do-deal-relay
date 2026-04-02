@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Validation Script for Deal Discovery System
-# Runs all 10 validation gates locally
+# Runs all 9 validation gates locally
 #
 
 set -e
@@ -49,10 +49,10 @@ echo ""
 # Gate 2: Check for hardcoded secrets
 echo "Gate 2: Secret Detection"
 SECRETS_FOUND=0
-if grep -rE "ghp_[a-zA-Z0-9]{36}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+if grep -r "ghp_" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     SECRETS_FOUND=1
 fi
-if grep -rE "sk-[a-zA-Z0-9]{48}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
+if grep -r "sk-" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
     SECRETS_FOUND=1
 fi
 if [ $SECRETS_FOUND -eq 0 ]; then
@@ -183,16 +183,6 @@ fi
 
 if [ $UNSAFE -eq 0 ]; then
     print_status 0 "No critical security issues found"
-fi
-echo ""
-
-# Gate 10: Dependency Vulnerability Scan
-echo "Gate 10: Dependency Vulnerability Scan"
-if ! npm audit --audit-level=moderate --json > /dev/null 2>&1; then
-    print_warning "Dependency vulnerabilities found (moderate or higher)"
-    echo "   Run 'npm audit' for details"
-else
-    print_status 0 "No dependency vulnerabilities (moderate or higher)"
 fi
 echo ""
 

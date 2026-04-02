@@ -1,10 +1,9 @@
 ---
 name: pre-commit
 description: Manage and maintain multi-language pre-commit hooks for code quality
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
+version: 1.0.0
+author: agent
+tags: [git, hooks, linting, formatting]
 ---
 
 # pre-commit
@@ -96,7 +95,7 @@ minimum_pre_commit_version: "3.0.0"
 ```yaml
 repos:
   - repo: https://github.com/user/repo
-    rev: v0.1.1 # Tag, SHA, or branch
+    rev: v1.0.0 # Tag, SHA, or branch
     hooks:
       - id: hook-id
         name: Custom Name

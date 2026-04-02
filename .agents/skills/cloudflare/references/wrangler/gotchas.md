@@ -104,7 +104,7 @@ For local DOs in same Worker, `script_name` is optional.
 
 ```jsonc
 { "placement": { "mode": "smart" } }
-// Only beneficial with D1/DOs
+ // Only beneficial with D1/DOs
 ```
 
 ### "unstable_startWorker not found"

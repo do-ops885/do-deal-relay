@@ -3,142 +3,6 @@ import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
-import {
-  getSourceCircuitBreaker,
-  CircuitBreakerOpenError,
-} from "../lib/circuit-breaker";
-import { createRobotsTxtCache } from "../lib/cache";
-
-// ============================================================================
-// Robots.txt Compliance with Caching
-// ============================================================================
-
-/**
- * Check if crawling is allowed by robots.txt
- * Returns true if allowed, false if disallowed
- * Fails open (returns true) on timeout or fetch errors
- * Cached for 1 hour to reduce redundant fetches
- */
-async function checkRobotsTxt(env: Env, domain: string): Promise<boolean> {
-  const cache = createRobotsTxtCache(env);
-  const cacheKey = `robots_txt:${domain}`;
-
-  // Try cache first
-  const cached = await cache.get<boolean>(cacheKey);
-  if (cached !== null) {
-    return cached;
-  }
-
-  try {
-    const response = await fetch(`https://${domain}/robots.txt`, {
-      method: "GET",
-      headers: { "User-Agent": "DealDiscoveryBot/1.0" },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!response.ok) {
-      // No robots.txt means allow all
-      await cache.set(cacheKey, true);
-      return true;
-    }
-
-    const content = await response.text();
-    const lines = content.split("\n");
-    let userAgentMatch = false;
-    let allowed = true;
-
-    for (const line of lines) {
-      const trimmed = line.trim().toLowerCase();
-
-      if (trimmed.startsWith("user-agent:")) {
-        const agent = trimmed.replace("user-agent:", "").trim();
-        // Match wildcard or any agent containing "deal"
-        userAgentMatch = agent === "*" || agent.includes("deal");
-      }
-
-      if (userAgentMatch && trimmed.startsWith("disallow:")) {
-        const path = line.trim().substring("disallow:".length).trim();
-        // Blocked if disallowing root or common referral/invite paths
-        if (
-          path === "/" ||
-          path.includes("invite") ||
-          path.includes("referral")
-        ) {
-          allowed = false;
-          break;
-        }
-      }
-    }
-
-    // Cache the result
-    await cache.set(cacheKey, allowed);
-    return allowed;
-  } catch {
-    // Fail open on any error (timeout, network, etc.)
-    // Don't cache errors to allow retry
-    return true;
-  }
-}
-
-// ============================================================================
-// Fetch with Retry and Circuit Breaker
-// ============================================================================
-
-/**
- * Fetch with retry logic, exponential backoff, and circuit breaker protection
- */
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries: number = CONFIG.MAX_RETRIES,
-  env?: Env,
-): Promise<Response> {
-  // Extract domain for circuit breaker
-  const domain = new URL(url).hostname;
-  const cb = env ? getSourceCircuitBreaker(domain, env) : undefined;
-
-  let lastError: Error | undefined;
-
-  const execute = async (): Promise<Response> => {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await fetch(url, options);
-
-        // Retry on 5xx or network errors
-        if (response.ok || response.status < 500) {
-          return response;
-        }
-
-        // 5xx error - retry
-        lastError = new Error(`HTTP ${response.status}`);
-      } catch (error) {
-        lastError = error as Error;
-      }
-
-      if (attempt < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10s delay
-        console.log(
-          `Retry ${attempt + 1}/${maxRetries} for ${url} after ${delay}ms`,
-        );
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    throw lastError || new Error(`Failed after ${maxRetries} retries`);
-  };
-
-  try {
-    if (cb) {
-      return await cb.execute(execute);
-    }
-    return await execute();
-  } catch (error) {
-    if (error instanceof CircuitBreakerOpenError) {
-      console.log(`Circuit breaker open for ${domain}: ${error.message}`);
-    }
-    throw error;
-  }
-}
 
 // ============================================================================
 // Discovery Engine
@@ -212,36 +76,19 @@ async function discoverFromSource(
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
-  // Check robots.txt compliance before fetching
-  const allowed = await checkRobotsTxt(env, source.domain);
-  if (!allowed) {
-    errors.push({
-      url: source.domain,
-      error: "Crawling disallowed by robots.txt",
-    });
-    await recordSourceValidation(env, source.domain, false);
-    return { deals, errors };
-  }
-
   for (const pattern of source.url_patterns) {
     try {
       const url = `https://${source.domain}${pattern}`;
 
-      // Respect payload limits with retry logic and circuit breaker
-      const response = await fetchWithRetry(
-        url,
-        {
-          method: "GET",
-          headers: {
-            "User-Agent":
-              "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-            Accept: "text/html,application/json",
-          },
-          signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
+      // Respect payload limits
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+          Accept: "text/html,application/json",
         },
-        CONFIG.MAX_RETRIES,
-        env,
-      );
+        signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -306,8 +153,6 @@ function parseHTMLContent(
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
-  const expiryPattern =
-    /(?:expires?|valid until|ends?|deadline)[:\s,]+([A-Za-z]{3,10}\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/gi;
 
   // Extract codes
   let match;
@@ -324,15 +169,6 @@ function parseHTMLContent(
       .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
 
-    // Find expiry date
-    const expiryMatch = content
-      .slice(Math.max(0, match.index - 500), match.index + 500)
-      .match(expiryPattern);
-
-    const expiry_date = expiryMatch
-      ? normalizeExtractedDate(expiryMatch[1])
-      : undefined;
-
     deals.push({
       code,
       url: urlMatch ? urlMatch[0] : `https://${source.domain}/invite/${code}`,
@@ -348,7 +184,6 @@ function parseHTMLContent(
         : 0,
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
-      expiry_date,
     });
   }
 
@@ -447,17 +282,6 @@ async function buildDeal(
       status: "active",
     },
   };
-}
-
-/**
- * Normalize extracted date string to ISO format
- */
-function normalizeExtractedDate(dateStr: string): string | undefined {
-  const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) {
-    return parsed.toISOString();
-  }
-  return undefined;
 }
 
 /**

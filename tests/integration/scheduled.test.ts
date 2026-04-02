@@ -147,9 +147,9 @@ describe("Scheduled Event Handler", () => {
 
       await worker.scheduled(mockScheduledEvent, mockEnv);
 
-      // Should log completion (first call is always the trigger message)
+      // Should log completion
       expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining("Scheduled event triggered"),
+        expect.stringContaining("Pipeline completed"),
       );
     });
 
@@ -204,7 +204,10 @@ describe("Scheduled Event Handler", () => {
       ).resolves.not.toThrow();
 
       // Should log error
-      expect(console.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining("Scheduled execution error"),
+        expect.any(Error),
+      );
     });
 
     it("should send notification on critical failure", async () => {

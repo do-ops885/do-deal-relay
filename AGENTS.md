@@ -1,127 +1,71 @@
 # AGENTS.md - Deal Discovery System
 
-> Single source of truth for all AI coding agents in this repository.
-
-**Goal**: Build autonomous deal discovery system with coordinated AI agents  
-**Version**: 0.1.1  
-**Phase**: Bootstrap  
-**Status**: In Development ⚠️ NOT PRODUCTION READY
+**Goal**: Build autonomous deal discovery system with coordinated AI agents
+**Version**: 0.1.0
+**Phase**: Bootstrap
+**Status**: In Development
 
 ## Quick Start
 
 ```bash
 # Install dependencies
 npm install
-
-# Setup skill symlinks (run once after clone)
-./scripts/setup-skills.sh
-
-# Install git pre-commit hook
-cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
-
 # Run quality gate (silent on success)
 ./scripts/quality_gate.sh
-
 # Run tests
 npm test
-
 # Start development
 npm run dev
 ```
 
 ## System Overview
 
-**Architecture**: Two-phase publish (Staging → Production) with 10 validation gates  
-**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize  
-**Infrastructure**: Cloudflare Workers + 5 KV namespaces  
+**Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
+**State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
+**Infrastructure**: Cloudflare Workers + 5 KV namespaces
 **Schedule**: Every 6 hours
 
 See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 
-## Current Status
+## Project Structure
 
-- **Phase 3**: 5 critical bug fixes ✅
-- **Phase 4**: 5 safety enhancements ✅
-- **Phase 5**: 5 quality improvements ✅
-- **Phase 6**: 5 performance features ✅
-- **Phase 7**: 5 feature enhancements 🔄 IN PROGRESS
+**IMPORTANT**: Only standard configuration files belong in root. All other files MUST use subfolders.
 
-**Metrics**: 148/148 tests passing, 10/10 validation gates, A- security grade
-
-See [plans/PROGRESS.md](plans/PROGRESS.md) for detailed progress.
-
-## Code Style
-
-- **Max 500 lines per source file** - split into focused sub-modules if exceeded
-- Conventional Commits: `feat:`, `fix:`, `docs:`, `ci:`, `test:`, `refactor:`
-- All public APIs must be documented
-- No hardcoded magic numbers - use named constants from `config.ts`
-- Render architecture diagrams as fenced `mermaid` blocks, never raw ASCII art
-- TypeScript: Strict mode enabled, no implicit `any`
-- Shell scripts: Use `shellcheck` for linting
-- Markdown: Use `markdownlint` for consistency
-
-## Testing Instructions
-
-- Write or update tests for every code change, even if not explicitly requested
-- Tests must be deterministic - use seeded RNG where randomness is needed
-- Success is silent; only surface failures (context-efficient back-pressure)
-- Target coverage: >80%
-- Mock external services (KV, fetch)
-
-### Commands
-
-```bash
-# Run all tests
-npm test
-
-# CI mode (headless)
-npm run test:ci
-
-# Type check only
-npm run lint
-
-# Validate all gates
-npm run validate
-
-# Run quality gate
-./scripts/quality_gate.sh
+```
+├── .github/workflows/    # CI/CD workflows
+├── .agents/skills/       # Agent coordination skills
+├── agents-docs/          # System documentation
+├── docs/                 # API documentation
+├── plans/                # Execution plans
+├── scripts/              # Utility scripts
+├── temp/                 # Analysis reports & state (gitignored)
+├── tests/                # Test suite
+└── worker/               # Cloudflare Worker source
 ```
 
-## PR Instructions
+### Root Directory Policy
 
-- Title format: `feat(scope): description` or `fix(scope): description`
-- Always run lint and tests before committing: `./scripts/quality_gate.sh`
-- Create a new branch per feature/fix - never commit directly to `main`
-- Keep PRs focused; one concern per PR
+**Allowed in root** (standard project files only):
 
-## Security
+- `.gitignore` - Git ignore patterns
+- `package.json` - NPM manifest
+- `package-lock.json` - NPM lockfile
+- `tsconfig.json` - TypeScript config
+- `vitest.config.ts` - Test runner config
+- `wrangler.toml` - Cloudflare Workers config
+- `README.md` - Main project documentation
+- `VERSION` - Version file
+- `LICENSE` - License file
 
-- Never commit secrets or API keys - use environment variables or `.env` (gitignored)
-- Never connect to untrusted MCP servers
-- Report vulnerabilities via GitHub private advisories
-- See [agents-docs/guard-rails.md](agents-docs/guard-rails.md) for full security details
+**MUST use subfolders**:
 
-## Skills
+- Documentation → `docs/` or `agents-docs/`
+- Reports/status → `temp/`
+- Scripts → `scripts/`
+- Tests → `tests/`
+- Generated files → `temp/`
 
-### Local (in `.agents/skills/`)
-
-- `agent-coordination` - Multi-agent orchestration
-- `goap-agent` - Goal-oriented planning
-- `task-decomposition` - Task breakdown
-- `parallel-execution` - Parallel workflows
-
-### External (Cloudflare platform)
-
-- `cloudflare` - Platform expertise (Workers, Pages, KV, D1, R2, AI)
-- `agents-sdk` - Building stateful AI agents
-- `durable-objects` - Stateful coordination
-- `wrangler` - Deployment and management
-- `workers-best-practices` - Performance optimization
-
-**Usage**: `skill <name>` to load guidance.
-
-**Setup**: Run `./scripts/setup-skills.sh` after cloning to create symlinks for Claude Code and Gemini CLI.
+See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rules.
 
 ## Reference
 
@@ -131,57 +75,61 @@ npm run validate
 | Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
 | Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
 | Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
+| Execution Plan   | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
+| Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
 | API Docs         | [docs/API.md](docs/API.md)                                         |
 | Skills           | [.agents/skills/](.agents/skills/)                                 |
-| Progress         | [plans/PROGRESS.md](plans/PROGRESS.md)                             |
+
+## Skills
+
+**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`
+
+**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`
+
+Use: `skill <name>` to load guidance.
 
 ## Endpoints
 
-Core: `/health` · `/metrics` · `/deals` · `/deals.json`  
-API: `/api/discover` · `/api/status` · `/api/log` · `/api/submit`  
-New: `/deals/ranked` · `/analytics` · `/api/webhooks`
+`/deals` · `/deals.json` · `/health` · `/metrics` · `/api/status` · `/api/log` · `/api/submit` · `/api/discover`
 
 See [docs/API.md](docs/API.md) for endpoint documentation.
 
-## Active Agents (Phase 7 Swarm)
+## Development
 
-| Agent               | Status      | Phase           | Responsibility              |
-| ------------------- | ----------- | --------------- | --------------------------- |
-| feature-agent-1     | in_progress | Feature Enhance | Deal categorization/tagging |
-| feature-agent-2     | in_progress | Feature Enhance | Deal ranking API            |
-| feature-agent-3     | in_progress | Feature Enhance | Analytics dashboard         |
-| feature-agent-4     | in_progress | Feature Enhance | Webhook support             |
-| feature-agent-5     | in_progress | Feature Enhance | Expiration notifications    |
-| test-agent-v2       | pending     | Test & Validate | Integration testing         |
-| validation-agent-v2 | pending     | Test & Validate | 10 validation gates         |
-| doc-agent           | in_progress | Test & Validate | Documentation updates       |
+### Available Scripts
 
-## Agent Guidance
+- `npm run dev` - Start development server
+- `npm run build` - Build TypeScript
+- `npm test` - Run tests in watch mode
+- `npm run test:ci` - Run tests once (for CI)
+- `npm run lint` - Type check
+- `npm run validate` - Run validation gates
+- `npm run format` - Format code with Prettier
 
-### Plan Before Executing
+### Quality Gates
 
-For non-trivial tasks: produce a written plan first, pause, and wait for confirmation before writing code.
+Run `./scripts/quality_gate.sh` to execute all validation checks:
 
-### Skills: Single Source in .agents/skills/
+- TypeScript compilation
+- Unit tests
+- Validation gates
+- Security checks
+- Root directory file organization (via `./scripts/check-root-files.sh`)
 
-All skills live canonically in `.agents/skills/`. Claude Code and Gemini CLI use symlinks pointing back to `.agents/skills/`. OpenCode reads skills directly from `.agents/skills/` - no symlinks needed.
+## Active Agents
 
-Run `./scripts/setup-skills.sh` after cloning to create symlinks for Claude Code and Gemini CLI.
+See `temp/state.json` for current agent status and progress.
 
-### Context Discipline
+| Agent               | Status  | Phase           | Responsibility      |
+| ------------------- | ------- | --------------- | ------------------- |
+| test-agent-v2       | pending | Test & Validate | Integration testing |
+| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
+| doc-agent           | pending | Test & Validate | Documentation       |
+| github-agent        | pending | Test & Validate | GitHub integration  |
+| browser-agent       | pending | Test & Validate | Browser testing     |
 
-- Delegate isolated research and analysis to sub-agents
-- Use `/clear` between unrelated tasks
-- Load skills only when needed, not upfront
-- Success is silent; only surface failures
+## Notes
 
-### Nested AGENTS.md
-
-For sub-packages, place an additional `AGENTS.md` inside each sub-package. The agent reads the nearest file in the directory tree - closest one takes precedence.
-
-## Development Notes
-
-- All changes are staged for review
-- Full validation suite runs on every commit
-- Two-phase deployment (staging → production) not yet active
-- API endpoints subject to change
+- **Analysis Reports**: Generated reports and swarm analysis are stored in `temp/` (not tracked in git)
+- **State Tracking**: Agent progress and system state tracked in `temp/state.json`
+- **Skills Lock**: External skill versions tracked in `temp/skills-lock.json`

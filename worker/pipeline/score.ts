@@ -1,7 +1,6 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
 import { getProductionSnapshot } from "../lib/storage";
-import { categorizeDeal, DealCategory } from "../lib/categorizer";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -18,7 +17,6 @@ interface ScoredDeal extends Deal {
     reward_plausibility: number;
     expiry: number;
   };
-  category: DealCategory;
 }
 
 interface ScoringResult {
@@ -91,9 +89,6 @@ export async function score(
       highValueCount++;
     }
 
-    // Categorize the deal
-    const category = categorizeDeal(deal);
-
     // Create scored deal
     const scoredDeal: ScoredDeal = {
       ...deal,
@@ -106,40 +101,13 @@ export async function score(
         reward_plausibility: rewardPlausibility,
         expiry: expiryScore,
       },
-      category,
       metadata: {
         ...deal.metadata,
         confidence_score: confidenceScore,
-        // Update category in metadata to match detected primary category
-        category: [category.primary, ...category.subcategories],
-        tags: [...new Set([...deal.metadata.tags, ...category.tags])],
       },
     };
 
     scoredDeals.push(scoredDeal);
-  }
-
-  // Notify for high-value deals (batched)
-  if (highValueCount > 0) {
-    const { notify } = await import("../notify");
-    const highValueDeals: Array<{ code: string; reward: number }> = scoredDeals
-      .filter((d) => isHighValue(d))
-      .map((d) => ({
-        code: d.code,
-        reward: typeof d.reward.value === "number" ? d.reward.value : 0,
-      }));
-
-    // Send single batched notification
-    await notify(env, {
-      type: "high_value_deal",
-      severity: "info",
-      run_id: ctx.run_id,
-      message: `Discovered ${highValueCount} high-value deal${highValueCount > 1 ? "s" : ""}`,
-      context: {
-        count: highValueCount,
-        deals: highValueDeals,
-      },
-    });
   }
 
   return {
@@ -236,7 +204,7 @@ function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
 /**
  * Check if deal is high value
  */
-export function isHighValue(deal: Deal): boolean {
+function isHighValue(deal: Deal): boolean {
   if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
     return deal.reward.value > CONFIG.HIGH_VALUE_THRESHOLD;
   }
@@ -256,22 +224,12 @@ export async function evolveSourceTrust(
   deals: Deal[],
   allValid: boolean,
 ): Promise<void> {
-  const { updateSourceTrust, recordSourceValidation } =
-    await import("../lib/storage");
-
-  // Get unique sources
-  const uniqueDomains = [...new Set(deals.map((d) => d.source.domain))];
-
+  const { DEFAULT_SOURCES } = await import("../config");
   const adjustment = allValid
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
-  for (const domain of uniqueDomains) {
-    await updateSourceTrust(env, domain, adjustment);
-    await recordSourceValidation(env, domain, allValid);
-  }
-
-  console.log(
-    `Evolving trust for ${uniqueDomains.length} sources: adjustment=${allValid ? "+" : "-"}${Math.abs(adjustment)}`,
-  );
+  // This would update the source registry
+  // Implementation depends on storage layer
+  console.log(`Evolving trust: adjustment=${adjustment}, allValid=${allValid}`);
 }

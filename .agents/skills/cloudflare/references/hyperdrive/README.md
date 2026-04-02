@@ -40,10 +40,9 @@ export default {
       connectionString: env.HYPERDRIVE.connectionString,
     });
     await client.connect();
-    const result = await client.query(
-      "SELECT * FROM users WHERE id = $1",
-      [123],
-    );
+    const result = await client.query("SELECT * FROM users WHERE id = $1", [
+      123,
+    ]);
     await client.end();
     return Response.json(result.rows);
   },
