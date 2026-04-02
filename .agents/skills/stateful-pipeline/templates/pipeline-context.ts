@@ -1,6 +1,6 @@
 /**
  * Pipeline Context Management
- * 
+ *
  * Maintains state across pipeline phases with:
  * - Data transformation tracking
  * - Error accumulation
@@ -12,19 +12,19 @@ export interface PipelineContext<TInput, TOutput = TInput> {
   // Core data
   input: TInput;
   output?: TOutput;
-  
+
   // Phase tracking
   currentPhase: string;
   completedPhases: string[];
   phaseData: Map<string, PhaseData>;
-  
+
   // Error handling
   errors: PhaseError[];
   retryCount: number;
-  
+
   // Rollback support
   snapshots: Snapshot<TOutput>[];
-  
+
   // Observability
   startTime: number;
   phaseStartTime: number;

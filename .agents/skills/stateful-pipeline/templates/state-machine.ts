@@ -28,7 +28,7 @@ export function createPipeline<T>(
       try {
         for (const phase of phases) {
           ctx.phase = phase;
-          
+
           // Execute phase with retry logic
           const result = await executePhaseWithRetry(
             phase,
@@ -92,34 +92,34 @@ async function executePhaseWithRetry<T>(
   maxRetries: number
 ): Promise<{ failurePath?: FailurePath }> {
   const phaseStartTime = Date.now();
-  
+
   while (ctx.retryCount <= maxRetries) {
     try {
       ctx.metrics?.recordPhaseStart(phase);
-      
+
       // Phase execution would go here
       // const result = await executePhase(phase, ctx.data);
-      
+
       ctx.metrics?.recordPhaseComplete(phase, Date.now() - phaseStartTime);
       return { failurePath: undefined };
-      
+
     } catch (error) {
       if (isRetryable(error) && ctx.retryCount < maxRetries) {
         ctx.retryCount++;
         await sleep(1000 * ctx.retryCount);
         continue;
       }
-      
+
       throw error;
     }
   }
-  
+
   return { failurePath: 'revert' };
 }
 
 function isRetryable(error: Error): boolean {
   // Retry on network errors, timeouts
-  return error.message.includes('timeout') || 
+  return error.message.includes('timeout') ||
          error.message.includes('ECONNRESET') ||
          error.message.includes('ETIMEDOUT');
 }
@@ -139,7 +139,7 @@ function handleFailure<T>(
         metrics: ctx.metrics?.finalize(),
         duration: Date.now() - ctx.startTime
       };
-      
+
     case 'quarantine':
       // Mark data as suspicious but continue
       return {
@@ -148,7 +148,7 @@ function handleFailure<T>(
         metrics: ctx.metrics?.finalize(),
         duration: Date.now() - ctx.startTime
       };
-      
+
     default:
       return {
         success: false,
@@ -191,7 +191,7 @@ interface PipelineMetrics {
 
 function createMetrics(): MetricsCollector {
   const phases: Record<string, { duration: number }> = {};
-  
+
   return {
     recordPhaseStart(phase: string) {
       // Implementation

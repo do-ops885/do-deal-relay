@@ -2,7 +2,7 @@ import { createPipeline } from '../templates/state-machine';
 
 /**
  * Example: Data ETL Pipeline
- * 
+ *
  * Demonstrates a 4-phase pipeline for extracting, transforming,
  * validating, and loading data.
  */
@@ -78,7 +78,7 @@ runDataPipeline(exampleInput).catch(console.error);
 
 /**
  * Example Output:
- * 
+ *
  * Pipeline completed successfully
  * Output: {
  *   records: [

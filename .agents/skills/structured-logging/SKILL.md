@@ -151,9 +151,9 @@ export default {
     const logger = new Logger({
       correlationId: req.headers.get('x-correlation-id') || crypto.randomUUID()
     });
-    
+
     logger.info('Request', { url: req.url });
-    
+
     return new Response('OK');
   }
 };

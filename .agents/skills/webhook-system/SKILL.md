@@ -71,9 +71,9 @@ app.post('/webhook', async (req) => {
     signature: req.headers['x-signature'],
     payload: JSON.stringify(req.body)
   });
-  
+
   if (!isValid) return new Response('Invalid', { status: 401 });
-  
+
   await processEvent(req.body);
   return new Response('OK');
 });
@@ -170,17 +170,17 @@ function verifyWebhook({
   tolerance = 300  // 5 minutes
 }: VerifyOptions): boolean {
   const [t, v1] = parseSignature(signature);
-  
+
   // Check timestamp
   if (Math.abs(Date.now()/1000 - t) > tolerance) {
     return false;
   }
-  
+
   // Verify signature
   const expected = crypto.createHmac('sha256', secret)
     .update(`${t}.${payload}`)
     .digest('hex');
-  
+
   return timingSafeEqual(v1, expected);
 }
 ```
