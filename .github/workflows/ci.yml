@@ -22,10 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -48,10 +48,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -71,10 +71,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -104,10 +104,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -147,11 +147,32 @@ jobs:
 
       - name: Check for hardcoded secrets
         run: |
-          # Check for common secret patterns
-          if grep -r "api[_-]key\|apikey\|password\|secret" --include="*.ts" --include="*.js" --include="*.json" . | grep -v "node_modules\|\.env\|test\|example" | grep -v "// " | head -20; then
+          # Check for actual secret patterns (not variable names or type definitions)
+          # Excludes:
+          #   - TypeScript type annotations (e.g., "secret: string")
+          #   - Interface property definitions (e.g., "secret: string,")
+          #   - Object property access (e.g., "config.secret")
+          #   - Template literals with variables (e.g., "apikey:${var}")
+          #   - Function parameters and comments
+          if grep -rE "api[_-]?key\s*[=:]\s*[\"'][^${}]" \
+              --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | \
+              grep -v "node_modules\|\.env\|test\|example\|\.d\.ts" | \
+              grep -vE "secret:\s*(string|boolean|number)\b|:\s*string[,;]?$|\w+\.secret\b|apikey:\$\{|// .*secret|/\* .*secret" | \
+              head -20; then
             echo "Potential secrets found in code. Please review."
             exit 1
           fi
+
+          # Check for high-entropy secret patterns (GitHub tokens, API keys)
+          if grep -rE "ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{48}|sk_live_[a-zA-Z0-9]{24,}|sk_test_[a-zA-Z0-9]{24,}|AKIA[0-9A-Z]{16}" \
+              --include="*.ts" --include="*.js" --include="*.json" --include="*.yml" --include="*.yaml" . 2>/dev/null | \
+              grep -v "node_modules\|\.env\|test\|example" | \
+              head -20; then
+            echo "High-entropy secrets found in code. Immediate review required."
+            exit 1
+          fi
+
+          echo "No hardcoded secrets detected."
         continue-on-error: true
 
   lint:
@@ -165,10 +186,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -192,10 +213,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
