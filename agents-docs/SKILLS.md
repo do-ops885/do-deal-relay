@@ -78,9 +78,9 @@ Advanced patterns, edge cases, full API reference.
 ```markdown
 ## Advanced Topics
 
-- [Parallel Workflows](./PARALLEL.md)
-- [Error Handling Patterns](./ERRORS.md)
-- [Performance Optimization](./PERF.md)
+- [Deep Dive A](./A.md)
+- [Deep Dive B](./B.md)
+- [Performance Tuning](./PERF.md)
 ```
 
 ## Creating a New Skill
