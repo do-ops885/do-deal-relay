@@ -1,6 +1,10 @@
 ---
 name: github-readme
 description: "Create human-focused, well-structured README.md files for projects. Use when generating or updating project documentation, creating user-facing docs, or establishing project identity."
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: d-oit
 tags: [documentation, readme, github, human-facing]

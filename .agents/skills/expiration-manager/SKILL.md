@@ -1,6 +1,10 @@
 ---
 name: expiration-manager
 description: Time-based workflow management for scheduling and tracking expirations. Use for deal expiration tracking, scheduled notifications, TTL-based cleanup, and deadline management.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Expiration Manager

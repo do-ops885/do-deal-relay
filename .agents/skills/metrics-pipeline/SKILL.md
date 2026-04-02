@@ -1,6 +1,10 @@
 ---
 name: metrics-pipeline
 description: Prometheus-compatible metrics collection and export. Use for tracking performance, business metrics, custom counters, histograms, and monitoring system health.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Metrics Pipeline

@@ -1,6 +1,10 @@
 ---
 name: anti-ai-slop
 description: "Prevent low-quality, repetitive, or 'sloppy' AI-generated code and content. Use when reviewing AI outputs, establishing code standards, or detecting AI-generated boilerplate."
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: d-oit
 tags: [quality, review, ai-detection, code-standards, anti-patterns]

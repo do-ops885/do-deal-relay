@@ -1,6 +1,10 @@
 ---
 name: guard-rails
 description: Safety and quality enforcement system for preventing errors and enforcing best practices. Use for automated safety checks, quality gates, policy enforcement, and preventing common mistakes in production systems.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Guard Rails

@@ -1,6 +1,10 @@
 ---
 name: structured-logging
 description: Correlation ID logging for distributed tracing. Use for request tracking, context propagation, log aggregation, and debugging across service boundaries.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Structured Logging

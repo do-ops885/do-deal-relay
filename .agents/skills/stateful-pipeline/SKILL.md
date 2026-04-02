@@ -1,6 +1,10 @@
 ---
 name: stateful-pipeline
 description: Framework for complex data processing pipelines with state machine, retry logic, failure handling, and rollback capability. Use when building multi-phase data workflows.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Stateful Pipeline Skill

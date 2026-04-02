@@ -1,6 +1,10 @@
 ---
 name: shell-script-quality
 description: "Lint, test, and ensure quality of shell scripts. Use when writing bash scripts, reviewing shell code, or establishing CI/CD shell script validation."
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: d-oit
 tags: [shell, bash, linting, testing, quality, scripts]

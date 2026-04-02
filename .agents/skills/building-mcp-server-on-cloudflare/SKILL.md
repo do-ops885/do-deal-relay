@@ -1,6 +1,10 @@
 ---
 name: building-mcp-server-on-cloudflare
 description: |
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
   Builds remote MCP (Model Context Protocol) servers on Cloudflare Workers
   with tools, OAuth authentication, and production deployment. Generates
   server code, configures auth providers, and deploys to Workers.

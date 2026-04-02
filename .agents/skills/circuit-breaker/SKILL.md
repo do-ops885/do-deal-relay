@@ -1,6 +1,10 @@
 ---
 name: circuit-breaker
 description: API resilience pattern for handling failures gracefully. Use for preventing cascade failures, automatic recovery, rate limiting, and protecting downstream services from overload.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Circuit Breaker

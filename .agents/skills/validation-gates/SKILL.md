@@ -1,6 +1,10 @@
 ---
 name: validation-gates
 description: Multi-gate validation framework for progressive quality assurance. Use for implementing 10-gate validation pipelines, quality checkpoints, and automated quality gates in CI/CD workflows.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Validation Gates

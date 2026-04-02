@@ -1,6 +1,10 @@
 ---
 name: crypto-utils
 description: Cryptographic utilities for hashing, encryption, and secure operations. Use for HMAC signing, password hashing, token generation, and secure random values.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Crypto Utils

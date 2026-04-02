@@ -1,6 +1,10 @@
 ---
 name: distributed-locking
 description: Distributed coordination with TTL for preventing race conditions across multiple workers or agents. Use for mutual exclusion, leader election, rate limiting, and concurrent access control in distributed systems.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Distributed Locking

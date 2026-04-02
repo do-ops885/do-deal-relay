@@ -1,6 +1,10 @@
 ---
 name: webhook-system
 description: Event notifications with HMAC signature verification. Use for reliable webhook delivery, secure payload signing, retry logic, and event subscription management.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Webhook System

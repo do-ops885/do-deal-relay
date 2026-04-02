@@ -1,6 +1,10 @@
 ---
 name: trust-model
 description: Source classification scoring system for establishing data trustworthiness. Use for calculating confidence scores, source reputation, data quality assessment, and risk-based processing decisions.
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 ---
 
 # Trust Model

@@ -1,6 +1,10 @@
 ---
 name: skill-creator
 description: Create, evaluate, and improve agent skills
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: d-oit
 tags: [skills, development, evaluation]
@@ -45,6 +49,10 @@ The SKILL.md is the core of any skill. It must:
 ---
 name: skill-name
 description: Clear, concise description of what this skill does
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: your-name
 tags: [tag1, tag2, tag3]

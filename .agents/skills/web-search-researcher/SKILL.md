@@ -1,6 +1,10 @@
 ---
 name: web-search-researcher
 description: "Research topics using web search. Use when gathering information about companies, technologies, market trends, or validating deal signals."
+metadata:
+  version: "1.0.0"
+  author: do-ops
+  spec: "agentskills.io"
 version: 1.0.0
 author: d-oit
 tags: [research, web-search, information-gathering, validation, due-diligence]
