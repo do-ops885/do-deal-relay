@@ -141,9 +141,11 @@ jobs:
           fi
 
           echo "✅ PR is mergeable"
-          echo "mergeable=true" >> "$GITHUB_OUTPUT"
-          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
-          echo "base_ref=$BASE_REF" >> "$GITHUB_OUTPUT"
+          {
+            echo "mergeable=true"
+            echo "author=$AUTHOR"
+            echo "base_ref=$BASE_REF"
+          } >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
