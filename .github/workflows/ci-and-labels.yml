@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - 'release/**'
+      - "release/**"
   pull_request:
     branches:
       - main
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Ensure script is executable
         run: chmod +x scripts/gh-labels-creator.sh
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup skills
         run: ./scripts/setup-skills.sh
@@ -43,15 +43,14 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: validate-skills
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
@@ -63,13 +62,13 @@ jobs:
       - name: Setup Python (if requirements.txt or pyproject.toml exists)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
@@ -84,20 +83,19 @@ jobs:
       - name: Run quality gate
         run: ./scripts/quality_gate.sh
         env:
-          SKIP_TESTS: true  # Skip tests in CI, run separately
+          SKIP_TESTS: true # Skip tests in CI, run separately
 
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    needs: quality-gate
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
@@ -107,13 +105,13 @@ jobs:
       - name: Setup Python (if requirements.txt or pyproject.toml exists)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
