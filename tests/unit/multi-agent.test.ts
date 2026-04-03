@@ -506,10 +506,10 @@ describe("Multi-Agent Workflow", () => {
 
       // Verify agent names
       const agentNames = result.phases.map((p) => p.name);
-      expect(agentNames).toContain("Codebase Verification");
-      expect(agentNames).toContain("Evals & Tests");
-      expect(agentNames).toContain("Git Workflow");
-      expect(agentNames).toContain("Issue Fixer");
+      expect(agentNames).toContain("Codebase Verification Agent");
+      expect(agentNames).toContain("Evals & Tests Runner Agent");
+      expect(agentNames).toContain("Git Workflow Manager Agent");
+      expect(agentNames).toContain("Issue Fixer Agent");
     });
 
     it("should handle handoff between phases", async () => {

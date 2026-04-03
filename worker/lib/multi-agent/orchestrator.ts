@@ -169,6 +169,16 @@ export class MultiAgentOrchestrator {
         }
       }
 
+      // Emit workflow completed event
+      this.emitEvent({
+        event_id: this.generateId(),
+        workflow_id,
+        timestamp: new Date().toISOString(),
+        type: "workflow_completed",
+        message: "Workflow completed successfully",
+        data: { phases_completed: phases.length },
+      });
+
       return this.createResult(workflow_id, "completed", phases, start_time);
     } catch (error) {
       this.emitEvent({
@@ -217,7 +227,31 @@ export class MultiAgentOrchestrator {
     };
 
     if (this.dryRun) {
-      // Return simulated success in dry run mode
+      // Return simulated success in dry run mode with appropriate metadata for quality gates
+      const dryRunMetadata: Record<string, unknown> = {
+        no_changes: false,
+        operations_count: 1,
+      };
+
+      // Add phase-specific metadata for quality gates
+      switch (phase) {
+        case 2:
+          dryRunMetadata.typescript_clean = true;
+          dryRunMetadata.total_tests = 10;
+          dryRunMetadata.tests_passed = 10;
+          break;
+        case 3:
+          dryRunMetadata.commits_created = 1;
+          dryRunMetadata.push_success = true;
+          break;
+        case 4:
+          dryRunMetadata.issues_detected = 0;
+          dryRunMetadata.auto_fixable = 0;
+          dryRunMetadata.fixed = 0;
+          dryRunMetadata.unresolved = 0;
+          break;
+      }
+
       const result: PhaseResult = {
         phase,
         name: agent.name,
@@ -234,6 +268,7 @@ export class MultiAgentOrchestrator {
         ],
         findings: [],
         errors: [],
+        metadata: dryRunMetadata,
       };
 
       this.emitEvent({
