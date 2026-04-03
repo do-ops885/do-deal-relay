@@ -368,7 +368,7 @@ describe("State Machine", () => {
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
           json: async () => [],
-        text: async () => "[]",
+          text: async () => "[]",
         });
       });
       vi.stubGlobal("fetch", mockFetch);

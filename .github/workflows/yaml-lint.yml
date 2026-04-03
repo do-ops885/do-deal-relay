@@ -7,17 +7,17 @@ name: YAML Lint
       - main
       - develop
     paths:
-      - '**.yml'
-      - '**.yaml'
-      - '.github/workflows/**'
+      - "**.yml"
+      - "**.yaml"
+      - ".github/workflows/**"
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - '**.yml'
-      - '**.yaml'
-      - '.github/workflows/**'
+      - "**.yml"
+      - "**.yaml"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install yamllint
         run: pip install yamllint

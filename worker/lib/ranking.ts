@@ -32,15 +32,15 @@ export function calculateDealScore(deal: Deal): number {
   // Weighted composite score
   const weights = {
     confidence: 0.25,
-    trust: 0.20,
-    recency: 0.20,
-    value: 0.20,
+    trust: 0.2,
+    recency: 0.2,
+    value: 0.2,
     expiry: 0.15,
   };
 
   return Object.entries(scores).reduce(
     (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-    0
+    0,
   );
 }
 
@@ -78,9 +78,8 @@ function calculateValueScore(reward: Deal["reward"]): number {
   const normalizedValue = Math.min(100, (baseValue / 500) * 100);
 
   // Bonus for cash rewards
-  const typeMultiplier = reward.type === "cash" ? 1.2 :
-                        reward.type === "percent" ? 1.1 :
-                        1.0;
+  const typeMultiplier =
+    reward.type === "cash" ? 1.2 : reward.type === "percent" ? 1.1 : 1.0;
 
   return Math.min(100, normalizedValue * typeMultiplier);
 }
@@ -113,7 +112,11 @@ function calculateExpiryScore(expiryDate: string | undefined): number {
 /**
  * Sort deals by specified field
  */
-export function sortDeals(deals: Deal[], sortBy: SortField, order: SortOrder = "desc"): Deal[] {
+export function sortDeals(
+  deals: Deal[],
+  sortBy: SortField,
+  order: SortOrder = "desc",
+): Deal[] {
   const sorted = [...deals];
 
   const compareFn = (a: Deal, b: Deal): number => {
@@ -124,7 +127,9 @@ export function sortDeals(deals: Deal[], sortBy: SortField, order: SortOrder = "
         comparison = a.metadata.confidence_score - b.metadata.confidence_score;
         break;
       case "recency":
-        comparison = new Date(a.source.discovered_at).getTime() - new Date(b.source.discovered_at).getTime();
+        comparison =
+          new Date(a.source.discovered_at).getTime() -
+          new Date(b.source.discovered_at).getTime();
         break;
       case "value":
         comparison = getNumericValue(a.reward) - getNumericValue(b.reward);
@@ -174,26 +179,39 @@ function compareExpiry(a: string | undefined, b: string | undefined): number {
 /**
  * Rank and filter deals
  */
-export function rankDeals(deals: Deal[], options: RankOptions): {
+export function rankDeals(
+  deals: Deal[],
+  options: RankOptions,
+): {
   deals: Deal[];
   total: number;
   filtered: number;
-  scores?: Array<{ dealId: string; score: number; breakdown: Record<string, number> }>;
+  scores?: Array<{
+    dealId: string;
+    score: number;
+    breakdown: Record<string, number>;
+  }>;
 } {
   // Filter first
-  let filtered = deals.filter(d => d.metadata.status === "active");
+  let filtered = deals.filter((d) => d.metadata.status === "active");
 
   if (options.minConfidence !== undefined) {
-    filtered = filtered.filter(d => d.metadata.confidence_score >= options.minConfidence!);
+    filtered = filtered.filter(
+      (d) => d.metadata.confidence_score >= options.minConfidence!,
+    );
   }
 
   if (options.minTrustScore !== undefined) {
-    filtered = filtered.filter(d => d.source.trust_score >= options.minTrustScore!);
+    filtered = filtered.filter(
+      (d) => d.source.trust_score >= options.minTrustScore!,
+    );
   }
 
   if (options.category) {
-    filtered = filtered.filter(d =>
-      d.metadata.category.some(c => c.toLowerCase() === options.category!.toLowerCase())
+    filtered = filtered.filter((d) =>
+      d.metadata.category.some(
+        (c) => c.toLowerCase() === options.category!.toLowerCase(),
+      ),
     );
   }
 
@@ -204,7 +222,7 @@ export function rankDeals(deals: Deal[], options: RankOptions): {
   const sorted = sortDeals(filtered, options.sortBy, options.order);
 
   // Calculate scores with breakdown
-  const scores = sorted.map(deal => ({
+  const scores = sorted.map((deal) => ({
     dealId: deal.id,
     score: calculateDealScore(deal),
     breakdown: {
@@ -213,7 +231,7 @@ export function rankDeals(deals: Deal[], options: RankOptions): {
       recency: calculateRecencyScore(deal.source.discovered_at),
       value: calculateValueScore(deal.reward),
       expiry: calculateExpiryScore(deal.expiry.date),
-    }
+    },
   }));
 
   // Apply limit
@@ -231,7 +249,7 @@ export function rankDeals(deals: Deal[], options: RankOptions): {
  * Get top deals by composite score
  */
 export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
-  const withScores = deals.map(deal => ({
+  const withScores = deals.map((deal) => ({
     deal,
     score: calculateDealScore(deal),
   }));
@@ -247,34 +265,44 @@ export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
  */
 export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
   const now = Date.now();
-  const cutoff = now + (days * 24 * 60 * 60 * 1000);
+  const cutoff = now + days * 24 * 60 * 60 * 1000;
 
   return deals
-    .filter(d => {
+    .filter((d) => {
       if (!d.expiry.date) return false;
       const expiry = new Date(d.expiry.date).getTime();
       return expiry > now && expiry <= cutoff;
     })
-    .sort((a, b) => new Date(a.expiry.date!).getTime() - new Date(b.expiry.date!).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.expiry.date!).getTime() - new Date(b.expiry.date!).getTime(),
+    );
 }
 
 /**
  * Get recently added deals (within specified days)
  */
 export function getRecentDeals(deals: Deal[], days: number = 7): Deal[] {
-  const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
   return deals
-    .filter(d => new Date(d.source.discovered_at).getTime() >= cutoff)
-    .sort((a, b) => new Date(b.source.discovered_at).getTime() - new Date(a.source.discovered_at).getTime());
+    .filter((d) => new Date(d.source.discovered_at).getTime() >= cutoff)
+    .sort(
+      (a, b) =>
+        new Date(b.source.discovered_at).getTime() -
+        new Date(a.source.discovered_at).getTime(),
+    );
 }
 
 /**
  * Get high value deals (above threshold)
  */
-export function getHighValueDeals(deals: Deal[], threshold: number = 50): Deal[] {
+export function getHighValueDeals(
+  deals: Deal[],
+  threshold: number = 50,
+): Deal[] {
   return deals
-    .filter(d => {
+    .filter((d) => {
       const value = typeof d.reward.value === "number" ? d.reward.value : 0;
       return value >= threshold;
     })

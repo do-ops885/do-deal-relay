@@ -161,8 +161,7 @@ export function referralToDeal(referral: ReferralInput): Omit<Deal, "id"> {
       trust_score: metadata.confidence_score ?? 0.5,
     },
     title: metadata.title || `${domain} Referral`,
-    description:
-      metadata.description || `Referral code for ${domain}`,
+    description: metadata.description || `Referral code for ${domain}`,
     code: referral.code,
     url: referral.url,
     reward: {
