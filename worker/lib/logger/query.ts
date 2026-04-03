@@ -13,10 +13,10 @@ async function fetchInBatches<T>(
   for (let i = 0; i < keys.length; i += batchSize) {
     const batch = keys.slice(i, i + batchSize);
     const batchResults = await Promise.all(
-      batch.map((key) => kv.get<T>(key, "json")),
+    batch.map((key) => kv.get(key, "json")),
     );
     results.push(
-      ...batchResults.filter((item): item is T => item !== null),
+    ...(batchResults.filter((item) => item !== null) as T[]),
     );
   }
   return results;

@@ -1,7 +1,7 @@
 ---
 name: Auto Merge
 
-on:
+"on":
   workflow_run:
     workflows: ["CI"]
     types:
@@ -68,8 +68,10 @@ jobs:
             exit 0
           fi
 
-          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          {
+            echo "pr_number=$PR_NUMBER"
+            echo "head_sha=$HEAD_SHA"
+          } >> "$GITHUB_OUTPUT"
           echo "Found PR #$PR_NUMBER"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -110,12 +112,14 @@ jobs:
           AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
           BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
 
-          echo "PR #$PR_NUMBER Status:"
-          echo "  - Base Branch: $BASE_REF"
-          echo "  - Merge State: $MERGE_STATE"
-          echo "  - Mergeable: $MERGEABLE"
-          echo "  - Review Decision: $REVIEW_DECISION"
-          echo "  - Author: $AUTHOR"
+          {
+            echo "PR #$PR_NUMBER Status:"
+            echo "  - Base Branch: $BASE_REF"
+            echo "  - Merge State: $MERGE_STATE"
+            echo "  - Mergeable: $MERGEABLE"
+            echo "  - Review Decision: $REVIEW_DECISION"
+            echo "  - Author: $AUTHOR"
+          }
 
           # Only auto-merge to develop or main
           if [ "$BASE_REF" != "main" ] && [ "$BASE_REF" != "develop" ]; then
@@ -142,10 +146,12 @@ jobs:
           fi
 
           echo "✅ All status checks passed"
-          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
-          echo "base_ref=$BASE_REF" >> "$GITHUB_OUTPUT"
-          echo "title=$(echo "$PR_DATA" | jq -r '.title')" >> "$GITHUB_OUTPUT"
-          echo "auto_merge_enabled=$(echo "$PR_DATA" | jq -r '.autoMergeRequest != null')" >> "$GITHUB_OUTPUT"
+          {
+            echo "author=$AUTHOR"
+            echo "base_ref=$BASE_REF"
+            echo "title=$(echo "$PR_DATA" | jq -r '.title')"
+            echo "auto_merge_enabled=$(echo "$PR_DATA" | jq -r '.autoMergeRequest != null')"
+          } >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

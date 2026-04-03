@@ -1,7 +1,7 @@
 ---
 name: KV Namespace Setup
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       environment:

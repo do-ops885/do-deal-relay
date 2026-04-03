@@ -1,7 +1,7 @@
 ---
 name: CI + Labels Setup
 
-on:
+"on":
   push:
     branches:
       - main

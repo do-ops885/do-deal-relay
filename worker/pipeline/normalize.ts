@@ -8,8 +8,8 @@ import { generateDealId } from "../lib/crypto";
 /**
  * Normalize all deals to canonical format
  */
-export function normalize(deals: Deal[], ctx: PipelineContext): Deal[] {
-  return deals.map((deal) => normalizeDeal(deal));
+export function normalize(deals: Deal[], _ctx: PipelineContext): Deal[] {
+  return deals.map((deal: Deal) => normalizeDeal(deal));
 }
 
 /**

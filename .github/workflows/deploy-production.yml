@@ -4,7 +4,7 @@ name: Deploy - Production
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-on:
+"on":
   push:
     branches: [main]
     tags:
