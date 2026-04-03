@@ -23,10 +23,26 @@ const mockSubtle = {
   importKey: vi.fn(),
   sign: vi.fn(),
 };
-global.crypto = {
-  subtle: mockSubtle as unknown as SubtleCrypto,
-  getRandomValues: (array: Uint8Array) => array,
-} as Crypto;
+
+// Node 24+ doesn't allow overriding global.crypto directly if it's already defined
+const mockGetRandomValues = (array: Uint8Array) => {
+  for (let i = 0; i < array.length; i++) {
+    array[i] = Math.floor(Math.random() * 256);
+  }
+  return array;
+};
+
+if (global.crypto) {
+  vi.stubGlobal("crypto", {
+    subtle: mockSubtle,
+    getRandomValues: mockGetRandomValues,
+  });
+} else {
+  (global as any).crypto = {
+    subtle: mockSubtle as unknown as SubtleCrypto,
+    getRandomValues: mockGetRandomValues,
+  };
+}
 
 describe("Webhooks Module", () => {
   let mockEnv: {

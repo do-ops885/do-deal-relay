@@ -1,3 +1,4 @@
+---
 name: Security & Compliance
 
 env:
@@ -32,15 +33,18 @@ jobs:
       - name: Run TruffleHog secret scanner
         run: |
           # Install TruffleHog
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          URL="https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh"
+          curl -sSfL "$URL" | sh -s -- -b /usr/local/bin
 
           # Handle single-commit scenario where BASE and HEAD are the same
-          if [ "${{ github.event.before }}" == "${{ github.sha }}" ] || [ -z "${{ github.event.before }}" ]; then
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          if [ "$BEFORE" = "$SHA" ] || [ -z "$BEFORE" ]; then
             echo "Single commit push or missing base - running full filesystem scan"
             trufflehog filesystem . --only-verified --json || true
           else
-            echo "Running incremental scan from ${{ github.event.before }} to ${{ github.sha }}"
-            trufflehog git file://. --since-commit ${{ github.event.before }} --only-verified --json || true
+            echo "Running incremental scan from $BEFORE to $SHA"
+            trufflehog git file://. --since-commit "$BEFORE" --only-verified --json || true
           fi
         continue-on-error: true
 
@@ -53,10 +57,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
@@ -84,17 +88,19 @@ jobs:
     steps:
       - name: Report Status
         run: |
-          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Audit | ${{ needs.dependency-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Security Scan Results"
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| Secret Scan | ${{ needs.secret-scan.result }} |"
+            echo "| Dependency Audit | ${{ needs.dependency-check.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "❌ **SECRETS DETECTED** - Immediate action required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ **SECRETS DETECTED** - Immediate action required" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Security checks completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Security checks completed" >> "$GITHUB_STEP_SUMMARY"

@@ -1,3 +1,4 @@
+---
 name: CI
 
 env:
@@ -25,10 +26,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -48,10 +49,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -71,10 +72,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -104,10 +105,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -138,7 +139,10 @@ jobs:
       - name: Check for hardcoded secrets
         run: |
           # Check for common secret patterns
-          if grep -r "api[_-]key\|apikey\|password\|secret" --include="*.ts" --include="*.js" --include="*.json" . | grep -v "node_modules\|\.env\|test\|example" | grep -v "// " | head -20; then
+          if grep -r "api[_-]key\|apikey\|password\|secret" \
+            --include="*.ts" --include="*.js" --include="*.json" . | \
+            grep -v "node_modules\|\.env\|test\|example" | \
+            grep -v "// " | head -n 20; then
             echo "Potential secrets found in code. Please review."
             exit 1
           fi
@@ -155,10 +159,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -182,10 +186,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
@@ -212,16 +216,18 @@ jobs:
     steps:
       - name: Report Status
         run: |
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Quality Gate | ${{ needs.quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TypeScript Check | ${{ needs.type-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Validation Gates | ${{ needs.validate-codes.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & Format | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Check | ${{ needs.build-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CI Results"
+            echo "| Job | Status |"
+            echo "|-----|--------|"
+            echo "| Quality Gate | ${{ needs.quality-gate.result }} |"
+            echo "| TypeScript Check | ${{ needs.type-check.result }} |"
+            echo "| Unit Tests | ${{ needs.test.result }} |"
+            echo "| Validation Gates | ${{ needs.validate-codes.result }} |"
+            echo "| Security Scan | ${{ needs.security-scan.result }} |"
+            echo "| Lint & Format | ${{ needs.lint.result }} |"
+            echo "| Build Check | ${{ needs.build-check.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Check if any required job failed
           if [[ "${{ needs.quality-gate.result }}" == "failure" ]] || \
@@ -229,10 +235,10 @@ jobs:
              [[ "${{ needs.test.result }}" == "failure" ]] || \
              [[ "${{ needs.validate-codes.result }}" == "failure" ]] || \
              [[ "${{ needs.security-scan.result }}" == "failure" ]]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "❌ CI Failed - Check individual jobs for details" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ CI Failed - Check individual jobs for details" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ All checks passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ All checks passed" >> "$GITHUB_STEP_SUMMARY"
           fi

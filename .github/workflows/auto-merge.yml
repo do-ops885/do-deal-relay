@@ -1,3 +1,4 @@
+---
 name: Auto Merge
 
 on:
@@ -26,7 +27,9 @@ jobs:
   auto-merge:
     name: Auto Merge PR
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 10
 
     steps:
@@ -47,7 +50,8 @@ jobs:
         id: get-pr
         run: |
           # Get the PR number from the workflow run
-          RUN_DATA=$(gh run view ${{ github.event.workflow_run.id }} --json headBranch,headSha,repository)
+          RUN_DATA=$(gh run view "${{ github.event.workflow_run.id }}" \
+            --json headBranch,headSha,repository)
           HEAD_BRANCH=$(echo "$RUN_DATA" | jq -r '.headBranch')
           HEAD_SHA=$(echo "$RUN_DATA" | jq -r '.headSha')
 
@@ -55,7 +59,8 @@ jobs:
           echo "Head SHA: $HEAD_SHA"
 
           # Find PR for this branch
-          PR_DATA=$(gh pr list --head "$HEAD_BRANCH" --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author,autoMergeRequest,headRefOid)
+          PR_DATA=$(gh pr list --head "$HEAD_BRANCH" \
+            --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author,headRefOid,autoMergeRequest)
           PR_NUMBER=$(echo "$PR_DATA" | jq -r '.[0].number // empty')
 
           if [ -z "$PR_NUMBER" ]; then
@@ -63,8 +68,8 @@ jobs:
             exit 0
           fi
 
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "Found PR #$PR_NUMBER"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,11 +78,11 @@ jobs:
         id: verify-head
         if: steps.get-pr.outputs.pr_number != ''
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
-          WORKFLOW_SHA=${{ steps.get-pr.outputs.head_sha }}
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
+          WORKFLOW_SHA="${{ steps.get-pr.outputs.head_sha }}"
 
           # Get current PR head
-          PR_HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq '.headRefOid')
+          PR_HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid')
 
           if [ "$WORKFLOW_SHA" != "$PR_HEAD_SHA" ]; then
             echo "❌ PR head SHA ($PR_HEAD_SHA) doesn't match workflow SHA ($WORKFLOW_SHA)"
@@ -93,10 +98,11 @@ jobs:
         id: check-status
         if: steps.get-pr.outputs.pr_number != ''
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
 
           # Get full PR details
-          PR_DATA=$(gh pr view $PR_NUMBER --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author,autoMergeRequest)
+          PR_DATA=$(gh pr view "$PR_NUMBER" \
+            --json number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author,autoMergeRequest)
 
           MERGE_STATE=$(echo "$PR_DATA" | jq -r '.mergeStateStatus')
           MERGEABLE=$(echo "$PR_DATA" | jq -r '.mergeable')
@@ -136,74 +142,79 @@ jobs:
           fi
 
           echo "✅ All status checks passed"
-          echo "author=$AUTHOR" >> $GITHUB_OUTPUT
-          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
+          echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$BASE_REF" >> "$GITHUB_OUTPUT"
+          echo "title=$(echo "$PR_DATA" | jq -r '.title')" >> "$GITHUB_OUTPUT"
+          echo "auto_merge_enabled=$(echo "$PR_DATA" | jq -r '.autoMergeRequest != null')" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check author permissions
         id: check-permissions
-        if: steps.get-pr.outputs.pr_number != '' && steps.check-status.outputs.base_ref != ''
+        if: >
+          steps.get-pr.outputs.pr_number != '' &&
+          steps.check-status.outputs.base_ref != ''
         run: |
-          AUTHOR=${{ steps.check-status.outputs.author }}
-          REPO=${{ github.repository }}
+          AUTHOR="${{ steps.check-status.outputs.author }}"
+          REPO="${{ github.repository }}"
 
           # Check if author has write access
-          PERMISSION=$(gh api repos/$REPO/collaborators/$AUTHOR/permission --jq '.permission' 2>/dev/null || echo "none")
+          PERMISSION=$(gh api "repos/$REPO/collaborators/$AUTHOR/permission" \
+            --jq '.permission' 2>/dev/null || echo "none")
 
           echo "Author $AUTHOR has permission: $PERMISSION"
 
-          if [ "$PERMISSION" != "admin" ] && [ "$PERMISSION" != "write" ] && [ "$PERMISSION" != "maintain" ]; then
+          if [ "$PERMISSION" != "admin" ] && \
+             [ "$PERMISSION" != "write" ] && \
+             [ "$PERMISSION" != "maintain" ]; then
             echo "❌ Author $AUTHOR does not have write access (permission: $PERMISSION)"
             echo "Skipping auto-merge for external contributor"
             exit 0
           fi
 
           echo "✅ Author has sufficient permissions"
-          echo "has_write_access=true" >> $GITHUB_OUTPUT
+          echo "has_write_access=true" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Approve PR
-        if: steps.get-pr.outputs.pr_number != '' && steps.check-permissions.outputs.has_write_access == 'true'
+        if: >
+          steps.get-pr.outputs.pr_number != '' &&
+          steps.check-permissions.outputs.has_write_access == 'true'
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
 
           # Check if already approved by bot
           BOT_LOGIN="github-actions[bot]"
-          APPROVED_BY_BOT=$(gh pr view $PR_NUMBER --json reviews --jq ".reviews | map(select(.author.login == \"$BOT_LOGIN\" and .state == \"APPROVED\")) | length")
+          APPROVED_BY_BOT=$(gh pr view "$PR_NUMBER" --json reviews \
+            --jq ".reviews | map(select(.author.login == \"$BOT_LOGIN\" and .state == \"APPROVED\")) | length")
 
           if [ "$APPROVED_BY_BOT" -gt 0 ]; then
             echo "PR already approved by bot, skipping"
           else
             echo "Approving PR #$PR_NUMBER"
-            gh pr review $PR_NUMBER --approve --body "Auto-approved: CI passed and author has write access"
+            gh pr review "$PR_NUMBER" --approve \
+              --body "Auto-approved: CI passed and author has write access"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge
-        if: steps.get-pr.outputs.pr_number != '' && steps.check-permissions.outputs.has_write_access == 'true' && !cancelled()
+        if: >
+          steps.get-pr.outputs.pr_number != '' &&
+          steps.check-permissions.outputs.has_write_access == 'true' &&
+          steps.check-status.outputs.auto_merge_enabled != 'true' &&
+          !cancelled()
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
-
-          # Get PR title
-          PR_TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
-
-          # Check if auto-merge is already enabled
-          AUTO_MERGE_STATUS=$(gh pr view $PR_NUMBER --json autoMergeRequest --jq '.autoMergeRequest != null')
-
-          if [ "$AUTO_MERGE_STATUS" = "true" ]; then
-            echo "Auto-merge already enabled for PR #$PR_NUMBER"
-            exit 0
-          fi
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
+          PR_TITLE="${{ steps.check-status.outputs.title }}"
 
           # Format commit message
           COMMIT_MESSAGE="${PR_TITLE} (#${PR_NUMBER})"
 
           echo "Enabling auto-merge for PR #$PR_NUMBER with squash method"
 
-          gh pr merge $PR_NUMBER \
+          gh pr merge "$PR_NUMBER" \
             --squash \
             --auto \
             --subject "$COMMIT_MESSAGE" \
@@ -214,18 +225,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Report success
-        if: success() && steps.get-pr.outputs.pr_number != '' && steps.check-permissions.outputs.has_write_access == 'true'
+        if: >
+          success() &&
+          steps.get-pr.outputs.pr_number != '' &&
+          steps.check-permissions.outputs.has_write_access == 'true'
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           echo "::notice::Auto-merge enabled for PR #$PR_NUMBER"
 
       - name: Report failure
         if: failure() && steps.get-pr.outputs.pr_number != ''
         run: |
-          PR_NUMBER=${{ steps.get-pr.outputs.pr_number }}
+          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           echo "::error::Auto-merge failed for PR #$PR_NUMBER"
 
           # Add comment to PR about failure
-          gh pr comment $PR_NUMBER --body "⚠️ Auto-merge failed. Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+          URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh pr comment "$PR_NUMBER" --body "⚠️ Auto-merge failed. Please check the [workflow logs]($URL) for details."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

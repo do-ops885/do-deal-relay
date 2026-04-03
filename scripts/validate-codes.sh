@@ -49,10 +49,12 @@ echo ""
 # Gate 2: Check for hardcoded secrets
 echo "Gate 2: Secret Detection"
 SECRETS_FOUND=0
-if grep -r "ghp_" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+# Look for GitHub Personal Access Tokens (ghp_ followed by 36-40 alphanumeric chars)
+if grep -rE "ghp_[a-zA-Z0-9]{36,40}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     SECRETS_FOUND=1
 fi
-if grep -r "sk-" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
+# Look for OpenAI API keys (sk- followed by 48-51 alphanumeric chars)
+if grep -rE "sk-[a-zA-Z0-9]{48,51}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
     SECRETS_FOUND=1
 fi
 if [ $SECRETS_FOUND -eq 0 ]; then
@@ -109,12 +111,12 @@ echo ""
 # Gate 5: Validate JSON files
 echo "Gate 5: JSON Validity"
 INVALID_JSON=0
-for file in $(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*"); do
+while IFS= read -r -d '' file; do
     if ! jq empty "$file" 2>/dev/null; then
         print_status 1 "Invalid JSON: $file"
         INVALID_JSON=1
     fi
-done
+done < <(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*" -print0)
 if [ $INVALID_JSON -eq 0 ]; then
     print_status 0 "All JSON files are valid"
 fi

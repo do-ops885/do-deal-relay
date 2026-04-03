@@ -1,3 +1,4 @@
+---
 name: Deploy - Production
 
 env:
@@ -36,10 +37,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
@@ -54,7 +55,8 @@ jobs:
       - name: Verify staging is healthy
         if: github.ref != 'refs/heads/main'
         run: |
-          STAGING_URL="https://do-deal-relay-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/health"
+          CF_ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          STAGING_URL="https://do-deal-relay-staging.${CF_ACCOUNT_ID}.workers.dev/health"
           echo "Verifying staging environment is healthy..."
 
           if ! curl -sf "$STAGING_URL"; then
@@ -70,16 +72,18 @@ jobs:
     needs: pre-deploy-checks
     timeout-minutes: 15
 
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event.inputs.confirm_deploy == true || github.event_name == 'push')
+    if: >
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) &&
+      (github.event.inputs.confirm_deploy == true || github.event_name == 'push')
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
@@ -157,23 +161,28 @@ jobs:
 
       - name: Trigger initial discovery
         run: |
+          CF_ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          URL="https://do-deal-relay.${CF_ACCOUNT_ID}.workers.dev/api/discover"
           echo "Triggering discovery pipeline..."
-          curl -sf -X POST "https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/api/discover" || true
+          curl -sf -X POST "$URL" || true
         continue-on-error: true
 
       - name: Create deployment summary
         run: |
-          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deployed by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Endpoints" >> $GITHUB_STEP_SUMMARY
-          echo "- Health: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/health" >> $GITHUB_STEP_SUMMARY
-          echo "- Metrics: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- Deals: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/deals" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Production Deployment Summary"
+            echo ""
+            echo "- **Version**: ${{ github.ref_name }}"
+            echo "- **Commit**: ${{ github.sha }}"
+            echo "- **Deployed by**: @${{ github.actor }}"
+            echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo ""
+            echo "### Endpoints"
+            CF_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+            echo "- Health: https://do-deal-relay.${CF_ID}.workers.dev/health"
+            echo "- Metrics: https://do-deal-relay.${CF_ID}.workers.dev/metrics"
+            echo "- Deals: https://do-deal-relay.${CF_ID}.workers.dev/deals"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create release on tag
         if: startsWith(github.ref, 'refs/tags/v')
@@ -181,12 +190,14 @@ jobs:
         with:
           script: |
             const tag = context.ref.replace('refs/tags/', '');
+            const body = `Production deployment for version ${tag}.\n\n` +
+                         `Deployed automatically via GitHub Actions.`;
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
               name: `Release ${tag}`,
-              body: `Production deployment for version ${tag}.\n\nDeployed automatically via GitHub Actions.`,
+              body: body,
               draft: false,
               prerelease: false
             });
@@ -196,11 +207,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Production deployment failed - ${context.sha.substring(0, 7)}`,
-              body: `Production deployment failed for commit ${context.sha}.\n\n[View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              body: `Production deployment failed for commit ${context.sha}.\n\n[View workflow run](${url})`,
               labels: ['deployment', 'production', 'failed', 'urgent']
             });
 
@@ -215,10 +227,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           cache: "npm"
 
       - name: Install Wrangler
@@ -239,11 +251,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `Production deployment failed and may require manual rollback.\n\n` +
+                         `- Commit: ${context.sha}\n` +
+                         `- Failed run: [View workflow](${url})\n\n` +
+                         `**Action Required**: Check Cloudflare dashboard and rollback if necessary.`;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `ROLLBACK REQUIRED - Production deployment failed`,
-              body: `Production deployment failed and may require manual rollback.\n\n- Commit: ${context.sha}\n- Failed run: [View workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n**Action Required**: Check Cloudflare dashboard and rollback if necessary.`,
+              body: body,
               labels: ['deployment', 'production', 'rollback', 'urgent']
             });
         continue-on-error: true

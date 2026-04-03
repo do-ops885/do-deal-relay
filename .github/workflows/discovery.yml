@@ -1,3 +1,4 @@
+---
 name: Scheduled Discovery
 
 on:
@@ -26,14 +27,17 @@ jobs:
     environment: production
     timeout-minutes: 30
 
-    if: github.event.schedule == '0 */6 * * *' || github.event.inputs.environment == 'production'
+    if: >
+      github.event.schedule == '0 */6 * * *' ||
+      github.event.inputs.environment == 'production'
 
     steps:
       - name: Trigger discovery pipeline
         run: |
           echo "Triggering scheduled discovery on production..."
 
-          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          CF_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PROD_URL="https://do-deal-relay.${CF_ID}.workers.dev"
 
           # Health check first
           echo "Checking production health..."
@@ -52,7 +56,8 @@ jobs:
 
       - name: Wait and verify
         run: |
-          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          CF_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PROD_URL="https://do-deal-relay.${CF_ID}.workers.dev"
 
           echo "Waiting 2 minutes for discovery to complete..."
           sleep 120
@@ -81,7 +86,8 @@ jobs:
         run: |
           echo "Triggering discovery on staging..."
 
-          STAGING_URL="https://do-deal-relay-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          CF_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          STAGING_URL="https://do-deal-relay-staging.${CF_ID}.workers.dev"
 
           # Health check
           echo "Checking staging health..."

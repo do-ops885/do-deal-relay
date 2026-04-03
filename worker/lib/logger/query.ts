@@ -1,6 +1,27 @@
 import { Env, LogEntry } from "../../types";
 import { LOG_INDEX_KEY, LOG_KEY_PREFIX, LogIndex, StructuredLogEntry, STRUCTURED_LOG_PREFIX, TRACE_INDEX_PREFIX } from "./types";
 
+/**
+ * Helper to fetch KV entries in batches to avoid subrequest limits (max 50)
+ */
+async function fetchInBatches<T>(
+  kv: KVNamespace,
+  keys: string[],
+  batchSize: number = 25,
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < keys.length; i += batchSize) {
+    const batch = keys.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map((key) => kv.get<T>(key, "json")),
+    );
+    results.push(
+      ...batchResults.filter((item): item is T => item !== null),
+    );
+  }
+  return results;
+}
+
 export async function getRunLogs(
   env: Env,
   run_id: string,
@@ -13,12 +34,8 @@ export async function getRunLogs(
       return [];
     }
 
-    // Parallelize KV fetches
-    const entries = (
-      await Promise.all(
-        entryKeys.map((key) => env.DEALS_LOG.get<LogEntry>(key, "json")),
-      )
-    ).filter((entry): entry is LogEntry => entry !== null);
+    // Parallelize KV fetches in safe batches
+    const entries = await fetchInBatches<LogEntry>(env.DEALS_LOG, entryKeys);
 
     return entries.sort(
       (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime(),
@@ -41,14 +58,15 @@ export async function queryLogsByRunId(
       return [];
     }
 
-    // Parallelize KV fetches for structured log keys
-    const entries = (
-      await Promise.all(
-        logKeys
-          .filter((key) => key.startsWith(STRUCTURED_LOG_PREFIX))
-          .map((key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json")),
-      )
-    ).filter((entry): entry is StructuredLogEntry => entry !== null);
+    const structuredKeys = logKeys.filter((key) =>
+      key.startsWith(STRUCTURED_LOG_PREFIX),
+    );
+
+    // Parallelize KV fetches in safe batches
+    const entries = await fetchInBatches<StructuredLogEntry>(
+      env.DEALS_LOG,
+      structuredKeys,
+    );
 
     return entries.sort(
       (a, b) =>
@@ -72,12 +90,11 @@ export async function queryLogsByTraceId(
       return [];
     }
 
-    // Parallelize KV fetches
-    const entries = (
-      await Promise.all(
-        logKeys.map((key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json")),
-      )
-    ).filter((entry): entry is StructuredLogEntry => entry !== null);
+    // Parallelize KV fetches in safe batches
+    const entries = await fetchInBatches<StructuredLogEntry>(
+      env.DEALS_LOG,
+      logKeys,
+    );
 
     return entries.sort(
       (a, b) =>
@@ -106,10 +123,8 @@ export async function getRecentLogs(
       keys.push(`${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`);
     }
 
-    // Parallelize KV fetches
-    const entries = (
-      await Promise.all(keys.map((key) => env.DEALS_LOG.get<LogEntry>(key, "json")))
-    ).filter((entry): entry is LogEntry => entry !== null);
+    // Parallelize KV fetches in safe batches
+    const entries = await fetchInBatches<LogEntry>(env.DEALS_LOG, keys);
 
     return entries;
   } catch (error) {
@@ -128,16 +143,14 @@ export async function getRecentStructuredLogs(
 
     const sortedKeys = listResult.keys
       .sort((a, b) => b.name.localeCompare(a.name))
-      .slice(0, count);
+      .slice(0, count)
+      .map((k) => k.name);
 
-    // Parallelize KV fetches
-    const logs = (
-      await Promise.all(
-        sortedKeys.map((key) =>
-          env.DEALS_LOG.get<StructuredLogEntry>(key.name, "json"),
-        ),
-      )
-    ).filter((entry): entry is StructuredLogEntry => entry !== null);
+    // Parallelize KV fetches in safe batches
+    const logs = await fetchInBatches<StructuredLogEntry>(
+      env.DEALS_LOG,
+      sortedKeys,
+    );
 
     return logs.sort(
       (a, b) =>
