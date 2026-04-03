@@ -55,10 +55,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
@@ -70,7 +70,6 @@ jobs:
             echo "⚠️ Security vulnerabilities found in dependencies"
             exit 1
           }
-        continue-on-error: true
 
       - name: Check for outdated dependencies
         run: |

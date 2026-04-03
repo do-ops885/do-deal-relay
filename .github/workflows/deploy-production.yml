@@ -40,13 +40,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      # Intentional: Tests pass but worker runtime crashes in CI (LESSON-022)
+      # Quality gate below still validates critical checks
       - name: Full test suite
         run: npm run test:ci
-        continue-on-error: true # Tests pass but worker runtime crashes (LESSON-022)
+        continue-on-error: true
 
       - name: Run quality gate
         run: ./scripts/quality_gate.sh
