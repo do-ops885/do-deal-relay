@@ -139,7 +139,7 @@ jobs:
           # Test health endpoint (may return 503 for fresh deployments)
           HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             "$PROD_URL/health" || echo "000")
-          if [ "$HEALTH_STATUS" = "200" ] || [ "$HEALTH_STATUS" = "503" ]; then
+          if [ "$HEALTH_STATUS" -eq 200 ] || [ "$HEALTH_STATUS" -eq 503 ]; then
             echo "✅ Health endpoint OK (status: $HEALTH_STATUS)"
           else
             echo "❌ Health endpoint failed with status $HEALTH_STATUS"
@@ -153,7 +153,7 @@ jobs:
           # Test deals endpoint (may return 404 for fresh deployments)
           DEALS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             "$PROD_URL/deals" || echo "000")
-          if [ "$DEALS_STATUS" = "200" ] || [ "$DEALS_STATUS" = "404" ]; then
+          if [ "$DEALS_STATUS" -eq 200 ] || [ "$DEALS_STATUS" -eq 404 ]; then
             echo "✅ Deals endpoint OK (status: $DEALS_STATUS)"
           else
             echo "❌ Deals endpoint failed with status $DEALS_STATUS"

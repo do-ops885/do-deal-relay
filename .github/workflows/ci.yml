@@ -111,7 +111,7 @@ jobs:
           # Handle single-commit scenario where BASE and HEAD are the same
           BEFORE="${{ github.event.before }}"
           SHA="${{ github.sha }}"
-          if [ "$BEFORE" == "$SHA" ] || [ -z "$BEFORE" ]; then
+          if [ "$BEFORE" = "$SHA" ] || [ -z "$BEFORE" ]; then
             echo "Single commit push - running full filesystem scan"
             trufflehog filesystem . --only-verified --json || true
           else
@@ -234,10 +234,14 @@ jobs:
              [[ "$TEST_RESULT" == "failure" ]] || \
              [[ "$VALIDATE_CODES_RESULT" == "failure" ]] || \
              [[ "$SECURITY_SCAN_RESULT" == "failure" ]]; then
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "❌ CI Failed - Check individual jobs for details" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo ""
+              echo "❌ CI Failed - Check individual jobs for details"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           else
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "✅ All CI checks passed!" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo ""
+              echo "✅ All CI checks passed!"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi

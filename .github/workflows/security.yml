@@ -36,7 +36,7 @@ jobs:
           # Handle single-commit scenario where BASE and HEAD are the same
           BEFORE="${{ github.event.before }}"
           SHA="${{ github.sha }}"
-          if [ "$BEFORE" == "$SHA" ] || [ -z "$BEFORE" ]; then
+          if [ "$BEFORE" = "$SHA" ] || [ -z "$BEFORE" ]; then
             echo "Single commit push - running full filesystem scan"
             trufflehog filesystem . --only-verified --json || true
           else
@@ -96,10 +96,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [[ "$SECRET_SCAN_RESULT" == "failure" ]]; then
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "❌ **SECRETS DETECTED** - Immediate action required" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo ""
+              echo "❌ **SECRETS DETECTED** - Immediate action required"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "✅ Security checks completed" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo ""
+            echo "✅ Security checks completed"
+          } >> "$GITHUB_STEP_SUMMARY"
