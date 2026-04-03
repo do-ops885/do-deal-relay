@@ -10,5 +10,12 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
     },
+    exclude: [
+      "**/node_modules/**",
+      "**/tests/browser/**", // Playwright browser tests
+      "**/tests/e2e/**", // Playwright E2E tests
+      "**/dist/**",
+      "**/.wrangler/**",
+    ],
   },
 });

@@ -24,16 +24,22 @@ const mockSubtle = {
   importKey: vi.fn(),
   sign: vi.fn(),
 };
-global.crypto = {
-  subtle: mockSubtle as unknown as SubtleCrypto,
-  getRandomValues: (array: Uint8Array) => {
-    // Fill with pseudo-random values based on counter
-    for (let i = 0; i < array.length; i++) {
-      array[i] = (Math.floor(Math.random() * 256) + randomCounter++) % 256;
-    }
-    return array;
-  },
-} as Crypto;
+
+// Use Object.defineProperty to override read-only global.crypto (Node.js 20+)
+Object.defineProperty(global, "crypto", {
+  value: {
+    subtle: mockSubtle as unknown as SubtleCrypto,
+    getRandomValues: (array: Uint8Array) => {
+      // Fill with pseudo-random values based on counter
+      for (let i = 0; i < array.length; i++) {
+        array[i] = (Math.floor(Math.random() * 256) + randomCounter++) % 256;
+      }
+      return array;
+    },
+  } as Crypto,
+  writable: true,
+  configurable: true,
+});
 
 describe("Webhooks Module", () => {
   let mockEnv: {
