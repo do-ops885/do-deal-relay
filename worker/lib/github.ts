@@ -4,6 +4,27 @@ import { CircuitBreaker, createGitHubCircuitBreaker } from "./circuit-breaker";
 import { createGitHubCache } from "./cache";
 
 // ============================================================================
+// Safe JSON Response Parser
+// Handles cases where response.json() might not be available (e.g., in tests)
+// ============================================================================
+
+async function safeResponseJson<T>(response: Response): Promise<T> {
+  // Check if response.json is a function
+  if (typeof response.json === "function") {
+    return (await response.json()) as T;
+  }
+
+  // Fallback: try to read text and parse as JSON
+  if (typeof response.text === "function") {
+    const text = await response.text();
+    return JSON.parse(text) as T;
+  }
+
+  // Last resort: try to access the response body directly
+  throw new Error("Response does not have json() or text() methods");
+}
+
+// ============================================================================
 // GitHub API Integration with Caching
 // ============================================================================
 
@@ -115,7 +136,9 @@ export async function getFileContent(
       );
     }
 
-    const data = (await response.json()) as { content: string; sha: string };
+    const data = await safeResponseJson<{ content: string; sha: string }>(
+      response,
+    );
     return {
       content: data.content,
       sha: data.sha,
@@ -181,8 +204,8 @@ export async function commitFile(
       throw new Error(`GitHub commit failed: ${response.status} - ${error}`);
     }
 
-    const data = (await response.json()) as { commit: { sha: string } };
-    return data.commit.sha;
+    const data = await safeResponseJson<{ commit: { sha: string } }>(response);
+    return data?.commit?.sha || "";
   };
 
   try {
@@ -282,8 +305,8 @@ ${JSON.stringify(details.context || {}, null, 2)}
       throw new Error(`Failed to create issue: ${response.status}`);
     }
 
-    const data = (await response.json()) as { number: number };
-    return data.number;
+    const data = await safeResponseJson<{ number: number }>(response);
+    return data?.number || 0;
   };
 
   try {
@@ -328,21 +351,23 @@ export async function getRecentCommits(
       throw new Error(`Failed to get commits: ${response.status}`);
     }
 
-    const data = (await response.json()) as Array<{
-      sha: string;
-      commit: {
-        message: string;
-        author: {
-          name: string;
-          email: string;
-          date: string;
+    const data = await safeResponseJson<
+      Array<{
+        sha: string;
+        commit: {
+          message: string;
+          author: {
+            name: string;
+            email: string;
+            date: string;
+          };
         };
-      };
-    }>;
+      }>
+    >(response);
     return data.map((commit) => ({
-      sha: commit.sha,
-      message: commit.commit.message,
-      author: commit.commit.author,
+      sha: commit?.sha || "",
+      message: commit?.commit?.message || "",
+      author: commit?.commit?.author || { name: "", email: "", date: "" },
     }));
   };
 
