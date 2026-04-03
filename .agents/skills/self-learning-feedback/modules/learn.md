@@ -21,6 +21,9 @@ Store errors and their fixes for future learning.
 
 ### Lesson Format
 
+Lessons are stored in **two formats**:
+
+**1. JSONL Format** (machine-readable, for `lessons.jsonl`):
 ```json
 {
   "lesson_id": "LESSON-042",
@@ -46,6 +49,24 @@ Store errors and their fixes for future learning.
   "confidence": "HIGH"
 }
 ```
+
+**2. Markdown Format** (human-readable, for `LESSONS.md`):
+```markdown
+### LESSON-XXX: Brief Title
+**Date**: YYYY-MM-DD
+**Component**: Which module/agent
+**Issue**: What went wrong
+**Root Cause**: Why it happened
+**Solution**: How it was fixed
+**Prevention**: How to avoid in future
+```
+
+### Dual-Format Rule
+
+After every lesson-worthy task:
+1. **Run capture_lesson.sh** → appends to `lessons.jsonl`
+2. **Document in LESSONS.md** → human-readable format with full context
+3. **Cross-reference** → Link related lessons for traceability
 
 ### Lesson Categories
 

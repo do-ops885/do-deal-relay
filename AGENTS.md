@@ -116,20 +116,62 @@ Run `./scripts/quality_gate.sh` to execute all validation checks:
 - Security checks
 - Root directory file organization (via `./scripts/check-root-files.sh`)
 
+### Self-Learning Protocol
+
+After every successful task completion, agents MUST:
+
+1. **Evaluate for Lesson Worthiness**
+   - Was this a novel problem?
+   - Did we overcome an unexpected obstacle?
+   - Is there prevention value for future agents?
+   - Would this be hard to rediscover?
+
+2. **If Yes - Document in LESSONS.md**
+   ```markdown
+   ### LESSON-XXX: Brief Title
+   **Date**: YYYY-MM-DD
+   **Component**: Which module/agent
+   **Issue**: What went wrong
+   **Root Cause**: Why it happened
+   **Solution**: How it was fixed
+   **Prevention**: How to avoid in future
+   ```
+
+3. **Update Active Context**
+   - Add note to `temp/state.json` if state changed
+   - Update AGENTS.md if process/structure changed
+   - Cross-reference related lessons
+
+4. **Log to JSONL** (for automated analysis)
+   ```json
+   {"lesson_id": "LESSON-XXX", "timestamp": "...", "tags": [...]}
+   ```
+
+**Trigger Phrases for Auto-Lesson Creation**:
+- "Wait, why didn't that work?"
+- "That was unexpected..."
+- "Let's try a different approach"
+- "Fixed it by..."
+- "The issue was..."
+
+See [agents-docs/LESSONS.md](agents-docs/LESSONS.md) for full format and examples.
+
 ## Active Agents
 
-See `temp/state.json` for current agent status and progress.
+All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md) for full registry.
 
-| Agent               | Status  | Phase           | Responsibility      |
-| ------------------- | ------- | --------------- | ------------------- |
-| test-agent-v2       | pending | Test & Validate | Integration testing |
-| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
-| doc-agent           | pending | Test & Validate | Documentation       |
-| github-agent        | pending | Test & Validate | GitHub integration  |
-| browser-agent       | pending | Test & Validate | Browser testing     |
+| Agent               | Status   | Phase           | Responsibility      |
+| ------------------- | -------- | --------------- | ------------------- |
+| test-agent          | complete | Test & Validate | Integration testing |
+| validation-agent    | complete | Test & Validate | 9 validation gates  |
+| doc-agent           | complete | Test & Validate | Documentation       |
+| github-agent        | complete | Test & Validate | GitHub integration  |
+| browser-agent       | pending  | Test & Validate | Browser testing     |
 
 ## Notes
 
-- **Analysis Reports**: Generated reports and swarm analysis are stored in `temp/` (not tracked in git)
-- **State Tracking**: Agent progress and system state tracked in `temp/state.json`
+- **Analysis Reports**: Generated reports stored in `temp/` (gitignored)
+- **State Tracking**: Agent progress tracked in `temp/state.json`
 - **Skills Lock**: External skill versions tracked in `temp/skills-lock.json`
+- **Validation Status**: All 9 validation gates passing
+- **Self-Learning**: See Self-Learning Protocol above - document lessons after every task
