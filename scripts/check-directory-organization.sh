@@ -105,7 +105,8 @@ for file in $(find . -name "*.md" -not -path "./node_modules/*" -not -path "./.g
        [[ "$file" == .claude/*.md ]] || \
        [[ "$file" == .opencode/*.md ]] || \
        [[ "$file" == .gemini/*.md ]] || \
-       [[ "$file" == .qwen/*.md ]]; then
+       [[ "$file" == .qwen/*.md ]] || \
+       [[ "$file" == .jules/*.md ]]; then
         continue
     fi
 

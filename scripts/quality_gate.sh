@@ -35,8 +35,13 @@ run_check() {
 # Check 1: TypeScript compilation (silent on success)
 run_check "TypeScript compilation" "npm run lint"
 
-# Check 2: Unit tests (silent on success)
-run_check "Unit tests" "npm run test:ci"
+# Check 2: Unit tests (silent on success) - skip if SKIP_TESTS is set
+if [ -z "$SKIP_TESTS" ]; then
+    run_check "Unit tests" "npm run test:ci"
+else
+    # Tests are skipped in CI, will run separately
+    :
+fi
 
 # Check 3: Validation gates
 run_check "Validation gates" "npm run validate"
@@ -49,8 +54,8 @@ if [ -d ".claude" ]; then
     run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
 fi
 
-# Check 6: Git hooks installed
-if [ ! -f ".git/hooks/pre-commit" ]; then
+# Check 6: Git hooks installed (skip in CI - hooks are for local dev only)
+if [ -z "$SKIP_TESTS" ] && [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
 fi
