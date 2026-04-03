@@ -15,6 +15,8 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    testTimeout: 15000, // Increased to accommodate retry delays (1+2+4=7s)
+    testTimeout: 15000,
+    retry: 1, // Retry flaky tests once
+    teardownTimeout: 5000, // Give workers time to cleanup
   },
 });
