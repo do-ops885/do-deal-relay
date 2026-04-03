@@ -3,7 +3,7 @@
 # Runs all validation checks that run in GitHub Actions
 # Exit 0 on success, Exit 2 on failure
 
-set -euo pipefail
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
