@@ -41,12 +41,15 @@ run_check "Unit tests" "npm run test:ci"
 # Check 3: Validation gates
 run_check "Validation gates" "npm run validate"
 
-# Check 4: Skill symlinks intact (if .claude exists)
+# Check 4: Directory organization
+run_check "Directory organization" "${SCRIPT_DIR}/check-directory-organization.sh"
+
+# Check 5: Skill symlinks intact (if .claude exists)
 if [ -d ".claude" ]; then
     run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
 fi
 
-# Check 5: Git hooks installed
+# Check 6: Git hooks installed
 if [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")

@@ -36,12 +36,26 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 ├── .agents/skills/       # Agent coordination skills
 ├── agents-docs/          # System documentation
 ├── docs/                 # API documentation
-├── plans/                # Execution plans
+├── plans/                # Future implementation plans
+├── reports/              # Permanent analysis reports
+│   └── analysis/         # Detailed investigation outputs
 ├── scripts/              # Utility scripts
-├── temp/                 # Analysis reports & state (gitignored)
+├── temp/                 # Temporary files (gitignored)
 ├── tests/                # Test suite
 └── worker/               # Cloudflare Worker source
 ```
+
+### Directory Usage Rules
+
+| Directory   | Purpose                          | Committed? | Lifespan     |
+| ----------- | -------------------------------- | ---------- | ------------ |
+| `docs/`     | API & technical documentation    | ✅ Yes     | Permanent    |
+| `agents-docs/` | System & agent documentation  | ✅ Yes     | Permanent    |
+| `plans/`    | Future implementation plans      | ✅ Yes     | Until done   |
+| `reports/`  | Analysis findings & learnings    | ✅ Yes     | Permanent    |
+| `temp/`     | Temporary working files         | ❌ No      | Session only |
+| `scripts/`  | Utility scripts                   | ✅ Yes     | Permanent    |
+| `tests/`    | Test suite                        | ✅ Yes     | Permanent    |
 
 ### Root Directory Policy
 
@@ -60,7 +74,9 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 **MUST use subfolders**:
 
 - Documentation → `docs/` or `agents-docs/`
-- Reports/status → `temp/`
+- **Permanent reports** → `reports/` (use `reports/analysis/` for investigations)
+- **Future plans** → `plans/`
+- **Temporary work** → `temp/` (gitignored, not committed)
 - Scripts → `scripts/`
 - Tests → `tests/`
 - Generated files → `temp/`
@@ -75,7 +91,7 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 | Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
 | Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
 | Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Execution Plan   | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
+| Execution Plan   | [plans/EXECUTION_PLAN.md](plans/EXECUTION_PLAN.md)                 |
 | Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
 | API Docs         | [docs/API.md](docs/API.md)                                         |
 | Skills           | [.agents/skills/](.agents/skills/)                                 |
@@ -170,8 +186,12 @@ All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agent
 
 ## Notes
 
-- **Analysis Reports**: Generated reports stored in `temp/` (gitignored)
+- **Permanent Reports**: Analysis findings go to `reports/` (committed, permanent record)
+- **Analysis Work**: Detailed investigations go to `reports/analysis/`
+- **Future Plans**: Roadmaps and specs go to `plans/`
+- **Temp Files**: Working files in `temp/` are gitignored, session-only
 - **State Tracking**: Agent progress tracked in `temp/state.json`
 - **Skills Lock**: External skill versions tracked in `temp/skills-lock.json`
 - **Validation Status**: All 9 validation gates passing
 - **Self-Learning**: See Self-Learning Protocol above - document lessons after every task
+- **Directory Guide**: See README files in each directory for usage rules

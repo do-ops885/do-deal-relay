@@ -241,7 +241,9 @@ for file in $FILES; do
             error "Non-essential file in root directory: $file"
             echo "   Move to appropriate subfolder:"
             echo "   - Documentation → docs/ or agents-docs/"
-            echo "   - Reports/status → temp/"
+            echo "   - Execution plans → plans/"
+            echo "   - Analysis reports → reports/ (use reports/analysis/ for investigations)"
+            echo "   - Temporary work → temp/ (gitignored)"
             echo "   - Scripts → scripts/"
             echo "   - Tests → tests/"
             echo "   - Source code → worker/"
@@ -254,7 +256,17 @@ if [ $ROOT_VIOLATIONS -eq 0 ]; then
     success "Root directory organization is valid"
 else
     echo ""
-    echo "   Reference: See agents-docs/guard-rails.md for file organization rules"
+    echo "   Reference: See AGENTS.md for file organization rules"
+fi
+echo ""
+
+# GUARD RAIL 9: Directory Organization Validation
+echo "Guard Rail 9: Directory Organization"
+if bash scripts/check-directory-organization.sh >/dev/null 2>&1; then
+    success "Directory organization is valid"
+else
+    error "Directory organization check failed"
+    echo "   Run: ./scripts/check-directory-organization.sh"
 fi
 echo ""
 
@@ -277,6 +289,6 @@ elif [ $WARNINGS -gt 0 ]; then
     echo "Review warnings above."
     exit 0
 else
-    echo -e "${GREEN}✓ ALL GUARD RAILS PASSED${NC}"
+    echo -e "${GREEN}✓ ALL 9 GUARD RAILS PASSED${NC}"
     exit 0
 fi

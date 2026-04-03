@@ -46,14 +46,14 @@ if [ ${#COMMIT_MSG} -lt 10 ]; then
 fi
 
 if [ ${#COMMIT_MSG} -gt 72 ]; then
-    warning "Commit message exceeds 72 characters (${#COMMIT_MSG} chars). Consider shorter first line."
+    error "Commit message exceeds 72 characters (${#COMMIT_MSG} chars). Must be 72 or fewer."
 fi
 
 # Check 2: Conventional Commits format
 # Format: type(scope): description
 CONVENTIONAL_PATTERN="^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\(.+\))?: .+$"
 if [[ ! $COMMIT_MSG =~ $CONVENTIONAL_PATTERN ]]; then
-    warning "Commit message doesn't follow conventional commits format"
+    error "Commit message doesn't follow conventional commits format"
     echo "   Expected: type(scope): description"
     echo "   Types: feat, fix, docs, style, refactor, test, chore, ci, build, perf"
     echo "   Example: feat(discovery): add support for new source"
@@ -69,14 +69,18 @@ fi
 
 # Check 4: No trailing periods in subject
 if [[ $COMMIT_MSG =~ \.$ ]]; then
-    warning "Commit message ends with period"
-    echo "   Remove trailing period from subject line"
+    error "Commit message ends with period - remove trailing period"
 fi
 
-# Check 5: Capitalization
-if [[ $COMMIT_MSG =~ ^[a-z] ]]; then
-    warning "Commit message starts with lowercase"
-    echo "   Capitalize first letter: '${COMMIT_MSG:0:1}' → '$(echo "${COMMIT_MSG:0:1}" | tr '[:lower:]' '[:upper:]')'"
+# Check 5: Description must start with uppercase (after type(scope):)
+# Extract the description part after the colon and space
+if [[ $COMMIT_MSG =~ ^[^:]+:\ ([^ ].*)$ ]]; then
+    DESCRIPTION="${BASH_REMATCH[1]}"
+    if [[ $DESCRIPTION =~ ^[a-z] ]]; then
+        error "Description starts with lowercase - must start with uppercase"
+        echo "   Change: '${DESCRIPTION:0:1}' → '$(echo "${DESCRIPTION:0:1}" | tr '[:lower:]' '[:upper:]')'"
+        ERRORS=$((ERRORS + 1))
+    fi
 fi
 
 # Check 6: No merge conflict markers
