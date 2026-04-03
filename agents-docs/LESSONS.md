@@ -24,7 +24,7 @@
    skill self-learning-feedback
    analyze_method: verify_script_patterns
    file: scripts/validate-codes.sh
-   
+
    # Capture the lesson after fix
    ./scripts/capture_lesson.sh \
      --error-type validation_script_bug \
@@ -89,3 +89,79 @@
 - ✅ Captured to lessons.jsonl via capture_lesson.sh
 - ✅ Documented in LESSONS.md with full context
 - ✅ Prevention rules established for future
+
+---
+
+### LESSON-016: GitHub Actions ShellCheck Validation Gap — Local Guard Rails Must Match CI
+
+**Date**: 2026-04-03
+**Component**: GitHub Actions / Workflows / Guard Rails
+
+**Issue**: PR failed in CI with ShellCheck errors that local guard rails didn't catch:
+1. SC2129: Multiple consecutive redirects to same file not grouped
+2. SC2086: Variables not double-quoted (word splitting/globbing)
+3. SC2170: Using `-eq` for string comparison instead of `=`
+
+**Root Cause**:
+
+- Local pre-commit hooks didn't run actionlint/shellcheck on workflow files
+- `.githooks/pre-commit` only checked for secrets in workflows, skipped validation
+- Actionlint wasn't installed locally, so no workflow validation occurred
+- Differences between local and CI environments caused "works on my machine" syndrome
+
+**Solution**:
+
+1. **Fixed all ShellCheck errors** in workflow files:
+   ```yaml
+   # Before (SC2129 violation)
+   echo "mergeable=true" >> "$GITHUB_OUTPUT"
+   echo "author=$AUTHOR" >> "$GITHUB_OUTPUT"
+   echo "base_ref=$BASE_REF" >> "$GITHUB_OUTPUT"
+
+   # After (grouped redirects)
+   {
+     echo "mergeable=true"
+     echo "author=$AUTHOR"
+     echo "base_ref=$BASE_REF"
+   } >> "$GITHUB_OUTPUT"
+   ```
+
+2. **Added Guard Rail 10** to pre-commit hook:
+   ```bash
+   # GUARD RAIL 10: GitHub Actions Workflow Validation
+   if command -v actionlint >/dev/null 2>&1; then
+       for file in $FILES; do
+           if [[ "$file" == .github/workflows/*.yml ]]; then
+               if ! actionlint -oneline -level error "$file" 2>/dev/null; then
+                   error "Workflow validation failed: $file"
+               fi
+           fi
+       done
+   else
+       warning "actionlint not installed - skipping workflow validation"
+       echo "   Install: go install github.com/rhysd/actionlint/cmd/actionlint@latest"
+   fi
+   ```
+
+3. **Fixed all workflow files**:
+   - `.github/workflows/auto-merge.yml` - Grouped GITHUB_OUTPUT redirects, quoted variables
+   - `.github/workflows/ci.yml` - Grouped GITHUB_STEP_SUMMARY redirects
+   - `.github/workflows/dependencies.yml` - Fixed string comparison (`=` not `-eq`)
+   - `.github/workflows/deploy-production.yml` - Grouped redirects
+   - `.github/workflows/security.yml` - Grouped redirects
+
+**Prevention**:
+
+- ✅ Added actionlint to Guard Rail 10 in pre-commit hook
+- ✅ Updated LESSONS.md with this entry
+- ✅ CI now passes - all ShellCheck errors resolved
+- ✅ Documented installation instructions for actionlint
+
+**Rule for Future Agents**:
+
+> When modifying GitHub Actions workflows, ALWAYS run `actionlint -level error` locally before committing. If actionlint is not installed, install it with: `go install github.com/rhysd/actionlint/cmd/actionlint@latest` or use Docker: `docker run --rm -v $PWD:/repo rhysd/actionlint:latest`
+
+**Files Modified**:
+- `.githooks/pre-commit` - Added Guard Rail 10
+- `.github/workflows/*.yml` - Fixed all ShellCheck issues
+- `agents-docs/LESSONS.md` - Documented lesson

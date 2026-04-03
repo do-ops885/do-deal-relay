@@ -278,6 +278,36 @@ else
 fi
 echo ""
 
+# GUARD RAIL 10: GitHub Actions Workflow Validation
+echo "Guard Rail 10: GitHub Actions Workflow Validation"
+WORKFLOW_ERRORS=0
+
+# Check if actionlint is available
+if command -v actionlint >/dev/null 2>&1; then
+    for file in $FILES; do
+        if [[ "$file" == .github/workflows/*.yml ]] || [[ "$file" == .github/workflows/*.yaml ]]; then
+            if [ -f "$file" ]; then
+                # Run actionlint and capture errors (exclude info-level warnings)
+                if ! actionlint -oneline -level error "$file" 2>/dev/null; then
+                    error "Workflow validation failed: $file"
+                    echo "   Run: actionlint $file"
+                    echo "   Or install: go install github.com/rhysd/actionlint/cmd/actionlint@latest"
+                    WORKFLOW_ERRORS=$((WORKFLOW_ERRORS + 1))
+                fi
+            fi
+        fi
+    done
+    
+    if [ $WORKFLOW_ERRORS -eq 0 ]; then
+        success "All workflow files are valid"
+    fi
+else
+    warning "actionlint not installed - skipping workflow validation"
+    echo "   Install: go install github.com/rhysd/actionlint/cmd/actionlint@latest"
+    echo "   Or run: docker run --rm -v \$PWD:/repo rhysd/actionlint:latest"
+fi
+echo ""
+
 # Summary
 echo "=================================="
 echo "Guard Rails Summary"

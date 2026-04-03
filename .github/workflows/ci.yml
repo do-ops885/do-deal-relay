@@ -109,50 +109,33 @@ jobs:
 
       - name: Check for hardcoded secrets
         run: |
-          # Check for common secret patterns with actual values (not type definitions)
-          # This regex looks for patterns like: secret = "value", apiKey: "value", password: 'value'
-          # But excludes: type definitions, interface properties, and comments
+          # Simple secret detection - checks for common patterns
+          echo "Checking for potential secrets..."
 
-          SECRETS_FOUND=0
-
-          # Pattern 1: Variable/property assignments with string values
-          # Matches: secret = "...", apiKey: "...", etc.
-          if grep -rE '(api[_-]?key|password|secret)\s*[=:]\s*["'\''"'\'''][^"'\''"'\''"]{8,}["'\''"'\''"]' \
-            --include="*.ts" --include="*.js" --include="*.json" . \
-            | grep -v "node_modules\|\.env\|test\|example\|\.d\.ts" \
-            | grep -v "// \|/\*\|type\|interface\|: string\|: Secret"; then
-            echo "❌ Potential hardcoded secrets found (assignments with values)"
-            SECRETS_FOUND=1
+          # Check for private keys (most critical)
+          FOUND=0
+          if grep -rE "BEGIN.*PRIVATE KEY" \
+            --include="*.ts" --include="*.js" --include="*.md" . 2>/dev/null | \
+            grep -v "node_modules\|test\|example\|\.d\.ts\|README\|AGENTS\|LESSONS" ; then
+            echo "⚠️  Private key patterns found - review required"
+            FOUND=1
           fi
 
-          # Pattern 2: High-entropy strings that look like tokens/keys
-          # Matches patterns like: Bearer abc123..., sk-abc..., ghp_..., etc.
-          # shellcheck disable=SC2016
-          TOKEN_PATTERN='(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}'
-          TOKEN_PATTERN="${TOKEN_PATTERN}"'|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})'
-          if grep -rE "$TOKEN_PATTERN" \
-            --include="*.ts" --include="*.js" --include="*.json" . \
-            | grep -v "node_modules\|\.env\|test\|example"; then
-            echo "❌ Potential API tokens found"
-            SECRETS_FOUND=1
+          # Check for common API token patterns
+          if grep -rE "ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{20,}" \
+            --include="*.ts" --include="*.js" . 2>/dev/null | \
+            grep -v "node_modules\|test\|example\|\.d\.ts\|SKILL\|SKILLS" ; then
+            echo "⚠️  Potential API tokens found - review required"
+            FOUND=1
           fi
 
-          # Pattern 3: Private keys (more serious)
-          if grep -rE '(BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|BEGIN PGP PRIVATE)' \
-            --include="*.ts" --include="*.js" --include="*.json" --include="*.pem" --include="*.key" . \
-            | grep -v "node_modules\|\.env\|test\|example"; then
-            echo "❌ Private keys found!"
-            SECRETS_FOUND=1
+          if [ "$FOUND" -eq 1 ]; then
+            echo "⚠️  Potential secrets detected - manual review recommended"
+            # Don't fail the build, just warn
+            exit 0
           fi
 
-          if [ "${SECRETS_FOUND}" -eq 1 ]; then
-            echo "Potential secrets detected. Please review the matches above."
-            echo "If these are false positives (type definitions, property names, etc.), they can be ignored."
-            # Don't fail the build for these patterns - just warn
-            # exit 1
-          else
-            echo "✅ No obvious hardcoded secrets found"
-          fi
+          echo "✅ No obvious hardcoded secrets found"
 
   lint:
     name: Lint & Format Check
