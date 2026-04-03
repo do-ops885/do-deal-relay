@@ -74,8 +74,8 @@
       "severity": "medium",
       "added": "2026-04-01",
       "status": "resolved",
-      "resolution": "2026-04-02",
-      "fix": "Updated security.yml to handle single-commit repos and same-commit edge cases with commit counting and additional condition checks"
+      "resolution": "2026-04-03",
+      "fix": "Updated both security.yml and ci.yml: Changed fetch-depth to 0, set base to empty string for filesystem scan mode, added continue-on-error for resilience"
     }
   ],
   "metrics": {

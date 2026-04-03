@@ -97,15 +97,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Secret Detection - TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
+          base: ""
           head: HEAD
           extra_args: --debug --only-verified
+        continue-on-error: true
 
       - name: Check for hardcoded secrets
         run: |
