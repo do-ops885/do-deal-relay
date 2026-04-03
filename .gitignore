@@ -366,4 +366,5 @@ debug/
 *.7z
 
 # Playwright
+test-results/
 playwright-report/
