@@ -1,5 +1,34 @@
 import { Env, LogEntry } from "../../types";
-import { LOG_INDEX_KEY, LOG_KEY_PREFIX, LogIndex, StructuredLogEntry, STRUCTURED_LOG_PREFIX, TRACE_INDEX_PREFIX } from "./types";
+import {
+  LOG_INDEX_KEY,
+  LOG_KEY_PREFIX,
+  LogIndex,
+  StructuredLogEntry,
+  STRUCTURED_LOG_PREFIX,
+  TRACE_INDEX_PREFIX,
+} from "./types";
+
+/**
+ * Helper to fetch KV entries in parallel batches to optimize performance
+ * while staying within platform limits.
+ */
+async function fetchInBatches<T>(
+  keys: string[],
+  fetcher: (key: string) => Promise<T | null>,
+  batchSize: number = 50,
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < keys.length; i += batchSize) {
+    const batch = keys.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map((key) => fetcher(key)));
+    for (const result of batchResults) {
+      if (result !== null) {
+        results.push(result);
+      }
+    }
+  }
+  return results;
+}
 
 export async function getRunLogs(
   env: Env,
@@ -13,13 +42,10 @@ export async function getRunLogs(
       return [];
     }
 
-    const entries: LogEntry[] = [];
-    for (const key of entryKeys) {
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
-    }
+    // Performance: Fetch all entries in parallel batches instead of sequentially
+    const entries = await fetchInBatches<LogEntry>(entryKeys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime(),
@@ -42,15 +68,16 @@ export async function queryLogsByRunId(
       return [];
     }
 
-    const entries: StructuredLogEntry[] = [];
-    for (const key of logKeys) {
-      if (key.startsWith(STRUCTURED_LOG_PREFIX)) {
-        const entry = await env.DEALS_LOG.get<StructuredLogEntry>(key, "json");
-        if (entry) {
-          entries.push(entry);
-        }
-      }
-    }
+    // Filter structured logs first
+    const structuredKeys = logKeys.filter((key) =>
+      key.startsWith(STRUCTURED_LOG_PREFIX),
+    );
+
+    // Performance: Fetch all entries in parallel batches instead of sequentially
+    const entries = await fetchInBatches<StructuredLogEntry>(
+      structuredKeys,
+      (key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -74,13 +101,10 @@ export async function queryLogsByTraceId(
       return [];
     }
 
-    const entries: StructuredLogEntry[] = [];
-    for (const key of logKeys) {
-      const entry = await env.DEALS_LOG.get<StructuredLogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
-    }
+    // Performance: Fetch all entries in parallel batches instead of sequentially
+    const entries = await fetchInBatches<StructuredLogEntry>(logKeys, (key) =>
+      env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -103,16 +127,17 @@ export async function getRecentLogs(
       return [];
     }
 
-    const entries: LogEntry[] = [];
     const startEntry = Math.max(1, index.total_entries - count + 1);
+    const keys: string[] = [];
 
     for (let i = startEntry; i <= index.total_entries; i++) {
-      const key = `${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`;
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
+      keys.push(`${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`);
     }
+
+    // Performance: Fetch all entries in parallel batches instead of sequentially
+    const entries = await fetchInBatches<LogEntry>(keys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
 
     return entries;
   } catch (error) {
@@ -127,22 +152,17 @@ export async function getRecentStructuredLogs(
 ): Promise<StructuredLogEntry[]> {
   try {
     const prefix = STRUCTURED_LOG_PREFIX;
-    const logs: StructuredLogEntry[] = [];
     const listResult = await env.DEALS_LOG.list({ prefix });
 
     const sortedKeys = listResult.keys
       .sort((a, b) => b.name.localeCompare(a.name))
-      .slice(0, count);
+      .slice(0, count)
+      .map((k) => k.name);
 
-    for (const key of sortedKeys) {
-      const entry = await env.DEALS_LOG.get<StructuredLogEntry>(
-        key.name,
-        "json",
-      );
-      if (entry) {
-        logs.push(entry);
-      }
-    }
+    // Performance: Fetch all entries in parallel batches instead of sequentially
+    const logs = await fetchInBatches<StructuredLogEntry>(sortedKeys, (key) =>
+      env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return logs.sort(
       (a, b) =>
