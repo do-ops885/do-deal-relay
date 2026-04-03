@@ -38,6 +38,7 @@ ALLOWED_ROOT_FILES=(
     "package-lock\.json"
     "tsconfig\.json"
     "vitest\.config\.ts"
+    "playwright\.config\.ts"
     "wrangler\.toml"
     "README\.md"
     "VERSION"

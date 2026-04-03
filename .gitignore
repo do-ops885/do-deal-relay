@@ -364,3 +364,6 @@ debug/
 *.tgz
 *.rar
 *.7z
+
+# Playwright
+playwright-report/
