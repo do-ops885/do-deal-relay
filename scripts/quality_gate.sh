@@ -55,7 +55,7 @@ if [ -d ".claude" ]; then
 fi
 
 # Check 6: Git hooks installed (skip in CI - hooks are for local dev only)
-if [ -z "$SKIP_TESTS" ] && [ ! -f ".git/hooks/pre-commit" ]; then
+if [ -z "$SKIP_TESTS" ] && [ -z "$GITHUB_ACTIONS" ] && [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
 fi
