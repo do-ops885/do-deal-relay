@@ -106,8 +106,8 @@ id = "e3ab520eafd5430ab72978e78bdd257e"
 binding = "DEALS_SOURCES"
 id = "be3c0fc148b749b49a59aa7cfa23e3ac"
 
-# Production D1 Database
+# Production D1 Database (created via dashboard: https://dash.cloudflare.com/1192502f519a5ae3cbf3d934e6f33ef2/workers/d1/databases/29ee4ca4-8147-4059-9898-b13c1e9599ff)
 [[env.production.d1_databases]]
 binding = "DEALS_DB"
 database_name = "deals-db"
-database_id = "33333333-3333-3333-3333-333333333333"
+database_id = "29ee4ca4-8147-4059-9898-b13c1e9599ff"
