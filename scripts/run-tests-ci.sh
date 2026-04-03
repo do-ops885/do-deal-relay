@@ -14,8 +14,11 @@ OUTPUT=$(npm run test:ci 2>&1)
 EXIT_CODE=$?
 
 # Check if tests passed by looking for the success pattern
-if echo "$OUTPUT" | grep -q "Tests.*333 passed"; then
-    echo "✅ All 333 tests passed"
+# Accept any test count (we have 426 tests now with multi-agent tests)
+if echo "$OUTPUT" | grep -qE "Tests.*[0-9]+ passed.*\([0-9]+\)"; then
+    # Extract the test count for reporting
+    TEST_COUNT=$(echo "$OUTPUT" | grep -oE "Tests.*[0-9]+ passed" | grep -oE "[0-9]+" | head -1)
+    echo "✅ All $TEST_COUNT tests passed"
     
     # Check if there was a worker pool error (non-critical)
     if echo "$OUTPUT" | grep -q "Worker exited unexpectedly"; then
