@@ -35,8 +35,13 @@ run_check() {
 # Check 1: TypeScript compilation (silent on success)
 run_check "TypeScript compilation" "npm run lint"
 
-# Check 2: Unit tests (silent on success)
-run_check "Unit tests" "npm run test:ci"
+# Check 2: Unit tests (silent on success) - skip if SKIP_TESTS is set
+if [ -z "$SKIP_TESTS" ]; then
+    run_check "Unit tests" "npm run test:ci"
+else
+    # Tests are skipped in CI, will run separately
+    :
+fi
 
 # Check 3: Validation gates
 run_check "Validation gates" "npm run validate"
