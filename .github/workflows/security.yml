@@ -86,17 +86,19 @@ jobs:
     steps:
       - name: Report Status
         run: |
-          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Audit | ${{ needs.dependency-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Security Scan Results"
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| Secret Scan | ${{ needs.secret-scan.result }} |"
+            echo "| Dependency Audit | ${{ needs.dependency-check.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "❌ **SECRETS DETECTED** - Immediate action required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ **SECRETS DETECTED** - Immediate action required" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Security checks completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Security checks completed" >> "$GITHUB_STEP_SUMMARY"
