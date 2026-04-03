@@ -5,7 +5,7 @@
  * Creates 1KB average payload size as specified in requirements.
  */
 
-const crypto = require("crypto");
+import crypto from "crypto";
 
 /**
  * Generate a realistic deal object
@@ -41,7 +41,7 @@ function generateDeal() {
 /**
  * Generate webhook payload (~1KB)
  */
-function generatePayload(context, events, done) {
+export function generatePayload(context, events, done) {
   const event = {
     id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     type: ["deal.created", "deal.updated", "deal.expired"][
@@ -78,7 +78,7 @@ function generatePayload(context, events, done) {
 /**
  * Generate batch webhook payload
  */
-function generateBatchPayload(context, events, done) {
+export function generateBatchPayload(context, events, done) {
   const batchSize = Math.floor(Math.random() * 10) + 5; // 5-15 webhooks per batch
   const webhooks = [];
 
@@ -106,7 +106,13 @@ function generateBatchPayload(context, events, done) {
 /**
  * Custom function to verify response time
  */
-function checkResponseTime(requestParams, response, context, events, done) {
+export function checkResponseTime(
+  requestParams,
+  response,
+  context,
+  events,
+  done,
+) {
   const responseTime = response.timings ? response.timings.total : 0;
 
   if (responseTime > 500) {
@@ -117,9 +123,3 @@ function checkResponseTime(requestParams, response, context, events, done) {
 
   return done();
 }
-
-module.exports = {
-  generatePayload,
-  generateBatchPayload,
-  checkResponseTime,
-};

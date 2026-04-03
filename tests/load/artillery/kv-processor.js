@@ -5,7 +5,7 @@
  * Simulates 10,000 operations with mixed read/write/delete patterns.
  */
 
-const crypto = require("crypto");
+import crypto from "crypto";
 
 // Key namespaces for testing
 const KEY_NAMESPACES = {
@@ -102,7 +102,7 @@ function generateTTL() {
 /**
  * Generate read operation parameters
  */
-function generateReadOperation(context, events, done) {
+export function generateReadOperation(context, events, done) {
   // 70% chance of reading existing keys, 30% random
   if (
     Math.random() < 0.7 &&
@@ -123,7 +123,7 @@ function generateReadOperation(context, events, done) {
 /**
  * Generate write operation parameters
  */
-function generateWriteOperation(context, events, done) {
+export function generateWriteOperation(context, events, done) {
   const key = generateKey();
   const value = generateValue();
   const ttl = generateTTL();
@@ -148,7 +148,7 @@ function generateWriteOperation(context, events, done) {
 /**
  * Generate delete operation parameters
  */
-function generateDeleteOperation(context, events, done) {
+export function generateDeleteOperation(context, events, done) {
   // Prefer deleting keys we created
   if (
     context.vars.recentKeys &&
@@ -169,7 +169,7 @@ function generateDeleteOperation(context, events, done) {
 /**
  * Check for rate limiting in response
  */
-function checkRateLimit(requestParams, response, context, events, done) {
+export function checkRateLimit(requestParams, response, context, events, done) {
   if (response.statusCode === 429) {
     events.emit("counter", "kv.rate_limited", 1);
   } else if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -184,18 +184,16 @@ function checkRateLimit(requestParams, response, context, events, done) {
 /**
  * Custom metrics for KV operations
  */
-function recordKVLatency(requestParams, response, context, events, done) {
+export function recordKVLatency(
+  requestParams,
+  response,
+  context,
+  events,
+  done,
+) {
   if (response.timings && response.timings.total) {
     events.emit("histogram", "kv.latency", response.timings.total);
   }
 
   return done();
 }
-
-module.exports = {
-  generateReadOperation,
-  generateWriteOperation,
-  generateDeleteOperation,
-  checkRateLimit,
-  recordKVLatency,
-};
