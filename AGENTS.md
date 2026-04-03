@@ -182,7 +182,7 @@ All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agent
 | validation-agent    | complete | Test & Validate | 9 validation gates  |
 | doc-agent           | complete | Test & Validate | Documentation       |
 | github-agent        | complete | Test & Validate | GitHub integration  |
-| browser-agent       | pending  | Test & Validate | Browser testing     |
+| browser-agent       | complete | Test & Validate | Browser/API testing |
 
 ## Notes
 
