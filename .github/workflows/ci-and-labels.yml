@@ -73,7 +73,7 @@ jobs:
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
-        run: npm ci --legacy-peer-deps
+        run: npm ci
         if: hashFiles('package.json') != ''
 
       - name: Install dependencies (Python)
@@ -117,7 +117,7 @@ jobs:
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
-        run: npm ci --legacy-peer-deps
+        run: npm ci
         if: hashFiles('package.json') != ''
 
       - name: Install dependencies (Python)
