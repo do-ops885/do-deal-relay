@@ -18,6 +18,7 @@ import { stage } from "./pipeline/stage";
 import { publishSnapshot, rollbackSnapshot } from "./publish";
 import { notify } from "./notify";
 import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
+import { runExpirationCheck } from "./lib/expiration-manager";
 import type { Env } from "./types";
 
 // ============================================================================
@@ -308,6 +309,20 @@ async function executePhase(
       return "finalize";
 
     case "finalize":
+      // Run expiration check
+      if (ctx.snapshot) {
+        const expiryResult = await runExpirationCheck(
+          env,
+          ctx.snapshot.deals,
+          ctx.previous_snapshot?.deals,
+          ctx.run_id,
+        );
+
+        if (expiryResult.errors.length > 0) {
+          console.warn("Expiration check errors:", expiryResult.errors);
+        }
+      }
+
       // Send success notification if needed
       await notify(env, {
         type: "system_error",

@@ -108,25 +108,57 @@ init → discover → normalize → dedupe → validate → score → stage → 
 
 ## Active Phase
 
-### Phase 7: Feature Enhancements 🔄 IN PROGRESS
+### Phase 7: Feature Enhancements ✅ COMPLETE
 
 | Feature                       | Priority | Status | Description                                 |
 | ----------------------------- | -------- | ------ | ------------------------------------------- |
-| Deal categorization/tagging   | Medium   | 🔄     | Auto-categorize deals by type/industry      |
-| Deal ranking API endpoint     | Low      | ⏳     | Sort deals by confidence, recency, value    |
-| Deal analytics dashboard      | Low      | ⏳     | Visual dashboard for deal insights          |
-| Webhook support               | Low      | ⏳     | Real-time notifications to external systems |
-| Deal expiration notifications | Low      | ⏳     | Alert when deals approaching expiry         |
+| Deal categorization/tagging   | Medium   | ✅     | Auto-categorize deals by type/industry      |
+| Deal ranking API endpoint     | Low      | ✅     | Sort deals by confidence, recency, value    |
+| Deal analytics dashboard      | Low      | ✅     | Visual dashboard for deal insights          |
+| Webhook support               | Low      | ✅     | Real-time notifications (already complete)  |
+| Deal expiration notifications | Low      | ✅     | Alert when deals approaching expiry         |
 
-## Swarm Coordination Status
+**Implementation Details:**
 
-**Phase 7 Swarm**: 5 agents deployed with handoff coordination
+1. **Auto-categorization** (`worker/lib/categorization.ts`)
+   - 11 category definitions (finance, food_delivery, transportation, travel, shopping, cloud_storage, communication, entertainment, health, education, software)
+   - Keyword-based and domain-based classification
+   - Confidence scoring with composite algorithm
 
-- Agent 1: Deal categorization/tagging
-- Agent 2: Deal ranking API endpoint
-- Agent 3: Deal analytics dashboard
-- Agent 4: Webhook support
-- Agent 5: Deal expiration notifications
+2. **Deal Ranking** (`worker/lib/ranking.ts`)
+   - Composite scoring based on confidence, trust, recency, value, expiry
+   - Multiple sort fields: confidence, recency, value, expiry, trust
+   - Highlights endpoint for featured deals
+
+3. **Expiration Manager** (`worker/lib/expiration-manager.ts`)
+   - Tracks deals expiring in 7d, 30d, 90d windows
+   - Automated notifications during pipeline finalize
+   - Separate handling for newly expired deals
+
+4. **Analytics Dashboard** (`/api/analytics`)
+   - Summary statistics (total, active, value, sources)
+   - Category distribution and trends
+   - Source performance metrics
+   - Value distribution analysis
+   - Quality metrics (confidence, trust, validation rates)
+
+**New API Endpoints:**
+
+- `GET /deals/ranked` - Ranked deals with filtering and sorting
+- `GET /deals/highlights` - Top deals, expiring soon, recently added
+- `GET /api/analytics` - Full analytics dashboard (JSON or summary format)
+
+**Updated Pipeline:**
+
+- Normalize phase now includes auto-categorization
+- Finalize phase includes expiration checks
+
+## Next Steps
+
+1. Complete integration testing for new features
+2. Deploy to staging
+3. Monitor analytics data quality
+4. Consider Phase 8: Advanced features (search, recommendations, ML scoring)
 
 ## Key Learnings
 

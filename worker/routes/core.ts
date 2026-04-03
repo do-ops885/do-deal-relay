@@ -18,6 +18,10 @@ import type {
 } from "../types";
 import { GetDealsQuerySchema, SubmitDealBodySchema } from "../types";
 import { jsonResponse } from "./utils";
+import {
+  generateDealAnalytics,
+  generateAnalyticsSummary,
+} from "../lib/analytics";
 
 /**
  * Core API Route Handlers
@@ -365,4 +369,128 @@ export async function handleSubmit(
     },
     201,
   );
+}
+
+import {
+  rankDeals,
+  SortField,
+  SortOrder,
+  getTopDeals,
+  getExpiringDeals,
+  getRecentDeals,
+} from "../lib/ranking";
+
+/**
+ * Handle ranked deals endpoint - GET /deals/ranked
+ */
+export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
+  const snapshot = await getProductionSnapshot(env);
+
+  if (!snapshot) {
+    return jsonResponse({ error: "No deals available" }, 404);
+  }
+
+  // Parse query parameters
+  const sortBy = (url.searchParams.get("sort_by") || "confidence") as SortField;
+  const order = (url.searchParams.get("order") || "desc") as SortOrder;
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 50;
+  const minConfidence = url.searchParams.has("min_confidence")
+    ? parseFloat(url.searchParams.get("min_confidence")!)
+    : undefined;
+  const minTrustScore = url.searchParams.has("min_trust")
+    ? parseFloat(url.searchParams.get("min_trust")!)
+    : undefined;
+  const category = url.searchParams.get("category") || undefined;
+  const includeScores = url.searchParams.get("include_scores") === "true";
+
+  // Rank deals
+  const result = rankDeals(snapshot.deals, {
+    sortBy,
+    order,
+    limit,
+    minConfidence,
+    minTrustScore,
+    category,
+  });
+
+  const response: Record<string, unknown> = {
+    deals: result.deals,
+    meta: {
+      total: result.total,
+      filtered: result.filtered,
+      returned: result.deals.length,
+      sort_by: sortBy,
+      order: order,
+    },
+  };
+
+  if (includeScores) {
+    response.scores = result.scores;
+  }
+
+  return jsonResponse(response);
+}
+
+/**
+ * Handle deal highlights endpoint - GET /deals/highlights
+ */
+export async function handleDealHighlights(
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  const snapshot = await getProductionSnapshot(env);
+
+  if (!snapshot) {
+    return jsonResponse({ error: "No deals available" }, 404);
+  }
+
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 5;
+
+  const topDeals = getTopDeals(snapshot.deals, limit);
+  const expiringSoon = getExpiringDeals(snapshot.deals, 7);
+  const recentlyAdded = getRecentDeals(snapshot.deals, 7);
+
+  return jsonResponse({
+    top_deals: topDeals,
+    expiring_soon: expiringSoon,
+    recently_added: recentlyAdded,
+    meta: {
+      top_deals_count: topDeals.length,
+      expiring_soon_count: expiringSoon.length,
+      recently_added_count: recentlyAdded.length,
+    },
+  });
+}
+
+/**
+ * Handle analytics dashboard endpoint - GET /api/analytics
+ */
+export async function handleAnalytics(url: URL, env: Env): Promise<Response> {
+  const format = url.searchParams.get("format") || "json";
+  const days = url.searchParams.has("days")
+    ? parseInt(url.searchParams.get("days")!, 10)
+    : 30;
+
+  try {
+    if (format === "summary") {
+      const summary = await generateAnalyticsSummary(env, days);
+      return jsonResponse(summary);
+    }
+
+    const analytics = await generateDealAnalytics(env, days);
+    return jsonResponse(analytics);
+  } catch (error) {
+    console.error("Analytics generation error:", error);
+    return jsonResponse(
+      {
+        error: "Failed to generate analytics",
+        message: (error as Error).message,
+      },
+      500,
+    );
+  }
 }

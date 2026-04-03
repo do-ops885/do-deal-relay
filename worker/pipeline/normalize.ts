@@ -1,5 +1,6 @@
 import { Deal, PipelineContext } from "../types";
 import { generateDealId } from "../lib/crypto";
+import { batchAutoCategorize } from "../lib/categorization";
 
 // ============================================================================
 // Normalization Pipeline
@@ -9,7 +10,10 @@ import { generateDealId } from "../lib/crypto";
  * Normalize all deals to canonical format
  */
 export function normalize(deals: Deal[], ctx: PipelineContext): Deal[] {
-  return deals.map((deal) => normalizeDeal(deal));
+  // First apply auto-categorization
+  const categorized = batchAutoCategorize(deals);
+  // Then normalize each deal
+  return categorized.map((deal) => normalizeDeal(deal));
 }
 
 /**

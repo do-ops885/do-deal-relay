@@ -28,12 +28,128 @@ Check system health status.
     "snapshot_valid": true
   }
 }
+
+---
+
+### GET /deals/ranked
+
+Get ranked and sorted deals with composite scoring.
+
+**Query Parameters:**
+
+- `sort_by` (string): Sort field - 'confidence', 'recency', 'value', 'expiry', 'trust' (default: 'confidence')
+- `order` (string): Sort order - 'asc' or 'desc' (default: 'desc')
+- `limit` (number): Max deals to return (default: 50, max: 1000)
+- `min_confidence` (number): Minimum confidence score filter
+- `min_trust` (number): Minimum trust score filter (0-1)
+- `category` (string): Filter by category
+- `include_scores` (boolean): Include score breakdown in response
+
+**Response:**
+
+```json
+{
+  "deals": [...],
+  "meta": {
+    "total": 100,
+    "filtered": 45,
+    "returned": 50,
+    "sort_by": "confidence",
+    "order": "desc"
+  },
+  "scores": [
+    {
+      "dealId": "sha256-hash",
+      "score": 85.5,
+      "breakdown": {
+        "confidence": 85,
+        "trust": 90,
+        "recency": 75,
+        "value": 80,
+        "expiry": 90
+      }
+    }
+  ]
+}
 ```
 
-**Status Codes:**
+---
 
-- 200: Healthy
-- 503: Degraded/Unhealthy
+### GET /deals/highlights
+
+Get highlighted deals (top, expiring soon, recently added).
+
+**Query Parameters:**
+
+- `limit` (number): Deals per category (default: 5)
+
+**Response:**
+
+```json
+{
+  "top_deals": [...],
+  "expiring_soon": [...],
+  "recently_added": [...],
+  "meta": {
+    "top_deals_count": 5,
+    "expiring_soon_count": 3,
+    "recently_added_count": 8
+  }
+}
+```
+
+---
+
+### GET /api/analytics
+
+Get comprehensive deal analytics and insights.
+
+**Query Parameters:**
+
+- `days` (number): Time period for analysis (default: 30, max: 90)
+- `format` (string): 'json' or 'summary' (default: 'json')
+
+**Response (JSON format):**
+
+```json
+{
+  "dealsOverTime": [
+    { "date": "2024-03-24", "discovered": 5, "published": 4, "expired": 1 }
+  ],
+  "categoryBreakdown": [
+    { "category": "finance", "count": 25, "avgConfidence": 0.82, "avgValue": 45 }
+  ],
+  "sourcePerformance": [
+    { "domain": "trading212.com", "dealsDiscovered": 10, "trustScore": 0.9 }
+  ],
+  "valueDistribution": [
+    { "range": "0-25", "count": 15, "percentage": 30 }
+  ],
+  "expiringSoon": {
+    "next7Days": 3,
+    "next30Days": 12,
+    "next90Days": 28
+  },
+  "qualityMetrics": {
+    "avgConfidence": 0.78,
+    "validationSuccessRate": 0.95,
+    "duplicateRate": 0.05
+  }
+}
+```
+
+**Response (Summary format):**
+
+```json
+{
+  "total_deals": 100,
+  "active_deals": 85,
+  "avg_deals_per_day": 3.5,
+  "total_value": 2500,
+  "unique_sources": 12,
+  "discovery_rate": 3.2
+}
+```
 
 ---
 

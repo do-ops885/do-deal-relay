@@ -12,6 +12,9 @@ import {
   handleStatus,
   handleGetLogs,
   handleSubmit,
+  handleRankedDeals,
+  handleDealHighlights,
+  handleAnalytics,
 } from "./routes/core";
 import {
   handleGetReferrals,
@@ -53,6 +56,12 @@ export default {
       if (path === "/deals" || path === "/deals.json") {
         return handleGetDeals(url, env);
       }
+      if (path === "/deals/ranked") {
+        return handleRankedDeals(url, env);
+      }
+      if (path === "/deals/highlights") {
+        return handleDealHighlights(url, env);
+      }
 
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
@@ -60,6 +69,7 @@ export default {
       }
       if (path === "/api/status") return handleStatus(env);
       if (path === "/api/log") return handleGetLogs(url, env);
+      if (path === "/api/analytics") return handleAnalytics(url, env);
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
@@ -69,7 +79,8 @@ export default {
       // Referral API
       if (path === "/api/referrals") {
         if (request.method === "GET") return handleGetReferrals(url, env);
-        if (request.method === "POST") return handleCreateReferral(request, env);
+        if (request.method === "POST")
+          return handleCreateReferral(request, env);
       }
 
       const referralMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
