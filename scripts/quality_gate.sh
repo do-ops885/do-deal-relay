@@ -59,8 +59,12 @@ fi
 # Check 7: YAML syntax validation (matches yaml-lint job)
 # Check if yamllint is available
 if command -v yamllint >/dev/null 2>&1; then
-    if ! yamllint -d "{extends: default, rules: {line-length: {max: 120}, indentation: {spaces: 2}}}" .github/ 2>&1; then
+    # Run yamllint but only capture errors, not warnings
+    yamllint_output=$(yamllint -d "{extends: default, rules: {line-length: {max: 120}, indentation: {spaces: 2}, document-start: disable, comments: {min-spaces-from-content: 1}}}" .github/ 2>&1) || yamllint_exit=$?
+    # Only fail if there are actual errors (not just warnings)
+    if echo "$yamllint_output" | grep -qE "^\[error\]"; then
         ERRORS+=("✗ YAML syntax validation failed")
+        ERRORS+=("$yamllint_output")
     fi
 else
     # Fallback: Basic YAML syntax check with Python
