@@ -1,5 +1,13 @@
 import { Env, LogEntry } from "../../types";
-import { LOG_INDEX_KEY, LOG_KEY_PREFIX, LogIndex, StructuredLogEntry, STRUCTURED_LOG_PREFIX, TRACE_INDEX_PREFIX } from "./types";
+import { fetchInBatches } from "../utils";
+import {
+  LOG_INDEX_KEY,
+  LOG_KEY_PREFIX,
+  LogIndex,
+  StructuredLogEntry,
+  STRUCTURED_LOG_PREFIX,
+  TRACE_INDEX_PREFIX,
+} from "./types";
 
 export async function getRunLogs(
   env: Env,
@@ -13,13 +21,10 @@ export async function getRunLogs(
       return [];
     }
 
-    const entries: LogEntry[] = [];
-    for (const key of entryKeys) {
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
-    }
+    // Parallelize log entry fetches in batches of 25 to respect subrequest limits
+    const entries = await fetchInBatches(entryKeys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime(),
@@ -42,15 +47,14 @@ export async function queryLogsByRunId(
       return [];
     }
 
-    const entries: StructuredLogEntry[] = [];
-    for (const key of logKeys) {
-      if (key.startsWith(STRUCTURED_LOG_PREFIX)) {
-        const entry = await env.DEALS_LOG.get<StructuredLogEntry>(key, "json");
-        if (entry) {
-          entries.push(entry);
-        }
-      }
-    }
+    const structuredLogKeys = logKeys.filter((key) =>
+      key.startsWith(STRUCTURED_LOG_PREFIX),
+    );
+
+    // Parallelize structured log fetches in batches
+    const entries = await fetchInBatches(structuredLogKeys, (key) =>
+      env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -74,13 +78,10 @@ export async function queryLogsByTraceId(
       return [];
     }
 
-    const entries: StructuredLogEntry[] = [];
-    for (const key of logKeys) {
-      const entry = await env.DEALS_LOG.get<StructuredLogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
-    }
+    // Parallelize fetches for logs in this trace
+    const entries = await fetchInBatches(logKeys, (key) =>
+      env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -103,18 +104,17 @@ export async function getRecentLogs(
       return [];
     }
 
-    const entries: LogEntry[] = [];
     const startEntry = Math.max(1, index.total_entries - count + 1);
+    const entryKeys: string[] = [];
 
     for (let i = startEntry; i <= index.total_entries; i++) {
-      const key = `${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`;
-      const entry = await env.DEALS_LOG.get<LogEntry>(key, "json");
-      if (entry) {
-        entries.push(entry);
-      }
+      entryKeys.push(`${LOG_KEY_PREFIX}${String(i).padStart(10, "0")}`);
     }
 
-    return entries;
+    // Parallelize fetches for recent logs
+    return await fetchInBatches(entryKeys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
   } catch (error) {
     console.error("Failed to get recent logs:", error);
     return [];
@@ -127,22 +127,18 @@ export async function getRecentStructuredLogs(
 ): Promise<StructuredLogEntry[]> {
   try {
     const prefix = STRUCTURED_LOG_PREFIX;
-    const logs: StructuredLogEntry[] = [];
     const listResult = await env.DEALS_LOG.list({ prefix });
 
     const sortedKeys = listResult.keys
       .sort((a, b) => b.name.localeCompare(a.name))
       .slice(0, count);
 
-    for (const key of sortedKeys) {
-      const entry = await env.DEALS_LOG.get<StructuredLogEntry>(
-        key.name,
-        "json",
-      );
-      if (entry) {
-        logs.push(entry);
-      }
-    }
+    const logNames = sortedKeys.map((key) => key.name);
+
+    // Parallelize fetching recent structured logs in batches
+    const logs = await fetchInBatches(logNames, (name) =>
+      env.DEALS_LOG.get<StructuredLogEntry>(name, "json"),
+    );
 
     return logs.sort(
       (a, b) =>

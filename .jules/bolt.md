@@ -1,0 +1,3 @@
+## 2024-03-31 - Batching KV Fetches for Improved Performance
+**Learning:** Sequential `await` calls in a loop for Cloudflare KV fetches introduce significant latency as each request must complete before the next one starts. This is especially noticeable when fetching a large number of log entries or metrics.
+**Action:** Use a batching helper like `fetchInBatches` to parallelize KV fetches using `Promise.all` while limiting the number of concurrent subrequests to respect the platform's limits (e.g., 50 subrequests per request in Cloudflare Workers). This significantly reduces the total time spent waiting for I/O.
