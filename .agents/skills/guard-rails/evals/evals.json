@@ -1,0 +1,72 @@
+{
+  "skill_name": "guard-rails",
+  "version": "1.0.0",
+  "description": "Safety and quality enforcement system for preventing errors and enforcing best practices",
+  "evals": [
+    {
+      "id": "guard-rails-xss-prevention",
+      "prompt": "How do I use guard rails to prevent XSS attacks in deal submissions?",
+      "expected_output": "XSS prevention patterns using guard rails for input validation",
+      "files": [],
+      "assertions": [
+        "Mentions script tag detection",
+        "Includes javascript: scheme blocking",
+        "Shows onerror/onload attribute detection",
+        "Demonstrates guardRails check for 'input' phase",
+        "Mentions data sanitization patterns"
+      ]
+    },
+    {
+      "id": "guard-rails-resource-limits",
+      "prompt": "What resource limits are enforced by guard rails and how do I configure them?",
+      "expected_output": "Resource limit configuration for deals, payload size, and field lengths",
+      "files": [],
+      "assertions": [
+        "Mentions MAX_DEALS_PER_RUN (1000)",
+        "Includes MAX_PAYLOAD_SIZE_BYTES (1MB)",
+        "Shows field length limits (title 200, description 1000)",
+        "Demonstrates enforceGuardRails usage",
+        "Shows fatal error on limit exceeded"
+      ]
+    },
+    {
+      "id": "guard-rails-quality-checks",
+      "prompt": "How do I validate data quality before publishing deals?",
+      "expected_output": "Quality validation using guard rails for required fields and URL validity",
+      "files": [],
+      "assertions": [
+        "Shows required fields validation",
+        "Includes URL parseability check",
+        "Mentions duplicate detection",
+        "Demonstrates anomaly detection for rewards",
+        "Shows quality gate enforcement"
+      ]
+    },
+    {
+      "id": "guard-rails-consistency",
+      "prompt": "How can I use guard rails to ensure data consistency through the pipeline?",
+      "expected_output": "Consistency checks for deal counts, data loss, and hash integrity",
+      "files": [],
+      "assertions": [
+        "Shows count validation between stages",
+        "Includes data loss detection (>50% threshold)",
+        "Mentions hash integrity tracking",
+        "Demonstrates consistency violation handling",
+        "Shows warning vs fatal consistency errors"
+      ]
+    },
+    {
+      "id": "guard-rails-file-organization",
+      "prompt": "How do guard rails enforce file organization policies?",
+      "expected_output": "File organization enforcement for root directory policy",
+      "files": [],
+      "assertions": [
+        "Mentions root directory policy",
+        "Lists allowed root files (.gitignore, package.json, etc.)",
+        "Shows subfolder requirements",
+        "Demonstrates FATAL enforcement for violations",
+        "Includes pre-commit check script"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "skill_name": "circuit-breaker",
+  "version": "1.0.0",
+  "description": "API resilience pattern for handling failures gracefully",
+  "evals": [
+    {
+      "id": "circuit-breaker-basic-usage",
+      "prompt": "How do I implement a circuit breaker for a GitHub API integration that should open after 5 failures and retry after 60 seconds?",
+      "expected_output": "Circuit breaker configuration with failure threshold of 5, timeout of 60 seconds, and proper state management using KV storage",
+      "files": [],
+      "assertions": [
+        "Answer includes failureThreshold configuration",
+        "Answer includes resetTimeoutMs configuration",
+        "Answer mentions KV storage for state persistence",
+        "Answer includes execute() method usage",
+        "Answer mentions three states: closed, open, half-open"
+      ]
+    },
+    {
+      "id": "circuit-breaker-state-transitions",
+      "prompt": "Explain how the circuit breaker handles state transitions when failures occur",
+      "expected_output": "Explanation of closed -> open -> half-open -> closed transitions with conditions for each",
+      "files": [],
+      "assertions": [
+        "Describes closed to open transition on threshold reached",
+        "Describes open to half-open after timeout",
+        "Describes half-open to closed on success",
+        "Describes half-open to open on failure",
+        "Mentions metrics tracking for state changes"
+      ]
+    },
+    {
+      "id": "circuit-breaker-preconfigured",
+      "prompt": "What pre-configured circuit breakers are available and when should I use each?",
+      "expected_output": "List of pre-configured breakers (GitHub, Telegram, Per-domain sources) and their specific use cases",
+      "files": [],
+      "assertions": [
+        "Mentions GitHub circuit breaker",
+        "Mentions Telegram circuit breaker",
+        "Mentions per-domain source breakers",
+        "Provides guidance on when to use each",
+        "Mentions breaker retrieval by name"
+      ]
+    },
+    {
+      "id": "circuit-breaker-error-handling",
+      "prompt": "How should I handle CircuitBreakerOpenError in my code?",
+      "expected_output": "Proper error handling pattern for circuit breaker open state with fallback logic",
+      "files": [],
+      "assertions": [
+        "Shows try/catch block for CircuitBreakerOpenError",
+        "Demonstrates fallback behavior",
+        "Shows logging of circuit breaker state",
+        "Includes graceful degradation pattern",
+        "Mentions retry logic after cooldown"
+      ]
+    },
+    {
+      "id": "circuit-breaker-metrics",
+      "prompt": "How can I monitor circuit breaker metrics and health?",
+      "expected_output": "Instructions on retrieving and interpreting circuit breaker metrics",
+      "files": [],
+      "assertions": [
+        "Mentions getMetrics() method",
+        "Lists tracked metrics: stateChanges, successCalls, failedCalls, rejectedCalls",
+        "Shows how to calculate rejection rate",
+        "Includes KV storage for metrics persistence",
+        "Provides example of metrics interpretation"
+      ]
+    }
+  ]
+}

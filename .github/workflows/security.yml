@@ -55,10 +55,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -85,15 +85,17 @@ jobs:
     steps:
       - name: Report Status
         run: |
+          SECRET_SCAN_RESULT="${{ needs.secret-scan.result }}"
+          DEPENDENCY_CHECK_RESULT="${{ needs.dependency-check.result }}"
           {
             echo "## Security Scan Results"
             echo "| Check | Status |"
             echo "|-------|--------|"
-            echo "| Secret Scan | ${{ needs.secret-scan.result }} |"
-            echo "| Dependency Audit | ${{ needs.dependency-check.result }} |"
+            echo "| Secret Scan | $SECRET_SCAN_RESULT |"
+            echo "| Dependency Audit | $DEPENDENCY_CHECK_RESULT |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
+          if [[ "$SECRET_SCAN_RESULT" == "failure" ]]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "❌ **SECRETS DETECTED** - Immediate action required" >> "$GITHUB_STEP_SUMMARY"
             exit 1

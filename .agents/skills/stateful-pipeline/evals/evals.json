@@ -1,0 +1,72 @@
+{
+  "skill_name": "stateful-pipeline",
+  "version": "1.0.0",
+  "description": "Framework for complex data processing pipelines with state machine, retry logic, failure handling, and rollback capability",
+  "evals": [
+    {
+      "id": "stateful-pipeline-basic",
+      "prompt": "How do I create a stateful pipeline for deal processing with 9 phases?",
+      "expected_output": "Pipeline creation with init, discover, normalize, dedupe, validate, score, stage, publish, verify, finalize phases",
+      "files": [],
+      "assertions": [
+        "Shows Pipeline class instantiation",
+        "Lists all 9 pipeline phases",
+        "Includes phase transition configuration",
+        "Mentions state persistence in KV",
+        "Demonstrates pipeline execution"
+      ]
+    },
+    {
+      "id": "stateful-pipeline-retry",
+      "prompt": "How does the stateful pipeline handle retries when a phase fails?",
+      "expected_output": "Retry mechanism with exponential backoff and retryable error classification",
+      "files": [],
+      "assertions": [
+        "Shows retry configuration (maxAttempts, backoff)",
+        "Distinguishes retryable vs non-retryable errors",
+        "Demonstrates exponential backoff calculation",
+        "Mentions retry counter in state",
+        "Shows giving up after max retries"
+      ]
+    },
+    {
+      "id": "stateful-pipeline-rollback",
+      "prompt": "How do I implement rollback when a pipeline phase fails?",
+      "expected_output": "Rollback mechanism to restore previous state on failure",
+      "files": [],
+      "assertions": [
+        "Shows rollback configuration",
+        "Includes state snapshot before phase execution",
+        "Demonstrates rollback() method call",
+        "Mentions cleanup of partial changes",
+        "Shows state restoration after rollback"
+      ]
+    },
+    {
+      "id": "stateful-pipeline-state-tracking",
+      "prompt": "How can I track pipeline execution state and progress?",
+      "expected_output": "State tracking with current phase, progress metrics, and history",
+      "files": [],
+      "assertions": [
+        "Shows getCurrentPhase() method",
+        "Includes progress percentage calculation",
+        "Mentions phase timing metrics",
+        "Demonstrates state serialization to KV",
+        "Shows execution history tracking"
+      ]
+    },
+    {
+      "id": "stateful-pipeline-error-handling",
+      "prompt": "How does the pipeline handle and report errors across phases?",
+      "expected_output": "Error handling with PipelineError, error context, and quarantine support",
+      "files": [],
+      "assertions": [
+        "Shows PipelineError class usage",
+        "Includes phase context in error",
+        "Mentions error quarantine for analysis",
+        "Demonstrates error notification",
+        "Shows graceful degradation options"
+      ]
+    }
+  ]
+}

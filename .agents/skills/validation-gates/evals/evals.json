@@ -1,0 +1,72 @@
+{
+  "skill_name": "validation-gates",
+  "version": "1.0.0",
+  "description": "Multi-gate validation framework for progressive quality assurance",
+  "evals": [
+    {
+      "id": "validation-gates-basic",
+      "prompt": "How do I set up a validation pipeline with the 10-gate system?",
+      "expected_output": "Validation pipeline configuration with all 10 gates in sequence",
+      "files": [],
+      "assertions": [
+        "Shows ValidationPipeline class instantiation",
+        "Lists all 10 gates in order",
+        "Includes gate configuration (syntax, lint, tests, security, performance, integration, docs, deps, size, final)",
+        "Mentions sequential vs parallel mode",
+        "Shows pipeline execution"
+      ]
+    },
+    {
+      "id": "validation-gates-syntax",
+      "prompt": "How do I configure the syntax validation gate?",
+      "expected_output": "Syntax gate configuration for TypeScript/JavaScript compilation",
+      "files": [],
+      "assertions": [
+        "Shows Gate.syntax() method",
+        "Includes language parameter (typescript)",
+        "Mentions strict mode option",
+        "Demonstrates compilation check",
+        "Shows error reporting"
+      ]
+    },
+    {
+      "id": "validation-gates-security",
+      "prompt": "How do I add security scanning to the validation pipeline?",
+      "expected_output": "Security gate configuration with vulnerability levels",
+      "files": [],
+      "assertions": [
+        "Shows Gate.security() method",
+        "Includes level parameter (low/moderate/high/critical)",
+        "Mentions npm audit integration",
+        "Demonstrates secret detection",
+        "Shows ignore patterns for false positives"
+      ]
+    },
+    {
+      "id": "validation-gates-results",
+      "prompt": "How do I interpret and handle validation gate results?",
+      "expected_output": "Validation result processing with pass/fail determination",
+      "files": [],
+      "assertions": [
+        "Shows ValidationResult structure",
+        "Includes passed boolean check",
+        "Mentions gates array with individual results",
+        "Demonstrates summary statistics",
+        "Shows artifact collection"
+      ]
+    },
+    {
+      "id": "validation-gates-conditional",
+      "prompt": "How do I set up conditional gates that only run when needed?",
+      "expected_output": "Conditional gate configuration with runIf function",
+      "files": [],
+      "assertions": [
+        "Shows Gate.conditional() method",
+        "Includes runIf predicate function",
+        "Mentions context-based conditions",
+        "Demonstrates test-only gates",
+        "Shows skip reasons in results"
+      ]
+    }
+  ]
+}

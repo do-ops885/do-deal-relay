@@ -1,0 +1,72 @@
+{
+  "skill_name": "do-deal-relay",
+  "version": "1.0.0",
+  "description": "AI agent self-prompting instructions for do-deal-relay referral system operations",
+  "evals": [
+    {
+      "id": "do-deal-referral-add",
+      "prompt": "How do I add a new referral code to the system?",
+      "expected_output": "Referral code addition via MCP tool or API endpoint",
+      "files": [],
+      "assertions": [
+        "Shows MCP tool usage (add_referral)",
+        "Includes referral code validation",
+        "Mentions required fields (code, domain, reward)",
+        "Demonstrates API POST request",
+        "Shows success confirmation"
+      ]
+    },
+    {
+      "id": "do-deal-query",
+      "prompt": "How do I query existing referral codes in the system?",
+      "expected_output": "Referral code query via search or listing",
+      "files": [],
+      "assertions": [
+        "Shows MCP tool usage (search_deals)",
+        "Includes filter parameters (domain, category)",
+        "Mentions full-text search",
+        "Demonstrates API GET request",
+        "Shows result formatting"
+      ]
+    },
+    {
+      "id": "do-deal-validation",
+      "prompt": "How do I validate if a referral code is still active?",
+      "expected_output": "Code validation via URL check or API validation endpoint",
+      "files": [],
+      "assertions": [
+        "Shows validate_deal MCP tool",
+        "Includes URL validation endpoint",
+        "Mentions status checking",
+        "Demonstrates batch validation",
+        "Shows validation result interpretation"
+      ]
+    },
+    {
+      "id": "do-deal-eu-compliance",
+      "prompt": "How does the system handle EU AI Act compliance for logging?",
+      "expected_output": "EU AI Act compliance with 180-day logging retention",
+      "files": [],
+      "assertions": [
+        "Mentions 180-day logging retention",
+        "Includes compliance logging methods",
+        "Shows audit trail requirements",
+        "Demonstrates transparency logging",
+        "Mentions human oversight records"
+      ]
+    },
+    {
+      "id": "do-deal-mcp-protocol",
+      "prompt": "How do I interact with the system via MCP protocol?",
+      "expected_output": "MCP protocol interaction with tools and resources",
+      "files": [],
+      "assertions": [
+        "Shows MCP endpoint (/mcp)",
+        "Lists available MCP tools",
+        "Includes tool invocation format",
+        "Mentions resource access",
+        "Demonstrates MCP client setup"
+      ]
+    }
+  ]
+}

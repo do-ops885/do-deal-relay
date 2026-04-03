@@ -1,0 +1,72 @@
+{
+  "skill_name": "architecture-diagram",
+  "version": "1.0.0",
+  "description": "Generate or update a project architecture SVG diagram by scanning the live project structure",
+  "evals": [
+    {
+      "id": "architecture-diagram-generate",
+      "prompt": "How do I generate an architecture diagram for my project?",
+      "expected_output": "Architecture diagram generation process and command",
+      "files": [],
+      "assertions": [
+        "Shows diagram generation command or method",
+        "Includes project structure scanning",
+        "Mentions SVG output format",
+        "Demonstrates component detection",
+        "Shows relationship mapping"
+      ]
+    },
+    {
+      "id": "architecture-diagram-customize",
+      "prompt": "How can I customize the appearance of the generated architecture diagram?",
+      "expected_output": "Customization options for colors, layout, and component styling",
+      "files": [],
+      "assertions": [
+        "Shows style configuration options",
+        "Includes color scheme selection",
+        "Mentions layout direction (vertical/horizontal)",
+        "Demonstrates component grouping",
+        "Shows legend and labeling options"
+      ]
+    },
+    {
+      "id": "architecture-diagram-update",
+      "prompt": "How do I update the architecture diagram when my project structure changes?",
+      "expected_output": "Diagram regeneration and update workflow",
+      "files": [],
+      "assertions": [
+        "Shows update detection mechanism",
+        "Includes incremental update option",
+        "Mentions manual regeneration trigger",
+        "Demonstrates version control integration",
+        "Shows CI/CD diagram validation"
+      ]
+    },
+    {
+      "id": "architecture-diagram-components",
+      "prompt": "What types of components can the architecture diagram detect and visualize?",
+      "expected_output": "Component detection capabilities: services, databases, APIs, etc.",
+      "files": [],
+      "assertions": [
+        "Lists detectable component types",
+        "Shows service detection from code",
+        "Includes database identification",
+        "Mentions API endpoint detection",
+        "Demonstrates external service recognition"
+      ]
+    },
+    {
+      "id": "architecture-diagram-output",
+      "prompt": "What output formats are supported for architecture diagrams?",
+      "expected_output": "Supported output formats: SVG, PNG, PDF, etc.",
+      "files": [],
+      "assertions": [
+        "Lists SVG as primary format",
+        "Includes PNG export option",
+        "Mentions PDF generation",
+        "Demonstrates interactive formats",
+        "Shows embedding options"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "skill_name": "distributed-locking",
+  "version": "1.0.0",
+  "description": "Distributed coordination with TTL for preventing race conditions",
+  "evals": [
+    {
+      "id": "distributed-lock-acquire",
+      "prompt": "How do I acquire a distributed lock for the pipeline to prevent concurrent executions?",
+      "expected_output": "Lock acquisition code with proper TTL and retry logic",
+      "files": [],
+      "assertions": [
+        "Shows Lock.acquire() method usage",
+        "Includes lock name parameter",
+        "Specifies TTL (time to live) value",
+        "Mentions retry attempts parameter",
+        "Demonstrates checking if lock was acquired"
+      ]
+    },
+    {
+      "id": "distributed-lock-release",
+      "prompt": "How do I properly release a distributed lock after work is complete?",
+      "expected_output": "Lock release code with error handling and best practices",
+      "files": [],
+      "assertions": [
+        "Shows Lock.release() method in finally block",
+        "Includes error handling for release failures",
+        "Mentions automatic TTL expiration as fallback",
+        "Demonstrates proper cleanup pattern",
+        "Shows lock token/identifier usage"
+      ]
+    },
+    {
+      "id": "distributed-lock-retry",
+      "prompt": "How does the distributed lock handle retries when lock is already held?",
+      "expected_output": "Explanation of retry mechanism with exponential backoff",
+      "files": [],
+      "assertions": [
+        "Mentions retry attempts configuration",
+        "Describes exponential backoff between retries",
+        "Shows how to handle LockAcquisitionError",
+        "Mentions maximum wait time calculation",
+        "Provides guidance on setting appropriate retry count"
+      ]
+    },
+    {
+      "id": "distributed-lock-use-cases",
+      "prompt": "What are common use cases for distributed locking in this system?",
+      "expected_output": "List of use cases: pipeline execution, scheduled job coordination, critical section protection",
+      "files": [],
+      "assertions": [
+        "Mentions pipeline execution coordination",
+        "Includes scheduled job deduplication",
+        "Mentions critical section protection",
+        "Shows leader election pattern",
+        "Demonstrates rate limiter coordination"
+      ]
+    },
+    {
+      "id": "distributed-lock-ttl",
+      "prompt": "How should I choose the appropriate TTL for a distributed lock?",
+      "expected_output": "TTL selection guidance based on operation duration and failure scenarios",
+      "files": [],
+      "assertions": [
+        "Recommends TTL longer than expected operation time",
+        "Mentions worst-case execution time consideration",
+        "Includes automatic expiration safety",
+        "Warns about too-short TTL (premature release)",
+        "Warns about too-long TTL (blocking issues)"
+      ]
+    }
+  ]
+}

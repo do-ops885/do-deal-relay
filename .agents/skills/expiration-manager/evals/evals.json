@@ -1,0 +1,72 @@
+{
+  "skill_name": "expiration-manager",
+  "version": "1.0.0",
+  "description": "Time-based workflow management for scheduling and tracking expirations",
+  "evals": [
+    {
+      "id": "expiration-schedule-check",
+      "prompt": "How do I schedule an expiration check for deals expiring within 7 days?",
+      "expected_output": "Expiration check scheduling with date range configuration",
+      "files": [],
+      "assertions": [
+        "Shows scheduleExpiryCheck() method",
+        "Includes days parameter (7)",
+        "Mentions cron trigger or scheduled event",
+        "Demonstrates filtering deals by expiry date",
+        "Shows notification scheduling"
+      ]
+    },
+    {
+      "id": "expiration-mark-expired",
+      "prompt": "How do I mark deals as expired when they pass their expiry date?",
+      "expected_output": "Code to mark expired deals and update their status",
+      "files": [],
+      "assertions": [
+        "Shows markExpiredDeals() method",
+        "Includes date comparison logic",
+        "Mentions status transition to 'expired'",
+        "Demonstrates batch update pattern",
+        "Shows KV storage update for deals"
+      ]
+    },
+    {
+      "id": "expiration-notifications",
+      "prompt": "How do I send notifications for deals expiring soon?",
+      "expected_output": "Notification setup for expiring deals with multiple time windows",
+      "files": [],
+      "assertions": [
+        "Shows sendExpiryNotifications() method",
+        "Includes multiple time windows (7d, 30d, 90d)",
+        "Mentions notification deduplication",
+        "Demonstrates webhook or email notifications",
+        "Shows notification queue management"
+      ]
+    },
+    {
+      "id": "expiration-tracking",
+      "prompt": "How can I track which deals are expiring and when?",
+      "expected_output": "Expiration tracking query and monitoring approach",
+      "files": [],
+      "assertions": [
+        "Shows getExpiringReferrals() method",
+        "Includes date range filtering",
+        "Mentions D1 database query",
+        "Demonstrates sorting by expiry date",
+        "Shows metrics tracking for expirations"
+      ]
+    },
+    {
+      "id": "expiration-auto-deactivate",
+      "prompt": "How do I automatically deactivate expired referral codes?",
+      "expected_output": "Auto-deactivation workflow for expired codes",
+      "files": [],
+      "assertions": [
+        "Shows automatic status change to inactive",
+        "Includes scheduled trigger configuration",
+        "Mentions webhook notification on deactivation",
+        "Demonstrates grace period handling",
+        "Shows audit logging for deactivation"
+      ]
+    }
+  ]
+}

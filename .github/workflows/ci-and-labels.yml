@@ -51,7 +51,7 @@ jobs:
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
@@ -96,7 +96,7 @@ jobs:
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)

@@ -1,0 +1,72 @@
+{
+  "skill_name": "crypto-utils",
+  "version": "1.0.0",
+  "description": "Cryptographic utilities for hashing, encryption, and secure operations",
+  "evals": [
+    {
+      "id": "crypto-hmac-generation",
+      "prompt": "How do I generate an HMAC-SHA256 signature for webhook payload verification?",
+      "expected_output": "HMAC generation code with proper key handling and payload formatting",
+      "files": [],
+      "assertions": [
+        "Shows HMAC-SHA256 algorithm usage",
+        "Includes secret key parameter",
+        "Demonstrates payload stringification",
+        "Shows hex or base64 output encoding",
+        "Mentions timing-safe comparison for verification"
+      ]
+    },
+    {
+      "id": "crypto-password-hashing",
+      "prompt": "What is the recommended way to hash passwords for secure storage?",
+      "expected_output": "Password hashing guidance using bcrypt or PBKDF2 with salt",
+      "files": [],
+      "assertions": [
+        "Recommends bcrypt or PBKDF2 (not SHA-256)",
+        "Mentions salt generation and storage",
+        "Includes cost factor/work factor discussion",
+        "Shows comparison function (not equality check)",
+        "Warns against MD5/SHA1 for passwords"
+      ]
+    },
+    {
+      "id": "crypto-api-key-generation",
+      "prompt": "How should I generate secure API keys for my service?",
+      "expected_output": "API key generation using cryptographically secure random bytes with proper formatting",
+      "files": [],
+      "assertions": [
+        "Uses crypto.getRandomValues or crypto.randomBytes",
+        "Recommends sufficient length (32+ bytes)",
+        "Shows base64 or hex encoding",
+        "Includes prefix for identification (e.g., 'sk_')",
+        "Mentions secure storage in KV/secrets"
+      ]
+    },
+    {
+      "id": "crypto-secure-token",
+      "prompt": "Generate a secure random token for CSRF protection",
+      "expected_output": "CSRF token generation with proper entropy and encoding",
+      "files": [],
+      "assertions": [
+        "Uses cryptographically secure random generation",
+        "Recommends 32 bytes minimum entropy",
+        "Shows base64url encoding (URL-safe)",
+        "Mentions token expiration handling",
+        "Includes storage in session/KV"
+      ]
+    },
+    {
+      "id": "crypto-data-integrity",
+      "prompt": "How can I verify data integrity for stored deals using hashing?",
+      "expected_output": "Data integrity verification using SHA-256 hash comparison",
+      "files": [],
+      "assertions": [
+        "Shows SHA-256 hash generation for data",
+        "Includes storing hash with data",
+        "Demonstrates verification on retrieval",
+        "Mentions collision resistance of SHA-256",
+        "Provides example of tampering detection"
+      ]
+    }
+  ]
+}

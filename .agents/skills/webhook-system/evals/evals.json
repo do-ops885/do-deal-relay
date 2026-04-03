@@ -1,0 +1,72 @@
+{
+  "skill_name": "webhook-system",
+  "version": "1.0.0",
+  "description": "Event notifications with HMAC signature verification, retry logic, and subscription management",
+  "evals": [
+    {
+      "id": "webhook-subscription",
+      "prompt": "How do I create a webhook subscription for deal updates?",
+      "expected_output": "Webhook subscription creation with endpoint URL and event types",
+      "files": [],
+      "assertions": [
+        "Shows subscribe() method",
+        "Includes endpoint URL parameter",
+        "Mentions event types (deal.created, deal.updated)",
+        "Demonstrates HMAC secret generation",
+        "Shows subscription confirmation"
+      ]
+    },
+    {
+      "id": "webhook-signature",
+      "prompt": "How do I verify webhook signatures to ensure authenticity?",
+      "expected_output": "HMAC signature verification for incoming webhooks",
+      "files": [],
+      "assertions": [
+        "Shows verifySignature() function",
+        "Includes HMAC-SHA256 algorithm",
+        "Mentions X-Webhook-Signature header",
+        "Demonstrates constant-time comparison",
+        "Shows signature mismatch handling"
+      ]
+    },
+    {
+      "id": "webhook-retry",
+      "prompt": "How does the webhook system handle delivery failures and retries?",
+      "expected_output": "Retry mechanism with exponential backoff and dead letter queue",
+      "files": [],
+      "assertions": [
+        "Shows retry configuration (maxAttempts, backoff)",
+        "Includes exponential backoff calculation",
+        "Mentions HTTP status code handling (2xx, 4xx, 5xx)",
+        "Demonstrates dead letter queue (DLQ)",
+        "Shows retry exhaustion handling"
+      ]
+    },
+    {
+      "id": "webhook-delivery",
+      "prompt": "How do I trigger webhook deliveries when events occur?",
+      "expected_output": "Event triggering and webhook delivery dispatch",
+      "files": [],
+      "assertions": [
+        "Shows triggerEvent() method",
+        "Includes event payload construction",
+        "Mentions subscription filtering",
+        "Demonstrates parallel delivery",
+        "Shows delivery tracking"
+      ]
+    },
+    {
+      "id": "webhook-batch",
+      "prompt": "How can I batch multiple events into a single webhook delivery?",
+      "expected_output": "Webhook batching for high-volume scenarios",
+      "files": [],
+      "assertions": [
+        "Shows enableBatching() configuration",
+        "Includes batch size and timeout settings",
+        "Mentions batch payload format",
+        "Demonstrates compression for large batches",
+        "Shows batch delivery optimization"
+      ]
+    }
+  ]
+}

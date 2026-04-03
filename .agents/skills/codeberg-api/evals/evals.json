@@ -1,0 +1,72 @@
+{
+  "skill_name": "codeberg-api",
+  "version": "1.0.0",
+  "description": "Interact with Forgejo/Codeberg repositories via the REST API",
+  "evals": [
+    {
+      "id": "codeberg-api-auth",
+      "prompt": "How do I authenticate with the Codeberg API?",
+      "expected_output": "Authentication setup with Forgejo/Codeberg token",
+      "files": [],
+      "assertions": [
+        "Shows token-based authentication",
+        "Includes FORGEJO_TOKEN environment variable",
+        "Mentions API endpoint URL",
+        "Demonstrates Authorization header format",
+        "Shows token permissions required"
+      ]
+    },
+    {
+      "id": "codeberg-api-read-file",
+      "prompt": "How do I read a file from a Codeberg repository?",
+      "expected_output": "File content retrieval from Forgejo/Codeberg repo",
+      "files": [],
+      "assertions": [
+        "Shows readFile() function",
+        "Includes repository path parameter",
+        "Mentions branch/ref specification",
+        "Demonstrates content decoding",
+        "Shows error handling for missing files"
+      ]
+    },
+    {
+      "id": "codeberg-api-create-pr",
+      "prompt": "How do I create a pull request on Codeberg?",
+      "expected_output": "Pull request creation with title, description, and branch refs",
+      "files": [],
+      "assertions": [
+        "Shows createPullRequest() function",
+        "Includes title and body parameters",
+        "Mentions head and base branch refs",
+        "Demonstrates PR number return",
+        "Shows PR URL generation"
+      ]
+    },
+    {
+      "id": "codeberg-api-issues",
+      "prompt": "How do I manage issues via the Codeberg API?",
+      "expected_output": "Issue operations: create, list, close, comment",
+      "files": [],
+      "assertions": [
+        "Shows createIssue() function",
+        "Includes listIssues() with filters",
+        "Mentions closeIssue() method",
+        "Demonstrates addComment() function",
+        "Shows issue label management"
+      ]
+    },
+    {
+      "id": "codeberg-api-ci",
+      "prompt": "How do I interact with Codeberg Actions CI/CD workflows?",
+      "expected_output": "CI workflow triggering and status monitoring",
+      "files": [],
+      "assertions": [
+        "Shows triggerWorkflow() function",
+        "Includes workflow run monitoring",
+        "Mentions status checking",
+        "Demonstrates artifact download",
+        "Shows CI configuration retrieval"
+      ]
+    }
+  ]
+}

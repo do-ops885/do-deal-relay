@@ -1,0 +1,72 @@
+{
+  "skill_name": "structured-logging",
+  "version": "1.0.0",
+  "description": "Correlation ID logging for distributed tracing and debugging across service boundaries",
+  "evals": [
+    {
+      "id": "structured-logging-basic",
+      "prompt": "How do I create a structured logger with correlation IDs?",
+      "expected_output": "Structured logger initialization with correlation ID and context",
+      "files": [],
+      "assertions": [
+        "Shows createStructuredLogger() function",
+        "Includes correlation ID generation",
+        "Mentions context attachment",
+        "Demonstrates JSON output format",
+        "Shows timestamp inclusion"
+      ]
+    },
+    {
+      "id": "structured-logging-correlation",
+      "prompt": "How do I propagate correlation IDs across service boundaries?",
+      "expected_output": "Correlation ID propagation through HTTP headers and async contexts",
+      "files": [],
+      "assertions": [
+        "Shows X-Correlation-Id header extraction",
+        "Includes correlation ID propagation to downstream services",
+        "Mentions async context preservation",
+        "Demonstrates logging with same correlation ID across services",
+        "Shows trace chain construction"
+      ]
+    },
+    {
+      "id": "structured-logging-levels",
+      "prompt": "What log levels are available and when should I use each?",
+      "expected_output": "Log level guidance: DEBUG, INFO, WARN, ERROR with use cases",
+      "files": [],
+      "assertions": [
+        "Lists DEBUG for detailed debugging",
+        "Lists INFO for normal operations",
+        "Lists WARN for potential issues",
+        "Lists ERROR for failures requiring attention",
+        "Shows level filtering configuration"
+      ]
+    },
+    {
+      "id": "structured-logging-query",
+      "prompt": "How can I query and filter structured logs?",
+      "expected_output": "Log querying with filters for correlation ID, level, time range, and context",
+      "files": [],
+      "assertions": [
+        "Shows queryLogs() function",
+        "Includes correlation ID filtering",
+        "Mentions level-based filtering",
+        "Demonstrates time range queries",
+        "Shows context field filtering"
+      ]
+    },
+    {
+      "id": "structured-logging-kv",
+      "prompt": "How do I store and retrieve logs from KV storage?",
+      "expected_output": "KV-based log storage with batching and retrieval patterns",
+      "files": [],
+      "assertions": [
+        "Shows log storage in KV",
+        "Includes batching for efficiency",
+        "Mentions log key naming convention",
+        "Demonstrates retrieval by correlation ID",
+        "Shows log rotation/expiry"
+      ]
+    }
+  ]
+}

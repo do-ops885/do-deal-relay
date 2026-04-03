@@ -1,0 +1,72 @@
+{
+  "skill_name": "web-doc-resolver",
+  "version": "1.0.0",
+  "description": "Resolve queries or URLs into compact, LLM-ready markdown using a low-cost cascade",
+  "evals": [
+    {
+      "id": "web-doc-resolver-url",
+      "prompt": "How do I resolve a documentation URL into markdown?",
+      "expected_output": "URL resolution process through the cascade (llms.txt, direct fetch, Jina AI)",
+      "files": [],
+      "assertions": [
+        "Shows resolve() function for URLs",
+        "Mentions llms.txt check first",
+        "Includes direct HTTP fetch fallback",
+        "Demonstrates Jina AI reader API",
+        "Shows markdown output format"
+      ]
+    },
+    {
+      "id": "web-doc-resolver-query",
+      "prompt": "How do I search for technical information using a query?",
+      "expected_output": "Query resolution with DuckDuckGo search and cascade",
+      "files": [],
+      "assertions": [
+        "Shows resolve() function for queries",
+        "Mentions DuckDuckGo search",
+        "Includes Exa MCP fallback",
+        "Demonstrates result aggregation",
+        "Shows markdown compilation"
+      ]
+    },
+    {
+      "id": "web-doc-resolver-cascade",
+      "prompt": "What is the cascade resolution strategy and why is it cost-effective?",
+      "expected_output": "Explanation of the 4-step cascade prioritizing free sources",
+      "files": [],
+      "assertions": [
+        "Lists cascade steps in order",
+        "Mentions free sources first (llms.txt, direct fetch)",
+        "Includes free tier APIs (Jina AI)",
+        "Demonstrates paid API fallback",
+        "Shows cost savings rationale"
+      ]
+    },
+    {
+      "id": "web-doc-resolver-rate-limits",
+      "prompt": "What are the rate limits for different providers and how do I handle them?",
+      "expected_output": "Rate limit handling with cooldowns and retry logic",
+      "files": [],
+      "assertions": [
+        "Lists DuckDuckGo cooldown (30s)",
+        "Lists Jina Reader cooldown (60s)",
+        "Includes Exa MCP limits",
+        "Demonstrates error recovery",
+        "Shows provider skip option"
+      ]
+    },
+    {
+      "id": "web-doc-resolver-best-practices",
+      "prompt": "What are the best practices for using web-doc-resolver effectively?",
+      "expected_output": "Best practices for targeted queries and official docs",
+      "files": [],
+      "assertions": [
+        "Recommends specific queries over broad ones",
+        "Mentions year filtering for current info",
+        "Prioritizes official documentation",
+        "Warns against fetching entire websites",
+        "Shows rate limit respect"
+      ]
+    }
+  ]
+}

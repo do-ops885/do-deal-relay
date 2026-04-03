@@ -1,0 +1,72 @@
+{
+  "skill_name": "metrics-pipeline",
+  "version": "1.0.0",
+  "description": "Prometheus-compatible metrics collection and export for tracking performance and business metrics",
+  "evals": [
+    {
+      "id": "metrics-pipeline-basic",
+      "prompt": "How do I set up metrics collection for the deal pipeline?",
+      "expected_output": "Metrics initialization and basic usage pattern",
+      "files": [],
+      "assertions": [
+        "Shows createMetrics() function",
+        "Includes metrics initialization with timestamp",
+        "Mentions pipeline run ID",
+        "Demonstrates phase timing recording",
+        "Shows metrics finalization"
+      ]
+    },
+    {
+      "id": "metrics-pipeline-phase-timing",
+      "prompt": "How do I record timing metrics for each pipeline phase?",
+      "expected_output": "Phase timing tracking with recordPhaseTiming method",
+      "files": [],
+      "assertions": [
+        "Shows recordPhaseTiming() method",
+        "Includes phase name parameter",
+        "Mentions duration calculation",
+        "Demonstrates before/after timestamp recording",
+        "Shows timing statistics aggregation"
+      ]
+    },
+    {
+      "id": "metrics-pipeline-prometheus",
+      "prompt": "How do I export metrics in Prometheus format?",
+      "expected_output": "Prometheus format conversion with proper metric names and labels",
+      "files": [],
+      "assertions": [
+        "Shows formatMetricsForPrometheus() function",
+        "Includes metric name formatting (snake_case)",
+        "Mentions HELP and TYPE comments",
+        "Demonstrates counter and gauge metrics",
+        "Shows label inclusion for dimensions"
+      ]
+    },
+    {
+      "id": "metrics-pipeline-aggregation",
+      "prompt": "How can I aggregate metrics across multiple pipeline runs?",
+      "expected_output": "Metrics aggregation with statistics calculation",
+      "files": [],
+      "assertions": [
+        "Shows getRecentMetrics() method",
+        "Includes time range filtering",
+        "Mentions calculateAggregateStats()",
+        "Demonstrates percentile calculations (p50, p95, p99)",
+        "Shows trend analysis"
+      ]
+    },
+    {
+      "id": "metrics-pipeline-custom",
+      "prompt": "How do I add custom business metrics beyond the defaults?",
+      "expected_output": "Custom metric recording with custom counters and labels",
+      "files": [],
+      "assertions": [
+        "Shows recordCustomMetric() method",
+        "Includes metric name and value parameters",
+        "Mentions custom labels support",
+        "Demonstrates business metric examples",
+        "Shows metric categorization"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "skill_name": "iterative-refinement",
+  "version": "1.0.0",
+  "description": "Execute iterative refinement workflows with validation loops until quality criteria are met",
+  "evals": [
+    {
+      "id": "iterative-refinement-basic",
+      "prompt": "How do I set up an iterative refinement loop for code quality improvement?",
+      "expected_output": "Iterative refinement configuration with quality criteria and max iterations",
+      "files": [],
+      "assertions": [
+        "Shows RefinementLoop class instantiation",
+        "Includes quality criteria definition",
+        "Mentions maxIterations parameter",
+        "Demonstrates validation function setup",
+        "Shows iteration callback function"
+      ]
+    },
+    {
+      "id": "iterative-refinement-convergence",
+      "prompt": "How does the refinement loop determine when to stop iterating?",
+      "expected_output": "Convergence criteria: quality threshold reached, max iterations, no improvement",
+      "files": [],
+      "assertions": [
+        "Describes quality score threshold",
+        "Mentions max iterations limit",
+        "Includes plateau detection (no improvement)",
+        "Demonstrates early stopping",
+        "Shows convergence history tracking"
+      ]
+    },
+    {
+      "id": "iterative-refinement-test-fix",
+      "prompt": "How can I use iterative refinement for test-fix cycles?",
+      "expected_output": "Test-fix refinement loop with test execution and code fixing",
+      "files": [],
+      "assertions": [
+        "Shows test execution in loop",
+        "Includes failure analysis",
+        "Mentions automated fix application",
+        "Demonstrates regression testing",
+        "Shows fix validation"
+      ]
+    },
+    {
+      "id": "iterative-refinement-feedback",
+      "prompt": "How do I provide feedback between refinement iterations?",
+      "expected_output": "Feedback mechanism for steering refinement direction",
+      "files": [],
+      "assertions": [
+        "Shows feedback collection between iterations",
+        "Includes validation results analysis",
+        "Mentions scoring adjustment",
+        "Demonstrates human-in-the-loop option",
+        "Shows automatic feedback generation"
+      ]
+    },
+    {
+      "id": "iterative-refinement-metrics",
+      "prompt": "How can I track metrics during the refinement process?",
+      "expected_output": "Refinement metrics tracking: iterations, quality scores, time per iteration",
+      "files": [],
+      "assertions": [
+        "Shows iteration count tracking",
+        "Includes quality score history",
+        "Mentions time per iteration",
+        "Demonstrates improvement rate calculation",
+        "Shows convergence visualization"
+      ]
+    }
+  ]
+}

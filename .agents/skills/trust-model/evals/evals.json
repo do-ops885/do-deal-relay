@@ -1,0 +1,72 @@
+{
+  "skill_name": "trust-model",
+  "version": "1.0.0",
+  "description": "Source classification scoring system for establishing data trustworthiness",
+  "evals": [
+    {
+      "id": "trust-model-basic",
+      "prompt": "How do I calculate a trust score for a deal source?",
+      "expected_output": "Trust score calculation based on source reputation, historical accuracy, and verification status",
+      "files": [],
+      "assertions": [
+        "Shows calculateTrustScore() function",
+        "Includes source reputation weight",
+        "Mentions historical accuracy factor",
+        "Demonstrates verification status bonus",
+        "Shows confidence score calculation"
+      ]
+    },
+    {
+      "id": "trust-model-source-classification",
+      "prompt": "How are sources classified in the trust model?",
+      "expected_output": "Source classification tiers: verified, established, new, suspicious, blocked",
+      "files": [],
+      "assertions": [
+        "Lists verified tier (official APIs)",
+        "Lists established tier (reliable scrapers)",
+        "Lists new tier (unverified sources)",
+        "Lists suspicious tier (flagged patterns)",
+        "Lists blocked tier (known malicious)"
+      ]
+    },
+    {
+      "id": "trust-model-anomaly-detection",
+      "prompt": "How does the trust model detect anomalous deals?",
+      "expected_output": "Anomaly detection based on reward value, deal frequency, and pattern matching",
+      "files": [],
+      "assertions": [
+        "Shows detectAnomalies() function",
+        "Includes reward threshold detection (>5x avg)",
+        "Mentions frequency-based anomalies",
+        "Demonstrates pattern matching for fraud",
+        "Shows quarantine recommendations"
+      ]
+    },
+    {
+      "id": "trust-model-quarantine",
+      "prompt": "How do I quarantine deals with low trust scores?",
+      "expected_output": "Quarantine workflow for suspicious deals requiring manual review",
+      "files": [],
+      "assertions": [
+        "Shows quarantineDeal() function",
+        "Includes trust score threshold configuration",
+        "Mentions quarantine reason recording",
+        "Demonstrates notification on quarantine",
+        "Shows manual review workflow"
+      ]
+    },
+    {
+      "id": "trust-model-reputation",
+      "prompt": "How is source reputation tracked and updated over time?",
+      "expected_output": "Reputation tracking with feedback loop from deal validation results",
+      "files": [],
+      "assertions": [
+        "Shows updateSourceReputation() function",
+        "Includes success/failure tracking",
+        "Mentions reputation decay over time",
+        "Demonstrates reputation recovery",
+        "Shows reputation history storage"
+      ]
+    }
+  ]
+}
