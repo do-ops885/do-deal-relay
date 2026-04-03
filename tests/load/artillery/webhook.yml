@@ -1,0 +1,72 @@
+# Webhook Load Testing Configuration
+#
+# Tests webhook delivery under concurrent load
+# Requirements: 100 concurrent deliveries, 1KB payload, 5 minute duration
+# Success criteria: 100% delivery success, <500ms processing time
+
+config:
+  target: "http://localhost:8787"
+
+  environments:
+    production:
+      target: "{{ $processEnvironment.WORKER_URL }}"
+
+  phases:
+    # Quick ramp to 100 concurrent connections
+    - duration: 30
+      arrivalRate: 10
+      rampTo: 100
+      name: "Ramp to 100 concurrent"
+    # Sustained load
+    - duration: 300 # 5 minutes
+      arrivalRate: 100
+      name: "Sustained 100 concurrent"
+    # Gradual ramp down
+    - duration: 30
+      arrivalRate: 100
+      rampTo: 10
+      name: "Ramp down"
+  processor: "./webhook-processor.js"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      X-Webhook-Secret: "{{ $processEnvironment.WEBHOOK_SECRET || 'test-secret' }}"
+  plugins:
+    expect: {}
+  ensure:
+    maxErrorRate: 0 # 0% error rate required
+    p95: 500 # < 500ms processing time
+
+scenarios:
+  - name: "Webhook delivery"
+    flow:
+      # Generate test payload
+      - function: "generatePayload"
+
+      # Submit webhook
+      - post:
+          url: "/api/webhook"
+          json:
+            event: "{{ event }}"
+            deal: "{{ deal }}"
+            timestamp: "{{ timestamp }}"
+            signature: "{{ signature }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "success"
+
+      # Verify processing time
+      - think: 0.1
+
+  - name: "Batch webhook delivery"
+    weight: 20
+    flow:
+      - function: "generateBatchPayload"
+      - post:
+          url: "/api/webhook/batch"
+          json:
+            webhooks: "{{ webhooks }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "processed"

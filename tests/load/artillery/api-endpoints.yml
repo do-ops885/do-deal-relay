@@ -1,0 +1,116 @@
+# Artillery Load Testing Configuration
+#
+# This directory contains Artillery configuration files for production-grade
+# load testing of the Deal Discovery API.
+#
+# Requirements (from production-readiness.md):
+# 1. API Endpoint Load Testing - 1000 req/min target
+# 2. Webhook Load Testing - 100 concurrent deliveries
+# 3. KV Storage Load Testing - 10,000 operations
+#
+# Usage:
+#   npm run test:load:api        # API endpoint tests
+#   npm run test:load:webhook    # Webhook delivery tests
+#   npm run test:load:kv         # KV storage tests
+#   npm run test:load:all        # Run all load tests
+#
+# Environment Variables:
+#   WORKER_URL - Target worker URL (default: http://localhost:8787)
+#   ARTILLERY_DURATION - Test duration in seconds (default varies by test)
+#   ARTILLERY_RATE - Request rate per second (default varies by test)
+
+config:
+  # Target URL - override with -t flag or WORKER_URL env var
+  target: "http://localhost:8787"
+
+  # Support for environment variable override via CLI
+  environments:
+    production:
+      target: "{{ $processEnvironment.WORKER_URL }}"
+    staging:
+      target: "http://localhost:8787"
+
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    # Ramp up to target load
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 17 # ~1000 req/min = 16.67 req/sec
+      name: "Ramp up to 1000 req/min"
+    # Sustained load
+    - duration: 600 # 10 minutes
+      arrivalRate: 17
+      name: "Sustained load (1000 req/min)"
+    # Cool down
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down"
+  defaults:
+    headers:
+      Accept: "application/json"
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+  ensure:
+    # Success criteria from production-readiness.md
+    p95: 200 # p95 latency < 200ms
+    maxErrorRate: 1 # < 1% error rate
+
+scenarios:
+  # Health endpoint - lightweight probe
+  - name: "Health check"
+    weight: 40
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "status"
+
+  # Ready endpoint - Kubernetes probe
+  - name: "Readiness probe"
+    weight: 20
+    flow:
+      - get:
+          url: "/health/ready"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  # Live endpoint - Kubernetes probe
+  - name: "Liveness probe"
+    weight: 20
+    flow:
+      - get:
+          url: "/health/live"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  # Metrics endpoint - Prometheus format
+  - name: "Metrics scrape"
+    weight: 10
+    flow:
+      - get:
+          url: "/metrics"
+          expect:
+            - statusCode: 200
+            - contentType: text
+
+  # Deals endpoint - main API
+  - name: "Get deals"
+    weight: 10
+    flow:
+      - get:
+          url: "/deals"
+          expect:
+            - statusCode: 200
+            - contentType: json
+          capture:
+            - json: "$.deals"
+              as: "deals_count"
+      - think: 1

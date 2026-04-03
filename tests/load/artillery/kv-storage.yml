@@ -1,0 +1,87 @@
+# KV Storage Load Testing Configuration
+#
+# Tests KV storage operations under high concurrency
+# Requirements: 10,000 operations, 50 parallel, mixed read/write/delete
+# Success criteria: No rate limiting, consistent performance
+
+config:
+  target: "http://localhost:8787"
+
+  environments:
+    production:
+      target: "{{ $processEnvironment.WORKER_URL }}"
+
+  phases:
+    # Read-heavy workload simulation
+    - duration: 120
+      arrivalRate: 50
+      name: "Read-heavy workload (70% read)"
+    # Mixed workload
+    - duration: 180
+      arrivalRate: 50
+      name: "Mixed workload (50/40/10 split)"
+    # Write-heavy burst
+    - duration: 60
+      arrivalRate: 100
+      name: "Write burst test"
+    # Recovery/cool-down
+    - duration: 60
+      arrivalRate: 25
+      name: "Recovery phase"
+  processor: "./kv-processor.js"
+  defaults:
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {{ $processEnvironment.API_TOKEN || 'test-token' }}"
+  plugins:
+    expect: {}
+  ensure:
+    maxErrorRate: 1 # < 1% errors (rate limiting counts as error)
+    p95: 100 # p95 < 100ms for KV ops
+
+scenarios:
+  # Read operations (70% of traffic)
+  - name: "KV Read"
+    weight: 70
+    flow:
+      - function: "generateReadOperation"
+      - get:
+          url: "/api/kv/read/{{ key }}"
+          expect:
+            - statusCode: [200, 404] # 404 is acceptable for read
+            - contentType: json
+
+  # Write operations (25% of traffic)
+  - name: "KV Write"
+    weight: 25
+    flow:
+      - function: "generateWriteOperation"
+      - post:
+          url: "/api/kv/write"
+          json:
+            key: "{{ key }}"
+            value: "{{ value }}"
+            ttl: "{{ ttl }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "success"
+
+  # Delete operations (5% of traffic)
+  - name: "KV Delete"
+    weight: 5
+    flow:
+      - function: "generateDeleteOperation"
+      - delete:
+          url: "/api/kv/delete/{{ key }}"
+          expect:
+            - statusCode: [200, 404]
+
+  # List/Batch operations (occasional)
+  - name: "KV List"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/kv/list?limit=100"
+          expect:
+            - statusCode: 200
+            - hasProperty: "keys"
