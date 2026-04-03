@@ -32,7 +32,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run Quality Gate
         run: ./scripts/quality_gate.sh
@@ -55,7 +55,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Type check
         run: npx tsc --noEmit
@@ -78,7 +78,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run tests
         run: npm run test:ci
@@ -111,7 +111,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run validation script
         run: ./scripts/validate-codes.sh
@@ -162,7 +162,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Check formatting
         run: npx prettier --check .
@@ -189,7 +189,7 @@ jobs:
           # Cache disabled - using npm install directly
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build TypeScript
         run: npm run build
