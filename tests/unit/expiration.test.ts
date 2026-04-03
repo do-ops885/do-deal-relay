@@ -8,6 +8,7 @@ import {
   isExpiringSoon,
   calculateExpiryUrgency,
 } from "../../worker/lib/expiration";
+import { setGitHubToken } from "../../worker/lib/github";
 import type { Deal, Env } from "../../worker/types";
 
 const createMockDeal = (
@@ -59,6 +60,9 @@ describe("Expiration Module", () => {
   beforeEach(() => {
     mockKvStorage = new Map();
 
+    // Initialize GitHub token for tests
+    setGitHubToken("test-token");
+
     mockEnv = {
       DEALS_PROD: {
         get: vi.fn(async <T>(key: string, type?: string) => {
@@ -106,6 +110,7 @@ describe("Expiration Module", () => {
       } as unknown as KVNamespace,
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
+      GITHUB_TOKEN: "test-token",
       NOTIFICATION_THRESHOLD: "100",
     } as Env;
   });

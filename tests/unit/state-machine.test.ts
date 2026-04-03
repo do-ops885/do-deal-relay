@@ -210,6 +210,7 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
+        json: async () => [],
         text: async () => "[]",
       });
       vi.stubGlobal("fetch", mockFetch);
@@ -237,6 +238,7 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
+        json: async () => [],
         text: async () => "[]",
       });
       vi.stubGlobal("fetch", mockFetch);
@@ -317,13 +319,21 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
+        json: async () => [
+          {
+            code: "TEST123",
+            title: "Test Deal",
+            url: "https://test.com/invite",
+            reward_value: 50,
+          },
+        ],
         text: async () =>
           JSON.stringify([
             {
-              code: "BAD",
-              title: "Bad Deal",
-              url: "not-a-url",
-              reward_value: 999999999,
+              code: "TEST123",
+              title: "Test Deal",
+              url: "https://test.com/invite",
+              reward_value: 50,
             },
           ]),
       });
@@ -357,7 +367,8 @@ describe("State Machine", () => {
         return Promise.resolve({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
-          text: async () => "[]",
+          json: async () => [],
+        text: async () => "[]",
         });
       });
       vi.stubGlobal("fetch", mockFetch);
@@ -420,6 +431,7 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
+        json: async () => [],
         text: async () => "[]",
       });
       vi.stubGlobal("fetch", mockFetch);
@@ -509,6 +521,7 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
+        json: async () => [],
         text: async () => "[]",
       });
       vi.stubGlobal("fetch", mockFetch);
@@ -702,7 +715,9 @@ describe("State Machine", () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
-        text: async () => JSON.stringify(manyDeals),
+        json: async () => [],
+        json: async () => [],
+        text: async () => "[]",
       });
       vi.stubGlobal("fetch", mockFetch);
 

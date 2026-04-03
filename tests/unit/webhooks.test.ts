@@ -18,14 +18,21 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock crypto
+// Mock crypto with proper getRandomValues
+let randomCounter = 0;
 const mockSubtle = {
   importKey: vi.fn(),
   sign: vi.fn(),
 };
 global.crypto = {
   subtle: mockSubtle as unknown as SubtleCrypto,
-  getRandomValues: (array: Uint8Array) => array,
+  getRandomValues: (array: Uint8Array) => {
+    // Fill with pseudo-random values based on counter
+    for (let i = 0; i < array.length; i++) {
+      array[i] = (Math.floor(Math.random() * 256) + randomCounter++) % 256;
+    }
+    return array;
+  },
 } as Crypto;
 
 describe("Webhooks Module", () => {

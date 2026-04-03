@@ -43,14 +43,20 @@ const WEBHOOK_INDEX_KEY = "webhooks:index";
  */
 export async function createWebhook(
   env: Env,
-  config: Omit<WebhookConfig, "id" | "createdAt">,
+  config: Omit<WebhookConfig, "id" | "createdAt" | "secret"> & {
+    secret?: string;
+  },
 ): Promise<WebhookConfig> {
   const id = generateWebhookId();
   const createdAt = new Date().toISOString();
 
+  // Auto-generate secret if not provided
+  const secret = config.secret || generateWebhookSecret();
+
   const webhookConfig: WebhookConfig = {
     ...config,
     id,
+    secret,
     createdAt,
   };
 
