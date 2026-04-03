@@ -212,25 +212,27 @@ jobs:
     steps:
       - name: Report Status
         run: |
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Quality Gate | ${{ needs.quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Validation Gates | ${{ needs.validate-codes.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & Format | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Check | ${{ needs.build-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CI Results"
+            echo "| Job | Status |"
+            echo "|-----|--------|"
+            echo "| Quality Gate | ${{ needs.quality-gate.result }} |"
+            echo "| Unit Tests | ${{ needs.test.result }} |"
+            echo "| Validation Gates | ${{ needs.validate-codes.result }} |"
+            echo "| Security Scan | ${{ needs.security-scan.result }} |"
+            echo "| Lint & Format | ${{ needs.lint.result }} |"
+            echo "| Build Check | ${{ needs.build-check.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Check if any required job failed
           if [[ "${{ needs.quality-gate.result }}" == "failure" ]] || \
              [[ "${{ needs.test.result }}" == "failure" ]] || \
              [[ "${{ needs.validate-codes.result }}" == "failure" ]] || \
              [[ "${{ needs.security-scan.result }}" == "failure" ]]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "❌ CI Failed - Check individual jobs for details" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ CI Failed - Check individual jobs for details" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ All checks passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ All CI checks passed!" >> "$GITHUB_STEP_SUMMARY"
           fi

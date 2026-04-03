@@ -37,8 +37,8 @@ jobs:
           npm outdated --json > outdated.json || true
 
           # Count outdated packages
-          COUNT=$(cat outdated.json | jq 'length')
-          echo "outdated_count=$COUNT" >> $GITHUB_OUTPUT
+          COUNT=$(jq 'length' < outdated.json)
+          echo "outdated_count=$COUNT" >> "$GITHUB_OUTPUT"
 
           if [ "$COUNT" -eq 0 ]; then
             echo "✅ All dependencies are up to date"
@@ -46,9 +46,10 @@ jobs:
           fi
 
           echo "Found $COUNT outdated packages"
-          cat outdated.json | jq -r 'to_entries[] | "\(.key): \(.value.current) → \(.value.latest)"'
+          jq -r 'to_entries[] | "\(.key): \(.value.current) → \(.value.latest)"' < outdated.json
 
       - name: Update packages
+        id: update-packages
         if: steps.check-updates.outputs.outdated_count > 0
         run: |
           # Update minor and patch versions only
@@ -89,9 +90,10 @@ jobs:
       - name: Report status
         if: always()
         run: |
-          if [ "${{ steps.check-updates.outputs.outdated_count }}" -eq 0 ]; then
+          OUTDATED="${{ steps.check-updates.outputs.outdated_count }}"
+          if [ "$OUTDATED" = "0" ]; then
             echo "✅ No dependency updates needed"
-          elif [ "${{ steps.update-packages.outcome }}" == "success" ]; then
+          elif [ "${{ steps.update-packages.outcome }}" = "success" ]; then
             echo "✅ Dependencies updated successfully"
           else
             echo "❌ Dependency update failed"

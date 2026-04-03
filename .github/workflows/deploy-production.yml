@@ -174,20 +174,19 @@ jobs:
       - name: Create deployment summary
         run: |
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deployed by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Endpoints" >> $GITHUB_STEP_SUMMARY
-          echo "- Health: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "- Metrics: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/metrics" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "- Deals: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/deals" \
-            >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Production Deployment Summary"
+            echo ""
+            echo "- **Version**: ${{ github.ref_name }}"
+            echo "- **Commit**: ${{ github.sha }}"
+            echo "- **Deployed by**: @${{ github.actor }}"
+            echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo ""
+            echo "### Endpoints"
+            echo "- Health: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
+            echo "- Metrics: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/metrics"
+            echo "- Deals: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/deals"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create release on tag
         if: startsWith(github.ref, 'refs/tags/v')
