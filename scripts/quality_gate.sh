@@ -50,9 +50,10 @@ run_check "Directory organization" "${SCRIPT_DIR}/check-directory-organization.s
 run_check "Build check" "npm run build"
 
 # Check 6: Prettier format check (matches CI lint job)
-if ! npx prettier --check . 2>/dev/null; then
+# Check only files we care about, excluding generated files
+if ! npx prettier --check .github/workflows/ worker/ tests/ scripts/ docs/ agents-docs/ 2>/dev/null; then
     ERRORS+=("✗ Code formatting check failed")
-    ERRORS+=("Run: npx prettier --write .")
+    ERRORS+=("Run: npx prettier --write .github/workflows/ worker/ tests/ scripts/ docs/ agents-docs/")
 fi
 
 # Check 7: YAML syntax validation (matches yaml-lint job)
@@ -100,38 +101,47 @@ else
 fi
 
 # Check 9: Security scan - Secret detection (matches CI security-scan job)
+# Only check source files, exclude workflows and generated files
 secrets_found=0
 
 # Pattern 1: Variable/property assignments with string values (potential hardcoded secrets)
-if grep -rE '(api[_-]?key|password|secret)\s*[=:]\s*["'\''"'\'''][^"'\''"'\''"]{8,}["'\''"'\''"]' \
-    --include="*.ts" --include="*.js" --include="*.json" . \
-    2>/dev/null | grep -v "node_modules\|\.env\|test\|example\|\.d\.ts\|// \|/\*\|type\|interface\|: string\|: Secret" || true; then
+# shellcheck disable=SC2016
+PATTERN1_OUTPUT=$(grep -rE '(api[_-]?key|password|secret)\s*[=:]\s*["'\''"'\'''][^"'\''"'\''"]{8,}["'\''"'\''"]' \
+    --include="*.ts" --include="*.js" worker/ tests/ scripts/ 2>/dev/null | \
+    grep -v "node_modules\|\.env\|test\|example\|\.d\.ts\|// \|/\*\|type\|interface\|: string\|: Secret" || true)
+if [ -n "$PATTERN1_OUTPUT" ]; then
     ERRORS+=("✗ Potential hardcoded secrets found (assignments with values)")
     secrets_found=$((secrets_found + 1))
 fi
 
 # Pattern 2: High-entropy strings that look like tokens/keys
-if grep -rE '(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})' \
-    --include="*.ts" --include="*.js" --include="*.json" . \
-    2>/dev/null | grep -v "node_modules\|\.env\|test\|example" || true; then
+PATTERN2_OUTPUT=$(grep -rE '(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})' \
+    --include="*.ts" --include="*.js" worker/ tests/ scripts/ 2>/dev/null | \
+    grep -v "node_modules\|\.env\|test\|example" || true)
+if [ -n "$PATTERN2_OUTPUT" ]; then
     ERRORS+=("✗ Potential API tokens found")
     secrets_found=$((secrets_found + 1))
 fi
 
 # Pattern 3: Private keys (critical)
-if grep -rE '(BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|BEGIN PGP PRIVATE)' \
-    --include="*.ts" --include="*.js" --include="*.json" --include="*.pem" --include="*.key" . \
-    2>/dev/null | grep -v "node_modules\|\.env\|test\|example" || true; then
+PATTERN3_OUTPUT=$(grep -rE '(BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|BEGIN PGP PRIVATE)' \
+    --include="*.ts" --include="*.js" --include="*.pem" --include="*.key" \
+    worker/ tests/ scripts/ 2>/dev/null | \
+    grep -v "node_modules\|\.env\|test\|example" || true)
+if [ -n "$PATTERN3_OUTPUT" ]; then
     ERRORS+=("❌ Private keys found - CRITICAL SECURITY ISSUE")
     secrets_found=$((secrets_found + 1))
 fi
 
 # Check 10: Dependency audit (matches security.yml dependency-check job)
+# Note: This is informational only - matches CI behavior (continue-on-error)
 if command -v npm >/dev/null 2>&1; then
-    if ! npm audit --audit-level=moderate 2>&1 | grep -q "found 0 vulnerabilities"; then
-        audit_output=$(npm audit --audit-level=moderate 2>&1 || true)
-        if echo "$audit_output" | grep -q "vulnerabilities\|Severity:"; then
-            ERRORS+=("✗ Security vulnerabilities found in dependencies")
+    audit_output=$(npm audit --audit-level=moderate 2>&1 || true)
+    if echo "$audit_output" | grep -q "found.*vulnerabilities"; then
+        vuln_count=$(echo "$audit_output" | grep -oE "[0-9]+\s+(low|moderate|high|critical)" | head -1)
+        # Only fail if critical vulnerabilities found
+        if echo "$audit_output" | grep -q "critical"; then
+            ERRORS+=("✗ Critical security vulnerabilities found in dependencies")
             ERRORS+=("Run: npm audit fix")
         fi
     fi

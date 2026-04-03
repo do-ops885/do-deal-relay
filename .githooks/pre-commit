@@ -100,6 +100,14 @@ SECRET_PATTERNS=(
 )
 
 for file in $FILES; do
+    # Skip lock files and workflow files (known to have hash-like patterns)
+    if [[ "$file" == "package-lock.json" ]] || [[ "$file" == "yarn.lock" ]] || [[ "$file" == "pnpm-lock.yaml" ]]; then
+        continue
+    fi
+    if [[ "$file" == .github/workflows/* ]]; then
+        continue
+    fi
+
     # Skip binary files and large files
     if [ -f "$file" ] && [ ! -d "$file" ]; then
         # Check file size (skip files > 1MB)

@@ -172,7 +172,12 @@ export async function reactivateReferral(
   referral.deactivated_reason = undefined;
 
   await storeReferralInput(env, referral);
-  await updateStatusLists(env, referral.id || "", oldStatus || "unknown", "active");
+  await updateStatusLists(
+    env,
+    referral.id || "",
+    oldStatus || "unknown",
+    "active",
+  );
 
   await logReferralChange(env, {
     referral_id: referral.id || "",

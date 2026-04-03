@@ -6,7 +6,7 @@ import type { Deal, Env, ExpiringDeal } from "../types";
 import { notify } from "../notify";
 
 const EXPIRY_WINDOWS = [7, 30, 90] as const;
-type ExpiryWindow = typeof EXPIRY_WINDOWS[number];
+type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
 
 interface ExpiryCheckResult {
   expiringDeals: ExpiringDeal[];
@@ -19,7 +19,7 @@ interface ExpiryCheckResult {
  */
 export function findExpiringDeals(
   deals: Deal[],
-  windowDays: ExpiryWindow
+  windowDays: ExpiryWindow,
 ): ExpiringDeal[] {
   const now = new Date();
   const cutoff = new Date(now.getTime() + windowDays * 24 * 60 * 60 * 1000);
@@ -33,16 +33,23 @@ export function findExpiringDeals(
     .map((deal) => ({
       deal,
       daysUntilExpiry: Math.ceil(
-        (new Date(deal.expiry.date!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        (new Date(deal.expiry.date!).getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24),
       ),
-      notificationWindow: `${windowDays}d` as ExpiryWindow extends 7 ? "7d" : ExpiryWindow extends 30 ? "30d" : "90d",
+      notificationWindow: `${windowDays}d` as ExpiryWindow extends 7
+        ? "7d"
+        : ExpiryWindow extends 30
+          ? "30d"
+          : "90d",
     }));
 }
 
 /**
  * Check all expiry windows and return deals grouped by window
  */
-export function checkAllExpiryWindows(deals: Deal[]): Record<string, ExpiringDeal[]> {
+export function checkAllExpiryWindows(
+  deals: Deal[],
+): Record<string, ExpiringDeal[]> {
   return {
     "7d": findExpiringDeals(deals, 7),
     "30d": findExpiringDeals(deals, 30),
@@ -56,18 +63,21 @@ export function checkAllExpiryWindows(deals: Deal[]): Record<string, ExpiringDea
 export async function sendExpiryNotifications(
   env: Env,
   expiringDeals: ExpiringDeal[],
-  runId: string
+  runId: string,
 ): Promise<{ sent: number; errors: string[] }> {
   const errors: string[] = [];
   let sent = 0;
 
   // Group by window for batched notifications
-  const grouped = expiringDeals.reduce((acc, deal) => {
-    const window = deal.notificationWindow;
-    if (!acc[window]) acc[window] = [];
-    acc[window].push(deal);
-    return acc;
-  }, {} as Record<string, ExpiringDeal[]>);
+  const grouped = expiringDeals.reduce(
+    (acc, deal) => {
+      const window = deal.notificationWindow;
+      if (!acc[window]) acc[window] = [];
+      acc[window].push(deal);
+      return acc;
+    },
+    {} as Record<string, ExpiringDeal[]>,
+  );
 
   for (const [window, deals] of Object.entries(grouped)) {
     try {
@@ -76,7 +86,8 @@ export async function sendExpiryNotifications(
       // Send batched notification for this window
       await notify(env, {
         type: "deal_expiring",
-        severity: window === "7d" ? "critical" : window === "30d" ? "warning" : "info",
+        severity:
+          window === "7d" ? "critical" : window === "30d" ? "warning" : "info",
         run_id: runId,
         message: `${deals.length} deal(s) expiring within ${window}`,
         context: {
@@ -94,7 +105,9 @@ export async function sendExpiryNotifications(
 
       sent++;
     } catch (error) {
-      errors.push(`Failed to send ${window} notification: ${(error as Error).message}`);
+      errors.push(
+        `Failed to send ${window} notification: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -106,23 +119,25 @@ export async function sendExpiryNotifications(
  */
 export function findNewlyExpiredDeals(
   currentDeals: Deal[],
-  previousDeals: Deal[]
+  previousDeals: Deal[],
 ): Deal[] {
   const now = new Date();
   const currentExpired = new Set(
     currentDeals
       .filter((d) => d.expiry.date && new Date(d.expiry.date) <= now)
-      .map((d) => d.id)
+      .map((d) => d.id),
   );
 
   const previousExpired = new Set(
     previousDeals
       .filter((d) => d.expiry.date && new Date(d.expiry.date) <= now)
-      .map((d) => d.id)
+      .map((d) => d.id),
   );
 
   // Deals that are now expired but weren't before
-  const newlyExpiredIds = [...currentExpired].filter((id) => !previousExpired.has(id));
+  const newlyExpiredIds = [...currentExpired].filter(
+    (id) => !previousExpired.has(id),
+  );
 
   return currentDeals.filter((d) => newlyExpiredIds.includes(d.id));
 }
@@ -133,7 +148,7 @@ export function findNewlyExpiredDeals(
 export async function sendExpiredNotifications(
   env: Env,
   newlyExpired: Deal[],
-  runId: string
+  runId: string,
 ): Promise<{ sent: number; errors: string[] }> {
   const errors: string[] = [];
   let sent = 0;
@@ -161,7 +176,9 @@ export async function sendExpiredNotifications(
 
     sent = 1;
   } catch (error) {
-    errors.push(`Failed to send expired notification: ${(error as Error).message}`);
+    errors.push(
+      `Failed to send expired notification: ${(error as Error).message}`,
+    );
   }
 
   return { sent, errors };
@@ -174,7 +191,7 @@ export async function runExpirationCheck(
   env: Env,
   currentDeals: Deal[],
   previousDeals: Deal[] | undefined,
-  runId: string
+  runId: string,
 ): Promise<ExpiryCheckResult> {
   const expiringDeals: ExpiringDeal[] = [];
   const errors: string[] = [];

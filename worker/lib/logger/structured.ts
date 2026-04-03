@@ -1,5 +1,10 @@
 import { Env } from "../../types";
-import { Logger, StructuredLogEntry, STRUCTURED_LOG_PREFIX, TRACE_INDEX_PREFIX } from "./types";
+import {
+  Logger,
+  StructuredLogEntry,
+  STRUCTURED_LOG_PREFIX,
+  TRACE_INDEX_PREFIX,
+} from "./types";
 
 class StructuredLogger implements Logger {
   private env: Env;
