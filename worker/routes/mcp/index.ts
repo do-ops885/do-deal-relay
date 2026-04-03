@@ -1,614 +1,552 @@
 /**
- * MCP (Model Context Protocol) Server Implementation
+ * MCP (Model Context Protocol) Server Route Handler
  *
- * Enables AI agents to interact with do-deal-relay via standardized protocol.
- * Runs on Cloudflare Workers with D1 database.
+ * Complete MCP server implementation for do-deal-relay on Cloudflare Workers.
+ * Implements MCP 2025-11-25 specification with stateless HTTP transport.
  *
  * Endpoints:
- * - POST /mcp/v1/tools/list - List available tools
- * - POST /mcp/v1/tools/call - Execute a tool
- * - GET  /mcp/v1/info - Server information
+ * - POST /mcp/initialize - Protocol version negotiation
+ * - POST /mcp/tools/list - List available tools with schemas
+ * - POST /mcp/tools/call - Execute tools
+ * - POST /mcp/resources/list - List available resources
+ * - POST /mcp/resources/read - Read resource content
+ *
+ * @module worker/routes/mcp
  */
 
 import type { Env } from "../../types";
-import { jsonResponse, errorResponse } from "../utils";
-import { D1Client } from "../../lib/d1-client";
 import {
-  EUAIActLogger,
-  createComplianceLogger,
-} from "../../lib/eu-ai-act-logger";
-import { authenticateRequest } from "../../lib/auth";
+  MCP_PROTOCOL_VERSION,
+  type JSONRPCRequest,
+  type JSONRPCResponse,
+  type InitializeResult,
+  type ToolsListResult,
+  type ToolCallResult,
+  type ResourcesListResult,
+  type ResourceTemplatesListResult,
+  type ResourceReadResult,
+  type InitializeParams,
+  type ToolsListParams,
+  type ToolCallParams,
+  type ResourcesListParams,
+  type ResourceReadParams,
+  MCPErrorCodes,
+} from "../../lib/mcp/types";
+import { getTools, executeTool } from "../../lib/mcp/tools";
+import {
+  getResources,
+  getResourceTemplates,
+  readResource,
+} from "../../lib/mcp/resources";
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  createRateLimitHeaders,
+} from "../../lib/rate-limit";
 
 // ============================================================================
-// MCP Types
+// Server Configuration
 // ============================================================================
 
-interface MCPTool {
-  name: string;
-  description: string;
-  inputSchema: object;
-}
+const SERVER_INFO = {
+  name: "do-deal-relay",
+  version: "0.1.2",
+};
 
-interface MCPCallRequest {
-  tool: string;
-  input: Record<string, unknown>;
-  correlationId?: string;
-}
+const SERVER_CAPABILITIES = {
+  tools: {
+    listChanged: true,
+  },
+  resources: {
+    subscribe: false,
+    listChanged: true,
+  },
+  prompts: {
+    listChanged: false,
+  },
+  logging: {},
+};
 
-interface MCPCallResult {
-  content: Array<{
-    type: "text" | "image" | "json";
-    text?: string;
-    data?: unknown;
-  }>;
-  isError?: boolean;
-}
+const SERVER_INSTRUCTIONS = `
+# Do-Deal-Relay MCP Server
+
+This server provides tools for discovering and managing referral deals.
+
+## Available Tools
+
+- **search_deals**: Search for referral deals by domain, category, or keywords
+- **get_deal**: Get detailed information about a specific referral code
+- **add_referral**: Add a new referral code to the system (requires quarantine review)
+- **research_domain**: Research a domain for available referral programs
+- **list_categories**: List all available deal categories
+- **validate_deal**: Validate a deal's URL and check if it's active
+- **get_stats**: Get system statistics and deal counts
+
+## Resources
+
+- **deals://{dealId}**: Individual deal details
+- **categories://list**: Deal categories list
+- **analytics://summary**: Deal summary statistics
+
+## Rate Limits
+
+- 60 requests per minute per client
+- Some tools have additional limits
+
+## EU AI Act Compliance
+
+All operations are logged for compliance with EU AI Act Regulation (EU) 2024/1689.
+`;
 
 // ============================================================================
-// Tool Definitions
+// CORS Headers
 // ============================================================================
 
-const TOOLS: MCPTool[] = [
-  {
-    name: "search_referrals",
-    description: "Search for referral codes by domain, code, or keywords",
-    inputSchema: {
-      type: "object",
-      properties: {
-        domain: {
-          type: "string",
-          description: "Filter by domain (e.g., 'scalable.capital')",
-        },
-        code: { type: "string", description: "Exact code to search for" },
-        query: { type: "string", description: "Free text search" },
-        min_confidence: {
-          type: "number",
-          minimum: 0,
-          maximum: 1,
-          default: 0.5,
-        },
-        limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
-      },
-    },
-  },
-  {
-    name: "add_referral",
-    description: "Add a new referral code to the system",
-    inputSchema: {
-      type: "object",
-      required: ["code", "url", "domain"],
-      properties: {
-        code: { type: "string", description: "The referral code" },
-        url: { type: "string", description: "Full referral URL" },
-        domain: { type: "string", description: "Domain (e.g., 'example.com')" },
-        title: { type: "string", description: "Title/description of the deal" },
-        reward_type: {
-          type: "string",
-          enum: ["cash", "credit", "percent", "item"],
-          default: "cash",
-        },
-        reward_value: {
-          type: ["string", "number"],
-          description: "Reward amount or description",
-        },
-        category: {
-          type: "array",
-          items: { type: "string" },
-          description: "Categories (e.g., ['finance', 'investing'])",
-        },
-      },
-    },
-  },
-  {
-    name: "get_referral_details",
-    description: "Get detailed information about a specific referral code",
-    inputSchema: {
-      type: "object",
-      required: ["code"],
-      properties: {
-        code: { type: "string", description: "The referral code to look up" },
-      },
-    },
-  },
-  {
-    name: "research_domain",
-    description: "Research a domain for available referral programs",
-    inputSchema: {
-      type: "object",
-      required: ["domain"],
-      properties: {
-        domain: {
-          type: "string",
-          description: "Domain to research (e.g., 'dropbox.com')",
-        },
-        depth: {
-          type: "string",
-          enum: ["quick", "thorough", "deep"],
-          default: "thorough",
-        },
-        sources: {
-          type: "array",
-          items: { type: "string" },
-          description: "Sources to check",
-        },
-      },
-    },
-  },
-  {
-    name: "get_stats",
-    description: "Get system statistics and metrics",
-    inputSchema: {
-      type: "object",
-      properties: {
-        metric_type: {
-          type: "string",
-          enum: ["referrals", "usage", "compliance"],
-          default: "referrals",
-        },
-        days: { type: "number", default: 30 },
-      },
-    },
-  },
-  {
-    name: "validate_url",
-    description: "Validate if a URL is safe and extract referral code",
-    inputSchema: {
-      type: "object",
-      required: ["url"],
-      properties: {
-        url: { type: "string", description: "URL to validate" },
-      },
-    },
-  },
-];
+const MCP_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": [
+    "Content-Type",
+    "MCP-Session-Id",
+    "MCP-Protocol-Version",
+    "Authorization",
+    "X-API-Key",
+  ].join(", "),
+  "Access-Control-Expose-Headers": [
+    "MCP-Session-Id",
+    "MCP-Protocol-Version",
+    "X-RateLimit-Limit",
+    "X-RateLimit-Remaining",
+    "X-RateLimit-Reset",
+  ].join(", "),
+};
 
 // ============================================================================
-// Tool Handlers
+// JSON-RPC Helpers
 // ============================================================================
 
-async function handleSearchReferrals(
-  input: Record<string, unknown>,
-  d1: D1Client,
-  logger: EUAIActLogger,
-  correlationId?: string,
-): Promise<MCPCallResult> {
-  const startTime = Date.now();
-
-  const results = await d1.searchReferrals({
-    domain: input.domain as string,
-    query: input.query as string,
-    minConfidence: input.min_confidence as number,
-    limit: input.limit as number,
-  });
-
-  // Log for EU AI Act compliance
-  await logger.logOperation({
-    timestamp: new Date().toISOString(),
-    systemId: "do-deal-relay",
-    operationId: crypto.randomUUID(),
-    correlationId,
-    operation: "mcp_search_referrals",
-    operationVersion: "0.1.2",
-    inputData: {
-      source: "mcp_agent",
-      hash: await hashData(JSON.stringify(input)),
-      description: `Search referrals: ${input.domain || input.query || "general"}`,
-      metadata: input,
-    },
-    outputData: {
-      result: "success",
-      confidence: 0.95,
-      explanation: `Found ${results.total} referrals`,
-    },
-    performanceMetrics: {
-      latencyMs: Date.now() - startTime,
-    },
-  });
-
+function createSuccessResponse(
+  id: string | number,
+  result: unknown,
+): JSONRPCResponse {
   return {
-    content: [
-      {
-        type: "json",
-        data: {
-          total: results.total,
-          referrals: results.results.map((r) => ({
-            code: r.code,
-            url: r.url,
-            domain: r.domain,
-            title: r.title,
-            reward: {
-              type: r.reward_type,
-              value: r.reward_value,
-              currency: r.currency,
-            },
-            confidence: r.confidence_score,
-          })),
-        },
-      },
-    ],
-  };
-}
-
-async function handleAddReferral(
-  input: Record<string, unknown>,
-  d1: D1Client,
-  logger: EUAIActLogger,
-  correlationId?: string,
-): Promise<MCPCallResult> {
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-
-  await d1.createReferral({
+    jsonrpc: "2.0",
     id,
-    code: input.code as string,
-    url: input.url as string,
-    domain: input.domain as string,
-    source: "mcp_agent",
-    status: "quarantined",
-    title: input.title as string,
-    reward_type: input.reward_type as string,
-    reward_value: String(input.reward_value || ""),
-    currency: "USD",
-    category: JSON.stringify(input.category || ["general"]),
-    tags: JSON.stringify(["mcp-added"]),
-    submitted_by: "mcp_agent",
-    confidence_score: 0.8,
-    use_count: 0,
-  });
+    result,
+  };
+}
 
-  // Log for EU AI Act compliance
-  await logger.logOperation({
-    timestamp: now,
-    systemId: "do-deal-relay",
-    operationId: id,
-    correlationId,
-    operation: "mcp_add_referral",
-    operationVersion: "0.1.2",
-    inputData: {
-      source: "mcp_agent",
-      hash: await hashData(JSON.stringify(input)),
-      description: `Add referral: ${input.code} for ${input.domain}`,
-      metadata: { ...input, id },
+function createErrorResponse(
+  id: string | number | null,
+  code: number,
+  message: string,
+  data?: unknown,
+): JSONRPCResponse {
+  return {
+    jsonrpc: "2.0",
+    id,
+    error: {
+      code,
+      message,
+      data,
     },
-    outputData: {
-      result: "created_quarantined",
-      confidence: 0.8,
-      explanation: "Referral created and queued for human review",
+  };
+}
+
+function createJSONResponse(
+  data: JSONRPCResponse,
+  status: number = 200,
+  extraHeaders: HeadersInit = {},
+): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...MCP_CORS_HEADERS,
+      ...extraHeaders,
     },
   });
-
-  return {
-    content: [
-      {
-        type: "text",
-        text: `✅ Referral code "${input.code}" added successfully!\n\nIt has been placed in quarantine for human review before activation.`,
-      },
-      {
-        type: "json",
-        data: {
-          id,
-          code: input.code,
-          status: "quarantined",
-          review_url: `https://do-deal-relay.com/admin/review/${id}`,
-        },
-      },
-    ],
-  };
-}
-
-async function handleGetReferralDetails(
-  input: Record<string, unknown>,
-  d1: D1Client,
-): Promise<MCPCallResult> {
-  const referral = await d1.getReferralByCode(input.code as string);
-
-  if (!referral) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `❌ Referral code "${input.code}" not found.`,
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  return {
-    content: [
-      {
-        type: "json",
-        data: {
-          code: referral.code,
-          url: referral.url,
-          domain: referral.domain,
-          title: referral.title,
-          description: referral.description,
-          status: referral.status,
-          reward: {
-            type: referral.reward_type,
-            value: referral.reward_value,
-            currency: referral.currency,
-          },
-          confidence: referral.confidence_score,
-          use_count: referral.use_count,
-          submitted_at: referral.submitted_at,
-        },
-      },
-    ],
-  };
-}
-
-async function handleResearchDomain(
-  input: Record<string, unknown>,
-  logger: EUAIActLogger,
-  correlationId?: string,
-): Promise<MCPCallResult> {
-  // Check cache first
-  const cacheKey = `research:${input.domain}`;
-
-  // For now, return a research task initiation
-  // Real implementation would queue a background job
-
-  await logger.logOperation({
-    timestamp: new Date().toISOString(),
-    systemId: "do-deal-relay",
-    operationId: crypto.randomUUID(),
-    correlationId,
-    operation: "mcp_research_domain",
-    operationVersion: "0.1.2",
-    inputData: {
-      source: "mcp_agent",
-      hash: await hashData(JSON.stringify(input)),
-      description: `Research domain: ${input.domain}`,
-      metadata: input,
-    },
-    outputData: {
-      result: "research_initiated",
-      confidence: 0.7,
-      explanation: `Research job queued for ${input.domain}`,
-    },
-  });
-
-  return {
-    content: [
-      {
-        type: "text",
-        text: `🔍 Research initiated for "${input.domain}"\n\nThis will search for referral programs on:\n- ProductHunt\n- GitHub\n- Hacker News\n- Reddit\n- Company website\n\nResults will be available in ~5 minutes.`,
-      },
-      {
-        type: "json",
-        data: {
-          domain: input.domain,
-          status: "queued",
-          estimated_completion: "5 minutes",
-          job_id: crypto.randomUUID(),
-        },
-      },
-    ],
-  };
-}
-
-async function handleGetStats(
-  input: Record<string, unknown>,
-  d1: D1Client,
-): Promise<MCPCallResult> {
-  const stats = await d1.getReferralStats();
-
-  return {
-    content: [
-      {
-        type: "json",
-        data: {
-          referrals: {
-            total: stats.total,
-            active: stats.active,
-            quarantined: stats.quarantined,
-            by_domain: stats.byDomain,
-          },
-          timestamp: new Date().toISOString(),
-        },
-      },
-    ],
-  };
-}
-
-async function handleValidateUrl(
-  input: Record<string, unknown>,
-): Promise<MCPCallResult> {
-  const url = input.url as string;
-
-  try {
-    const parsed = new URL(url);
-    const segments = parsed.pathname.split("/").filter((s) => s.length > 0);
-    const code = segments[segments.length - 1] || "";
-
-    // Security checks
-    const isValid =
-      parsed.protocol === "https:" &&
-      code.length >= 3 &&
-      !url.includes("..") &&
-      !url.includes("\\");
-
-    return {
-      content: [
-        {
-          type: "json",
-          data: {
-            valid: isValid,
-            url: url,
-            extracted_code: isValid ? code.toUpperCase() : null,
-            domain: parsed.hostname.replace(/^www\./, ""),
-            security_check: {
-              https: parsed.protocol === "https:",
-              no_traversal: !url.includes(".."),
-              has_code: code.length >= 3,
-            },
-          },
-        },
-      ],
-    };
-  } catch {
-    return {
-      content: [
-        {
-          type: "text",
-          text: "❌ Invalid URL format",
-        },
-      ],
-      isError: true,
-    };
-  }
 }
 
 // ============================================================================
 // Request Handlers
 // ============================================================================
 
-export async function handleMCPListTools(env: Env): Promise<Response> {
-  const complianceLogger = env.DEALS_DB
-    ? createComplianceLogger(env.DEALS_DB)
-    : null;
+/**
+ * Handle initialize request
+ */
+async function handleInitialize(
+  params: InitializeParams,
+): Promise<InitializeResult> {
+  // Negotiate protocol version
+  const protocolVersion =
+    params.protocolVersion === MCP_PROTOCOL_VERSION
+      ? MCP_PROTOCOL_VERSION
+      : MCP_PROTOCOL_VERSION;
 
-  // Log for EU AI Act compliance
-  if (complianceLogger) {
-    await complianceLogger.logOperation({
-      timestamp: new Date().toISOString(),
-      systemId: "do-deal-relay",
-      operationId: crypto.randomUUID(),
-      operation: "mcp_list_tools",
-      operationVersion: "0.1.2",
-      inputData: {
-        source: "mcp_agent",
-        hash: "tools_list",
-        description: "List available MCP tools",
-      },
-      outputData: {
-        result: "success",
-        confidence: 1.0,
-        explanation: `${TOOLS.length} tools available`,
-      },
+  return {
+    protocolVersion,
+    capabilities: SERVER_CAPABILITIES,
+    serverInfo: SERVER_INFO,
+    instructions: SERVER_INSTRUCTIONS,
+  };
+}
+
+/**
+ * Handle ping request
+ */
+async function handlePing(): Promise<{}> {
+  return {};
+}
+
+/**
+ * Handle tools/list request
+ */
+async function handleToolsList(): Promise<ToolsListResult> {
+  const tools = getTools();
+
+  // Convert Zod schemas to JSON Schema for output
+  const serializedTools = tools.map((tool) => ({
+    name: tool.name,
+    title: tool.title,
+    description: tool.description,
+    inputSchema:
+      typeof tool.inputSchema === "object"
+        ? tool.inputSchema
+        : { type: "object" },
+    outputSchema:
+      tool.outputSchema && typeof tool.outputSchema === "object"
+        ? tool.outputSchema
+        : undefined,
+    annotations: tool.annotations,
+  }));
+
+  return {
+    tools: serializedTools as unknown as typeof tools,
+  };
+}
+
+/**
+ * Handle tools/call request
+ */
+async function handleToolCall(
+  params: ToolCallParams,
+  env: Env,
+  request: Request,
+): Promise<ToolCallResult> {
+  const { name, arguments: args = {} } = params;
+
+  return executeTool(name, args, env, request);
+}
+
+/**
+ * Handle resources/list request
+ */
+async function handleResourcesList(): Promise<ResourcesListResult> {
+  const resources = getResources();
+  return { resources };
+}
+
+/**
+ * Handle resources/templates/list request
+ */
+async function handleResourceTemplatesList(): Promise<ResourceTemplatesListResult> {
+  const resourceTemplates = getResourceTemplates();
+  return { resourceTemplates };
+}
+
+/**
+ * Handle resources/read request
+ */
+async function handleResourceRead(
+  params: ResourceReadParams,
+  env: Env,
+): Promise<ResourceReadResult> {
+  const { uri } = params;
+  return readResource(uri, env);
+}
+
+// ============================================================================
+// Main Route Handler
+// ============================================================================
+
+/**
+ * Handle MCP JSON-RPC requests
+ */
+export async function handleMCPRequest(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  // Handle CORS preflight
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: MCP_CORS_HEADERS,
     });
   }
 
-  return jsonResponse({
-    tools: TOOLS,
-    server_info: {
-      name: "do-deal-relay",
-      version: "0.1.2",
-      protocol_version: "2025-03",
-      capabilities: {
-        tools: true,
-        resources: false,
-        prompts: false,
-      },
-    },
-  });
+  // Only accept POST requests
+  if (request.method !== "POST") {
+    return createJSONResponse(
+      createErrorResponse(
+        null,
+        MCPErrorCodes.INVALID_REQUEST,
+        "Only POST method is supported for MCP endpoints",
+      ),
+      405,
+    );
+  }
+
+  // Rate limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = await checkRateLimit(env, clientId, "/mcp");
+
+  if (!rateLimitResult.allowed) {
+    return createJSONResponse(
+      createErrorResponse(
+        null,
+        -32000,
+        "Rate limit exceeded. Please try again later.",
+        {
+          retry_after:
+            rateLimitResult.resetTime - Math.floor(Date.now() / 1000),
+        },
+      ),
+      429,
+      Object.fromEntries(createRateLimitHeaders(rateLimitResult)),
+    );
+  }
+
+  // Parse JSON-RPC request
+  let rpcRequest: JSONRPCRequest;
+  try {
+    const body = (await request.json()) as { [key: string]: unknown };
+
+    // Validate JSON-RPC 2.0 structure
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      body.jsonrpc !== "2.0" ||
+      typeof body.method !== "string"
+    ) {
+      return createJSONResponse(
+        createErrorResponse(
+          null,
+          MCPErrorCodes.INVALID_REQUEST,
+          "Invalid JSON-RPC 2.0 request",
+        ),
+        400,
+      );
+    }
+
+    rpcRequest = body as unknown as JSONRPCRequest;
+  } catch {
+    return createJSONResponse(
+      createErrorResponse(
+        null,
+        MCPErrorCodes.PARSE_ERROR,
+        "Parse error: Invalid JSON",
+      ),
+      400,
+    );
+  }
+
+  const { id, method, params = {} } = rpcRequest;
+
+  // Handle the request based on method
+  try {
+    let result: unknown;
+
+    switch (method) {
+      case "initialize":
+        result = await handleInitialize(params as unknown as InitializeParams);
+        break;
+
+      case "ping":
+        result = await handlePing();
+        break;
+
+      case "tools/list":
+        result = await handleToolsList();
+        break;
+
+      case "tools/call":
+        result = await handleToolCall(
+          params as unknown as ToolCallParams,
+          env,
+          request,
+        );
+        break;
+
+      case "resources/list":
+        result = await handleResourcesList();
+        break;
+
+      case "resources/templates/list":
+        result = await handleResourceTemplatesList();
+        break;
+
+      case "resources/read":
+        result = await handleResourceRead(
+          params as unknown as ResourceReadParams,
+          env,
+        );
+        break;
+
+      case "notifications/initialized":
+        // Notification, no response needed
+        return new Response(null, { status: 202, headers: MCP_CORS_HEADERS });
+
+      default:
+        return createJSONResponse(
+          createErrorResponse(
+            id,
+            MCPErrorCodes.METHOD_NOT_FOUND,
+            `Method not found: ${method}`,
+          ),
+          404,
+        );
+    }
+
+    // Return success response
+    const rateLimitHeaders = Object.fromEntries(
+      createRateLimitHeaders(rateLimitResult),
+    );
+
+    return createJSONResponse(createSuccessResponse(id, result), 200, {
+      ...rateLimitHeaders,
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+    });
+  } catch (error) {
+    console.error("MCP handler error:", error);
+
+    return createJSONResponse(
+      createErrorResponse(
+        id,
+        MCPErrorCodes.INTERNAL_ERROR,
+        `Internal error: ${(error as Error).message}`,
+      ),
+      500,
+    );
+  }
 }
 
+// ============================================================================
+// Legacy Endpoints (for backwards compatibility)
+// ============================================================================
+
+/**
+ * Handle legacy MCP v1 tool listing
+ */
+export async function handleMCPListTools(env: Env): Promise<Response> {
+  const tools = getTools();
+
+  return new Response(
+    JSON.stringify({
+      tools,
+      server_info: {
+        name: SERVER_INFO.name,
+        version: SERVER_INFO.version,
+        protocol_version: MCP_PROTOCOL_VERSION,
+        capabilities: SERVER_CAPABILITIES,
+      },
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...MCP_CORS_HEADERS,
+      },
+    },
+  );
+}
+
+/**
+ * Handle legacy MCP v1 tool call
+ */
 export async function handleMCPCall(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  // Authenticate request
-  const auth = await authenticateRequest(request, env);
-  if (!auth.authenticated) {
-    return errorResponse(auth.error || "Unauthorized", 401);
-  }
-
-  // Check D1 availability
-  if (!env.DEALS_DB) {
-    return errorResponse("D1 database not configured. MCP requires D1.", 503);
-  }
-
-  const d1 = new D1Client(env.DEALS_DB);
-  const complianceLogger = createComplianceLogger(env.DEALS_DB);
-
-  let body: MCPCallRequest;
   try {
-    body = (await request.json()) as MCPCallRequest;
-  } catch {
-    return errorResponse("Invalid JSON body", 400);
+    const body = (await request.json()) as {
+      tool?: string;
+      input?: { [key: string]: unknown };
+      correlationId?: string;
+    };
+
+    const { tool, input = {}, correlationId } = body;
+
+    if (!tool) {
+      return new Response(JSON.stringify({ error: "Missing 'tool' field" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          ...MCP_CORS_HEADERS,
+        },
+      });
+    }
+
+    const result = await executeTool(tool, input, env, request);
+
+    return new Response(JSON.stringify(result), {
+      status: result.isError ? 400 : 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...MCP_CORS_HEADERS,
+      },
+    });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: "Invalid request",
+        message: (error as Error).message,
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          ...MCP_CORS_HEADERS,
+        },
+      },
+    );
   }
-
-  const { tool, input, correlationId } = body;
-
-  // Find and execute tool
-  let result: MCPCallResult;
-
-  switch (tool) {
-    case "search_referrals":
-      result = await handleSearchReferrals(
-        input,
-        d1,
-        complianceLogger,
-        correlationId,
-      );
-      break;
-    case "add_referral":
-      result = await handleAddReferral(
-        input,
-        d1,
-        complianceLogger,
-        correlationId,
-      );
-      break;
-    case "get_referral_details":
-      result = await handleGetReferralDetails(input, d1);
-      break;
-    case "research_domain":
-      result = await handleResearchDomain(
-        input,
-        complianceLogger,
-        correlationId,
-      );
-      break;
-    case "get_stats":
-      result = await handleGetStats(input, d1);
-      break;
-    case "validate_url":
-      result = await handleValidateUrl(input);
-      break;
-    default:
-      return errorResponse(`Unknown tool: ${tool}`, 400);
-  }
-
-  return jsonResponse(result, result.isError ? 400 : 200);
 }
 
+/**
+ * Handle MCP server information
+ */
 export async function handleMCPInfo(env: Env): Promise<Response> {
-  return jsonResponse({
-    name: "do-deal-relay",
-    description:
-      "Autonomous deal discovery and referral code management system",
-    version: "0.1.2",
-    protocol_version: "2025-03",
-    provider: {
-      name: "do-ops",
-      contact: "compliance@do-ops.dev",
-    },
-    features: {
-      tools: TOOLS.map((t) => t.name),
-      eu_ai_act_compliant: true,
-      human_oversight: true,
-      rate_limiting: true,
-      audit_logging: true,
-    },
-    limits: {
-      max_requests_per_minute: 60,
-      max_search_results: 100,
-    },
-    documentation: "https://do-deal-relay.com/docs/mcp",
-  });
-}
+  const tools = getTools();
 
-// ============================================================================
-// Utility
-// ============================================================================
-
-async function hashData(data: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const buffer = await crypto.subtle.digest("SHA-256", encoder.encode(data));
-  const array = Array.from(new Uint8Array(buffer));
-  return "sha256:" + array.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return new Response(
+    JSON.stringify({
+      name: SERVER_INFO.name,
+      description:
+        "Autonomous deal discovery and referral code management system",
+      version: SERVER_INFO.version,
+      protocol_version: MCP_PROTOCOL_VERSION,
+      provider: {
+        name: "do-ops",
+        contact: "compliance@do-ops.dev",
+      },
+      features: {
+        tools: tools.map((t) => t.name),
+        eu_ai_act_compliant: true,
+        human_oversight: true,
+        rate_limiting: true,
+        audit_logging: true,
+      },
+      limits: {
+        max_requests_per_minute: 60,
+        max_search_results: 100,
+      },
+      documentation: "https://do-deal-relay.com/docs/mcp",
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...MCP_CORS_HEADERS,
+      },
+    },
+  );
 }

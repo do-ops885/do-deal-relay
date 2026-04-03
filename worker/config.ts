@@ -15,8 +15,30 @@ export const CONFIG = {
   // Limits
   MAX_PAYLOAD_SIZE_BYTES: 1_000_000, // 1MB
   FETCH_TIMEOUT_MS: 30_000, // 30 seconds
+  RESEARCH_FETCH_TIMEOUT_MS: 15_000, // 15 seconds for research
   MAX_RETRIES: 3,
   MAX_DEALS_PER_RUN: 1000,
+
+  // User Agent for web requests
+  USER_AGENT:
+    "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery; research@example.com)",
+
+  // Research settings
+  RESEARCH_MAX_SOURCES_PER_QUERY: 5,
+  RESEARCH_MIN_CONFIDENCE: 0.3,
+  RESEARCH_CACHE_TTL_MINUTES: 60,
+
+  // API Rate Limits
+  API_RATE_LIMITS: {
+    PRODUCTHUNT: 30, // requests per minute
+    GITHUB: 30,
+    HACKERNEWS: 100,
+    REDDIT: 60,
+  },
+
+  // Retry settings
+  RETRY_DELAY_MS: 1000,
+  MAX_RETRY_DELAY_MS: 30000,
 
   // Scoring weights
   SCORING_WEIGHTS: {

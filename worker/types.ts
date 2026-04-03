@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { KVNamespace, D1Database } from "@cloudflare/workers-types";
 
 // ============================================================================
 // Core Deal Schema
@@ -281,6 +282,9 @@ export interface Env {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
+  // D1 Migration Feature Flags
+  USE_D1_READS?: string;
+  DISABLE_DUAL_WRITE?: string;
 }
 
 // ============================================================================
@@ -435,6 +439,8 @@ export interface ReferralResearchResult {
     search_queries: string[];
     research_duration_ms: number;
     agent_id: string;
+    errors?: string[];
+    used_real_fetching?: boolean;
   };
 }
 
@@ -445,6 +451,11 @@ export interface WebResearchRequest {
   depth?: "quick" | "thorough" | "deep";
   sources?: string[];
   max_results?: number;
+  options?: {
+    use_real_fetching?: boolean;
+    skip_cache?: boolean;
+    timeout_ms?: number;
+  };
 }
 
 export interface ExpiringDeal {
@@ -490,4 +501,11 @@ export const WebResearchRequestSchema = z.object({
   depth: z.enum(["quick", "thorough", "deep"]).optional(),
   sources: z.array(z.string()).optional(),
   max_results: z.number().int().min(1).max(100).optional(),
+  options: z
+    .object({
+      use_real_fetching: z.boolean().optional(),
+      skip_cache: z.boolean().optional(),
+      timeout_ms: z.number().int().min(1000).max(60000).optional(),
+    })
+    .optional(),
 });

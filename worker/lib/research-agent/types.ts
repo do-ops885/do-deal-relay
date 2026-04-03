@@ -14,89 +14,210 @@ export interface ResearchSource {
     url: RegExp[];
   };
   priority: number;
+  // API-specific configuration
+  apiConfig?: SourceApiConfig;
 }
 
-// Known referral program sources and patterns
-export const RESEARCH_SOURCES: ResearchSource[] = [
-  {
-    name: "producthunt",
-    baseUrl: "https://www.producthunt.com",
-    searchPattern: "/search?q={query}",
-    extractionPatterns: {
-      code: [
-        /referral[:\s]+([A-Z0-9]{4,})/gi,
-        /invite[:\s]+([A-Z0-9]{4,})/gi,
-        /code[:\s]+([A-Z0-9]{4,})/gi,
-      ],
-      reward: [
-        /\$?\d+[\d,]*\s*(USD|EUR|GBP)?/gi,
-        /(\d+%\s*(off|discount|bonus))/gi,
-      ],
-      url: [/https?:\/\/[^\s\"]+/gi],
-    },
-    priority: 1,
-  },
-  {
-    name: "company_site",
-    baseUrl: "",
-    searchPattern: "",
-    extractionPatterns: {
-      code: [
-        /refer(?:ral)?[:\s]+([A-Z0-9_-]{4,})/gi,
-        /invite[:\s]+([A-Z0-9_-]{4,})/gi,
-      ],
-      reward: [
-        /(?:get|earn|receive)\s+([^<\.]{10,100})/gi,
-        /\$[\d,]+(?:\.\d{2})?/g,
-      ],
-      url: [/\/invite\/([A-Z0-9_-]+)/gi, /\/refer\/([A-Z0-9_-]+)/gi],
-    },
-    priority: 1,
-  },
-  {
-    name: "reddit",
-    baseUrl: "https://www.reddit.com",
-    searchPattern: "/search/?q={query}%20referral",
-    extractionPatterns: {
-      code: [/code[:\s]+([A-Z0-9]{4,})/gi, /(?:use|my)\s+([A-Z0-9]{6,})/gi],
-      reward: [/(\$?\d+[^<\.]{5,50}bonus)/gi, /(free[^<\.]{5,30})/gi],
-      url: [/https?:\/\/[^\s\"]+refer[^\s\"]*/gi],
-    },
-    priority: 2,
-  },
-  {
-    name: "hackernews",
-    baseUrl: "https://hn.algolia.com",
-    searchPattern: "/?q={query}%20referral",
-    extractionPatterns: {
-      code: [/invite[:\s]+([A-Z0-9]{4,})/gi, /ref[:\s]+([A-Z0-9]{4,})/gi],
-      reward: [/(\d+%\s*off)/gi, /(\$\d+[^<\.]{5,30})/gi],
-      url: [/https?:\/\/[^\s\"]+/gi],
-    },
-    priority: 2,
-  },
-  {
-    name: "github",
-    baseUrl: "https://github.com",
-    searchPattern: "/search?q={query}+referral",
-    extractionPatterns: {
-      code: [/code[:\s`]+([A-Z0-9]{4,})/gi, /`([A-Z0-9_-]{6,})`/g],
-      reward: [/(\$[\d,]+(?:\.\d{2})?)/g, /(\d+\s*(credits|tokens))/gi],
-      url: [/https?:\/\/[^\s\"]+/gi],
-    },
-    priority: 3,
-  },
-];
+// API Configuration for each source
+export interface SourceApiConfig {
+  type: "graphql" | "rest" | "oauth" | "algolia" | "direct";
+  endpoint: string;
+  authType: "bearer" | "token" | "oauth2" | "none";
+  authHeaderName?: string;
+  rateLimitPerMinute: number;
+  timeoutMs: number;
+  // Response transformer function name
+  responseTransformer: string;
+  // Additional headers
+  headers?: { [key: string]: string };
+}
 
-// Known referral program domains and their patterns
-export const KNOWN_REFERRAL_PROGRAMS: Record<
-  string,
-  {
+// Rate limit tracking
+export interface RateLimitStatus {
+  remaining: number;
+  resetAt: number;
+  used: number;
+  limit: number;
+}
+
+export interface ResearchCacheEntry {
+  query: string;
+  source: string;
+  results: ReferralResearchResult["discovered_codes"];
+  timestamp: number;
+  expiresAt: number;
+}
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+// ProductHunt GraphQL API Response
+export interface ProductHuntPost {
+  id: string;
+  name: string;
+  tagline: string;
+  url: string;
+  votesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  thumbnail?: { url: string };
+  topics?: { edges: Array<{ node: { name: string } }> };
+  description?: string;
+  website?: string;
+}
+
+export interface ProductHuntResponse {
+  data?: {
+    posts?: {
+      edges: Array<{ node: ProductHuntPost }>;
+    };
+  };
+  errors?: Array<{ message: string }>;
+}
+
+// GitHub Search API Response
+export interface GitHubRepository {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  language: string | null;
+  topics: string[];
+  created_at: string;
+  updated_at: string;
+  homepage: string | null;
+}
+
+export interface GitHubSearchResponse {
+  total_count: number;
+  incomplete_results: boolean;
+  items: GitHubRepository[];
+}
+
+// Hacker News Algolia API Response
+export interface HackerNewsHit {
+  objectID: string;
+  title: string | null;
+  url: string | null;
+  author: string;
+  points: number;
+  num_comments: number;
+  created_at: string;
+  story_text: string | null;
+  comment_text: string | null;
+  _tags: string[];
+}
+
+export interface HackerNewsSearchResponse {
+  hits: HackerNewsHit[];
+  nbHits: number;
+  page: number;
+  nbPages: number;
+  hitsPerPage: number;
+  processingTimeMS: number;
+  query: string;
+  params: string;
+}
+
+// Reddit API Response
+export interface RedditPost {
+  id: string;
+  title: string;
+  selftext: string;
+  url: string;
+  permalink: string;
+  author: string;
+  score: number;
+  num_comments: number;
+  created_utc: number;
+  subreddit: string;
+  is_self: boolean;
+}
+
+export interface RedditListingChild {
+  kind: string;
+  data: RedditPost;
+}
+
+export interface RedditListingResponse {
+  kind: string;
+  data: {
+    after: string | null;
+    before: string | null;
+    children: RedditListingChild[];
+    dist: number;
+  };
+}
+
+// Meta tags type
+export interface MetaTags {
+  [key: string]: string;
+}
+
+// Generic Page Content
+export interface PageContentResult {
+  url: string;
+  title: string;
+  description: string;
+  textContent: string;
+  links: Array<{ text: string; href: string }>;
+  metaTags: MetaTags;
+}
+
+// Research Configuration
+export interface ResearchConfig {
+  // API Keys (from environment)
+  productHuntToken?: string;
+  githubToken?: string;
+  redditClientId?: string;
+  redditClientSecret?: string;
+  redditUsername?: string;
+  redditPassword?: string;
+
+  // Rate limiting
+  maxRequestsPerMinute: number;
+  requestWindowMs: number;
+
+  // Retry configuration
+  maxRetries: number;
+  retryDelayMs: number;
+  maxRetryDelayMs: number;
+
+  // Cache configuration
+  cacheEnabled: boolean;
+  cacheTtlMs: number;
+
+  // Circuit breaker configuration
+  circuitBreakerEnabled: boolean;
+  failureThreshold: number;
+  recoveryTimeoutMs: number;
+
+  // Source weights for confidence scoring
+  sourceWeights: { [key: string]: number };
+}
+
+// Circuit breaker state
+export interface CircuitBreakerState {
+  failures: number;
+  lastFailureTime: number;
+  state: "closed" | "open" | "half-open";
+  successCount: number;
+}
+
+// ============================================================================
+// Known Referral Programs
+// ============================================================================
+
+export const KNOWN_REFERRAL_PROGRAMS: {
+  [key: string]: {
     patterns: string[];
     urlFormats: string[];
     typicalRewards: string[];
-  }
-> = {
+  };
+} = {
   "trading212.com": {
     patterns: ["/invite/", "/referral/"],
     urlFormats: ["https://www.trading212.com/invite/{code}"],
@@ -151,6 +272,132 @@ export const KNOWN_REFERRAL_PROGRAMS: Record<
     typicalRewards: ["$30 off", "$15 off first order"],
   },
 };
+
+// ============================================================================
+// Research Sources Configuration
+// ============================================================================
+
+export const RESEARCH_SOURCES: ResearchSource[] = [
+  {
+    name: "producthunt",
+    baseUrl: "https://www.producthunt.com",
+    searchPattern: "/search?q={query}",
+    extractionPatterns: {
+      code: [
+        /referral[:\s]+([A-Z0-9]{4,})/gi,
+        /invite[:\s]+([A-Z0-9]{4,})/gi,
+        /code[:\s]+([A-Z0-9]{4,})/gi,
+      ],
+      reward: [
+        /\$?\d+[\d,]*\s*(USD|EUR|GBP)?/gi,
+        /(\d+%\s*(off|discount|bonus))/gi,
+      ],
+      url: [/https?:\/\/[^\s"]+/gi],
+    },
+    priority: 1,
+    apiConfig: {
+      type: "graphql",
+      endpoint: "https://api.producthunt.com/v2/api/graphql",
+      authType: "bearer",
+      rateLimitPerMinute: 30,
+      timeoutMs: 10000,
+      responseTransformer: "transformProductHuntResponse",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  },
+  {
+    name: "company_site",
+    baseUrl: "",
+    searchPattern: "",
+    extractionPatterns: {
+      code: [
+        /refer(?:ral)?[:\s]+([A-Z0-9_-]{4,})/gi,
+        /invite[:\s]+([A-Z0-9_-]{4,})/gi,
+      ],
+      reward: [
+        /(?:get|earn|receive)\s+([^<\.]{10,100})/gi,
+        /\$[\d,]+(?:\.\d{2})?/g,
+      ],
+      url: [/\/invite\/([A-Z0-9_-]+)/gi, /\/refer\/([A-Z0-9_-]+)/gi],
+    },
+    priority: 1,
+    apiConfig: {
+      type: "direct",
+      endpoint: "",
+      authType: "none",
+      rateLimitPerMinute: 60,
+      timeoutMs: 15000,
+      responseTransformer: "transformPageContent",
+    },
+  },
+  {
+    name: "reddit",
+    baseUrl: "https://www.reddit.com",
+    searchPattern: "/search/?q={query}%20referral",
+    extractionPatterns: {
+      code: [/code[:\s]+([A-Z0-9]{4,})/gi, /(?:use|my)\s+([A-Z0-9]{6,})/gi],
+      reward: [/(\$?\d+[^<\.]{5,50}bonus)/gi, /(free[^<\.]{5,30})/gi],
+      url: [/https?:\/\/[^\s"]+refer[^\s"]*/gi],
+    },
+    priority: 2,
+    apiConfig: {
+      type: "oauth",
+      endpoint: "https://oauth.reddit.com",
+      authType: "oauth2",
+      rateLimitPerMinute: 60,
+      timeoutMs: 10000,
+      responseTransformer: "transformRedditResponse",
+      headers: {
+        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+      },
+    },
+  },
+  {
+    name: "hackernews",
+    baseUrl: "https://hn.algolia.com",
+    searchPattern: "/?q={query}%20referral",
+    extractionPatterns: {
+      code: [/invite[:\s]+([A-Z0-9]{4,})/gi, /ref[:\s]+([A-Z0-9]{4,})/gi],
+      reward: [/(\d+%\s*off)/gi, /(\$\d+[^<\.]{5,30})/gi],
+      url: [/https?:\/\/[^\s"]+/gi],
+    },
+    priority: 2,
+    apiConfig: {
+      type: "algolia",
+      endpoint: "https://hn.algolia.com/api/v1/search",
+      authType: "none",
+      rateLimitPerMinute: 100,
+      timeoutMs: 8000,
+      responseTransformer: "transformHackerNewsResponse",
+    },
+  },
+  {
+    name: "github",
+    baseUrl: "https://github.com",
+    searchPattern: "/search?q={query}+referral",
+    extractionPatterns: {
+      code: [/code[:\s`]+([A-Z0-9]{4,})/gi, /`([A-Z0-9_-]{6,})`/g],
+      reward: [/(\$[\d,]+(?:\.\d{2})?)/g, /(\d+\s*(credits|tokens))/gi],
+      url: [/https?:\/\/[^\s"]+/gi],
+    },
+    priority: 3,
+    apiConfig: {
+      type: "rest",
+      endpoint: "https://api.github.com/search/repositories",
+      authType: "token",
+      authHeaderName: "Authorization",
+      rateLimitPerMinute: 30,
+      timeoutMs: 10000,
+      responseTransformer: "transformGitHubResponse",
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  },
+];
 
 // ============================================================================
 // Helper Functions
@@ -251,6 +498,7 @@ export function generateSampleCode(domain: string, index: number): string {
   return `${prefix}${suffix}`;
 }
 
+// Legacy simulation function - kept for backwards compatibility
 export function simulateDiscovery(
   query: string,
   source: ResearchSource,
@@ -334,4 +582,27 @@ export function extractRewardValue(rewardSummary?: string): number | undefined {
   }
 
   return undefined;
+}
+
+// Get default research configuration
+export function getDefaultResearchConfig(): ResearchConfig {
+  return {
+    maxRequestsPerMinute: 60,
+    requestWindowMs: 60000,
+    maxRetries: 3,
+    retryDelayMs: 1000,
+    maxRetryDelayMs: 30000,
+    cacheEnabled: true,
+    cacheTtlMs: 3600000, // 1 hour
+    circuitBreakerEnabled: true,
+    failureThreshold: 5,
+    recoveryTimeoutMs: 30000,
+    sourceWeights: {
+      producthunt: 0.85,
+      github: 0.8,
+      reddit: 0.75,
+      hackernews: 0.8,
+      company_site: 0.7,
+    },
+  };
 }

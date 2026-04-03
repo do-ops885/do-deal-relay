@@ -228,6 +228,93 @@ deals_active_deals 45
 
 ---
 
+### POST /api/research
+
+Research referral codes for a specific domain or query.
+
+**Request Body:**
+
+```json
+{
+  "query": "trading212 referral code",
+  "domain": "trading212.com",
+  "depth": "thorough",
+  "sources": ["all"],
+  "max_results": 20,
+  "options": {
+    "use_real_fetching": false
+  }
+}
+```
+
+**Parameters:**
+
+- `query` (string, required): Search query for referral codes
+- `domain` (string, optional): Target domain to search for
+- `depth` (string, optional): Research depth - 'quick', 'thorough', or 'deep' (default: 'quick')
+- `sources` (array, optional): Sources to search - 'all' or specific sources like ['producthunt', 'reddit', 'hackernews', 'github']
+- `max_results` (number, optional): Maximum results to return (default: 10, max: 100)
+- `options.use_real_fetching` (boolean, optional): Enable real web fetching (default: false, uses simulation)
+
+**Response:**
+
+```json
+{
+  "query": "trading212 referral code",
+  "domain": "trading212.com",
+  "discovered_codes": [
+    {
+      "code": "ABC123XYZ",
+      "url": "https://trading212.com/invite/ABC123XYZ",
+      "source": "known_pattern:trading212.com",
+      "discovered_at": "2024-03-31T12:00:00Z",
+      "reward_summary": "Free share worth up to £100",
+      "confidence": 0.85
+    }
+  ],
+  "research_metadata": {
+    "sources_checked": ["known_pattern:trading212.com", "producthunt", "reddit"],
+    "search_queries": ["trading212 referral", "trading212 invite"],
+    "research_duration_ms": 1250,
+    "agent_id": "research-agent-1711886400000",
+    "used_real_fetching": false
+  }
+}
+```
+
+**Research Sources:**
+
+When `sources` is set to `["all"]` or specific sources, the system searches:
+
+- `known_pattern`: Known referral programs with defined patterns (e.g., trading212.com)
+- `producthunt`: Product Hunt for product referral programs
+- `reddit`: Reddit discussions about referral codes
+- `hackernews`: Hacker News referral discussions
+- `github`: GitHub repositories with referral documentation
+- `company_site`: Direct company website scraping
+
+**Real vs Simulated Fetching:**
+
+By default (`use_real_fetching: false`), the system uses simulation to generate realistic referral codes based on known patterns. When enabled:
+
+- The system fetches real web content from the specified sources
+- Extracts referral codes using pattern matching
+- Returns actual discovered codes with confidence scores
+- Falls back to simulation if fetching fails
+
+**Rate Limiting:**
+
+Research requests are rate-limited per source (10 requests per minute per source). When rate limited, the system returns a 429 status with retry information.
+
+**Status Codes:**
+
+- 200: Research completed successfully
+- 400: Invalid request parameters
+- 429: Rate limited - retry after specified time
+- 500: Research failed
+
+---
+
 ### POST /api/discover
 
 Trigger manual discovery (triggers pipeline).

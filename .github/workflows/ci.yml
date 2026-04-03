@@ -27,9 +27,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Run Quality Gate
         run: ./scripts/quality_gate.sh
@@ -49,9 +50,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Run tests
         run: ./scripts/run-tests-ci.sh
@@ -81,9 +83,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Run validation script
         run: ./scripts/validate-codes.sh
@@ -99,13 +102,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Secret Detection - TruffleHog
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ""
-          head: HEAD
-          extra_args: --debug --only-verified
+      - name: Secret Detection - TruffleHog shell script
+        run: |
+          # Install TruffleHog
+          INSTALL_URL="https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh"
+          curl -sSfL "$INSTALL_URL" | sh -s -- -b /usr/local/bin
+
+          # Handle single-commit scenario where BASE and HEAD are the same
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          if [ "$BEFORE" == "$SHA" ] || [ -z "$BEFORE" ]; then
+            echo "Single commit push - running full filesystem scan"
+            trufflehog filesystem . --only-verified --json || true
+          else
+            echo "Running incremental scan from $BEFORE to $SHA"
+            trufflehog git file://. --since-commit "$BEFORE" \
+              --only-verified --json || true
+          fi
         continue-on-error: true
 
       - name: Check for hardcoded secrets
@@ -153,9 +166,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Check formatting
         run: npx prettier --check .
@@ -179,9 +193,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Build TypeScript
         run: npm run build

@@ -22,8 +22,9 @@ npm run dev
 
 **Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
 **State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
-**Infrastructure**: Cloudflare Workers + 5 KV namespaces
+**Infrastructure**: Cloudflare Workers + 5 KV namespaces + D1 Database
 **Schedule**: Every 6 hours
+**AI Integration**: MCP Server (Model Context Protocol 2025-11-25) for agent-to-system communication
 
 See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 
@@ -98,15 +99,25 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 
 ## Skills
 
-**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`
+**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`, `web-doc-resolver`
 
-**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`
+**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`, `building-mcp-server-on-cloudflare`
 
 Use: `skill <name>` to load guidance.
 
+> **Tip**: For web research tasks, use `web-doc-resolver` skill first - it uses a cost-effective cascade (llms.txt → direct fetch → Jina AI → paid APIs only as last resort) to minimize token usage.
+
 ## Endpoints
 
-`/deals` · `/deals.json` · `/health` · `/metrics` · `/api/status` · `/api/log` · `/api/submit` · `/api/discover`
+**Core**: `/deals` · `/deals.json` · `/health` · `/metrics`
+
+**API**: `/api/status` · `/api/log` · `/api/submit` · `/api/discover`
+
+**MCP (Model Context Protocol)**: `/mcp` · `/mcp/v1/tools/list` · `/mcp/v1/tools/call` · `/mcp/v1/info`
+
+**D1 Database**: `/api/d1/search` · `/api/d1/stats` · `/api/d1/deals` · `/api/d1/migrations`
+
+**Validation**: `/api/validate/url` · `/api/validate/batch` · `/api/deals/{code}/validate`
 
 See [docs/API.md](docs/API.md) for endpoint documentation.
 
@@ -195,3 +206,6 @@ All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agent
 - **Validation Status**: All 9 validation gates passing
 - **Self-Learning**: See Self-Learning Protocol above - document lessons after every task
 - **Directory Guide**: See README files in each directory for usage rules
+- **Web Research**: Use `web-doc-resolver` skill for cost-effective research (free sources first, paid APIs last)
+- **MCP Server**: Full Model Context Protocol 2025-11-25 implementation available at `/mcp`
+- **D1 Database**: Full-text search and advanced queries available via `/api/d1/*`

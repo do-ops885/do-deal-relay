@@ -30,12 +30,18 @@ ENVIRONMENT = "production"
 GITHUB_REPO = "do-ops885/do-deal-relay"
 NOTIFICATION_THRESHOLD = "100"
 
+# MCP Configuration
+MCP_PROTOCOL_VERSION = "2025-11-25"
+MCP_RATE_LIMIT_PER_MINUTE = "60"
+
 [env.staging]
 name = "do-deal-relay-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
 GITHUB_REPO = "do-ops885/do-deal-relay"
 NOTIFICATION_THRESHOLD = "100"
+MCP_PROTOCOL_VERSION = "2025-11-25"
+MCP_RATE_LIMIT_PER_MINUTE = "120"
 
 [[env.staging.kv_namespaces]]
 binding = "DEALS_PROD"
@@ -56,6 +62,18 @@ id = "e3ab520eafd5430ab72978e78bdd257e"
 [[env.staging.kv_namespaces]]
 binding = "DEALS_SOURCES"
 id = "be3c0fc148b749b49a59aa7cfa23e3ac"
+
+# D1 Database for advanced queries and full-text search
+[[d1_databases]]
+binding = "DEALS_DB"
+database_name = "deals-db"
+database_id = "local-deals-db"
+
+# Staging D1 Database
+[[env.staging.d1_databases]]
+binding = "DEALS_DB"
+database_name = "deals-db-staging"
+database_id = "local-deals-db-staging"
 
 # Production environment (explicitly defined for --env production flag)
 [env.production]
@@ -65,6 +83,8 @@ name = "do-deal-relay"
 ENVIRONMENT = "production"
 GITHUB_REPO = "do-ops885/do-deal-relay"
 NOTIFICATION_THRESHOLD = "100"
+MCP_PROTOCOL_VERSION = "2025-11-25"
+MCP_RATE_LIMIT_PER_MINUTE = "60"
 
 [[env.production.kv_namespaces]]
 binding = "DEALS_PROD"
@@ -85,3 +105,9 @@ id = "e3ab520eafd5430ab72978e78bdd257e"
 [[env.production.kv_namespaces]]
 binding = "DEALS_SOURCES"
 id = "be3c0fc148b749b49a59aa7cfa23e3ac"
+
+# Production D1 Database
+[[env.production.d1_databases]]
+binding = "DEALS_DB"
+database_name = "deals-db"
+database_id = "prod-deals-db"
