@@ -352,9 +352,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
 /**
  * Try HEAD request to validate URL
  */
-async function tryHeadRequest(
-  url: string,
-): Promise<{
+async function tryHeadRequest(url: string): Promise<{
   success: boolean;
   statusCode?: number;
   statusText?: string;
@@ -398,9 +396,7 @@ async function tryHeadRequest(
 /**
  * Try GET request as fallback
  */
-async function tryGetRequest(
-  url: string,
-): Promise<{
+async function tryGetRequest(url: string): Promise<{
   success: boolean;
   statusCode?: number;
   statusText?: string;

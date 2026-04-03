@@ -16,7 +16,14 @@
     {
       "skill": "task-decomposition",
       "triggers": {
-        "keywords": ["plan", "decompose", "break down", "steps", "phases", "milestone"],
+        "keywords": [
+          "plan",
+          "decompose",
+          "break down",
+          "steps",
+          "phases",
+          "milestone"
+        ],
         "patterns": ["plan.*", "step.*", "phase.*"],
         "files": []
       },
@@ -26,7 +33,13 @@
     {
       "skill": "code-quality",
       "triggers": {
-        "keywords": ["review", "quality", "refactor", "clean code", "best practice"],
+        "keywords": [
+          "review",
+          "quality",
+          "refactor",
+          "clean code",
+          "best practice"
+        ],
         "patterns": ["review.*", "quality.*", "refactor.*"],
         "files": ["**/*.rs", "**/*.ts", "**/*.js", "**/*.py", "**/*.go"]
       },
@@ -36,7 +49,13 @@
     {
       "skill": "test-runner",
       "triggers": {
-        "keywords": ["test", "spec", "coverage", "unit test", "integration test"],
+        "keywords": [
+          "test",
+          "spec",
+          "coverage",
+          "unit test",
+          "integration test"
+        ],
         "patterns": ["test.*", "spec.*", ".*_test\\.", ".*\\.test\\."],
         "files": ["**/tests/**/*", "**/*.test.*", "**/*_test.*"]
       },
@@ -66,7 +85,13 @@
     {
       "skill": "web-search-researcher",
       "triggers": {
-        "keywords": ["search", "research", "find information", "look up", "documentation"],
+        "keywords": [
+          "search",
+          "research",
+          "find information",
+          "look up",
+          "documentation"
+        ],
         "patterns": ["search.*", "research.*", "find.*"],
         "files": []
       },

@@ -128,9 +128,7 @@ export class ExpirationManager {
     await this.storage.delete(`exp:${id}`);
   }
 
-  async getStatus(
-    id: string,
-  ): Promise<{
+  async getStatus(id: string): Promise<{
     expiresAt: number;
     remaining: number;
     notified: number[];

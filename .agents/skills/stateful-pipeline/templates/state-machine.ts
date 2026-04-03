@@ -1,28 +1,33 @@
-import { PipelinePhase, PipelineContext, PipelineConfig, FailurePath } from './types';
+import {
+  PipelinePhase,
+  PipelineContext,
+  PipelineConfig,
+  FailurePath,
+} from "./types";
 
 /**
  * Create a stateful pipeline with configurable phases
  */
 export function createPipeline<T>(
   phases: string[],
-  config: PipelineConfig = {}
+  config: PipelineConfig = {},
 ): PipelineInstance<T> {
   const {
     maxRetries = 3,
-    onFailure = 'revert',
+    onFailure = "revert",
     enableMetrics = true,
-    enableStructuredLogging = true
+    enableStructuredLogging = true,
   } = config;
 
   return {
     async execute(initialData: T): Promise<PipelineResult<T>> {
       const ctx: PipelineContext<T> = {
         data: initialData,
-        phase: 'init',
+        phase: "init",
         retryCount: 0,
         errors: [],
         metrics: enableMetrics ? createMetrics() : undefined,
-        startTime: Date.now()
+        startTime: Date.now(),
       };
 
       try {
@@ -30,11 +35,7 @@ export function createPipeline<T>(
           ctx.phase = phase;
 
           // Execute phase with retry logic
-          const result = await executePhaseWithRetry(
-            phase,
-            ctx,
-            maxRetries
-          );
+          const result = await executePhaseWithRetry(phase, ctx, maxRetries);
 
           if (result.failurePath) {
             return handleFailure(result.failurePath, ctx, onFailure);
@@ -45,13 +46,12 @@ export function createPipeline<T>(
           success: true,
           data: ctx.data,
           metrics: ctx.metrics?.finalize(),
-          duration: Date.now() - ctx.startTime
+          duration: Date.now() - ctx.startTime,
         };
-
       } catch (error) {
         return handleUnexpectedError(error, ctx);
       }
-    }
+    },
   };
 }
 
@@ -77,7 +77,7 @@ interface PipelineContext<T> {
   startTime: number;
 }
 
-type FailurePath = 'revert' | 'quarantine' | 'concurrency_abort';
+type FailurePath = "revert" | "quarantine" | "concurrency_abort";
 
 interface PipelineConfig {
   maxRetries?: number;
@@ -89,7 +89,7 @@ interface PipelineConfig {
 async function executePhaseWithRetry<T>(
   phase: string,
   ctx: PipelineContext<T>,
-  maxRetries: number
+  maxRetries: number,
 ): Promise<{ failurePath?: FailurePath }> {
   const phaseStartTime = Date.now();
 
@@ -102,7 +102,6 @@ async function executePhaseWithRetry<T>(
 
       ctx.metrics?.recordPhaseComplete(phase, Date.now() - phaseStartTime);
       return { failurePath: undefined };
-
     } catch (error) {
       if (isRetryable(error) && ctx.retryCount < maxRetries) {
         ctx.retryCount++;
@@ -114,39 +113,41 @@ async function executePhaseWithRetry<T>(
     }
   }
 
-  return { failurePath: 'revert' };
+  return { failurePath: "revert" };
 }
 
 function isRetryable(error: Error): boolean {
   // Retry on network errors, timeouts
-  return error.message.includes('timeout') ||
-         error.message.includes('ECONNRESET') ||
-         error.message.includes('ETIMEDOUT');
+  return (
+    error.message.includes("timeout") ||
+    error.message.includes("ECONNRESET") ||
+    error.message.includes("ETIMEDOUT")
+  );
 }
 
 function handleFailure<T>(
   failurePath: FailurePath,
   ctx: PipelineContext<T>,
-  onFailure: FailurePath
+  onFailure: FailurePath,
 ): PipelineResult<T> {
   switch (onFailure) {
-    case 'revert':
+    case "revert":
       // Rollback logic
       return {
         success: false,
         error: `Pipeline failed at phase ${ctx.phase}`,
-        failurePath: 'revert',
+        failurePath: "revert",
         metrics: ctx.metrics?.finalize(),
-        duration: Date.now() - ctx.startTime
+        duration: Date.now() - ctx.startTime,
       };
 
-    case 'quarantine':
+    case "quarantine":
       // Mark data as suspicious but continue
       return {
         success: true,
         data: ctx.data,
         metrics: ctx.metrics?.finalize(),
-        duration: Date.now() - ctx.startTime
+        duration: Date.now() - ctx.startTime,
       };
 
     default:
@@ -155,25 +156,25 @@ function handleFailure<T>(
         error: `Unexpected failure path: ${failurePath}`,
         failurePath,
         metrics: ctx.metrics?.finalize(),
-        duration: Date.now() - ctx.startTime
+        duration: Date.now() - ctx.startTime,
       };
   }
 }
 
 function handleUnexpectedError<T>(
   error: Error,
-  ctx: PipelineContext<T>
+  ctx: PipelineContext<T>,
 ): PipelineResult<T> {
   return {
     success: false,
     error: error.message,
     metrics: ctx.metrics?.finalize(),
-    duration: Date.now() - ctx.startTime
+    duration: Date.now() - ctx.startTime,
   };
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Metrics stub
@@ -203,8 +204,8 @@ function createMetrics(): MetricsCollector {
       return {
         phases,
         totalDuration: 0,
-        retryCount: 0
+        retryCount: 0,
       };
-    }
+    },
   };
 }
