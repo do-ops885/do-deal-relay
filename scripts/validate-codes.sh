@@ -49,10 +49,10 @@ echo ""
 # Gate 2: Check for hardcoded secrets
 echo "Gate 2: Secret Detection"
 SECRETS_FOUND=0
-if grep -r "ghp_" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+if grep -rE "ghp_[a-zA-Z0-9]{36,}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     SECRETS_FOUND=1
 fi
-if grep -r "sk-" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
+if grep -rE "sk-[a-zA-Z0-9]{20,}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
     SECRETS_FOUND=1
 fi
 if [ $SECRETS_FOUND -eq 0 ]; then
@@ -109,12 +109,12 @@ echo ""
 # Gate 5: Validate JSON files
 echo "Gate 5: JSON Validity"
 INVALID_JSON=0
-for file in $(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*"); do
+while IFS= read -r file; do
     if ! jq empty "$file" 2>/dev/null; then
         print_status 1 "Invalid JSON: $file"
         INVALID_JSON=1
     fi
-done
+done < <(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*")
 if [ $INVALID_JSON -eq 0 ]; then
     print_status 0 "All JSON files are valid"
 fi
