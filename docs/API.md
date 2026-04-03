@@ -507,3 +507,236 @@ All endpoints support CORS:
   }
 }
 ```
+
+
+---
+
+## Multi-Agent Workflow API
+
+Execute coordinated 4-phase workflow with specialized agents.
+
+### POST /api/workflow/execute
+
+Execute the complete multi-agent workflow.
+
+**Request Body:**
+
+```json
+{
+  "workflow_id": "my-workflow-001",
+  "dry_run": false,
+  "skip_phases": [],
+  "options": {
+    "notify_on_complete": true
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "workflow_id": "my-workflow-001",
+  "status": "completed",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Codebase Verification",
+      "status": "passed",
+      "duration_ms": 1234,
+      "checks": [
+        {
+          "name": "URL Pattern Verification",
+          "status": "passed",
+          "message": "Checked 4 URL patterns: 0 incorrect"
+        }
+      ],
+      "findings": [],
+      "errors": []
+    },
+    {
+      "phase": 2,
+      "name": "Evals & Tests",
+      "status": "partial",
+      "duration_ms": 5678,
+      "checks": [],
+      "findings": [],
+      "errors": []
+    },
+    {
+      "phase": 3,
+      "name": "Git Workflow",
+      "status": "passed",
+      "duration_ms": 9012,
+      "checks": [],
+      "findings": [],
+      "metadata": {
+        "commits_created": 3,
+        "push_success": true
+      }
+    },
+    {
+      "phase": 4,
+      "name": "Issue Fixer",
+      "status": "partial",
+      "duration_ms": 3456,
+      "checks": [],
+      "findings": [],
+      "metadata": {
+        "issues_detected": 2,
+        "auto_fixable": 1,
+        "fixed": 1,
+        "unresolved": 1
+      }
+    }
+  ],
+  "metadata": {
+    "total_duration_ms": 19380,
+    "phases_passed": 2,
+    "phases_failed": 0,
+    "phases_partial": 2,
+    "commits_created": ["64b7eec", "4031253", "f546fcf"],
+    "issues_fixed": ["package-lock-sync"]
+  },
+  "duration_ms": 19380,
+  "events": [
+    { "type": "workflow_started", "timestamp": "..." },
+    { "type": "phase_started", "phase": 1, "timestamp": "..." },
+    { "type": "phase_completed", "phase": 1, "timestamp": "..." },
+    { "type": "handoff_completed", "phase": 1, "timestamp": "..." }
+  ]
+}
+```
+
+### GET /api/workflow/plan
+
+Get the execution plan without running.
+
+**Response:**
+
+```json
+{
+  "plan_id": "evt-1234567890-abc123",
+  "workflow_id": "multi-agent-4-phase",
+  "created_at": "2026-04-03T15:00:00Z",
+  "phases": [
+    {
+      "phase": 1,
+      "agent_id": "verifier",
+      "estimated_duration_ms": 300000,
+      "dependencies": [],
+      "fallback_strategy": "skip"
+    },
+    {
+      "phase": 2,
+      "agent_id": "tester",
+      "estimated_duration_ms": 600000,
+      "dependencies": [1],
+      "fallback_strategy": "retry"
+    },
+    {
+      "phase": 3,
+      "agent_id": "git",
+      "estimated_duration_ms": 300000,
+      "dependencies": [2],
+      "fallback_strategy": "retry"
+    },
+    {
+      "phase": 4,
+      "agent_id": "fixer",
+      "estimated_duration_ms": 600000,
+      "dependencies": [3],
+      "fallback_strategy": "retry"
+    }
+  ],
+  "estimated_duration_ms": 1800000,
+  "risk_assessment": {
+    "overall_risk": "medium",
+    "factors": [
+      {
+        "category": "test_environment",
+        "level": "high",
+        "description": "Known Vitest pool crashes in test environment"
+      }
+    ],
+    "mitigation_strategies": [
+      "Use retry logic for transient failures",
+      "Document known issues in LESSONS.md"
+    ]
+  }
+}
+```
+
+### POST /api/workflow/phase/:phase
+
+Execute a specific phase only.
+
+**Parameters:**
+
+- `phase` (number): Phase number (1-4)
+
+**Request Body:**
+
+```json
+{
+  "dry_run": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "phase": 1,
+  "name": "Codebase Verification",
+  "status": "passed",
+  "duration_ms": 1234,
+  "checks": [],
+  "findings": [],
+  "errors": []
+}
+```
+
+### Workflow Phases
+
+| Phase | Agent | Purpose | Timeout |
+|-------|-------|---------|---------|
+| 1 | CodebaseVerificationAgent | Verify URL patterns, file structure | 5 min |
+| 2 | EvalsAndTestsAgent | Run TypeScript, tests, validation gates | 10 min |
+| 3 | GitWorkflowAgent | Stage, commit, push changes | 5 min |
+| 4 | IssueFixerAgent | Detect and fix pre-existing issues | 10 min |
+
+### Quality Gates
+
+Each phase has quality gates that must pass:
+
+- **Phase 1**: No incorrect URLs, no missing critical files
+- **Phase 2**: TypeScript compiles, test pass rate ≥ 80%
+- **Phase 3**: At least 1 commit created, push successful
+- **Phase 4**: No critical issues, auto-fix success rate ≥ 50%
+
+### Event Types
+
+| Event | Description |
+|-------|-------------|
+| `workflow_started` | Workflow execution began |
+| `phase_started` | Phase execution began |
+| `phase_completed` | Phase completed successfully |
+| `phase_failed` | Phase failed |
+| `phase_retry` | Retrying failed phase |
+| `quality_gate_passed` | Quality gate criteria met |
+| `quality_gate_failed` | Quality gate criteria not met |
+| `handoff_completed` | Handoff to next phase |
+| `workflow_completed` | All phases completed |
+| `workflow_failed` | Workflow failed |
+| `workflow_cancelled` | Workflow cancelled |
+
+### Error Handling
+
+The orchestrator handles errors with:
+
+- **Retry Logic**: Configurable max attempts with exponential backoff
+- **Quality Gates**: Phase boundaries with criteria validation
+- **Graceful Degradation**: Continue with warnings if non-critical
+- **Event Logging**: All events emitted for monitoring
