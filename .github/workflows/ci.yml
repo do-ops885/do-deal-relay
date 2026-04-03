@@ -1,6 +1,7 @@
+---
 name: CI
 
-on:
+"on":
   push:
     branches: [main, develop]
   pull_request:
@@ -126,7 +127,10 @@ jobs:
 
           # Pattern 2: High-entropy strings that look like tokens/keys
           # Matches patterns like: Bearer abc123..., sk-abc..., ghp_..., etc.
-          if grep -rE '(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})' \
+          # shellcheck disable=SC2016
+          TOKEN_PATTERN='(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}'
+          TOKEN_PATTERN="${TOKEN_PATTERN}"'|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})'
+          if grep -rE "$TOKEN_PATTERN" \
             --include="*.ts" --include="*.js" --include="*.json" . \
             | grep -v "node_modules\|\.env\|test\|example"; then
             echo "❌ Potential API tokens found"

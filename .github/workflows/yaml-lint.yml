@@ -1,7 +1,7 @@
 ---
 name: YAML Lint
 
-on:
+"on":
   push:
     branches:
       - main

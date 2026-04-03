@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Quality Gate - Silent Success / Loud Failure Pattern
-# Runs all validation checks
-# Exit 0 (silent) on success, Exit 2 (loud) on failure
+# Quality Gate - Matches GitHub Actions CI Pipeline
+# Runs all validation checks that run in GitHub Actions
+# Exit 0 on success, Exit 2 on failure
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -32,30 +32,118 @@ run_check() {
     return 0
 }
 
-# Check 1: TypeScript compilation (silent on success)
+# Check 1: TypeScript compilation (matches CI lint job)
 run_check "TypeScript compilation" "npm run lint"
 
-# Check 2: Unit tests (silent on success) - skip if SKIP_TESTS is set
-if [ -z "$SKIP_TESTS" ]; then
+# Check 2: Unit tests (matches CI test job) - skip if SKIP_TESTS is set
+if [ -z "${SKIP_TESTS:-}" ]; then
     run_check "Unit tests" "${SCRIPT_DIR}/run-tests-ci.sh"
-else
-    # Tests are skipped in CI, will run separately
-    :
 fi
 
-# Check 3: Validation gates
+# Check 3: Validation gates (matches CI validate-codes job)
 run_check "Validation gates" "npm run validate"
 
 # Check 4: Directory organization
 run_check "Directory organization" "${SCRIPT_DIR}/check-directory-organization.sh"
 
-# Check 5: Skill symlinks intact (if .claude exists)
+# Check 5: Build check (matches CI build-check job)
+run_check "Build check" "npm run build"
+
+# Check 6: Prettier format check (matches CI lint job)
+if ! npx prettier --check . 2>/dev/null; then
+    ERRORS+=("✗ Code formatting check failed")
+    ERRORS+=("Run: npx prettier --write .")
+fi
+
+# Check 7: YAML syntax validation (matches yaml-lint job)
+# Check if yamllint is available
+if command -v yamllint >/dev/null 2>&1; then
+    if ! yamllint -d "{extends: default, rules: {line-length: {max: 120}, indentation: {spaces: 2}}}" .github/ 2>&1; then
+        ERRORS+=("✗ YAML syntax validation failed")
+    fi
+else
+    # Fallback: Basic YAML syntax check with Python
+    if command -v python3 >/dev/null 2>&1; then
+        yaml_errors=0
+        while IFS= read -r -d '' file; do
+            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                ERRORS+=("✗ YAML syntax error in: $file")
+                yaml_errors=$((yaml_errors + 1))
+            fi
+        done < <(find .github/workflows -name "*.yml" -print0 2>/dev/null)
+
+        if [ $yaml_errors -gt 0 ]; then
+            ERRORS+=("Install yamllint for better validation: pip install yamllint")
+        fi
+    fi
+fi
+
+# Check 8: GitHub Actions workflow validation (matches actionlint in yaml-lint job)
+# Check if actionlint is available
+if command -v actionlint >/dev/null 2>&1; then
+    if ! actionlint .github/workflows/*.yml 2>&1; then
+        ERRORS+=("✗ GitHub Actions workflow validation failed")
+    fi
+else
+    # Fallback: Basic workflow syntax checks
+    workflow_errors=0
+    for workflow in .github/workflows/*.yml; do
+        if [ -f "$workflow" ]; then
+            # Check for common issues
+            if grep -q "uses: actions/checkout@v5" "$workflow" 2>/dev/null; then
+                # v5 doesn't exist, should be v4
+                ERRORS+=("✗ Invalid action version in $workflow: actions/checkout@v5 (use v4)")
+                workflow_errors=$((workflow_errors + 1))
+            fi
+        fi
+    done
+fi
+
+# Check 9: Security scan - Secret detection (matches CI security-scan job)
+secrets_found=0
+
+# Pattern 1: Variable/property assignments with string values (potential hardcoded secrets)
+if grep -rE '(api[_-]?key|password|secret)\s*[=:]\s*["'\''"'\'''][^"'\''"'\''"]{8,}["'\''"'\''"]' \
+    --include="*.ts" --include="*.js" --include="*.json" . \
+    2>/dev/null | grep -v "node_modules\|\.env\|test\|example\|\.d\.ts\|// \|/\*\|type\|interface\|: string\|: Secret" || true; then
+    ERRORS+=("✗ Potential hardcoded secrets found (assignments with values)")
+    secrets_found=$((secrets_found + 1))
+fi
+
+# Pattern 2: High-entropy strings that look like tokens/keys
+if grep -rE '(bearer\s+[a-zA-Z0-9_-]{20,}|sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16})' \
+    --include="*.ts" --include="*.js" --include="*.json" . \
+    2>/dev/null | grep -v "node_modules\|\.env\|test\|example" || true; then
+    ERRORS+=("✗ Potential API tokens found")
+    secrets_found=$((secrets_found + 1))
+fi
+
+# Pattern 3: Private keys (critical)
+if grep -rE '(BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|BEGIN PGP PRIVATE)' \
+    --include="*.ts" --include="*.js" --include="*.json" --include="*.pem" --include="*.key" . \
+    2>/dev/null | grep -v "node_modules\|\.env\|test\|example" || true; then
+    ERRORS+=("❌ Private keys found - CRITICAL SECURITY ISSUE")
+    secrets_found=$((secrets_found + 1))
+fi
+
+# Check 10: Dependency audit (matches security.yml dependency-check job)
+if command -v npm >/dev/null 2>&1; then
+    if ! npm audit --audit-level=moderate 2>&1 | grep -q "found 0 vulnerabilities"; then
+        audit_output=$(npm audit --audit-level=moderate 2>&1 || true)
+        if echo "$audit_output" | grep -q "vulnerabilities\|Severity:"; then
+            ERRORS+=("✗ Security vulnerabilities found in dependencies")
+            ERRORS+=("Run: npm audit fix")
+        fi
+    fi
+fi
+
+# Check 11: Skill symlinks intact (if .claude exists)
 if [ -d ".claude" ]; then
     run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
 fi
 
-# Check 6: Git hooks installed (skip in CI - hooks are for local dev only)
-if [ -z "$SKIP_TESTS" ] && [ -z "$GITHUB_ACTIONS" ] && [ ! -f ".git/hooks/pre-commit" ]; then
+# Check 12: Git hooks installed (skip in CI - hooks are for local dev only)
+if [ -z "${SKIP_TESTS:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ] && [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
 fi
@@ -70,10 +158,13 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     for error in "${ERRORS[@]}"; do
         echo "$error"
         # Add blank line after each error block
-        if [[ "$error" == ✗* ]]; then
+        if [[ "$error" == ✗* ]] || [[ "$error" == ❌* ]]; then
             echo ""
         fi
     done
+
+    echo "Summary: ${#ERRORS[@]} issue(s) found"
+    echo "Fix the errors above before pushing to GitHub."
 
     exit 2
 fi

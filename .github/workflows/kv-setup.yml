@@ -1,6 +1,7 @@
+---
 name: KV Namespace Setup
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       environment:
@@ -29,7 +30,10 @@ jobs:
     environment: production
     timeout-minutes: 10
 
-    if: github.event.inputs.confirm == true && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'both')
+    if: >
+      github.event.inputs.confirm == true &&
+      (github.event.inputs.environment == 'production' ||
+       github.event.inputs.environment == 'both')
 
     steps:
       - name: Checkout repository
@@ -91,7 +95,10 @@ jobs:
     environment: staging
     timeout-minutes: 10
 
-    if: github.event.inputs.confirm == true && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'both')
+    if: >
+      github.event.inputs.confirm == true &&
+      (github.event.inputs.environment == 'staging' ||
+       github.event.inputs.environment == 'both')
 
     steps:
       - name: Checkout repository

@@ -1,6 +1,7 @@
+---
 name: Deploy - Production
 
-on:
+"on":
   push:
     branches: [main]
     tags:
@@ -52,11 +53,12 @@ jobs:
       - name: Verify staging is healthy
         if: github.ref != 'refs/heads/main'
         run: |
-          STAGING_URL="https://do-deal-relay-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/health"
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
           echo "Verifying staging environment is healthy..."
 
           if ! curl -sf "$STAGING_URL"; then
-            echo "❌ Staging environment is not healthy. Aborting production deployment."
+            echo "❌ Staging not healthy. Aborting production deployment."
             exit 1
           fi
           echo "✅ Staging environment is healthy"
@@ -68,7 +70,9 @@ jobs:
     needs: pre-deploy-checks
     timeout-minutes: 15
 
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event.inputs.confirm_deploy == true || github.event_name == 'push')
+    if: >
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) &&
+      (github.event.inputs.confirm_deploy == true || github.event_name == 'push')
 
     steps:
       - name: Checkout repository
@@ -104,7 +108,8 @@ jobs:
           sleep 15
 
           # Health check
-          HEALTH_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/health"
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
           echo "Checking health at: $HEALTH_URL"
 
           for i in {1..5}; do
@@ -122,12 +127,14 @@ jobs:
 
       - name: Run smoke tests on production
         run: |
-          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PROD_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev"
 
           echo "Running smoke tests on production..."
 
           # Test health endpoint (may return 503 for fresh deployments)
-          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/health" || echo "000")
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$PROD_URL/health" || echo "000")
           if [ "$HEALTH_STATUS" = "200" ] || [ "$HEALTH_STATUS" = "503" ]; then
             echo "✅ Health endpoint OK (status: $HEALTH_STATUS)"
           else
@@ -139,8 +146,9 @@ jobs:
           curl -sf "$PROD_URL/metrics" || exit 1
           echo "✅ Metrics endpoint OK"
 
-          # Test deals endpoint (may return 404 for fresh deployments with no data)
-          DEALS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/deals" || echo "000")
+          # Test deals endpoint (may return 404 for fresh deployments)
+          DEALS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$PROD_URL/deals" || echo "000")
           if [ "$DEALS_STATUS" = "200" ] || [ "$DEALS_STATUS" = "404" ]; then
             echo "✅ Deals endpoint OK (status: $DEALS_STATUS)"
           else
@@ -157,12 +165,15 @@ jobs:
 
       - name: Trigger initial discovery
         run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           echo "Triggering discovery pipeline..."
-          curl -sf -X POST "https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/api/discover" || true
+          curl -sf -X POST \
+            "https://do-deal-relay.${ACCOUNT_ID}.workers.dev/api/discover" || true
         continue-on-error: true
 
       - name: Create deployment summary
         run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
@@ -171,9 +182,12 @@ jobs:
           echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Endpoints" >> $GITHUB_STEP_SUMMARY
-          echo "- Health: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/health" >> $GITHUB_STEP_SUMMARY
-          echo "- Metrics: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- Deals: https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev/deals" >> $GITHUB_STEP_SUMMARY
+          echo "- Health: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- Metrics: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/metrics" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "- Deals: https://do-deal-relay.${ACCOUNT_ID}.workers.dev/deals" \
+            >> $GITHUB_STEP_SUMMARY
 
       - name: Create release on tag
         if: startsWith(github.ref, 'refs/tags/v')
@@ -186,7 +200,8 @@ jobs:
               repo: context.repo.repo,
               tag_name: tag,
               name: `Release ${tag}`,
-              body: `Production deployment for version ${tag}.\n\nDeployed automatically via GitHub Actions.`,
+              body: 'Production deployment for version ${tag}.\n\n' +
+                'Deployed automatically via GitHub Actions.',
               draft: false,
               prerelease: false
             });
@@ -196,11 +211,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const sha = context.sha;
+            const runId = context.runId;
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Production deployment failed - ${context.sha.substring(0, 7)}`,
-              body: `Production deployment failed for commit ${context.sha}.\n\n[View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              title: `Production deployment failed - ${sha.substring(0, 7)}`,
+              body: `Production deployment failed for commit ${sha}.\n\n` +
+                `[View workflow run](${url}/actions/runs/${runId})`,
               labels: ['deployment', 'production', 'failed', 'urgent']
             });
 
@@ -208,9 +227,10 @@ jobs:
     name: Rollback on Failure
     runs-on: ubuntu-latest
     needs: deploy-production
-    if: failure() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: >
+      failure() &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     timeout-minutes: 10
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -231,7 +251,8 @@ jobs:
         run: |
           echo "Attempting to rollback..."
           # Get deployment list and rollback to previous
-          wrangler deployments list --name do-deal-relay --env production || true
+          wrangler deployments list --name do-deal-relay \
+            --env production || true
           echo "Please manually rollback via Cloudflare dashboard if needed"
         continue-on-error: true
 
@@ -240,11 +261,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const sha = context.sha;
+            const runId = context.runId;
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `ROLLBACK REQUIRED - Production deployment failed`,
-              body: `Production deployment failed and may require manual rollback.\n\n- Commit: ${context.sha}\n- Failed run: [View workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n**Action Required**: Check Cloudflare dashboard and rollback if necessary.`,
+              body: `Production deployment failed.\n\n` +
+                `- Commit: ${sha}\n` +
+                `- Failed run: [View workflow](${url}/actions/runs/${runId})\n\n` +
+                '**Action Required**: Check Cloudflare dashboard and rollback.',
               labels: ['deployment', 'production', 'rollback', 'urgent']
             });
         continue-on-error: true
