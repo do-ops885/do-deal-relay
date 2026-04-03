@@ -62,10 +62,14 @@ target/
 # BUILD OUTPUTS
 # ============================================================================
 
-dist/
-build/
-lib/
-out/
+# Build outputs at root only
+/dist/
+/build/
+/lib/
+/out/
+
+# But NOT worker/lib (source code)
+!worker/lib/
 *.tsbuildinfo
 *.tscache
 .rollup.cache
