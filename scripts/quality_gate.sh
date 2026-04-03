@@ -37,7 +37,7 @@ run_check "TypeScript compilation" "npm run lint"
 
 # Check 2: Unit tests (silent on success) - skip if SKIP_TESTS is set
 if [ -z "$SKIP_TESTS" ]; then
-    run_check "Unit tests" "npm run test:ci"
+    run_check "Unit tests" "${SCRIPT_DIR}/run-tests-ci.sh"
 else
     # Tests are skipped in CI, will run separately
     :
