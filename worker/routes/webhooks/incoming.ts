@@ -5,7 +5,7 @@
 import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
-import { handleIncomingWebhook } from "../../lib/webhook-handler";
+import { handleIncomingWebhook } from "../../lib/webhook/index";
 import { jsonResponse } from "./types";
 
 // ============================================================================

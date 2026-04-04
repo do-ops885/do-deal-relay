@@ -14,7 +14,7 @@ import {
   getDeadLetterQueue,
   retryDeadLetterEvent,
   type WebhookEventType,
-} from "../../lib/webhook-handler";
+} from "../../lib/webhook/index";
 import {
   jsonResponse,
   VALID_WEBHOOK_EVENTS,
