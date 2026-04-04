@@ -108,11 +108,17 @@ jobs:
 
       - name: Verify production deployment
         run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping deployment verification"
+            exit 0
+          fi
+
           echo "Waiting for deployment to propagate..."
           sleep 15
 
           # Health check
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
           echo "Checking health at: ${HEALTH_URL}"
 
