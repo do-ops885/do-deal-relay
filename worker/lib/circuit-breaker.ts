@@ -410,3 +410,46 @@ export function getAllCircuitBreakerMetrics(): Record<
 export function resetAllMetrics(): void {
   metricsMap.clear();
 }
+
+// ============================================================================
+// Convenience Functions (for MCP and external consumers)
+// ============================================================================
+
+/**
+ * Create a new circuit breaker with the given name and options
+ */
+export function createCircuitBreaker(
+  name: string,
+  options?: Partial<CircuitBreakerOptions>,
+  env?: Env,
+): CircuitBreaker {
+  return new CircuitBreaker(name, options, env);
+}
+
+/**
+ * Execute a function with circuit breaker protection
+ */
+export async function callWithCircuitBreaker<T>(
+  circuitBreaker: CircuitBreaker,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return circuitBreaker.execute(fn);
+}
+
+/**
+ * Get metrics for a circuit breaker
+ */
+export function getCircuitBreakerMetrics(
+  circuitBreaker: CircuitBreaker,
+): CircuitBreakerMetrics {
+  return circuitBreaker.getMetrics();
+}
+
+/**
+ * Reset a circuit breaker to closed state
+ */
+export async function resetCircuitBreaker(
+  circuitBreaker: CircuitBreaker,
+): Promise<void> {
+  return circuitBreaker.reset();
+}
