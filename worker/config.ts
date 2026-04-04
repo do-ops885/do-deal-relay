@@ -79,6 +79,17 @@ export const CONFIG = {
   RESEARCH_MD_FILE: "deals-research.md",
   STATUS_FILE: "status.json",
 
+  // NLQ (Natural Language Query) settings
+  NLQ_MAX_QUERY_LENGTH: 500,
+  NLQ_RULE_MAX_QUERY_LENGTH: 100,
+  NLQ_DEFAULT_LIMIT: 20,
+  NLQ_MAX_LIMIT: 100,
+  NLQ_RATE_LIMIT_PER_MINUTE: 30,
+  NLQ_AI_MAX_TOKENS_LONG: 500,
+  NLQ_AI_MAX_TOKENS_SHORT: 100,
+  NLQ_AI_CONFIDENCE_THRESHOLD: 0.75,
+  NLQ_AI_CACHE_TTL_MINUTES: 60,
+
   // KV keys
   KV_KEYS: {
     PROD_SNAPSHOT: "snapshot:prod",

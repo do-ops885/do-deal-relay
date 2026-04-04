@@ -195,6 +195,57 @@ All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agent
 | github-agent        | complete | Test & Validate | GitHub integration  |
 | browser-agent       | complete | Test & Validate | Browser/API testing |
 
+## Development Standards
+
+### Code Quality Rules
+
+**1. No Magic Numbers**
+- All numeric literals must be constants in `worker/config.ts` or local `CONFIG` objects
+- Bad: `if (count > 100)` → Good: `if (count > CONFIG.MAX_RESULTS)`
+- Bad: `setTimeout(fn, 5000)` → Good: `setTimeout(fn, CONFIG.TIMEOUT_MS)`
+
+**2. Max 500 Lines Per Source File**
+- Source files must not exceed 500 lines
+- Split files when approaching limit: `feature.ts` → `feature/index.ts`, `feature/types.ts`, `feature/utils.ts`
+- Guard rails enforce this automatically
+
+**3. Atomic Git Commits**
+- One logical change per commit
+- Commit message format: `type(scope): Description under 72 chars`
+- Each commit must pass quality gate independently
+- No "fix typo" or "address review" commits - amend instead
+
+**4. All Commits Verified with Tests**
+- `./scripts/quality_gate.sh` must pass before every commit
+- Includes: TypeScript compilation, unit tests, validation gates
+- Pre-commit hooks block commits if tests fail
+- CI will reject PRs with failing tests
+
+### Skills Development Standards
+
+**5. Real-World Skill Evaluations**
+- Every new skill MUST include `evals/evals.json` with real-world test cases
+- Evals must test actual usage scenarios, not synthetic examples
+- Example: webhook skill evals test actual HTTP delivery to webhook.site
+- Example: NLQ skill evals test real queries from users
+- Use `temp/skill-eval-{name}.jsonl` for ongoing eval tracking
+
+**6. End-to-End Usage Focus**
+- Always test skills with real e2e scenarios before marking complete
+- Create integration tests in `tests/integration/` for new features
+- Skills must demonstrate real workflow usage, not just unit functions
+- Document real-world usage examples in SKILL.md
+
+### Verification Checklist
+
+Before marking any task complete:
+- [ ] No magic numbers (grep for literal values > 10, < 0)
+- [ ] All source files < 500 lines
+- [ ] Atomic commits (one logical change each)
+- [ ] All tests passing
+- [ ] Skill evals using real-world scenarios
+- [ ] E2E integration tests written
+
 ## Notes
 
 - **Permanent Reports**: Analysis findings go to `reports/` (committed, permanent record)

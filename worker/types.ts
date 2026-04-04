@@ -275,6 +275,7 @@ export interface Env {
   DEALS_DB?: D1Database;
   DEALS_WEBHOOKS?: KVNamespace;
   WEBHOOK_API_KEYS?: KVNamespace;
+  AI?: Ai;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
