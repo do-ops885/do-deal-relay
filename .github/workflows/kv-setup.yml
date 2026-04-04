@@ -23,6 +23,9 @@ concurrency:
   group: kv-setup
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   setup-production-kv:
     name: Setup Production KV Namespaces
@@ -31,7 +34,7 @@ jobs:
     timeout-minutes: 10
 
     if: >
-      github.event.inputs.confirm == true &&
+      github.event.inputs.confirm == 'true' &&
       (github.event.inputs.environment == 'production' ||
        github.event.inputs.environment == 'both')
 
@@ -96,7 +99,7 @@ jobs:
     timeout-minutes: 10
 
     if: >
-      github.event.inputs.confirm == true &&
+      github.event.inputs.confirm == 'true' &&
       (github.event.inputs.environment == 'staging' ||
        github.event.inputs.environment == 'both')
 

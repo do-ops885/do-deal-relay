@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   quality-gate:
     name: Quality Gate
@@ -116,7 +120,7 @@ jobs:
             trufflehog filesystem . --only-verified --json || true
           else
             echo "Running incremental scan from ${BEFORE} to ${SHA}"
-            trufflehog git file://. --since-commit "${BEFORE}" \
+            trufflehog git . --since-commit "${BEFORE}" \
               --only-verified --json || true
           fi
         continue-on-error: true

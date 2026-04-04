@@ -41,10 +41,11 @@ jobs:
             trufflehog filesystem . --only-verified --json || true
           else
             echo "Running incremental scan from ${BEFORE} to ${SHA}"
-            trufflehog git file://. --since-commit "${BEFORE}" \
+            trufflehog git . --since-commit "${BEFORE}" \
               --only-verified --json || true
           fi
         continue-on-error: true
+        id: secret-scan
 
   dependency-check:
     name: Dependency Vulnerabilities
@@ -95,7 +96,8 @@ jobs:
             echo "| Dependency Audit | ${DEPENDENCY_CHECK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ "${SECRET_SCAN_RESULT}" == "failure" ]]; then
+          SECRET_SCAN_OUTCOME="${{ steps.secret-scan.outcome }}"
+          if [[ "${SECRET_SCAN_RESULT}" == "failure" ]] || [[ "${SECRET_SCAN_OUTCOME}" == "failure" ]]; then
             {
               echo ""
               echo "❌ **SECRETS DETECTED** - Immediate action required"

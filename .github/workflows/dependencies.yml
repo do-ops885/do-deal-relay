@@ -11,6 +11,10 @@ concurrency:
   group: dependency-updates
   cancel-in-progress: false
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-dependencies:
     name: Update Dependencies
@@ -33,8 +37,8 @@ jobs:
       - name: Check for updates
         id: check-updates
         run: |
-          # Check for outdated packages
-          npm outdated --json > outdated.json || true
+          # Check for outdated packages - ensure valid JSON output
+          npm outdated --json > outdated.json 2>/dev/null || echo '{}' > outdated.json
 
           # Count outdated packages
           COUNT=$(jq 'length' < outdated.json)

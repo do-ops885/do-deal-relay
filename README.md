@@ -67,7 +67,7 @@ curl https://your-worker.workers.dev/api/log
 
 ## Development Roadmap
 
-### Phase 1: Bootstrap (Current - v0.2.0)
+### Phase 1: Bootstrap
 
 - [ ] Fix test infrastructure
 - [ ] Install missing dependencies
