@@ -62,8 +62,13 @@ export async function findExpiringDeals(
   // Sort by days until expiry (most urgent first)
   expiringDeals.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 
-  console.log(
+  logger.info(
     `Found ${expiringDeals.length} deals expiring within ${windowDays} days`,
+    {
+      component: "expiration",
+      count: expiringDeals.length,
+      windowDays,
+    },
   );
   return expiringDeals;
 }
@@ -397,7 +402,9 @@ export async function sendExpiryNotifications(
   );
 
   if (dealsToNotify.length === 0) {
-    console.log("All expiring deals already notified");
+    logger.info("All expiring deals already notified", {
+      component: "expiration",
+    });
     return;
   }
 
@@ -443,7 +450,10 @@ export async function sendExpiryNotifications(
   const notifiedIds = dealsToNotify.map((ed) => ed.deal.id);
   await recordNotifiedExpiringDeals(env, notifiedIds);
 
-  console.log(`Sent expiry notifications for ${dealsToNotify.length} deals`);
+  logger.info(`Sent expiry notifications for ${dealsToNotify.length} deals`, {
+    component: "expiration",
+    count: dealsToNotify.length,
+  });
 }
 
 /**
@@ -598,7 +608,10 @@ async function sendExpiredNotifications(
     },
   });
 
-  console.log(`Sent expired notifications for ${expiredDeals.length} deals`);
+  logger.info(`Sent expired notifications for ${expiredDeals.length} deals`, {
+    component: "expiration",
+    count: expiredDeals.length,
+  });
 }
 
 // ============================================================================
@@ -611,7 +624,9 @@ async function sendExpiredNotifications(
 export async function markExpiredDeals(env: Env): Promise<number> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) {
-    console.log("No production snapshot found");
+    logger.warn("No production snapshot found", {
+      component: "expiration",
+    });
     return 0;
   }
 
@@ -673,7 +688,10 @@ export async function markExpiredDeals(env: Env): Promise<number> {
     );
     await sendExpiredNotifications(env, expiredDeals);
 
-    console.log(`Marked ${expiredCount} deals as expired`);
+    logger.info(`Marked ${expiredCount} deals as expired`, {
+      component: "expiration",
+      count: expiredCount,
+    });
   }
 
   return expiredCount;
@@ -699,7 +717,10 @@ export async function scheduleExpiryCheck(env: Env): Promise<void> {
     }),
   );
 
-  console.log(`Next expiry check scheduled for ${nextCheck.toISOString()}`);
+  logger.info(`Next expiry check scheduled for ${nextCheck.toISOString()}`, {
+    component: "expiration",
+    scheduled_at: nextCheck.toISOString(),
+  });
 }
 
 /**
@@ -795,7 +816,9 @@ export async function checkDealExpirations(env: Env): Promise<{
   expiredMarked: number;
   notificationsSent: number;
 }> {
-  console.log("Starting deal expiration check...");
+  logger.info("Starting deal expiration check...", {
+    component: "expiration",
+  });
 
   // 1. Find deals expiring soon (multiple windows)
   const expiring7Days = await findExpiringDeals(env, 7);
@@ -827,7 +850,10 @@ export async function checkDealExpirations(env: Env): Promise<{
     notificationsSent: allExpiring.length,
   };
 
-  console.log("Deal expiration check completed:", result);
+  logger.info("Deal expiration check completed", {
+    component: "expiration",
+    ...result,
+  });
   return result;
 }
 
