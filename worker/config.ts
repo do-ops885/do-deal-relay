@@ -4,8 +4,8 @@
 
 export const CONFIG = {
   // System
-  VERSION: "0.2.0",
-  SCHEMA_VERSION: "0.2.0",
+  VERSION: "0.1.3",
+  SCHEMA_VERSION: "0.1.3",
 
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes

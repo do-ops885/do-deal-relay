@@ -1,6 +1,6 @@
 {
   "name": "do-deal-relay",
-  "version": "0.2.0",
+  "version": "0.1.3",
   "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
   "type": "module",
   "scripts": {
