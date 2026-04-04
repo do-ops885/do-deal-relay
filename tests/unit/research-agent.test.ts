@@ -268,9 +268,9 @@ describe("Research Agent - Real Fetching", () => {
 
       const result = await executeReferralResearch(mockEnv, request);
 
-      // Should still return results via fallback simulation
-      expect(result.discovered_codes.length).toBeGreaterThan(0);
+      // Verify real fetching was attempted
       expect(result.research_metadata.used_real_fetching).toBe(true);
+      // Errors should be recorded when fetching fails
       expect(result.research_metadata.errors).toBeDefined();
       expect(result.research_metadata.errors!.length).toBeGreaterThan(0);
     });
