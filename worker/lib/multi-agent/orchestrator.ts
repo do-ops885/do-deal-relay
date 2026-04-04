@@ -264,11 +264,16 @@ export class MultiAgentOrchestrator {
             name: "Dry Run",
             status: "passed",
             message: "Phase executed in dry-run mode",
+            details: { simulated: true },
           },
         ],
         findings: [],
         errors: [],
-        metadata: dryRunMetadata,
+        metadata: {
+          ...dryRunMetadata,
+          simulated: true,
+          simulation_warning: "X-Simulation-Mode: true",
+        },
       };
 
       this.emitEvent({
