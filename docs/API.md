@@ -28,6 +28,73 @@ Check system health status.
     "snapshot_valid": true
   }
 }
+```
+
+#### GET /health/ready
+
+Readiness probe - returns 200 when all dependencies are healthy.
+
+**Response** (200 OK):
+
+```json
+{
+  "ready": true,
+  "status": "healthy",
+  "timestamp": "2026-04-04T12:00:00Z",
+  "version": "0.2.0",
+  "checks": {
+    "kv_connection": true,
+    "last_run_success": true,
+    "snapshot_valid": true
+  },
+  "components": {
+    "kv_stores": {
+      "deals_prod": true,
+      "deals_staging": true,
+      "deals_log": true,
+      "deals_lock": true,
+      "deals_sources": true
+    },
+    "pipeline": {
+      "last_run": "2026-04-04T11:00:00Z",
+      "last_success": true,
+      "average_duration_ms": 0
+    },
+    "external_services": {
+      "github_api": true
+    }
+  }
+}
+```
+
+**Response** (503 Service Unavailable):
+
+```json
+{
+  "ready": false,
+  "status": "degraded",
+  "timestamp": "2026-04-04T12:00:00Z",
+  "version": "0.2.0",
+  "checks": {
+    "kv_connection": false,
+    "last_run_success": false,
+    "snapshot_valid": false
+  }
+}
+```
+
+#### GET /health/live
+
+Liveness probe - returns 200 if service is running. Minimal check used by orchestrators (Kubernetes, etc.) to verify the worker is alive.
+
+**Response** (200 OK):
+
+```json
+{
+  "alive": true,
+  "timestamp": "2026-04-04T12:00:00Z"
+}
+```
 
 ---
 
@@ -1022,6 +1089,786 @@ Check D1 database health and connectivity.
     "pendingMigrations": 0
   }
 }
+```
+
+---
+
+## NLQ (Natural Language Query) API
+
+Search deals using natural language queries like "trading deals with $100 bonuses" or "crypto platforms with signup rewards". The NLQ API parses user intent, extracts entities, and executes optimized database queries.
+
+---
+
+### POST /api/nlq
+
+Execute a natural language query to search for deals.
+
+**Request Body:**
+
+```json
+{
+  "query": "trading platforms with $100 signup bonus",
+  "limit": 20,
+  "offset": 0,
+  "include_expired": false,
+  "min_confidence": 0.7
+}
+```
+
+**Parameters:**
+
+- `query` (string, required): Natural language search query (max 500 characters)
+- `limit` (number, optional): Max results to return (default: 20, max: 100)
+- `offset` (number, optional): Pagination offset (default: 0)
+- `include_expired` (boolean, optional): Include expired deals (default: false)
+- `min_confidence` (number, optional): Minimum confidence score filter (0-1)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "trading platforms with $100 signup bonus",
+  "explanation": {
+    "intent": "search",
+    "intent_confidence": 0.92,
+    "entities_found": 3,
+    "filters_applied": [
+      "category:trading",
+      "reward_value:gte:100"
+    ],
+    "search_text": "trading signup bonus",
+    "sort_applied": {
+      "field": "relevance",
+      "order": "desc"
+    }
+  },
+  "count": 8,
+  "execution_time_ms": 145,
+  "results": [
+    {
+      "id": "sha256-hash",
+      "code": "ABC123",
+      "url": "https://trading212.com/invite/ABC123",
+      "domain": "trading212.com",
+      "title": "Trading212",
+      "description": "Free share worth up to £100",
+      "status": "active",
+      "reward_type": "item",
+      "reward_value": "Free share worth up to £100",
+      "categories": ["finance", "trading"],
+      "confidence_score": 0.85,
+      "expires_at": "2024-12-31T23:59:59Z"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: Query executed successfully
+- 400: Invalid request (validation error or missing query)
+- 429: Rate limit exceeded
+- 500: Query execution failed
+- 503: Database unavailable
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/api/nlq" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "crypto exchanges with high signup bonuses", "limit": 10}'
+```
+
+---
+
+### GET /api/nlq
+
+Execute a natural language query via URL parameter (simplified interface for quick queries).
+
+**Query Parameters:**
+
+- `q` (string, required): Natural language search query (max 500 characters)
+- `limit` (number, optional): Max results to return (default: 20)
+- `include_expired` (boolean, optional): Include expired deals (default: false)
+
+**Response:**
+
+Same format as POST /api/nlq
+
+**Example:**
+
+```bash
+# Simple search
+curl "https://your-worker.workers.dev/api/nlq?q=trading%20platforms%20with%20bonus"
+
+# With limit
+curl "https://your-worker.workers.dev/api/nlq?q=crypto%20deals&limit=5"
+
+# Include expired deals
+curl "https://your-worker.workers.dev/api/nlq?q=finance&include_expired=true"
+```
+
+---
+
+### POST /api/nlq/explain
+
+Explain how a query would be parsed without executing it. Useful for debugging and understanding query interpretation.
+
+**Request Body:**
+
+```json
+{
+  "query": "trading deals with $100 bonuses"
+}
+```
+
+**Query Parameters (alternative to POST body):**
+
+- `q` (string): Natural language query (when using GET)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "trading deals with $100 bonuses",
+  "parsed": {
+    "tokens": [
+      { "value": "trading", "type": "word", "normalized": "trading" },
+      { "value": "deals", "type": "word", "normalized": "deals" },
+      { "value": "$", "type": "currency", "normalized": "USD" },
+      { "value": "100", "type": "number", "normalized": "100" },
+      { "value": "bonuses", "type": "word", "normalized": "bonuses" }
+    ],
+    "intent": {
+      "intent": "search",
+      "confidence": 0.89,
+      "keywords": ["find", "search", "deals"],
+      "originalQuery": "trading deals with $100 bonuses"
+    },
+    "entities": [
+      { "type": "category", "value": "trading", "confidence": 0.95 },
+      { "type": "reward_value", "value": 100, "operator": "gte", "confidence": 0.88 }
+    ]
+  },
+  "structured": {
+    "textQuery": "trading bonuses",
+    "filters": [
+      { "field": "category", "operator": "like", "value": "trading" },
+      { "field": "reward_value", "operator": "gte", "value": 100 }
+    ],
+    "categories": ["trading"],
+    "sortBy": "relevance",
+    "sortOrder": "desc",
+    "limit": 20,
+    "offset": 0,
+    "includeExpired": false
+  },
+  "explanation": {
+    "intent": "search",
+    "intent_confidence": 0.89,
+    "entities_found": 2,
+    "filters_applied": [
+      "category:trading",
+      "reward_value:gte:100"
+    ],
+    "search_text": "trading bonuses",
+    "sort_applied": {
+      "field": "relevance",
+      "order": "desc"
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Explain completed successfully
+- 400: Missing or invalid query
+- 500: Explain failed
+- 503: Database unavailable
+
+**Examples:**
+
+```bash
+# Using POST with JSON body
+curl -X POST "https://your-worker.workers.dev/api/nlq/explain" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "high value crypto signup bonuses"}'
+
+# Using GET with query parameter
+curl "https://your-worker.workers.dev/api/nlq/explain?q=trading%20deals%20with%20$100%20bonuses"
+```
+
+---
+
+## Webhook API
+
+Manage webhook subscriptions, incoming webhooks from partners, and delivery monitoring. Webhooks enable real-time notifications when referral deals are created, updated, or change status.
+
+---
+
+### POST /webhooks/subscribe
+
+Subscribe to receive webhook events when referrals change.
+
+**Request Headers:**
+
+- `X-API-Key` (string, required): Valid API key for authentication
+- `Content-Type` (string, required): `application/json`
+
+**Request Body:**
+
+```json
+{
+  "url": "https://example.com/webhooks",
+  "events": ["referral.created", "referral.updated"],
+  "partner_id": "my_partner",
+  "metadata": {
+    "team": "engineering",
+    "environment": "production"
+  },
+  "retry_policy": {
+    "max_attempts": 5,
+    "initial_delay_ms": 1000,
+    "max_delay_ms": 60000,
+    "backoff_multiplier": 2
+  },
+  "filters": {
+    "domains": ["trading212.com"],
+    "status": ["active"]
+  }
+}
+```
+
+**Parameters:**
+
+- `url` (string, required): HTTPS URL to receive webhook events
+- `events` (array, required): Event types to subscribe to
+  - Valid events: `referral.created`, `referral.updated`, `referral.deactivated`, `referral.expired`, `referral.validated`, `referral.quarantined`, `ping`
+- `partner_id` (string, optional): Partner identifier (default: "default")
+- `metadata` (object, optional): Custom metadata for the subscription
+- `retry_policy` (object, optional): Custom retry configuration
+- `filters` (object, optional): Filter events by domains or status
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "subscription": {
+    "id": "sub_abc123xyz",
+    "url": "https://example.com/webhooks",
+    "events": ["referral.created", "referral.updated"],
+    "secret": "whsec_xxxxxxxxxxxxxxxxxxxxxx",
+    "active": true,
+    "created_at": "2024-03-31T12:00:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- 201: Subscription created successfully
+- 400: Invalid request (missing fields, invalid URL, or invalid events)
+- 401: Unauthorized - missing or invalid API key
+- 500: Failed to create subscription
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/subscribe" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "url": "https://example.com/webhooks",
+    "events": ["referral.created", "referral.updated"],
+    "partner_id": "my_app"
+  }'
+```
+
+---
+
+### POST /webhooks/unsubscribe
+
+Unsubscribe from webhook events and delete a subscription.
+
+**Request Headers:**
+
+- `X-API-Key` (string, required): Valid API key for authentication
+- `Content-Type` (string, required): `application/json`
+
+**Request Body:**
+
+```json
+{
+  "subscription_id": "sub_abc123xyz"
+}
+```
+
+**Parameters:**
+
+- `subscription_id` (string, required): ID of the subscription to delete
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Subscription deleted successfully"
+}
+```
+
+**Status Codes:**
+
+- 200: Subscription deleted successfully
+- 400: Missing subscription_id
+- 401: Unauthorized - missing or invalid API key
+- 404: Subscription not found
+- 500: Failed to delete subscription
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/unsubscribe" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{"subscription_id": "sub_abc123xyz"}'
+```
+
+---
+
+### GET /webhooks/subscriptions
+
+List active webhook subscriptions for a partner.
+
+**Query Parameters:**
+
+- `partner_id` (string, optional): Filter by partner ID (default: "default")
+
+**Response:**
+
+```json
+{
+  "subscriptions": [
+    {
+      "id": "sub_abc123xyz",
+      "url": "https://example.com/webhooks",
+      "events": ["referral.created", "referral.updated"],
+      "active": true,
+      "created_at": "2024-03-31T12:00:00Z",
+      "filters": {
+        "domains": ["trading212.com"],
+        "status": ["active"]
+      }
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 500: Failed to list subscriptions
+
+**Example:**
+
+```bash
+# List all subscriptions for default partner
+curl "https://your-worker.workers.dev/webhooks/subscriptions"
+
+# List subscriptions for specific partner
+curl "https://your-worker.workers.dev/webhooks/subscriptions?partner_id=my_app"
+```
+
+---
+
+### POST /webhooks/partners
+
+Register a new webhook partner for incoming webhooks.
+
+**Request Headers:**
+
+- `X-API-Key` (string, required): Valid API key for authentication
+- `Content-Type` (string, required): `application/json`
+
+**Request Body:**
+
+```json
+{
+  "name": "Trading212 Integration",
+  "allowed_events": ["referral.created", "referral.updated"],
+  "rate_limit_per_minute": 100
+}
+```
+
+**Parameters:**
+
+- `name` (string, required): Partner name
+- `allowed_events` (array, optional): Events this partner can send
+- `rate_limit_per_minute` (number, optional): Rate limit for incoming webhooks
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "partner": {
+    "id": "partner_trading212",
+    "name": "Trading212 Integration",
+    "secret": "whsec_partner_xxxxxxxxxxxxxxxx",
+    "active": true,
+    "allowed_events": ["referral.created", "referral.updated"],
+    "rate_limit_per_minute": 100,
+    "created_at": "2024-03-31T12:00:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- 201: Partner created successfully
+- 400: Missing required field: name
+- 401: Unauthorized - missing or invalid API key
+- 500: Failed to create partner
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/partners" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "name": "Trading212 Integration",
+    "allowed_events": ["referral.created"],
+    "rate_limit_per_minute": 60
+  }'
+```
+
+---
+
+### GET /webhooks/partners/:partnerId
+
+Get details for a specific webhook partner.
+
+**Parameters:**
+
+- `partnerId` (string, required): Partner ID to look up
+
+**Response:**
+
+```json
+{
+  "partner": {
+    "id": "partner_trading212",
+    "name": "Trading212 Integration",
+    "active": true,
+    "allowed_events": ["referral.created", "referral.updated"],
+    "rate_limit_per_minute": 100,
+    "created_at": "2024-03-31T12:00:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 404: Partner not found
+- 500: Failed to get partner
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/webhooks/partners/partner_trading212"
+```
+
+---
+
+### POST /webhooks/incoming/:partnerId
+
+Receive incoming webhooks from partners. Requires HMAC signature verification.
+
+**Request Headers:**
+
+- `Content-Type` (string, required): `application/json`
+- `X-Webhook-Signature` (string, required): HMAC-SHA256 signature of payload
+- `X-Webhook-Timestamp` (string, required): Unix timestamp of request
+- `X-Webhook-Id` (string, required): Unique webhook ID for idempotency
+- `Idempotency-Key` (string, optional): Additional idempotency key
+
+**Request Body:**
+
+```json
+{
+  "event": "referral.created",
+  "data": {
+    "code": "ABC123XYZ",
+    "url": "https://trading212.com/invite/ABC123XYZ",
+    "domain": "trading212.com",
+    "title": "Trading212 Referral",
+    "description": "Free share worth up to £100",
+    "reward": {
+      "type": "item",
+      "value": "Free share worth up to £100",
+      "currency": "GBP"
+    },
+    "expires_at": "2024-12-31T23:59:59Z",
+    "status": "active",
+    "metadata": {
+      "source": "partner_webhook"
+    }
+  },
+  "external_id": "ext_12345",
+  "metadata": {
+    "partner_version": "1.0"
+  }
+}
+```
+
+**Parameters:**
+
+- `event` (string, required): Event type
+- `data` (object, required): Referral data
+  - `code` (string, required): Referral code
+  - `url` (string, required): Full referral URL
+  - `domain` (string, required): Domain name
+  - `title` (string, optional): Referral title
+  - `description` (string, optional): Description
+  - `reward` (object, optional): Reward details
+  - `expires_at` (string, optional): ISO 8601 expiration date
+  - `status` (string, optional): Status (active, inactive, expired, quarantined)
+- `external_id` (string, optional): External reference ID
+- `metadata` (object, optional): Additional metadata
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Referral created successfully",
+  "referral_id": "abc123-sha256"
+}
+```
+
+**Status Codes:**
+
+- 200: Webhook processed successfully
+- 400: Missing required headers or invalid payload
+- 415: Content-Type must be application/json
+- 500: Failed to process webhook
+
+**Signature Verification:**
+
+Partners must sign payloads using HMAC-SHA256 with their partner secret:
+
+```
+Signature = HMAC-SHA256(partner_secret, timestamp + "." + payload)
+```
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/incoming/partner_trading212" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Signature: sha256=xxxxxxxxxxxxxxxx" \
+  -H "X-Webhook-Timestamp: 1711886400" \
+  -H "X-Webhook-Id: wh_1234567890" \
+  -d '{
+    "event": "referral.created",
+    "data": {
+      "code": "NEWCODE123",
+      "url": "https://example.com/invite/NEWCODE123",
+      "domain": "example.com"
+    }
+  }'
+```
+
+---
+
+### GET /webhooks/dlq
+
+View the dead letter queue - failed webhook deliveries that can be retried.
+
+**Response:**
+
+```json
+{
+  "count": 3,
+  "events": [
+    {
+      "event_id": "evt_abc123",
+      "event_type": "referral.created",
+      "subscription_id": "sub_xyz789",
+      "attempts": 5,
+      "enqueued_at": "2024-03-31T10:30:00Z",
+      "retryable": true
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 500: Failed to get dead letter queue
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/webhooks/dlq"
+```
+
+---
+
+### POST /webhooks/dlq/:eventId/:subscriptionId
+
+Retry a failed webhook delivery from the dead letter queue.
+
+**Parameters:**
+
+- `eventId` (string, required): Event ID to retry
+- `subscriptionId` (string, required): Subscription ID for the delivery
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Event queued for retry",
+  "event_id": "evt_abc123",
+  "subscription_id": "sub_xyz789"
+}
+```
+
+**Status Codes:**
+
+- 200: Event queued for retry
+- 404: Event not found or subscription inactive
+- 500: Failed to retry event
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/dlq/evt_abc123/sub_xyz789"
+```
+
+---
+
+### POST /webhooks/sync
+
+Configure bidirectional sync settings for a partner.
+
+**Request Headers:**
+
+- `Content-Type` (string, required): `application/json`
+
+**Request Body:**
+
+```json
+{
+  "partner_id": "partner_trading212",
+  "direction": "bidirectional",
+  "mode": "scheduled",
+  "schedule": {
+    "cron": "0 */6 * * *",
+    "timezone": "UTC"
+  },
+  "conflict_resolution": "timestamp",
+  "priority": "local",
+  "filters": {
+    "domains": ["trading212.com"],
+    "status": ["active"]
+  },
+  "field_mapping": {
+    "external_code": "code",
+    "external_url": "url"
+  }
+}
+```
+
+**Parameters:**
+
+- `partner_id` (string, required): Partner ID
+- `direction` (string, required): Sync direction - `push`, `pull`, or `bidirectional`
+- `mode` (string, required): Sync mode - `realtime`, `scheduled`, or `manual`
+- `schedule` (object, optional): Cron schedule for scheduled mode
+  - `cron` (string, required): Cron expression
+  - `timezone` (string, required): Timezone identifier
+- `conflict_resolution` (string, optional): How to resolve conflicts - `timestamp`, `priority`, or `manual`
+- `priority` (string, optional): Default priority - `local` or `remote`
+- `filters` (object, optional): Sync filters by domains or status
+- `field_mapping` (object, optional): Map external field names to internal fields
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "sync_config": {
+    "id": "sync_abc123",
+    "partner_id": "partner_trading212",
+    "direction": "bidirectional",
+    "mode": "scheduled",
+    "status": "idle"
+  }
+}
+```
+
+**Status Codes:**
+
+- 201: Sync configuration created
+- 400: Missing required fields
+- 500: Failed to create sync config
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/sync" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "partner_id": "partner_trading212",
+    "direction": "bidirectional",
+    "mode": "realtime"
+  }'
+```
+
+---
+
+### GET /webhooks/sync/:partnerId
+
+Get the current sync state for a partner.
+
+**Parameters:**
+
+- `partnerId` (string, required): Partner ID to get sync state for
+
+**Response:**
+
+```json
+{
+  "state": {
+    "partner_id": "partner_trading212",
+    "last_sync_at": "2024-03-31T12:00:00Z",
+    "cursor": "cursor_token_xyz",
+    "sync_version": 42,
+    "pending_changes": 5,
+    "status": "idle",
+    "last_error": null
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 404: Sync state not found
+- 500: Failed to get sync state
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/webhooks/sync/partner_trading212"
 ```
 
 ---
