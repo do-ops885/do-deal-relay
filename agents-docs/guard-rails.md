@@ -18,6 +18,8 @@ Guard rails are automated safety checks that prevent the system from:
 | File Type             | Max Lines | Enforcement |
 | --------------------- | --------- | ----------- |
 | TypeScript/JavaScript | 500       | FATAL       |
+| SKILL.md              | 250       | WARNING     |
+| AGENTS.md             | 150       | WARNING     |
 | JSON (config)         | 1000      | WARNING     |
 | Markdown (docs)       | 1000      | WARNING     |
 

@@ -181,15 +181,35 @@ echo ""
 # GUARD RAIL 4: Line Count Limits
 # ============================================
 echo "Guard Rail 4: Line Count Limits"
-MAX_LINES=500
+MAX_LINES_TS=500
+MAX_LINES_SKILL=250
+MAX_LINES_AGENTS=150
 
 LINE_VIOLATIONS=0
 while IFS= read -r file; do
-    if [[ "$file" == *.ts ]] || [[ "$file" == *.js ]]; then
-        if [ -f "$file" ]; then
-            LINES=$(wc -l < "$file")
-            if [ "$LINES" -gt "$MAX_LINES" ]; then
-                warning "$file has $LINES lines (max $MAX_LINES)"
+    if [ -f "$file" ]; then
+        LINES=$(wc -l < "$file")
+        
+        # TypeScript/JavaScript files
+        if [[ "$file" == *.ts ]] || [[ "$file" == *.js ]]; then
+            if [ "$LINES" -gt $MAX_LINES_TS ]; then
+                warning "$file has $LINES lines (max $MAX_LINES_TS)"
+                LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
+            fi
+        fi
+        
+        # SKILL.md files
+        if [[ "$file" == */SKILL.md ]]; then
+            if [ "$LINES" -gt $MAX_LINES_SKILL ]; then
+                warning "$file has $LINES lines (max $MAX_LINES_SKILL)"
+                LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
+            fi
+        fi
+        
+        # AGENTS.md
+        if [[ "$file" == "AGENTS.md" ]]; then
+            if [ "$LINES" -gt $MAX_LINES_AGENTS ]; then
+                warning "AGENTS.md has $LINES lines (max $MAX_LINES_AGENTS)"
                 LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
             fi
         fi
