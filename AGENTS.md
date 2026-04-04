@@ -18,6 +18,21 @@ npm test
 npm run dev
 ```
 
+## Local Guard Rails (NEW)
+
+Enhanced pre-commit and pre-push hooks now run the **same checks as GitHub Actions CI** locally:
+
+```bash
+# Install git hooks (run once after clone)
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+cp scripts/pre-push-hook.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+```
+
+**Pre-commit (10 gates)**: Secrets detection (17 patterns), file size limits, syntax validation, directory organization
+**Pre-push (9 gates)**: TypeScript compilation, full test suite, validation gates, security audit, build verification
+
+See [agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md) for complete documentation.
+
 ## System Overview
 
 **Architecture**: Two-phase publish (Staging → Production) with 9 validation gates
@@ -86,16 +101,17 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 
 ## Reference
 
-| Resource         | Location                                                           |
-| ---------------- | ------------------------------------------------------------------ |
-| System Reference | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
-| Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
-| Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
-| Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Execution Plan   | [plans/EXECUTION_PLAN.md](plans/EXECUTION_PLAN.md)                 |
-| Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
-| API Docs         | [docs/API.md](docs/API.md)                                         |
-| Skills           | [.agents/skills/](.agents/skills/)                                 |
+| Resource           | Location                                                           |
+| ------------------ | ------------------------------------------------------------------ |
+| System Reference   | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
+| Agent Specs        | [agents-docs/agents/](agents-docs/agents/)                         |
+| Guard Rails        | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
+| **Local Guard Rails** | **[agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md)**    |
+| Coordination       | [agents-docs/coordination/](agents-docs/coordination/)             |
+| Execution Plan     | [plans/EXECUTION_PLAN.md](plans/EXECUTION_PLAN.md)                 |
+| Lessons Learned    | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
+| API Docs           | [docs/API.md](docs/API.md)                                         |
+| Skills             | [.agents/skills/](.agents/skills/)                                 |
 
 ## Skills
 

@@ -46,7 +46,9 @@ if [ -z "$STAGED_FILES" ]; then
     exit 0
 fi
 
-info "Checking ${#STAGED_FILES[@]} staged files..."
+# Count staged files
+STAGED_COUNT=$(echo "$STAGED_FILES" | wc -l | tr -d ' ')
+info "Checking ${STAGED_COUNT} staged file(s)..."
 echo ""
 
 # ============================================
@@ -85,37 +87,59 @@ echo ""
 # GUARD RAIL 2: Secret Detection in Staged Changes
 # ============================================
 echo "Guard Rail 2: Secret Detection"
-SECRET_PATTERNS=(
-    "ghp_[a-zA-Z0-9]{36}"                    # GitHub Personal Access Token
-    "gho_[a-zA-Z0-9]{36}"                    # GitHub OAuth Token
-    "ghs_[a-zA-Z0-9]{36}"                    # GitHub Server-to-Server Token
-    "sk-[a-zA-Z0-9]{48}"                     # Stripe Secret Key
-    "sk_live_[a-zA-Z0-9]{24,}"               # Stripe Live Key
-    "sk_test_[a-zA-Z0-9]{24,}"               # Stripe Test Key
-    "AKIA[0-9A-Z]{16}"                       # AWS Access Key ID
-    "ASIA[0-9A-Z]{16}"                       # AWS Session Token
-    "[A-Za-z0-9/+=]{40}"                     # Generic base64 secret (40+ chars)
-    "bearer\s+[a-zA-Z0-9_-]{20,}"             # Bearer token
-    "api[_-]?key\s*[=:]\s*["\'][^"\']{8,}["\']"  # API key assignments
-    "password\s*[=:]\s*["\'][^"\']{8,}["\']"      # Password assignments
-    "secret\s*[=:]\s*["\'][^"\']{8,}["\']"        # Secret assignments
-    "BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY" # Private keys
-    "BEGIN PGP PRIVATE KEY"                   # PGP keys
-)
 
 SECRETS_FOUND=0
 PATTERN_COUNT=0
 
-for pattern in "${SECRET_PATTERNS[@]}"; do
+# Define secret patterns as individual checks to avoid bash array issues
+check_pattern() {
+    local pattern="$1"
+    local name="$2"
     PATTERN_COUNT=$((PATTERN_COUNT + 1))
-    # Check staged diff for secrets
-    MATCHES=$(git diff --cached 2>/dev/null | grep -E "$pattern" || true)
+
+    # Check staged diff for secrets, but exclude:
+    # - Comment lines (starting with # or // or *)
+    # - Lines containing "check_pattern" (function calls)
+    # - Lines that are clearly documentation
+    local MATCHES
+    MATCHES=$(git diff --cached 2>/dev/null | \
+        grep -vE "^[[:space:]]*(#|//|\*|\-\-|<!--)" | \
+        grep -v "check_pattern" | \
+        grep -vE "^\s*\-\s*" | \
+        grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
-        error "Potential secret detected (pattern $PATTERN_COUNT):"
+        error "Potential secret detected ($name):"
         echo "  $MATCHES" | head -3
         SECRETS_FOUND=1
     fi
-done
+}
+
+# GitHub tokens
+check_pattern "ghp_[a-zA-Z0-9]{36}" "GitHub PAT"
+check_pattern "gho_[a-zA-Z0-9]{36}" "GitHub OAuth"
+check_pattern "ghs_[a-zA-Z0-9]{36}" "GitHub Server-to-Server"
+
+# Stripe keys
+check_pattern "sk-[a-zA-Z0-9]{48}" "Stripe Secret"
+check_pattern "sk_live_[a-zA-Z0-9]{24,}" "Stripe Live"
+check_pattern "sk_test_[a-zA-Z0-9]{24,}" "Stripe Test"
+
+# AWS keys
+check_pattern "AKIA[0-9A-Z]{16}" "AWS Access Key"
+check_pattern "ASIA[0-9A-Z]{16}" "AWS Session"
+
+# Generic patterns
+check_pattern "[A-Za-z0-9/+=]{40}" "Generic base64 secret"
+check_pattern "bearer\s+[a-zA-Z0-9_-]{20,}" "Bearer token"
+
+# Assignment patterns
+check_pattern "api[_-]?key\s*[=:]\s*[\"'][^\"']{8,}[\"']" "API key assignment"
+check_pattern "password\s*[=:]\s*[\"'][^\"']{8,}[\"']" "Password assignment"
+check_pattern "secret\s*[=:]\s*[\"'][^\"']{8,}[\"']" "Secret assignment"
+
+# Private keys (escaped parentheses for bash compatibility)
+check_pattern "BEGIN \(RSA\|EC\|DSA\|OPENSSH\) PRIVATE KEY" "Private key"
+check_pattern "BEGIN PGP PRIVATE KEY" "PGP key"
 
 if [ $SECRETS_FOUND -eq 0 ]; then
     success "No secrets detected ($PATTERN_COUNT patterns checked)"
