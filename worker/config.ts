@@ -40,6 +40,9 @@ export const CONFIG = {
   RETRY_DELAY_MS: 1000,
   MAX_RETRY_DELAY_MS: 30000,
 
+  // KV batching settings
+  KV_BATCH_SIZE: 25, // Cloudflare Workers subrequest limit is 50, we use 25 for safety margin
+
   // Scoring weights
   SCORING_WEIGHTS: {
     validity_ratio: 0.25,

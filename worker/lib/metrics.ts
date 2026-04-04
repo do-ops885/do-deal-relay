@@ -1,6 +1,7 @@
 import { PipelinePhase } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
+import { fetchInBatches } from "./utils";
 
 // ============================================================================
 // Pipeline Metrics Types
@@ -171,6 +172,7 @@ export async function getMetrics(
 
 /**
  * Get recent pipeline run metrics
+ * Optimization: Parallel batch fetch instead of sequential loop
  */
 export async function getRecentMetrics(
   env: Env,
@@ -181,16 +183,9 @@ export async function getRecentMetrics(
   const index: string[] = indexRaw ? JSON.parse(indexRaw) : [];
 
   const runIds = index.slice(0, count);
-  const metrics: PipelineMetrics[] = [];
 
-  for (const runId of runIds) {
-    const metric = await getMetrics(env, runId);
-    if (metric) {
-      metrics.push(metric);
-    }
-  }
-
-  return metrics;
+  // Use parallel batch fetching for better performance
+  return fetchInBatches(runIds, (runId) => getMetrics(env, runId));
 }
 
 /**
