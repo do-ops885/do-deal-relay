@@ -60,7 +60,7 @@ function generateValue() {
         metadata: {
           created: new Date().toISOString(),
           source: "api",
-          version: "0.1.2",
+          version: "0.1.3",
         },
       });
 

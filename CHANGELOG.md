@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-03-15
+## [0.1.3] - 2026-04-04
 
 ### Fixed
 - GitHub Actions workflows using non-existent action versions (checkout@v5, setup-python@v6)
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized action versions to stable releases (checkout@v4, setup-python@v5)
 - Replaced deprecated rust-toolchain action with dtolnay/rust-toolchain@stable
 - Added --ci flag support to gh-labels-creator.sh for non-interactive CI runs
-- Updated README.md version badge to 0.2.0
+- Updated README.md version badge to 0.1.3
 - Updated all documentation to reference Qwen Code support
 - Improved CONTRIBUTING.md with comprehensive guide
 - Cleaned up AGENTS_REGISTRY.md formatting
