@@ -2080,6 +2080,471 @@ curl "https://your-worker.workers.dev/api/email/help"
 
 ---
 
+## Webhook System
+
+The webhook system enables real-time deal synchronization and event notifications between partners and the deal discovery platform.
+
+### Authentication
+
+- **Incoming webhooks**: HMAC-SHA256 signature verification via `X-Webhook-Signature` header
+- **Subscription management**: API key via `X-API-Key` header
+- **Partner management**: Admin-level API key required
+
+---
+
+### POST /webhooks/incoming/:partnerId
+
+Receive incoming webhook events from partners. Creates or updates deals based on the webhook payload.
+
+**Authentication**: HMAC-SHA256 signature verification
+
+**Request Headers**:
+- `X-Webhook-Signature`: HMAC-SHA256 signature of the request body
+- `X-Webhook-Id`: Unique event ID
+- `X-Webhook-Timestamp`: Unix timestamp (seconds)
+
+**Request Body**:
+```json
+{
+  "event": "referral.created",
+  "data": {
+    "code": "ABC123",
+    "url": "https://example.com/ref/ABC123",
+    "domain": "example.com",
+    "title": "Example Referral",
+    "reward": {
+      "type": "cash",
+      "value": 10,
+      "currency": "USD"
+    },
+    "expires_at": "2026-12-31T23:59:59Z",
+    "status": "active"
+  },
+  "external_id": "ext-12345",
+  "metadata": {
+    "source": "partner_system"
+  }
+}
+```
+
+**Supported Events**:
+- `referral.created` - New referral deal
+- `referral.updated` - Updated referral deal
+- `referral.deactivated` - Deactivated referral
+- `referral.expired` - Expired referral
+- `referral.validated` - Validated referral
+- `referral.quarantined` - Quarantined for review
+- `ping` - Health check ping
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "message": "Webhook processed successfully",
+  "referralId": "ref_abc123"
+}
+```
+
+**Status Codes**:
+- 200: Webhook processed successfully
+- 201: New deal created from webhook
+- 400: Invalid payload or missing fields
+- 401: Invalid or missing signature
+- 429: Rate limit exceeded
+- 500: Processing error
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/incoming/partner-123" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Signature: sha256=..." \
+  -H "X-Webhook-Id: evt_123" \
+  -H "X-Webhook-Timestamp: 1712000000" \
+  -d '{
+    "event": "referral.created",
+    "data": {
+      "code": "ABC123",
+      "url": "https://example.com/ref/ABC123",
+      "domain": "example.com"
+    }
+  }'
+```
+
+---
+
+### POST /webhooks/subscribe
+
+Subscribe to deal event notifications.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Request Body**:
+```json
+{
+  "partner_id": "partner-123",
+  "url": "https://your-server.com/webhooks",
+  "events": ["referral.created", "referral.updated"],
+  "filters": {
+    "domains": ["example.com", "test.com"],
+    "status": ["active"]
+  },
+  "retry_policy": {
+    "max_attempts": 5,
+    "initial_delay_ms": 1000,
+    "max_delay_ms": 60000,
+    "backoff_multiplier": 2
+  },
+  "metadata": {
+    "environment": "production"
+  }
+}
+```
+
+**Response (201)**:
+```json
+{
+  "id": "sub_abc123",
+  "partner_id": "partner-123",
+  "url": "https://your-server.com/webhooks",
+  "events": ["referral.created", "referral.updated"],
+  "active": true,
+  "created_at": "2026-04-04T12:00:00Z",
+  "updated_at": "2026-04-04T12:00:00Z"
+}
+```
+
+**Status Codes**:
+- 201: Subscription created
+- 400: Invalid request body
+- 401: Invalid or missing API key
+- 403: Insufficient permissions
+- 409: Duplicate subscription
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/subscribe" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "partner_id": "partner-123",
+    "url": "https://your-server.com/webhooks",
+    "events": ["referral.created"]
+  }'
+```
+
+---
+
+### POST /webhooks/unsubscribe
+
+Unsubscribe from deal event notifications.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Request Body**:
+```json
+{
+  "subscription_id": "sub_abc123"
+}
+```
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "message": "Subscription unsubscribed successfully"
+}
+```
+
+**Status Codes**:
+- 200: Subscription unsubscribed
+- 400: Missing subscription ID
+- 401: Invalid or missing API key
+- 404: Subscription not found
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/unsubscribe" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{"subscription_id": "sub_abc123"}'
+```
+
+---
+
+### GET /webhooks/subscriptions
+
+List all subscriptions for a partner.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Query Parameters**:
+- `partner_id` (string, required): Partner ID to filter by
+- `active` (boolean, optional): Filter by active status
+
+**Response (200)**:
+```json
+{
+  "subscriptions": [
+    {
+      "id": "sub_abc123",
+      "partner_id": "partner-123",
+      "url": "https://your-server.com/webhooks",
+      "events": ["referral.created"],
+      "active": true,
+      "created_at": "2026-04-04T12:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+**Status Codes**:
+- 200: Subscriptions retrieved
+- 401: Invalid or missing API key
+- 403: Insufficient permissions
+
+**Example**:
+```bash
+curl "https://your-worker.workers.dev/webhooks/subscriptions?partner_id=partner-123" \
+  -H "X-API-Key: your-api-key"
+```
+
+---
+
+### POST /webhooks/partners
+
+Create a new webhook partner (admin only).
+
+**Authentication**: Admin API key required (`X-API-Key` header)
+
+**Request Body**:
+```json
+{
+  "name": "Partner Name",
+  "allowed_events": ["referral.created", "referral.updated"],
+  "rate_limit_per_minute": 60
+}
+```
+
+**Response (201)**:
+```json
+{
+  "id": "partner-abc123",
+  "name": "Partner Name",
+  "secret": "whsec_...",
+  "active": true,
+  "allowed_events": ["referral.created", "referral.updated"],
+  "rate_limit_per_minute": 60,
+  "created_at": "2026-04-04T12:00:00Z"
+}
+```
+
+**Status Codes**:
+- 201: Partner created
+- 400: Invalid request body
+- 401: Invalid or missing API key
+- 403: Not admin level
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/partners" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-admin-api-key" \
+  -d '{
+    "name": "Partner Name",
+    "allowed_events": ["referral.created"]
+  }'
+```
+
+---
+
+### GET /webhooks/partners/:partnerId
+
+Get partner details (admin only).
+
+**Authentication**: Admin API key required (`X-API-Key` header)
+
+**Response (200)**:
+```json
+{
+  "id": "partner-abc123",
+  "name": "Partner Name",
+  "active": true,
+  "allowed_events": ["referral.created"],
+  "rate_limit_per_minute": 60,
+  "created_at": "2026-04-04T12:00:00Z"
+}
+```
+
+**Status Codes**:
+- 200: Partner retrieved
+- 401: Invalid or missing API key
+- 403: Not admin level
+- 404: Partner not found
+
+**Example**:
+```bash
+curl "https://your-worker.workers.dev/webhooks/partners/partner-abc123" \
+  -H "X-API-Key: your-admin-api-key"
+```
+
+---
+
+### GET /webhooks/dlq
+
+Get dead letter queue events (failed webhook deliveries).
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Query Parameters**:
+- `limit` (number, optional): Max events to return (default: 50)
+- `offset` (number, optional): Offset for pagination
+
+**Response (200)**:
+```json
+{
+  "events": [
+    {
+      "event_id": "evt_123",
+      "subscription_id": "sub_abc123",
+      "status": "failed",
+      "attempts": 5,
+      "last_error": "Connection timeout",
+      "enqueued_at": "2026-04-04T12:00:00Z",
+      "retryable": true
+    }
+  ],
+  "total": 1
+}
+```
+
+**Status Codes**:
+- 200: Dead letter queue retrieved
+- 401: Invalid or missing API key
+
+**Example**:
+```bash
+curl "https://your-worker.workers.dev/webhooks/dlq?limit=20" \
+  -H "X-API-Key: your-api-key"
+```
+
+---
+
+### POST /webhooks/dlq/:eventId/:subscriptionId
+
+Retry a dead letter queue event.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Response (200)**:
+```json
+{
+  "success": true,
+  "message": "Event requeued for delivery"
+}
+```
+
+**Status Codes**:
+- 200: Event requeued
+- 401: Invalid or missing API key
+- 404: Event not found
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/dlq/evt_123/sub_abc123" \
+  -H "X-API-Key: your-api-key"
+```
+
+---
+
+### POST /webhooks/sync
+
+Create bidirectional sync configuration for a partner.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Request Body**:
+```json
+{
+  "partner_id": "partner-123",
+  "direction": "bidirectional",
+  "mode": "realtime",
+  "conflict_resolution": "timestamp",
+  "priority": "local",
+  "filters": {
+    "domains": ["example.com"],
+    "status": ["active"]
+  },
+  "field_mapping": {
+    "external_code": "code",
+    "external_url": "url"
+  }
+}
+```
+
+**Response (201)**:
+```json
+{
+  "partner_id": "partner-123",
+  "direction": "bidirectional",
+  "mode": "realtime",
+  "conflict_resolution": "timestamp",
+  "priority": "local",
+  "created_at": "2026-04-04T12:00:00Z"
+}
+```
+
+**Status Codes**:
+- 201: Sync config created
+- 400: Invalid request body
+- 401: Invalid or missing API key
+- 409: Sync config already exists
+
+**Example**:
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/sync" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "partner_id": "partner-123",
+    "direction": "bidirectional",
+    "mode": "realtime"
+  }'
+```
+
+---
+
+### GET /webhooks/sync/:partnerId
+
+Get sync state for a partner.
+
+**Authentication**: API key required (`X-API-Key` header)
+
+**Response (200)**:
+```json
+{
+  "partner_id": "partner-123",
+  "last_sync_at": "2026-04-04T12:00:00Z",
+  "cursor": "cursor_abc123",
+  "sync_version": 1,
+  "pending_changes": 0,
+  "status": "idle"
+}
+```
+
+**Status Codes**:
+- 200: Sync state retrieved
+- 401: Invalid or missing API key
+- 404: Sync config not found
+
+**Example**:
+```bash
+curl "https://your-worker.workers.dev/webhooks/sync/partner-123" \
+  -H "X-API-Key: your-api-key"
+```
+
+---
+
 ## Multi-Agent Workflow API
 
 ⚠️ **Coming Soon** - The workflow API is planned for a future release.

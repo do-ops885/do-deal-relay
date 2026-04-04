@@ -1,211 +1,119 @@
 {
-  "version": "0.1.4",
-  "release_date": "2026-04-03",
-  "status": "multi-agent-workflow-complete",
-  "phase": "Multi-Agent Workflow Implementation Complete",
-  "workflow_execution": {
-    "completed_at": "2026-04-03T16:00:00Z",
-    "phases_completed": 4,
-    "phases_summary": {
-      "phase_1": {
-        "name": "Codebase Verification",
-        "status": "passed",
-        "result": "All URL patterns verified correct"
-      },
-      "phase_2": {
-        "name": "Evals & Tests",
-        "status": "partial",
-        "result": "TypeScript passed, tests skipped due to environment"
-      },
-      "phase_3": {
-        "name": "Git Workflow",
-        "status": "passed",
-        "result": "3 commits created and pushed to origin/main"
-      },
-      "phase_4": {
-        "name": "Pre-existing Issues",
-        "status": "partial",
-        "result": "Issues identified, documented in LESSONS.md"
-      }
-    },
-    "commits_created": [
+  "version": "0.2.0",
+  "release_date": "2026-04-04",
+  "status": "phase-4-complete",
+  "phase": "SWARM Analysis - Phase 3 & 4 Documentation & E2E Tests",
+  "swarm_phase_3": {
+    "date": "2026-04-04",
+    "agents_deployed": 3,
+    "focus": "Real Research & Test Coverage",
+    "completed": [
       {
-        "hash": "64b7eec",
-        "message": "feat: Add load testing infrastructure and multi-agent workflow plan",
-        "files": 10,
-        "additions": 1066
+        "task": "Auto-enable real research fetching",
+        "commit": "4232361",
+        "details": "Detect API keys and auto-enable real fetching for ProductHunt, GitHub, Reddit"
       },
       {
-        "hash": "4031253",
-        "message": "fix: Sync package-lock.json with package.json",
-        "files": 1,
-        "note": "Initial lock file fix"
+        "task": "D1 queries test coverage",
+        "commit": "debcc30",
+        "details": "62 tests for 820-line database layer (searchDeals, createDeal, updateDeal, etc.)"
       },
       {
-        "hash": "f546fcf",
-        "message": "fix: Regenerate package-lock.json from scratch",
-        "files": 1,
-        "note": "Complete lock file regeneration with all dependencies"
+        "task": "Email API documentation",
+        "commit": "8301c43",
+        "details": "Documented 3 email endpoints (incoming, parse, help)"
       }
     ]
   },
-  "multi_agent_workflow": {
-    "status": "complete",
-    "completed_at": "2026-04-03T16:00:00Z",
-    "components": {
-      "types": {
-        "file": "worker/lib/multi-agent/types.ts",
-        "lines": 455,
-        "features": ["PhaseResult", "WorkflowConfig", "Quality Gates", "Event Types"]
+  "swarm_critical_fixes": {
+    "date": "2026-04-04",
+    "agents_deployed": 4,
+    "fixes_applied": {
+      "bug_001": {
+        "title": "Fixed deactivate endpoint regex",
+        "location": "worker/index.ts:104-117",
+        "change": "Changed regex to make /deactivate and /reactivate reachable",
+        "verified": true
       },
-      "orchestrator": {
-        "file": "worker/lib/multi-agent/orchestrator.ts",
-        "lines": 437,
-        "features": ["4-phase coordination", "Retry logic", "Quality gates", "Event emission"]
+      "webhook_routes": {
+        "title": "Registered 10 webhook endpoints",
+        "location": "worker/index.ts:167-169",
+        "change": "Added handleWebhookRoutes import and call",
+        "verified": true
       },
-      "agents": {
-        "phase1": {
-          "name": "CodebaseVerificationAgent",
-          "file": "worker/lib/multi-agent/agents/phase1-verifier.ts",
-          "features": ["URL pattern checking", "File structure validation", "Root policy verification"]
-        },
-        "phase2": {
-          "name": "EvalsAndTestsAgent",
-          "file": "worker/lib/multi-agent/agents/phase2-tester.ts",
-          "features": ["TypeScript compilation", "Unit tests", "Validation gates"]
-        },
-        "phase3": {
-          "name": "GitWorkflowAgent",
-          "file": "worker/lib/multi-agent/agents/phase3-git.ts",
-          "features": ["Git staging", "Commit creation", "Push to origin", "CI/CD checks"]
-        },
-        "phase4": {
-          "name": "IssueFixerAgent",
-          "file": "worker/lib/multi-agent/agents/phase4-fixer.ts",
-          "features": ["Issue detection", "Auto-fix attempts", "Documentation updates"]
-        }
+      "reactivate_route": {
+        "title": "Added reactivate referral route",
+        "location": "worker/index.ts:113-115",
+        "change": "Added handleReactivateReferral handler",
+        "verified": true
       },
-      "tests": {
-        "file": "tests/unit/multi-agent.test.ts",
-        "test_cases": 30,
-        "coverage": ["All 4 agents", "Orchestrator", "Integration tests", "Error handling"]
+      "nlq_documentation": {
+        "title": "Documented NLQ endpoints",
+        "location": "docs/API.md",
+        "change": "Added NLQ API section",
+        "verified": true
       }
     },
-    "api_endpoints": [
-      "POST /api/workflow/execute",
-      "GET /api/workflow/plan",
-      "POST /api/workflow/phase/:phase"
-    ]
+    "tests_passing": 405,
+    "quality_gate": "passed"
   },
-  "deal_discovery_feature": {
-    "status": "complete",
-    "completed_at": "2026-04-03T15:00:00Z",
-    "components": {
-      "fetcher": {
-        "file": "worker/lib/research-agent/fetcher.ts",
-        "features": [
-          "Real HTTP fetching with timeout control",
-          "Robots.txt compliance checking",
-          "Content extraction with regex patterns",
-          "Rate limiting per source (10 req/min)",
-          "Confidence score calculation",
-          "Payload size limits (1MB)",
-          "Error handling with fallback to simulation"
-        ]
-      },
-      "orchestrator": {
-        "file": "worker/lib/research-agent/orchestrator.ts",
-        "features": [
-          "Dual-mode research (real + simulated)",
-          "Source-specific query generation",
-          "Result deduplication",
-          "Conversion to ReferralInput format",
-          "Integration with existing storage layer"
-        ]
-      },
-      "config": {
-        "file": "worker/config.ts",
-        "added": [
-          "RESEARCH_FETCH_TIMEOUT_MS: 15s",
-          "USER_AGENT: DealDiscoveryBot/1.0",
-          "RESEARCH_MAX_SOURCES_PER_QUERY: 5",
-          "RESEARCH_MIN_CONFIDENCE: 0.3",
-          "RESEARCH_CACHE_TTL_MINUTES: 60"
-        ]
-      },
-      "types": {
-        "file": "worker/types.ts",
-        "added": [
-          "WebResearchRequest.options.use_real_fetching",
-          "WebResearchRequest.options.skip_cache",
-          "WebResearchRequest.options.timeout_ms",
-          "ReferralResearchResult.research_metadata.errors",
-          "ReferralResearchResult.research_metadata.used_real_fetching"
-        ]
-      },
-      "tests": {
-        "file": "tests/unit/research-agent.test.ts",
-        "coverage": [
-          "fetchFromSource with error handling",
-          "extractReferralsFromContent with confidence scoring",
-          "researchRateLimiter with window tracking",
-          "executeReferralResearch with fallback",
-          "convertResearchToReferrals with filtering",
-          "researchAllReferralPossibilities"
-        ]
-      },
-      "documentation": {
-        "file": "docs/API.md",
-        "added": [
-          "POST /api/research endpoint documentation",
-          "Real vs simulated fetching explanation",
-          "Research sources enumeration",
-          "Rate limiting documentation"
-        ]
-      }
-    }
-  },
-  "findings": {
-    "url_patterns": {
-      "status": "verified",
-      "localhost_urls": "✓ Correct - development use",
-      "workers_dev_urls": "✓ Correct - dynamic with env vars",
-      "production_domains": "✓ Correct - CORS configured"
-    },
-    "pre_existing_issues": [
+  "swarm_phase_4": {
+    "date": "2026-04-04",
+    "focus": "Documentation & E2E Tests",
+    "completed": [
       {
-        "id": "vitest-pool-crashes",
-        "description": "Cloudflare Vitest pool workers crash with 'Worker exited unexpectedly'",
-        "impact": "Deploy workflow fails despite tests passing (333/333)",
-        "root_cause": "Miniflare v2 deprecated, workerd runtime crashes",
-        "lesson_id": "LESSON-022",
-        "status": "documented"
+        "task": "Document webhook endpoints in API.md",
+        "details": "Added 10 webhook endpoint docs (incoming, subscribe, unsubscribe, subscriptions, partners, dlq, sync)"
       },
       {
-        "id": "package-lock-sync",
-        "description": "package-lock.json out of sync with package.json",
-        "impact": "npm ci fails in GitHub Actions",
-        "fix": "Regenerated lock file from scratch",
-        "status": "resolved"
+        "task": "Add E2E tests for MCP tools",
+        "details": "12 new integration tests for MCP protocol (tools/list, tools/call, info, sequential calls)"
+      },
+      {
+        "task": "Create deployment guide",
+        "details": "718-line comprehensive deployment guide (prerequisites, KV, D1, CI/CD, rollback, monitoring)"
+      },
+      {
+        "task": "Verify MCP pagination",
+        "details": "Confirmed pagination already implemented in MCP utils and JSON-RPC handler"
       }
     ]
   },
   "ci_cd": {
-    "status": "partial",
-    "workflows": {
-      "ci": { "status": "success", "conclusion": "passed" },
-      "security_compliance": { "status": "success", "conclusion": "passed" },
-      "ci_labels": { "status": "success", "conclusion": "passed" },
-      "deploy_production": { "status": "success", "conclusion": "passed" }
-    }
+    "status": "fixed",
+    "workflow_fixes": [
+      {
+        "commit": "9d13f63",
+        "description": "Handle missing CLOUDFLARE_ACCOUNT_ID in smoke tests and KV seeding"
+      },
+      {
+        "commit": "168c254",
+        "description": "Skip deployment verification when ACCOUNT_ID missing"
+      }
+    ]
   },
-  "documentation_updated": [
-    "plans/multi-agent-workflow.md - Complete workflow execution plan",
-    "agents-docs/LESSONS.md - LESSON-022: Vitest pool crashes, LESSON-023: Multi-agent workflow",
-    "docs/API.md - POST /api/research and Multi-Agent Workflow API documentation",
-    "worker/lib/multi-agent/ - Complete multi-agent workflow implementation",
-    "tests/unit/multi-agent.test.ts - Comprehensive test coverage"
+  "test_coverage": {
+    "files": 28,
+    "tests": 757,
+    "passed": 757,
+    "skipped": 6,
+    "new_tests_this_phase": 100
+  },
+  "total_commits": 11,
+  "commits": [
+    "6816b65 fix(routes): Fix critical referral routing bugs",
+    "3235730 feat(circuit-breaker): Add convenience functions",
+    "ce44453 test(critical-components): Add 191 comprehensive unit tests",
+    "43ee13c docs(api): Add comprehensive API documentation (847 lines)",
+    "fcb0879 docs(lessons): Add LESSON-025 on SWARM finding bugs",
+    "63db877 docs(analysis): Add SWARM analysis report",
+    "9d13f63 fix(ci): Handle missing CLOUDFLARE_ACCOUNT_ID secret",
+    "168c254 fix(ci): Skip deployment verification when ACCOUNT_ID missing",
+    "4232361 feat(research): Auto-enable real fetching when API keys available",
+    "debcc30 test(d1): Add comprehensive unit tests for database queries",
+    "8301c43 docs(api): Document email API endpoints"
   ],
-  "updated_at": "2026-04-03T16:00:00Z",
-  "updated_by": "multi-agent-workflow-implementation"
+  "github_actions_status": "all_passing",
+  "updated_at": "2026-04-04T13:00:00Z",
+  "updated_by": "swarm-phase-4-complete"
 }
