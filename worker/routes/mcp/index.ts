@@ -229,14 +229,15 @@ function createJSONResponse(
 async function handleInitialize(
   params: InitializeParams,
 ): Promise<InitializeResult> {
-  // Negotiate protocol version
-  const protocolVersion =
-    params.protocolVersion === MCP_PROTOCOL_VERSION
-      ? MCP_PROTOCOL_VERSION
-      : MCP_PROTOCOL_VERSION;
+  // Negotiate protocol version - reject if incompatible
+  if (params.protocolVersion !== MCP_PROTOCOL_VERSION) {
+    throw new Error(
+      `Unsupported protocol version: ${params.protocolVersion}. Expected: ${MCP_PROTOCOL_VERSION}`,
+    );
+  }
 
   return {
-    protocolVersion,
+    protocolVersion: MCP_PROTOCOL_VERSION,
     capabilities: SERVER_CAPABILITIES,
     serverInfo: SERVER_INFO,
     instructions: SERVER_INSTRUCTIONS,

@@ -3,7 +3,7 @@ name: Scheduled Discovery
 
 "on":
   schedule:
-    # Run every 6 hours (matching the cron in wrangler.toml)
+    # Run every 6 hours (matching the cron in wrangler.jsonc)
     - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:

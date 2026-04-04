@@ -183,7 +183,7 @@ Returns help email content.
 
 ## Cloudflare Email Workers
 
-To enable Cloudflare Email Workers, add to `wrangler.toml`:
+To enable Cloudflare Email Workers, add to `wrangler.jsonc`:
 
 ```toml
 [email]

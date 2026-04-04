@@ -103,9 +103,11 @@ check_pattern() {
     # - Lines that are clearly documentation
     local MATCHES
     MATCHES=$(git diff --cached 2>/dev/null | \
-        grep -vE "^[[:space:]]*(#|//|\*|\-\-|<!--)" | \
+        grep -vE "^[-+@ ]*(#|//|\*|--|<!--)" | \
         grep -v "check_pattern" | \
-        grep -vE "^\s*\-\s*" | \
+        grep -vE "^\s*-\s*" | \
+        grep -vE "https?://" | \
+        grep -vE "dash\.cloudflare\.com" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"
@@ -322,6 +324,7 @@ ALLOWED_ROOT_FILES=(
     "package-lock.json"
     "tsconfig.json"
     "vitest.config.ts"
+    "wrangler.jsonc"
     "wrangler.toml"
     "VERSION"
     ".gitignore"

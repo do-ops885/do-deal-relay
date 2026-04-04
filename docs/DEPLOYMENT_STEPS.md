@@ -5,7 +5,7 @@
 All automated deployment preparation steps have been completed:
 
 - ✅ 5 KV namespaces created
-- ✅ wrangler.toml updated with namespace IDs
+- ✅ wrangler.jsonc updated with namespace IDs
 - ✅ TypeScript compilation passing
 - ✅ All 207 tests passing
 - ✅ Security audit complete (Grade A-)
@@ -129,7 +129,7 @@ The cron trigger will run automatically every 6 hours.
 
 ### KV operations failing
 
-- Verify all 5 KV namespaces are bound correctly in wrangler.toml
+- Verify all 5 KV namespaces are bound correctly in wrangler.jsonc
 - Check namespace IDs match what's in the dashboard
 
 ### Pipeline not running

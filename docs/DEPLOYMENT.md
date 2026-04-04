@@ -186,7 +186,7 @@ Each command returns a JSON object with the namespace ID:
 
 ### Update Configuration
 
-Copy the returned IDs into `wrangler.jsonc` (or `wrangler.toml`) under the appropriate environment block. The current production IDs are:
+Copy the returned IDs into `wrangler.jsonc` under the appropriate environment block. The current production IDs are:
 
 | Binding        | ID                               |
 | -------------- | -------------------------------- |

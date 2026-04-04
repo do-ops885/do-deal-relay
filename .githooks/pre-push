@@ -112,7 +112,7 @@ if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "mast
     echo ""
     echo -e "${YELLOW}⚠️  Direct push to main branch detected${NC}"
     echo ""
-    
+
     # Skip interactive prompt in non-interactive environments
     if [ ! -t 0 ]; then
         echo "Non-interactive environment detected - proceeding with main push"
@@ -125,11 +125,11 @@ if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "mast
         echo "  2. Type 'I understand pushing to main' to continue with main push"
         echo "  3. Use --no-verify to bypass all checks (not recommended)"
         echo ""
-        
+
         # Read user input
         printf "Enter your choice (or type the confirmation phrase): "
         read -r USER_INPUT
-        
+
         if [[ "$USER_INPUT" == "I understand pushing to main" ]]; then
             # Log the authorized push
             echo "[$(date -Iseconds)] AUTHORIZED main push by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF" >> "$AUDIT_LOG"

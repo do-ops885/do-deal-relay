@@ -217,19 +217,23 @@ function isHighValue(deal: Deal): boolean {
 }
 
 /**
- * Update source trust scores based on validation
+ * Update source trust scores based on validation results
+ * Stub: trust evolution requires persistent source registry storage
+ * Currently logs the adjustment that would be applied
  */
 export async function evolveSourceTrust(
   env: Env,
   deals: Deal[],
   allValid: boolean,
 ): Promise<void> {
-  const { DEFAULT_SOURCES } = await import("../config");
   const adjustment = allValid
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
-  // This would update the source registry
-  // Implementation depends on storage layer
-  console.log(`Evolving trust: adjustment=${adjustment}, allValid=${allValid}`);
+  const sources = new Set(deals.map((d) => d.source.domain));
+  for (const domain of sources) {
+    console.log(
+      `Trust evolution for ${domain}: ${adjustment > 0 ? "+" : ""}${adjustment} (${allValid ? "success" : "failure"})`,
+    );
+  }
 }

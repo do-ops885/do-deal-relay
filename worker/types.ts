@@ -259,7 +259,8 @@ export interface NotificationEvent {
     | "trust_anomaly"
     | "system_error"
     | "deal_expiring"
-    | "deal_expired";
+    | "deal_expired"
+    | "pipeline_complete";
   severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;

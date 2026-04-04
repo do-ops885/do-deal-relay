@@ -154,4 +154,4 @@ wrangler tail
 
 - CLI: `scripts/refcli.ts`
 - API: `worker/index.ts`
-- Config: `wrangler.toml`
+- Config: `wrangler.jsonc`

@@ -355,7 +355,7 @@ Cloudflare Cron Triggers have a minimum interval of 1 minute. More frequent exec
 - Queue-based processing for high-frequency events
 
 **Documentation**:
-- [wrangler.toml](wrangler.toml) - Cron trigger configuration
+- [wrangler.jsonc](wrangler.jsonc) - Cron trigger configuration
 
 **External Reference**: [Cloudflare Cron Triggers](https://developers.cloudflare.com/workers/platform/triggers/cron-triggers/)
 

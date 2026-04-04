@@ -28,9 +28,15 @@ export async function generateDealId(
 
 /**
  * Generate snapshot hash from deals array
+ * Sorts deals by ID to ensure canonical ordering regardless of input order
  */
 export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
-  const serialized = JSON.stringify(deals, Object.keys(deals).sort());
+  const sorted = [...deals].sort((a, b) => {
+    const idA = (a as Record<string, unknown>).id as string;
+    const idB = (b as Record<string, unknown>).id as string;
+    return (idA || "").localeCompare(idB || "");
+  });
+  const serialized = JSON.stringify(sorted);
   return sha256(serialized);
 }
 

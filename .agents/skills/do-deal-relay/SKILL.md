@@ -138,7 +138,7 @@ Expected: 5/5 tests pass, 100% success rate.
 ### 503 Service Unavailable
 
 - D1 database not configured
-- Check wrangler.toml
+- Check wrangler.jsonc
 
 ---
 

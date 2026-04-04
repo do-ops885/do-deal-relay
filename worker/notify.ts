@@ -23,6 +23,7 @@ function getNotifyLogger(env: Env) {
 interface NotificationHistory {
   type: string;
   source: string;
+  run_id: string;
   timestamp: string;
 }
 
@@ -103,11 +104,24 @@ async function shouldSendNotification(
       )) || [];
     const now = new Date().getTime();
 
-    // Check for recent notifications of same type and source
-    const recent = history.filter(
+    // Filter out stale entries older than cooldown period (TTL cleanup)
+    const active = history.filter(
+      (h) => now - new Date(h.timestamp).getTime() < NOTIFICATION_COOLDOWN_MS,
+    );
+
+    // Persist cleanup if we removed stale entries
+    if (active.length !== history.length) {
+      await env.DEALS_PROD.put(NOTIFICATION_KEY, JSON.stringify(active), {
+        expirationTtl: NOTIFICATION_COOLDOWN_MS / 1000,
+      });
+    }
+
+    // Check for recent notifications of same type, source, and run_id
+    const recent = active.filter(
       (h) =>
         h.type === event.type &&
         h.source === (event.context?.source || "system") &&
+        h.run_id === event.run_id &&
         now - new Date(h.timestamp).getTime() < NOTIFICATION_COOLDOWN_MS,
     );
 
@@ -134,6 +148,7 @@ async function recordNotification(
     history.push({
       type: event.type,
       source: (event.context?.source as string) || "system",
+      run_id: event.run_id,
       timestamp: new Date().toISOString(),
     });
 
@@ -265,6 +280,8 @@ function getTypeEmoji(type: NotificationEvent["type"]): string {
       return "🔍";
     case "concurrency_abort":
       return "🚦";
+    case "pipeline_complete":
+      return "✅";
     default:
       return "ℹ️";
   }

@@ -222,6 +222,7 @@ vitest-coverage/
 .wrangler/
 wrangler.toml
 !wrangler.toml.example
+wrangler.jsonc.example
 .dev.vars
 !.dev.vars.example
 .cloudflare/

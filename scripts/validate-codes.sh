@@ -87,7 +87,7 @@ REQUIRED_FILES=(
     "AGENTS.md"
     "package.json"
     "tsconfig.json"
-    "wrangler.toml"
+    "wrangler.jsonc"
     "worker/index.ts"
     "worker/types.ts"
     "worker/config.ts"
@@ -130,22 +130,22 @@ else
 fi
 echo ""
 
-# Gate 7: Check wrangler.toml configuration
+# Gate 7: Check wrangler.jsonc configuration
 echo "Gate 7: Wrangler Configuration"
-if [ -f "wrangler.toml" ]; then
-    if grep -q "DEALS_PROD" wrangler.toml && grep -q "DEALS_STAGING" wrangler.toml; then
+if [ -f "wrangler.jsonc" ]; then
+    if grep -q "DEALS_PROD" wrangler.jsonc && grep -q "DEALS_STAGING" wrangler.jsonc; then
         print_status 0 "KV namespaces configured"
     else
         print_warning "KV namespace placeholders present (needs real IDs for deploy)"
     fi
 
-    if grep -q "crons" wrangler.toml; then
+    if grep -q "crons" wrangler.jsonc; then
         print_status 0 "Cron trigger configured"
     else
         print_status 1 "Cron trigger not configured"
     fi
 else
-    print_status 1 "wrangler.toml not found"
+    print_status 1 "wrangler.jsonc not found"
 fi
 echo ""
 

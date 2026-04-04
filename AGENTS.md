@@ -125,7 +125,7 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 - `package-lock.json` - NPM lockfile
 - `tsconfig.json` - TypeScript config
 - `vitest.config.ts` - Test runner config
-- `wrangler.toml` - Cloudflare Workers config
+- `wrangler.jsonc` - Cloudflare Workers config
 - `README.md` - Main project documentation
 - `VERSION` - Version file
 - `LICENSE` - License file

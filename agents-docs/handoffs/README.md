@@ -23,7 +23,7 @@
       "description": "Configuration constants"
     },
     {
-      "path": "wrangler.toml",
+      "path": "wrangler.jsonc",
       "type": "file",
       "checksum": "ghi789...",
       "description": "Cloudflare Worker config with KV placeholders"

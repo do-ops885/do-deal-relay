@@ -11,9 +11,9 @@ import { acquireLock, releaseLock, extendLock } from "./lib/lock";
 import { createLogBuilder, appendLog } from "./lib/logger";
 import { discover } from "./pipeline/discover";
 import { normalize } from "./pipeline/normalize";
-import { deduplicate, calculateSourceDiversity } from "./pipeline/dedupe";
+import { deduplicate } from "./pipeline/dedupe";
 import { validate, calculateValidationRatio } from "./pipeline/validate";
-import { score } from "./pipeline/score";
+import { score, calculateSourceDiversity } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
 import { publishSnapshot, rollbackSnapshot } from "./publish";
 import { notify } from "./notify";
@@ -325,7 +325,7 @@ async function executePhase(
 
       // Send success notification if needed
       await notify(env, {
-        type: "system_error",
+        type: "pipeline_complete",
         severity: "info",
         run_id: ctx.run_id,
         message: `Pipeline completed successfully. ${ctx.scored.length} deals published.`,
