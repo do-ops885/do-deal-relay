@@ -528,10 +528,11 @@ export class MultiAgentOrchestrator {
   }
 
   /**
-   * Generate unique ID
+   * Generate unique ID using cryptographically secure method
    */
   private generateId(): string {
-    return `evt-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    // Using crypto.randomUUID() for secure ID generation instead of Math.random()
+    return `evt-${Date.now()}-${crypto.randomUUID().split("-")[0]}`;
   }
 
   /**

@@ -188,5 +188,6 @@ export function getWebhookKV(env: Env): KVNamespace | null {
 // ============================================================================
 
 export function generateId(): string {
-  return `${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 11)}`;
+  // Using crypto.randomUUID() for secure ID generation instead of Math.random()
+  return `${Date.now().toString(36)}_${crypto.randomUUID().split("-")[0]}`;
 }

@@ -28,6 +28,33 @@ interface GateResult {
   reason?: string;
 }
 
+// Type-safe context hash storage helper - avoids unsafe casting
+// PipelineContext is extended with an index signature for metadata storage
+interface ContextWithHashes extends PipelineContext {
+  [key: `deal_hash_${string}`]: string;
+}
+
+/**
+ * Get a hash value from context using type-safe access
+ */
+function getContextHash(
+  ctx: PipelineContext,
+  dealId: string,
+): string | undefined {
+  return (ctx as ContextWithHashes)[`deal_hash_${dealId}`];
+}
+
+/**
+ * Store a hash value in context using type-safe access
+ */
+function setContextHash(
+  ctx: PipelineContext,
+  dealId: string,
+  hash: string,
+): void {
+  (ctx as ContextWithHashes)[`deal_hash_${dealId}`] = hash;
+}
+
 /**
  * Run all 9 validation gates on deals
  */
@@ -336,9 +363,9 @@ async function gateSnapshotHashVerification(
 
     const fieldsHash = await generateSnapshotHash([criticalFields]);
 
-    // Store or retrieve from context for comparison
+    // Store or retrieve from context for comparison using type-safe helper
     const ctxKey = `deal_hash_${deal.id}`;
-    const storedHash = (ctx as unknown as Record<string, string>)[ctxKey];
+    const storedHash = getContextHash(ctx, deal.id);
 
     if (storedHash && fieldsHash !== storedHash) {
       return {
@@ -349,7 +376,7 @@ async function gateSnapshotHashVerification(
 
     // Store the hash for future verification if not present
     if (!storedHash) {
-      (ctx as unknown as Record<string, string>)[ctxKey] = fieldsHash;
+      setContextHash(ctx, deal.id, fieldsHash);
     }
   }
 

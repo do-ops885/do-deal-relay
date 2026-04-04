@@ -596,6 +596,8 @@ export async function fetchGenericPageContent(
     }
 
     const contentType = response.headers.get("content-type") || "text/html";
+    // HTML scraping: Content size is bounded by CONFIG.MAX_PAYLOAD_SIZE_BYTES check below.
+    // Using response.text() is acceptable here as we need the full HTML for parsing.
     const html = await response.text();
 
     // Validate content size after reading
