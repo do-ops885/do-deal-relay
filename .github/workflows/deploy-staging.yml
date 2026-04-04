@@ -46,8 +46,9 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # Intentional: Use wrapper script to handle vitest pool crashes (LESSON-022)
       - name: Run tests
-        run: npm run test:ci
+        run: ./scripts/run-tests-ci.sh
 
       - name: Deploy to Cloudflare Staging
         uses: cloudflare/wrangler-action@v3
