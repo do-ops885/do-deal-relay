@@ -177,8 +177,13 @@ export async function executeReferralResearch(
   // Normalize query
   const normalizedQuery = normalizeResearchQuery(request.query, request.domain);
 
-  // Determine if we should use real fetching or simulation
-  const useRealFetching = request.options?.use_real_fetching ?? false;
+  // Get API keys for potential real fetching
+  const apiKeys = getApiKeys(env);
+  const hasApiKeys = Boolean(
+    apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
+  );
+  // Auto-enable real fetching when API keys are available, unless explicitly disabled
+  const useRealFetching = request.options?.use_real_fetching ?? hasApiKeys;
 
   // Gather research from multiple sources
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
@@ -215,7 +220,6 @@ export async function executeReferralResearch(
 
   if (sourcesToUse.includes("all")) {
     // Use top priority sources in parallel
-    const apiKeys = getApiKeys(env);
     const sources = RESEARCH_SOURCES.slice(
       0,
       CONFIG.RESEARCH_MAX_SOURCES_PER_QUERY,
@@ -240,8 +244,6 @@ export async function executeReferralResearch(
     await Promise.allSettled(researchPromises);
   } else {
     // Use specified sources
-    const apiKeys = getApiKeys(env);
-
     for (const sourceName of sourcesToUse) {
       const source = RESEARCH_SOURCES.find((s) => s.name === sourceName);
       if (!source) {
