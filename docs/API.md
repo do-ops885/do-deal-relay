@@ -20,7 +20,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -194,7 +194,7 @@ Get full snapshot with metadata.
 
 ```json
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",
@@ -422,321 +422,619 @@ Submit a new deal for validation.
 - 400: Invalid request
 - 409: Deal already exists
 
-## Error Responses
+---
 
-All errors follow this format:
+## Referral API
 
-```json
-{
-  "error": "Error description",
-  "message": "Detailed message"
-}
-```
+Manage referral codes with full CRUD operations and research capabilities.
 
-**Status Codes:**
+### GET /api/referrals
 
-- 400: Bad Request
-- 404: Not Found
-- 409: Conflict
-- 429: Rate Limited
-- 500: Internal Server Error
+Search and list referral codes with filtering.
 
-## Rate Limiting
+**Query Parameters:**
 
-- 100 requests per minute per IP
-- Exceeded limit returns 429 status
-- Retry-After header included
+- `domain` (string): Filter by domain (e.g., 'trading212.com')
+- `status` (string): Filter by status - 'active', 'inactive', 'expired', 'all' (default: 'all')
+- `category` (string): Filter by category
+- `source` (string): Filter by source - 'api', 'mcp_agent', 'research', 'all' (default: 'all')
+- `limit` (number): Max results to return (default: 100, max: 1000)
+- `offset` (number): Pagination offset (default: 0)
 
-## CORS
-
-All endpoints support CORS:
-
-- `Access-Control-Allow-Origin: *`
-- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
-- `Access-Control-Allow-Headers: Content-Type`
-
-## Tool Definitions (for AI Agents)
-
-### get_deals
+**Response:**
 
 ```json
 {
-  "name": "get_deals",
-  "description": "Retrieve active referral deals",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "category": { "type": "string" },
-      "min_reward": { "type": "number" },
-      "limit": { "type": "number", "default": 100 }
+  "referrals": [
+    {
+      "id": "abc123-sha256",
+      "code": "GcCOCxbo",
+      "url": "https://trading212.com/invite/GcCOCxbo",
+      "domain": "trading212.com",
+      "status": "active",
+      "source": "api",
+      "submitted_at": "2024-03-31T12:00:00Z",
+      "metadata": {
+        "title": "Trading212 Referral",
+        "description": "Free share worth up to £100",
+        "reward_type": "item",
+        "reward_value": "Free share worth up to £100",
+        "category": ["finance", "investing"],
+        "confidence_score": 0.85
+      }
     }
-  }
+  ],
+  "total": 150,
+  "limit": 100,
+  "offset": 0
 }
 ```
-
-### get_deal_by_code
-
-```json
-{
-  "name": "get_deal_by_code",
-  "description": "Find deal by referral code",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "code": { "type": "string" }
-    },
-    "required": ["code"]
-  }
-}
-```
-
-### submit_deal
-
-```json
-{
-  "name": "submit_deal",
-  "description": "Submit a discovered deal",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "url": { "type": "string" },
-      "code": { "type": "string" },
-      "source": { "type": "string" }
-    },
-    "required": ["url", "code"]
-  }
-}
-```
-
 
 ---
 
-## Multi-Agent Workflow API
+### POST /api/referrals
 
-Execute coordinated 4-phase workflow with specialized agents.
-
-### POST /api/workflow/execute
-
-Execute the complete multi-agent workflow.
+Create a new referral code.
 
 **Request Body:**
 
 ```json
 {
-  "workflow_id": "my-workflow-001",
-  "dry_run": false,
-  "skip_phases": [],
-  "options": {
-    "notify_on_complete": true
+  "code": "MYCODE123",
+  "url": "https://example.com/invite/MYCODE123",
+  "domain": "example.com",
+  "source": "api",
+  "submitted_by": "user@example.com",
+  "expires_at": "2024-12-31T23:59:59Z",
+  "metadata": {
+    "title": "Example Referral",
+    "description": "Get $10 off your first purchase",
+    "reward_type": "cash",
+    "reward_value": 10,
+    "currency": "USD",
+    "category": ["shopping"],
+    "tags": ["new-user", "signup"],
+    "requirements": ["New users only", "Min purchase $50"],
+    "confidence_score": 0.9,
+    "notes": "Verified referral program"
   }
 }
 ```
+
+**Required Fields:**
+- `code` (string): The referral code
+- `url` (string): Full referral URL
+- `domain` (string): Domain name
+
+**Optional Fields:**
+- `source` (string): Source of the referral (default: 'api')
+- `submitted_by` (string): Who submitted the referral
+- `expires_at` (string): ISO 8601 expiration date
+- `metadata` (object): Additional metadata
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "message": "Referral created successfully",
+  "referral": {
+    "id": "generated-sha256-id",
+    "code": "MYCODE123",
+    "url": "https://example.com/invite/MYCODE123",
+    "domain": "example.com",
+    "status": "quarantined"
+  }
+}
+```
+
+**Status Codes:**
+
+- 201: Created successfully
+- 400: Validation failed
+- 409: Referral code already exists
+- 413: Request body too large (>1MB)
+- 415: Content-Type must be application/json
+
+---
+
+### GET /api/referrals/:code
+
+Get a specific referral by code.
+
+**Parameters:**
+
+- `code` (string): The referral code to look up
+
+**Response:**
+
+```json
+{
+  "referral": {
+    "id": "abc123-sha256",
+    "code": "GcCOCxbo",
+    "url": "https://trading212.com/invite/GcCOCxbo",
+    "domain": "trading212.com",
+    "status": "active",
+    "source": "api",
+    "submitted_at": "2024-03-31T12:00:00Z",
+    "submitted_by": "api",
+    "expires_at": "2024-12-31T23:59:59Z",
+    "deactivated_at": null,
+    "deactivated_reason": null,
+    "replaced_by": null,
+    "description": "Referral code for trading212.com",
+    "metadata": {
+      "title": "Trading212 Referral",
+      "description": "Free share worth up to £100",
+      "reward_type": "item",
+      "reward_value": "Free share worth up to £100",
+      "currency": "GBP",
+      "category": ["finance", "investing"],
+      "tags": ["verified", "high-value"],
+      "requirements": ["New users only"],
+      "confidence_score": 0.85,
+      "notes": "Verified referral program"
+    },
+    "validation": {
+      "last_validated": "2024-03-31T12:00:00Z",
+      "status": "valid"
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 404: Referral not found
+
+---
+
+### POST /api/referrals/:code/deactivate
+
+Deactivate a referral code.
+
+**Parameters:**
+
+- `code` (string): The referral code to deactivate
+
+**Request Body:**
+
+```json
+{
+  "reason": "expired",
+  "replaced_by": "NEWCODE456",
+  "notes": "Code expired, replaced with new code"
+}
+```
+
+**Required Fields:**
+- `reason` (string): Why the code is being deactivated
+
+**Optional Fields:**
+- `replaced_by` (string): New code that replaces this one
+- `notes` (string): Additional notes
 
 **Response:**
 
 ```json
 {
   "success": true,
-  "workflow_id": "my-workflow-001",
-  "status": "completed",
-  "phases": [
-    {
-      "phase": 1,
-      "name": "Codebase Verification",
-      "status": "passed",
-      "duration_ms": 1234,
-      "checks": [
-        {
-          "name": "URL Pattern Verification",
-          "status": "passed",
-          "message": "Checked 4 URL patterns: 0 incorrect"
-        }
-      ],
-      "findings": [],
-      "errors": []
-    },
-    {
-      "phase": 2,
-      "name": "Evals & Tests",
-      "status": "partial",
-      "duration_ms": 5678,
-      "checks": [],
-      "findings": [],
-      "errors": []
-    },
-    {
-      "phase": 3,
-      "name": "Git Workflow",
-      "status": "passed",
-      "duration_ms": 9012,
-      "checks": [],
-      "findings": [],
-      "metadata": {
-        "commits_created": 3,
-        "push_success": true
-      }
-    },
-    {
-      "phase": 4,
-      "name": "Issue Fixer",
-      "status": "partial",
-      "duration_ms": 3456,
-      "checks": [],
-      "findings": [],
-      "metadata": {
-        "issues_detected": 2,
-        "auto_fixable": 1,
-        "fixed": 1,
-        "unresolved": 1
-      }
-    }
-  ],
-  "metadata": {
-    "total_duration_ms": 19380,
-    "phases_passed": 2,
-    "phases_failed": 0,
-    "phases_partial": 2,
-    "commits_created": ["64b7eec", "4031253", "f546fcf"],
-    "issues_fixed": ["package-lock-sync"]
-  },
-  "duration_ms": 19380,
-  "events": [
-    { "type": "workflow_started", "timestamp": "..." },
-    { "type": "phase_started", "phase": 1, "timestamp": "..." },
-    { "type": "phase_completed", "phase": 1, "timestamp": "..." },
-    { "type": "handoff_completed", "phase": 1, "timestamp": "..." }
-  ]
-}
-```
-
-### GET /api/workflow/plan
-
-Get the execution plan without running.
-
-**Response:**
-
-```json
-{
-  "plan_id": "evt-1234567890-abc123",
-  "workflow_id": "multi-agent-4-phase",
-  "created_at": "2026-04-03T15:00:00Z",
-  "phases": [
-    {
-      "phase": 1,
-      "agent_id": "verifier",
-      "estimated_duration_ms": 300000,
-      "dependencies": [],
-      "fallback_strategy": "skip"
-    },
-    {
-      "phase": 2,
-      "agent_id": "tester",
-      "estimated_duration_ms": 600000,
-      "dependencies": [1],
-      "fallback_strategy": "retry"
-    },
-    {
-      "phase": 3,
-      "agent_id": "git",
-      "estimated_duration_ms": 300000,
-      "dependencies": [2],
-      "fallback_strategy": "retry"
-    },
-    {
-      "phase": 4,
-      "agent_id": "fixer",
-      "estimated_duration_ms": 600000,
-      "dependencies": [3],
-      "fallback_strategy": "retry"
-    }
-  ],
-  "estimated_duration_ms": 1800000,
-  "risk_assessment": {
-    "overall_risk": "medium",
-    "factors": [
-      {
-        "category": "test_environment",
-        "level": "high",
-        "description": "Known Vitest pool crashes in test environment"
-      }
-    ],
-    "mitigation_strategies": [
-      "Use retry logic for transient failures",
-      "Document known issues in LESSONS.md"
-    ]
+  "message": "Referral deactivated successfully",
+  "referral": {
+    "id": "abc123-sha256",
+    "code": "GcCOCxbo",
+    "url": "https://trading212.com/invite/GcCOCxbo",
+    "domain": "trading212.com",
+    "status": "inactive",
+    "deactivated_at": "2024-04-01T10:30:00Z",
+    "reason": "expired",
+    "replaced_by": "NEWCODE456"
   }
 }
 ```
 
-### POST /api/workflow/phase/:phase
+**Status Codes:**
 
-Execute a specific phase only.
+- 200: Deactivated successfully
+- 400: Invalid request
+- 404: Referral not found
 
-**Parameters:**
+---
 
-- `phase` (number): Phase number (1-4)
+### POST /api/research
+
+Research referral codes for a specific domain or query.
 
 **Request Body:**
 
 ```json
 {
-  "dry_run": true
+  "query": "trading212 referral code",
+  "domain": "trading212.com",
+  "depth": "thorough",
+  "sources": ["all"],
+  "max_results": 20,
+  "options": {
+    "use_real_fetching": false
+  }
 }
 ```
+
+**Parameters:**
+
+- `query` (string, required): Search query for referral codes
+- `domain` (string, optional): Target domain to search for
+- `depth` (string, optional): Research depth - 'quick', 'thorough', or 'deep' (default: 'quick')
+- `sources` (array, optional): Sources to search - 'all' or specific sources
+- `max_results` (number, optional): Maximum results (default: 10, max: 100)
+- `options.use_real_fetching` (boolean, optional): Enable real web fetching (default: false)
 
 **Response:**
 
 ```json
 {
-  "phase": 1,
-  "name": "Codebase Verification",
-  "status": "passed",
-  "duration_ms": 1234,
-  "checks": [],
-  "findings": [],
-  "errors": []
+  "success": true,
+  "message": "Research completed",
+  "query": "trading212 referral code",
+  "domain": "trading212.com",
+  "discovered_codes": 5,
+  "stored_referrals": 3,
+  "research_metadata": {
+    "sources_checked": ["known_pattern:trading212.com", "producthunt", "reddit"],
+    "search_queries": ["trading212 referral", "trading212 invite"],
+    "research_duration_ms": 1250,
+    "agent_id": "research-agent-1711886400000",
+    "used_real_fetching": false
+  }
 }
 ```
 
-### Workflow Phases
+**Research Sources:**
 
-| Phase | Agent | Purpose | Timeout |
-|-------|-------|---------|---------|
-| 1 | CodebaseVerificationAgent | Verify URL patterns, file structure | 5 min |
-| 2 | EvalsAndTestsAgent | Run TypeScript, tests, validation gates | 10 min |
-| 3 | GitWorkflowAgent | Stage, commit, push changes | 5 min |
-| 4 | IssueFixerAgent | Detect and fix pre-existing issues | 10 min |
+When `sources` is set to `["all"]` or specific sources, the system searches:
 
-### Quality Gates
+- `known_pattern`: Known referral programs with defined patterns
+- `producthunt`: Product Hunt for product referral programs
+- `reddit`: Reddit discussions about referral codes
+- `hackernews`: Hacker News referral discussions
+- `github`: GitHub repositories with referral documentation
+- `company_site`: Direct company website scraping
 
-Each phase has quality gates that must pass:
+**Status Codes:**
 
-- **Phase 1**: No incorrect URLs, no missing critical files
-- **Phase 2**: TypeScript compiles, test pass rate ≥ 80%
-- **Phase 3**: At least 1 commit created, push successful
-- **Phase 4**: No critical issues, auto-fix success rate ≥ 50%
+- 200: Research completed
+- 400: Invalid request
+- 415: Content-Type must be application/json
+- 500: Research failed
 
-### Event Types
+---
 
-| Event | Description |
-|-------|-------------|
-| `workflow_started` | Workflow execution began |
-| `phase_started` | Phase execution began |
-| `phase_completed` | Phase completed successfully |
-| `phase_failed` | Phase failed |
-| `phase_retry` | Retrying failed phase |
-| `quality_gate_passed` | Quality gate criteria met |
-| `quality_gate_failed` | Quality gate criteria not met |
-| `handoff_completed` | Handoff to next phase |
-| `workflow_completed` | All phases completed |
-| `workflow_failed` | Workflow failed |
-| `workflow_cancelled` | Workflow cancelled |
+## D1 Database API
 
-### Error Handling
+Advanced database queries, full-text search, and statistics via D1 SQL database.
 
-The orchestrator handles errors with:
+### GET /api/d1/search
 
-- **Retry Logic**: Configurable max attempts with exponential backoff
-- **Quality Gates**: Phase boundaries with criteria validation
-- **Graceful Degradation**: Continue with warnings if non-critical
-- **Event Logging**: All events emitted for monitoring
+Full-text search deals using FTS5 (Full-Text Search).
+
+**Query Parameters:**
+
+- `q` (string, required): Search query
+- `limit` (number): Max results (default: 20)
+- `include_expired` (boolean): Include expired deals (default: false)
+- `status` (string): Filter by status ('active', 'inactive', 'expired', 'quarantined')
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "trading212 free share",
+  "count": 5,
+  "results": [
+    {
+      "id": "sha256-hash",
+      "code": "GcCOCxbo",
+      "url": "https://trading212.com/invite/GcCOCxbo",
+      "domain": "trading212.com",
+      "title": "Trading212 Referral",
+      "description": "Free share worth up to £100",
+      "status": "active",
+      "reward_type": "item",
+      "reward_value": "Free share worth up to £100",
+      "categories": ["finance", "investing"],
+      "confidence_score": 0.85,
+      "submitted_at": "2024-03-31T12:00:00Z",
+      "expires_at": "2024-12-31T23:59:59Z",
+      "rank": 0.95
+    }
+  ]
+}
+```
+
+**FTS5 Query Syntax:**
+
+- Simple terms: `q=trading212` - matches any field containing "trading212"
+- Phrases: `q="free share"` - exact phrase match
+- AND: `q=trading212 AND investing` - both terms must match
+- OR: `q=trading212 OR scalable` - either term matches
+- NOT: `q=trading212 NOT expired` - exclude matches
+- Prefix: `q=trad*` - prefix matching
+
+**Example Queries:**
+
+```bash
+# Simple search
+curl "https://your-worker.workers.dev/api/d1/search?q=trading212"
+
+# Phrase search
+curl "https://your-worker.workers.dev/api/d1/search?q=%22free%20share%22"
+
+# Active deals only
+curl "https://your-worker.workers.dev/api/d1/search?q=finance&status=active"
+
+# Include expired
+curl "https://your-worker.workers.dev/api/d1/search?q=crypto&include_expired=true"
+```
+
+---
+
+### GET /api/d1/suggestions
+
+Get search suggestions for autocomplete (requires at least 2 characters).
+
+**Query Parameters:**
+
+- `q` (string, required): Partial query (min 2 characters)
+- `limit` (number): Max suggestions (default: 10)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "trad",
+  "suggestions": [
+    "trading212",
+    "trading",
+    "trade republic",
+    "trader"
+  ]
+}
+```
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/d1/suggestions?q=trad&limit=5"
+```
+
+---
+
+### GET /api/d1/stats
+
+Get comprehensive database statistics.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "stats": {
+    "total_deals": 150,
+    "active_deals": 120,
+    "expired_deals": 20,
+    "quarantined_deals": 10,
+    "total_referral_codes": 150,
+    "avg_confidence_score": 0.78,
+    "top_category": "finance",
+    "top_source": "api",
+    "deals_added_last_7_days": 15,
+    "deals_added_last_30_days": 45,
+    "deals_expiring_next_7_days": 5,
+    "deals_expiring_next_30_days": 18
+  }
+}
+```
+
+---
+
+### GET /api/d1/deals
+
+Advanced deal filtering with multiple criteria.
+
+**Query Parameters:**
+
+- `domain` (string): Filter by domain
+- `category` (string): Filter by category
+- `status` (string): Filter by status (default: 'active')
+- `limit` (number): Max results (default: 50)
+- `min_confidence` (number): Minimum confidence score (0-1)
+- `expiring_in` (number): Days until expiration (gets deals expiring within N days)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "count": 10,
+  "metadata": {
+    "filter": {
+      "type": "domain",
+      "domain": "trading212.com"
+    }
+  },
+  "results": [
+    {
+      "id": "sha256-hash",
+      "code": "GcCOCxbo",
+      "url": "https://trading212.com/invite/GcCOCxbo",
+      "domain": "trading212.com",
+      "title": "Trading212 Referral",
+      "status": "active",
+      "reward_type": "item",
+      "reward_value": "Free share worth up to £100",
+      "confidence_score": 0.85,
+      "expires_at": "2024-12-31T23:59:59Z"
+    }
+  ]
+}
+```
+
+**Example Queries:**
+
+```bash
+# By domain
+curl "https://your-worker.workers.dev/api/d1/deals?domain=trading212.com"
+
+# By category with confidence filter
+curl "https://your-worker.workers.dev/api/d1/deals?category=finance&min_confidence=0.8"
+
+# Expiring soon
+curl "https://your-worker.workers.dev/api/d1/deals?expiring_in=7"
+
+# All statuses
+curl "https://your-worker.workers.dev/api/d1/deals?status=all&limit=100"
+```
+
+---
+
+### GET /api/d1/domains
+
+List all domains with deal counts.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "count": 25,
+  "domains": [
+    {
+      "domain": "trading212.com",
+      "deal_count": 3,
+      "active_count": 2,
+      "expired_count": 1
+    },
+    {
+      "domain": "scalable.capital",
+      "deal_count": 2,
+      "active_count": 2,
+      "expired_count": 0
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/d1/categories
+
+List all categories with deal counts.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "count": 8,
+  "categories": [
+    {
+      "name": "finance",
+      "display_name": "Finance & Banking",
+      "deal_count": 45,
+      "description": "Financial services and banking deals"
+    },
+    {
+      "name": "shopping",
+      "display_name": "Shopping",
+      "deal_count": 30,
+      "description": "Retail and e-commerce deals"
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/d1/migrations
+
+Get database migration status or initialize database.
+
+**Query Parameters:**
+
+- `action` (string): Set to 'init' to initialize database
+
+**Response (Status):**
+
+```json
+{
+  "success": true,
+  "status": {
+    "currentVersion": 3,
+    "latestVersion": 3,
+    "pendingCount": 0,
+    "pending": [],
+    "appliedCount": 3
+  }
+}
+```
+
+**Response (Initialize):**
+
+```json
+{
+  "success": true,
+  "message": "Database initialized to version 3",
+  "applied": [1, 2, 3],
+  "error": null
+}
+```
+
+**Example:**
+
+```bash
+# Check status
+curl "https://your-worker.workers.dev/api/d1/migrations"
+
+# Initialize database
+curl "https://your-worker.workers.dev/api/d1/migrations?action=init"
+```
+
+---
+
+### GET /api/d1/health
+
+Check D1 database health and connectivity.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "healthy": true,
+  "status": {
+    "connected": true,
+    "currentVersion": 3,
+    "latestVersion": 3,
+    "pendingMigrations": 0
+  }
+}
+```
+
+---
+
+## Multi-Agent Workflow API
+
+⚠️ **Coming Soon** - The workflow API is planned for a future release.
+
+The multi-agent workflow system will provide:
+- 4-phase coordinated execution (Verification → Testing → Git → Fixes)
+- Event-driven orchestration with quality gates
+- Automatic retry logic and graceful degradation
+
+For current pipeline operations, use `/api/discover` and `/api/status` endpoints.
+
+---
