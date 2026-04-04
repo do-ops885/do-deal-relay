@@ -43,6 +43,10 @@ export const CONFIG = {
   // KV batching settings
   KV_BATCH_SIZE: 25, // Cloudflare Workers subrequest limit is 50, we use 25 for safety margin
 
+  // CI polling settings
+  CI_POLL_MAX_ATTEMPTS: 18,
+  CI_POLL_INTERVAL_MS: 10000,
+
   // Scoring weights
   SCORING_WEIGHTS: {
     validity_ratio: 0.25,

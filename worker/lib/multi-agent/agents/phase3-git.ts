@@ -3,6 +3,7 @@
  *
  * Handles git operations: staging, committing, pushing.
  * Manages commit history and branch synchronization.
+ * Polls GitHub Actions status with retry loop until CI passes.
  */
 
 import type {
@@ -14,6 +15,10 @@ import type {
   GitOperation,
   CommitInfo,
 } from "../types";
+import { getWorkflowRuns, waitForWorkflowsComplete } from "../../github";
+import { CONFIG } from "../../../config";
+
+const REPO = "do-ops885/do-deal-relay";
 
 export class GitWorkflowAgent implements Agent {
   id = "git-001";
@@ -30,25 +35,18 @@ export class GitWorkflowAgent implements Agent {
     const commits: CommitInfo[] = [];
 
     try {
-      // Step 1: Check git status
+      // Step 1: Check git status (simulated - uses cached state)
       const statusCheck = await this.checkGitStatus();
       operations.push(...statusCheck.operations);
       checks.push(statusCheck.check);
 
-      if (statusCheck.hasChanges) {
-        findings.push({
-          type: "info",
-          category: "git",
-          message: `Found ${statusCheck.modifiedFiles} modified files to stage`,
-        });
-      } else {
+      if (!statusCheck.hasChanges) {
         findings.push({
           type: "info",
           category: "git",
           message: "No changes to commit - working tree clean",
         });
 
-        // Nothing to do - return early with success
         return {
           phase: 3,
           name: "Git Workflow",
@@ -66,88 +64,41 @@ export class GitWorkflowAgent implements Agent {
         };
       }
 
-      // Step 2: Stage changes
+      findings.push({
+        type: "info",
+        category: "git",
+        message: `Found ${statusCheck.modifiedFiles} modified files to stage`,
+      });
+
+      // Step 2: Stage changes (simulated)
       const stageOp = await this.stageChanges();
       operations.push(stageOp);
 
-      if (stageOp.status === "failed") {
-        checks.push({
-          name: "Stage Changes",
-          status: "failed",
-          message: `Failed to stage changes: ${stageOp.error}`,
-        });
-        findings.push({
-          type: "error",
-          category: "git",
-          message: `Staging failed: ${stageOp.error}`,
-          suggestion: "Check file permissions and git configuration",
-        });
+      checks.push({
+        name: "Stage Changes",
+        status: stageOp.status === "success" ? "passed" : "failed",
+        message: stageOp.message || "Staged changes",
+      });
 
-        return {
-          phase: 3,
-          name: "Git Workflow",
-          status: "failed",
-          duration_ms: Date.now() - start_time,
+      if (stageOp.status === "failed") {
+        return this.createFailedResult(
+          3,
+          start_time,
           started_at,
           checks,
           findings,
-          errors: [
-            {
-              code: "GIT_STAGE_ERROR",
-              message: stageOp.error || "Failed to stage changes",
-              recoverable: true,
-              retry_count: context.attempt,
-            },
-          ],
-        };
+          stageOp.error || "Staging failed",
+        );
       }
 
-      checks.push({
-        name: "Stage Changes",
-        status: "passed",
-        message: "Changes staged successfully",
-      });
-
-      // Step 3: Create commits
+      // Step 3: Create commits (simulated)
       const commitResult = await this.createCommits();
       operations.push(...commitResult.operations);
       commits.push(...commitResult.commits);
 
-      if (commitResult.commits.length === 0) {
-        checks.push({
-          name: "Create Commits",
-          status: "failed",
-          message: "No commits created",
-        });
-        findings.push({
-          type: "error",
-          category: "git",
-          message: "Failed to create any commits",
-          suggestion: "Check if there are staged changes and git configuration",
-        });
-
-        return {
-          phase: 3,
-          name: "Git Workflow",
-          status: "failed",
-          duration_ms: Date.now() - start_time,
-          started_at,
-          checks,
-          findings,
-          errors: [
-            {
-              code: "GIT_COMMIT_ERROR",
-              message: "Failed to create commits",
-              recoverable: true,
-              retry_count: context.attempt,
-            },
-          ],
-        };
-      }
-
       checks.push({
         name: "Create Commits",
-        status: "passed",
+        status: commitResult.commits.length > 0 ? "passed" : "failed",
         message: `Created ${commitResult.commits.length} commit(s)`,
         details: {
           commits: commitResult.commits.map((c) => ({
@@ -157,6 +108,17 @@ export class GitWorkflowAgent implements Agent {
         },
       });
 
+      if (commitResult.commits.length === 0) {
+        return this.createFailedResult(
+          3,
+          start_time,
+          started_at,
+          checks,
+          findings,
+          "No commits created",
+        );
+      }
+
       commitResult.commits.forEach((commit) => {
         findings.push({
           type: "success",
@@ -165,57 +127,41 @@ export class GitWorkflowAgent implements Agent {
         });
       });
 
-      // Step 4: Push to origin
+      // Step 4: Push to origin (simulated)
       const pushOp = await this.pushToOrigin();
       operations.push(pushOp);
 
-      if (pushOp.status === "failed") {
-        checks.push({
-          name: "Push to Origin",
-          status: "failed",
-          message: `Push failed: ${pushOp.error}`,
-        });
-        findings.push({
-          type: "error",
-          category: "git",
-          message: `Push failed: ${pushOp.error}`,
-          suggestion: "Check network connection and remote repository access",
-        });
+      checks.push({
+        name: "Push to Origin",
+        status: pushOp.status === "success" ? "passed" : "failed",
+        message:
+          pushOp.status === "success"
+            ? "Successfully pushed to origin"
+            : `Push failed: ${pushOp.error}`,
+      });
 
-        return {
-          phase: 3,
-          name: "Git Workflow",
-          status: "failed",
-          duration_ms: Date.now() - start_time,
+      if (pushOp.status === "failed") {
+        return this.createFailedResult(
+          3,
+          start_time,
           started_at,
           checks,
           findings,
-          errors: [
-            {
-              code: "GIT_PUSH_ERROR",
-              message: pushOp.error || "Failed to push",
-              recoverable: true,
-              retry_count: context.attempt,
-            },
-          ],
-        };
+          pushOp.error || "Push failed",
+        );
       }
 
-      checks.push({
-        name: "Push to Origin",
-        status: "passed",
-        message: "Successfully pushed to origin",
-      });
       findings.push({
         type: "success",
         category: "git",
         message: `Pushed ${commits.length} commit(s) to origin/main`,
       });
 
-      // Check GitHub Actions status
-      const actionsCheck = await this.checkGitHubActions();
-      checks.push(actionsCheck.check);
-      findings.push(...actionsCheck.findings);
+      // Step 5: Poll GitHub Actions with retry loop
+      const headSha = commits[0]?.hash || "";
+      const ciResult = await this.pollGitHubActionsWithRetry(headSha);
+      checks.push(ciResult.check);
+      findings.push(...ciResult.findings);
 
       // Determine overall status
       const failedChecks = checks.filter((c) => c.status === "failed").length;
@@ -240,6 +186,9 @@ export class GitWorkflowAgent implements Agent {
             0,
           ),
           push_success: pushOp.status === "success",
+          ci_passed: ciResult.ciPassed,
+          ci_attempts: ciResult.attempts,
+          commit_sha: headSha,
         },
       };
     } catch (error) {
@@ -263,38 +212,55 @@ export class GitWorkflowAgent implements Agent {
     }
   }
 
+  private createFailedResult(
+    phase: number,
+    start_time: number,
+    started_at: string,
+    checks: PhaseCheck[],
+    findings: PhaseFinding[],
+    errorMsg: string,
+  ): PhaseResult {
+    return {
+      phase,
+      name: "Git Workflow",
+      status: "failed",
+      duration_ms: Date.now() - start_time,
+      started_at,
+      completed_at: new Date().toISOString(),
+      checks,
+      findings,
+      errors: [
+        {
+          code: "GIT_OPERATION_ERROR",
+          message: errorMsg,
+          recoverable: true,
+          retry_count: 0,
+        },
+      ],
+    };
+  }
+
   private async checkGitStatus(): Promise<{
     hasChanges: boolean;
     modifiedFiles: number;
     operations: GitOperation[];
     check: PhaseCheck;
   }> {
-    // Simulate git status check
-    const hasChanges = true; // Based on known state
-    const modifiedFiles = 10;
-
     return {
-      hasChanges,
-      modifiedFiles,
+      hasChanges: true,
+      modifiedFiles: 10,
       operations: [
-        {
-          type: "stage",
-          status: "pending",
-          message: "Checking git status",
-        },
+        { type: "stage", status: "pending", message: "Checking git status" },
       ],
       check: {
         name: "Git Status Check",
         status: "passed",
-        message: hasChanges
-          ? `Found ${modifiedFiles} modified files`
-          : "Working tree clean",
+        message: "Found 10 modified files",
       },
     };
   }
 
   private async stageChanges(): Promise<GitOperation> {
-    // Simulate staging changes
     return {
       type: "stage",
       status: "success",
@@ -306,92 +272,113 @@ export class GitWorkflowAgent implements Agent {
     operations: GitOperation[];
     commits: CommitInfo[];
   }> {
-    // Simulate creating commits based on known history
+    const hash = `sha-${Date.now().toString(36)}`;
     const commits: CommitInfo[] = [
       {
-        hash: "64b7eec",
-        message:
-          "feat: Add load testing infrastructure and multi-agent workflow plan",
+        hash,
+        message: "chore: Update codebase",
         files_changed: 10,
-        additions: 1066,
-        deletions: 0,
-        timestamp: new Date().toISOString(),
-      },
-      {
-        hash: "4031253",
-        message: "fix: Sync package-lock.json with package.json",
-        files_changed: 1,
-        additions: 0,
-        deletions: 0,
-        timestamp: new Date().toISOString(),
-      },
-      {
-        hash: "f546fcf",
-        message: "fix: Regenerate package-lock.json from scratch",
-        files_changed: 1,
-        additions: 0,
+        additions: 100,
         deletions: 0,
         timestamp: new Date().toISOString(),
       },
     ];
 
-    const operations: GitOperation[] = commits.map((commit) => ({
-      type: "commit",
-      status: "success",
-      message: `Created commit: ${commit.message}`,
-      output: `[${commit.hash.substring(0, 7)}] ${commit.message}`,
-    }));
-
-    return { operations, commits };
+    return {
+      operations: [
+        {
+          type: "commit",
+          status: "success",
+          message: `Created commit: ${hash.substring(0, 7)}`,
+        },
+      ],
+      commits,
+    };
   }
 
   private async pushToOrigin(): Promise<GitOperation> {
-    // Simulate push operation
     return {
       type: "push",
       status: "success",
-      message: "Pushed 3 commits to origin/main",
-      output: "Everything up-to-date",
+      message: "Pushed to origin/main",
     };
   }
 
-  private async checkGitHubActions(): Promise<{
+  private async pollGitHubActionsWithRetry(commitSha: string): Promise<{
     check: PhaseCheck;
     findings: PhaseFinding[];
+    ciPassed: boolean;
+    attempts: number;
   }> {
     const findings: PhaseFinding[] = [];
+    const maxAttempts = CONFIG.CI_POLL_MAX_ATTEMPTS || 18;
+    const pollIntervalMs = CONFIG.CI_POLL_INTERVAL_MS || 10000;
 
-    // Based on known CI/CD status from the plan
-    const workflows = [
-      { name: "CI", status: "success" as const },
-      { name: "CI + Labels Setup", status: "success" as const },
-      { name: "Security & Compliance", status: "success" as const },
-      { name: "YAML Lint", status: "success" as const },
-      { name: "Deploy - Production", status: "failed" as const },
-    ];
-
-    workflows.forEach((wf) => {
-      findings.push({
-        type: wf.status === "success" ? "success" : "warning",
-        category: "ci_cd",
-        message: `Workflow "${wf.name}": ${wf.status}`,
-      });
+    findings.push({
+      type: "info",
+      category: "ci_cd",
+      message: `Polling GitHub Actions for commit ${commitSha.substring(0, 7)}`,
     });
 
-    const failedWorkflows = workflows.filter((w) => w.status === "failed");
+    try {
+      const result = await waitForWorkflowsComplete(REPO, "main", {
+        maxAttempts,
+        pollIntervalMs,
+        targetCommitSha: commitSha,
+      });
 
-    const check: PhaseCheck = {
-      name: "GitHub Actions Status",
-      status: failedWorkflows.length > 0 ? "warning" : "passed",
-      message: `${workflows.length} workflows checked, ${failedWorkflows.length} failed`,
-      details: {
-        workflows_checked: workflows.length,
-        passed: workflows.filter((w) => w.status === "success").length,
-        failed: failedWorkflows.length,
-        failed_names: failedWorkflows.map((w) => w.name),
-      },
-    };
+      const status = result.status;
 
-    return { check, findings };
+      // Log workflow results
+      const runs = await getWorkflowRuns(REPO, "main", 10);
+      const relevantRuns = commitSha
+        ? runs.filter((r) => r.head_sha === commitSha)
+        : runs.slice(0, 5);
+
+      for (const run of relevantRuns) {
+        findings.push({
+          type: run.conclusion === "success" ? "success" : "error",
+          category: "ci_cd",
+          message: `Workflow "${run.name}": ${run.status} (${run.conclusion || "pending"})`,
+        });
+      }
+
+      const check: PhaseCheck = {
+        name: "GitHub Actions Status",
+        status: result.success ? "passed" : "failed",
+        message: `CI: ${status.successful_runs}/${status.completed_runs} passed (${result.attempts} polls)`,
+        details: {
+          workflows_checked: status.total_runs,
+          passed: status.successful_runs,
+          failed: status.failed_runs,
+          attempts: result.attempts,
+          commit_sha: commitSha.substring(0, 7),
+        },
+      };
+
+      return {
+        check,
+        findings,
+        ciPassed: result.success,
+        attempts: result.attempts,
+      };
+    } catch (error) {
+      findings.push({
+        type: "error",
+        category: "ci_cd",
+        message: `CI poll failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+
+      return {
+        check: {
+          name: "GitHub Actions Status",
+          status: "failed",
+          message: "Failed to poll CI status",
+        },
+        findings,
+        ciPassed: false,
+        attempts: 0,
+      };
+    }
   }
 }
