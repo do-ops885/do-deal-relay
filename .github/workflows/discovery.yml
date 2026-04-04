@@ -42,22 +42,22 @@ jobs:
           fi
 
           PROD_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev"
-          echo "Production URL: $PROD_URL"
+          echo "Production URL: ${PROD_URL}"
 
           # Health check first
           echo "Checking production health..."
-          if ! curl -sf "$PROD_URL/health"; then
+          if ! curl -sf "${PROD_URL}/health"; then
             echo "⚠️ Production health check failed, but continuing with discovery"
           fi
 
           # Trigger discovery
           echo "Triggering discovery..."
-          RESPONSE=$(curl -sf -X POST "$PROD_URL/api/discover" 2>&1) || {
-            echo "Discovery trigger failed: $RESPONSE"
+          RESPONSE=$(curl -sf -X POST "${PROD_URL}/api/discover" 2>&1) || {
+            echo "Discovery trigger failed: ${RESPONSE}"
             exit 1
           }
 
-          echo "Discovery triggered successfully: $RESPONSE"
+          echo "Discovery triggered successfully: ${RESPONSE}"
 
       - name: Wait and verify
         run: |
@@ -74,8 +74,8 @@ jobs:
 
           # Check status
           echo "Checking discovery status..."
-          STATUS=$(curl -sf "$PROD_URL/api/status" 2>/dev/null || echo '{}')
-          echo "Status: $STATUS"
+          STATUS=$(curl -sf "${PROD_URL}/api/status" 2>/dev/null || echo '{}')
+          echo "Status: ${STATUS}"
 
       - name: Report to logs
         if: always()
@@ -107,11 +107,11 @@ jobs:
 
           # Health check
           echo "Checking staging health..."
-          curl -sf "$STAGING_URL/health" || echo "⚠️ Staging health check warning"
+          curl -sf "${STAGING_URL}/health" || echo "⚠️ Staging health check warning"
 
           # Trigger discovery
           echo "Triggering discovery..."
-          curl -sf -X POST "$STAGING_URL/api/discover" || {
+          curl -sf -X POST "${STAGING_URL}/api/discover" || {
             echo "❌ Discovery trigger failed"
             exit 1
           }

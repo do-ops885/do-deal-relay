@@ -31,17 +31,17 @@ jobs:
         run: |
           # Install TruffleHog
           INSTALL_URL="https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh"
-          curl -sSfL "$INSTALL_URL" | sh -s -- -b /usr/local/bin
+          curl -sSfL "${INSTALL_URL}" | sh -s -- -b /usr/local/bin
 
           # Handle single-commit scenario where BASE and HEAD are the same
           BEFORE="${{ github.event.before }}"
           SHA="${{ github.sha }}"
-          if [ "$BEFORE" = "$SHA" ] || [ -z "$BEFORE" ]; then
+          if [ "${BEFORE}" = "${SHA}" ] || [ -z "${BEFORE}" ]; then
             echo "Single commit push - running full filesystem scan"
             trufflehog filesystem . --only-verified --json || true
           else
-            echo "Running incremental scan from $BEFORE to $SHA"
-            trufflehog git file://. --since-commit "$BEFORE" \
+            echo "Running incremental scan from ${BEFORE} to ${SHA}"
+            trufflehog git file://. --since-commit "${BEFORE}" \
               --only-verified --json || true
           fi
         continue-on-error: true
@@ -91,11 +91,11 @@ jobs:
             echo "## Security Scan Results"
             echo "| Check | Status |"
             echo "|-------|--------|"
-            echo "| Secret Scan | $SECRET_SCAN_RESULT |"
-            echo "| Dependency Audit | $DEPENDENCY_CHECK_RESULT |"
+            echo "| Secret Scan | ${SECRET_SCAN_RESULT} |"
+            echo "| Dependency Audit | ${DEPENDENCY_CHECK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ "$SECRET_SCAN_RESULT" == "failure" ]]; then
+          if [[ "${SECRET_SCAN_RESULT}" == "failure" ]]; then
             {
               echo ""
               echo "❌ **SECRETS DETECTED** - Immediate action required"

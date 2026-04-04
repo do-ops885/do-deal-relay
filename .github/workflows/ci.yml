@@ -106,17 +106,17 @@ jobs:
         run: |
           # Install TruffleHog
           INSTALL_URL="https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh"
-          curl -sSfL "$INSTALL_URL" | sh -s -- -b /usr/local/bin
+          curl -sSfL "${INSTALL_URL}" | sh -s -- -b /usr/local/bin
 
           # Handle single-commit scenario where BASE and HEAD are the same
           BEFORE="${{ github.event.before }}"
           SHA="${{ github.sha }}"
-          if [ "$BEFORE" = "$SHA" ] || [ -z "$BEFORE" ]; then
+          if [ "${BEFORE}" = "${SHA}" ] || [ -z "${BEFORE}" ]; then
             echo "Single commit push - running full filesystem scan"
             trufflehog filesystem . --only-verified --json || true
           else
-            echo "Running incremental scan from $BEFORE to $SHA"
-            trufflehog git file://. --since-commit "$BEFORE" \
+            echo "Running incremental scan from ${BEFORE} to ${SHA}"
+            trufflehog git file://. --since-commit "${BEFORE}" \
               --only-verified --json || true
           fi
         continue-on-error: true
@@ -143,7 +143,8 @@ jobs:
             FOUND=1
           fi
 
-          if [ "$FOUND" -eq 1 ]; then
+          # SC2170 fix: use string comparison
+          if [ "${FOUND}" = "1" ]; then
             echo "⚠️  Potential secrets detected - manual review recommended"
             # Don't fail the build, just warn
             exit 0
@@ -221,19 +222,19 @@ jobs:
             echo "## CI Results"
             echo "| Job | Status |"
             echo "|-----|--------|"
-            echo "| Quality Gate | $QUALITY_GATE_RESULT |"
-            echo "| Unit Tests | $TEST_RESULT |"
-            echo "| Validation Gates | $VALIDATE_CODES_RESULT |"
-            echo "| Security Scan | $SECURITY_SCAN_RESULT |"
-            echo "| Lint & Format | $LINT_RESULT |"
-            echo "| Build Check | $BUILD_CHECK_RESULT |"
+            echo "| Quality Gate | ${QUALITY_GATE_RESULT} |"
+            echo "| Unit Tests | ${TEST_RESULT} |"
+            echo "| Validation Gates | ${VALIDATE_CODES_RESULT} |"
+            echo "| Security Scan | ${SECURITY_SCAN_RESULT} |"
+            echo "| Lint & Format | ${LINT_RESULT} |"
+            echo "| Build Check | ${BUILD_CHECK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           # Check if any required job failed
-          if [[ "$QUALITY_GATE_RESULT" == "failure" ]] || \
-             [[ "$TEST_RESULT" == "failure" ]] || \
-             [[ "$VALIDATE_CODES_RESULT" == "failure" ]] || \
-             [[ "$SECURITY_SCAN_RESULT" == "failure" ]]; then
+          if [[ "${QUALITY_GATE_RESULT}" == "failure" ]] || \
+             [[ "${TEST_RESULT}" == "failure" ]] || \
+             [[ "${VALIDATE_CODES_RESULT}" == "failure" ]] || \
+             [[ "${SECURITY_SCAN_RESULT}" == "failure" ]]; then
             {
               echo ""
               echo "❌ CI Failed - Check individual jobs for details"

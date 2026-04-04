@@ -66,10 +66,10 @@ jobs:
           # Health check
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           HEALTH_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
-          echo "Checking health at: $HEALTH_URL"
+          echo "Checking health at: ${HEALTH_URL}"
 
           for i in {1..5}; do
-            if curl -sf "$HEALTH_URL"; then
+            if curl -sf "${HEALTH_URL}"; then
               echo "✅ Staging health check passed"
               exit 0
             fi
@@ -89,19 +89,19 @@ jobs:
           echo "Running smoke tests on staging..."
 
           # Test health endpoint
-          curl -sf "$STAGING_URL/health" || exit 1
+          curl -sf "${STAGING_URL}/health" || exit 1
           echo "✅ Health endpoint OK"
 
           # Test metrics endpoint
-          curl -sf "$STAGING_URL/metrics" || exit 1
+          curl -sf "${STAGING_URL}/metrics" || exit 1
           echo "✅ Metrics endpoint OK"
 
           # Test deals endpoint
-          curl -sf "$STAGING_URL/deals" || exit 1
+          curl -sf "${STAGING_URL}/deals" || exit 1
           echo "✅ Deals endpoint OK"
 
           # Test API status endpoint
-          curl -sf "$STAGING_URL/api/status" || exit 1
+          curl -sf "${STAGING_URL}/api/status" || exit 1
           echo "✅ API status endpoint OK"
 
           echo "All smoke tests passed!"
