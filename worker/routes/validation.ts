@@ -10,7 +10,6 @@
  * Features:
  * - Rate limiting on all endpoints
  * - Circuit breaker protection
- * - EU AI Act compliant logging
  * - Proper error handling
  */
 
@@ -47,7 +46,6 @@ import {
   getLastValidationResults,
 } from "../lib/expiration";
 import { logger } from "../lib/global-logger";
-import { createComplianceLogger } from "../lib/eu-ai-act-logger";
 
 // ============================================================================
 // Types
@@ -66,41 +64,6 @@ interface ValidateDealBody {
   checkUrl?: boolean;
   checkCode?: boolean;
   checkRewards?: boolean;
-}
-
-// ============================================================================
-// EU AI Act Compliance
-// ============================================================================
-
-function logValidationOperation(
-  env: Env,
-  operation: string,
-  input: unknown,
-  output: unknown,
-): void {
-  try {
-    if (env.DEALS_DB) {
-      const complianceLogger = createComplianceLogger(env.DEALS_DB);
-      complianceLogger.logOperation({
-        timestamp: new Date().toISOString(),
-        systemId: "do-deal-relay",
-        operationId: crypto.randomUUID(),
-        operation,
-        operationVersion: "0.1.0",
-        inputData: {
-          source: "api",
-          hash: "",
-          description: `Validation API: ${operation}`,
-          metadata: input as Record<string, unknown>,
-        },
-        outputData: {
-          result: JSON.stringify(output),
-        },
-      });
-    }
-  } catch {
-    // Silently fail logging - don't break API
-  }
 }
 
 // ============================================================================
@@ -150,9 +113,6 @@ export async function handleValidateUrl(
 
     // Perform validation
     const result = await validateUrl(body.url, env);
-
-    // Log for compliance
-    logValidationOperation(env, "validate_url", { url: body.url }, result);
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
@@ -255,14 +215,6 @@ export async function handleValidateBatch(
         : undefined,
       errors: urlResults.errors,
     };
-
-    // Log for compliance
-    logValidationOperation(
-      env,
-      "validate_batch",
-      { count: body.urls.length },
-      { summary },
-    );
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
@@ -472,14 +424,6 @@ export async function handleValidateDeal(
         results.issues.push("Reward has changed since last update");
       }
     }
-
-    // Log for compliance
-    logValidationOperation(
-      env,
-      "validate_deal",
-      { code, options },
-      { valid: results.valid },
-    );
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);

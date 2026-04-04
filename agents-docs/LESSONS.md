@@ -297,11 +297,15 @@ worker/lib/multi-agent/
 - `worker/lib/multi-agent/agents/phase4-fixer.ts` (256 lines)
 - `tests/unit/multi-agent.test.ts` (654 lines) - Test suite
 
-**API Endpoints**:
+**API Endpoints (Internal Library Only - Not HTTP API)**:
 
-- `POST /api/workflow/execute` - Execute full workflow
-- `GET /api/workflow/plan` - Get execution plan
-- `POST /api/workflow/phase/:phase` - Execute single phase
+The multi-agent workflow system exists as an internal library (`worker/lib/multi-agent/`) for programmatic use. The following HTTP endpoints are **NOT implemented** (documented for future but currently only internal):
+
+- `POST /api/workflow/execute` - ❌ NOT IMPLEMENTED (internal library only)
+- `GET /api/workflow/plan` - ❌ NOT IMPLEMENTED (internal library only)  
+- `POST /api/workflow/phase/:phase` - ❌ NOT IMPLEMENTED (internal library only)
+
+**Note**: The orchestrator is accessible via JavaScript/TypeScript imports for use in scheduled workers or other internal processes. See `worker/lib/multi-agent/index.ts` for the public API.
 
 **Documentation**:
 
