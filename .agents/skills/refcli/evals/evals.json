@@ -11,52 +11,57 @@
   ],
   "evals": [
     {
-      "name": "add_referral_code",
-      "description": "Add a new referral code via CLI",
-      "criteria": [
-        "Uses correct command structure",
-        "Includes required fields (code, url, domain)",
-        "Handles optional metadata fields",
-        "Verifies successful creation"
+      "id": "refcli-add-referral",
+      "prompt": "Add a new referral code 'FREESHIP' for domain 'example.com' with URL 'https://example.com/ref' using refcli",
+      "expected_output": "Executes refcli command with correct parameters and confirms creation",
+      "assertions": [
+        "Uses 'refcli add' command structure",
+        "Includes required fields: code, url, domain",
+        "Provides confirmation message on success"
       ]
     },
     {
-      "name": "deactivate_referral_code",
-      "description": "Deactivate an existing referral code",
-      "criteria": [
-        "Specifies correct code",
-        "Provides valid reason",
-        "Optionally includes replacement code",
+      "id": "refcli-deactivate",
+      "prompt": "Deactivate the referral code 'OLDCODE' with reason 'Expired offer' using refcli",
+      "expected_output": "Deactivates the code and confirms status change",
+      "assertions": [
+        "Uses 'refcli deactivate' command",
+        "Specifies correct code to deactivate",
+        "Provides valid reason for deactivation",
         "Confirms deactivation status"
       ]
     },
     {
-      "name": "search_referral_codes",
-      "description": "Search and filter referral codes",
-      "criteria": [
-        "Uses appropriate filters (status, domain)",
-        "Formats output correctly",
-        "Handles pagination if needed"
+      "id": "refcli-search",
+      "prompt": "Search for active referral codes for domain 'trading212.com' using refcli",
+      "expected_output": "Returns list of matching referral codes with details",
+      "assertions": [
+        "Uses 'refcli list' or 'refcli search' command",
+        "Applies correct filters (status=active, domain)",
+        "Formats output with code, URL, and status",
+        "Handles empty results gracefully"
       ]
     },
     {
-      "name": "run_web_research",
-      "description": "Execute web research for referral codes",
-      "criteria": [
+      "id": "refcli-research",
+      "prompt": "Run web research for referral codes on domain 'robinhood.com' with depth 'standard' using refcli",
+      "expected_output": "Executes research and displays discovered codes",
+      "assertions": [
+        "Uses 'refcli research' command",
         "Specifies domain correctly",
         "Chooses appropriate depth level",
-        "Processes research results",
-        "Stores discovered codes"
+        "Processes and displays research results"
       ]
     },
     {
-      "name": "cli_error_handling",
-      "description": "Handle CLI errors gracefully",
-      "criteria": [
-        "Checks for required parameters",
-        "Handles authentication errors",
-        "Provides helpful error messages",
-        "Suggests next steps on failure"
+      "id": "refcli-error-handling",
+      "prompt": "Handle error when trying to add a referral code without providing the required URL parameter",
+      "expected_output": "Displays helpful error message with usage instructions",
+      "assertions": [
+        "Detects missing required parameters",
+        "Provides clear error message",
+        "Shows correct command syntax",
+        "Suggests next steps to fix the error"
       ]
     }
   ]
