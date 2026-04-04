@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { executeNLQ } from "../../../routes/nlq/index";
 

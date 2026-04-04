@@ -1,11 +1,17 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getRunLogs, getRecentLogs } from "../../logger";
 
 export const GetLogsInputSchema = z.object({
   run_id: z.string().optional().describe("Filter by run_id"),
-  count: z.number().int().min(1).max(1000).default(100).describe("Maximum results"),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .default(100)
+    .describe("Maximum results"),
 });
 
 /**

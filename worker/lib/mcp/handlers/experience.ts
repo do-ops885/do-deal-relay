@@ -1,12 +1,18 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
-import { getReferralByCode, storeReferralInput } from "../../referral-storage/crud";
+import {
+  getReferralByCode,
+  storeReferralInput,
+} from "../../referral-storage/crud";
 
 export const ExperienceDealInputSchema = z.object({
   code: z.string().describe("The referral code used"),
   success: z.boolean().describe("Whether the deal was successfully used"),
-  comment: z.string().optional().describe("Optional comment about the experience"),
+  comment: z
+    .string()
+    .optional()
+    .describe("Optional comment about the experience"),
 });
 
 /**
@@ -74,13 +80,17 @@ export async function handleExperienceDeal(
         resource: {
           uri: `deals://${code}/experience`,
           mimeType: "application/json",
-          text: JSON.stringify({
-            success: true,
-            code,
-            reported_success: success,
-            new_confidence: currentScore,
-            total_experiences: experiences.length,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              code,
+              reported_success: success,
+              new_confidence: currentScore,
+              total_experiences: experiences.length,
+            },
+            null,
+            2,
+          ),
         },
       },
     ],

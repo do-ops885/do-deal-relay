@@ -1,13 +1,19 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getProductionSnapshot } from "../../storage";
 import { getTopDeals, getExpiringDeals, getRecentDeals } from "../../ranking";
 import { calculateStringSimilarity } from "../../crypto";
 
 export const GetSimilarDealsInputSchema = z.object({
-  code: z.string().optional().describe("The referral code to find similar deals for"),
-  domain: z.string().optional().describe("Alternatively, find deals for this domain"),
+  code: z
+    .string()
+    .optional()
+    .describe("The referral code to find similar deals for"),
+  domain: z
+    .string()
+    .optional()
+    .describe("Alternatively, find deals for this domain"),
   limit: z.number().int().min(1).max(50).default(5).describe("Maximum results"),
 });
 
@@ -23,7 +29,12 @@ export async function handleGetSimilarDeals(
 
   if (!code && !domain) {
     return {
-      content: [{ type: "text", text: "❌ Either 'code' or 'domain' parameter is required." }],
+      content: [
+        {
+          type: "text",
+          text: "❌ Either 'code' or 'domain' parameter is required.",
+        },
+      ],
       isError: true,
     };
   }
@@ -46,12 +57,19 @@ export async function handleGetSimilarDeals(
     );
     if (byDomain.length === 0) {
       return {
-        content: [{ type: "text", text: `❌ No deals found for domain "${domain}".` }],
+        content: [
+          { type: "text", text: `❌ No deals found for domain "${domain}".` },
+        ],
         isError: true,
       };
     }
     return {
-      content: [{ type: "text", text: `Found ${byDomain.length} deals for domain "${domain}".` }],
+      content: [
+        {
+          type: "text",
+          text: `Found ${byDomain.length} deals for domain "${domain}".`,
+        },
+      ],
       structuredContent: {
         similar: [],
         total: 0,
@@ -63,20 +81,28 @@ export async function handleGetSimilarDeals(
 
   if (!targetDeal) {
     return {
-      content: [{ type: "text", text: `❌ Deal with code "${code}" not found.` }],
+      content: [
+        { type: "text", text: `❌ Deal with code "${code}" not found.` },
+      ],
       isError: true,
     };
   }
 
-  const targetCategories = new Set(targetDeal.metadata.category.map((c) => c.toLowerCase()));
-  const targetTags = new Set(targetDeal.metadata.tags.map((t) => t.toLowerCase()));
+  const targetCategories = new Set(
+    targetDeal.metadata.category.map((c) => c.toLowerCase()),
+  );
+  const targetTags = new Set(
+    targetDeal.metadata.tags.map((t) => t.toLowerCase()),
+  );
   const targetDomain = targetDeal.source.domain.toLowerCase();
 
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
     .map((d) => {
       let score = 0;
-      const dealCategories = new Set(d.metadata.category.map((c) => c.toLowerCase()));
+      const dealCategories = new Set(
+        d.metadata.category.map((c) => c.toLowerCase()),
+      );
       for (const cat of targetCategories) {
         if (dealCategories.has(cat)) score += 3;
       }

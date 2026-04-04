@@ -1,4 +1,4 @@
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { generateAnalyticsSummary } from "../../analytics/index";
 

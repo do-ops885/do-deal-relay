@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getPipelineStatus, executePipeline } from "../../../state-machine";
 
@@ -50,7 +50,10 @@ export async function handleTriggerDiscovery(
           text: "✅ Discovery pipeline triggered successfully.",
         },
       ],
-      structuredContent: { success: true, message: "Discovery pipeline triggered" },
+      structuredContent: {
+        success: true,
+        message: "Discovery pipeline triggered",
+      },
     };
   } else {
     return {

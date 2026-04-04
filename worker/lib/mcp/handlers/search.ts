@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { searchReferrals, referralToDeal } from "../../referral-storage/search";
 import { rankDeals } from "../../ranking";
@@ -30,8 +30,18 @@ export const SearchDealsInputSchema = z.object({
     .optional()
     .describe("Field to sort by"),
   order: z.enum(["asc", "desc"]).optional().describe("Sort order"),
-  min_confidence: z.number().min(0).max(1).optional().describe("Minimum confidence score"),
-  min_trust: z.number().min(0).max(1).optional().describe("Minimum trust score"),
+  min_confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Minimum confidence score"),
+  min_trust: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe("Minimum trust score"),
 });
 
 /**
@@ -42,7 +52,17 @@ export async function handleSearchDeals(
   args: z.infer<typeof SearchDealsInputSchema>,
   env: Env,
 ): Promise<ToolCallResult> {
-  const { domain, category, status, query, limit, sort_by, order, min_confidence, min_trust } = args;
+  const {
+    domain,
+    category,
+    status,
+    query,
+    limit,
+    sort_by,
+    order,
+    min_confidence,
+    min_trust,
+  } = args;
 
   // Build search filters for base search
   const filters = {
@@ -61,7 +81,7 @@ export async function handleSearchDeals(
     const dealBase = referralToDeal(r);
     return {
       ...dealBase,
-      id: r.id || `ref-${r.domain || "unknown"}-${r.code}`,
+      id: r.id || `ref-\${r.domain || "unknown"}-\${r.code}`,
     };
   });
 
@@ -93,17 +113,29 @@ export async function handleSearchDeals(
     content: [
       {
         type: "text",
-        text: `Found ${rankingResult.total} base deals, ${rankingResult.filtered} after filtering. Returning top ${formattedDeals.length}.`,
+        text: `Found \${rankingResult.total} base deals, \${rankingResult.filtered} after filtering. Returning top \${formattedDeals.length}.`,
       },
       {
         type: "resource",
         resource: {
-          uri: `deals://search?${new URLSearchParams({ domain: domain || "", category: category || "", status: status || "" }).toString()}`,
+          uri: \`deals://search?\${new URLSearchParams({ domain: domain || "", category: category || "", status: status || "" }).toString()}\`,
           mimeType: "application/json",
-          text: JSON.stringify({ deals: formattedDeals, total: rankingResult.total, filtered: rankingResult.filtered }, null, 2),
+          text: JSON.stringify(
+            {
+              deals: formattedDeals,
+              total: rankingResult.total,
+              filtered: rankingResult.filtered,
+            },
+            null,
+            2,
+          ),
         },
       },
     ],
-    structuredContent: { deals: formattedDeals, total: rankingResult.total, filtered: rankingResult.filtered },
+    structuredContent: {
+      deals: formattedDeals,
+      total: rankingResult.total,
+      filtered: rankingResult.filtered,
+    },
   };
 }

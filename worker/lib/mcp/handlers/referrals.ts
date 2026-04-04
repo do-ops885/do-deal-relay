@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Env, ReferralInput } from "../../types";
+import type { Env, ReferralInput } from "../../../types";
 import type { ToolCallResult } from "../types";
 import {
   getReferralByCode,

@@ -40,10 +40,7 @@ import {
   handleExperienceDeal,
   ExperienceDealInputSchema,
 } from "./handlers/experience";
-import {
-  handleReportDeal,
-  ReportDealInputSchema,
-} from "./handlers/report";
+import { handleReportDeal, ReportDealInputSchema } from "./handlers/report";
 import {
   handleGetPipelineStatus,
   handleTriggerDiscovery,
@@ -53,10 +50,7 @@ import {
   handleGetDealHighlights,
   GetSimilarDealsInputSchema,
 } from "./handlers/discovery";
-import {
-  handleGetLogs,
-  GetLogsInputSchema,
-} from "./handlers/logging";
+import { handleGetLogs, GetLogsInputSchema } from "./handlers/logging";
 
 // ============================================================================
 // Tool Definitions
@@ -508,7 +502,8 @@ export const MCP_TOOLS: Tool[] = [
   {
     name: "get_logs",
     title: "Get Pipeline Logs",
-    description: "Retrieve recent or specific run logs for the discovery pipeline",
+    description:
+      "Retrieve recent or specific run logs for the discovery pipeline",
     inputSchema: {
       type: "object",
       properties: {

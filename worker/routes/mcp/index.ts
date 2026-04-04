@@ -60,7 +60,7 @@ import {
 
 const SERVER_INFO = {
   name: "do-deal-relay",
-  version: "0.1.3",
+  version: "0.1.2",
 };
 
 const SERVER_CAPABILITIES = {

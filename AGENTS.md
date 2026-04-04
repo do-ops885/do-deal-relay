@@ -1,7 +1,7 @@
 # AGENTS.md - Deal Discovery System
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.3
+**Version**: 0.2.0
 **Phase**: Bootstrap
 **Status**: In Development
 
@@ -119,8 +119,6 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 **Allowed in root** (standard project files only):
 
 - `.gitignore` - Git ignore patterns
-- `CHANGELOG.md` - Changelog
-- `MIGRATION.md` - Migration guide
 - `package.json` - NPM manifest
 - `package-lock.json` - NPM lockfile
 - `tsconfig.json` - TypeScript config

@@ -316,8 +316,6 @@ ALLOWED_ROOT_FILES=(
     "AGENTS.md"
     "README.md"
     "LICENSE"
-    "CHANGELOG.md"
-    "MIGRATION.md"
     "package.json"
     "package-lock.json"
     "tsconfig.json"
@@ -352,11 +350,6 @@ while IFS= read -r file; do
             fi
         done
 
-        # Allow CHANGELOG.md and MIGRATION.md in root
-        if [[ "$file" == "CHANGELOG.md" ]] || [[ "$file" == "MIGRATION.md" ]]; then
-            ALLOWED=1
-        fi
-
         if [ $ALLOWED -eq 0 ]; then
             error "File in root directory not in allowed list: $file"
             ROOT_VIOLATIONS=1
@@ -379,7 +372,7 @@ MISPLACED=0
 
 while IFS= read -r file; do
     # Documentation should be in docs/ or agents-docs/
-    if [[ "$file" == *.md ]] && [[ "$file" != "README.md" ]] && [[ "$file" != "AGENTS.md" ]] && [[ "$file" != "LICENSE" ]] && [[ "$file" != "CHANGELOG.md" ]] && [[ "$file" != "MIGRATION.md" ]]; then
+    if [[ "$file" == *.md ]] && [[ "$file" != "README.md" ]] && [[ "$file" != "AGENTS.md" ]] && [[ "$file" != "LICENSE" ]]; then
         if [[ "$file" != docs/* ]] && [[ "$file" != agents-docs/* ]]; then
             warning "Markdown file outside docs/: $file"
             MISPLACED=1
