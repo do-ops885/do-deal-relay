@@ -7,16 +7,20 @@ import {
   handleReady,
   handleLive,
   handleMetrics,
+} from "./routes/health";
+import {
   handleGetDeals,
-  handleDiscover,
-  handleStatus,
-  handleGetLogs,
-  handleSubmit,
   handleRankedDeals,
   handleDealHighlights,
   handleSimilarDeals,
+} from "./routes/deals";
+import {
+  handleDiscover,
+  handleStatus,
+  handleGetLogs,
   handleAnalytics,
-} from "./routes/core";
+} from "./routes/pipeline";
+import { handleSubmit } from "./routes/submission";
 import {
   handleGetReferrals,
   handleCreateReferral,
