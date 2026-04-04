@@ -82,15 +82,21 @@ class StructuredLogger implements Logger {
   }
 
   debug(message: string, context?: Record<string, unknown>): void {
-    this.log("debug", message, context).catch(() => {});
+    this.log("debug", message, context).catch((err) => {
+      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+    });
   }
 
   info(message: string, context?: Record<string, unknown>): void {
-    this.log("info", message, context).catch(() => {});
+    this.log("info", message, context).catch((err) => {
+      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+    });
   }
 
   warn(message: string, context?: Record<string, unknown>): void {
-    this.log("warn", message, context).catch(() => {});
+    this.log("warn", message, context).catch((err) => {
+      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+    });
   }
 
   error(
@@ -98,7 +104,9 @@ class StructuredLogger implements Logger {
     error?: Error,
     context?: Record<string, unknown>,
   ): void {
-    this.log("error", message, context, error).catch(() => {});
+    this.log("error", message, context, error).catch((err) => {
+      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+    });
   }
 
   withPhase(phase: string): Logger {
