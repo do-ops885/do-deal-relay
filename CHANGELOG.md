@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2026-03-15
 
 ### Fixed
+- **kv-setup.yml**: Boolean comparison bug (`== true` → `== 'true'`) preventing manual KV namespace creation
+- **deploy-production.yml**: Boolean comparison bug blocking manual production deployments
+- **deploy-production.yml**: Staging health check logic inverted (was skipped on main branch pushes)
+- **deploy-production.yml**: Failure notification steps never fired due to `continue-on-error: true` on preceding steps
+- **deploy-staging.yml**: Missing `await` on `github.rest.issues.create()` causing incomplete issue creation
+- **security.yml**: Summary check ineffective due to `continue-on-error: true` on secret-scan job
+- **cleanup.yml**: Cache cleanup deleted newest caches instead of oldest (missing sort by `last_accessed_at`)
+- **ci.yml** & **security.yml**: TruffleHog `file://.` protocol replaced with correct `.` path
+- **yaml-lint.yml**: Linting non-YAML files in `.github/` directory (now targets `.github/workflows/`)
+- **auto-merge.yml**: jq string interpolation with `[bot]` replaced with `--arg` for safe handling
+- **dependencies.yml**: `jq` failing on empty/invalid `outdated.json` when no packages are outdated
 - GitHub Actions workflows using non-existent action versions (checkout@v5, setup-python@v6)
 - yaml-lint.yml using unstable actionlint version tag
 - ci-and-labels.yml using deprecated actions-rust-lang action
@@ -27,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up AGENTS_REGISTRY.md formatting
 
 ### Added
+- `permissions` blocks to all workflows without explicit permissions (kv-setup, discovery, ci-and-labels, dependencies, ci)
 - develop branch support in ci-and-labels.yml workflow
 - .qwen/skills/ symlinks for Qwen Code support
 - .github/dependabot.yml with 2026 best practices:

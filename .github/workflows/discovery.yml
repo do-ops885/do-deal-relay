@@ -20,6 +20,9 @@ concurrency:
   group: scheduled-discovery
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   discovery-production:
     name: Discovery - Production

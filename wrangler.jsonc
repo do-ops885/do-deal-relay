@@ -13,7 +13,7 @@
   },
   // Scheduled triggers: Discovery every 6h, expiry check at 9am, weekly validation Sunday midnight
   "triggers": {
-    "crons": ["0 */6 * * *", "0 9 * * *", "0 0 * * 0"],
+    "crons": ["0 */6 * * *", "0 9 * * *", "0 0 * * SUN"],
   },
   // KV Namespaces for different data types
   "kv_namespaces": [

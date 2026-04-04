@@ -1,40 +1,46 @@
 import { describe, it, expect } from "vitest";
+import { deduplicate } from "../../worker/pipeline/dedupe";
 import {
-  deduplicate,
   calculateSourceDiversity,
   calculateUniquenessScore,
-} from "../../worker/pipeline/dedupe";
+} from "../../worker/pipeline/score";
 import type { Deal, PipelineContext } from "../../worker/types";
 
-const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
-  id,
-  source: {
-    url: `https://${overrides.source?.domain || "example.com"}/invite`,
-    domain: overrides.source?.domain || "example.com",
-    discovered_at: "2024-03-31T00:00:00Z",
-    trust_score: 0.7,
-  },
-  title: "Test Deal",
-  description: "Test description",
-  code: overrides.code || "CODE123",
-  url: `https://${overrides.source?.domain || "example.com"}/invite/${overrides.code || "CODE123"}`,
-  reward: {
-    type: "cash",
-    value: 50,
-    currency: "USD",
-  },
-  expiry: {
-    confidence: 0.8,
-    type: "soft",
-  },
-  metadata: {
-    category: ["test"],
-    tags: ["test"],
-    normalized_at: "2024-03-31T00:00:00Z",
-    confidence_score: 0.8,
-    status: "active",
-  },
-});
+const createMockDeal = (
+  id: string,
+  overrides: { source?: { domain?: string }; code?: string } = {},
+): Deal => {
+  const domain = overrides.source?.domain || "example.com";
+  return {
+    id,
+    source: {
+      url: `https://${domain}/invite`,
+      domain,
+      discovered_at: "2024-03-31T00:00:00Z",
+      trust_score: 0.7,
+    },
+    title: "Test Deal",
+    description: "Test description",
+    code: overrides.code || "CODE123",
+    url: `https://${domain}/invite/${overrides.code || "CODE123"}`,
+    reward: {
+      type: "cash",
+      value: 50,
+      currency: "USD",
+    },
+    expiry: {
+      confidence: 0.8,
+      type: "soft",
+    },
+    metadata: {
+      category: ["test"],
+      tags: ["test"],
+      normalized_at: "2024-03-31T00:00:00Z",
+      confidence_score: 0.8,
+      status: "active",
+    },
+  };
+};
 
 describe("Deduplication Pipeline", () => {
   const ctx: PipelineContext = {

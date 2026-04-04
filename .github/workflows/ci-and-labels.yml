@@ -12,6 +12,10 @@ name: CI + Labels Setup
       - main
       - develop
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   labels:
     name: Initialize GitHub Labels

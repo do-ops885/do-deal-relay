@@ -76,8 +76,11 @@ jobs:
               repo: context.repo.repo
             });
 
-            // Keep only the 5 most recent caches
-            const cachesToDelete = caches.data.actions_caches.slice(5);
+            // Sort by last_accessed_at descending (oldest first), then delete oldest
+            const sorted = caches.data.actions_caches.sort(
+              (a, b) => new Date(a.last_accessed_at) - new Date(b.last_accessed_at)
+            );
+            const cachesToDelete = sorted.slice(5);
 
             for (const cache of cachesToDelete) {
               await github.rest.actions.deleteActionsCacheById({

@@ -190,8 +190,7 @@ jobs:
           BOT_LOGIN="github-actions[bot]"
           REVIEWS=$(gh pr view "$PR_NUMBER" --json reviews --jq '.reviews')
           APPROVED_BY_BOT=$(echo "$REVIEWS" | \
-            jq "map(select(.author.login == \"$BOT_LOGIN\" and \
-            .state == \"APPROVED\")) | length")
+            jq --arg login "$BOT_LOGIN" 'map(select(.author.login == $login and .state == "APPROVED")) | length')
 
           if [ "${APPROVED_BY_BOT}" -gt 0 ]; then
             echo "PR already approved by bot, skipping"

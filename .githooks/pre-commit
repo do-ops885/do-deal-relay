@@ -242,6 +242,8 @@ ALLOWED_ROOT_FILES=(
     "^\.gitattributes$"
     "^\.ignore$"
     "^NOTICE$"
+    "^CHANGELOG\.md$"
+    "^MIGRATION\.md$"
 )
 
 # Check each staged file that's in root

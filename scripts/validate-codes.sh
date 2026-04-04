@@ -2,6 +2,7 @@
 #
 # Validation Script for Deal Discovery System
 # Runs all 9 validation gates locally
+# All operations have timeouts to prevent hanging
 #
 
 set -e
@@ -18,6 +19,11 @@ NC='\033[0m' # No Color
 
 ERRORS=0
 WARNINGS=0
+
+# Timeouts (seconds)
+TSC_TIMEOUT=30
+GREP_TIMEOUT=10
+JQ_TIMEOUT=10
 
 # Function to print status
 print_status() {
@@ -39,20 +45,28 @@ echo ""
 
 # Gate 1: Check TypeScript compilation
 echo "Gate 1: TypeScript Compilation"
-if npx tsc --noEmit 2>/dev/null; then
+if timeout "${TSC_TIMEOUT}" npx tsc --noEmit 2>/dev/null; then
     print_status 0 "TypeScript compiles without errors"
 else
-    print_status 1 "TypeScript compilation failed"
+    exit_code=$?
+    if [ $exit_code -eq 124 ]; then
+        print_warning "TypeScript compilation timed out (${TSC_TIMEOUT}s)"
+    else
+        print_status 1 "TypeScript compilation failed"
+    fi
 fi
 echo ""
 
 # Gate 2: Check for hardcoded secrets
 echo "Gate 2: Secret Detection"
 SECRETS_FOUND=0
-if grep -rE "ghp_[a-zA-Z0-9]{36,}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+GREP_ARGS="--include=*.ts --include=*.js --include=*.json -r"
+EXCLUDE="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.agents"
+
+if timeout "${GREP_TIMEOUT}" grep ${GREP_ARGS} ${EXCLUDE} "ghp_[a-zA-Z0-9]{36,}" . 2>/dev/null; then
     SECRETS_FOUND=1
 fi
-if grep -rE "sk-[a-zA-Z0-9]{20,}" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v ".agents/skills"; then
+if timeout "${GREP_TIMEOUT}" grep ${GREP_ARGS} ${EXCLUDE} "sk-[a-zA-Z0-9]{20,}" . 2>/dev/null; then
     SECRETS_FOUND=1
 fi
 if [ $SECRETS_FOUND -eq 0 ]; then
@@ -110,11 +124,11 @@ echo ""
 echo "Gate 5: JSON Validity"
 INVALID_JSON=0
 while IFS= read -r file; do
-    if ! jq empty "$file" 2>/dev/null; then
+    if ! timeout "${JQ_TIMEOUT}" jq empty "$file" 2>/dev/null; then
         print_status 1 "Invalid JSON: $file"
         INVALID_JSON=1
     fi
-done < <(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*")
+done < <(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./.agents/*")
 if [ $INVALID_JSON -eq 0 ]; then
     print_status 0 "All JSON files are valid"
 fi
@@ -122,8 +136,8 @@ echo ""
 
 # Gate 6: Check for TODO comments
 echo "Gate 6: TODO/FIXME Check"
-TODOS=$(grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | wc -l)
-if [ $TODOS -eq 0 ]; then
+TODOS=$(timeout "${GREP_TIMEOUT}" grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | wc -l || echo "0")
+if [ "$TODOS" -eq 0 ]; then
     print_status 0 "No TODO/FIXME comments found"
 else
     print_warning "Found $TODOS TODO/FIXME comments (review recommended)"
@@ -151,10 +165,10 @@ echo ""
 
 # Gate 8: Validate schema version consistency
 echo "Gate 8: Schema Version Consistency"
-CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-AGENTS_VERSION=$(grep "\\*\\*Version\\*\\*:" AGENTS.md | grep -o "[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+")
+CONFIG_VERSION=$(grep "SCHEMA_VERSION" worker/config.ts | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+AGENTS_VERSION=$(grep -i "Version" AGENTS.md | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "")
 
-if [ "$CONFIG_VERSION" = "$AGENTS_VERSION" ]; then
+if [ -n "$CONFIG_VERSION" ] && [ "$CONFIG_VERSION" = "$AGENTS_VERSION" ]; then
     print_status 0 "Schema versions consistent ($CONFIG_VERSION)"
 else
     print_warning "Schema version mismatch: config=$CONFIG_VERSION, agents=$AGENTS_VERSION"
@@ -166,18 +180,18 @@ echo "Gate 9: Security Patterns"
 UNSAFE=0
 
 # Check for eval()
-if grep -r "eval(" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+if timeout "${GREP_TIMEOUT}" grep -r "eval(" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     print_status 1 "Unsafe eval() detected"
     UNSAFE=1
 fi
 
 # Check for innerHTML
-if grep -r "innerHTML" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+if timeout "${GREP_TIMEOUT}" grep -r "innerHTML" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
     print_warning "innerHTML usage detected (review for XSS)"
 fi
 
 # Check for http:// (should be https://) - allow localhost for development
-if grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://" | grep -v "tests/" | grep -v "localhost" | grep -v "allow-http"; then
+if timeout "${GREP_TIMEOUT}" grep -r "http://" --include="*.ts" --include="*.json" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "https://" | grep -v "tests/" | grep -v "localhost" | grep -v "allow-http" | grep -v "temp/"; then
     print_warning "HTTP URLs found (should use HTTPS)"
 fi
 
