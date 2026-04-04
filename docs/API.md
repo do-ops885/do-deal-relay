@@ -1873,6 +1873,213 @@ curl "https://your-worker.workers.dev/webhooks/sync/partner_trading212"
 
 ---
 
+## Email API
+
+Process incoming emails to extract referral codes, parse email content for testing, and retrieve help email templates. Email webhooks support HMAC signature verification for security.
+
+---
+
+### POST /api/email/incoming
+
+Receive and process emails via webhook to extract referral codes. Supports HMAC signature verification for secure email processing.
+
+**Request Headers**:
+
+- `Content-Type` (string, required): `application/json`
+- `X-Webhook-Signature` (string, optional): HMAC-SHA256 signature (required if `EMAIL_WEBHOOK_SECRET` is configured)
+- `X-Webhook-Timestamp` (string, optional): Unix timestamp (required if signature is present)
+
+**Request Body**:
+
+```json
+{
+  "from": "user@example.com",
+  "to": "referrals@do-deal-relay.com",
+  "subject": "Trading212 Referral Code ABC123",
+  "text": "Here is my referral code ABC123 for Trading212",
+  "html": "<p>Here is my referral code <b>ABC123</b> for Trading212</p>",
+  "headers": {
+    "Message-Id": "<message-id@example.com>"
+  }
+}
+```
+
+**Parameters**:
+
+- `from` (string, required): Sender email address (must be valid email format)
+- `to` (string, required): Recipient email address(es), comma-separated for multiple recipients
+- `subject` (string, required): Email subject line
+- `text` (string, optional): Plain text body content
+- `html` (string, optional): HTML body content
+- `headers` (object, optional): Additional email headers
+
+**Response (Success - 200)**:
+
+```json
+{
+  "success": true,
+  "message": "Referral code extracted and stored",
+  "referralId": "sha256-hash-id",
+  "extracted": {
+    "code": "ABC123",
+    "domain": "trading212.com",
+    "url": "https://trading212.com/invite/ABC123",
+    "confidence": 0.85,
+    "command": null
+  },
+  "confirmationSent": true
+}
+```
+
+**Response (Extraction Failed - 200)**:
+
+```json
+{
+  "success": false,
+  "message": "No referral code found in email",
+  "referralId": null,
+  "extracted": null,
+  "confirmationSent": false
+}
+```
+
+**Status Codes**:
+
+- 200: Email processed (success depends on `success` field in response)
+- 400: Missing required fields or invalid email format
+- 401: Invalid webhook signature
+- 500: Failed to process email
+
+**Signature Verification**:
+
+When `EMAIL_WEBHOOK_SECRET` environment variable is configured, requests must include:
+- `X-Webhook-Signature`: `sha256=<base64_signature>`
+- `X-Webhook-Timestamp`: Unix timestamp (within 5 minutes of current time)
+
+Signature format: `HMAC-SHA256(webhook_secret, timestamp + "." + body)`
+
+**Example**:
+
+```bash
+curl -X POST "https://your-worker.workers.dev/api/email/incoming" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Signature: sha256=xxxxxxxxxxxxxxxx" \
+  -H "X-Webhook-Timestamp: 1711886400" \
+  -d '{
+    "from": "user@example.com",
+    "to": "referrals@do-deal-relay.com",
+    "subject": "Trading212 Referral Code",
+    "text": "My code is ABC123 for Trading212"
+  }'
+```
+
+---
+
+### POST /api/email/parse
+
+Parse email content for testing email extraction without storing results. Useful for debugging email parsing logic and verifying extraction patterns.
+
+**Request Headers**:
+
+- `Content-Type` (string, required): `application/json`
+
+**Request Body**:
+
+```json
+{
+  "from": "test@example.com",
+  "to": "referrals@do-deal-relay.com",
+  "subject": "Here is my referral code XYZ789",
+  "text": "Use my referral code XYZ789 for Robinhood",
+  "html": "<p>Use my referral code <b>XYZ789</b> for Robinhood</p>"
+}
+```
+
+**Parameters**:
+
+- `from` (string, required): Sender email address
+- `subject` (string, required): Email subject line
+- `to` (string, optional): Recipient email address(es)
+- `text` (string, optional): Plain text body content
+- `html` (string, optional): HTML body content
+
+**Response (200)**:
+
+```json
+{
+  "extraction": {
+    "code": "XYZ789",
+    "domain": "robinhood.com",
+    "url": "https://robinhood.com/invite/XYZ789",
+    "confidence": 0.72,
+    "command": null,
+    "source": "email_body"
+  },
+  "command": {
+    "type": "submit",
+    "params": {
+      "code": "XYZ789",
+      "domain": "robinhood.com"
+    },
+    "confidence": 0.8
+  },
+  "email": {
+    "from": "test@example.com",
+    "to": ["referrals@do-deal-relay.com"],
+    "subject": "Here is my referral code XYZ789",
+    "hasText": true,
+    "hasHtml": true
+  }
+}
+```
+
+**Status Codes**:
+
+- 200: Parse completed successfully
+- 400: Missing required fields (from, subject)
+- 500: Failed to parse email
+
+**Example**:
+
+```bash
+curl -X POST "https://your-worker.workers.dev/api/email/parse" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "test@example.com",
+    "subject": "Referral Code: ABC123 for Coinbase",
+    "text": "Use my referral code ABC123"
+  }'
+```
+
+---
+
+### GET /api/email/help
+
+Get help email content template for replying to users who need assistance with email submissions.
+
+**Response (200)**:
+
+```json
+{
+  "subject": "How to Submit Referral Codes via Email",
+  "text": "Subject: [Company] Referral Code [CODE]\n\nBody: Include the referral code...",
+  "html": "<h2>How to Submit Referral Codes via Email</h2><p>..."
+}
+```
+
+**Status Codes**:
+
+- 200: Help content retrieved successfully
+- 500: Failed to generate help content
+
+**Example**:
+
+```bash
+curl "https://your-worker.workers.dev/api/email/help"
+```
+
+---
+
 ## Multi-Agent Workflow API
 
 ⚠️ **Coming Soon** - The workflow API is planned for a future release.
