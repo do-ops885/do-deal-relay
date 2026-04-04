@@ -176,10 +176,60 @@ interface LoggerConfig {
 
 ## Best Practices
 
-1. **Always use correlation IDs** - Essential for tracing
-2. **Structured data** - Log objects, not strings
-3. **Consistent keys** - Standardize field names
-4. **Appropriate levels** - Error for problems, info for normal
-5. **Don't log secrets** - Use redaction
+### Cloudflare Workers Considerations
+
+When logging in Cloudflare Workers:
+
+1. **Use `waitUntil()` for log writes** - Don't block the response
+   ```typescript
+   export default {
+     async fetch(req, env, ctx) {
+       const logger = new Logger({
+         correlationId: req.headers.get('x-correlation-id') || crypto.randomUUID()
+       });
+
+       logger.info('Request received', { url: req.url });
+
+       // Flush logs without blocking
+       ctx.waitUntil(logger.flush());
+
+       return new Response('OK');
+     }
+   };
+   ```
+
+2. **Never use empty catch blocks** - Always handle or log errors
+   ```typescript
+   // ❌ Bad - silently swallows errors
+   logger.flush().catch(() => {});
+
+   // ✅ Good - logs failures
+   logger.flush().catch(err => {
+     console.error('Failed to flush logs:', err);
+   });
+   ```
+
+3. **Fallback logging for compliance** - EU AI Act requires logging even on failure
+   ```typescript
+   try {
+     await processRequest(req);
+   } catch (error) {
+     // Always log - even if primary logger fails
+     console.error(JSON.stringify({
+       timestamp: new Date().toISOString(),
+       level: 'error',
+       message: 'Request processing failed',
+       correlationId,
+       error: String(error)
+     }));
+     throw error;
+   }
+   ```
+
+4. **Always use correlation IDs** - Essential for tracing
+5. **Structured data** - Log objects, not strings
+6. **Consistent keys** - Standardize field names
+7. **Appropriate levels** - Error for problems, info for normal
+8. **Don't log secrets** - Use redaction
 
 See [templates/logger.ts](templates/logger.ts) and [examples/tracing.ts](examples/tracing.ts) for complete examples.

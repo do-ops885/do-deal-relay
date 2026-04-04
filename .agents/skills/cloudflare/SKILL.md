@@ -128,6 +128,117 @@ Need analytics?
 Need IaC? → pulumi/ (Pulumi), terraform/ (Terraform), or api/ (REST API)
 ```
 
+## Best Practices
+
+Reference the comprehensive [Best Practices Guide](../../../docs/BEST_PRACTICES.md) for detailed guidance.
+
+### Quick Reference
+
+| Category | Rule | Example |
+|----------|------|---------|
+| **Security** | Use `crypto.randomUUID()` not `Math.random()` | `const id = crypto.randomUUID()` |
+| **Performance** | Stream response bodies | `return new Response(response.body, ...)` |
+| **Type Safety** | Never use `as unknown as T` | Use type guards instead |
+| **Configuration** | Use `wrangler.jsonc` with `nodejs_compat` | See config examples below |
+| **Error Handling** | Use `waitUntil()` for background work | `ctx.waitUntil(logAsync())` |
+| **Logging** | Structured logging with correlation IDs | `logger.info('msg', { id })` |
+
+### Security
+
+```typescript
+// ✅ Good - cryptographically secure
+const id = crypto.randomUUID();
+
+// ❌ Bad - predictable, not secure
+const id = Math.random().toString(36);
+```
+
+### Performance
+
+```typescript
+// ✅ Good - streaming for large responses
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const response = await fetch('https://api.example.com/large-data');
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  }
+};
+
+// ❌ Bad - buffers entire response
+const text = await response.text();  // Memory intensive
+```
+
+### Type Safety
+
+```typescript
+// ❌ Bad - bypasses type safety entirely
+const result = unsafeData as unknown as Deal;
+
+// ✅ Good - proper type guards
+function isDeal(obj: unknown): obj is Deal {
+  return obj && typeof obj === 'object' &&
+         'id' in obj && 'title' in obj;
+}
+
+if (isDeal(data)) {
+  // data is properly typed as Deal
+}
+```
+
+### Configuration
+
+```jsonc
+// wrangler.jsonc
+{
+  "name": "my-worker",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
+```
+
+### Error Handling
+
+```typescript
+// ✅ Good - fire-and-forget background tasks
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    ctx.waitUntil(logToAnalytics(request));
+    return new Response('OK');
+  }
+};
+```
+
+### Structured Logging
+
+```typescript
+// ✅ Good - structured logging with correlation IDs
+interface LogEntry {
+  timestamp: string;
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  correlationId: string;
+  context?: Record<string, unknown>;
+}
+
+function log(level: LogEntry['level'], message: string, context?: Record<string, unknown>) {
+  const entry: LogEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    correlationId: crypto.randomUUID(),
+    context
+  };
+  console.log(JSON.stringify(entry));
+}
+```
+
 ## Product Index
 
 ### Compute & Runtime

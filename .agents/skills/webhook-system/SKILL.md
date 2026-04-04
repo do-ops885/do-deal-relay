@@ -122,7 +122,7 @@ const subscriptions = new SubscriptionManager();
 
 // Subscribe
 await subscriptions.subscribe({
-  id: 'sub-1',
+  id: `sub_${Date.now()}_${crypto.randomUUID().split('-')[0]}`,
   url: 'https://api.example.com/webhook',
   events: ['deal.created', 'deal.updated'],
   secret: generateSecret()
