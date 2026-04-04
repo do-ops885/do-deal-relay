@@ -339,6 +339,8 @@ async function researchFromSourceParallel(
   sourcesChecked.push(source.name);
   researchRateLimiter.recordRequest(source.name);
 
+  let useSimulationFallback = false;
+
   // Check cache first
   const cached = getCachedResults(query, source.name);
   if (cached) {
@@ -396,14 +398,18 @@ async function researchFromSourceParallel(
       } else {
         errors.push(`${source.name}: ${fetchResult.error}`);
         recordFailure(source.name);
-        // Don't fallback to simulation on fetch failure - record error only
+        // Fallback to simulation mode on fetch failure
+        useSimulationFallback = true;
       }
     } catch (error) {
       errors.push(`${source.name}: ${(error as Error).message}`);
       recordFailure(source.name);
-      // Don't fallback to simulation on error - record error only
+      // Fallback to simulation mode on error
+      useSimulationFallback = true;
     }
-  } else {
+  }
+
+  if (!useRealFetching || useSimulationFallback) {
     // Use simulation mode
     const simulatedCodes = simulateDiscovery(query, source, depth);
     discoveredCodes.push(

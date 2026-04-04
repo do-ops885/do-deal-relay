@@ -2,6 +2,7 @@ import { Snapshot, SnapshotSchema, Deal, SourceConfig } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { generateSnapshotHash } from "./crypto";
+import { fetchInBatches } from "./utils";
 
 // ============================================================================
 // KV Storage Abstraction Layer
@@ -276,10 +277,9 @@ export async function getLastRunMetadata(env: Env) {
 
 /**
  * Clear all staging data
+ * Optimization: Parallel batch delete instead of sequential loop
  */
 export async function clearStaging(env: Env): Promise<void> {
   const list = await env.DEALS_STAGING.list();
-  for (const key of list.keys) {
-    await env.DEALS_STAGING.delete(key.name);
-  }
+  await fetchInBatches(list.keys, (key) => env.DEALS_STAGING.delete(key.name));
 }

@@ -28,10 +28,13 @@ import {
  */
 
 export async function handleHealth(env: Env): Promise<Response> {
-  const snapshot = await getProductionSnapshot(env);
-  const status = await getPipelineStatus(env);
+  // Optimization: Parallelize independent KV fetches
+  const [snapshot, status, logs] = await Promise.all([
+    getProductionSnapshot(env),
+    getPipelineStatus(env),
+    getRecentLogs(env, 100),
+  ]);
 
-  const logs = await getRecentLogs(env, 100);
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
     (l) => l.phase === "finalize" && l.status === "complete",
@@ -89,8 +92,11 @@ export async function handleMetrics(
   env: Env,
   format: string = "prometheus",
 ): Promise<Response> {
-  const snapshot = await getProductionSnapshot(env);
-  const logs = await getRecentLogs(env, 1000);
+  // Optimization: Parallelize independent KV fetches
+  const [snapshot, logs] = await Promise.all([
+    getProductionSnapshot(env),
+    getRecentLogs(env, 1000),
+  ]);
 
   const runs = logs.filter((l) => l.phase === "finalize").length;
   const successes = logs.filter(

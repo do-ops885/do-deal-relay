@@ -7,31 +7,7 @@ import {
   STRUCTURED_LOG_PREFIX,
   TRACE_INDEX_PREFIX,
 } from "./types";
-
-/**
- * Helper to fetch KV entries in batches to avoid subrequest limits and improve performance.
- * @param env Worker environment
- * @param keys Keys to fetch
- * @param batchSize Number of concurrent requests (default 25)
- * @returns Array of non-null fetched entries
- */
-async function batchFetch<T>(
-  env: Env,
-  keys: string[],
-  batchSize: number = 25,
-): Promise<T[]> {
-  const results: T[] = [];
-  for (let i = 0; i < keys.length; i += batchSize) {
-    const batch = keys.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map((key) => env.DEALS_LOG.get<T>(key, "json")),
-    );
-    for (const res of batchResults) {
-      if (res) results.push(res);
-    }
-  }
-  return results;
-}
+import { fetchInBatches } from "../utils";
 
 export async function getRunLogs(
   env: Env,
@@ -46,7 +22,9 @@ export async function getRunLogs(
     }
 
     // Optimization: Parallel batch fetch instead of sequential loop
-    const entries = await batchFetch<LogEntry>(env, entryKeys);
+    const entries = await fetchInBatches<string, LogEntry>(entryKeys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime(),
@@ -74,7 +52,10 @@ export async function queryLogsByRunId(
     );
 
     // Optimization: Parallel batch fetch instead of sequential loop
-    const entries = await batchFetch<StructuredLogEntry>(env, keysToFetch);
+    const entries = await fetchInBatches<string, StructuredLogEntry>(
+      keysToFetch,
+      (key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -99,7 +80,10 @@ export async function queryLogsByTraceId(
     }
 
     // Optimization: Parallel batch fetch instead of sequential loop
-    const entries = await batchFetch<StructuredLogEntry>(env, logKeys);
+    const entries = await fetchInBatches<string, StructuredLogEntry>(
+      logKeys,
+      (key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return entries.sort(
       (a, b) =>
@@ -130,7 +114,9 @@ export async function getRecentLogs(
     }
 
     // Optimization: Parallel batch fetch instead of sequential loop
-    const entries = await batchFetch<LogEntry>(env, keys);
+    const entries = await fetchInBatches<string, LogEntry>(keys, (key) =>
+      env.DEALS_LOG.get<LogEntry>(key, "json"),
+    );
 
     return entries;
   } catch (error) {
@@ -153,7 +139,10 @@ export async function getRecentStructuredLogs(
       .map((k) => k.name);
 
     // Optimization: Parallel batch fetch instead of sequential loop
-    const logs = await batchFetch<StructuredLogEntry>(env, sortedKeys);
+    const logs = await fetchInBatches<string, StructuredLogEntry>(
+      sortedKeys,
+      (key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
+    );
 
     return logs.sort(
       (a, b) =>
