@@ -232,6 +232,15 @@ export interface ToolCallResult {
   content: ContentBlock[];
   isError?: boolean;
   structuredContent?: unknown;
+  _meta?: {
+    progress?: {
+      progressToken: string | number;
+      progress: number;
+      total?: number;
+      message?: string;
+    };
+    [key: string]: unknown;
+  };
 }
 
 // ============================================================================

@@ -47,6 +47,12 @@ import {
   getClientIdentifier,
   createRateLimitHeaders,
 } from "../../lib/rate-limit";
+import {
+  encodeCursor,
+  decodeCursor,
+  paginate,
+  type ProgressNotification,
+} from "../../lib/mcp/utils";
 
 // ============================================================================
 // Server Configuration
@@ -245,13 +251,13 @@ async function handlePing(): Promise<{}> {
 }
 
 /**
- * Handle tools/list request
+ * Handle tools/list request with pagination support
  */
-async function handleToolsList(): Promise<ToolsListResult> {
+async function handleToolsList(params?: {
+  cursor?: string;
+}): Promise<ToolsListResult> {
   const tools = getTools();
 
-  // Convert Zod schemas to JSON Schema for output
-  // The serialized tools have Zod schemas converted to plain objects for JSON serialization
   const serializedTools = tools.map((tool) => ({
     name: tool.name,
     title: tool.title,
@@ -267,31 +273,63 @@ async function handleToolsList(): Promise<ToolsListResult> {
     annotations: tool.annotations,
   }));
 
-  // Return type matches ToolsListResult with tools as plain objects
+  const PAGE_SIZE = 5;
+  const { items, nextCursor } = paginate(
+    serializedTools,
+    params?.cursor,
+    PAGE_SIZE,
+  );
+
   return {
-    tools: serializedTools,
+    tools: items,
+    nextCursor,
   } as ToolsListResult;
 }
 
 /**
- * Handle tools/call request
+ * Handle tools/call request with progress tracking
  */
 async function handleToolCall(
   params: ToolCallParams,
   env: Env,
   request: Request,
 ): Promise<ToolCallResult> {
-  const { name, arguments: args = {} } = params;
+  const { name, arguments: args = {}, _meta } = params;
 
-  return executeTool(name, args, env, request);
+  const result = await executeTool(name, args, env, request);
+
+  if (_meta?.progressToken) {
+    const progressNotification: ProgressNotification = {
+      progressToken: _meta.progressToken,
+      progress: 1,
+      total: 1,
+      message: `Tool "${name}" completed`,
+    };
+
+    return {
+      ...result,
+      _meta: {
+        ...(result._meta || {}),
+        progress: progressNotification,
+      },
+    };
+  }
+
+  return result;
 }
 
 /**
- * Handle resources/list request
+ * Handle resources/list request with pagination support
  */
-async function handleResourcesList(): Promise<ResourcesListResult> {
+async function handleResourcesList(params?: {
+  cursor?: string;
+}): Promise<ResourcesListResult> {
   const resources = getResources();
-  return { resources };
+
+  const PAGE_SIZE = 5;
+  const { items, nextCursor } = paginate(resources, params?.cursor, PAGE_SIZE);
+
+  return { resources: items, nextCursor };
 }
 
 /**
@@ -422,9 +460,11 @@ export async function handleMCPRequest(
         result = await handlePing();
         break;
 
-      case "tools/list":
-        result = await handleToolsList();
+      case "tools/list": {
+        const toolsListParams = params as { cursor?: string } | undefined;
+        result = await handleToolsList(toolsListParams);
         break;
+      }
 
       case "tools/call": {
         // Validate params using type guard for type safety
@@ -443,9 +483,11 @@ export async function handleMCPRequest(
         break;
       }
 
-      case "resources/list":
-        result = await handleResourcesList();
+      case "resources/list": {
+        const resourcesListParams = params as { cursor?: string } | undefined;
+        result = await handleResourcesList(resourcesListParams);
         break;
+      }
 
       case "resources/templates/list":
         result = await handleResourceTemplatesList();
