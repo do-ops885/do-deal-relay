@@ -129,6 +129,27 @@ jobs:
           exit 1
         continue-on-error: true
 
+      - name: Seed KV for fresh deployments
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PROD_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev"
+
+          echo "Checking if KV needs seeding..."
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${PROD_URL}/health" || echo "000")
+
+          if [ "${HEALTH_STATUS}" = "503" ]; then
+            echo "Fresh deployment detected (health=503), seeding KV..."
+            # Create empty snapshot to initialize KV
+            curl -sf -X POST "${PROD_URL}/api/discover" || true
+            # Wait for discovery to complete
+            sleep 5
+            echo "KV seeded successfully"
+          else
+            echo "KV already initialized (health=${HEALTH_STATUS})"
+          fi
+        continue-on-error: true
+
       - name: Run smoke tests on production
         run: |
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
