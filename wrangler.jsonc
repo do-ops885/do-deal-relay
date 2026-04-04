@@ -1,0 +1,141 @@
+// wrangler.jsonc - Cloudflare Workers Configuration
+// Best practices: JSONC format allows comments for better documentation
+{
+  "name": "do-deal-relay",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-03-31",
+  // Enable Node.js compatibility for better ecosystem support
+  "compatibility_flags": ["nodejs_compat"],
+  // Observability for monitoring and debugging
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  // Scheduled triggers: Discovery every 6h, expiry check at 9am
+  "triggers": {
+    "crons": ["0 */6 * * *", "0 9 * * *"],
+  },
+  // KV Namespaces for different data types
+  "kv_namespaces": [
+    {
+      "binding": "DEALS_PROD",
+      "id": "23ee9b8c9e2748e5880f476b8b57a524",
+    },
+    {
+      "binding": "DEALS_STAGING",
+      "id": "b0db85b92fae45c1895152737ab72649",
+    },
+    {
+      "binding": "DEALS_LOG",
+      "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+    },
+    {
+      "binding": "DEALS_LOCK",
+      "id": "e3ab520eafd5430ab72978e78bdd257e",
+    },
+    {
+      "binding": "DEALS_SOURCES",
+      "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+    },
+  ],
+  // Environment variables (non-secrets only - secrets use `wrangler secret`)
+  "vars": {
+    "ENVIRONMENT": "production",
+    "GITHUB_REPO": "do-ops885/do-deal-relay",
+    "NOTIFICATION_THRESHOLD": "100",
+    // MCP Configuration
+    "MCP_PROTOCOL_VERSION": "2025-11-25",
+    "MCP_RATE_LIMIT_PER_MINUTE": "60",
+  },
+  // D1 Database for advanced queries and full-text search
+  "d1_databases": [
+    {
+      "binding": "DEALS_DB",
+      "database_name": "deals-db",
+      "database_id": "11111111-1111-1111-1111-111111111111",
+    },
+  ],
+  // Environment-specific configurations
+  "env": {
+    // Staging environment for pre-production testing
+    "staging": {
+      "name": "do-deal-relay-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "NOTIFICATION_THRESHOLD": "100",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "120",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "DEALS_PROD",
+          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+        },
+        {
+          "binding": "DEALS_STAGING",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "DEALS_LOG",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+        },
+        {
+          "binding": "DEALS_LOCK",
+          "id": "e3ab520eafd5430ab72978e78bdd257e",
+        },
+        {
+          "binding": "DEALS_SOURCES",
+          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DEALS_DB",
+          "database_name": "deals-db-staging",
+          "database_id": "22222222-2222-2222-2222-222222222222",
+        },
+      ],
+    },
+    // Production environment (explicitly defined for --env production flag)
+    "production": {
+      "name": "do-deal-relay",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "NOTIFICATION_THRESHOLD": "100",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "60",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "DEALS_PROD",
+          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+        },
+        {
+          "binding": "DEALS_STAGING",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "DEALS_LOG",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+        },
+        {
+          "binding": "DEALS_LOCK",
+          "id": "e3ab520eafd5430ab72978e78bdd257e",
+        },
+        {
+          "binding": "DEALS_SOURCES",
+          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DEALS_DB",
+          "database_name": "deals-db",
+          "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+        },
+      ],
+    },
+  },
+}
