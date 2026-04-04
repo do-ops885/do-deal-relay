@@ -511,3 +511,45 @@ export const WebResearchRequestSchema = z.object({
     })
     .optional(),
 });
+
+// ============================================================================
+// Experience Feedback System Types
+// ============================================================================
+
+export const ExperienceEventTypeSchema = z.enum([
+  "click",
+  "view",
+  "conversion",
+  "feedback",
+]);
+
+export type ExperienceEventType = z.infer<typeof ExperienceEventTypeSchema>;
+
+export const ExperienceEventInputSchema = z.object({
+  deal_code: z.string().min(1),
+  event_type: ExperienceEventTypeSchema,
+  agent_id: z.string().optional(),
+  score: z.number().int().min(-100).max(100).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export type ExperienceEventInput = z.infer<typeof ExperienceEventInputSchema>;
+
+export interface ExperienceEvent {
+  id: string;
+  deal_code: string;
+  event_type: string;
+  agent_id: string | null;
+  score: number | null;
+  metadata: string | null;
+  created_at: number;
+}
+
+export interface ExperienceAggregate {
+  deal_code: string;
+  total_events: number;
+  positive_events: number;
+  negative_events: number;
+  avg_score: number;
+  last_updated: number;
+}

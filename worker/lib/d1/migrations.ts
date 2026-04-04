@@ -368,6 +368,43 @@ export const MIGRATIONS: Migration[] = [
       DROP VIEW IF EXISTS v_referral_stats;
     `,
   },
+  {
+    version: 6,
+    name: "add_experience_feedback_tables",
+    up: `
+      CREATE TABLE IF NOT EXISTS experience_events (
+          id TEXT PRIMARY KEY,
+          deal_code TEXT NOT NULL,
+          event_type TEXT NOT NULL,
+          agent_id TEXT,
+          score INTEGER,
+          metadata TEXT,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS experience_aggregates (
+          deal_code TEXT PRIMARY KEY,
+          total_events INTEGER DEFAULT 0,
+          positive_events INTEGER DEFAULT 0,
+          negative_events INTEGER DEFAULT 0,
+          avg_score REAL DEFAULT 0,
+          last_updated INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_experience_events_deal_code ON experience_events(deal_code);
+      CREATE INDEX IF NOT EXISTS idx_experience_events_type ON experience_events(event_type);
+      CREATE INDEX IF NOT EXISTS idx_experience_events_created ON experience_events(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_experience_events_agent ON experience_events(agent_id) WHERE agent_id IS NOT NULL;
+    `,
+    down: `
+      DROP INDEX IF EXISTS idx_experience_events_deal_code;
+      DROP INDEX IF EXISTS idx_experience_events_type;
+      DROP INDEX IF EXISTS idx_experience_events_created;
+      DROP INDEX IF EXISTS idx_experience_events_agent;
+      DROP TABLE IF EXISTS experience_aggregates;
+      DROP TABLE IF EXISTS experience_events;
+    `,
+  },
 ];
 
 // ============================================================================

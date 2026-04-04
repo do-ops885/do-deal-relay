@@ -49,6 +49,12 @@ import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
 import { handleWebhookRoutes } from "./routes/webhooks";
 import { logger } from "./lib/global-logger";
+import {
+  handleSubmitExperience,
+  handleGetExperience,
+  handleRunAggregation,
+} from "./routes/experience";
+import { runAggregation } from "./lib/d1/experience";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -187,6 +193,20 @@ export default {
       const webhookResponse = await handleWebhookRoutes(request, env, path);
       if (webhookResponse) return webhookResponse;
 
+      // Experience Feedback API
+      if (path === "/api/experience" && request.method === "POST") {
+        return handleSubmitExperience(request, env);
+      }
+
+      const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
+      if (experienceMatch && request.method === "GET") {
+        return handleGetExperience(experienceMatch[1], env);
+      }
+
+      if (path === "/api/experience/aggregate" && request.method === "POST") {
+        return handleRunAggregation(env);
+      }
+
       // 404
       return jsonResponse({ error: "Not found" }, 404);
     } catch (error) {
@@ -209,7 +229,7 @@ export default {
     });
 
     try {
-      // Daily cron job at 9am - expiration checks
+      // Daily cron job at 9am - expiration checks and experience aggregation
       if (cron === "0 9 * * *") {
         logger.info("Running daily expiration check", {
           component: "scheduled",
@@ -222,6 +242,18 @@ export default {
           expiringFound: result.expiringFound,
           expiredMarked: result.expiredMarked,
           notificationsSent: result.notificationsSent,
+        });
+
+        logger.info("Running daily experience aggregation", {
+          component: "scheduled",
+        });
+
+        const aggResult = await runAggregation(env.DEALS_DB!);
+
+        logger.info("Daily experience aggregation completed", {
+          component: "scheduled",
+          dealsProcessed: aggResult.dealsProcessed,
+          eventsProcessed: aggResult.eventsProcessed,
         });
 
         return;
