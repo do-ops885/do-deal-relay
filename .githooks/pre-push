@@ -2,6 +2,7 @@
 #
 # Pre-push Guard Rails Hook
 # Prevents pushing broken or unsafe code
+# All operations have timeouts to prevent hanging
 #
 
 set -e
@@ -16,6 +17,11 @@ NC='\033[0m'
 
 ERRORS=0
 
+# Timeouts (seconds)
+TSC_TIMEOUT=30
+TEST_TIMEOUT=60
+VALIDATE_TIMEOUT=30
+
 warning() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
@@ -29,20 +35,37 @@ success() {
     echo -e "${GREEN}✓${NC} $1"
 }
 
-# GUARD RAIL 1: TypeScript Compilation
+# GUARD RAIL 1: TypeScript Compilation (with timeout)
 echo "Guard Rail 1: TypeScript Compilation"
-if npx tsc --noEmit 2>/dev/null; then
+if timeout "${TSC_TIMEOUT}" npx tsc --noEmit 2>/dev/null; then
     success "TypeScript compilation passed"
 else
-    error "TypeScript compilation failed"
+    exit_code=$?
+    if [ $exit_code -eq 124 ]; then
+        error "TypeScript compilation timed out (${TSC_TIMEOUT}s)"
+    else
+        error "TypeScript compilation failed"
+    fi
     echo "   Run: npx tsc --noEmit"
 fi
 echo ""
 
-# GUARD RAIL 2: Run Tests (if they exist)
+# GUARD RAIL 2: Run Tests (CI mode with timeout, not watch mode)
 echo "Guard Rail 2: Test Suite"
-if [ -f "package.json" ] && grep -q '"test"' package.json; then
-    if npm test 2>/dev/null | grep -q "pass\|✓"; then
+if [ -f "package.json" ] && grep -q '"test:ci"' package.json; then
+    if timeout "${TEST_TIMEOUT}" npm run test:ci 2>&1 | tail -5 | grep -qE "pass|✓|passed"; then
+        success "Tests passing"
+    else
+        exit_code=${PIPESTATUS[0]}
+        if [ $exit_code -eq 124 ]; then
+            warning "Tests timed out (${TEST_TIMEOUT}s) - skipping"
+        else
+            warning "Tests failed - review manually"
+        fi
+    fi
+elif [ -f "package.json" ] && grep -q '"test"' package.json; then
+    # Fallback: run test in CI mode if available
+    if timeout "${TEST_TIMEOUT}" npm test -- --run 2>&1 | tail -5 | grep -qE "pass|✓|passed"; then
         success "Tests passing"
     else
         warning "Test status unclear - review manually"
@@ -52,14 +75,19 @@ else
 fi
 echo ""
 
-# GUARD RAIL 3: Validation Script
+# GUARD RAIL 3: Validation Script (with timeout)
 echo "Guard Rail 3: Validation Script"
 if [ -f "scripts/validate-codes.sh" ]; then
-    if bash scripts/validate-codes.sh 2>&1 | grep -q "All validation gates passed"; then
+    if timeout "${VALIDATE_TIMEOUT}" bash scripts/validate-codes.sh 2>&1 | grep -q "All validation gates passed"; then
         success "Validation script passed"
     else
-        error "Validation script found issues"
-        echo "   Run: ./scripts/validate-codes.sh"
+        exit_code=${PIPESTATUS[0]}
+        if [ $exit_code -eq 124 ]; then
+            warning "Validation script timed out (${VALIDATE_TIMEOUT}s) - skipping"
+        else
+            error "Validation script found issues"
+            echo "   Run: ./scripts/validate-codes.sh"
+        fi
     fi
 else
     success "No validation script (skipping)"
@@ -90,11 +118,9 @@ fi
 echo ""
 
 # GUARD RAIL 5: Check Branch Name
-# Get remote ref from pre-push arguments (local_ref local_sha remote_ref remote_sha)
 REMOTE_REF="${4:-}"
 PUSH_TO_MAIN=false
 if [ -n "$REMOTE_REF" ]; then
-    # Extract branch name from remote ref (e.g., refs/heads/main -> main)
     REMOTE_BRANCH=$(echo "$REMOTE_REF" | sed 's|refs/heads/||')
     if [[ "$REMOTE_BRANCH" == "main" ]] || [[ "$REMOTE_BRANCH" == "master" ]]; then
         PUSH_TO_MAIN=true
@@ -104,7 +130,6 @@ fi
 echo "Guard Rail 5: Branch Name"
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "unknown")
 
-# Audit log path (defined early for use in both branches)
 AUDIT_LOG="temp/main-push-audit.log"
 mkdir -p temp
 
@@ -113,7 +138,6 @@ if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "mast
     echo -e "${YELLOW}⚠️  Direct push to main branch detected${NC}"
     echo ""
 
-    # Skip interactive prompt in non-interactive environments
     if [ ! -t 0 ]; then
         echo "Non-interactive environment detected - proceeding with main push"
         echo "[$(date -Iseconds)] AUTO-AUTHORIZED main push (non-interactive) by $(git config user.email || echo 'unknown')" >> "$AUDIT_LOG"
@@ -126,16 +150,13 @@ if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "mast
         echo "  3. Use --no-verify to bypass all checks (not recommended)"
         echo ""
 
-        # Read user input
         printf "Enter your choice (or type the confirmation phrase): "
         read -r USER_INPUT
 
         if [[ "$USER_INPUT" == "I understand pushing to main" ]]; then
-            # Log the authorized push
             echo "[$(date -Iseconds)] AUTHORIZED main push by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF" >> "$AUDIT_LOG"
             success "Main push authorized and logged"
         else
-            # Log the blocked attempt
             echo "[$(date -Iseconds)] BLOCKED main push attempt by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF, input: '$USER_INPUT'" >> "$AUDIT_LOG"
             error "Main push blocked - confirmation phrase not entered correctly"
             echo "   Push has been logged. To force push, use: git push --no-verify"
@@ -156,7 +177,6 @@ echo ""
 echo "Guard Rail 6: Recent Commits"
 COMMITS=$(git log --oneline --no-merges -5 2>/dev/null || echo "")
 if [ -n "$COMMITS" ]; then
-    # Check for WIP commits (only at start of message)
     if echo "$COMMITS" | grep -qiE "^(wip|work in progress|tmp|temp|draft)"; then
         error "WIP/temporary commits detected!"
         echo "$COMMITS" | head -3

@@ -58,6 +58,12 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping staging health check"
+            exit 0
+          fi
+
           STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
           echo "Verifying staging environment is healthy..."
 
