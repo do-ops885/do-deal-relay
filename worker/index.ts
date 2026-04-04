@@ -14,6 +14,7 @@ import {
   handleSubmit,
   handleRankedDeals,
   handleDealHighlights,
+  handleSimilarDeals,
   handleAnalytics,
 } from "./routes/core";
 import {
@@ -79,6 +80,9 @@ export default {
       }
       if (path === "/deals/highlights") {
         return handleDealHighlights(url, env);
+      }
+      if (path === "/deals/similar") {
+        return handleSimilarDeals(url, env);
       }
 
       // Pipeline API

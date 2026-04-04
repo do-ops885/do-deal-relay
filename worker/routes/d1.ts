@@ -16,6 +16,9 @@ import {
   getSearchSuggestions,
   getDomainsWithCounts,
   getCategoriesWithCounts,
+  getSimilarDealsD1,
+  getRecommendedDealsD1,
+  getTrendingDealsD1,
   type DealSearchResult,
   type ExpiringDeal,
 } from "../lib/d1/queries";
@@ -65,17 +68,9 @@ export async function handleD1Search(url: URL, env: Env): Promise<Response> {
     logger.error(
       "D1 search error",
       error instanceof Error ? error : new Error(String(error)),
-      {
-        query,
-      },
+      { query },
     );
-    return jsonResponse(
-      {
-        error: "Search failed",
-        message: error instanceof Error ? error.message : String(error),
-      },
-      500,
-    );
+    return jsonResponse({ error: "Search failed" }, 500);
   }
 }
 
@@ -470,5 +465,99 @@ export async function handleD1Request(
     return handleD1Health(env);
   }
 
+  // Recommendations
+  if (path === "/api/d1/similar" && request.method === "GET") {
+    return handleD1Similar(url, env);
+  }
+
+  if (path === "/api/d1/recommended" && request.method === "GET") {
+    return handleD1Recommended(url, env);
+  }
+
+  if (path === "/api/d1/trending" && request.method === "GET") {
+    return handleD1Trending(url, env);
+  }
+
   return jsonResponse({ error: "D1 endpoint not found" }, 404);
+}
+
+/**
+ * Handle similar deals from D1 - GET /api/d1/similar?deal_id=X
+ */
+async function handleD1Similar(url: URL, env: Env): Promise<Response> {
+  const dealId = url.searchParams.get("deal_id");
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 5;
+  const includeExpired = url.searchParams.get("include_expired") === "true";
+
+  if (!dealId) {
+    return jsonResponse({ error: "deal_id query parameter required" }, 400);
+  }
+
+  if (!env.DEALS_DB) {
+    return jsonResponse({ error: "Database not configured" }, 503);
+  }
+
+  try {
+    const deals = await getSimilarDealsD1(env.DEALS_DB, dealId, {
+      limit,
+      includeExpired,
+    });
+    return jsonResponse({ similar: deals, total: deals.length });
+  } catch (error) {
+    console.error("similar-deals-failed", { dealId, error: String(error) });
+    return jsonResponse({ error: "Failed to get similar deals" }, 500);
+  }
+}
+
+/**
+ * Handle recommended deals from D1 - GET /api/d1/recommended?domains=X,Y
+ */
+async function handleD1Recommended(url: URL, env: Env): Promise<Response> {
+  const domainsParam = url.searchParams.get("domains") || "";
+  const domains = domainsParam ? domainsParam.split(",") : [];
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 10;
+
+  if (!env.DEALS_DB) {
+    return jsonResponse({ error: "Database not configured" }, 503);
+  }
+
+  try {
+    const deals = await getRecommendedDealsD1(env.DEALS_DB, domains, { limit });
+    return jsonResponse({ recommended: deals, total: deals.length });
+  } catch (error) {
+    console.error("recommended-deals-failed", { error: String(error) });
+    return jsonResponse({ error: "Failed to get recommended deals" }, 500);
+  }
+}
+
+/**
+ * Handle trending deals from D1 - GET /api/d1/trending?days=7
+ */
+async function handleD1Trending(url: URL, env: Env): Promise<Response> {
+  const days = url.searchParams.has("days")
+    ? parseInt(url.searchParams.get("days")!, 10)
+    : 7;
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 10;
+
+  if (!env.DEALS_DB) {
+    return jsonResponse({ error: "Database not configured" }, 503);
+  }
+
+  try {
+    const deals = await getTrendingDealsD1(env.DEALS_DB, days, limit);
+    return jsonResponse({
+      trending: deals,
+      total: deals.length,
+      period_days: days,
+    });
+  } catch (error) {
+    console.error("trending-deals-failed", { error: String(error) });
+    return jsonResponse({ error: "Failed to get trending deals" }, 500);
+  }
 }

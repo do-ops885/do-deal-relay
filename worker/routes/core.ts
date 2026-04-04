@@ -372,13 +372,120 @@ export async function handleSubmit(
 }
 
 import {
+  calculateDealScore,
+  sortDeals,
   rankDeals,
-  SortField,
-  SortOrder,
   getTopDeals,
   getExpiringDeals,
   getRecentDeals,
+  type SortField,
+  type SortOrder,
 } from "../lib/ranking";
+import { calculateStringSimilarity } from "../lib/crypto";
+
+/**
+ * Handle similar deals endpoint - GET /deals/similar?code=X
+ * Returns deals similar to the given deal code
+ */
+export async function handleSimilarDeals(
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  const code = url.searchParams.get("code");
+  const domain = url.searchParams.get("domain");
+  const limit = url.searchParams.has("limit")
+    ? parseInt(url.searchParams.get("limit")!, 10)
+    : 5;
+
+  if (!code && !domain) {
+    return jsonResponse(
+      { error: "Either 'code' or 'domain' query parameter required" },
+      400,
+    );
+  }
+
+  const snapshot = await getProductionSnapshot(env);
+  if (!snapshot) {
+    return jsonResponse({ error: "No deals available" }, 404);
+  }
+
+  const targetDeal = snapshot.deals.find(
+    (d) => code && d.code.toLowerCase() === code.toLowerCase(),
+  );
+
+  if (!targetDeal && domain) {
+    const byDomain = snapshot.deals.filter(
+      (d) => d.source.domain.toLowerCase() === domain.toLowerCase(),
+    );
+    if (byDomain.length === 0) {
+      return jsonResponse({ error: "No deals found for domain" }, 404);
+    }
+    return jsonResponse({
+      similar: [],
+      total: 0,
+      reason: "No reference deal found, showing domain deals",
+      domain_deals: byDomain.slice(0, limit),
+    });
+  }
+
+  if (!targetDeal) {
+    return jsonResponse({ error: "Deal not found" }, 404);
+  }
+
+  const targetCategories = new Set(
+    targetDeal.metadata.category.map((c) => c.toLowerCase()),
+  );
+  const targetTags = new Set(
+    targetDeal.metadata.tags.map((t) => t.toLowerCase()),
+  );
+  const targetDomain = targetDeal.source.domain.toLowerCase();
+
+  const similar = snapshot.deals
+    .filter((d) => d.id !== targetDeal.id)
+    .map((d) => {
+      let score = 0;
+
+      // Category match (weight: 3)
+      const dealCategories = new Set(
+        d.metadata.category.map((c) => c.toLowerCase()),
+      );
+      for (const cat of targetCategories) {
+        if (dealCategories.has(cat)) score += 3;
+      }
+
+      // Domain match (weight: 2)
+      if (d.source.domain.toLowerCase() === targetDomain) {
+        score += 2;
+      }
+
+      // Tag overlap (weight: 1)
+      const dealTags = new Set(d.metadata.tags.map((t) => t.toLowerCase()));
+      for (const tag of targetTags) {
+        if (dealTags.has(tag)) score += 1;
+      }
+
+      // Code similarity (weight: 1)
+      const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
+      score += codeSim;
+
+      return { deal: d, similarity: score };
+    })
+    .filter((s) => s.similarity > 0)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit)
+    .map((s) => s.deal);
+
+  return jsonResponse({
+    reference: {
+      id: targetDeal.id,
+      title: targetDeal.title,
+      code: targetDeal.code,
+      domain: targetDeal.source.domain,
+    },
+    similar,
+    total: similar.length,
+  });
+}
 
 /**
  * Handle ranked deals endpoint - GET /deals/ranked
