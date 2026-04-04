@@ -1,0 +1,129 @@
+{
+  "skill": "nlq",
+  "description": "Natural Language Query skill - convert conversational queries to structured searches",
+  "evals": [
+    {
+      "id": "nlq-basic-search",
+      "name": "Basic Category Search",
+      "prompt": "Use the NLQ endpoint to find 'trading platform deals'",
+      "expected_behavior": "Should return deals in the 'trading' or 'finance' category",
+      "success_criteria": [
+        "Response status is 200",
+        "Returns array of deals",
+        "All deals have category related to trading/finance",
+        "Response time < 500ms"
+      ]
+    },
+    {
+      "id": "nlq-reward-filter",
+      "name": "Reward Amount Filter",
+      "prompt": "Search for 'deals with signup bonus over $50'",
+      "expected_behavior": "Should filter deals with reward_value >= 50 and reward_type = 'cash' or 'credit'",
+      "success_criteria": [
+        "Returns only deals with reward_value >= 50",
+        "All deals have reward_type in ('cash', 'credit')",
+        "Intent classified as 'filter' or 'search'",
+        "No errors in parsing"
+      ]
+    },
+    {
+      "id": "nlq-comparison",
+      "name": "Platform Comparison",
+      "prompt": "Compare 'Robinhood vs Webull trading platforms'",
+      "expected_behavior": "Should identify comparison intent and return both platforms",
+      "success_criteria": [
+        "Intent classified as 'compare'",
+        "Entities include 'Robinhood' and 'Webull'",
+        "Returns deals from both platforms",
+        "Comparison explanation provided"
+      ]
+    },
+    {
+      "id": "nlq-time-constraint",
+      "name": "Expiring Deals Query",
+      "prompt": "Find 'deals expiring this week'",
+      "expected_behavior": "Should filter deals with expiry within 7 days",
+      "success_criteria": [
+        "Date entities extracted correctly",
+        "WHERE clause includes expiry date filter",
+        "Returns only deals expiring within 7 days",
+        "Query parsed without errors"
+      ]
+    },
+    {
+      "id": "nlq-complex-combined",
+      "name": "Complex Combined Query",
+      "prompt": "Find 'best crypto exchanges with signup bonus over $25 expiring this month'",
+      "expected_behavior": "Should combine category, reward, amount, and time filters",
+      "success_criteria": [
+        "Category detected as 'crypto'",
+        "Reward filter >= $25",
+        "Expiry filter for current month",
+        "Ranking/sorting by 'best' detected",
+        "Returns filtered and sorted results"
+      ]
+    },
+    {
+      "id": "nlq-mcp-tool",
+      "name": "MCP Tool Integration",
+      "prompt": "Call the MCP natural_language_query tool with query 'banking deals with high cash bonuses'",
+      "expected_behavior": "Should execute via MCP and return structured results",
+      "success_criteria": [
+        "MCP tool call successful",
+        "Returns JSON-RPC response",
+        "Deals returned in MCP format",
+        "Tool execution time < 1000ms"
+      ]
+    },
+    {
+      "id": "nlq-explain",
+      "name": "Query Explanation",
+      "prompt": "Use /api/nlq/explain?q='top 5 finance apps with $100+ rewards'",
+      "expected_behavior": "Should return explanation of how query was parsed",
+      "success_criteria": [
+        "Returns explanation object",
+        "Intent is 'rank' due to 'top'",
+        "Limit is 5 due to '5'",
+        "Category is 'finance'",
+        "Reward filter >= $100"
+      ]
+    },
+    {
+      "id": "nlq-ai-enhancement",
+      "name": "AI-Powered Enhancement",
+      "prompt": "Query: 'better trading platforms than Robinhood with good reviews'",
+      "expected_behavior": "AI should enhance query to find alternatives and high trust deals",
+      "success_criteria": [
+        "AI enhancement applied",
+        "Comparator 'better than' detected",
+        "'Robinhood' extracted as reference",
+        "Sentiment filter for 'good' applied to trust score",
+        "Returns alternative platforms"
+      ]
+    },
+    {
+      "id": "nlq-error-handling",
+      "name": "Error Handling",
+      "prompt": "Submit malformed request to /api/nlq with empty query",
+      "expected_behavior": "Should return proper error response",
+      "success_criteria": [
+        "Returns 400 status code",
+        "Error message is clear",
+        "JSON error response format",
+        "No server errors or crashes"
+      ]
+    },
+    {
+      "id": "nlq-rate-limiting",
+      "name": "Rate Limiting",
+      "prompt": "Send 35 requests to /api/nlq within 60 seconds",
+      "expected_behavior": "Should allow 30 requests, then rate limit",
+      "success_criteria": [
+        "First 30 requests succeed (200)",
+        "31st+ requests return 429",
+        "Rate limit headers present",
+        "Retry-After header included"
+      ]
+    }
+  ]
+}

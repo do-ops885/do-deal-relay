@@ -32,7 +32,7 @@ Returns server information and protocol capabilities.
     "logging": {},
     "completions": {}
   },
-  "tools_available": 7,
+  "tools_available": 8,
   "documentation": "https://do-deal-relay.com/docs/mcp"
 }
 ```
@@ -446,6 +446,88 @@ Get system statistics and deal counts.
 
 ---
 
+### 8. natural_language_query
+
+Search deals using natural language. The AI parses your query into structured search parameters.
+
+**Supported Query Patterns:**
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| Category search | "finance deals", "shopping offers" | Find deals by category |
+| Domain search | "codes from trading212.com", "dropbox.com referrals" | Find deals from specific websites |
+| Expiring soon | "deals expiring in 7 days" | Find time-sensitive deals |
+| Reward type | "cash bonus deals", "percentage offers" | Filter by reward type |
+| High confidence | "best deals", "verified offers" | Find top-quality deals |
+| Recent deals | "new deals", "latest referrals" | Find recently added deals |
+| Free text | "stock trading signup bonus" | General keyword search |
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| query | string | Yes | Natural language query |
+| limit | number | No | Max results (1-50, default: 10) |
+| includeSql | boolean | No | Include generated SQL (debug mode) |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "natural_language_query",
+    "arguments": {
+      "query": "finance deals expiring this week",
+      "limit": 5
+    }
+  }
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "🔍 Natural Language Query: \"finance deals expiring this week\"\n\nParsed as: expiring_soon\nFound 3 deals\n\nTop results:\n1. Trading212 Signup Bonus (trading212.com) - GcCOCxbo\n2. Scalable Capital Offer (scalable.capital) - SC2024\n3. FreeTrade Referral (freetrade.io) - FTBONUS"
+    },
+    {
+      "type": "resource",
+      "resource": {
+        "uri": "nlq://results?finance+deals+expiring+this+week",
+        "mimeType": "application/json",
+        "text": "{\"deals\":[{\"deal_id\":\"...\",\"title\":\"...\"}],\"count\":3}"
+      }
+    }
+  ],
+  "structuredContent": {
+    "success": true,
+    "query": "finance deals expiring this week",
+    "parsed": {
+      "type": "expiring_soon",
+      "params": { "expiringDays": 7, "category": "finance", "limit": 5 }
+    },
+    "count": 3,
+    "deals": [...],
+    "suggestions": null
+  }
+}
+```
+
+**Query Tips:**
+
+- Be specific: "trading212.com deals" works better than "trading deals"
+- Use categories: "finance", "shopping", "tech", "crypto"
+- Mention time: "expiring in 7 days", "new this week"
+- Specify rewards: "cash bonus", "percentage discount"
+
+---
+
 ## Tool Annotations
 
 Each tool includes safety annotations:
@@ -529,6 +611,22 @@ curl -X POST https://your-worker.workers.dev/mcp/v1/tools/call \
       }
     }
   }'
+
+# Natural language query
+curl -X POST https://your-worker.workers.dev/mcp/v1/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+      "name": "natural_language_query",
+      "arguments": {
+        "query": "best finance deals expiring soon",
+        "limit": 10
+      }
+    }
+  }'
 ```
 
 ### JavaScript/TypeScript Example
@@ -555,6 +653,12 @@ async function callMcpTool(toolName: string, args: object) {
 const result = await callMcpTool('search_deals', {
   domain: 'trading212.com',
   status: 'active'
+});
+
+// Natural language query example
+const nlqResult = await callMcpTool('natural_language_query', {
+  query: 'finance deals expiring this week',
+  limit: 10
 });
 ```
 

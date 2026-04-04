@@ -38,6 +38,7 @@ import {
 } from "./routes/validation";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import { handleD1Request } from "./routes/d1";
+import { handleNLQRequest } from "./routes/nlq/index";
 import { logger } from "./lib/global-logger";
 
 // ============================================================================
@@ -148,6 +149,11 @@ export default {
       // D1 Database API endpoints
       if (path.startsWith("/api/d1/")) {
         return handleD1Request(request, url, env);
+      }
+
+      // NLQ (Natural Language Query) API endpoints
+      if (path.startsWith("/api/nlq")) {
+        return handleNLQRequest(request, url, env);
       }
 
       // 404

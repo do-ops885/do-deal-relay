@@ -27,6 +27,7 @@ import {
 import { REFERRAL_KEYS } from "../referral-storage/types";
 import { CATEGORY_DEFINITIONS } from "../categorization";
 import { generateAnalyticsSummary } from "../analytics";
+import { executeNLQ, parseNaturalLanguageQuery } from "../../routes/nlq/index";
 
 // ============================================================================
 // Tool Input/Output Schemas (Zod)
@@ -109,6 +110,25 @@ const ListCategoriesInputSchema = z.object({
 const ValidateDealInputSchema = z.object({
   url: z.string().url().describe("URL to validate"),
   check_status: z.boolean().default(true).describe("Check if deal is active"),
+});
+
+const NaturalLanguageQueryInputSchema = z.object({
+  query: z
+    .string()
+    .describe(
+      "Natural language query (e.g., 'finance deals', 'codes from trading212.com')",
+    ),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(50)
+    .default(10)
+    .describe("Maximum results to return"),
+  includeSql: z
+    .boolean()
+    .default(false)
+    .describe("Include generated SQL in response (debug mode)"),
 });
 
 // ============================================================================
@@ -378,6 +398,81 @@ export const MCP_TOOLS: Tool[] = [
     },
     annotations: {
       title: "Get Stats",
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  {
+    name: "natural_language_query",
+    title: "Natural Language Query",
+    description:
+      "Search deals using natural language. Understands queries like 'finance deals', 'codes from trading212.com', 'best offers expiring this week'",
+    inputSchema: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "Natural language query (e.g., 'finance deals', 'codes from trading212.com')",
+        },
+        limit: {
+          type: "number",
+          minimum: 1,
+          maximum: 50,
+          default: 10,
+          description: "Maximum results to return",
+        },
+        includeSql: {
+          type: "boolean",
+          default: false,
+          description: "Include generated SQL in response (debug mode)",
+        },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        query: { type: "string" },
+        parsed: {
+          type: "object",
+          properties: {
+            type: { type: "string" },
+            params: { type: "object" },
+            originalQuery: { type: "string" },
+          },
+        },
+        count: { type: "number" },
+        results: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              deal_id: { type: "string" },
+              title: { type: "string" },
+              description: { type: "string" },
+              domain: { type: "string" },
+              code: { type: "string" },
+              url: { type: "string" },
+              reward_type: { type: "string" },
+              reward_value: { type: "number" },
+              status: { type: "string" },
+              category: { type: "array", items: { type: "string" } },
+              confidence_score: { type: "number" },
+            },
+          },
+        },
+        suggestions: {
+          type: "array",
+          items: { type: "string" },
+          description: "Alternative search suggestions if no results found",
+        },
+      },
+    },
+    annotations: {
+      title: "Natural Language Query",
       destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
@@ -798,6 +893,124 @@ async function handleGetStats(
   }
 }
 
+/**
+ * Natural Language Query tool handler
+ */
+async function handleNaturalLanguageQuery(
+  args: z.infer<typeof NaturalLanguageQueryInputSchema>,
+  env: Env,
+): Promise<ToolCallResult> {
+  const { query, limit, includeSql } = args;
+
+  const result = await executeNLQ(env, query, limit);
+
+  if (!result.success) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `❌ Natural language query failed for: "${query}"`,
+        },
+      ],
+      isError: true,
+      structuredContent: result,
+    };
+  }
+
+  interface DealResult {
+    deal_id: string;
+    title: string;
+    description: string;
+    domain: string;
+    code: string;
+    url: string;
+    reward_type: string;
+    reward_value: number;
+    status: string;
+    category: string[];
+    confidence_score: number;
+  }
+
+  const deals = result.results.map((r) => {
+    const deal = r as DealResult;
+    return {
+      deal_id: deal.deal_id,
+      title: deal.title,
+      description: deal.description,
+      domain: deal.domain,
+      code: deal.code,
+      url: deal.url,
+      reward_type: deal.reward_type,
+      reward_value: deal.reward_value,
+      status: deal.status,
+      category: deal.category,
+      confidence_score: deal.confidence_score,
+    };
+  });
+
+  // Build response text
+  let responseText = `🔍 Natural Language Query: "${query}"\n\n`;
+  responseText += `Parsed as: ${result.parsed.type}\n`;
+  responseText += `Found ${result.count} deals\n\n`;
+
+  if (result.count > 0) {
+    responseText += "Top results:\n";
+    deals.slice(0, 5).forEach((d, i) => {
+      responseText += `${i + 1}. ${d.title} (${d.domain}) - ${d.code}\n`;
+    });
+  } else if (result.suggestions && result.suggestions.length > 0) {
+    responseText += `No results found. Did you mean: ${result.suggestions.join(", ")}?`;
+  }
+
+  const content: Array<
+    | { type: "text"; text: string }
+    | {
+        type: "resource";
+        resource: { uri: string; mimeType: string; text: string };
+      }
+  > = [
+    {
+      type: "text",
+      text: responseText,
+    },
+  ];
+
+  // Add SQL if requested
+  if (includeSql && result.sql) {
+    content.push({
+      type: "resource",
+      resource: {
+        uri: `nlq://sql?${encodeURIComponent(query)}`,
+        mimeType: "text/plain",
+        text: `-- Generated SQL\n${result.sql}`,
+      },
+    });
+  }
+
+  // Add results resource
+  content.push({
+    type: "resource",
+    resource: {
+      uri: `nlq://results?${encodeURIComponent(query)}`,
+      mimeType: "application/json",
+      text: JSON.stringify({ deals, count: result.count }, null, 2),
+    },
+  });
+
+  return {
+    content,
+    structuredContent: {
+      success: result.success,
+      query: result.query,
+      parsed: result.parsed,
+      count: result.count,
+      deals,
+      suggestions: result.suggestions,
+      sql: includeSql ? result.sql : undefined,
+    },
+  };
+}
+
 // ============================================================================
 // Tool Registry
 // ============================================================================
@@ -815,6 +1028,11 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
   validate_deal: (args, env) =>
     handleValidateDeal(ValidateDealInputSchema.parse(args), env),
   get_stats: (args, env) => handleGetStats(args, env),
+  natural_language_query: (args, env) =>
+    handleNaturalLanguageQuery(
+      NaturalLanguageQueryInputSchema.parse(args),
+      env,
+    ),
 };
 
 /**

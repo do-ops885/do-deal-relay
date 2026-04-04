@@ -85,12 +85,14 @@ This server provides tools for discovering and managing referral deals.
 - **list_categories**: List all available deal categories
 - **validate_deal**: Validate a deal's URL and check if it's active
 - **get_stats**: Get system statistics and deal counts
+- **natural_language_query**: Search deals using natural language (e.g., "finance deals", "codes from trading212.com")
 
 ## Resources
 
 - **deals://{dealId}**: Individual deal details
 - **categories://list**: Deal categories list
 - **analytics://summary**: Deal summary statistics
+- **nlq://queries**: Natural language query templates and examples
 
 ## Rate Limits
 
