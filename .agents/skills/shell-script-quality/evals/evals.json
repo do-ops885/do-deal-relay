@@ -2,7 +2,7 @@
   "skill": "shell-script-quality",
   "version": "1.0.0",
   "description": "Evaluation cases for shell-script-quality skill",
-  "evaluations": [
+  "evals": [
     {
       "id": "basic-lint-check",
       "prompt": "Review this shell script for quality issues: #!/bin/bash\nrm -rf /tmp/$1\necho Done",
