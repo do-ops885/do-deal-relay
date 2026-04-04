@@ -21,8 +21,11 @@ import {
   getReferralsByStatus,
   referralToDeal,
 } from "../referral-storage/search";
-import { CATEGORY_DEFINITIONS } from "../categorization";
-import { generateAnalyticsSummary, generateDealAnalytics } from "../analytics";
+import { CATEGORY_DEFINITIONS } from "../categorization/definitions";
+import {
+  generateAnalyticsSummary,
+  generateDealAnalytics,
+} from "../analytics/index";
 
 // ============================================================================
 // Resource Definitions

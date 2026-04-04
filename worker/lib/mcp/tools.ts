@@ -25,8 +25,8 @@ import {
   storeReferralInput,
 } from "../referral-storage/crud";
 import { REFERRAL_KEYS } from "../referral-storage/types";
-import { CATEGORY_DEFINITIONS } from "../categorization";
-import { generateAnalyticsSummary } from "../analytics";
+import { CATEGORY_DEFINITIONS } from "../categorization/definitions";
+import { generateAnalyticsSummary } from "../analytics/index";
 import { executeNLQ, parseNaturalLanguageQuery } from "../../routes/nlq/index";
 
 // ============================================================================
