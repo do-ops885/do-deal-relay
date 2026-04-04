@@ -5,6 +5,26 @@
 **Phase**: Bootstrap
 **Status**: In Development
 
+## Named Constants
+
+```bash
+# File size limits (lines)
+readonly MAX_LINES_PER_SOURCE_FILE=500
+readonly MAX_LINES_PER_SKILL_MD=250
+readonly MAX_LINES_AGENTS_MD=150
+
+# Retry and polling configuration
+readonly DEFAULT_MAX_RETRIES=3
+readonly DEFAULT_RETRY_DELAY_SECONDS=5
+readonly DEFAULT_POLL_INTERVAL_SECONDS=5
+readonly DEFAULT_MAX_POLL_ATTEMPTS=12
+readonly DEFAULT_TIMEOUT_SECONDS=1800
+
+# Git/PR configuration
+readonly MAX_COMMIT_SUBJECT_LENGTH=72
+readonly MAX_PR_TITLE_LENGTH=72
+```
+
 ## Quick Start
 
 ```bash
@@ -179,6 +199,26 @@ Run `./scripts/quality_gate.sh` to execute all validation checks:
 - Validation gates
 - Security checks
 - Root directory file organization (via `./scripts/check-root-files.sh`)
+
+### Pre-Existing Issue Policy
+
+**Fix ALL issues before completing any task.** Do not introduce new work while ignoring existing problems.
+
+**Scope of Pre-Existing Issues**:
+- Lint warnings and type errors
+- Test failures (unit, integration, e2e)
+- Security vulnerabilities (CVEs, dependency issues)
+- Documentation gaps (missing docs, outdated content)
+- Code style violations (formatting, naming, patterns)
+
+**Process**:
+1. Run quality gate: `./scripts/quality_gate.sh`
+2. Note all failures and warnings
+3. Fix ALL issues before proceeding with new work
+4. Re-run quality gate to confirm all issues resolved
+5. Only then complete the task
+
+**Rationale**: Leaving issues unfixed creates technical debt and obscures the impact of new changes. Every task must improve the codebase, not compound existing problems.
 
 ### Self-Learning Protocol
 
