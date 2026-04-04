@@ -1093,6 +1093,53 @@ Check D1 database health and connectivity.
 
 ---
 
+## Model Context Protocol (MCP) API
+
+The Model Context Protocol (MCP) is the primary interface for agent-to-system communication. It provides a standardized way for AI agents to discover and execute tools, read resources, and manage referral deals.
+
+### POST /mcp
+
+Main entry point for MCP JSON-RPC requests (Specification 2025-11-25).
+
+**Supported Methods:**
+
+- `initialize`: Protocol version negotiation and capability exchange
+- `ping`: Health check
+- `tools/list`: List available tools with JSON schemas
+- `tools/call`: Execute a tool with arguments
+- `resources/list`: List available static resources
+- `resources/templates/list`: List dynamic resource templates
+- `resources/read`: Read resource content by URI
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_deals` | Search for referral deals with advanced filtering and ranking |
+| `get_deal` | Get detailed information about a specific referral code |
+| `add_referral` | Add a new referral code to the system (requires review) |
+| `research_domain` | Research a domain for available referral programs |
+| `list_categories` | List all available deal categories with descriptions |
+| `validate_deal` | Validate a deal's URL and check if it's active |
+| `get_stats` | Get system statistics and deal counts |
+| `experience_deal` | Report success or failure with a specific code |
+| `report_deal` | Report broken, expired, or fraudulent codes |
+| `get_pipeline_status` | Get current status of the discovery pipeline |
+| `trigger_discovery` | Manually trigger the discovery pipeline |
+| `get_similar_deals` | Find referral deals similar to a specific code or domain |
+| `get_deal_highlights` | Get top-rated, recent, and soon-to-expire deals |
+| `get_logs` | Retrieve recent or specific run logs |
+| `natural_language_query` | Search deals using natural language |
+
+### Resources
+
+- `deals://{dealId}`: Individual deal details
+- `categories://list`: Deal categories list
+- `analytics://summary`: Deal summary statistics
+- `nlq://results?query={q}`: Natural language query results
+
+---
+
 ## NLQ (Natural Language Query) API
 
 Search deals using natural language queries like "trading deals with $100 bonuses" or "crypto platforms with signup rewards". The NLQ API parses user intent, extracts entities, and executes optimized database queries.

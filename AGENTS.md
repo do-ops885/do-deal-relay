@@ -80,7 +80,7 @@ This prevents issue spam when workflows retry or fail consecutively.
 **State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
 **Infrastructure**: Cloudflare Workers + 5 KV namespaces + D1 Database
 **Schedule**: Every 6 hours
-**AI Integration**: MCP Server (Model Context Protocol 2025-11-25) for agent-to-system communication
+**AI Integration**: MCP Server (Model Context Protocol 2025-11-25) for agent-to-system communication. MCP is the primary interface for agent interaction, providing tools for deal discovery, reporting, and pipeline management.
 
 See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 

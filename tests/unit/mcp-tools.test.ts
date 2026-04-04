@@ -120,9 +120,9 @@ async function seedReferral(env: Env, referral: ReferralInput): Promise<void> {
 // ============================================================================
 
 describe("MCP Tools - Definitions", () => {
-  it("should export 8 tools", () => {
+  it("should export 15 tools", () => {
     const tools = getTools();
-    expect(tools).toHaveLength(8);
+    expect(tools).toHaveLength(15);
   });
 
   it("should have all required tool fields", () => {
@@ -145,6 +145,13 @@ describe("MCP Tools - Definitions", () => {
     expect(toolNames).toContain("list_categories");
     expect(toolNames).toContain("validate_deal");
     expect(toolNames).toContain("get_stats");
+    expect(toolNames).toContain("report_deal");
+    expect(toolNames).toContain("experience_deal");
+    expect(toolNames).toContain("get_pipeline_status");
+    expect(toolNames).toContain("trigger_discovery");
+    expect(toolNames).toContain("get_similar_deals");
+    expect(toolNames).toContain("get_deal_highlights");
+    expect(toolNames).toContain("get_logs");
     expect(toolNames).toContain("natural_language_query");
   });
 
