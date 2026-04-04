@@ -1,7 +1,15 @@
 import { CONFIG } from "../config";
-import type { Snapshot } from "../types";
+import type { Snapshot, Env } from "../types";
 import { CircuitBreaker, createGitHubCircuitBreaker } from "./circuit-breaker";
 import { createGitHubCache } from "./cache";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface GitHubCacheEnv {
+  DEALS_PROD: KVNamespace;
+}
 
 // ============================================================================
 // Safe JSON Response Parser
@@ -51,16 +59,12 @@ let githubCache: ReturnType<typeof createGitHubCache> | undefined;
 /**
  * Initialize GitHub circuit breaker and cache
  */
-export function initGitHubCircuitBreaker(env?: {
-  DEALS_PROD: KVNamespace;
-}): void {
-  githubCircuitBreaker = createGitHubCircuitBreaker(
-    env as Parameters<typeof createGitHubCircuitBreaker>[0],
-  );
+export function initGitHubCircuitBreaker(env?: GitHubCacheEnv): void {
+  githubCircuitBreaker = createGitHubCircuitBreaker(env as Env);
 
   // Initialize cache if env provided
   if (env) {
-    githubCache = createGitHubCache(env as any);
+    githubCache = createGitHubCache(env as Env);
   }
 }
 
