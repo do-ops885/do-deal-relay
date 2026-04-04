@@ -1,7 +1,7 @@
 # Deployment Guide
 
 **Project**: do-deal-relay — Cloudflare Workers deal discovery system
-**Version**: 0.1.3
+**Version**: 0.2.0
 **Last Updated**: 2026-04-04
 
 ---

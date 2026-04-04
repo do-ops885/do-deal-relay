@@ -1,7 +1,7 @@
 # MCP (Model Context Protocol) Documentation
 
 **Protocol Version**: 2025-11-25
-**Server Version**: 0.1.3
+**Server Version**: 0.2.0
 **Base URL**: `https://your-worker.workers.dev/mcp`
 
 ## Overview
@@ -23,7 +23,7 @@ Returns server information and protocol capabilities.
 ```json
 {
   "server": "do-deal-relay-mcp",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "protocol_version": "2025-11-25",
   "capabilities": {
     "tools": { "listChanged": true },
@@ -152,7 +152,7 @@ Get server information and metadata.
 ```json
 {
   "name": "do-deal-relay-mcp",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "protocol_version": "2025-11-25",
   "capabilities": {
     "tools": { "listChanged": true },

@@ -63,7 +63,7 @@ seed_prod_snapshot() {
   echo "  Namespace ID: ${namespace_id}"
 
   local seed_data
-  seed_data='{"version":"0.1.3","deals":[],"stats":{"total":0,"active":0,"quarantined":0,"rejected":0,"duplicates":0},"generated_at":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'","run_id":"seed","trace_id":"seed-'"$(date +%s)"'","snapshot_hash":"seed-'"$(date +%s)"'","previous_hash":"","schema_version":"0.1.3"}'
+  seed_data='{"version":"0.1.1","deals":[],"stats":{"total":0,"active":0,"quarantined":0,"rejected":0,"duplicates":0},"generated_at":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'","run_id":"seed","trace_id":"seed-'"$(date +%s)"'","snapshot_hash":"seed-'"$(date +%s)"'","previous_hash":"","schema_version":"0.1.1"}'
 
   if wrangler kv key put --namespace-id="${namespace_id}" "snapshot:prod" "${seed_data}" 2>/dev/null; then
     echo "✓ Production snapshot seeded"

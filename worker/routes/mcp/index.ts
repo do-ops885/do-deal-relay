@@ -60,7 +60,7 @@ import {
 
 const SERVER_INFO = {
   name: "do-deal-relay",
-  version: "0.1.3",
+  version: "0.1.2",
 };
 
 const SERVER_CAPABILITIES = {
@@ -91,6 +91,13 @@ This server provides tools for discovering and managing referral deals.
 - **list_categories**: List all available deal categories
 - **validate_deal**: Validate a deal's URL and check if it's active
 - **get_stats**: Get system statistics and deal counts
+- **experience_deal**: Report your success or failure with a specific referral code
+- **report_deal**: Report a broken, expired, or fraudulent referral code
+- **get_pipeline_status**: Get the current status of the deal discovery pipeline
+- **trigger_discovery**: Manually trigger the deal discovery pipeline
+- **get_similar_deals**: Find referral deals similar to a specific code or domain
+- **get_deal_highlights**: Get top-rated, recently added, and soon-to-expire deals
+- **get_logs**: Retrieve recent or specific run logs for the discovery pipeline
 - **natural_language_query**: Search deals using natural language (e.g., "finance deals", "codes from trading212.com")
 
 ## Resources

@@ -33,7 +33,7 @@ Initialize production KV with seed data:
 ```bash
 # Get the namespace ID from wrangler.jsonc (DEALS_PROD)
 # Then run:
-wrangler kv key put --namespace-id=23ee9b8c9e2748e5880f476b8b57a524 "snapshot:prod" '{"version":"0.1.3","deals":[],"stats":{"total":0,"active":0}}'
+wrangler kv key put --namespace-id=23ee9b8c9e2748e5880f476b8b57a524 "snapshot:prod" '{"version":"0.1.1","deals":[],"stats":{"total":0,"active":0}}'
 ```
 
 Or trigger initial discovery:

@@ -893,13 +893,13 @@ describe("Expiration Manager", () => {
       });
 
       const snapshot = {
-        version: "0.1.3",
+        version: "0.1.1",
         generated_at: new Date().toISOString(),
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.3",
+        schema_version: "0.1.1",
         stats: {
           total: 4,
           active: 4,
@@ -961,13 +961,13 @@ describe("Expiration Manager", () => {
       });
 
       const snapshot = {
-        version: "0.1.3",
+        version: "0.1.1",
         generated_at: new Date().toISOString(),
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.3",
+        schema_version: "0.1.1",
         stats: {
           total: 2,
           active: 2,
@@ -1028,13 +1028,13 @@ describe("Expiration Manager", () => {
       });
 
       const snapshot = {
-        version: "0.1.3",
+        version: "0.1.1",
         generated_at: new Date().toISOString(),
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.3",
+        schema_version: "0.1.1",
         stats: {
           total: 2,
           active: 2,

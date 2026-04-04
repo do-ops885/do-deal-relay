@@ -1,7 +1,7 @@
 # AGENTS.md - Deal Discovery System
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.3
+**Version**: 0.2.0
 **Phase**: Bootstrap
 **Status**: In Development
 
@@ -80,7 +80,7 @@ This prevents issue spam when workflows retry or fail consecutively.
 **State Machine**: init→discover→normalize→dedupe→validate→score→stage→publish→verify→finalize
 **Infrastructure**: Cloudflare Workers + 5 KV namespaces + D1 Database
 **Schedule**: Every 6 hours
-**AI Integration**: MCP Server (Model Context Protocol 2025-11-25) for agent-to-system communication
+**AI Integration**: MCP Server (Model Context Protocol 2025-11-25) for agent-to-system communication. MCP is the primary interface for agent interaction, providing tools for deal discovery, reporting, and pipeline management.
 
 See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full details.
 
@@ -119,8 +119,6 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 **Allowed in root** (standard project files only):
 
 - `.gitignore` - Git ignore patterns
-- `CHANGELOG.md` - Changelog
-- `MIGRATION.md` - Migration guide
 - `package.json` - NPM manifest
 - `package-lock.json` - NPM lockfile
 - `tsconfig.json` - TypeScript config
