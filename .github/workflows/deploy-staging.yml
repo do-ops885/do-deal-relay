@@ -121,10 +121,29 @@ jobs:
             const sha = context.sha;
             const runId = context.runId;
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+            const title = 'Staging deployment failed';
+
+            // Check for existing open staging issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'deployment,staging,failed'
+            });
+
+            const duplicateExists = existingIssues.data.some(issue =>
+              issue.title === title && issue.body.includes(sha.substring(0, 7))
+            );
+
+            if (duplicateExists) {
+              console.log(`Staging issue already exists for ${sha.substring(0, 7)}`);
+              return;
+            }
+
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Staging deployment failed',
+              title: title,
               body: `Staging deployment failed for commit ${sha}.\n\n` +
                 `[View workflow run](${url}/actions/runs/${runId})`,
               labels: ['deployment', 'staging', 'failed']

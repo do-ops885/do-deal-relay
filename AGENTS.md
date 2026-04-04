@@ -33,6 +33,27 @@ cp scripts/pre-push-hook.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 
 See [agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md) for complete documentation.
 
+## Duplicate Issue Prevention (NEW)
+
+GitHub workflows now check for **existing open issues before creating duplicates**:
+
+**Affected Workflows**:
+- `deploy-production.yml` - Checks for existing deployment/rollback issues
+- `deploy-staging.yml` - Checks for existing staging issues
+
+**Deduplication Logic**:
+1. Query existing open issues with matching labels
+2. Check if issue title contains the same commit SHA
+3. Skip creation if duplicate found
+4. Log message: "Issue already exists for deployment failure of <sha>"
+
+**Labels Used for Deduplication**:
+- Production: `deployment`, `production`, `failed`
+- Rollback: `deployment`, `production`, `rollback`
+- Staging: `deployment`, `staging`, `failed`
+
+This prevents issue spam when workflows retry or fail consecutively.
+
 ## System Overview
 
 **Architecture**: Two-phase publish (Staging → Production) with 9 validation gates

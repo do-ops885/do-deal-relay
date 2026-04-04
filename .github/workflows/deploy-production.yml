@@ -222,10 +222,29 @@ jobs:
             const sha = context.sha;
             const runId = context.runId;
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+            const title = `Production deployment failed - ${sha.substring(0, 7)}`;
+
+            // Check for existing open issue with same title
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'deployment,production,failed'
+            });
+
+            const duplicateExists = existingIssues.data.some(issue =>
+              issue.title === title || issue.title.includes(sha.substring(0, 7))
+            );
+
+            if (duplicateExists) {
+              console.log(`Issue already exists for deployment failure of ${sha.substring(0, 7)}`);
+              return;
+            }
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Production deployment failed - ${sha.substring(0, 7)}`,
+              title: title,
               body: `Production deployment failed for commit ${sha}.\n\n` +
                 `[View workflow run](${url}/actions/runs/${runId})`,
               labels: ['deployment', 'production', 'failed', 'urgent']
@@ -272,10 +291,29 @@ jobs:
             const sha = context.sha;
             const runId = context.runId;
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+            const title = `ROLLBACK REQUIRED - Production deployment failed`;
+
+            // Check for existing open rollback issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'deployment,production,rollback'
+            });
+
+            const duplicateExists = existingIssues.data.some(issue =>
+              issue.title === title && issue.body.includes(sha.substring(0, 7))
+            );
+
+            if (duplicateExists) {
+              console.log(`Rollback issue already exists for ${sha.substring(0, 7)}`);
+              return;
+            }
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `ROLLBACK REQUIRED - Production deployment failed`,
+              title: title,
               body: `Production deployment failed.\n\n` +
                 `- Commit: ${sha}\n` +
                 `- Failed run: [View workflow](${url}/actions/runs/${runId})\n\n` +
