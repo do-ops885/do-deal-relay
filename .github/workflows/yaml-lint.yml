@@ -26,6 +26,7 @@ jobs:
   yamllint:
     name: YAML Syntax Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -46,6 +47,7 @@ jobs:
   actionlint:
     name: GitHub Actions Workflow Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
