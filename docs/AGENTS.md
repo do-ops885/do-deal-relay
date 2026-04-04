@@ -1,7 +1,7 @@
 # AGENTS.md - Deal Discovery System
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.3
+**Version**: 0.1.2
 **Phase**: Bootstrap
 **Status**: In Development
 

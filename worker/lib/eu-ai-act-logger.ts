@@ -435,7 +435,7 @@ export function createComplianceLogger(
 ): EUAIActLogger {
   const defaultConfig: ComplianceConfig = {
     systemId: "do-deal-relay",
-    systemVersion: "0.1.3",
+    systemVersion: "0.1.2",
     providerName: "do-ops",
     providerContact: "compliance@do-ops.dev",
     intendedPurpose: "Autonomous deal discovery and referral code management",

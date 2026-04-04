@@ -48,17 +48,22 @@ export async function handleSubmit(
     );
   }
 
+  const metadata = (body.metadata || {}) as Record<string, unknown>;
+  const reward = (metadata.reward || {}) as Record<string, unknown>;
+  const rewardType = ((reward.type as string) || "cash") as
+    | "cash"
+    | "credit"
+    | "percent"
+    | "item";
+
   const dealId = await generateDealId(
     body.source || "manual",
     body.code,
-    "cash",
+    rewardType,
   );
 
   const stagingSnapshot = await getStagingSnapshot(env);
   const now = new Date().toISOString();
-
-  const metadata = (body.metadata || {}) as Record<string, unknown>;
-  const reward = (metadata.reward || {}) as Record<string, unknown>;
   const expiry = (metadata.expiry || {}) as Record<string, unknown>;
 
   const newDeal: Deal = {
