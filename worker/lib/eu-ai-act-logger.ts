@@ -348,7 +348,7 @@ and limitations, please contact the provider.
     const result = await this.db
       .prepare(
         `
-      SELECT 
+      SELECT
         operation,
         COUNT(*) as count,
         SUM(CASE WHEN oversight_decision IS NOT NULL THEN 1 ELSE 0 END) as oversight_count,
@@ -435,7 +435,7 @@ export function createComplianceLogger(
 ): EUAIActLogger {
   const defaultConfig: ComplianceConfig = {
     systemId: "do-deal-relay",
-    systemVersion: "0.1.2",
+    systemVersion: "0.1.3",
     providerName: "do-ops",
     providerContact: "compliance@do-ops.dev",
     intendedPurpose: "Autonomous deal discovery and referral code management",
