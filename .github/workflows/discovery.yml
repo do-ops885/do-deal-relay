@@ -34,7 +34,15 @@ jobs:
         run: |
           echo "Triggering scheduled discovery on production..."
 
-          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          # Use account ID from secret or fall back to known value
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "⚠️ CLOUDFLARE_ACCOUNT_ID secret not set, using fallback"
+            ACCOUNT_ID="do-it-119"
+          fi
+
+          PROD_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev"
+          echo "Production URL: $PROD_URL"
 
           # Health check first
           echo "Checking production health..."
@@ -53,7 +61,13 @@ jobs:
 
       - name: Wait and verify
         run: |
-          PROD_URL="https://do-deal-relay.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          # Use account ID from secret or fall back to known value
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          if [ -z "$ACCOUNT_ID" ]; then
+            ACCOUNT_ID="do-it-119"
+          fi
+
+          PROD_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev"
 
           echo "Waiting 2 minutes for discovery to complete..."
           sleep 120
@@ -82,7 +96,14 @@ jobs:
         run: |
           echo "Triggering discovery on staging..."
 
-          STAGING_URL="https://do-deal-relay-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          # Use account ID from secret or fall back to known value
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "⚠️ CLOUDFLARE_ACCOUNT_ID secret not set, using fallback"
+            ACCOUNT_ID="do-it-119"
+          fi
+
+          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
 
           # Health check
           echo "Checking staging health..."
