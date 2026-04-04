@@ -383,3 +383,53 @@ The multi-agent workflow system exists as an internal library (`worker/lib/multi
 
 **Tests**: 30+ test cases covering all agents and orchestrator
 
+---
+
+### LESSON-025: SWARM Analysis Finding Critical Production Bugs
+
+**Date**: 2026-04-04
+**Component**: API Routing / Webhooks / Referral System
+
+**Issue**: SWARM analysis (5 specialized agents) found 1 CRITICAL bug and 3 HIGH issues that would break production API endpoints.
+
+**Critical Bug (BUG-001)**:
+- **Location**: `worker/index.ts:102-109`
+- **Issue**: Regex `/^\/api\/referrals\/([^/]+)$/` ends with `$`, making `/api/referrals/:code/deactivate` UNREACHABLE
+- **Impact**: Cannot deactivate referral codes via API
+- **Root Cause**: Regex written to match only exact paths, but deactivate endpoint has an extra segment
+- **Fix**: Changed regex to `/^\/api\/referrals\/([^/]+)(?:\/(deactivate|reactivate))?$/` with proper action extraction
+
+**High Priority Issues Found**:
+1. **10 Webhook Endpoints Not Registered**: `handleWebhookRoutes()` existed but was never called in `index.ts`
+2. **Reactivate Endpoint Not Routed**: `handleReactivateReferral()` existed but not wired up
+3. **NLQ Endpoints Undocumented**: 4 NLQ endpoints implemented but missing from `API.md`
+
+**SWARM Methodology**:
+```bash
+# Deploy 5 specialized agents in parallel
+- API Documentation Auditor (32 endpoints analyzed)
+- Code Completeness Scanner (140 source files)
+- Test Coverage Auditor (27 test files)
+- MCP Protocol Auditor (spec compliance)
+- Feature Completeness Auditor (12 features)
+```
+
+**Fix Strategy**:
+- 4 parallel agents deployed simultaneously
+- Each agent fixed one critical issue:
+  1. Fixed deactivate/reactivate regex and routing
+  2. Added webhook routes import and handler call
+  3. Added reactivate route handler
+  4. Documented NLQ endpoints in API.md
+
+**Results**:
+- 405 tests passing
+- Quality gate: PASSED
+- All critical endpoints now functional
+
+**Prevention**:
+1. Add route registration check to validation gates
+2. Require endpoint tests for all new routes
+3. Run SWARM analysis before major releases
+4. Document endpoints BEFORE or DURING implementation (not after)
+
