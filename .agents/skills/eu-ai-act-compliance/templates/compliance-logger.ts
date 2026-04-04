@@ -155,7 +155,7 @@ export class AIActLogger {
 
   /**
    * Log human oversight action (Article 14)
-   * 
+   *
    * Required for high-risk systems to document:
    - Natural persons who verified results
    * - Their competence, training, authority

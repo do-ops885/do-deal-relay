@@ -1,7 +1,7 @@
 # Swarm Coordination Patterns
 
-**Version: 0.1.1  
-**Last Updated**: 2026-04-01  
+**Version: 0.1.1
+**Last Updated**: 2026-04-01
 **Status\*\*: Active
 
 ## Overview
@@ -10,8 +10,8 @@ This document defines reusable swarm coordination patterns for multi-agent colla
 
 ## Pattern 1: Research Swarm
 
-**Agents**: Gemini + Qwen  
-**Use Case**: Web research and information discovery  
+**Agents**: Gemini + Qwen
+**Use Case**: Web research and information discovery
 **Execution**: Parallel
 
 ### Workflow
@@ -58,8 +58,8 @@ Research Task: "Find referral codes for picnic.app"
 
 ## Pattern 2: Validation Pipeline
 
-**Agents**: Claude + Qwen  
-**Use Case**: Quality gates and validation  
+**Agents**: Claude + Qwen
+**Use Case**: Quality gates and validation
 **Execution**: Parallel with fail-fast
 
 ### Workflow
@@ -94,8 +94,8 @@ Research Task: "Find referral codes for picnic.app"
 
 ## Pattern 3: Code Review Swarm
 
-**Agents**: Claude + Gemini  
-**Use Case**: Multi-module code review  
+**Agents**: Claude + Gemini
+**Use Case**: Multi-module code review
 **Execution**: Parallel by module
 
 ### Workflow
@@ -137,9 +137,9 @@ Research Task: "Find referral codes for picnic.app"
 
 ## Pattern 4: Referral Management Swarm
 
-**Agents**: All agents (6 interface agents + processing agents)  
-**Use Case**: Referral code ingestion and management  
-**Execution**: Parallel interface + Sequential processing  
+**Agents**: All agents (6 interface agents + processing agents)
+**Use Case**: Referral code ingestion and management
+**Execution**: Parallel interface + Sequential processing
 **Configuration**: [referral-swarm-config.json](referral-swarm-config.json)
 
 ### Structure
@@ -175,8 +175,8 @@ See [referral-handoff-protocol.md](referral-handoff-protocol.md) for detailed ha
 
 ## Pattern 5: Continuous Verification Loop
 
-**Agents**: 3+ agents with different perspectives  
-**Use Case**: Complex tasks requiring iterative refinement  
+**Agents**: 3+ agents with different perspectives
+**Use Case**: Complex tasks requiring iterative refinement
 **Execution**: Loop until consensus
 
 ### Workflow Diagram

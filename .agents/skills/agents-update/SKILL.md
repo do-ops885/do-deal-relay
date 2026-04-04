@@ -19,7 +19,7 @@ Optimize AGENTS.md to be a concise coordination hub (<140 lines) by moving detai
 
 ## Core Rule
 
-**AGENTS.md ≤ 140 LOC**: Quick reference + links only  
+**AGENTS.md ≤ 140 LOC**: Quick reference + links only
 **agents-docs/**: Complete instructions with examples
 
 ## Section Mapping
@@ -135,8 +135,8 @@ When moving content, always:
 ```markdown
 # [Title]
 
-**Version: 0.1.1  
-**Status**: Active  
+**Version: 0.1.1
+**Status**: Active
 **Purpose\*\*: [One-line description]
 
 ## Overview
@@ -158,8 +158,8 @@ When moving content, always:
 ````markdown
 # [Feature Name]
 
-**Version: 0.1.1  
-**Status**: [Active/Planned/Deprecated]  
+**Version: 0.1.1
+**Status**: [Active/Planned/Deprecated]
 **Last Updated\*\*: [ISO date]
 
 ## Overview

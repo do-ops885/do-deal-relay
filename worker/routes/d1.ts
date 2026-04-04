@@ -25,6 +25,35 @@ import {
 import { getMigrationStatus, initDatabase } from "../lib/d1/migrations";
 
 // ============================================================================
+// Authentication Middleware
+// ============================================================================
+
+async function authenticateD1Request(
+  env: Env,
+  request: Request,
+): Promise<boolean> {
+  // Skip auth for health check
+  const url = new URL(request.url);
+  if (url.pathname === "/api/d1/health") return true;
+
+  // Check for API key in header
+  const apiKey = request.headers.get("X-API-Key");
+  if (!apiKey) {
+    return false;
+  }
+
+  // If WEBHOOK_API_KEYS is configured, validate against it
+  if (env.WEBHOOK_API_KEYS) {
+    const validKey = await env.WEBHOOK_API_KEYS.get(`apikey:${apiKey}`);
+    if (!validKey) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// ============================================================================
 // Logger Helper
 // ============================================================================
 
@@ -426,6 +455,15 @@ export async function handleD1Request(
   url: URL,
   env: Env,
 ): Promise<Response> {
+  // Authenticate request
+  const authenticated = await authenticateD1Request(env, request);
+  if (!authenticated) {
+    return jsonResponse(
+      { error: "Unauthorized. X-API-Key header required." },
+      401,
+    );
+  }
+
   const path = url.pathname;
 
   // Search endpoints

@@ -18,74 +18,96 @@ interface LockData {
 /**
  * Acquire distributed lock for pipeline execution
  * Uses KV with TTL for automatic expiration
+ * Includes retry logic to handle race conditions on KV put/get
  */
 export async function acquireLock(
   env: Env,
   run_id: string,
   trace_id: string,
 ): Promise<boolean> {
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + CONFIG.LOCK_TTL_SECONDS * 1000);
+  const maxRetries = 3;
+  const retryDelayMs = 100;
 
-  const lockData: LockData = {
-    run_id,
-    trace_id,
-    acquired_at: now.toISOString(),
-    expires_at: expiresAt.toISOString(),
-  };
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CONFIG.LOCK_TTL_SECONDS * 1000);
 
-  try {
-    // Check existing lock
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+    const lockData: LockData = {
+      run_id,
+      trace_id,
+      acquired_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+    };
 
-    if (existing) {
-      const expiresAtExisting = new Date(existing.expires_at);
-      const now = new Date();
+    try {
+      // Check existing lock
+      const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
-      // Lock is still valid
-      if (expiresAtExisting > now) {
+      if (existing) {
+        const expiresAtExisting = new Date(existing.expires_at);
+        const nowCheck = new Date();
+
+        // Lock is still valid
+        if (expiresAtExisting > nowCheck) {
+          throw new PipelineError(
+            "ConcurrencyError",
+            `Lock held by run ${existing.run_id} until ${existing.expires_at}`,
+            "init",
+            false,
+          );
+        }
+
+        // Lock expired, we can take over (log warning)
+        console.warn(
+          `Lock expired for run ${existing.run_id}, taking over with ${run_id}`,
+        );
+      }
+
+      // Acquire new lock
+      await env.DEALS_LOCK.put(LOCK_KEY, JSON.stringify(lockData), {
+        expirationTtl: CONFIG.LOCK_TTL_SECONDS,
+      });
+
+      // Verify lock was acquired (retry if race condition detected)
+      const verify = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+      if (!verify || verify.trace_id !== trace_id) {
+        if (attempt < maxRetries - 1) {
+          // Race condition detected, retry with backoff
+          await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
+          continue;
+        }
         throw new PipelineError(
           "ConcurrencyError",
-          `Lock held by run ${existing.run_id} until ${existing.expires_at}`,
+          "Failed to verify lock acquisition after retries",
           "init",
           false,
         );
       }
 
-      // Lock expired, we can take over (log warning)
-      console.warn(
-        `Lock expired for run ${existing.run_id}, taking over with ${run_id}`,
-      );
-    }
-
-    // Acquire new lock
-    await env.DEALS_LOCK.put(LOCK_KEY, JSON.stringify(lockData), {
-      expirationTtl: CONFIG.LOCK_TTL_SECONDS,
-    });
-
-    // Verify lock was acquired
-    const verify = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
-    if (!verify || verify.trace_id !== trace_id) {
+      return true;
+    } catch (error) {
+      if (error instanceof PipelineError) {
+        throw error;
+      }
+      if (attempt < maxRetries - 1) {
+        await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
+        continue;
+      }
       throw new PipelineError(
         "ConcurrencyError",
-        "Failed to verify lock acquisition",
+        `Lock acquisition failed: ${(error as Error).message}`,
         "init",
-        false,
+        true,
       );
     }
-
-    return true;
-  } catch (error) {
-    if (error instanceof PipelineError) {
-      throw error;
-    }
-    throw new PipelineError(
-      "ConcurrencyError",
-      `Lock acquisition failed: ${(error as Error).message}`,
-      "init",
-      true,
-    );
   }
+
+  throw new PipelineError(
+    "ConcurrencyError",
+    "Lock acquisition failed after max retries",
+    "init",
+    true,
+  );
 }
 
 /**

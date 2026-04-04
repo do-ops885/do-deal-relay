@@ -92,7 +92,7 @@ main() {
         echo "Usage: $0 <argument>" >&2
         exit 1
     }
-    
+
     # Your logic here
 }
 

@@ -179,15 +179,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check links
         uses: lycheeverse/lychee-action@v1
         with:
           args: README.md
-      
+
       - name: Check spelling
         uses: crate-ci/typos@master
-      
+
       - name: Mobile preview
         # Custom script to check mobile rendering
 ```

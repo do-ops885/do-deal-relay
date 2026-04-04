@@ -272,7 +272,7 @@ Thumbs.db
     # ShellCheck latest
     wget -qO- "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz" | tar -xJv
     sudo cp "shellcheck-stable/shellcheck" /usr/bin/
-    
+
     # BATS latest
     git clone --depth 1 https://github.com/bats-core/bats-core.git
     sudo bats-core/install.sh /usr/local

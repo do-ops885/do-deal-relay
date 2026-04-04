@@ -30,7 +30,7 @@
 - `package-lock.json` - NPM lockfile
 - `tsconfig.json` - TypeScript config
 - `vitest.config.ts` - Test runner config
-- `wrangler.toml` - Cloudflare Workers config
+- `wrangler.jsonc` - Cloudflare Workers config
 - `README.md` - Main project documentation
 - `VERSION` - Version file
 
@@ -156,13 +156,13 @@ See [guard-rails.md](guard-rails.md) for full security details.
 
 ## Active Agents
 
-| Agent               | Status  | Phase           | Responsibility      |
-| ------------------- | ------- | --------------- | ------------------- |
-| test-agent-v2       | pending | Test & Validate | Integration testing |
-| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
-| doc-agent           | pending | Test & Validate | Documentation       |
-| github-agent        | pending | Test & Validate | GitHub integration  |
-| browser-agent       | pending | Test & Validate | Browser testing     |
+| Agent               | Status   | Phase           | Responsibility      |
+| ------------------- | -------- | --------------- | ------------------- |
+| test-agent          | complete | Test & Validate | Integration testing |
+| validation-agent    | complete | Test & Validate | 9 validation gates  |
+| doc-agent           | complete | Test & Validate | Documentation       |
+| github-agent        | complete | Test & Validate | GitHub integration  |
+| browser-agent       | complete | Test & Validate | Browser/API testing |
 
 ## Skills
 

@@ -24,6 +24,7 @@ import {
   handleDeactivateReferral,
   handleReactivateReferral,
   handleResearch,
+  handleGetResearchResults,
 } from "./routes/referrals";
 import { jsonResponse } from "./routes/utils";
 import {
@@ -39,6 +40,11 @@ import {
   handleValidateDeal,
 } from "./routes/validation";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  createRateLimitMiddleware,
+} from "./lib/rate-limit";
 import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
 import { handleWebhookRoutes } from "./routes/webhooks";
@@ -87,7 +93,8 @@ export default {
 
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
-        return handleDiscover(env);
+        const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
+        return rateLimiter(request, () => handleDiscover(env));
       }
       if (path === "/api/status") return handleStatus(env);
       if (path === "/api/log") return handleGetLogs(url, env);
@@ -95,7 +102,8 @@ export default {
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
-        return handleSubmit(request, env);
+        const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
+        return rateLimiter(request, () => handleSubmit(request, env));
       }
 
       // Referral API
@@ -122,7 +130,14 @@ export default {
 
       // Research API
       if (path === "/api/research" && request.method === "POST") {
-        return handleResearch(request, env);
+        const rateLimiter = createRateLimitMiddleware(env, "/api/research");
+        return rateLimiter(request, () => handleResearch(request, env));
+      }
+
+      // Research results API
+      if (path.startsWith("/api/research/") && request.method === "GET") {
+        const domain = path.replace("/api/research/", "");
+        return handleGetResearchResults(domain, env);
       }
 
       // Validation API
@@ -194,8 +209,8 @@ export default {
     });
 
     try {
-      // Daily cron job at midnight - expiration checks
-      if (cron === "0 0 * * *") {
+      // Daily cron job at 9am - expiration checks
+      if (cron === "0 9 * * *") {
         logger.info("Running daily expiration check", {
           component: "scheduled",
         });

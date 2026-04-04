@@ -125,7 +125,7 @@ else
     echo "  Fluff words: $FLUFF_COUNT (${FLUFF_PERCENTAGE}%)"
     echo "  Repetition: $REPETITION_LINES lines"
     echo ""
-    
+
     if [[ ${#FLUFF_FOUND[@]} -gt 0 ]]; then
         echo "Fluff words found:"
         for word in "${FLUFF_FOUND[@]}"; do
@@ -133,6 +133,6 @@ else
         done
         echo ""
     fi
-    
+
     echo -e "Action: ${GRADE_COLOR}${ACTION}${NC}"
 fi

@@ -402,14 +402,14 @@ Reddit hosts a diverse ecosystem of AI-related communities, with specific subred
 
 When someone asks "How do you discover AI/tech deals?":
 
-> "For deal discovery, I've tried manual monitoring, RSS feeds, and now AI agents. 
-> 
+> "For deal discovery, I've tried manual monitoring, RSS feeds, and now AI agents.
+>
 > **Manual monitoring** works but doesn't scale. **RSS feeds** are good for news but miss signals from ProductHunt, GitHub trending, etc.
-> 
+>
 > **AI agents** can monitor multiple sources, score opportunities, and even draft initial research. The trade-off is setup complexity and API costs.
-> 
+>
 > We built [do-deal-relay] specifically for this - it uses coordinated agents to watch multiple sources, scores deals by custom criteria, and generates research summaries. Trade-off: requires some technical setup with Cloudflare Workers.
-> 
+>
 > Happy to share more about the agent architecture if anyone's interested."
 
 ---

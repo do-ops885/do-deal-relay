@@ -114,7 +114,7 @@ function normalizeText(text: string): string {
   return text
     .trim()
     .replace(/\s+/g, " ") // Collapse whitespace
-    .replace(/[^\x20-\x7E]/g, "") // Remove non-printable
+    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "") // Remove control chars only
     .slice(0, 1000); // Max length
 }
 

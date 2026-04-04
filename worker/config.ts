@@ -20,8 +20,7 @@ export const CONFIG = {
   MAX_DEALS_PER_RUN: 1000,
 
   // User Agent for web requests
-  USER_AGENT:
-    "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery; research@example.com)",
+  USER_AGENT: "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
 
   // Research settings
   RESEARCH_MAX_SOURCES_PER_QUERY: 5,
@@ -113,13 +112,112 @@ export const CONFIG = {
 export const DEFAULT_SOURCES = [
   {
     domain: "trading212.com",
-    url_patterns: ["/invite/*", "/referral/*"],
+    url_patterns: ["/invite/", "/referral/"],
     selectors: {
       code: "[data-ref-code], .referral-code, .invite-code",
       reward: ".reward-amount, [data-reward], .bonus-value",
     },
     trust_initial: 0.7,
     classification: "probationary" as const,
+    active: true,
+  },
+  {
+    domain: "revolut.com",
+    url_patterns: ["/referral/", "/invite/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.6,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "wise.com",
+    url_patterns: ["/invite/", "/referral/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.6,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "robinhood.com",
+    url_patterns: ["/signup/", "/referral/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.6,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "webull.com",
+    url_patterns: ["/invite/", "/referral/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.5,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "public.com",
+    url_patterns: ["/referral/", "/invite/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.5,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "crypto.com",
+    url_patterns: ["/referral/", "/invite/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.5,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "binance.com",
+    url_patterns: ["/en/activity/referral/", "/en/register"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.5,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "coinbase.com",
+    url_patterns: ["/invite/", "/referral/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.6,
+    classification: "unverified" as const,
+    active: true,
+  },
+  {
+    domain: "paypal.com",
+    url_patterns: ["/referral/", "/invite/"],
+    selectors: {
+      code: "[data-ref-code], .referral-code",
+      reward: ".bonus-amount, .reward-value",
+    },
+    trust_initial: 0.5,
+    classification: "unverified" as const,
     active: true,
   },
 ];

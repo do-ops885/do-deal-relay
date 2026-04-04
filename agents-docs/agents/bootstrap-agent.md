@@ -13,7 +13,7 @@
 - [x] `agents-docs/` structure
 - [x] `package.json`
 - [x] `tsconfig.json`
-- [x] `wrangler.toml`
+- [x] `wrangler.jsonc`
 - [ ] All pipeline modules (migrate from existing)
 - [ ] Worker entry point
 
@@ -37,7 +37,7 @@ Before handing to Storage Agent:
 - [ ] All worker/ files exist and compile
 - [ ] Directory structure complete
 - [ ] No compilation errors (`npm run lint`)
-- [ ] wrangler.toml has placeholder KV IDs
+- [ ] wrangler.jsonc has placeholder KV IDs
 
 ## Context for Next Agent
 

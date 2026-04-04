@@ -53,7 +53,7 @@ Improvements: 20% → 17% → 12% → 9% → 6% → 4%
 
 Last 3 iterations:
 - I5: 9% improvement
-- I6: 6% improvement  
+- I6: 6% improvement
 - I7: 4% improvement
 Average: 6.3%
 
@@ -287,13 +287,13 @@ Iteration 4: Validator fails with error
 Response:
 1. Check if error is transient (network, timeout)
    → If yes: Retry same iteration
-   
+
 2. Check if validator is misconfigured
    → If yes: Fix configuration, retry
-   
+
 3. Check if previous change broke validator
    → If yes: Revert iteration 4, adjust approach
-   
+
 4. If persistent: Stop loop, report issue
 ```
 

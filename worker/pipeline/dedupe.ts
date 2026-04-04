@@ -4,6 +4,7 @@ import {
   calculateUrlSimilarity,
   calculateStringSimilarity,
 } from "../lib/crypto";
+import { calculateSourceDiversity, calculateUniquenessScore } from "./score";
 
 // ============================================================================
 // Deduplication Pipeline
@@ -206,32 +207,4 @@ function createCrossSourceKey(deal: Deal): string {
   const rewardKey = `${deal.reward.type}:${deal.reward.value}`;
 
   return `${normalizedTitle}:${deal.code}:${rewardKey}`;
-}
-
-/**
- * Calculate uniqueness score
- */
-export function calculateUniquenessScore(
-  duplicateCount: number,
-  totalCandidates: number,
-): number {
-  if (totalCandidates === 0) return 1.0;
-  const uniqueRatio = (totalCandidates - duplicateCount) / totalCandidates;
-  return Math.min(1.0, uniqueRatio);
-}
-
-/**
- * Calculate source diversity score
- */
-export function calculateSourceDiversity(deals: Deal[]): number {
-  if (deals.length === 0) return 0;
-
-  const domains = new Set(deals.map((d) => d.source.domain));
-  const diversity = domains.size / deals.length;
-
-  // Reward having deals from multiple sources
-  // Max score at ~5 different domains for 10 deals
-  const optimalRatio = Math.min(domains.size / 5, 1.0);
-
-  return Math.min(1.0, diversity * 2) * optimalRatio;
 }

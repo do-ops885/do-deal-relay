@@ -1,7 +1,11 @@
 import { Snapshot, PipelineContext, PipelineError, ErrorClass } from "./types";
 import { CONFIG } from "./config";
 import { promoteToProduction, revertProduction } from "./lib/storage";
-import { commitSnapshot, isSnapshotCommitted } from "./lib/github";
+import {
+  commitSnapshot,
+  isSnapshotCommitted,
+  verifyCommit,
+} from "./lib/github";
 import { setLastRunMetadata } from "./lib/storage";
 import type { Env } from "./types";
 
@@ -140,21 +144,4 @@ export async function rollbackSnapshot(
       false,
     );
   }
-}
-
-/**
- * Verify GitHub commit
- */
-async function verifyCommit(
-  repo: string,
-  expectedSha: string,
-): Promise<boolean> {
-  const { getRecentCommits } = await import("./lib/github");
-  const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
-
-  if (commits.length === 0) {
-    return false;
-  }
-
-  return commits[0].sha === expectedSha;
 }

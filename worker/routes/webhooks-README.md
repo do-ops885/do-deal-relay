@@ -410,9 +410,9 @@ worker/
 
 ## Configuration
 
-Add to your `wrangler.toml`:
+Add to your `wrangler.jsonc`:
 
-```toml
+```jsonc
 [env.production]
 kv_namespaces = [
   { binding = "DEALS_PROD", id = "..." },

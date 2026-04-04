@@ -1,7 +1,7 @@
 # Load Testing Report - Production
 
-**Date**: 2026-04-03  
-**Target**: https://do-deal-relay.do-it-119.workers.dev  
+**Date**: 2026-04-03
+**Target**: https://do-deal-relay.do-it-119.workers.dev
 **Status**: ✅ Completed
 
 ---
@@ -76,7 +76,7 @@ Throughput:           14 req/sec average
 2. Check authentication requirements
 3. Validate KV operation permissions
 
-**Next Steps**: 
+**Next Steps**:
 - Implement KV API endpoints OR
 - Update test to use direct KV bindings (if supported by Artillery)
 

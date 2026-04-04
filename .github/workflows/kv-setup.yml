@@ -79,7 +79,7 @@ jobs:
           echo ""
           echo "Next steps:"
           echo "1. Run 'wrangler kv:namespace list' to get namespace IDs"
-          echo "2. Update wrangler.toml with the namespace IDs"
+          echo "2. Update wrangler.jsonc with the namespace IDs"
 
       - name: List created namespaces
         env:

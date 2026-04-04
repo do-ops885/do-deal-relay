@@ -96,13 +96,13 @@ if [[ "$DRY_RUN" == true ]]; then
 else
     # Save to lessons.jsonl (append mode)
     LESSONS_FILE="agents-docs/lessons.jsonl"
-    
+
     # Ensure directory exists
     mkdir -p "$(dirname "$LESSONS_FILE")"
-    
+
     # Append lesson
     echo "$LESSON_JSON" >> "$LESSONS_FILE"
-    
+
     echo -e "${GREEN}✓ Lesson captured:${NC} $LESSON_ID"
     echo -e "${BLUE}  Saved to:${NC} $LESSONS_FILE"
     echo ""

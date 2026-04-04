@@ -18,7 +18,7 @@ This plan tracks all warnings, issues, and incomplete items required for product
 ### What Worked
 
 - ✅ Pre-deploy validation passed
-- ✅ Cloudflare deploy succeeded (wrangler.toml fix worked)
+- ✅ Cloudflare deploy succeeded (wrangler.jsonc fix worked)
 - ✅ Worker is deployed and running
 
 ### Current Issue
@@ -31,7 +31,7 @@ This plan tracks all warnings, issues, and incomplete items required for product
 Initialize production KV with seed data:
 
 ```bash
-# Get the namespace ID from wrangler.toml (DEALS_PROD)
+# Get the namespace ID from wrangler.jsonc (DEALS_PROD)
 # Then run:
 wrangler kv key put --namespace-id=23ee9b8c9e2748e5880f476b8b57a524 "snapshot:prod" '{"version":"0.1.1","deals":[],"stats":{"total":0,"active":0}}'
 ```

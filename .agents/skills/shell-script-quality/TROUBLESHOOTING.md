@@ -108,10 +108,10 @@ disable=SC2086,SC2181
 teardown() {
     # Reset environment
     unset MY_VAR
-    
+
     # Clean temp files
     [[ -d "$TEST_TEMP_DIR" ]] && rm -rf "$TEST_TEMP_DIR"
-    
+
     # Restore PATH
     export PATH="$ORIGINAL_PATH"
 }
@@ -184,10 +184,10 @@ create_mock() {
 echo "mock output"
 EOF
     chmod +x "$TEST_TEMP_DIR/$cmd"
-    
+
     # Put mock first in PATH
     export PATH="$TEST_TEMP_DIR:$PATH"
-    
+
     # Verify
     which "$cmd"  # Should show mock path
 }
@@ -256,9 +256,9 @@ bats --jobs 4 tests/
 @test "debug example" {
     # Show variables
     echo "DEBUG: variable=$variable" >&3
-    
+
     run command
-    
+
     # Show output
     echo "DEBUG: status=$status" >&3
     echo "DEBUG: output=$output" >&3

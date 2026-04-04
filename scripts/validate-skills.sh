@@ -27,7 +27,7 @@ echo ""
 for skill_dir in .agents/skills/*/; do
     skill_name=$(basename "$skill_dir")
     echo "Checking $skill_name..."
-    
+
     # Check SKILL.md exists
     if [ ! -f "$skill_dir/SKILL.md" ]; then
         echo "  ✗ SKILL.md not found"
@@ -59,7 +59,7 @@ echo ""
 for cli_dir in .claude .gemini .qwen; do
     if [ -d "$cli_dir/skills" ]; then
         echo "Checking $cli_dir/skills/ symlinks..."
-        
+
         for link in "$cli_dir/skills"/*/; do
             if [ -L "$link" ]; then
                 # Check if symlink points to valid location

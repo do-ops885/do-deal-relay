@@ -86,7 +86,7 @@ Single message invoking all agents:
 I need you to coordinate these parallel tasks:
 
 1. code-reviewer: [Specific instructions]
-2. test-runner: [Specific instructions]  
+2. test-runner: [Specific instructions]
 3. security-auditor: [Specific instructions]
 
 Execute all simultaneously.

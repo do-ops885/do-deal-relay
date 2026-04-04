@@ -1,7 +1,7 @@
 # SYNTHESIS Module — Improve
 
-**Persona**: SYNTHESIS (Integrated Analysis)  
-**Purpose**: Combine RYAN rigor + FLASH pragmatism + SOCRATES reasoning into actionable recommendations  
+**Persona**: SYNTHESIS (Integrated Analysis)
+**Purpose**: Combine RYAN rigor + FLASH pragmatism + SOCRATES reasoning into actionable recommendations
 **Priority**: Useful decisions, explicit trade-offs, concrete recommendations
 
 ## suggest_fixes
@@ -203,7 +203,7 @@ Generate human-readable issue reports for review.
 ```markdown
 # Issue Report
 
-Generated: 2026-04-02T12:00:00Z  
+Generated: 2026-04-02T12:00:00Z
 Synthesized from: RYAN verify + FLASH score + SOCRATES lessons
 
 ---
@@ -212,10 +212,10 @@ Synthesized from: RYAN verify + FLASH score + SOCRATES lessons
 
 ### Issue 1: Version Mismatch (HIGH Severity)
 
-**Location**: agents-docs/features/referral-system.md line 3  
-**RYAN Analysis**: Claims v0.1.1, actual project version is 0.1.1  
-**Impact**: Users may assume feature is production-ready  
-**FLASH Assessment**: 2 minute fix, prevents trust erosion  
+**Location**: agents-docs/features/referral-system.md line 3
+**RYAN Analysis**: Claims v0.1.1, actual project version is 0.1.1
+**Impact**: Users may assume feature is production-ready
+**FLASH Assessment**: 2 minute fix, prevents trust erosion
 **SOCRATES Question**: What else claims v0.1.1 incorrectly?
 
 **Fix**: `sed -i 's/v0.1.1/v0.1.1/' agents-docs/features/referral-system.md`
@@ -226,10 +226,10 @@ Synthesized from: RYAN verify + FLASH score + SOCRATES lessons
 
 ### Issue 2: High Noise Level
 
-**Location**: AGENTS.md lines 23-25  
-**RYAN Analysis**: 5 fluff words in 50 word paragraph  
-**Impact**: Reduced readability, slower comprehension  
-**FLASH Assessment**: 5 minute fix for +5 clarity points  
+**Location**: AGENTS.md lines 23-25
+**RYAN Analysis**: 5 fluff words in 50 word paragraph
+**Impact**: Reduced readability, slower comprehension
+**FLASH Assessment**: 5 minute fix for +5 clarity points
 **Recommendation**: Remove "essentially", "in order to"
 
 ---
@@ -238,9 +238,9 @@ Synthesized from: RYAN verify + FLASH score + SOCRATES lessons
 
 ### Issue 3: Recurring Pattern
 
-**SOCRATES Insight**: Version mismatches occur 15x/month  
-**Root Cause**: Template has hardcoded version  
-**Long-term Fix**: Add variable to scaffolding  
+**SOCRATES Insight**: Version mismatches occur 15x/month
+**Root Cause**: Template has hardcoded version
+**Long-term Fix**: Add variable to scaffolding
 **ROI**: 30 min setup → saves 30 min/month
 
 ---

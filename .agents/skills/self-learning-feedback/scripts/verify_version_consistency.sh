@@ -68,7 +68,7 @@ check_file() {
     local found_version=""
     local status="PASS"
     local severity="LOW"
-    
+
     # Check frontmatter version
     if [[ "$file" == *SKILL.md ]]; then
         found_version=$(grep "^version:" "$file" 2>/dev/null | head -1 | sed 's/version: *//' | tr -d '[:space:]')
@@ -77,7 +77,7 @@ check_file() {
             severity="MEDIUM"
         fi
     fi
-    
+
     # Check markdown headers
     if grep -q "Version.*:" "$file" 2>/dev/null; then
         local header_version=$(grep -i "version.*:" "$file" | grep -v "Source" | head -1 | sed 's/.*Version.*: *//' | tr -d '[:space:]')
@@ -87,14 +87,14 @@ check_file() {
             found_version="$header_version"
         fi
     fi
-    
+
     # Check for v1.0.0 template pattern
     if grep -q "v1\.0\.0\|version.*1\.0\.0" "$file" 2>/dev/null; then
         status="FAIL"
         severity="HIGH"
         found_version="1.0.0 (template default)"
     fi
-    
+
     # Report
     if [[ "$status" == "FAIL" ]]; then
         echo -e "${RED}❌ FAIL${NC} $file"
@@ -102,7 +102,7 @@ check_file() {
         echo -e "   Actual:  ${GREEN}$SOURCE_VERSION${NC}"
         echo -e "   Severity: ${RED}$severity${NC}"
         ((FAIL++))
-        
+
         # Fix if requested
         if [[ "$FIX_MODE" == true && "$DRY_RUN" == false ]]; then
             # Fix SKILL.md frontmatter
@@ -110,7 +110,7 @@ check_file() {
                 sed -i "s/^version: *.*/version: $SOURCE_VERSION/" "$file"
                 echo -e "   ${GREEN}→ Fixed frontmatter version${NC}"
             fi
-            
+
             # Fix markdown headers
             sed -i "s/v1\.0\.0/v$SOURCE_VERSION/g" "$file"
             sed -i "s/Version.*:.*1\.0\.0/Version: $SOURCE_VERSION/g" "$file"
@@ -118,7 +118,7 @@ check_file() {
         elif [[ "$DRY_RUN" == true ]]; then
             echo -e "   ${YELLOW}→ Would fix (dry run)${NC}"
         fi
-        
+
         CHECKS+=("{\"file\":\"$file\",\"claimed\":\"$found_version\",\"actual\":\"$SOURCE_VERSION\",\"status\":\"FAIL\",\"severity\":\"$severity\"}")
     else
         [[ -n "$found_version" ]] && echo -e "${GREEN}✓ PASS${NC} $file (version: $found_version)"

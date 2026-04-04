@@ -1,7 +1,7 @@
 # RYAN Module — Verify
 
-**Persona**: RYAN (Methodical Analyst)  
-**Purpose**: Deep analysis, risk control, evidence-backed verification  
+**Persona**: RYAN (Methodical Analyst)
+**Purpose**: Deep analysis, risk control, evidence-backed verification
 **Priority**: Security, correctness, maintainability
 
 ## verify_version_consistency
@@ -179,8 +179,8 @@ All verify commands output structured reports:
 ```markdown
 # Verification Report
 
-**Run Date**: 2026-04-02T12:00:00Z  
-**Source Version**: 0.1.1  
+**Run Date**: 2026-04-02T12:00:00Z
+**Source Version**: 0.1.1
 **Status**: NEEDS_ATTENTION
 
 ## Summary

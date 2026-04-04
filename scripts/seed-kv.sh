@@ -32,22 +32,22 @@ check_auth() {
   echo "✓ Authenticated with Cloudflare"
 }
 
-# Get namespace ID from wrangler.toml
+# Get namespace ID from wrangler.jsonc
 get_namespace_id() {
   local namespace_name="$1"
 
-  if [ ! -f "${ROOT_DIR}/wrangler.toml" ]; then
-    echo "❌ wrangler.toml not found"
+  if [ ! -f "${ROOT_DIR}/wrangler.jsonc" ]; then
+    echo "❌ wrangler.jsonc not found"
     exit 1
   fi
 
-  # Extract namespace ID from wrangler.toml
+  # Extract namespace ID from wrangler.jsonc
   local id
-  id=$(grep -A 2 "binding = \"${namespace_name}\"" "${ROOT_DIR}/wrangler.toml" | grep "id = " | head -1 | sed 's/.*id = "\(.*\)".*/\1/')
+  id=$(grep -A 2 "\"binding\": \"${namespace_name}\"" "${ROOT_DIR}/wrangler.jsonc" | grep "\"id\"" | head -1 | sed 's/.*"id": *"\(.*\)".*/\1/')
 
   if [ -z "$id" ]; then
     echo "❌ Could not find namespace ID for ${namespace_name}"
-    echo "   Check wrangler.toml for the correct namespace binding"
+    echo "   Check wrangler.jsonc for the correct namespace binding"
     exit 1
   fi
 
@@ -97,7 +97,7 @@ seed_referral_storage() {
   local namespace_id
 
   # Check if DEALS_REFERRALS is configured
-  if ! grep -q "binding = \"DEALS_REFERRALS\"" "${ROOT_DIR}/wrangler.toml" 2>/dev/null; then
+  if ! grep -q "\"binding\": \"DEALS_REFERRALS\"" "${ROOT_DIR}/wrangler.jsonc" 2>/dev/null; then
     echo "⚠ DEALS_REFERRALS not configured, skipping"
     return 0
   fi
@@ -123,7 +123,7 @@ seed_webhook_storage() {
   local namespace_id
 
   # Check if DEALS_WEBHOOKS is configured
-  if ! grep -q "binding = \"DEALS_WEBHOOKS\"" "${ROOT_DIR}/wrangler.toml" 2>/dev/null; then
+  if ! grep -q "\"binding\": \"DEALS_WEBHOOKS\"" "${ROOT_DIR}/wrangler.jsonc" 2>/dev/null; then
     echo "⚠ DEALS_WEBHOOKS not configured, skipping"
     return 0
   fi
@@ -220,11 +220,11 @@ case "${1:-}" in
     echo "  --verify-only  Only verify existing seed data"
     echo ""
     echo "This script initializes Cloudflare KV namespaces with required seed data"
-    echo "for fresh deployments. It reads namespace IDs from wrangler.toml."
+    echo "for fresh deployments. It reads namespace IDs from wrangler.jsonc."
     echo ""
     echo "Prerequisites:"
     echo "  - wrangler CLI installed and authenticated"
-    echo "  - wrangler.toml with KV namespace bindings"
+    echo "  - wrangler.jsonc with KV namespace bindings"
     echo ""
     exit 0
     ;;

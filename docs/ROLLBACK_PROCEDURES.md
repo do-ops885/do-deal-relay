@@ -134,7 +134,7 @@ curl https://do-deal-relay.<subdomain>.workers.dev/health
 # 1. Verify trigger is configured
 npx wrangler triggers list
 
-# 2. If missing, check wrangler.toml has:
+# 2. If missing, check wrangler.jsonc has:
 # [triggers]
 # crons = ["0 */6 * * *"]
 
