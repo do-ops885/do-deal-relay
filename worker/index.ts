@@ -21,6 +21,7 @@ import {
   handleCreateReferral,
   handleGetReferralByCode,
   handleDeactivateReferral,
+  handleReactivateReferral,
   handleResearch,
 } from "./routes/referrals";
 import { jsonResponse } from "./routes/utils";
@@ -39,6 +40,7 @@ import {
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
+import { handleWebhookRoutes } from "./routes/webhooks";
 import { logger } from "./lib/global-logger";
 
 // ============================================================================
@@ -99,13 +101,19 @@ export default {
           return handleCreateReferral(request, env);
       }
 
-      const referralMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
+      const referralMatch = path.match(
+        /^\/api\/referrals\/([^/]+)(?:\/(deactivate|reactivate))?$/,
+      );
       if (referralMatch) {
         const code = referralMatch[1];
-        if (request.method === "GET") return handleGetReferralByCode(code, env);
-        if (path.endsWith("/deactivate") && request.method === "POST") {
+        const action = referralMatch[2];
+        if (action === "deactivate" && request.method === "POST") {
           return handleDeactivateReferral(request, code, env);
         }
+        if (action === "reactivate" && request.method === "POST") {
+          return handleReactivateReferral(code, env);
+        }
+        if (request.method === "GET") return handleGetReferralByCode(code, env);
       }
 
       // Research API
@@ -155,6 +163,10 @@ export default {
       if (path.startsWith("/api/nlq")) {
         return handleNLQRequest(request, url, env);
       }
+
+      // Webhook routes
+      const webhookResponse = await handleWebhookRoutes(request, env, path);
+      if (webhookResponse) return webhookResponse;
 
       // 404
       return jsonResponse({ error: "Not found" }, 404);
