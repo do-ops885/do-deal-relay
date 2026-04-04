@@ -1,8 +1,8 @@
 # URL Handling Rules (CRITICAL)
 
-**Status**: Active  
-**Version: 0.1.1  
-**Applies To**: All agents, CLI tools, API endpoints, and integrations  
+**Status**: Active
+**Version: 0.1.1
+**Applies To**: All agents, CLI tools, API endpoints, and integrations
 **Enforcement\*\*: FATAL - Violations block execution
 
 This document defines the mandatory URL handling rules for the referral management system. **All agents MUST follow these rules.**

@@ -49,8 +49,8 @@ tags: [verification, scoring, self-learning, feedback, analysis-swarm, quality]
 
 ## Core Rule
 
-**VERIFY BEFORE CLAIM**: Every status claim must have verifiable evidence  
-**SCORE BEFORE SHIP**: Every output gets a quality score (0-100)  
+**VERIFY BEFORE CLAIM**: Every status claim must have verifiable evidence
+**SCORE BEFORE SHIP**: Every output gets a quality score (0-100)
 **LEARN FROM MISTAKES**: Every error becomes institutional knowledge
 
 ## Module Reference
@@ -192,20 +192,20 @@ After verification and scoring:
 
 ### Version Mismatch Found
 
-**Cause**: Skill template copied, version not updated  
-**Solution**: Run `verify_version_consistency.sh --fix`  
+**Cause**: Skill template copied, version not updated
+**Solution**: Run `verify_version_consistency.sh --fix`
 **Prevention**: Add to pre-commit hooks
 
 ### Status Claim Without Evidence
 
-**Cause**: Documentation outdated vs. implementation  
-**Solution**: Update status or implement missing pieces  
+**Cause**: Documentation outdated vs. implementation
+**Solution**: Update status or implement missing pieces
 **Prevention**: Automated status verification in CI
 
 ### High Noise Score
 
-**Cause**: Verbose output, repetition, low signal  
-**Solution**: Run `suggest_fixes` for condensation  
+**Cause**: Verbose output, repetition, low signal
+**Solution**: Run `suggest_fixes` for condensation
 **Prevention**: Noise check in pre-commit
 
 ## Best Practices

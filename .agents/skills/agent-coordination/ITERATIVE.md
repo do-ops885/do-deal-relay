@@ -33,15 +33,15 @@ Use `loop-agent` to orchestrate iterations:
 Task(subagent_type="loop-agent",
      prompt="""
      Goal: Optimize database queries until < 100ms response time
-     
+
      Agent to iterate: performance-optimizer
      Max iterations: 5
-     
+
      Success criteria:
      - Query response time < 100ms
      - All tests pass
      - No functionality changes
-     
+
      After each iteration:
      1. Measure query performance
      2. Run test suite

@@ -48,12 +48,12 @@ validate_inputs() {
         echo "Usage: $0 <input>" >&2
         return 1
     }
-    
+
     [[ -f "$1" ]] || {
         echo "ERROR: File not found: $1" >&2
         return 1
     }
-    
+
     return 0
 }
 
@@ -108,10 +108,10 @@ show_progress() {
 process_data() {
     local input_file="$1"
     local output_file="${2:-/dev/stdout}"
-    
+
     [[ -z "$input_file" ]] && return 1
     [[ -f "$input_file" ]] || return 1
-    
+
     cat "$input_file" > "$output_file" || return 2
     return 0
 }
@@ -123,7 +123,7 @@ process() {
     local input="${1:?Input required}"
     local output="${2:-output.txt}"
     local verbose="${3:-false}"
-    
+
     [[ "$verbose" == "true" ]] && echo "Processing $input -> $output"
     # Process...
 }
@@ -147,7 +147,7 @@ parse_hook_input() {
     local input="$(cat)"
     local tool="$(echo "$input" | jq -r '.tool')"
     local params="$(echo "$input" | jq -r '.params')"
-    
+
     echo "Tool: $tool"
     echo "Params: $params"
 }
@@ -183,16 +183,16 @@ echo "data" > "$TEMP_FILE"
 update_file() {
     local file="$1" content="$2"
     local backup="${file}.bak"
-    
+
     # Backup
     [[ -f "$file" ]] && cp "$file" "$backup"
-    
+
     # Update
     echo "$content" > "$file" || {
         [[ -f "$backup" ]] && mv "$backup" "$file"
         return 1
     }
-    
+
     # Remove backup on success
     [[ -f "$backup" ]] && rm -f "$backup"
     return 0
@@ -207,7 +207,7 @@ require_commands() {
     for cmd in "$@"; do
         command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
     done
-    
+
     if [[ ${#missing[@]} -gt 0 ]]; then
         echo "ERROR: Missing required commands: ${missing[*]}" >&2
         return 1
@@ -285,17 +285,17 @@ for file in *.txt; do
 process_parallel() {
     local max_jobs=4
     local job_count=0
-    
+
     for file in *.txt; do
         process_file "$file" &
         ((job_count++))
-        
+
         if [[ $job_count -ge $max_jobs ]]; then
             wait -n  # Wait for any job to finish
             ((job_count--))
         fi
     done
-    
+
     wait  # Wait for remaining jobs
 }
 ```
@@ -307,13 +307,13 @@ mkdir -p "$CACHE_DIR"
 
 get_cached() {
     local key="$1" cache_file="$CACHE_DIR/$key"
-    
+
     if [[ -f "$cache_file" ]]; then
         # Check if cache is fresh (< 1 hour)
         local age=$(( $(date +%s) - $(stat -f%m "$cache_file" 2>/dev/null || stat -c%Y "$cache_file") ))
         [[ $age -lt 3600 ]] && cat "$cache_file" && return 0
     fi
-    
+
     return 1
 }
 ```

@@ -1,7 +1,7 @@
 # FLASH Module — Score
 
-**Persona**: FLASH (Rapid Pragmatic Analyst)  
-**Purpose**: Speed, pragmatism, shipping pressure, noise detection  
+**Persona**: FLASH (Rapid Pragmatic Analyst)
+**Purpose**: Speed, pragmatism, shipping pressure, noise detection
 **Priority**: Unblock progress, minimize delay, target highest-impact issues
 
 ## score_output

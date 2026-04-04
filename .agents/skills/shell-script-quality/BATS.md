@@ -46,7 +46,7 @@ teardown() {
 @test "process_file succeeds" {
     local file="$(mktemp)"
     echo "test data" > "$file"
-    
+
     run process_file "$file"
     [ "$status" -eq 0 ]
     [ "$output" = "test data" ]

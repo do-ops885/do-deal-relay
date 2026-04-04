@@ -37,7 +37,7 @@ log_info() {
 # Test 1: Module structure
 test_modules() {
     log_section "Test 1: 3-Persona Module Structure"
-    
+
     local modules=("verify" "score" "learn" "improve")
     for mod in "${modules[@]}"; do
         if [[ -f "$SKILL_DIR/modules/$mod.md" ]]; then
@@ -52,7 +52,7 @@ test_modules() {
 # Test 2: Version consistency
 test_version() {
     log_section "Test 2: Version Matches Project (Not Template)"
-    
+
     local project_version=$(cat VERSION 2>/dev/null || echo "0.1.1")
     if grep -q "version: $project_version" "$SKILL_DIR/SKILL.md"; then
         log_pass "Skill version ($project_version) matches project VERSION"
@@ -66,7 +66,7 @@ test_version() {
 # Test 3: Frontmatter
 test_frontmatter() {
     log_section "Test 3: SKILL.md Frontmatter"
-    
+
     local required=("name: self-learning-feedback" "description:" "version:" "tags:")
     for field in "${required[@]}"; do
         if grep -q "$field" "$SKILL_DIR/SKILL.md"; then
@@ -81,7 +81,7 @@ test_frontmatter() {
 # Test 4: Analysis Swarm integration
 test_swarm_pattern() {
     log_section "Test 4: ANALYSIS SWARM Pattern Integration"
-    
+
     # Check RYAN module mentions
     if grep -q "RYAN\|verify\|risk\|correctness" "$SKILL_DIR/modules/verify.md"; then
         log_pass "RYAN module (verify) has correct focus"
@@ -89,7 +89,7 @@ test_swarm_pattern() {
         log_fail "RYAN module missing key concepts"
         ((FAILED++))
     fi
-    
+
     # Check FLASH module mentions
     if grep -q "FLASH\|score\|speed\|noise" "$SKILL_DIR/modules/score.md"; then
         log_pass "FLASH module (score) has correct focus"
@@ -97,7 +97,7 @@ test_swarm_pattern() {
         log_fail "FLASH module missing key concepts"
         ((FAILED++))
     fi
-    
+
     # Check SOCRATES module mentions
     if grep -q "SOCRATES\|learn\|question\|assumption" "$SKILL_DIR/modules/learn.md"; then
         log_pass "SOCRATES module (learn) has correct focus"
@@ -105,7 +105,7 @@ test_swarm_pattern() {
         log_fail "SOCRATES module missing key concepts"
         ((FAILED++))
     fi
-    
+
     # Check SYNTHESIS module mentions
     if grep -q "SYNTHESIS\|improve\|recommend\|trade-off" "$SKILL_DIR/modules/improve.md"; then
         log_pass "SYNTHESIS module (improve) has correct focus"
@@ -118,7 +118,7 @@ test_swarm_pattern() {
 # Test 5: Scripts exist
 test_scripts() {
     log_section "Test 5: Verification Scripts"
-    
+
     local scripts=(
         "verify_version_consistency.sh"
         "verify_status_accuracy.sh"
@@ -126,7 +126,7 @@ test_scripts() {
         "capture_lesson.sh"
         "suggest_fixes.sh"
     )
-    
+
     for script in "${scripts[@]}"; do
         if [[ -f "$SKILL_DIR/scripts/$script" ]]; then
             log_pass "Script exists: $script"
@@ -139,10 +139,10 @@ test_scripts() {
 # Test 6: Real usage - version check
 test_real_usage() {
     log_section "Test 6: Real Usage - Version Verification"
-    
+
     # Check for v1.0.0 claims that should be 0.1.1
     local v1_claims=$(grep -r "v1\.0\.0\|version.*1\.0\.0" --include="*.md" . 2>/dev/null | grep -v node_modules | grep -v ".agents/skills/" | wc -l || echo "0")
-    
+
     if [[ $v1_claims -eq 0 ]]; then
         log_pass "No v1.0.0 version claims found outside skills (consistent with VERSION)"
     else
@@ -154,7 +154,7 @@ test_real_usage() {
 # Test 7: LESSONS.md exists
 test_lessons() {
     log_section "Test 7: Learned Lessons Integration"
-    
+
     if [[ -f "agents-docs/LESSONS.md" ]]; then
         log_pass "LESSONS.md exists for institutional knowledge"
         local lessons_count=$(grep -c "LESSON-" agents-docs/LESSONS.md 2>/dev/null || echo "0")
@@ -167,10 +167,10 @@ test_lessons() {
 # Test 8: Evals configuration
 test_evals() {
     log_section "Test 8: Evals Configuration"
-    
+
     if [[ -f "$SKILL_DIR/evals/evals.json" ]]; then
         log_pass "Evals file exists"
-        
+
         # Check JSON validity
         if python3 -c "import json; json.load(open('$SKILL_DIR/evals/evals.json'))" 2>/dev/null; then
             log_pass "Evals JSON is valid"
@@ -192,7 +192,7 @@ main() {
     echo "║  ANALYSIS SWARM Pattern Validation                      ║"
     echo "╚════════════════════════════════════════════════════════╝"
     echo ""
-    
+
     test_modules
     test_version
     test_frontmatter
@@ -201,7 +201,7 @@ main() {
     test_real_usage
     test_lessons
     test_evals
-    
+
     echo ""
     echo "═══════════════════════════════════════════════════════════"
     if [[ $FAILED -eq 0 ]]; then

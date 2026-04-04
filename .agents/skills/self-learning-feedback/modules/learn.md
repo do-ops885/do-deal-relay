@@ -1,7 +1,7 @@
 # SOCRATES Module — Learn
 
-**Persona**: SOCRATES (Questioning Facilitator)  
-**Purpose**: Surface assumptions, expose blind spots, test confidence, improve synthesis  
+**Persona**: SOCRATES (Questioning Facilitator)
+**Purpose**: Surface assumptions, expose blind spots, test confidence, improve synthesis
 **Priority**: Disciplined questioning, assumption testing, knowledge building
 
 ## capture_lesson

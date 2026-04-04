@@ -126,7 +126,7 @@ Caused by: Error: Worker exited unexpectedly
    ```bash
    # Upgrade to latest vitest-pool-workers
    npm update @cloudflare/vitest-pool-workers
-   
+
    # Or reinstall to get latest compatible versions
    rm -rf node_modules package-lock.json
    npm install
@@ -239,13 +239,13 @@ The TruffleHog GitHub Action requires different commits between base and head to
    ```bash
    # Agent 1: Workflow Syntax Auditor
    - Check YAML syntax, action versions, template literals
-   
-   # Agent 2: Security Configuration Auditor  
+
+   # Agent 2: Security Configuration Auditor
    - Check permissions, timeouts, continue-on-error misuse
-   
+
    # Agent 3: Efficiency Auditor
    - Check caching, timeouts, redundant steps
-   
+
    # Agent 4: Pre-existing Issues Checker
    - Verify LESSON implementations are complete
    ```
@@ -372,7 +372,7 @@ worker/lib/multi-agent/
 The multi-agent workflow system exists as an internal library (`worker/lib/multi-agent/`) for programmatic use. The following HTTP endpoints are **NOT implemented** (documented for future but currently only internal):
 
 - `POST /api/workflow/execute` - ❌ NOT IMPLEMENTED (internal library only)
-- `GET /api/workflow/plan` - ❌ NOT IMPLEMENTED (internal library only)  
+- `GET /api/workflow/plan` - ❌ NOT IMPLEMENTED (internal library only)
 - `POST /api/workflow/phase/:phase` - ❌ NOT IMPLEMENTED (internal library only)
 
 **Note**: The orchestrator is accessible via JavaScript/TypeScript imports for use in scheduled workers or other internal processes. See `worker/lib/multi-agent/index.ts` for the public API.
@@ -432,4 +432,3 @@ The multi-agent workflow system exists as an internal library (`worker/lib/multi
 2. Require endpoint tests for all new routes
 3. Run SWARM analysis before major releases
 4. Document endpoints BEFORE or DURING implementation (not after)
-

@@ -14,11 +14,11 @@ from typing import Dict, List, Tuple, Optional
 
 class SkillEvaluator:
     """Evaluate agent skills for correctness and completeness."""
-    
+
     def __init__(self, skills_dir: Optional[Path] = None):
         self.skills_dir = skills_dir or Path(".agents/skills")
         self.results: Dict[str, dict] = {}
-        
+
     def discover_skills(self) -> List[Path]:
         """Discover all skills in the skills directory."""
         skills = []
@@ -28,12 +28,12 @@ class SkillEvaluator:
                 if skill_md.exists():
                     skills.append(item)
         return sorted(skills)
-    
+
     def evaluate_skill(self, skill_path: Path) -> dict:
         """Evaluate a single skill."""
         skill_name = skill_path.name
         print(f"\n🔍 Evaluating skill: {skill_name}")
-        
+
         results = {
             'name': skill_name,
             'status': 'pending',
@@ -41,20 +41,20 @@ class SkillEvaluator:
             'errors': [],
             'warnings': []
         }
-        
+
         # Check 1: SKILL.md exists and has proper structure
         skill_md = skill_path / "SKILL.md"
         if skill_md.exists():
             content = skill_md.read_text()
             results['checks']['skill_md_exists'] = True
-            
+
             # Check frontmatter
             if content.startswith('---'):
                 results['checks']['has_frontmatter'] = True
             else:
                 results['checks']['has_frontmatter'] = False
                 results['errors'].append("Missing YAML frontmatter")
-            
+
             # Check required sections
             required_sections = ['## Overview', '## Quick Start']
             for section in required_sections:
@@ -63,7 +63,7 @@ class SkillEvaluator:
                 else:
                     results['checks'][f'has_{section.lower().replace(" ", "_")}'] = False
                     results['warnings'].append(f"Missing section: {section}")
-            
+
             # Check line count
             line_count = len(content.splitlines())
             results['checks']['line_count'] = line_count
@@ -72,7 +72,7 @@ class SkillEvaluator:
         else:
             results['checks']['skill_md_exists'] = False
             results['errors'].append("SKILL.md not found")
-        
+
         # Check 2: Examples exist
         examples_dir = skill_path / "examples"
         if examples_dir.exists():
@@ -83,7 +83,7 @@ class SkillEvaluator:
         else:
             results['checks']['examples_count'] = 0
             results['warnings'].append("No examples directory")
-        
+
         # Check 3: References exist
         refs_dir = skill_path / "references"
         if refs_dir.exists():
@@ -91,7 +91,7 @@ class SkillEvaluator:
         else:
             results['checks']['has_references'] = False
             results['warnings'].append("No references directory")
-        
+
         # Check 4: Scripts exist
         scripts_dir = skill_path / "scripts"
         if scripts_dir.exists():
@@ -106,7 +106,7 @@ class SkillEvaluator:
         else:
             results['checks']['has_scripts'] = False
             results['warnings'].append("No scripts directory")
-        
+
         # Run skill-specific tests if they exist
         test_script = skill_path / "scripts" / "test.py"
         if test_script.exists():
@@ -126,7 +126,7 @@ class SkillEvaluator:
             except Exception as e:
                 results['checks']['tests_passed'] = False
                 results['errors'].append(f"Test execution error: {str(e)}")
-        
+
         # Determine overall status
         if results['errors']:
             results['status'] = 'failed'
@@ -134,14 +134,14 @@ class SkillEvaluator:
             results['status'] = 'passed_with_warnings'
         else:
             results['status'] = 'passed'
-        
+
         return results
-    
+
     def run_all_evaluations(self) -> dict:
         """Run evaluations for all skills."""
         skills = self.discover_skills()
         print(f"\n📊 Found {len(skills)} skills to evaluate")
-        
+
         all_results = {
             'timestamp': datetime.now().isoformat(),
             'total_skills': len(skills),
@@ -150,20 +150,20 @@ class SkillEvaluator:
             'failed': 0,
             'skills': {}
         }
-        
+
         for skill_path in skills:
             result = self.evaluate_skill(skill_path)
             all_results['skills'][skill_path.name] = result
-            
+
             if result['status'] == 'passed':
                 all_results['passed'] += 1
             elif result['status'] == 'passed_with_warnings':
                 all_results['passed_with_warnings'] += 1
             else:
                 all_results['failed'] += 1
-        
+
         return all_results
-    
+
     def print_summary(self, results: dict):
         """Print evaluation summary."""
         print("\n" + "="*60)
@@ -174,7 +174,7 @@ class SkillEvaluator:
         print(f"⚠️  Passed with Warnings: {results['passed_with_warnings']}")
         print(f"❌ Failed: {results['failed']}")
         print("="*60)
-        
+
         # Print details for failed skills
         if results['failed'] > 0:
             print("\n❌ FAILED SKILLS:")
@@ -183,7 +183,7 @@ class SkillEvaluator:
                     print(f"\n  {name}:")
                     for error in skill_result['errors']:
                         print(f"    - {error}")
-        
+
         # Print warnings
         if results['passed_with_warnings'] > 0:
             print("\n⚠️  SKILLS WITH WARNINGS:")
@@ -192,18 +192,18 @@ class SkillEvaluator:
                     print(f"\n  {name}:")
                     for warning in skill_result['warnings']:
                         print(f"    - {warning}")
-        
+
         print("\n" + "="*60)
-    
+
     def save_results(self, results: dict, output_path: Optional[Path] = None):
         """Save results to JSON file."""
         if output_path is None:
             output_path = Path(".agents/skills/evals/results.json")
-        
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
-        
+
         print(f"\n💾 Results saved to: {output_path}")
 
 
@@ -213,7 +213,7 @@ def main():
     results = evaluator.run_all_evaluations()
     evaluator.print_summary(results)
     evaluator.save_results(results)
-    
+
     # Exit with error code if any skills failed
     if results['failed'] > 0:
         sys.exit(1)

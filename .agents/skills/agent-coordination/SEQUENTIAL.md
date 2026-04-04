@@ -26,7 +26,7 @@ Sequential Chain:
 
 Message 1:
 ```
-Task(subagent_type="feature-implementer", 
+Task(subagent_type="feature-implementer",
      prompt="Implement password reset feature")
 ```
 

@@ -18,7 +18,7 @@ For research tasks, follow this cascade to minimize token usage:
 2. Direct HTTP fetch (FREE) - Simple GET request
    ↓ if fails
 3. Jina Reader API (FREE tier) - AI-powered extraction
-   ↓ if fails  
+   ↓ if fails
 4. Paid APIs (last resort) - Tavily, Exa, Firecrawl
 ```
 
@@ -34,7 +34,7 @@ For research tasks, follow this cascade to minimize token usage:
 # Cost-effective resolution (free sources first)
 skill web-doc-resolver
 
-# Deep research (when free sources insufficient)  
+# Deep research (when free sources insufficient)
 skill web-search-researcher
 ```
 

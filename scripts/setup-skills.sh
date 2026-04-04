@@ -13,12 +13,12 @@ echo ""
 if [ -d ".claude" ]; then
     echo "Setting up Claude Code skills..."
     mkdir -p .claude/skills
-    
+
     for skill in .agents/skills/*/; do
         skill_name=$(basename "$skill")
         target="../../.agents/skills/$skill_name"
         link=".claude/skills/$skill_name"
-        
+
         if [ -e "$link" ] || [ -L "$link" ]; then
             echo "  ✓ $skill_name (already exists)"
         else
@@ -42,7 +42,7 @@ for skill in .agents/skills/*/; do
     skill_name=$(basename "$skill")
     target="../../.agents/skills/$skill_name"
     link=".gemini/skills/$skill_name"
-    
+
     if [ -e "$link" ] || [ -L "$link" ]; then
         echo "  ✓ $skill_name (already exists)"
     else
@@ -65,7 +65,7 @@ for skill in .agents/skills/*/; do
     skill_name=$(basename "$skill")
     target="../../.agents/skills/$skill_name"
     link=".qwen/skills/$skill_name"
-    
+
     if [ -e "$link" ] || [ -L "$link" ]; then
         echo "  ✓ $skill_name (already exists)"
     else

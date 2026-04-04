@@ -39,11 +39,11 @@ log_fail() {
 # Check 1: Current AGENTS.md state
 check_current_state() {
     log_section "1. Current AGENTS.md State"
-    
+
     if [[ -f "$AGENTS_MD" ]]; then
         local lines=$(wc -l < "$AGENTS_MD")
         log_info "AGENTS.md exists with $lines lines"
-        
+
         if [[ $lines -le 140 ]]; then
             log_pass "AGENTS.md is already optimized (≤140 lines)"
             return 0
@@ -60,7 +60,7 @@ check_current_state() {
 # Check 2: Destination files existence
 check_destination_files() {
     log_section "2. Destination Files Verification"
-    
+
     local required_files=(
         "agents-docs/coordination/production-readiness.md"
         "agents-docs/quality-standards.md"
@@ -73,10 +73,10 @@ check_destination_files() {
         "agents-docs/PROJECT_STRUCTURE.md"
         "agents-docs/coordination/state-management.md"
     )
-    
+
     local found=0
     local missing=0
-    
+
     for file in "${required_files[@]}"; do
         local full_path="$WORKSPACE_ROOT/$file"
         if [[ -f "$full_path" ]]; then
@@ -88,9 +88,9 @@ check_destination_files() {
             ((missing++))
         fi
     done
-    
+
     log_info "Found: $found / ${#required_files[@]} destination files"
-    
+
     if [[ $missing -eq 0 ]]; then
         return 0
     else
@@ -101,11 +101,11 @@ check_destination_files() {
 # Check 3: AGENTS.md content verification
 check_agents_md_content() {
     log_section "3. AGENTS.md Content Verification"
-    
+
     # Check that key sections still exist as brief summaries
     local checks_passed=0
     local checks_total=0
-    
+
     # Check for Quick Start
     ((checks_total++))
     if grep -q "Quick Start" "$AGENTS_MD"; then
@@ -114,7 +114,7 @@ check_agents_md_content() {
     else
         log_fail "Quick Start section missing"
     fi
-    
+
     # Check for essential links table
     ((checks_total++))
     if grep -q "Resource" "$AGENTS_MD" && grep -q "Location" "$AGENTS_MD"; then
@@ -123,7 +123,7 @@ check_agents_md_content() {
     else
         log_fail "References table missing"
     fi
-    
+
     # Check that detailed sections are brief (no more than 10 lines per section)
     ((checks_total++))
     local sections=$(grep -c "^## " "$AGENTS_MD" || true)
@@ -133,9 +133,9 @@ check_agents_md_content() {
     else
         log_info "Many sections ($sections) - may need more optimization"
     fi
-    
+
     log_info "Content checks: $checks_passed / $checks_total passed"
-    
+
     if [[ $checks_passed -eq $checks_total ]]; then
         return 0
     else
@@ -146,23 +146,23 @@ check_agents_md_content() {
 # Check 4: Cross-reference validation
 check_cross_references() {
     log_section "4. Cross-Reference Validation"
-    
+
     local refs=$(grep -c "agents-docs/" "$AGENTS_MD" || true)
     log_info "Found $refs references to agents-docs/ in AGENTS.md"
-    
+
     if [[ $refs -gt 5 ]]; then
         log_pass "Good cross-reference coverage"
     else
         log_info "Consider adding more cross-references"
     fi
-    
+
     return 0
 }
 
 # Check 5: Run skill test suite
 check_skill_tests() {
     log_section "5. Skill Test Suite"
-    
+
     if [[ -x "$SKILL_DIR/tests/test_skill.sh" ]]; then
         log_info "Running skill tests..."
         if bash "$SKILL_DIR/tests/test_skill.sh"; then
@@ -182,15 +182,15 @@ check_skill_tests() {
 # Check 6: Summary report
 generate_summary() {
     log_section "6. Summary Report"
-    
+
     local lines=$(wc -l < "$AGENTS_MD")
-    
+
     echo ""
     echo "AGENTS.md Optimization Status"
     echo "-----------------------------"
     echo "Current lines: $lines"
     echo "Target: ≤140 lines"
-    
+
     if [[ $lines -le 140 ]]; then
         echo -e "Status: ${GREEN}OPTIMIZED${NC}"
         echo ""
@@ -205,7 +205,7 @@ generate_summary() {
         echo -e "Status: ${YELLOW}NEEDS OPTIMIZATION${NC}"
         echo "Need to reduce by: $reduction_needed lines"
     fi
-    
+
     echo ""
     echo "To apply optimization:"
     echo "  skill agents-update"
@@ -214,18 +214,18 @@ generate_summary() {
 # Main execution
 main() {
     log_section "Real Usage Verification: agents-update skill"
-    
+
     local overall_pass=0
-    
+
     check_current_state || overall_pass=1
     check_destination_files || overall_pass=1
     check_agents_md_content || overall_pass=1
     check_cross_references || overall_pass=1
     check_skill_tests || overall_pass=1
     generate_summary
-    
+
     log_section "Verification Complete"
-    
+
     if [[ $overall_pass -eq 0 ]]; then
         echo -e "${GREEN}All checks passed!${NC}"
         exit 0

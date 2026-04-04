@@ -1,8 +1,8 @@
 # Security Audit Report - do-deal-relay
 
-**Date:** 2026-04-02  
-**Auditor:** AI Security Analysis  
-**Scope:** Full codebase security review  
+**Date:** 2026-04-02
+**Auditor:** AI Security Analysis
+**Scope:** Full codebase security review
 **Version:** 0.1.2
 
 ---
@@ -61,7 +61,7 @@ if (path === "/api/submit" && request.method === "POST") {
 async function requireAuth(request: Request, env: Env): Promise<string | null> {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
-  
+
   const token = authHeader.slice(7);
   // Validate against env.ALLOWED_API_KEYS or similar
   return validateApiKey(env, token) ? token : null;
@@ -111,10 +111,10 @@ const ALLOWED_ORIGINS = env.ALLOWED_ORIGINS?.split(",") || [
 
 function jsonResponse(data: unknown, status: number = 200, request?: Request): Response {
   const origin = request?.headers.get("Origin");
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
-    ? origin 
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "")
+    ? origin
     : "https://yourdomain.com"; // Default fallback
-  
+
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
@@ -152,17 +152,17 @@ const CSP_HEADER = "default-src 'none'; frame-ancestors 'none'; base-uri 'self'"
 ```typescript
 export async function handleCreateReferral(request: Request, env: Env): Promise<Response> {
   // ... content-type checks ...
-  
+
   const body = (await request.json()) as Record<string, unknown>;
-  
+
   const code = body.code as string;  // 🔴 Type assertion bypasses validation
   const url = body.url as string;
   const domain = body.domain as string;
-  
+
   if (!code || !url || !domain) {  // Only checks existence, not format
     return jsonResponse({ error: "Missing required fields" }, 400);
   }
-  
+
   // ... later validates with Zod ...
   const validation = ReferralInputSchema.safeParse(referral);
 ```
@@ -179,9 +179,9 @@ const body = await request.json();
 // Validate with Zod FIRST, then use
 const parseResult = ReferralInputSchema.safeParse(body);
 if (!parseResult.success) {
-  return jsonResponse({ 
-    error: "Validation failed", 
-    details: parseResult.error.errors 
+  return jsonResponse({
+    error: "Validation failed",
+    details: parseResult.error.errors
   }, 400);
 }
 
@@ -267,18 +267,18 @@ The URL passes validation (has protocol and host) but contains a malicious redir
 function validateReferralUrl(url: string, expectedDomain: string): boolean {
   try {
     const parsed = new URL(url);
-    
+
     // Check protocol
     if (!['https:', 'http:'].includes(parsed.protocol)) {
       return false;
     }
-    
+
     // Verify domain matches (with or without www)
     const host = parsed.hostname.replace(/^www\./, '');
     if (host !== expectedDomain.replace(/^www\./, '')) {
       return false;
     }
-    
+
     // Check for suspicious query parameters
     const suspiciousParams = ['redirect', 'url', 'next', 'return', 'callback'];
     for (const param of suspiciousParams) {
@@ -290,7 +290,7 @@ function validateReferralUrl(url: string, expectedDomain: string): boolean {
         }
       }
     }
-    
+
     return true;
   } catch {
     return false;
@@ -325,11 +325,11 @@ function validateUrlScheme(url: string): boolean {
   try {
     const parsed = new URL(url);
     const allowedSchemes = ['http:', 'https:'];
-    
+
     // Check for Unicode homoglyphs
     const normalized = url.normalize('NFC').toLowerCase();
     const suspicious = ['javascript', 'data', 'vbscript', 'file', 'about', 'chrome'];
-    
+
     for (const scheme of suspicious) {
       if (normalized.includes(scheme)) {
         // Additional check - must be exact scheme match
@@ -338,7 +338,7 @@ function validateUrlScheme(url: string): boolean {
         }
       }
     }
-    
+
     return allowedSchemes.includes(parsed.protocol);
   } catch {
     return false;
@@ -394,13 +394,13 @@ export async function verifyWithRotation(
   // Try current secret first
   const currentResult = await verifyHmacSignature(payload, signature, secrets.current, timestamp);
   if (currentResult.valid) return currentResult;
-  
+
   // Fall back to previous secret during rotation
   if (secrets.previous) {
     const previousResult = await verifyHmacSignature(payload, signature, secrets.previous, timestamp);
     if (previousResult.valid) return previousResult;
   }
-  
+
   return { valid: false, error: "Invalid signature" };
 }
 ```
@@ -440,11 +440,11 @@ export async function handleEmailIncoming(request: Request, env: Env): Promise<R
   if (env.EMAIL_WEBHOOK_SECRET) {
     const signature = request.headers.get("x-webhook-signature");
     const timestamp = request.headers.get("x-webhook-timestamp");
-    
+
     if (!signature || !timestamp) {
       return jsonResponse({ error: "Missing signature headers" }, 401);
     }
-    
+
     const payload = await request.text();
     const sigResult = await verifyHmacSignature(
       payload,
@@ -452,11 +452,11 @@ export async function handleEmailIncoming(request: Request, env: Env): Promise<R
       env.EMAIL_WEBHOOK_SECRET,
       parseInt(timestamp, 10)
     );
-    
+
     if (!sigResult.valid) {
       return jsonResponse({ error: "Invalid signature" }, 401);
     }
-    
+
     // Re-parse body after reading
     const body = JSON.parse(payload);
     // ... continue processing
@@ -514,21 +514,21 @@ export default {
     // Global rate limit check first
     const clientId = getClientIdentifier(request);
     const globalLimit = await checkRateLimit(env, clientId, "global");
-    
+
     if (!globalLimit.allowed) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
         status: 429,
         headers: { "Content-Type": "application/json" },
       });
     }
-    
+
     // Per-endpoint limits
     const endpointLimits: Record<string, RateLimitConfig> = {
       "/api/discover": { max: 5, window: 300 },
       "/api/submit": { max: 10, window: 60 },
       "/api/research": { max: 20, window: 60 },
     };
-    
+
     // ... rest of handler
   }
 };
@@ -607,12 +607,12 @@ export async function writeStagingSnapshot(
 ): Promise<Snapshot> {
   const hash = await generateSnapshotHash(snapshot.deals);
   const fullSnapshot: Snapshot = { ...snapshot, snapshot_hash: hash };
-  
+
   // Encrypt if encryption key available
-  const data = env.ENCRYPTION_KEY 
+  const data = env.ENCRYPTION_KEY
     ? await encrypt(JSON.stringify(fullSnapshot), env.ENCRYPTION_KEY)
     : JSON.stringify(fullSnapshot);
-  
+
   await env.DEALS_STAGING.put(CONFIG.KV_KEYS.STAGING_SNAPSHOT, data);
   // ...
 }
@@ -667,20 +667,20 @@ export async function setGitHubToken(token: string): Promise<boolean> {
   const response = await fetch("https://api.github.com/user", {
     headers: { Authorization: `Bearer ${token}` }
   });
-  
+
   if (!response.ok) {
     throw new Error("Invalid GitHub token");
   }
-  
+
   const scopes = response.headers.get("X-OAuth-Scopes")?.split(",") || [];
   const requiredScopes = ["repo", "write:discussion"];
-  
+
   for (const scope of requiredScopes) {
     if (!scopes.includes(scope)) {
       console.warn(`GitHub token missing scope: ${scope}`);
     }
   }
-  
+
   githubToken = token;
   return true;
 }
@@ -824,11 +824,11 @@ export async function apiRequest(method: string, path: string, body?: unknown): 
 ```typescript
 export async function apiRequest(method: string, path: string, body?: unknown): Promise<unknown> {
   const url = new URL(path, config.endpoint);
-  
+
   if (url.protocol !== "https:") {
     throw new Error("Only HTTPS endpoints are allowed");
   }
-  
+
   // ... rest of request
 }
 ```
@@ -934,7 +934,7 @@ async function executeReferralResearch(env: Env, request: WebResearchRequest): P
     '172.16.0.0/12',
     '192.168.0.0/16',
   ];
-  
+
   // Validate all URLs before fetching
   const urlsToFetch = resolveSearchUrls(request);
   for (const url of urlsToFetch) {
@@ -942,7 +942,7 @@ async function executeReferralResearch(env: Env, request: WebResearchRequest): P
       throw new Error(`URL not allowed: ${url}`);
     }
   }
-  
+
   // ... proceed with research
 }
 ```
@@ -970,9 +970,9 @@ async function executeReferralResearch(env: Env, request: WebResearchRequest): P
 } catch (error) {
   const requestId = generateId();
   logger.error(`Error ${requestId}:`, error);  // Log full details internally
-  
+
   return jsonResponse(
-    { 
+    {
       error: "Internal server error",  // Generic message to client
       request_id: requestId,  // For support lookup
     },
@@ -1074,7 +1074,7 @@ describe("API Authentication", () => {
 // tests/security/rate-limit.test.ts
 describe("Rate Limiting", () => {
   it("should block excessive requests", async () => {
-    const requests = Array(101).fill(null).map(() => 
+    const requests = Array(101).fill(null).map(() =>
       worker.fetch("/api/submit", { method: "POST", body: "{}" })
     );
     const responses = await Promise.all(requests);
