@@ -24,6 +24,8 @@ async function safeResponseJson<T>(response: Response): Promise<T> {
   }
 
   // Fallback: try to read text and parse as JSON
+  // Note: This is a fallback for test environments where response.json() might not be available.
+  // In production, GitHub API responses are typically small (<1MB) for the endpoints we use.
   if (typeof response.text === "function") {
     const text = await response.text();
     return JSON.parse(text) as T;
@@ -230,7 +232,16 @@ export async function commitFile(
     });
 
     if (!response.ok) {
-      const error = await response.text();
+      // Check Content-Length before reading to avoid memory issues with large error responses
+      const contentLength = response.headers.get("content-length");
+      const maxErrorSize = 1024 * 1024; // 1MB limit for error responses
+
+      let error: string;
+      if (contentLength && parseInt(contentLength, 10) > maxErrorSize) {
+        error = "Error response too large to display";
+      } else {
+        error = await response.text();
+      }
       throw new Error(`GitHub commit failed: ${response.status} - ${error}`);
     }
 

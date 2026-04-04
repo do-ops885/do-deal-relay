@@ -40,6 +40,7 @@ ALLOWED_ROOT_FILES=(
     "vitest\.config\.ts"
     "playwright\.config\.ts"
     "wrangler\.toml"
+    "wrangler\.jsonc"
     "README\.md"
     "VERSION"
     "LICENSE"

@@ -143,7 +143,15 @@ async function sendWebhookToSubscription(
         break;
       } else {
         // Failed - retry
-        attemptRecord.response_body = await response.text();
+        // Check Content-Length before reading to avoid memory issues with large error responses
+        const contentLength = response.headers.get("content-length");
+        const maxErrorSize = 10 * 1024; // 10KB limit for webhook error responses
+
+        if (contentLength && parseInt(contentLength, 10) > maxErrorSize) {
+          attemptRecord.response_body = `Error response too large (${contentLength} bytes)`;
+        } else {
+          attemptRecord.response_body = await response.text();
+        }
         delivery.attempts.push(attemptRecord);
         delivery.status =
           attempt < retryPolicy.max_attempts ? "retrying" : "failed";
@@ -195,7 +203,8 @@ function calculateBackoff(
 ): number {
   const base = policy.initial_delay_ms;
   const multiplier = Math.pow(policy.backoff_multiplier, attempt - 1);
-  const jitter = Math.random() * 1000; // Add randomness
+  // Math.random() is acceptable here for jitter - not security-sensitive, just adds randomness to prevent thundering herd
+  const jitter = Math.random() * 1000;
 
   return Math.min(base * multiplier + jitter, policy.max_delay_ms);
 }

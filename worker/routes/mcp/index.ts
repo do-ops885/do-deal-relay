@@ -31,6 +31,10 @@ import {
   type ResourcesListParams,
   type ResourceReadParams,
   MCPErrorCodes,
+  JSONRPCRequestSchema,
+  InitializeParamsSchema,
+  ToolCallParamsSchema,
+  ResourceReadParamsSchema,
 } from "../../lib/mcp/types";
 import { getTools, executeTool } from "../../lib/mcp/tools";
 import {
@@ -153,6 +157,45 @@ function createErrorResponse(
   };
 }
 
+// ============================================================================
+// Type Guard Functions - Validate request structures to avoid unsafe casting
+// ============================================================================
+
+/**
+ * Validate JSON-RPC request structure using Zod schema
+ * Returns null if validation fails, otherwise returns the validated request
+ */
+function validateJSONRPCRequest(body: unknown): JSONRPCRequest | null {
+  const result = JSONRPCRequestSchema.safeParse(body);
+  return result.success ? (result.data as JSONRPCRequest) : null;
+}
+
+/**
+ * Validate Initialize params structure
+ */
+function validateInitializeParams(params: unknown): InitializeParams | null {
+  const result = InitializeParamsSchema.safeParse(params);
+  return result.success ? (result.data as InitializeParams) : null;
+}
+
+/**
+ * Validate ToolCall params structure
+ */
+function validateToolCallParams(params: unknown): ToolCallParams | null {
+  const result = ToolCallParamsSchema.safeParse(params);
+  return result.success ? (result.data as ToolCallParams) : null;
+}
+
+/**
+ * Validate ResourceRead params structure
+ */
+function validateResourceReadParams(
+  params: unknown,
+): ResourceReadParams | null {
+  const result = ResourceReadParamsSchema.safeParse(params);
+  return result.success ? (result.data as ResourceReadParams) : null;
+}
+
 function createJSONResponse(
   data: JSONRPCResponse,
   status: number = 200,
@@ -206,6 +249,7 @@ async function handleToolsList(): Promise<ToolsListResult> {
   const tools = getTools();
 
   // Convert Zod schemas to JSON Schema for output
+  // The serialized tools have Zod schemas converted to plain objects for JSON serialization
   const serializedTools = tools.map((tool) => ({
     name: tool.name,
     title: tool.title,
@@ -221,9 +265,10 @@ async function handleToolsList(): Promise<ToolsListResult> {
     annotations: tool.annotations,
   }));
 
+  // Return type matches ToolsListResult with tools as plain objects
   return {
-    tools: serializedTools as unknown as typeof tools,
-  };
+    tools: serializedTools,
+  } as ToolsListResult;
 }
 
 /**
@@ -322,13 +367,9 @@ export async function handleMCPRequest(
   try {
     const body = (await request.json()) as { [key: string]: unknown };
 
-    // Validate JSON-RPC 2.0 structure
-    if (
-      typeof body !== "object" ||
-      body === null ||
-      body.jsonrpc !== "2.0" ||
-      typeof body.method !== "string"
-    ) {
+    // Validate JSON-RPC 2.0 structure using type guard for type safety
+    const validatedRequest = validateJSONRPCRequest(body);
+    if (!validatedRequest) {
       return createJSONResponse(
         createErrorResponse(
           null,
@@ -339,7 +380,7 @@ export async function handleMCPRequest(
       );
     }
 
-    rpcRequest = body as unknown as JSONRPCRequest;
+    rpcRequest = validatedRequest;
   } catch {
     return createJSONResponse(
       createErrorResponse(
@@ -358,9 +399,22 @@ export async function handleMCPRequest(
     let result: unknown;
 
     switch (method) {
-      case "initialize":
-        result = await handleInitialize(params as unknown as InitializeParams);
+      case "initialize": {
+        // Validate params using type guard for type safety
+        const validatedParams = validateInitializeParams(params);
+        if (!validatedParams) {
+          return createJSONResponse(
+            createErrorResponse(
+              id,
+              MCPErrorCodes.INVALID_PARAMS,
+              "Invalid initialize params",
+            ),
+            400,
+          );
+        }
+        result = await handleInitialize(validatedParams);
         break;
+      }
 
       case "ping":
         result = await handlePing();
@@ -370,13 +424,22 @@ export async function handleMCPRequest(
         result = await handleToolsList();
         break;
 
-      case "tools/call":
-        result = await handleToolCall(
-          params as unknown as ToolCallParams,
-          env,
-          request,
-        );
+      case "tools/call": {
+        // Validate params using type guard for type safety
+        const validatedParams = validateToolCallParams(params);
+        if (!validatedParams) {
+          return createJSONResponse(
+            createErrorResponse(
+              id,
+              MCPErrorCodes.INVALID_PARAMS,
+              "Invalid tools/call params",
+            ),
+            400,
+          );
+        }
+        result = await handleToolCall(validatedParams, env, request);
         break;
+      }
 
       case "resources/list":
         result = await handleResourcesList();
@@ -386,12 +449,22 @@ export async function handleMCPRequest(
         result = await handleResourceTemplatesList();
         break;
 
-      case "resources/read":
-        result = await handleResourceRead(
-          params as unknown as ResourceReadParams,
-          env,
-        );
+      case "resources/read": {
+        // Validate params using type guard for type safety
+        const validatedParams = validateResourceReadParams(params);
+        if (!validatedParams) {
+          return createJSONResponse(
+            createErrorResponse(
+              id,
+              MCPErrorCodes.INVALID_PARAMS,
+              "Invalid resources/read params",
+            ),
+            400,
+          );
+        }
+        result = await handleResourceRead(validatedParams, env);
         break;
+      }
 
       case "notifications/initialized":
         // Notification, no response needed

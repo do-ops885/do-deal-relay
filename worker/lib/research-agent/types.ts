@@ -491,10 +491,15 @@ export function generatePotentialCodes(
 }
 
 export function generateSampleCode(domain: string, index: number): string {
-  // Generate realistic-looking referral codes
+  // Generate realistic-looking referral codes using crypto-secure random values
   const prefixes = ["REF", "INV", domain.slice(0, 3).toUpperCase()];
   const prefix = prefixes[index % prefixes.length];
-  const suffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Using crypto.getRandomValues for secure random suffix generation
+  const array = new Uint8Array(4);
+  crypto.getRandomValues(array);
+  const suffix = Array.from(array, (b) => (b % 36).toString(36))
+    .join("")
+    .toUpperCase();
   return `${prefix}${suffix}`;
 }
 
@@ -536,7 +541,12 @@ export function generateSimulatedCode(source: string, index: number): string {
   };
 
   const prefix = prefixes[source]?.[index % 2] || "REF";
-  const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  // Using crypto.getRandomValues for secure random suffix generation
+  const array = new Uint8Array(3);
+  crypto.getRandomValues(array);
+  const suffix = Array.from(array, (b) => (b % 36).toString(36))
+    .join("")
+    .toUpperCase();
   return `${prefix}${suffix}${index}`;
 }
 
@@ -551,7 +561,10 @@ export function generateSimulatedReward(source: string): string {
   };
 
   const sourceRewards = rewards[source] || ["Unknown reward"];
-  return sourceRewards[Math.floor(Math.random() * sourceRewards.length)];
+  // Using crypto.getRandomValues for secure random selection (not security-critical but consistent)
+  const array = new Uint8Array(1);
+  crypto.getRandomValues(array);
+  return sourceRewards[array[0] % sourceRewards.length];
 }
 
 export function deduplicateCodes(

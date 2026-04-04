@@ -193,7 +193,8 @@ export class WebhookClient {
       "Content-Type": "application/json",
       "X-Webhook-Signature": `sha256=${signature}`,
       "X-Webhook-Timestamp": timestamp.toString(),
-      "X-Webhook-Id": `wh_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      // Using crypto.randomUUID() for secure webhook ID generation
+      "X-Webhook-Id": `wh_${Date.now()}_${crypto.randomUUID().split("-")[0]}`,
       "User-Agent": `WebhookClient/${this.config.partnerId}`,
     };
 
@@ -208,7 +209,16 @@ export class WebhookClient {
           signal: AbortSignal.timeout(this.config.timeoutMs),
         });
 
-        const responseBody = await response.text();
+        // Check Content-Length before reading to avoid memory issues with large responses
+        const contentLength = response.headers.get("content-length");
+        const maxResponseSize = 1024 * 1024; // 1MB limit
+
+        let responseBody: string;
+        if (contentLength && parseInt(contentLength, 10) > maxResponseSize) {
+          responseBody = "Response too large";
+        } else {
+          responseBody = await response.text();
+        }
 
         if (response.status >= 200 && response.status < 300) {
           const data = JSON.parse(responseBody) as { referral_id?: string };
@@ -422,7 +432,8 @@ export async function createWebhookHeaders(
     "X-Webhook-Timestamp": timestamp.toString(),
     "X-Webhook-Id":
       eventId ||
-      `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      // Using crypto.randomUUID() for secure event ID generation
+      `evt_${Date.now()}_${crypto.randomUUID().split("-")[0]}`,
     "X-Webhook-Event-Type": eventType,
     "X-Webhook-Version": "1.0",
   };

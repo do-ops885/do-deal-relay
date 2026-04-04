@@ -372,6 +372,8 @@ async function fetchAndValidateCode(
       };
     }
 
+    // HTML scraping: Pages are typically small (<1MB). Using response.text() is acceptable
+    // for searching referral codes in page content.
     const html = await response.text();
     const pageTitle = extractTitle(html);
 

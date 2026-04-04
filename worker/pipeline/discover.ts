@@ -95,10 +95,22 @@ async function discoverFromSource(
       }
 
       const contentType = response.headers.get("content-type") || "";
-      const content = await response.text();
 
-      // Check payload size
-      if (content.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
+      // Check Content-Length before reading to avoid memory issues with large responses
+      const contentLength = response.headers.get("content-length");
+      const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
+
+      let content: string;
+      if (contentLength && parseInt(contentLength, 10) > maxSize) {
+        throw new Error(
+          `Payload exceeds size limit: ${contentLength} bytes (max: ${maxSize})`,
+        );
+      } else {
+        content = await response.text();
+      }
+
+      // Validate payload size after reading
+      if (content.length > maxSize) {
         throw new Error("Payload exceeds size limit");
       }
 

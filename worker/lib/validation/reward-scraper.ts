@@ -201,6 +201,8 @@ async function performRewardScrape(
       };
     }
 
+    // HTML scraping: Pages are typically small (<1MB). Using response.text() is acceptable
+    // for extracting reward information from referral pages.
     const html = await response.text();
     const extractedReward = extractRewardFromHTML(html);
 
