@@ -321,15 +321,7 @@ async function researchFromSourceParallel(
   // Check circuit breaker
   if (isCircuitOpen(source.name)) {
     errors.push(`${source.name}: Circuit breaker is open`);
-
-    // Still provide simulated results if circuit is open
-    const simulatedCodes = simulateDiscovery(query, source, depth);
-    discoveredCodes.push(
-      ...simulatedCodes.map((c) => ({
-        ...c,
-        source: `${c.source} (simulated - circuit open)`,
-      })),
-    );
+    // Circuit open - don't add simulated data, just record error
     return;
   }
 
@@ -340,15 +332,7 @@ async function researchFromSourceParallel(
       researchRateLimiter.getTimeUntilNextWindow(source.name) / 1000,
     );
     errors.push(`Rate limited for ${source.name}, try again in ${waitTime}s`);
-
-    // Provide simulated results if rate limited
-    const simulatedCodes = simulateDiscovery(query, source, depth);
-    discoveredCodes.push(
-      ...simulatedCodes.map((c) => ({
-        ...c,
-        source: `${c.source} (simulated - rate limited)`,
-      })),
-    );
+    // Rate limited - don't add simulated data, just record error
     return;
   }
 
@@ -412,30 +396,12 @@ async function researchFromSourceParallel(
       } else {
         errors.push(`${source.name}: ${fetchResult.error}`);
         recordFailure(source.name);
-
-        // Fallback to simulation if fetch failed
-        const simulatedCodes = simulateDiscovery(query, source, depth);
-        discoveredCodes.push(
-          ...simulatedCodes.map((c) => ({
-            ...c,
-            source: `${c.source} (simulated fallback)`,
-            confidence: applySourceConfidence(c.confidence * 0.8, source.name), // Penalize fallback
-          })),
-        );
+        // Don't fallback to simulation on fetch failure - record error only
       }
     } catch (error) {
       errors.push(`${source.name}: ${(error as Error).message}`);
       recordFailure(source.name);
-
-      // Fallback to simulation
-      const simulatedCodes = simulateDiscovery(query, source, depth);
-      discoveredCodes.push(
-        ...simulatedCodes.map((c) => ({
-          ...c,
-          source: `${c.source} (simulated fallback)`,
-          confidence: applySourceConfidence(c.confidence * 0.8, source.name),
-        })),
-      );
+      // Don't fallback to simulation on error - record error only
     }
   } else {
     // Use simulation mode

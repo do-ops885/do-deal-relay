@@ -5,6 +5,7 @@
 
 import type { Env } from "../types";
 import { jsonResponse } from "./utils";
+import { createStructuredLogger } from "../lib/logger";
 import {
   searchDeals,
   getDealStats,
@@ -19,6 +20,14 @@ import {
   type ExpiringDeal,
 } from "../lib/d1/queries";
 import { getMigrationStatus, initDatabase } from "../lib/d1/migrations";
+
+// ============================================================================
+// Logger Helper
+// ============================================================================
+
+function getD1Logger(env: Env) {
+  return createStructuredLogger(env, "d1-routes", `d1-${Date.now()}`);
+}
 
 // ============================================================================
 // Search Endpoint - GET /api/d1/search
@@ -52,7 +61,14 @@ export async function handleD1Search(url: URL, env: Env): Promise<Response> {
       results,
     });
   } catch (error) {
-    console.error("D1 search error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 search error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        query,
+      },
+    );
     return jsonResponse(
       {
         error: "Search failed",
@@ -98,7 +114,14 @@ export async function handleD1Suggestions(
       suggestions,
     });
   } catch (error) {
-    console.error("D1 suggestions error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 suggestions error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        partial,
+      },
+    );
     return jsonResponse(
       {
         error: "Suggestions failed",
@@ -126,7 +149,11 @@ export async function handleD1Stats(env: Env): Promise<Response> {
       stats,
     });
   } catch (error) {
-    console.error("D1 stats error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 stats error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return jsonResponse(
       {
         error: "Failed to retrieve statistics",
@@ -204,7 +231,16 @@ export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
       results,
     });
   } catch (error) {
-    console.error("D1 deals error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 deals error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        domain,
+        category,
+        status,
+      },
+    );
     return jsonResponse(
       {
         error: "Failed to retrieve deals",
@@ -233,7 +269,11 @@ export async function handleD1Domains(env: Env): Promise<Response> {
       domains,
     });
   } catch (error) {
-    console.error("D1 domains error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 domains error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return jsonResponse(
       {
         error: "Failed to retrieve domains",
@@ -262,7 +302,11 @@ export async function handleD1Categories(env: Env): Promise<Response> {
       categories,
     });
   } catch (error) {
-    console.error("D1 categories error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 categories error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return jsonResponse(
       {
         error: "Failed to retrieve categories",
@@ -313,7 +357,14 @@ export async function handleD1Migrations(
       },
     });
   } catch (error) {
-    console.error("D1 migrations error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 migrations error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        action,
+      },
+    );
     return jsonResponse(
       {
         error: "Failed to retrieve migration status",
@@ -355,7 +406,11 @@ export async function handleD1Health(env: Env): Promise<Response> {
       },
     });
   } catch (error) {
-    console.error("D1 health check error:", error);
+    const logger = getD1Logger(env);
+    logger.error(
+      "D1 health check error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return jsonResponse(
       {
         success: false,

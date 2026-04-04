@@ -1,7 +1,16 @@
 import { CONFIG } from "../config";
-import type { Snapshot } from "../types";
+import type { Snapshot, Env } from "../types";
 import { CircuitBreaker, createGitHubCircuitBreaker } from "./circuit-breaker";
 import { createGitHubCache } from "./cache";
+import { createStructuredLogger } from "./logger";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface GitHubCacheEnv {
+  DEALS_PROD: KVNamespace;
+}
 
 // ============================================================================
 // Safe JSON Response Parser
@@ -48,19 +57,31 @@ let githubToken: string | undefined;
 let githubCircuitBreaker: CircuitBreaker | undefined;
 let githubCache: ReturnType<typeof createGitHubCache> | undefined;
 
+// ============================================================================
+// Logger Helper
+// ============================================================================
+
+function getGitHubLogger() {
+  // Create a minimal env object for logger since we don't have full Env here
+  const mockEnv = {
+    DEALS_LOG: {} as KVNamespace,
+    DEALS_PROD: {} as KVNamespace,
+    DEALS_STAGING: {} as KVNamespace,
+    DEALS_SOURCES: {} as KVNamespace,
+    GITHUB_TOKEN: githubToken || "",
+  } as Env;
+  return createStructuredLogger(mockEnv, "github", `gh-${Date.now()}`);
+}
+
 /**
  * Initialize GitHub circuit breaker and cache
  */
-export function initGitHubCircuitBreaker(env?: {
-  DEALS_PROD: KVNamespace;
-}): void {
-  githubCircuitBreaker = createGitHubCircuitBreaker(
-    env as Parameters<typeof createGitHubCircuitBreaker>[0],
-  );
+export function initGitHubCircuitBreaker(env?: GitHubCacheEnv): void {
+  githubCircuitBreaker = createGitHubCircuitBreaker(env as Env);
 
   // Initialize cache if env provided
   if (env) {
-    githubCache = createGitHubCache(env as any);
+    githubCache = createGitHubCache(env as Env);
   }
 }
 
@@ -160,7 +181,16 @@ export async function getFileContent(
 
     return result;
   } catch (error) {
-    console.error("Failed to get file content:", error);
+    const logger = getGitHubLogger();
+    logger.error(
+      "Failed to get file content",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        repo,
+        path,
+        branch,
+      },
+    );
     throw error;
   }
 }
@@ -225,7 +255,16 @@ export async function commitFile(
 
     return result;
   } catch (error) {
-    console.error("Failed to commit file:", error);
+    const logger = getGitHubLogger();
+    logger.error(
+      "Failed to commit file",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        repo,
+        path,
+        branch,
+      },
+    );
     throw error;
   }
 }
@@ -315,7 +354,16 @@ ${JSON.stringify(details.context || {}, null, 2)}
     }
     return await execute();
   } catch (error) {
-    console.error("Failed to create notification issue:", error);
+    const logger = getGitHubLogger();
+    logger.error(
+      "Failed to create notification issue",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        repo,
+        type,
+        run_id,
+      },
+    );
     throw error;
   }
 }
@@ -386,7 +434,16 @@ export async function getRecentCommits(
 
     return result;
   } catch (error) {
-    console.error("Failed to get recent commits:", error);
+    const logger = getGitHubLogger();
+    logger.error(
+      "Failed to get recent commits",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        repo,
+        path,
+        count,
+      },
+    );
     return [];
   }
 }

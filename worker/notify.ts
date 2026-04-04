@@ -1,11 +1,20 @@
 import { CONFIG } from "./config";
 import { createGitHubIssue } from "./lib/github";
 import { getRecentLogs } from "./lib/logger";
+import { createStructuredLogger } from "./lib/logger";
 import {
   createTelegramCircuitBreaker,
   CircuitBreakerOpenError,
 } from "./lib/circuit-breaker";
 import type { Env, NotificationEvent } from "./types";
+
+// ============================================================================
+// Logger Helper
+// ============================================================================
+
+function getNotifyLogger(env: Env) {
+  return createStructuredLogger(env, "notify", `ntf-${Date.now()}`);
+}
 
 // ============================================================================
 // Notification System
@@ -28,10 +37,14 @@ export async function notify(
   env: Env,
   event: NotificationEvent,
 ): Promise<boolean> {
+  const logger = getNotifyLogger(env);
+
   // Check deduplication
   const shouldSend = await shouldSendNotification(env, event);
   if (!shouldSend) {
-    console.log(`Notification deduped: ${event.type}`);
+    logger.info(`Notification deduped: ${event.type}`, {
+      event_type: event.type,
+    });
     return false;
   }
 
@@ -44,7 +57,13 @@ export async function notify(
         return true;
       }
     } catch (error) {
-      console.error("Telegram notification failed:", error);
+      logger.error(
+        "Telegram notification failed",
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          event_type: event.type,
+        },
+      );
     }
   }
 
@@ -52,10 +71,19 @@ export async function notify(
   try {
     const issueNumber = await sendGitHubNotification(env, event);
     await recordNotification(env, event);
-    console.log(`Created GitHub issue #${issueNumber} for ${event.type}`);
+    logger.info(`Created GitHub issue #${issueNumber} for ${event.type}`, {
+      event_type: event.type,
+      issue_number: issueNumber,
+    });
     return true;
   } catch (error) {
-    console.error("GitHub notification failed:", error);
+    logger.error(
+      "GitHub notification failed",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        event_type: event.type,
+      },
+    );
     return false;
   }
 }
@@ -113,7 +141,11 @@ async function recordNotification(
     const trimmed = history.slice(-100);
     await env.DEALS_PROD.put(NOTIFICATION_KEY, JSON.stringify(trimmed));
   } catch (error) {
-    console.error("Failed to record notification:", error);
+    const logger = getNotifyLogger(env);
+    logger.error(
+      "Failed to record notification",
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 }
 
@@ -167,7 +199,10 @@ ${event.context ? `\`\`\`json\n${JSON.stringify(event.context, null, 2)}\n\`\`\`
     return await cb.execute(execute);
   } catch (error) {
     if (error instanceof CircuitBreakerOpenError) {
-      console.log(`Telegram circuit breaker is open: ${error.message}`);
+      const logger = getNotifyLogger(env);
+      logger.info(`Telegram circuit breaker is open: ${error.message}`, {
+        circuit_breaker: "telegram",
+      });
     }
     throw error;
   }

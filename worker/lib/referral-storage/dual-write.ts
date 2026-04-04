@@ -11,6 +11,7 @@
  */
 
 import type { Env, ReferralInput } from "../../types";
+import { createStructuredLogger } from "../logger";
 import {
   storeReferralInput as storeInKV,
   getReferralById as getFromKVById,
@@ -58,12 +59,23 @@ function useD1Writes(env: Env): boolean {
 // Logging Helper
 // ============================================================================
 
+function getDualWriteLogger(env: Env) {
+  return createStructuredLogger(env, "dual-write", `dw-${Date.now()}`);
+}
+
 async function logDualWriteError(
   env: Env,
   operation: string,
   error: unknown,
 ): Promise<void> {
-  console.error(`[DualWrite] ${operation} failed:`, error);
+  const logger = getDualWriteLogger(env);
+  logger.error(
+    `[DualWrite] ${operation} failed`,
+    error instanceof Error ? error : new Error(String(error)),
+    {
+      operation,
+    },
+  );
 }
 
 // ============================================================================
@@ -231,7 +243,14 @@ export async function getReferralById(
         };
       }
     } catch (error) {
-      console.error("D1 read failed, falling back to KV:", error);
+      const logger = getDualWriteLogger(env);
+      logger.error(
+        "D1 read failed, falling back to KV",
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          id,
+        },
+      );
     }
   }
 
@@ -263,7 +282,14 @@ export async function getReferralByCode(
         };
       }
     } catch (error) {
-      console.error("D1 read failed, falling back to KV:", error);
+      const logger = getDualWriteLogger(env);
+      logger.error(
+        "D1 read failed, falling back to KV",
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          code,
+        },
+      );
     }
   }
 
@@ -488,7 +514,14 @@ export async function searchReferralsD1(
 
     return [];
   } catch (error) {
-    console.error("D1 search error:", error);
+    const logger = getDualWriteLogger(env);
+    logger.error(
+      "D1 search error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        query,
+      },
+    );
     return [];
   }
 }
@@ -550,7 +583,14 @@ export async function getExpiringReferralsD1(
 
     return [];
   } catch (error) {
-    console.error("D1 expiring referrals error:", error);
+    const logger = getDualWriteLogger(env);
+    logger.error(
+      "D1 expiring referrals error",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        days,
+      },
+    );
     return [];
   }
 }
@@ -601,7 +641,11 @@ export async function getReferralStatsD1(env: Env): Promise<{
         domainResult.success && domainResult.data ? domainResult.data : [],
     };
   } catch (error) {
-    console.error("D1 referral stats error:", error);
+    const logger = getDualWriteLogger(env);
+    logger.error(
+      "D1 referral stats error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return { total: 0, active: 0, byDomain: [] };
   }
 }

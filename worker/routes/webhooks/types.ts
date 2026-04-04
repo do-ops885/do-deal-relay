@@ -6,7 +6,7 @@ import type {
   WebhookEventType,
   RetryPolicy,
   WebhookFilters,
-} from "../../lib/webhook-handler";
+} from "../../lib/webhook/index";
 
 // Re-export types from webhook-handler for convenience
 export type { WebhookEventType, RetryPolicy, WebhookFilters };

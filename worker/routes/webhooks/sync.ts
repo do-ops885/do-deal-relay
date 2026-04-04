@@ -4,7 +4,7 @@
 
 import type { Env } from "../../types";
 import { handleError } from "../../lib/error-handler";
-import { createSyncConfig, getSyncState } from "../../lib/webhook-handler";
+import { createSyncConfig, getSyncState } from "../../lib/webhook/index";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
 // ============================================================================
