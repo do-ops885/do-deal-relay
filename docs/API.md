@@ -2545,15 +2545,80 @@ curl "https://your-worker.workers.dev/webhooks/sync/partner-123" \
 
 ---
 
-## Multi-Agent Workflow API
+## Multi-Agent Workflow System
 
-⚠️ **Coming Soon** - The workflow API is planned for a future release.
+The multi-agent workflow system is an **internal orchestration engine** (not exposed via HTTP). It coordinates 4-phase automated execution for codebase verification, testing, git operations, and issue fixing.
 
-The multi-agent workflow system will provide:
-- 4-phase coordinated execution (Verification → Testing → Git → Fixes)
-- Event-driven orchestration with quality gates
-- Automatic retry logic and graceful degradation
+### Architecture
 
-For current pipeline operations, use `/api/discover` and `/api/status` endpoints.
+```
+┌─────────────────────────────────────────────────────────┐
+│                  MultiAgentOrchestrator                  │
+├─────────────────────────────────────────────────────────┤
+│  Phase 1: Codebase Verification Agent                   │
+│    - URL pattern checks, file structure validation      │
+│    - Source integrity verification                      │
+├─────────────────────────────────────────────────────────┤
+│  Phase 2: Evals & Tests Runner Agent                    │
+│    - Test suite execution and coverage analysis         │
+│    - Quality gate validation                            │
+├─────────────────────────────────────────────────────────┤
+│  Phase 3: Git Workflow Manager Agent                    │
+│    - Branch management, commit operations               │
+│    - PR creation and merge coordination                 │
+├─────────────────────────────────────────────────────────┤
+│  Phase 4: Issue Fixer Agent                             │
+│    - Detected issue resolution                          │
+│    - Automated fix attempts with rollback               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Features
+
+- **Sequential Handoff**: Each phase passes context to the next
+- **Retry Logic**: Exponential backoff on recoverable failures
+- **Quality Gates**: Validation at each phase boundary
+- **Event Emission**: Progress tracking via workflow events
+- **Dry Run Mode**: Execute without side effects for testing
+
+### Usage (Internal)
+
+```typescript
+import { MultiAgentOrchestrator } from "./lib/multi-agent";
+
+const orchestrator = new MultiAgentOrchestrator({
+  workflow_id: "workflow-001",
+  dryRun: false,
+  skipPhases: [],
+  onEvent: (event) => console.log(event.type, event.message),
+});
+
+const result = await orchestrator.execute();
+console.log(`Workflow ${result.status} in ${result.duration_ms}ms`);
+```
+
+### Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `workflow_id` | string | auto-generated | Unique workflow identifier |
+| `dryRun` | boolean | false | Execute without side effects |
+| `skipPhases` | number[] | [] | Phase numbers to skip |
+| `onEvent` | function | noop | Event callback for progress tracking |
+
+### Workflow Events
+
+| Event Type | Description |
+|------------|-------------|
+| `workflow_started` | Workflow execution began |
+| `phase_started` | Individual phase execution started |
+| `phase_completed` | Phase completed successfully |
+| `phase_failed` | Phase failed (may retry) |
+| `quality_gate_passed` | Quality gate validation passed |
+| `quality_gate_failed` | Quality gate validation failed |
+| `workflow_completed` | All phases completed |
+| `workflow_failed` | Workflow failed (unrecoverable) |
+
+For external pipeline operations, use `/api/discover` and `/api/status` endpoints.
 
 ---
