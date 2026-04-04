@@ -38,14 +38,14 @@ jobs:
 
           # Count outdated packages
           COUNT=$(jq 'length' < outdated.json)
-          echo "outdated_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "outdated_count=${COUNT}" >> "$GITHUB_OUTPUT"
 
-          if [ "$COUNT" -eq 0 ]; then
+          if [ "${COUNT}" -eq 0 ]; then
             echo "✅ All dependencies are up to date"
             exit 0
           fi
 
-          echo "Found $COUNT outdated packages"
+          echo "Found ${COUNT} outdated packages"
           jq -r 'to_entries[] | "\(.key): \(.value.current) → \(.value.latest)"' < outdated.json
 
       - name: Update packages
@@ -91,7 +91,7 @@ jobs:
         if: always()
         run: |
           OUTDATED="${{ steps.check-updates.outputs.outdated_count }}"
-          if [ "$OUTDATED" = "0" ]; then
+          if [ "${OUTDATED}" = "0" ]; then
             echo "✅ No dependency updates needed"
           elif [ "${{ steps.update-packages.outcome }}" = "success" ]; then
             echo "✅ Dependencies updated successfully"

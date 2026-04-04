@@ -175,11 +175,18 @@ describe("Storage Layer", () => {
     });
 
     it("should handle errors gracefully", async () => {
+      // Suppress expected console.error for this test
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
       mockKvStorage.set("prod:snapshot:prod", "invalid json");
 
       const result = await getProductionSnapshot(mockEnv);
 
       expect(result).toBeNull();
+
+      // Verify console.error was called (expected behavior)
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 

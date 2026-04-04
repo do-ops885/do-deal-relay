@@ -126,10 +126,16 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 describe("State Machine", () => {
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mockKvStorage = new Map();
     vi.stubGlobal("fetch", vi.fn());
+
+    // Suppress expected console warnings and errors during tests
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     mockEnv = {
       DEALS_PROD: {
@@ -221,6 +227,8 @@ describe("State Machine", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   describe("executePipeline", () => {

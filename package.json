@@ -8,7 +8,7 @@
     "deploy": "wrangler deploy",
     "build": "tsc",
     "test": "vitest",
-    "test:ci": "vitest run",
+    "test:ci": "vitest run --pool=forks --no-file-parallelism",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:load:api": "artillery run -t ${WORKER_URL:-http://localhost:8787} tests/load/artillery/api-endpoints.yml",
