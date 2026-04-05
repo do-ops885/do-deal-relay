@@ -212,7 +212,8 @@ async function executePhase(
     case "discover":
       const discovery = await discover(env, ctx);
       ctx.candidates = discovery.deals;
-      if (ctx.metrics) recordDealCount(ctx.metrics, "discovered", ctx.candidates.length);
+      if (ctx.metrics)
+        recordDealCount(ctx.metrics, "discovered", ctx.candidates.length);
 
       // Guard rail: Check input resources
       if (ctx.candidates.length > 0) {
@@ -236,13 +237,15 @@ async function executePhase(
 
     case "normalize":
       ctx.normalized = normalize(ctx.candidates, ctx);
-      if (ctx.metrics) recordDealCount(ctx.metrics, "normalized", ctx.normalized.length);
+      if (ctx.metrics)
+        recordDealCount(ctx.metrics, "normalized", ctx.normalized.length);
       return "dedupe";
 
     case "dedupe":
       const dedupeResult = deduplicate(ctx.normalized, ctx);
       ctx.deduped = dedupeResult.unique;
-      if (ctx.metrics) recordDealCount(ctx.metrics, "deduped", ctx.deduped.length);
+      if (ctx.metrics)
+        recordDealCount(ctx.metrics, "deduped", ctx.deduped.length);
       if (ctx.deduped.length === 0) {
         return "finalize"; // No unique deals
       }
@@ -251,7 +254,8 @@ async function executePhase(
     case "validate":
       const validation = await validate(ctx.deduped, ctx, env);
       ctx.validated = validation.valid;
-      if (ctx.metrics) recordDealCount(ctx.metrics, "validated", ctx.validated.length);
+      if (ctx.metrics)
+        recordDealCount(ctx.metrics, "validated", ctx.validated.length);
 
       // Log validation stats
       await appendLog(
@@ -276,7 +280,8 @@ async function executePhase(
     case "score":
       const scoring = await score(ctx.validated, ctx, env);
       ctx.scored = scoring.deals;
-      if (ctx.metrics) recordDealCount(ctx.metrics, "scored", ctx.scored.length);
+      if (ctx.metrics)
+        recordDealCount(ctx.metrics, "scored", ctx.scored.length);
 
       // Log scoring stats
       await appendLog(
@@ -334,7 +339,8 @@ async function executePhase(
         }
 
         await publishSnapshot(env, ctx.snapshot!, ctx);
-        if (ctx.metrics) recordDealCount(ctx.metrics, "published", ctx.scored.length);
+        if (ctx.metrics)
+          recordDealCount(ctx.metrics, "published", ctx.scored.length);
         return "verify";
       } catch (error) {
         return "revert";
