@@ -14,6 +14,7 @@ import { getWebhookKV, generateId, DEFAULT_RETRY_POLICY } from "./types";
 import { getSubscription } from "./subscriptions";
 import { generateWebhookHeaders } from "../hmac";
 import { logger } from "../global-logger";
+import { fetchInBatches } from "../utils";
 
 // ============================================================================
 // Outgoing Webhooks
@@ -56,18 +57,22 @@ async function getAllActiveSubscriptions(
     if (!kv) return [];
 
     // List all subscription keys
-    const keys = await kv.list({ prefix: "webhook_subscription:" });
-    const subscriptions: WebhookSubscription[] = [];
+    const listResult = await kv.list({ prefix: "webhook_subscription:" });
 
-    for (const key of keys.keys) {
-      const data = await kv.get(key.name);
-      if (data) {
-        const sub = JSON.parse(data) as WebhookSubscription;
-        if (sub.active) subscriptions.push(sub);
-      }
-    }
-    return subscriptions;
-  } catch {
+    // Optimization: Parallel batch fetch instead of sequential loop
+    // This reduces latency from O(N) to O(N/batchSize)
+    const subscriptions = await fetchInBatches<
+      { name: string },
+      WebhookSubscription
+    >(listResult.keys, (key) => kv.get<WebhookSubscription>(key.name, "json"));
+
+    // Filter for non-null results first to be safe, then check if active
+    return subscriptions.filter((sub) => sub && sub.active);
+  } catch (error) {
+    logger.error("Failed to get all active subscriptions", {
+      component: "webhook",
+      error: (error as Error).message,
+    });
     return [];
   }
 }
@@ -251,15 +256,22 @@ export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
     const kv = getWebhookKV(env);
     if (!kv) return [];
 
-    const keys = await kv.list({ prefix: "webhook_dlq:" });
-    const entries: DeadLetterEvent[] = [];
+    const listResult = await kv.list({ prefix: "webhook_dlq:" });
 
-    for (const key of keys.keys) {
-      const data = await kv.get(key.name);
-      if (data) entries.push(JSON.parse(data));
-    }
-    return entries;
-  } catch {
+    // Optimization: Parallel batch fetch instead of sequential loop
+    // This reduces latency from O(N) to O(N/batchSize)
+    const entries = await fetchInBatches<{ name: string }, DeadLetterEvent>(
+      listResult.keys,
+      (key) => kv.get<DeadLetterEvent>(key.name, "json"),
+    );
+
+    // Filter out potential null results (safe check)
+    return entries.filter((entry) => entry !== null);
+  } catch (error) {
+    logger.error("Failed to get dead letter queue", {
+      component: "webhook",
+      error: (error as Error).message,
+    });
     return [];
   }
 }

@@ -1,4 +1,5 @@
 import type { Env } from "../types";
+import { executeInBatches } from "./utils";
 
 // ============================================================================
 // Cache Entry Types
@@ -177,9 +178,10 @@ export class KVCache {
   async clear(): Promise<void> {
     try {
       const list = await this.kv.list({ prefix: `${this.namespace}:` });
-      for (const key of list.keys) {
-        await this.kv.delete(key.name);
-      }
+
+      // Optimization: Parallel batch delete instead of sequential loop
+      // This reduces latency from O(N) to O(N/batchSize)
+      await executeInBatches(list.keys, (key) => this.kv.delete(key.name));
     } catch (error) {
       console.error("Cache clear error:", error);
       throw error;
