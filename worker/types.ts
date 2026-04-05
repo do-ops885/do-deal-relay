@@ -191,10 +191,42 @@ export interface PipelineContext {
   deduped: Deal[];
   validated: Deal[];
   scored: Deal[];
+  metrics?: PipelineMetrics;
   snapshot?: Snapshot;
   previous_snapshot?: Snapshot;
   errors: Array<{ phase: string; error: Error }>;
   retry_count: number;
+}
+
+// ============================================================================
+// Pipeline Metrics Types
+// ============================================================================
+
+export interface PipelineMetrics {
+  run_id: string;
+  start_time: number;
+  end_time?: number;
+  phase_timings: Record<PipelinePhase, number>;
+  total_duration_ms: number;
+  deals_processed: {
+    discovered: number;
+    normalized: number;
+    deduped: number;
+    validated: number;
+    scored: number;
+    published: number;
+  };
+  validation_cache?: {
+    hit_total: number;
+    miss_total: number;
+    write_total: number;
+    d1_lookup_total: number;
+    dedup_hit_total: number;
+  };
+  errors: number;
+  retries: number;
+  success: boolean;
+  final_phase: PipelinePhase;
 }
 
 // ============================================================================
@@ -287,6 +319,7 @@ export interface Env {
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;
+  ENABLE_VALIDATION_CACHE?: string;
 }
 
 // ============================================================================

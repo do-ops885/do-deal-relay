@@ -1,31 +1,7 @@
-import { PipelinePhase } from "../types";
+import { PipelinePhase, PipelineMetrics } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { fetchInBatches } from "./utils";
-
-// ============================================================================
-// Pipeline Metrics Types
-// ============================================================================
-
-export interface PipelineMetrics {
-  run_id: string;
-  start_time: number;
-  end_time?: number;
-  phase_timings: Record<PipelinePhase, number>;
-  total_duration_ms: number;
-  deals_processed: {
-    discovered: number;
-    normalized: number;
-    deduped: number;
-    validated: number;
-    scored: number;
-    published: number;
-  };
-  errors: number;
-  retries: number;
-  success: boolean;
-  final_phase: PipelinePhase;
-}
 
 // ============================================================================
 // Metrics Functions
@@ -58,6 +34,13 @@ export function createMetrics(run_id: string): PipelineMetrics {
       validated: 0,
       scored: 0,
       published: 0,
+    },
+    validation_cache: {
+      hit_total: 0,
+      miss_total: 0,
+      write_total: 0,
+      d1_lookup_total: 0,
+      dedup_hit_total: 0,
     },
     errors: 0,
     retries: 0,
@@ -106,6 +89,26 @@ export function recordError(metrics: PipelineMetrics): void {
  */
 export function recordRetry(metrics: PipelineMetrics): void {
   metrics.retries++;
+}
+
+/**
+ * Update validation cache metrics
+ */
+export function recordValidationCacheMetric(
+  metrics: PipelineMetrics,
+  metric: keyof Required<PipelineMetrics>["validation_cache"],
+  increment: number = 1,
+): void {
+  if (!metrics.validation_cache) {
+    metrics.validation_cache = {
+      hit_total: 0,
+      miss_total: 0,
+      write_total: 0,
+      d1_lookup_total: 0,
+      dedup_hit_total: 0,
+    };
+  }
+  metrics.validation_cache[metric] += increment;
 }
 
 /**
@@ -206,6 +209,13 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]): {
     scored: number;
     published: number;
   };
+  avg_validation_cache?: {
+    hit_total: number;
+    miss_total: number;
+    write_total: number;
+    d1_lookup_total: number;
+    dedup_hit_total: number;
+  };
   total_errors: number;
   total_retries: number;
 } {
@@ -235,6 +245,13 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]): {
         validated: 0,
         scored: 0,
         published: 0,
+      },
+      avg_validation_cache: {
+        hit_total: 0,
+        miss_total: 0,
+        write_total: 0,
+        d1_lookup_total: 0,
+        dedup_hit_total: 0,
       },
       total_errors: 0,
       total_retries: 0,
@@ -292,6 +309,39 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]): {
     ),
   };
 
+  const avgValidationCache = {
+    hit_total: Math.round(
+      metrics.reduce(
+        (sum, m) => sum + (m.validation_cache?.hit_total || 0),
+        0,
+      ) / metrics.length,
+    ),
+    miss_total: Math.round(
+      metrics.reduce(
+        (sum, m) => sum + (m.validation_cache?.miss_total || 0),
+        0,
+      ) / metrics.length,
+    ),
+    write_total: Math.round(
+      metrics.reduce(
+        (sum, m) => sum + (m.validation_cache?.write_total || 0),
+        0,
+      ) / metrics.length,
+    ),
+    d1_lookup_total: Math.round(
+      metrics.reduce(
+        (sum, m) => sum + (m.validation_cache?.d1_lookup_total || 0),
+        0,
+      ) / metrics.length,
+    ),
+    dedup_hit_total: Math.round(
+      metrics.reduce(
+        (sum, m) => sum + (m.validation_cache?.dedup_hit_total || 0),
+        0,
+      ) / metrics.length,
+    ),
+  };
+
   const totalDuration = metrics.reduce(
     (sum, m) => sum + m.total_duration_ms,
     0,
@@ -308,6 +358,7 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]): {
     avg_duration_ms: Math.round(totalDuration / metrics.length),
     avg_phase_timings: avgPhaseTimings,
     avg_deals_per_run: avgDeals,
+    avg_validation_cache: avgValidationCache,
     total_errors: totalErrors,
     total_retries: totalRetries,
   };
@@ -383,6 +434,29 @@ export function formatMetricsForPrometheus(
   lines.push(
     `deals_pipeline_deals_avg{stage="published"} ${stats.avg_deals_per_run.published}`,
   );
+
+  // Validation cache metrics
+  if (stats.avg_validation_cache) {
+    lines.push(
+      "# HELP deals_validation_cache_avg Average validation cache stats per run",
+    );
+    lines.push("# TYPE deals_validation_cache_avg gauge");
+    lines.push(
+      `deals_validation_cache_avg{type="hit"} ${stats.avg_validation_cache.hit_total}`,
+    );
+    lines.push(
+      `deals_validation_cache_avg{type="miss"} ${stats.avg_validation_cache.miss_total}`,
+    );
+    lines.push(
+      `deals_validation_cache_avg{type="write"} ${stats.avg_validation_cache.write_total}`,
+    );
+    lines.push(
+      `deals_validation_cache_avg{type="d1_lookup"} ${stats.avg_validation_cache.d1_lookup_total}`,
+    );
+    lines.push(
+      `deals_validation_cache_avg{type="dedup_hit"} ${stats.avg_validation_cache.dedup_hit_total}`,
+    );
+  }
 
   // Errors and retries
   lines.push("# HELP deals_pipeline_errors_total Total errors encountered");

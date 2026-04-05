@@ -48,6 +48,16 @@ const PHASES: PipelinePhase[] = [
   "finalize",
 ];
 
+import {
+  createMetrics,
+  recordPhaseTiming,
+  recordDealCount,
+  recordError,
+  recordRetry,
+  finalizeMetrics,
+  storeMetrics,
+} from "./lib/metrics";
+
 /**
  * Execute full pipeline
  */
@@ -69,6 +79,7 @@ export async function executePipeline(env: Env): Promise<{
     deduped: [],
     validated: [],
     scored: [],
+    metrics: createMetrics(run_id),
     errors: [],
     retry_count: 0,
   };
@@ -96,7 +107,14 @@ export async function executePipeline(env: Env): Promise<{
         }
 
         // Execute phase
+        const phaseStartTime = Date.now();
         const result = await executePhase(currentPhase, ctx, env);
+        const phaseDuration = Date.now() - phaseStartTime;
+
+        // Record metrics
+        if (ctx.metrics) {
+          recordPhaseTiming(ctx.metrics, currentPhase, phaseDuration);
+        }
 
         if (result === "finalize") {
           // Success path
@@ -122,6 +140,7 @@ export async function executePipeline(env: Env): Promise<{
         // Continue to next phase
         phaseIndex++;
       } catch (error) {
+        if (ctx.metrics) recordError(ctx.metrics);
         const errorMessage = (error as Error).message;
         ctx.errors.push({ phase: currentPhase, error: error as Error });
 
@@ -145,15 +164,26 @@ export async function executePipeline(env: Env): Promise<{
           ctx.retry_count < CONFIG.MAX_RETRIES
         ) {
           ctx.retry_count++;
+          if (ctx.metrics) recordRetry(ctx.metrics);
           // Retry same phase with backoff
           await new Promise((r) => setTimeout(r, 1000 * ctx.retry_count));
           continue;
         }
 
         // Non-retryable or max retries reached
+        if (ctx.metrics) {
+          finalizeMetrics(ctx.metrics, false, currentPhase);
+          await storeMetrics(env, ctx.metrics);
+        }
         await handleFailure("revert", ctx, env);
         return { success: false, phase: currentPhase, error: errorMessage };
       }
+    }
+
+    // Finalize metrics
+    if (ctx.metrics) {
+      finalizeMetrics(ctx.metrics, true, "finalize");
+      await storeMetrics(env, ctx.metrics);
     }
 
     // Success
@@ -182,6 +212,7 @@ async function executePhase(
     case "discover":
       const discovery = await discover(env, ctx);
       ctx.candidates = discovery.deals;
+      if (ctx.metrics) recordDealCount(ctx.metrics, "discovered", ctx.candidates.length);
 
       // Guard rail: Check input resources
       if (ctx.candidates.length > 0) {
@@ -205,11 +236,13 @@ async function executePhase(
 
     case "normalize":
       ctx.normalized = normalize(ctx.candidates, ctx);
+      if (ctx.metrics) recordDealCount(ctx.metrics, "normalized", ctx.normalized.length);
       return "dedupe";
 
     case "dedupe":
       const dedupeResult = deduplicate(ctx.normalized, ctx);
       ctx.deduped = dedupeResult.unique;
+      if (ctx.metrics) recordDealCount(ctx.metrics, "deduped", ctx.deduped.length);
       if (ctx.deduped.length === 0) {
         return "finalize"; // No unique deals
       }
@@ -218,6 +251,7 @@ async function executePhase(
     case "validate":
       const validation = await validate(ctx.deduped, ctx, env);
       ctx.validated = validation.valid;
+      if (ctx.metrics) recordDealCount(ctx.metrics, "validated", ctx.validated.length);
 
       // Log validation stats
       await appendLog(
@@ -242,6 +276,7 @@ async function executePhase(
     case "score":
       const scoring = await score(ctx.validated, ctx, env);
       ctx.scored = scoring.deals;
+      if (ctx.metrics) recordDealCount(ctx.metrics, "scored", ctx.scored.length);
 
       // Log scoring stats
       await appendLog(
@@ -299,6 +334,7 @@ async function executePhase(
         }
 
         await publishSnapshot(env, ctx.snapshot!, ctx);
+        if (ctx.metrics) recordDealCount(ctx.metrics, "published", ctx.scored.length);
         return "verify";
       } catch (error) {
         return "revert";
