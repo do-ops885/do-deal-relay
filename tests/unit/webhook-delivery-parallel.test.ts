@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getDeadLetterQueue, sendOutgoingWebhooks } from "../../worker/lib/webhook/delivery";
+import {
+  getDeadLetterQueue,
+  sendOutgoingWebhooks,
+} from "../../worker/lib/webhook/delivery";
 import * as webhookTypes from "../../worker/lib/webhook/types";
 import type { Env } from "../../worker/types";
 
 vi.mock("../../worker/lib/webhook/types", async () => {
-  const actual = await vi.importActual("../../worker/lib/webhook/types") as any;
+  const actual = (await vi.importActual(
+    "../../worker/lib/webhook/types",
+  )) as any;
   return {
     ...actual,
     getWebhookKV: vi.fn().mockImplementation((env) => env.DEALS_WEBHOOKS),
@@ -106,20 +111,37 @@ describe("Webhook Delivery Optimization", () => {
 
       mockKv.get.mockImplementation(async (key: string, type: string) => {
         if (key === "webhook_subscription:sub1") {
-          return { id: "sub1", active: true, events: ["referral.created"], url: "https://sub1.com" };
+          return {
+            id: "sub1",
+            active: true,
+            events: ["referral.created"],
+            url: "https://sub1.com",
+          };
         }
         if (key === "webhook_subscription:sub2") {
-          return { id: "sub2", active: false, events: ["referral.created"], url: "https://sub2.com" };
+          return {
+            id: "sub2",
+            active: false,
+            events: ["referral.created"],
+            url: "https://sub2.com",
+          };
         }
         if (key === "webhook_subscription:sub3") {
-          return { id: "sub3", active: true, events: ["referral.created"], url: "https://sub3.com" };
+          return {
+            id: "sub3",
+            active: true,
+            events: ["referral.created"],
+            url: "https://sub3.com",
+          };
         }
         return null;
       });
 
       await sendOutgoingWebhooks(mockEnv, event);
 
-      expect(mockKv.list).toHaveBeenCalledWith({ prefix: "webhook_subscription:" });
+      expect(mockKv.list).toHaveBeenCalledWith({
+        prefix: "webhook_subscription:",
+      });
       expect(mockKv.get).toHaveBeenCalledTimes(3);
 
       // Verify that fetch was called for the active subscriptions
