@@ -20,7 +20,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.2.0",
+  "version": "0.1.3",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -41,7 +41,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": true,
   "status": "healthy",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.2.0",
+  "version": "0.1.3",
   "checks": {
     "kv_connection": true,
     "last_run_success": true,
@@ -74,7 +74,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": false,
   "status": "degraded",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.2.0",
+  "version": "0.1.3",
   "checks": {
     "kv_connection": false,
     "last_run_success": false,
@@ -261,7 +261,7 @@ Get full snapshot with metadata.
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.1.3",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",
@@ -2667,5 +2667,109 @@ console.log(`Workflow ${result.status} in ${result.duration_ms}ms`);
 | `workflow_failed` | Workflow failed (unrecoverable) |
 
 For external pipeline operations, use `/api/discover` and `/api/status` endpoints.
+
+---
+
+## Experience Feedback API
+
+Track user/agent interactions with deals for analytics and learning.
+
+### POST /api/experience
+
+Submit an experience event for a deal.
+
+**Request Body:**
+
+```json
+{
+  "deal_code": "ref-abc123",
+  "event_type": "click",
+  "agent_id": "agent-001",
+  "score": 50,
+  "metadata": { "source": "mcp", "context": "search_results" }
+}
+```
+
+**Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `deal_code` | string | Yes | The referral code of the deal |
+| `event_type` | string | Yes | One of: `click`, `view`, `conversion`, `feedback` |
+| `agent_id` | string | No | ID of the agent/user generating the event |
+| `score` | integer | No | Score between -100 and 100 |
+| `metadata` | object | No | Additional context as JSON |
+
+**Response** (201 Created):
+
+```json
+{
+  "success": true,
+  "event_id": "uuid-here",
+  "deal_code": "ref-abc123",
+  "event_type": "click"
+}
+```
+
+**Error Responses:**
+
+- `400` - Missing required fields or invalid event_type
+- `415` - Content-Type must be application/json
+- `500` - Failed to submit experience event
+- `503` - D1 database not configured
+
+### GET /api/experience/:code
+
+Get aggregated experience data for a specific deal.
+
+**Response** (200 OK):
+
+```json
+{
+  "success": true,
+  "aggregate": {
+    "deal_code": "ref-abc123",
+    "total_events": 150,
+    "positive_events": 120,
+    "negative_events": 30,
+    "avg_score": 45,
+    "last_updated": "2026-04-04T12:00:00Z"
+  }
+}
+```
+
+**No Data Response** (200 OK):
+
+```json
+{
+  "deal_code": "ref-abc123",
+  "total_events": 0,
+  "positive_events": 0,
+  "negative_events": 0,
+  "avg_score": 0,
+  "last_updated": null
+}
+```
+
+### POST /api/experience/aggregate
+
+Trigger manual experience aggregation across all deals.
+
+**Response** (200 OK):
+
+```json
+{
+  "success": true,
+  "deals_processed": 42,
+  "events_processed": 1500
+}
+```
+
+**Error Responses:**
+
+- `500` - Aggregation failed
+- `503` - D1 database not configured
+
+**Note:** Aggregation also runs automatically daily at 9am via cron job.
 
 ---

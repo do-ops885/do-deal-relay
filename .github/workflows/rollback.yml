@@ -1,0 +1,185 @@
+---
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to rollback to (tag or commit SHA)"
+        required: true
+        type: string
+      reason:
+        description: "Reason for rollback"
+        required: false
+        type: string
+        default: "Manual rollback triggered"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rollback-production
+  cancel-in-progress: false
+
+jobs:
+  pre-rollback-checks:
+    name: Pre-Rollback Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate rollback inputs
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "${VERSION}" ]; then
+            echo "❌ Version is required"
+            exit 1
+          fi
+          echo "Rollback to version: ${VERSION}"
+          echo "Reason: ${{ github.event.inputs.reason || 'Not specified' }}"
+
+  rollback:
+    name: Rollback to ${{ github.event.inputs.version }}
+    runs-on: ubuntu-latest
+    environment: production
+    needs: pre-rollback-checks
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Checkout target version
+        run: |
+          TARGET="${{ github.event.inputs.version }}"
+          if [[ "${TARGET}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Checking out tag: ${TARGET}"
+            git fetch --tags origin "${TARGET}"
+            git checkout "${TARGET}"
+          elif [[ "${TARGET}" =~ ^[a-f0-9]{7,40}$ ]]; then
+            echo "Checking out commit: ${TARGET}"
+            git fetch origin "${TARGET}"
+            git checkout "${TARGET}"
+          else
+            echo "Invalid version format: ${TARGET}"
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Cloudflare Production
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production
+
+      - name: Verify rollback
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping verification"
+            exit 0
+          fi
+
+          echo "Waiting for deployment to propagate..."
+          sleep 15
+
+          HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
+          echo "Checking health at: ${HEALTH_URL}"
+
+          for i in {1..5}; do
+            if curl -sf "${HEALTH_URL}"; then
+              echo "✅ Rollback verification passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+
+          echo "❌ Rollback verification failed"
+          exit 1
+
+      - name: Create rollback summary
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          TARGET="${{ github.event.inputs.version }}"
+          REASON="${{ github.event.inputs.reason || 'Not specified' }}"
+          SHA="${{ github.sha }}"
+          ACTOR="${{ github.actor }}"
+          {
+            echo "## Production Rollback Summary"
+            echo ""
+            echo "- **Target Version**: ${TARGET}"
+            echo "- **Commit**: ${SHA}"
+            echo "- **Reason**: ${REASON}"
+            echo "- **Triggered by**: @${ACTOR}"
+            echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo ""
+            echo "### Rollback Checklist"
+            echo "- [ ] Verified application health"
+            echo "- [ ] Checked critical endpoints"
+            echo "- [ ] Monitored error rates"
+            echo "- [ ] Notified stakeholders if needed"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = "${{ github.event.inputs.version }}";
+            const reason = "${{ github.event.inputs.reason || 'Not specified' }}";
+            const sha = "${{ github.sha }}";
+            const actor = "${{ github.actor }}";
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Rollback completed - Deployed ${target}`,
+              body: `## Rollback Completed\n\n` +
+                `| Field | Value |\n|------|-------|\n` +
+                `| Target Version | ${target} |\n` +
+                `| Previous Commit | ${sha.substring(0, 7)} |\n` +
+                `| Reason | ${reason} |\n` +
+                `| Triggered by | @${actor} |\n\n` +
+                `**Time**: ${new Date().toISOString()}`,
+              labels: ['deployment', 'production', 'rollback', 'completed']
+            });
+
+  notify:
+    name: Notify on Rollback
+    runs-on: ubuntu-latest
+    needs: rollback
+    if: always()
+
+    steps:
+      - name: Create notification
+        run: |
+          ROLLBACK_STATUS="${{ needs.rollback.result }}"
+          TARGET="${{ github.event.inputs.version }}"
+          {
+            echo "## Rollback Notification"
+            echo ""
+            echo "| Status | Version |"
+            echo "|--------|---------|"
+            if [ "${ROLLBACK_STATUS}" = "success" ]; then
+              echo "| ✅ Success | ${TARGET} |"
+            else
+              echo "| ❌ Failed | ${TARGET} |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

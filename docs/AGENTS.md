@@ -1,7 +1,7 @@
 # AGENTS.md - Deal Discovery System
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.2
+**Version**: 0.1.3
 **Phase**: Bootstrap
 **Status**: In Development
 
@@ -75,7 +75,7 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 | Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
 | Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
 | Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Execution Plan   | [agents-docs/EXECUTION_PLAN.md](agents-docs/EXECUTION_PLAN.md)     |
+| Execution Plan   | [plans/EXECUTION_PLAN.md](../plans/EXECUTION_PLAN.md)             |
 | Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
 | API Docs         | [docs/API.md](docs/API.md)                                         |
 | Skills           | [.agents/skills/](.agents/skills/)                                 |
@@ -120,13 +120,13 @@ Run `./scripts/quality_gate.sh` to execute all validation checks:
 
 See `temp/state.json` for current agent status and progress.
 
-| Agent               | Status  | Phase           | Responsibility      |
-| ------------------- | ------- | --------------- | ------------------- |
-| test-agent-v2       | pending | Test & Validate | Integration testing |
-| validation-agent-v2 | pending | Test & Validate | 9 validation gates  |
-| doc-agent           | pending | Test & Validate | Documentation       |
-| github-agent        | pending | Test & Validate | GitHub integration  |
-| browser-agent       | pending | Test & Validate | Browser testing     |
+| Agent               | Status   | Phase           | Responsibility      |
+| ------------------- | -------- | --------------- | ------------------- |
+| test-agent          | complete | Test & Validate | Integration testing |
+| validation-agent    | complete | Test & Validate | 9 validation gates  |
+| doc-agent           | complete | Test & Validate | Documentation       |
+| github-agent        | complete | Test & Validate | GitHub integration  |
+| browser-agent       | complete | Test & Validate | Browser/API testing |
 
 ## Notes
 
