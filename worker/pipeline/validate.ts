@@ -2,6 +2,8 @@ import { Deal, PipelineContext, PipelineError, ErrorClass } from "../types";
 import { DealSchema } from "../types";
 import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
 import { verifyNormalization } from "./normalize";
+import { validateDealFastPath } from "./validate-fast-path";
+import { recordValidationCacheMetric } from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
 import type { Env } from "../types";
@@ -78,6 +80,7 @@ export async function validate(
 
   // Load production snapshot for idempotency check
   const productionSnapshot = await getProductionSnapshot(env);
+  const useCache = env.ENABLE_VALIDATION_CACHE === "true";
   const existingDealIds = new Set(
     productionSnapshot?.deals.map((d) => d.id) || [],
   );
@@ -87,19 +90,62 @@ export async function validate(
     let allPassed = true;
     const failureReasons: string[] = [];
 
-    // Run each gate
-    for (const gate of VALIDATION_GATES) {
-      const gateResult = await runGate(gate, deal, ctx, existingDealIds);
-      gateResults[gate] = gateResult;
+    // Run fast-path check if enabled
+    let fastPathDecision = null;
+    let skipGates = false;
 
-      if (!gateResult.passed) {
-        allPassed = false;
-        failureReasons.push(`${gate}: ${gateResult.reason}`);
-        result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+    if (useCache) {
+      const fastPath = await validateDealFastPath(env, {
+        url: deal.url,
+        fingerprint: deal.id,
+        source: deal.source.domain,
+        traceId: ctx.trace_id,
+        metrics: ctx.metrics,
+      });
+
+      if (fastPath.hit && fastPath.decision) {
+        skipGates = true;
+        fastPathDecision = fastPath.decision;
+      } else {
+        fastPathDecision = fastPath; // contains persist function
+      }
+    }
+
+    // Run each gate
+    if (!skipGates) {
+      for (const gate of VALIDATION_GATES) {
+        const gateResult = await runGate(gate, deal, ctx, existingDealIds);
+        gateResults[gate] = gateResult;
+
+        if (!gateResult.passed) {
+          allPassed = false;
+          failureReasons.push(`${gate}: ${gateResult.reason}`);
+          result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+        }
+      }
+    }
+
+    if (skipGates && fastPathDecision && "status" in fastPathDecision) {
+      allPassed = fastPathDecision.status === "accepted";
+      if (!allPassed) {
+        failureReasons.push(`cached_rejection: ${fastPathDecision.reason}`);
       }
     }
 
     if (allPassed) {
+      // Persist to cache if it was a miss
+      if (
+        useCache &&
+        fastPathDecision &&
+        "persist" in fastPathDecision &&
+        fastPathDecision.persist
+      ) {
+        await fastPathDecision.persist({
+          status: "accepted",
+          trustScore: deal.source.trust_score,
+        });
+      }
+
       // Check for quarantine conditions
       if (shouldQuarantine(deal)) {
         deal.metadata.status = "quarantined";
@@ -111,6 +157,23 @@ export async function validate(
         result.stats.valid++;
       }
     } else {
+      // Persist to cache if it was a miss
+      if (
+        useCache &&
+        fastPathDecision &&
+        "persist" in fastPathDecision &&
+        fastPathDecision.persist
+      ) {
+        const isDuplicate = failureReasons.some(
+          (r) => r.includes("Deduplication Check") || r.includes("duplicate"),
+        );
+        await fastPathDecision.persist({
+          status: isDuplicate ? "duplicate" : "rejected",
+          reason: failureReasons.join("; "),
+          trustScore: deal.source.trust_score,
+        });
+      }
+
       deal.metadata.status = "rejected";
       result.invalid.push({ deal, reasons: failureReasons });
       result.stats.invalid++;
