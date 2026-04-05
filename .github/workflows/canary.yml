@@ -1,7 +1,7 @@
 ---
 name: Canary Deployment
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       percentage:
@@ -42,8 +42,8 @@ jobs:
       - name: Validate inputs
         id: config
         run: |
-          PERCENTAGE=${{ github.event.inputs.percentage || 10 }}
-          DURATION=${{ github.event.inputs.duration || 30 }}
+          PERCENTAGE="${{ github.event.inputs.percentage || 10 }}"
+          DURATION="${{ github.event.inputs.duration || 30 }}"
 
           if [ "${PERCENTAGE}" -lt 10 ] || [ "${PERCENTAGE}" -gt 50 ]; then
             echo "❌ Percentage must be between 10 and 50"
@@ -55,17 +55,17 @@ jobs:
             exit 1
           fi
 
-          echo "percentage=${PERCENTAGE}" >> $GITHUB_OUTPUT
-          echo "duration=${DURATION}" >> $GITHUB_OUTPUT
+          echo "percentage=${PERCENTAGE}" >> "$GITHUB_OUTPUT"
+          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
           echo "Auto-promote: ${{ github.event.inputs.auto_promote || false }}"
 
-          echo "## Canary Deployment Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Traffic % | ${PERCENTAGE}% |" >> $GITHUB_STEP_SUMMARY
-          echo "| Duration | ${DURATION} minutes |" >> $GITHUB_STEP_SUMMARY
-          echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |" >> $GITHUB_STEP_SUMMARY
+          echo "## Canary Deployment Configuration" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Setting | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Traffic % | ${PERCENTAGE}% |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Duration | ${DURATION} minutes |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-canary:
     name: Deploy Canary
@@ -116,8 +116,8 @@ jobs:
           # This is a placeholder for the configuration step
           echo "Canary deployed with ${PERCENTAGE}% traffic allocation"
 
-          echo "## Canary Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Canary Status" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Status**: Deployed"
           echo "- **Traffic**: ${PERCENTAGE}%"
           echo "- **URL**: https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
@@ -167,13 +167,16 @@ jobs:
           done
 
           echo ""
-          echo "## Canary Monitoring Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Healthy checks | ${HEALTHY} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Failed checks | ${FAILED} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Success rate | $(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | bc 2>/dev/null || echo "N/A")% |" >> $GITHUB_STEP_SUMMARY
+          echo "## Canary Monitoring Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Healthy checks | ${HEALTHY} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Failed checks | ${FAILED} |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "| Success rate |"
+            echo "$(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | bc 2>/dev/null || echo "N/A")%"
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ ${FAILED} -gt 5 ]; then
             echo ""
@@ -197,25 +200,25 @@ jobs:
           MONITOR_RESULT="${{ needs.monitor-canary.result }}"
           AUTO_PROMOTE="${{ github.event.inputs.auto_promote || false }}"
 
-          echo "## Canary Decision" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Canary Decision" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${MONITOR_RESULT}" = "failure" ]; then
-            echo "| Action | Rollback |" >> $GITHUB_STEP_SUMMARY
-            echo "| Reason | Canary monitoring detected failures |" >> $GITHUB_STEP_SUMMARY
+            echo "| Action | Rollback |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Canary monitoring detected failures |" >> "$GITHUB_STEP_SUMMARY"
             echo ""
             echo "❌ Canary failed - requires manual rollback"
             exit 1
           fi
 
           if [ "${AUTO_PROMOTE}" = "true" ]; then
-            echo "| Action | Auto-Promote |" >> $GITHUB_STEP_SUMMARY
-            echo "| Reason | Monitoring passed and auto-promote enabled |" >> $GITHUB_STEP_SUMMARY
+            echo "| Action | Auto-Promote |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Monitoring passed and auto-promote enabled |" >> "$GITHUB_STEP_SUMMARY"
             echo ""
             echo "✅ Auto-promoting canary to production..."
           else
-            echo "| Action | Manual Review Required |" >> $GITHUB_STEP_SUMMARY
-            echo "| Reason | Auto-promote not enabled |" >> $GITHUB_STEP_SUMMARY
+            echo "| Action | Manual Review Required |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Auto-promote not enabled |" >> "$GITHUB_STEP_SUMMARY"
             echo ""
             echo "⚠️ Canary passed monitoring. Review and manually promote if desired."
             echo "Run 'Deploy - Production' workflow to promote."
