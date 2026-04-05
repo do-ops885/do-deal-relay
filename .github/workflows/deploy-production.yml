@@ -13,6 +13,13 @@ name: Deploy - Production
         required: true
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      confirm_deploy:
+        description: "Confirm production deployment"
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
