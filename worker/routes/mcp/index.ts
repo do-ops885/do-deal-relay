@@ -15,6 +15,7 @@
  */
 
 import type { Env } from "../../types";
+import { CONFIG } from "../../config";
 import {
   MCP_PROTOCOL_VERSION,
   type JSONRPCRequest,
@@ -60,7 +61,7 @@ import {
 
 const SERVER_INFO = {
   name: "do-deal-relay",
-  version: "0.1.2",
+  version: CONFIG.VERSION,
 };
 
 const SERVER_CAPABILITIES = {

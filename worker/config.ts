@@ -2,10 +2,12 @@
 // Configuration Constants
 // ============================================================================
 
+import { VERSION } from "./version";
+
 export const CONFIG = {
   // System
-  VERSION: "0.1.3",
-  SCHEMA_VERSION: "0.1.3",
+  VERSION,
+  SCHEMA_VERSION: "1.0.0",
 
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes
