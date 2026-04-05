@@ -48,8 +48,13 @@
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
   },
   // D1 Database for advanced queries and full-text search
-  // Note: Default binding removed - use --env production or --env staging for real database
-  "d1_databases": [],
+  "d1_databases": [
+    {
+      "binding": "DEALS_DB",
+      "database_name": "deals-db-staging",
+      "database_id": "22222222-2222-2222-2222-222222222222",
+    },
+  ],
   // Environment-specific configurations
   "env": {
     // Staging environment for pre-production testing

@@ -2,7 +2,7 @@
 name: do-deal-relay
 description: AI agent self-prompting instructions for do-deal-relay. Use for adding referral codes, querying referrals, and interacting via MCP protocol. EU AI Act compliant with 180-day logging retention.
 metadata:
-  version: "0.1.2"
+  version: "0.1.3"
   author: do-ops
   spec: "agentskills.io"
   eu_ai_act: "compliant"
@@ -144,7 +144,7 @@ Expected: 5/5 tests pass, 100% success rate.
 
 ## Version Check
 
-Current: v0.1.2
+Current: v0.1.3
 Verify: `cat package.json | grep version`
 
 Last Updated: 2026-04-02

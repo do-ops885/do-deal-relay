@@ -1,5 +1,7 @@
 #!/bin/bash
 # Release workflow script
+# Single source of truth: VERSION file
+# All other version references are derived from it
 # Usage: ./scripts/release.sh [version]
 
 set -e
@@ -46,11 +48,15 @@ if [[ ! $CONFIRM =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-# Update VERSION file
+# Update VERSION file (SINGLE SOURCE OF TRUTH)
 echo "$NEW_VERSION" > VERSION
-echo "✓ Updated VERSION"
+echo "✓ Updated VERSION (single source of truth)"
 
-# Update package.json
+# Generate worker/version.ts from VERSION
+bash scripts/generate-version.sh
+echo "✓ Generated worker/version.ts"
+
+# Update package.json (derived from VERSION)
 sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" package.json
 echo "✓ Updated package.json"
 
@@ -58,10 +64,14 @@ echo "✓ Updated package.json"
 sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" package-lock.json 2>/dev/null || true
 echo "✓ Updated package-lock.json"
 
-# Update worker/config.ts
-sed -i "s/VERSION: \".*\"/VERSION: \"$NEW_VERSION\"/" worker/config.ts
-sed -i "s/SCHEMA_VERSION: \".*\"/SCHEMA_VERSION: \"$NEW_VERSION\"/" worker/config.ts
-echo "✓ Updated worker/config.ts"
+# Update skill metadata
+sed -i "s/version: \".*\"/version: \"$NEW_VERSION\"/" .agents/skills/do-deal-relay/SKILL.md
+sed -i "s/Current: v[0-9]*\.[0-9]*\.[0-9]*/Current: v$NEW_VERSION/" .agents/skills/do-deal-relay/SKILL.md
+echo "✓ Updated .agents/skills/do-deal-relay/SKILL.md"
+
+# Update AGENTS.md
+sed -i "s/\*\*Version\*\*: [0-9]*\.[0-9]*\.[0-9]*/\*\*Version\*\*: $NEW_VERSION/" AGENTS.md
+echo "✓ Updated AGENTS.md"
 
 # Update README.md version badge
 sed -i "s/Version.*:.*[0-9]\+\.[0-9]\+\.[0-9]\+/Version: $NEW_VERSION/" README.md
@@ -75,7 +85,7 @@ echo "✓ Updated test files"
 # Update public/deals.json
 if [ -f public/deals.json ]; then
     sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" public/deals.json
-    sed -i "s/\"schema_version\": \"[^\"]*\"/\"schema_version\": \"$NEW_VERSION\"/" public/deals.json
+    sed -i "s/\"schema_version\": \"[^\"]*\"/schema_version: \"$NEW_VERSION\"/" public/deals.json
     echo "✓ Updated public/deals.json"
 fi
 
@@ -84,7 +94,7 @@ sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/g" docs/API.md
 echo "✓ Updated docs/API.md"
 
 # Update other doc files
-for file in AGENTS.md docs/AGENTS.md agents-docs/SYSTEM_REFERENCE.md QUICKSTART.md; do
+for file in docs/AGENTS.md agents-docs/SYSTEM_REFERENCE.md QUICKSTART.md; do
     if [ -f "$file" ]; then
         sed -i "s/\b$CURRENT_VERSION\b/$NEW_VERSION/g" "$file" 2>/dev/null || true
     fi

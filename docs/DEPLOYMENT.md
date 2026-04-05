@@ -1,7 +1,7 @@
 # Deployment Guide
 
 **Project**: do-deal-relay — Cloudflare Workers deal discovery system
-**Version**: 0.2.0
+**Version**: 0.1.3
 **Last Updated**: 2026-04-04
 
 ---
@@ -354,8 +354,8 @@ git merge develop
 git push origin main
 
 # Or deploy with a version tag
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 ### Manual Production Deploy via Workflow Dispatch
@@ -478,7 +478,7 @@ curl -s "${PROD_URL}/mcp/v1/info" | jq .
 {
   "status": "healthy",
   "environment": "production",
-  "version": "0.2.0",
+  "version": "0.1.3",
   "timestamp": "2026-04-04T..."
 }
 ```

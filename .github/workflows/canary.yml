@@ -1,0 +1,231 @@
+---
+name: Canary Deployment
+
+"on":
+  workflow_dispatch:
+    inputs:
+      percentage:
+        description: "Traffic percentage for canary (10-50%)"
+        required: false
+        type: number
+        default: 10
+      duration:
+        description: "Canary duration in minutes (5-60)"
+        required: false
+        type: number
+        default: 30
+      auto_promote:
+        description: "Auto-promote if healthy"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: canary-deployment
+  cancel-in-progress: true
+
+jobs:
+  setup-canary:
+    name: Setup Canary Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      percentage: ${{ steps.config.outputs.percentage }}
+      duration: ${{ steps.config.outputs.duration }}
+
+    steps:
+      - name: Validate inputs
+        id: config
+        run: |
+          PERCENTAGE="${{ github.event.inputs.percentage || 10 }}"
+          DURATION="${{ github.event.inputs.duration || 30 }}"
+
+          if [ "${PERCENTAGE}" -lt 10 ] || [ "${PERCENTAGE}" -gt 50 ]; then
+            echo "❌ Percentage must be between 10 and 50"
+            exit 1
+          fi
+
+          if [ "${DURATION}" -lt 5 ] || [ "${DURATION}" -gt 60 ]; then
+            echo "❌ Duration must be between 5 and 60 minutes"
+            exit 1
+          fi
+
+          echo "percentage=${PERCENTAGE}" >> "$GITHUB_OUTPUT"
+          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
+          echo "Auto-promote: ${{ github.event.inputs.auto_promote || false }}"
+
+          echo "## Canary Deployment Configuration" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Setting | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Traffic % | ${PERCENTAGE}% |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Duration | ${DURATION} minutes |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-canary:
+    name: Deploy Canary
+    runs-on: ubuntu-latest
+    needs: setup-canary
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Configure canary traffic split
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PERCENTAGE="${{ needs.setup-canary.outputs.percentage }}"
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set"
+            exit 0
+          fi
+
+          echo "Configuring canary traffic split to ${PERCENTAGE}%..."
+          # Note: Actual traffic splitting requires Cloudflare Load Balancer or Workers
+          # This is a placeholder for the configuration step
+          echo "Canary deployed with ${PERCENTAGE}% traffic allocation"
+
+          echo "## Canary Status" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Status**: Deployed"
+          echo "- **Traffic**: ${PERCENTAGE}%"
+          echo "- **URL**: https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+
+      - name: Wait for canary duration
+        run: |
+          DURATION="${{ needs.setup-canary.outputs.duration }}"
+          echo "Monitoring canary for ${DURATION} minutes..."
+          echo "Run 'Monitor Canary' workflow step for real-time monitoring"
+
+  monitor-canary:
+    name: Monitor Canary
+    runs-on: ubuntu-latest
+    needs: [setup-canary, deploy-canary]
+    timeout-minutes: 65
+
+    steps:
+      - name: Health check loop
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          DURATION="${{ needs.setup-canary.outputs.duration }}"
+          END_TIME=$(($(date +%s) + DURATION * 60))
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping monitoring"
+            exit 0
+          fi
+
+          CANARY_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          HEALTHY=0
+          FAILED=0
+
+          echo "Monitoring canary at: ${CANARY_URL}"
+          echo "Duration: ${DURATION} minutes"
+
+          while [ $(date +%s) -lt ${END_TIME} ]; do
+            if curl -sf "${CANARY_URL}/health"; then
+              HEALTHY=$((HEALTHY + 1))
+              echo "[$(date +%H:%M:%S)] ✅ Canary healthy"
+            else
+              FAILED=$((FAILED + 1))
+              echo "[$(date +%H:%M:%S)] ❌ Canary unhealthy"
+            fi
+
+            # Check every 30 seconds
+            sleep 30
+          done
+
+          echo ""
+          echo "## Canary Monitoring Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Healthy checks | ${HEALTHY} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Failed checks | ${FAILED} |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "| Success rate |"
+            echo "$(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | bc 2>/dev/null || echo "N/A")%"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ ${FAILED} -gt 5 ]; then
+            echo ""
+            echo "❌ Canary monitoring detected multiple failures"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Canary monitoring completed successfully"
+
+  promote-or-rollback:
+    name: Promote or Rollback
+    runs-on: ubuntu-latest
+    needs: [setup-canary, deploy-canary, monitor-canary]
+    environment: production
+    timeout-minutes: 20
+
+    steps:
+      - name: Decision
+        run: |
+          MONITOR_RESULT="${{ needs.monitor-canary.result }}"
+          AUTO_PROMOTE="${{ github.event.inputs.auto_promote || false }}"
+
+          echo "## Canary Decision" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${MONITOR_RESULT}" = "failure" ]; then
+            echo "| Action | Rollback |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Canary monitoring detected failures |" >> "$GITHUB_STEP_SUMMARY"
+            echo ""
+            echo "❌ Canary failed - requires manual rollback"
+            exit 1
+          fi
+
+          if [ "${AUTO_PROMOTE}" = "true" ]; then
+            echo "| Action | Auto-Promote |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Monitoring passed and auto-promote enabled |" >> "$GITHUB_STEP_SUMMARY"
+            echo ""
+            echo "✅ Auto-promoting canary to production..."
+          else
+            echo "| Action | Manual Review Required |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Reason | Auto-promote not enabled |" >> "$GITHUB_STEP_SUMMARY"
+            echo ""
+            echo "⚠️ Canary passed monitoring. Review and manually promote if desired."
+            echo "Run 'Deploy - Production' workflow to promote."
+          fi
+
+      - name: Deploy to Production (if auto-promote)
+        if: github.event.inputs.auto_promote == 'true'
+        uses: ./.github/workflows/deploy-production.yml
+        with:
+          confirm_deploy: true

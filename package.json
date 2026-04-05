@@ -4,9 +4,9 @@
   "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "bash scripts/generate-version.sh && wrangler dev",
     "deploy": "wrangler deploy",
-    "build": "tsc",
+    "build": "bash scripts/generate-version.sh && tsc",
     "test": "vitest",
     "test:ci": "vitest run --pool=forks --no-file-parallelism",
     "test:e2e": "playwright test",

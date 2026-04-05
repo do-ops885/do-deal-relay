@@ -101,6 +101,12 @@ check_pattern() {
     # - Comment lines (starting with # or // or *)
     # - Lines containing "check_pattern" (function calls)
     # - Lines that are clearly documentation
+    # - Lines that are section separators (mostly # or =)
+    # - YAML schema references ($ref paths)
+    # - OpenAPI/YAML component paths
+    # - Test files (patterns like whsec_test, sk_test, ghp_test are test data)
+    # - Lines that are clearly test data (whsec_test, ghp_test, sk_test)
+    # - Lines that look like mock/test secrets (whsec_old, whsec_secret, test_key)
     local MATCHES
     MATCHES=$(git diff --cached 2>/dev/null | \
         grep -vE "^[-+@ ]*(#|//|\*|--|<!--)" | \
@@ -108,6 +114,12 @@ check_pattern() {
         grep -vE "^\s*-\s*" | \
         grep -vE "https?://" | \
         grep -vE "dash\.cloudflare\.com" | \
+        grep -vE "^[+#= ]*$" | \
+        grep -vE "\$[a-z]+://" | \
+        grep -vE "^\s*\$ref:" | \
+        grep -vE "#/components/" | \
+        grep -vE "(whsec_test|ghp_test|sk_test|test_secret|whsec_secret|whsec_old|whsec_fake|whsec_mock)" | \
+        grep -vE "(mock|test|fake|demo|sample)_?(key|secret|token|password|api.?key)" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"

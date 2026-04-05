@@ -55,6 +55,11 @@ import {
   handleRunAggregation,
 } from "./routes/experience";
 import { runAggregation } from "./lib/d1/experience";
+import {
+  handleEmailIncoming,
+  handleEmailParse,
+  handleEmailHelp,
+} from "./routes/email";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -205,6 +210,17 @@ export default {
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
         return handleRunAggregation(env);
+      }
+
+      // Email API
+      if (path === "/api/email/incoming" && request.method === "POST") {
+        return handleEmailIncoming(request, env);
+      }
+      if (path === "/api/email/parse" && request.method === "POST") {
+        return handleEmailParse(request, env);
+      }
+      if (path === "/api/email/help" && request.method === "GET") {
+        return handleEmailHelp();
       }
 
       // 404

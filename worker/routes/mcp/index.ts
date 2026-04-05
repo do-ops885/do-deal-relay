@@ -15,349 +15,29 @@
  */
 
 import type { Env } from "../../types";
-import {
-  MCP_PROTOCOL_VERSION,
-  type JSONRPCRequest,
-  type JSONRPCResponse,
-  type InitializeResult,
-  type ToolsListResult,
-  type ToolCallResult,
-  type ResourcesListResult,
-  type ResourceTemplatesListResult,
-  type ResourceReadResult,
-  type InitializeParams,
-  type ToolsListParams,
-  type ToolCallParams,
-  type ResourcesListParams,
-  type ResourceReadParams,
-  MCPErrorCodes,
-  JSONRPCRequestSchema,
-  InitializeParamsSchema,
-  ToolCallParamsSchema,
-  ResourceReadParamsSchema,
-} from "../../lib/mcp/types";
+import { CONFIG } from "../../config";
 import { getTools, executeTool } from "../../lib/mcp/tools";
+import { createRateLimitHeaders } from "../../lib/rate-limit";
+import { handleInitialize, handlePing } from "./initialize";
+import { handleToolsList, handleToolCall } from "./tools";
 import {
-  getResources,
-  getResourceTemplates,
-  readResource,
-} from "../../lib/mcp/resources";
+  handleResourcesList,
+  handleResourceTemplatesList,
+  handleResourceRead,
+} from "./resources";
 import {
-  checkRateLimit,
-  getClientIdentifier,
-  createRateLimitHeaders,
-} from "../../lib/rate-limit";
-import {
-  encodeCursor,
-  decodeCursor,
-  paginate,
-  type ProgressNotification,
-} from "../../lib/mcp/utils";
-
-// ============================================================================
-// Server Configuration
-// ============================================================================
-
-const SERVER_INFO = {
-  name: "do-deal-relay",
-  version: "0.1.2",
-};
-
-const SERVER_CAPABILITIES = {
-  tools: {
-    listChanged: true,
-  },
-  resources: {
-    subscribe: false,
-    listChanged: true,
-  },
-  prompts: {
-    listChanged: false,
-  },
-  logging: {},
-};
-
-const SERVER_INSTRUCTIONS = `
-# Do-Deal-Relay MCP Server
-
-This server provides tools for discovering and managing referral deals.
-
-## Available Tools
-
-- **search_deals**: Search for referral deals by domain, category, or keywords
-- **get_deal**: Get detailed information about a specific referral code
-- **add_referral**: Add a new referral code to the system (requires quarantine review)
-- **research_domain**: Research a domain for available referral programs
-- **list_categories**: List all available deal categories
-- **validate_deal**: Validate a deal's URL and check if it's active
-- **get_stats**: Get system statistics and deal counts
-- **experience_deal**: Report your success or failure with a specific referral code
-- **report_deal**: Report a broken, expired, or fraudulent referral code
-- **get_pipeline_status**: Get the current status of the deal discovery pipeline
-- **trigger_discovery**: Manually trigger the deal discovery pipeline
-- **get_similar_deals**: Find referral deals similar to a specific code or domain
-- **get_deal_highlights**: Get top-rated, recently added, and soon-to-expire deals
-- **get_logs**: Retrieve recent or specific run logs for the discovery pipeline
-- **natural_language_query**: Search deals using natural language (e.g., "finance deals", "codes from trading212.com")
-
-## Resources
-
-- **deals://{dealId}**: Individual deal details
-- **categories://list**: Deal categories list
-- **analytics://summary**: Deal summary statistics
-- **nlq://queries**: Natural language query templates and examples
-
-## Rate Limits
-
-- 60 requests per minute per client
-- Some tools have additional limits
-
-## EU AI Act Compliance
-
-All operations are logged for compliance with EU AI Act Regulation (EU) 2024/1689.
-`;
-
-// ============================================================================
-// CORS Headers
-// ============================================================================
-
-const MCP_CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": [
-    "Content-Type",
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "Authorization",
-    "X-API-Key",
-  ].join(", "),
-  "Access-Control-Expose-Headers": [
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "X-RateLimit-Limit",
-    "X-RateLimit-Remaining",
-    "X-RateLimit-Reset",
-  ].join(", "),
-};
-
-// ============================================================================
-// JSON-RPC Helpers
-// ============================================================================
-
-function createSuccessResponse(
-  id: string | number,
-  result: unknown,
-): JSONRPCResponse {
-  return {
-    jsonrpc: "2.0",
-    id,
-    result,
-  };
-}
-
-function createErrorResponse(
-  id: string | number | null,
-  code: number,
-  message: string,
-  data?: unknown,
-): JSONRPCResponse {
-  return {
-    jsonrpc: "2.0",
-    id,
-    error: {
-      code,
-      message,
-      data,
-    },
-  };
-}
-
-// ============================================================================
-// Type Guard Functions - Validate request structures to avoid unsafe casting
-// ============================================================================
-
-/**
- * Validate JSON-RPC request structure using Zod schema
- * Returns null if validation fails, otherwise returns the validated request
- */
-function validateJSONRPCRequest(body: unknown): JSONRPCRequest | null {
-  const result = JSONRPCRequestSchema.safeParse(body);
-  return result.success ? (result.data as JSONRPCRequest) : null;
-}
-
-/**
- * Validate Initialize params structure
- */
-function validateInitializeParams(params: unknown): InitializeParams | null {
-  const result = InitializeParamsSchema.safeParse(params);
-  return result.success ? (result.data as InitializeParams) : null;
-}
-
-/**
- * Validate ToolCall params structure
- */
-function validateToolCallParams(params: unknown): ToolCallParams | null {
-  const result = ToolCallParamsSchema.safeParse(params);
-  return result.success ? (result.data as ToolCallParams) : null;
-}
-
-/**
- * Validate ResourceRead params structure
- */
-function validateResourceReadParams(
-  params: unknown,
-): ResourceReadParams | null {
-  const result = ResourceReadParamsSchema.safeParse(params);
-  return result.success ? (result.data as ResourceReadParams) : null;
-}
-
-function createJSONResponse(
-  data: JSONRPCResponse,
-  status: number = 200,
-  extraHeaders: HeadersInit = {},
-): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...MCP_CORS_HEADERS,
-      ...extraHeaders,
-    },
-  });
-}
-
-// ============================================================================
-// Request Handlers
-// ============================================================================
-
-/**
- * Handle initialize request
- */
-async function handleInitialize(
-  params: InitializeParams,
-): Promise<InitializeResult> {
-  // Negotiate protocol version - reject if incompatible
-  if (params.protocolVersion !== MCP_PROTOCOL_VERSION) {
-    throw new Error(
-      `Unsupported protocol version: ${params.protocolVersion}. Expected: ${MCP_PROTOCOL_VERSION}`,
-    );
-  }
-
-  return {
-    protocolVersion: MCP_PROTOCOL_VERSION,
-    capabilities: SERVER_CAPABILITIES,
-    serverInfo: SERVER_INFO,
-    instructions: SERVER_INSTRUCTIONS,
-  };
-}
-
-/**
- * Handle ping request
- */
-async function handlePing(): Promise<{}> {
-  return {};
-}
-
-/**
- * Handle tools/list request with pagination support
- */
-async function handleToolsList(params?: {
-  cursor?: string;
-}): Promise<ToolsListResult> {
-  const tools = getTools();
-
-  const serializedTools = tools.map((tool) => ({
-    name: tool.name,
-    title: tool.title,
-    description: tool.description,
-    inputSchema:
-      typeof tool.inputSchema === "object"
-        ? tool.inputSchema
-        : { type: "object" },
-    outputSchema:
-      tool.outputSchema && typeof tool.outputSchema === "object"
-        ? tool.outputSchema
-        : undefined,
-    annotations: tool.annotations,
-  }));
-
-  const PAGE_SIZE = 5;
-  const { items, nextCursor } = paginate(
-    serializedTools,
-    params?.cursor,
-    PAGE_SIZE,
-  );
-
-  return {
-    tools: items,
-    nextCursor,
-  } as ToolsListResult;
-}
-
-/**
- * Handle tools/call request with progress tracking
- */
-async function handleToolCall(
-  params: ToolCallParams,
-  env: Env,
-  request: Request,
-): Promise<ToolCallResult> {
-  const { name, arguments: args = {}, _meta } = params;
-
-  const result = await executeTool(name, args, env, request);
-
-  if (_meta?.progressToken) {
-    const progressNotification: ProgressNotification = {
-      progressToken: _meta.progressToken,
-      progress: 1,
-      total: 1,
-      message: `Tool "${name}" completed`,
-    };
-
-    return {
-      ...result,
-      _meta: {
-        ...(result._meta || {}),
-        progress: progressNotification,
-      },
-    };
-  }
-
-  return result;
-}
-
-/**
- * Handle resources/list request with pagination support
- */
-async function handleResourcesList(params?: {
-  cursor?: string;
-}): Promise<ResourcesListResult> {
-  const resources = getResources();
-
-  const PAGE_SIZE = 5;
-  const { items, nextCursor } = paginate(resources, params?.cursor, PAGE_SIZE);
-
-  return { resources: items, nextCursor };
-}
-
-/**
- * Handle resources/templates/list request
- */
-async function handleResourceTemplatesList(): Promise<ResourceTemplatesListResult> {
-  const resourceTemplates = getResourceTemplates();
-  return { resourceTemplates };
-}
-
-/**
- * Handle resources/read request
- */
-async function handleResourceRead(
-  params: ResourceReadParams,
-  env: Env,
-): Promise<ResourceReadResult> {
-  const { uri } = params;
-  return readResource(uri, env);
-}
+  MCP_CORS_HEADERS,
+  MCP_PROTOCOL_VERSION,
+  createSuccessResponse,
+  createErrorResponse,
+  createJSONResponse,
+  validateJSONRPCRequest,
+  validateInitializeParams,
+  validateToolCallParams,
+  validateResourceReadParams,
+  checkMCPRateLimit,
+} from "./utils";
+import { MCPErrorCodes } from "../../lib/mcp/types";
 
 // ============================================================================
 // Main Route Handler
@@ -391,8 +71,7 @@ export async function handleMCPRequest(
   }
 
   // Rate limiting
-  const clientId = getClientIdentifier(request);
-  const rateLimitResult = await checkRateLimit(env, clientId, "/mcp");
+  const rateLimitResult = await checkMCPRateLimit(request, env);
 
   if (!rateLimitResult.allowed) {
     return createJSONResponse(
@@ -411,24 +90,9 @@ export async function handleMCPRequest(
   }
 
   // Parse JSON-RPC request
-  let rpcRequest: JSONRPCRequest;
+  let body: { [key: string]: unknown };
   try {
-    const body = (await request.json()) as { [key: string]: unknown };
-
-    // Validate JSON-RPC 2.0 structure using type guard for type safety
-    const validatedRequest = validateJSONRPCRequest(body);
-    if (!validatedRequest) {
-      return createJSONResponse(
-        createErrorResponse(
-          null,
-          MCPErrorCodes.INVALID_REQUEST,
-          "Invalid JSON-RPC 2.0 request",
-        ),
-        400,
-      );
-    }
-
-    rpcRequest = validatedRequest;
+    body = (await request.json()) as { [key: string]: unknown };
   } catch {
     return createJSONResponse(
       createErrorResponse(
@@ -440,7 +104,20 @@ export async function handleMCPRequest(
     );
   }
 
-  const { id, method, params = {} } = rpcRequest;
+  // Validate JSON-RPC 2.0 structure using type guard for type safety
+  const validatedRequest = validateJSONRPCRequest(body);
+  if (!validatedRequest) {
+    return createJSONResponse(
+      createErrorResponse(
+        null,
+        MCPErrorCodes.INVALID_REQUEST,
+        "Invalid JSON-RPC 2.0 request",
+      ),
+      400,
+    );
+  }
+
+  const { id, method, params = {} } = validatedRequest;
 
   // Handle the request based on method
   try {
@@ -570,10 +247,15 @@ export async function handleMCPListTools(env: Env): Promise<Response> {
     JSON.stringify({
       tools,
       server_info: {
-        name: SERVER_INFO.name,
-        version: SERVER_INFO.version,
+        name: "do-deal-relay",
+        version: CONFIG.VERSION,
         protocol_version: MCP_PROTOCOL_VERSION,
-        capabilities: SERVER_CAPABILITIES,
+        capabilities: {
+          tools: { listChanged: true },
+          resources: { subscribe: false, listChanged: true },
+          prompts: { listChanged: false },
+          logging: {},
+        },
       },
     }),
     {
@@ -645,10 +327,10 @@ export async function handleMCPInfo(env: Env): Promise<Response> {
 
   return new Response(
     JSON.stringify({
-      name: SERVER_INFO.name,
+      name: "do-deal-relay",
       description:
         "Autonomous deal discovery and referral code management system",
-      version: SERVER_INFO.version,
+      version: CONFIG.VERSION,
       protocol_version: MCP_PROTOCOL_VERSION,
       provider: {
         name: "do-ops",

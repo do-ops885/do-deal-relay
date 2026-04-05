@@ -1,7 +1,7 @@
 # Web Research Integration
 
 **Feature**: Automated referral code discovery from web sources
-**Version**: 0.2.0
+**Version**: 0.1.3
 **Status**: Complete - Real API integrations implemented
 
 ## Overview

@@ -50,7 +50,7 @@ jobs:
         run: |
           # Get the PR number from the workflow run
           RUN_ID="${{ github.event.workflow_run.id }}"
-          RUN_DATA=$(gh run view "$RUN_ID" --json headBranch,headSha,repository)
+          RUN_DATA=$(gh run view "$RUN_ID" --json headBranch,headSha)
           HEAD_BRANCH=$(echo "$RUN_DATA" | jq -r '.headBranch')
           HEAD_SHA=$(echo "$RUN_DATA" | jq -r '.headSha')
 

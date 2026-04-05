@@ -1,0 +1,2631 @@
+openapi: 3.1.0
+info:
+  title: Deal Discovery System API
+  version: 0.1.3
+  description: |
+    API for deal discovery, referral management, and MCP integration.
+
+    This system provides:
+    - Deal discovery and aggregation from multiple sources
+    - Referral code management with full CRUD operations
+    - Natural language query (NLQ) search
+    - Model Context Protocol (MCP) for AI agent integration
+    - Webhook support for real-time notifications
+    - Email processing for referral extraction
+  contact:
+    name: Deal Discovery Team
+  license:
+    name: MIT
+  x-logo:
+    url: https://workers.cloudflare.com/resources/assets/workers-logo-horizontal-rod.png
+
+servers:
+  - url: https://do-deal-relay.workers.dev
+    description: Production server
+  - url: https://staging.do-deal-relay.workers.dev
+    description: Staging server
+  - url: http://localhost:8787
+    description: Local development
+
+tags:
+  - name: Health
+    description: System health and readiness checks
+  - name: Deals
+    description: Public deal endpoints
+  - name: Pipeline
+    description: Discovery pipeline operations
+  - name: Referrals
+    description: Referral code management
+  - name: Validation
+    description: URL and deal validation
+  - name: D1
+    description: D1 database queries
+  - name: NLQ
+    description: Natural language query search
+  - name: MCP
+    description: Model Context Protocol endpoints
+  - name: Webhooks
+    description: Webhook subscriptions and events
+  - name: Email
+    description: Email processing endpoints
+  - name: Bulk
+    description: Bulk import/export operations
+
+paths:
+  # ============================================================================
+  # Health Endpoints
+  # ============================================================================
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: getHealth
+      description: Check system health status
+      responses:
+        "200":
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      operationId: getReady
+      description: Returns 200 when all dependencies are healthy
+      responses:
+        "200":
+          description: System is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+        "503":
+          description: System is not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      operationId: getLive
+      description: Returns 200 if service is running. Used by orchestrators.
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alive:
+                    type: boolean
+                    example: true
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /metrics:
+    get:
+      tags: [Health]
+      summary: Prometheus metrics
+      operationId: getMetrics
+      description: Returns Prometheus-compatible metrics
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [prometheus, json]
+            default: prometheus
+      responses:
+        "200":
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP deals_runs_total Total discovery runs
+                  deals_runs_total 42
+                  # HELP deals_active_deals Current active deals
+                  deals_active_deals 45
+
+  # ============================================================================
+  # Public Deals Endpoints
+  # ============================================================================
+  /deals:
+    get:
+      tags: [Deals]
+      summary: Get active deals
+      operationId: getDeals
+      description: Returns filtered array of active deals
+      parameters:
+        - $ref: "#/components/parameters/category"
+        - $ref: "#/components/parameters/min_reward"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: List of active deals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Deal"
+
+  /deals.json:
+    get:
+      tags: [Deals]
+      summary: Get deals snapshot
+      operationId: getDealsSnapshot
+      description: Returns full snapshot with metadata
+      responses:
+        "200":
+          description: Full snapshot with metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snapshot"
+
+  /deals/ranked:
+    get:
+      tags: [Deals]
+      summary: Get ranked deals
+      operationId: getRankedDeals
+      description: Get ranked and sorted deals with composite scoring
+      parameters:
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [confidence, recency, value, expiry, trust]
+            default: confidence
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - $ref: "#/components/parameters/limit"
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+        - name: min_trust
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+        - $ref: "#/components/parameters/category"
+        - name: include_scores
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Ranked deals with scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RankedDealsResponse"
+
+  /deals/highlights:
+    get:
+      tags: [Deals]
+      summary: Get highlighted deals
+      operationId: getDealHighlights
+      description: Get highlighted deals (top, expiring soon, recently added)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Highlighted deals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HighlightsResponse"
+
+  /deals/similar:
+    get:
+      tags: [Deals]
+      summary: Find similar deals
+      operationId: getSimilarDeals
+      description: Find deals similar to a given code or domain
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+          description: Deal code to find similar deals for
+        - name: domain
+          in: query
+          schema:
+            type: string
+          description: Domain to find similar deals for
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Similar deals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  similar_deals:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Deal"
+                  query:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      domain:
+                        type: string
+
+  # ============================================================================
+  # Pipeline API
+  # ============================================================================
+  /api/discover:
+    post:
+      tags: [Pipeline]
+      summary: Trigger discovery pipeline
+      operationId: triggerDiscovery
+      description: Manually trigger the discovery pipeline
+      responses:
+        "200":
+          description: Pipeline triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "409":
+          description: Another run is in progress
+        "500":
+          description: Pipeline failed
+
+  /api/status:
+    get:
+      tags: [Pipeline]
+      summary: Get pipeline status
+      operationId: getStatus
+      description: Get current pipeline status
+      responses:
+        "200":
+          description: Pipeline status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStatus"
+
+  /api/log:
+    get:
+      tags: [Pipeline]
+      summary: Get research logs
+      operationId: getLogs
+      parameters:
+        - name: run_id
+          in: query
+          schema:
+            type: string
+          description: Get logs for specific run
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, jsonl]
+            default: json
+      responses:
+        "200":
+          description: Research logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogsResponse"
+            text/plain:
+              schema:
+                type: string
+                description: JSONL format when format=jsonl
+
+  /api/analytics:
+    get:
+      tags: [Pipeline]
+      summary: Get deal analytics
+      operationId: getAnalytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 90
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, summary]
+            default: json
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsResponse"
+
+  # ============================================================================
+  # Deal Submission
+  # ============================================================================
+  /api/submit:
+    post:
+      tags: [Deals]
+      summary: Submit a deal
+      operationId: submitDeal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitDealBody"
+      responses:
+        "202":
+          description: Deal submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitDealResponse"
+        "400":
+          description: Invalid request
+        "409":
+          description: Deal already exists
+
+  # ============================================================================
+  # Referral API
+  # ============================================================================
+  /api/referrals:
+    get:
+      tags: [Referrals]
+      summary: List referrals
+      operationId: listReferrals
+      parameters:
+        - $ref: "#/components/parameters/domain"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, expired, all]
+            default: all
+        - $ref: "#/components/parameters/category"
+        - name: source
+          in: query
+          schema:
+            type: string
+            default: all
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          description: List of referrals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralListResponse"
+
+    post:
+      tags: [Referrals]
+      summary: Create referral
+      operationId: createReferral
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReferralBody"
+      responses:
+        "201":
+          description: Referral created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateReferralResponse"
+        "400":
+          description: Validation failed
+        "409":
+          description: Referral already exists
+
+  /api/referrals/{code}:
+    get:
+      tags: [Referrals]
+      summary: Get referral by code
+      operationId: getReferralByCode
+      parameters:
+        - $ref: "#/components/parameters/code"
+      responses:
+        "200":
+          description: Referral found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralResponse"
+        "404":
+          description: Referral not found
+
+  /api/referrals/{code}/deactivate:
+    post:
+      tags: [Referrals]
+      summary: Deactivate referral
+      operationId: deactivateReferral
+      parameters:
+        - $ref: "#/components/parameters/code"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeactivateReferralBody"
+      responses:
+        "200":
+          description: Referral deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralResponse"
+        "400":
+          description: Invalid request
+        "404":
+          description: Referral not found
+
+  /api/referrals/{code}/reactivate:
+    post:
+      tags: [Referrals]
+      summary: Reactivate referral
+      operationId: reactivateReferral
+      parameters:
+        - $ref: "#/components/parameters/code"
+      responses:
+        "200":
+          description: Referral reactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralResponse"
+        "404":
+          description: Referral not found
+
+  # ============================================================================
+  # Research API
+  # ============================================================================
+  /api/research:
+    post:
+      tags: [Referrals]
+      summary: Research referral codes
+      operationId: researchReferral
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResearchRequest"
+      responses:
+        "200":
+          description: Research completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchResponse"
+        "400":
+          description: Invalid request
+        "429":
+          description: Rate limited
+        "500":
+          description: Research failed
+
+  /api/research/{domain}:
+    get:
+      tags: [Referrals]
+      summary: Get research results for domain
+      operationId: getResearchResults
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Research results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchResults"
+
+  # ============================================================================
+  # Validation API
+  # ============================================================================
+  /api/validate/url:
+    post:
+      tags: [Validation]
+      summary: Validate URL
+      operationId: validateUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UrlValidationResult"
+        "400":
+          description: Invalid URL
+
+  /api/validate/batch:
+    post:
+      tags: [Validation]
+      summary: Batch validate URLs
+      operationId: validateBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchValidationBody"
+      responses:
+        "200":
+          description: Batch validation results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchValidationResult"
+
+  /api/validation/stats:
+    get:
+      tags: [Validation]
+      summary: Get validation statistics
+      operationId: getValidationStats
+      responses:
+        "200":
+          description: Validation statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationStats"
+
+  /api/deals/{code}/validate:
+    post:
+      tags: [Validation]
+      summary: Validate deal
+      operationId: validateDeal
+      parameters:
+        - $ref: "#/components/parameters/code"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checkUrl:
+                  type: boolean
+                  default: true
+                checkCode:
+                  type: boolean
+                  default: true
+                checkRewards:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealValidationResult"
+        "404":
+          description: Deal not found
+
+  # ============================================================================
+  # MCP Endpoints
+  # ============================================================================
+  /mcp:
+    post:
+      tags: [MCP]
+      summary: MCP request handler
+      operationId: handleMCP
+      description: Main entry point for MCP JSON-RPC requests (Specification 2025-11-25)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MCPRequest"
+      responses:
+        "200":
+          description: MCP response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPResponse"
+
+  /mcp/v1/tools/list:
+    post:
+      tags: [MCP]
+      summary: List MCP tools
+      operationId: listMCPTools
+      responses:
+        "200":
+          description: List of available tools
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPToolsList"
+
+  /mcp/v1/tools/call:
+    post:
+      tags: [MCP]
+      summary: Call MCP tool
+      operationId: callMCPTool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MCPToolCall"
+      responses:
+        "200":
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPToolResult"
+
+  /mcp/v1/info:
+    get:
+      tags: [MCP]
+      summary: Get MCP server info
+      operationId: getMCPInfo
+      responses:
+        "200":
+          description: MCP server information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MCPInfo"
+
+  # ============================================================================
+  # D1 Database Endpoints
+  # ============================================================================
+  /api/d1/search:
+    get:
+      tags: [D1]
+      summary: Full-text search deals
+      operationId: d1Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: include_expired
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, expired, quarantined]
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1SearchResponse"
+
+  /api/d1/suggestions:
+    get:
+      tags: [D1]
+      summary: Get search suggestions
+      operationId: d1Suggestions
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Search suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1SuggestionsResponse"
+
+  /api/d1/deals:
+    get:
+      tags: [D1]
+      summary: List deals with filters
+      operationId: d1ListDeals
+      parameters:
+        - $ref: "#/components/parameters/domain"
+        - $ref: "#/components/parameters/category"
+        - name: status
+          in: query
+          schema:
+            type: string
+            default: active
+        - $ref: "#/components/parameters/limit"
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+        - name: expiring_in
+          in: query
+          schema:
+            type: integer
+            description: Days until expiration
+      responses:
+        "200":
+          description: Deals list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1DealsResponse"
+
+  /api/d1/stats:
+    get:
+      tags: [D1]
+      summary: Get database statistics
+      operationId: d1Stats
+      responses:
+        "200":
+          description: Database statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1StatsResponse"
+
+  /api/d1/domains:
+    get:
+      tags: [D1]
+      summary: List domains with deal counts
+      operationId: d1Domains
+      responses:
+        "200":
+          description: Domain list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1DomainsResponse"
+
+  /api/d1/categories:
+    get:
+      tags: [D1]
+      summary: List categories
+      operationId: d1Categories
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1CategoriesResponse"
+
+  /api/d1/migrations:
+    get:
+      tags: [D1]
+      summary: Get migration status
+      operationId: d1Migrations
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [init]
+      responses:
+        "200":
+          description: Migration status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1MigrationResponse"
+
+  /api/d1/health:
+    get:
+      tags: [D1]
+      summary: D1 health check
+      operationId: d1Health
+      responses:
+        "200":
+          description: D1 health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/D1HealthResponse"
+
+  # ============================================================================
+  # NLQ Endpoints
+  # ============================================================================
+  /api/nlq:
+    get:
+      tags: [NLQ]
+      summary: Natural language query (GET)
+      operationId: nlqGet
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 500
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: include_expired
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: NLQ results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NLQResponse"
+
+    post:
+      tags: [NLQ]
+      summary: Natural language query (POST)
+      operationId: nlqPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NLQRequest"
+      responses:
+        "200":
+          description: NLQ results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NLQResponse"
+        "400":
+          description: Invalid request
+        "429":
+          description: Rate limited
+
+  /api/nlq/explain:
+    get:
+      tags: [NLQ]
+      summary: Explain NLQ query (GET)
+      operationId: nlqExplainGet
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Query explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NLQExplainResponse"
+
+    post:
+      tags: [NLQ]
+      summary: Explain NLQ query (POST)
+      operationId: nlqExplainPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Query explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NLQExplainResponse"
+
+  # ============================================================================
+  # Webhook Endpoints
+  # ============================================================================
+  /api/webhooks/incoming/{partnerId}:
+    post:
+      tags: [Webhooks]
+      summary: Receive incoming webhook
+      operationId: webhookIncoming
+      parameters:
+        - name: partnerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncomingWebhookBody"
+      responses:
+        "200":
+          description: Webhook processed
+        "400":
+          description: Invalid payload
+        "401":
+          description: Invalid signature
+
+  /api/webhooks/subscribe:
+    post:
+      tags: [Webhooks]
+      summary: Subscribe to webhooks
+      operationId: webhookSubscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeBody"
+      responses:
+        "201":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResponse"
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized
+
+  /api/webhooks/unsubscribe:
+    post:
+      tags: [Webhooks]
+      summary: Unsubscribe from webhooks
+      operationId: webhookUnsubscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscription_id]
+              properties:
+                subscription_id:
+                  type: string
+      responses:
+        "200":
+          description: Unsubscribed successfully
+        "400":
+          description: Missing subscription_id
+        "404":
+          description: Subscription not found
+
+  /api/webhooks/subscriptions:
+    get:
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      operationId: listSubscriptions
+      parameters:
+        - name: partner_id
+          in: query
+          schema:
+            type: string
+            default: default
+      responses:
+        "200":
+          description: Subscription list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionListResponse"
+
+  /api/webhooks/partners:
+    get:
+      tags: [Webhooks]
+      summary: List webhook partners
+      operationId: listPartners
+      responses:
+        "200":
+          description: Partner list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerListResponse"
+
+    post:
+      tags: [Webhooks]
+      summary: Create webhook partner
+      operationId: createPartner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePartnerBody"
+      responses:
+        "201":
+          description: Partner created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerResponse"
+        "400":
+          description: Invalid request
+
+  /api/webhooks/dlq:
+    get:
+      tags: [Webhooks]
+      summary: Get dead letter queue
+      operationId: getDLQ
+      responses:
+        "200":
+          description: DLQ contents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLQResponse"
+
+  /api/webhooks/dlq/{id}/retry:
+    post:
+      tags: [Webhooks]
+      summary: Retry failed webhook
+      operationId: retryWebhook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event queued for retry
+        "404":
+          description: Event not found
+
+  /api/webhooks/sync:
+    post:
+      tags: [Webhooks]
+      summary: Configure sync
+      operationId: createSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncConfigBody"
+      responses:
+        "201":
+          description: Sync configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncConfigResponse"
+
+  # ============================================================================
+  # Email Endpoints
+  # ============================================================================
+  /api/email/incoming:
+    post:
+      tags: [Email]
+      summary: Process incoming email
+      operationId: emailIncoming
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailIncomingBody"
+      responses:
+        "200":
+          description: Email processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailIncomingResponse"
+        "400":
+          description: Invalid email
+        "401":
+          description: Invalid signature
+
+  /api/email/parse:
+    post:
+      tags: [Email]
+      summary: Parse email content
+      operationId: emailParse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailParseBody"
+      responses:
+        "200":
+          description: Parsed email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailParseResponse"
+
+  /api/email/help:
+    get:
+      tags: [Email]
+      summary: Get email help
+      operationId: emailHelp
+      responses:
+        "200":
+          description: Help email template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailHelpResponse"
+
+  # ============================================================================
+  # Bulk Operations
+  # ============================================================================
+  /api/bulk/import:
+    post:
+      tags: [Bulk]
+      summary: Bulk import referral codes
+      operationId: bulkImport
+      description: Import multiple referral codes at once. Maximum 100 per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportBody"
+      responses:
+        "200":
+          description: Import results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImportResponse"
+        "400":
+          description: Invalid request or validation failed
+
+  /api/bulk/export:
+    get:
+      tags: [Bulk]
+      summary: Export deals
+      operationId: bulkExport
+      description: Export deals as CSV or JSON. Maximum 1000 per request.
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+            default: json
+        - $ref: "#/components/parameters/domain"
+        - $ref: "#/components/parameters/category"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, expired, all]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Export results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkExportResponse"
+            text/csv:
+              schema:
+                type: string
+                description: CSV format when format=csv
+
+# ==============================================================================
+# Components
+# ==============================================================================
+components:
+  parameters:
+    code:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The referral code
+
+    domain:
+      name: domain
+      in: query
+      schema:
+        type: string
+      description: Filter by domain
+
+    category:
+      name: category
+      in: query
+      schema:
+        type: string
+      description: Filter by category
+
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+      description: Maximum results to return
+
+    offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+      description: Pagination offset
+
+  schemas:
+    # ==========================================================================
+    # Core Schemas
+    # ==========================================================================
+    Deal:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique deal identifier
+        source:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+            domain:
+              type: string
+            discovered_at:
+              type: string
+              format: date-time
+            trust_score:
+              type: number
+              minimum: 0
+              maximum: 1
+        title:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        url:
+          type: string
+          format: uri
+        reward:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [cash, credit, percent, item]
+            value:
+              oneOf:
+                - type: number
+                - type: string
+            currency:
+              type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        expiry:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+            confidence:
+              type: number
+            type:
+              type: string
+              enum: [hard, soft, unknown]
+        metadata:
+          type: object
+          properties:
+            category:
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+            normalized_at:
+              type: string
+              format: date-time
+            confidence_score:
+              type: number
+            status:
+              type: string
+              enum: [active, quarantined, rejected]
+
+    Snapshot:
+      type: object
+      properties:
+        version:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        run_id:
+          type: string
+        snapshot_hash:
+          type: string
+        stats:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            quarantined:
+              type: integer
+            rejected:
+              type: integer
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+
+    # ==========================================================================
+    # Health Schemas
+    # ==========================================================================
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            kv_connection:
+              type: boolean
+            last_run_success:
+              type: boolean
+            snapshot_valid:
+              type: boolean
+
+    ReadinessStatus:
+      type: object
+      properties:
+        ready:
+          type: boolean
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        checks:
+          type: object
+        components:
+          type: object
+
+    # ==========================================================================
+    # Deal Response Schemas
+    # ==========================================================================
+    RankedDealsResponse:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            filtered:
+              type: integer
+            returned:
+              type: integer
+            sort_by:
+              type: string
+            order:
+              type: string
+        scores:
+          type: array
+          items:
+            type: object
+            properties:
+              dealId:
+                type: string
+              score:
+                type: number
+              breakdown:
+                type: object
+
+    HighlightsResponse:
+      type: object
+      properties:
+        top_deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        expiring_soon:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        recently_added:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        meta:
+          type: object
+
+    # ==========================================================================
+    # Pipeline Schemas
+    # ==========================================================================
+    PipelineStatus:
+      type: object
+      properties:
+        locked:
+          type: boolean
+        current_run:
+          type: object
+          nullable: true
+        last_run:
+          type: object
+          properties:
+            run_id:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            success:
+              type: boolean
+
+    LogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogEntry"
+        count:
+          type: integer
+
+    LogEntry:
+      type: object
+      properties:
+        run_id:
+          type: string
+        trace_id:
+          type: string
+        ts:
+          type: string
+          format: date-time
+        phase:
+          type: string
+          enum:
+            [
+              init,
+              discover,
+              normalize,
+              dedupe,
+              validate,
+              score,
+              stage,
+              publish,
+              verify,
+              finalize,
+            ]
+        status:
+          type: string
+          enum: [complete, incomplete, error, skipped]
+        candidate_count:
+          type: integer
+        valid_count:
+          type: integer
+        duplicate_count:
+          type: integer
+        rejected_count:
+          type: integer
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        dealsOverTime:
+          type: array
+          items:
+            type: object
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+        sourcePerformance:
+          type: array
+          items:
+            type: object
+        valueDistribution:
+          type: array
+          items:
+            type: object
+        expiringSoon:
+          type: object
+        qualityMetrics:
+          type: object
+
+    # ==========================================================================
+    # Submit Schemas
+    # ==========================================================================
+    SubmitDealBody:
+      type: object
+      required: [url, code]
+      properties:
+        url:
+          type: string
+          format: uri
+        code:
+          type: string
+        source:
+          type: string
+        metadata:
+          type: object
+
+    SubmitDealResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        code:
+          type: string
+
+    # ==========================================================================
+    # Referral Schemas
+    # ==========================================================================
+    ReferralListResponse:
+      type: object
+      properties:
+        referrals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Referral"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        url:
+          type: string
+          format: uri
+        domain:
+          type: string
+        status:
+          type: string
+        source:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        submitted_by:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        deactivated_at:
+          type: string
+          format: date-time
+          nullable: true
+        deactivated_reason:
+          type: string
+          nullable: true
+        replaced_by:
+          type: string
+          nullable: true
+        description:
+          type: string
+        metadata:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            reward_type:
+              type: string
+            reward_value:
+              oneOf:
+                - type: number
+                - type: string
+            category:
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+            requirements:
+              type: array
+              items:
+                type: string
+            confidence_score:
+              type: number
+        validation:
+          type: object
+
+    ReferralResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        referral:
+          $ref: "#/components/schemas/Referral"
+
+    CreateReferralBody:
+      type: object
+      required: [code, url, domain]
+      properties:
+        code:
+          type: string
+        url:
+          type: string
+          format: uri
+        domain:
+          type: string
+        source:
+          type: string
+          default: api
+        submitted_by:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            reward_type:
+              type: string
+            reward_value:
+              oneOf:
+                - type: number
+                - type: string
+            category:
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+            requirements:
+              type: array
+              items:
+                type: string
+            confidence_score:
+              type: number
+
+    CreateReferralResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        referral:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            url:
+              type: string
+            domain:
+              type: string
+            status:
+              type: string
+
+    DeactivateReferralBody:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+        replaced_by:
+          type: string
+        notes:
+          type: string
+
+    # ==========================================================================
+    # Research Schemas
+    # ==========================================================================
+    ResearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        domain:
+          type: string
+        depth:
+          type: string
+          enum: [quick, thorough, deep]
+          default: quick
+        sources:
+          type: array
+          items:
+            type: string
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        options:
+          type: object
+          properties:
+            use_real_fetching:
+              type: boolean
+              default: false
+            skip_cache:
+              type: boolean
+            timeout_ms:
+              type: integer
+
+    ResearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        query:
+          type: string
+        domain:
+          type: string
+        discovered_codes:
+          type: integer
+        stored_referrals:
+          type: integer
+        research_metadata:
+          type: object
+
+    ResearchResults:
+      type: object
+      properties:
+        domain:
+          type: string
+        discovered_codes:
+          type: array
+          items:
+            type: object
+        research_metadata:
+          type: object
+
+    # ==========================================================================
+    # Validation Schemas
+    # ==========================================================================
+    UrlValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        url:
+          type: string
+        error:
+          type: string
+        status:
+          type: string
+
+    BatchValidationBody:
+      type: object
+      required: [urls]
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        checkRewards:
+          type: boolean
+          default: false
+
+    BatchValidationResult:
+      type: object
+      properties:
+        summary:
+          type: object
+        urls:
+          type: array
+          items:
+            type: object
+        rewards:
+          type: array
+          items:
+            type: object
+        errors:
+          type: array
+          items:
+            type: string
+
+    ValidationStats:
+      type: object
+      properties:
+        validation:
+          type: object
+        last_run:
+          type: object
+          nullable: true
+        deals:
+          type: object
+        providers:
+          type: object
+        generated_at:
+          type: string
+          format: date-time
+
+    DealValidationResult:
+      type: object
+      properties:
+        deal:
+          type: object
+        url:
+          type: object
+        code:
+          type: object
+        rewards:
+          type: object
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            type: string
+
+    # ==========================================================================
+    # MCP Schemas
+    # ==========================================================================
+    MCPRequest:
+      type: object
+      required: [jsonrpc, method]
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        method:
+          type: string
+        params:
+          type: object
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+
+    MCPResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+        result:
+          type: object
+        error:
+          type: object
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+
+    MCPToolsList:
+      type: object
+      properties:
+        tools:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              inputSchema:
+                type: object
+
+    MCPToolCall:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        arguments:
+          type: object
+
+    MCPToolResult:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+        isError:
+          type: boolean
+
+    MCPInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        protocolVersion:
+          type: string
+
+    # ==========================================================================
+    # D1 Schemas
+    # ==========================================================================
+    D1SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        query:
+          type: string
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+
+    D1SuggestionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        query:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    D1DealsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+        metadata:
+          type: object
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+
+    D1StatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        stats:
+          type: object
+          properties:
+            total_deals:
+              type: integer
+            active_deals:
+              type: integer
+            expired_deals:
+              type: integer
+            quarantined_deals:
+              type: integer
+            total_referral_codes:
+              type: integer
+            avg_confidence_score:
+              type: number
+            top_category:
+              type: string
+            top_source:
+              type: string
+            deals_added_last_7_days:
+              type: integer
+            deals_added_last_30_days:
+              type: integer
+            deals_expiring_next_7_days:
+              type: integer
+            deals_expiring_next_30_days:
+              type: integer
+
+    D1DomainsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+        domains:
+          type: array
+          items:
+            type: object
+            properties:
+              domain:
+                type: string
+              deal_count:
+                type: integer
+              active_count:
+                type: integer
+              expired_count:
+                type: integer
+
+    D1CategoriesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
+          type: integer
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              display_name:
+                type: string
+              deal_count:
+                type: integer
+              description:
+                type: string
+
+    D1MigrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: object
+          properties:
+            currentVersion:
+              type: integer
+            latestVersion:
+              type: integer
+            pendingCount:
+              type: integer
+            appliedCount:
+              type: integer
+        message:
+          type: string
+        applied:
+          type: array
+          items:
+            type: integer
+
+    D1HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        healthy:
+          type: boolean
+        status:
+          type: object
+
+    # ==========================================================================
+    # NLQ Schemas
+    # ==========================================================================
+    NLQRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          maxLength: 500
+        limit:
+          type: integer
+          default: 20
+          maximum: 100
+        offset:
+          type: integer
+          default: 0
+        include_expired:
+          type: boolean
+          default: false
+        min_confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    NLQResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        query:
+          type: string
+        explanation:
+          type: object
+        count:
+          type: integer
+        execution_time_ms:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+
+    NLQExplainResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        query:
+          type: string
+        parsed:
+          type: object
+        structured:
+          type: object
+        explanation:
+          type: object
+
+    # ==========================================================================
+    # Webhook Schemas
+    # ==========================================================================
+    IncomingWebhookBody:
+      type: object
+      required: [event, data]
+      properties:
+        event:
+          type: string
+        data:
+          type: object
+          required: [code, url, domain]
+          properties:
+            code:
+              type: string
+            url:
+              type: string
+            domain:
+              type: string
+            title:
+              type: string
+            description:
+              type: string
+            reward:
+              type: object
+            expires_at:
+              type: string
+              format: date-time
+            status:
+              type: string
+        external_id:
+          type: string
+        metadata:
+          type: object
+
+    SubscribeBody:
+      type: object
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        partner_id:
+          type: string
+        metadata:
+          type: object
+        retry_policy:
+          type: object
+        filters:
+          type: object
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        subscription:
+          $ref: "#/components/schemas/Subscription"
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        filters:
+          type: object
+
+    SubscriptionListResponse:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subscription"
+
+    CreatePartnerBody:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        allowed_events:
+          type: array
+          items:
+            type: string
+        rate_limit_per_minute:
+          type: integer
+
+    PartnerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        partner:
+          type: object
+
+    PartnerListResponse:
+      type: object
+      properties:
+        partners:
+          type: array
+          items:
+            type: object
+
+    DLQResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+        events:
+          type: array
+          items:
+            type: object
+
+    SyncConfigBody:
+      type: object
+      required: [partner_id, direction, mode]
+      properties:
+        partner_id:
+          type: string
+        direction:
+          type: string
+          enum: [push, pull, bidirectional]
+        mode:
+          type: string
+          enum: [realtime, scheduled, manual]
+        schedule:
+          type: object
+        conflict_resolution:
+          type: string
+        priority:
+          type: string
+        filters:
+          type: object
+        field_mapping:
+          type: object
+
+    SyncConfigResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        sync_config:
+          type: object
+
+    # ==========================================================================
+    # Email Schemas
+    # ==========================================================================
+    EmailIncomingBody:
+      type: object
+      required: [from, to, subject]
+      properties:
+        from:
+          type: string
+          format: email
+        to:
+          type: string
+        subject:
+          type: string
+        text:
+          type: string
+        html:
+          type: string
+        headers:
+          type: object
+
+    EmailIncomingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        referralId:
+          type: string
+          nullable: true
+        extracted:
+          type: object
+          nullable: true
+        confirmationSent:
+          type: boolean
+
+    EmailParseBody:
+      type: object
+      required: [from, subject]
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        subject:
+          type: string
+        text:
+          type: string
+        html:
+          type: string
+
+    EmailParseResponse:
+      type: object
+      properties:
+        extraction:
+          type: object
+        command:
+          type: object
+        email:
+          type: object
+
+    EmailHelpResponse:
+      type: object
+      properties:
+        subject:
+          type: string
+        text:
+          type: string
+        html:
+          type: string
+
+    # ==========================================================================
+    # Bulk Schemas
+    # ==========================================================================
+    BulkImportBody:
+      type: object
+      required: [deals]
+      properties:
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkImportItem"
+          maxItems: 100
+
+    BulkImportItem:
+      type: object
+      required: [code, url, domain]
+      properties:
+        code:
+          type: string
+        url:
+          type: string
+          format: uri
+        domain:
+          type: string
+        source:
+          type: string
+        submitted_by:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            reward_type:
+              type: string
+            reward_value:
+              oneOf:
+                - type: number
+                - type: string
+            category:
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+            requirements:
+              type: array
+              items:
+                type: string
+            confidence_score:
+              type: number
+
+    BulkImportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        total:
+          type: integer
+        imported:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkImportResult"
+
+    BulkImportResult:
+      type: object
+      properties:
+        index:
+          type: integer
+        success:
+          type: boolean
+        code:
+          type: string
+        message:
+          type: string
+        referral_id:
+          type: string
+          nullable: true
+        errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    BulkExportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        format:
+          type: string
+        total:
+          type: integer
+        returned:
+          type: integer
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        pagination:
+          type: object
+          properties:
+            limit:
+              type: integer
+            offset:
+              type: integer
+            has_more:
+              type: boolean
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
