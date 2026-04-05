@@ -54,13 +54,13 @@ jobs:
           fi
 
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Invalid version format: $VERSION"
+            echo "Invalid version format: $VERSION"
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "✅ Version: $VERSION"
+          echo "Version: $VERSION"
 
       - name: Verify VERSION file matches
         run: |
@@ -68,10 +68,10 @@ jobs:
           TAG_VERSION="${{ steps.get-version.outputs.version }}"
 
           if [ "$FILE_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ VERSION file ($FILE_VERSION) doesn't match tag ($TAG_VERSION)"
+            echo "VERSION file ($FILE_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-          echo "✅ VERSION file matches tag"
+          echo "VERSION file matches tag"
 
       - name: Verify package.json matches
         run: |
@@ -79,10 +79,10 @@ jobs:
           TAG_VERSION="${{ steps.get-version.outputs.version }}"
 
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ package.json ($PKG_VERSION) doesn't match tag ($TAG_VERSION)"
+            echo "package.json ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-          echo "✅ package.json matches tag"
+          echo "package.json matches tag"
 
   create-tag:
     name: Create Git Tag
@@ -102,7 +102,7 @@ jobs:
           TAG="v${{ needs.validate-version.outputs.version }}"
 
           if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "⚠️ Tag $TAG already exists, skipping"
+            echo "Tag $TAG already exists, skipping"
             exit 0
           fi
 
@@ -110,7 +110,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
-          echo "✅ Created and pushed tag $TAG"
+          echo "Created and pushed tag $TAG"
 
   create-release:
     name: Create GitHub Release
@@ -125,84 +125,42 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Generate changelog
-        id: changelog
+      - name: Generate release body
         run: |
+          chmod +x scripts/generate-release-body.sh
           TAG="v${{ needs.validate-version.outputs.version }}"
-          PREV_TAG=$(git tag --sort=-v:refname | grep -v "$TAG" | head -1 || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-            COMMITS=$(git log --format="- %s (%h)" "$TAG" || echo "- Initial release")
-          else
-            COMMITS=$(git log --format="- %s (%h)" "$PREV_TAG..$TAG" || echo "")
-          fi
-
-          CHANGELOG="## Changes
-
-          $COMMITS
-
-          ## Installation
-
-          \`\`\`bash
-          git clone https://github.com/${{ github.repository }}.git
-          cd do-deal-relay
-          git checkout $TAG
-          npm install
-          \`\`\`
-
-          ## Deploy
-
-          \`\`\`bash
-          npm run build
-          npm run deploy
-          \`\`\`"
-
-          echo "body<<CHANGELOG_EOF" >> "$GITHUB_OUTPUT"
-          echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
-          echo "CHANGELOG_EOF" >> "$GITHUB_OUTPUT"
+          bash scripts/generate-release-body.sh "$TAG" "${{ github.repository }}" > release-body.md
 
       - name: Create GitHub Release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const tag = 'v${{ needs.validate-version.outputs.version }}';
-            const version = '${{ needs.validate-version.outputs.version }}';
-            const body = Buffer.from('${{ steps.changelog.outputs.body }}', 'base64').toString('utf-8');
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ needs.validate-version.outputs.version }}"
+          VERSION="${{ needs.validate-version.outputs.version }}"
 
-            // Check if release already exists
-            const existingReleases = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100
-            });
+          # Check if release already exists
+          EXISTING=$(gh release view "$TAG" --json id --jq '.id' 2>/dev/null || echo "")
 
-            const existingRelease = existingReleases.data.find(r => r.tag_name === tag);
-
-            if (existingRelease) {
-              console.log(`Release ${tag} already exists, updating...`);
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: existingRelease.id,
-                name: `Release ${tag}`,
-                body: body,
-                draft: false,
-                prerelease: version.includes('-')
-              });
-              console.log(`✅ Updated release ${tag}`);
-            } else {
-              await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: tag,
-                name: `Release ${tag}`,
-                body: body,
-                draft: false,
-                prerelease: version.includes('-'),
-                make_latest: true
-              });
-              console.log(`✅ Created release ${tag}`);
-            }
+          if [ -n "$EXISTING" ]; then
+            echo "Release $TAG already exists, updating..."
+            gh release edit "$TAG" \
+              --title "Release $TAG" \
+              --notes-file release-body.md \
+              --prerelease=false
+            echo "Updated release $TAG"
+          else
+            IS_PRERELEASE="false"
+            if echo "$VERSION" | grep -q '-'; then
+              IS_PRERELEASE="true"
+            fi
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes-file release-body.md \
+              --generate-notes=false \
+              --prerelease="$IS_PRERELEASE" \
+              --latest
+            echo "Created release $TAG"
+          fi
 
   deploy-production:
     name: Deploy to Production
@@ -236,7 +194,6 @@ jobs:
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
             const title = `Release ${tag} deployment failed`;
 
-            // Check for existing open issue
             const existingIssues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
