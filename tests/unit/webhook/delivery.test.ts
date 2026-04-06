@@ -17,7 +17,13 @@ import type {
 function createMockKv() {
   const storage = new Map<string, string>();
   return {
-    get: vi.fn(async (key: string) => storage.get(key) ?? null),
+    get: vi.fn(async (key: string, type?: string) => {
+      const value = storage.get(key) ?? null;
+      if (type === "json" && typeof value === "string") {
+        return JSON.parse(value);
+      }
+      return value;
+    }),
     put: vi.fn(async (key: string, value: string) => {
       storage.set(key, value);
     }),

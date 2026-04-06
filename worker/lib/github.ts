@@ -63,16 +63,21 @@ let githubCache: ReturnType<typeof createGitHubCache> | undefined;
 // Logger Helper
 // ============================================================================
 
-function getGitHubLogger() {
+function getGitHubLogger(env?: Env) {
   // Create a minimal env object for logger since we don't have full Env here
-  const mockEnv = {
-    DEALS_LOG: {} as KVNamespace,
-    DEALS_PROD: {} as KVNamespace,
-    DEALS_STAGING: {} as KVNamespace,
-    DEALS_SOURCES: {} as KVNamespace,
-    GITHUB_TOKEN: githubToken || "",
-  } as Env;
-  return createStructuredLogger(mockEnv, "github", `gh-${Date.now()}`);
+  const loggerEnv =
+    env ||
+    ({
+      DEALS_LOG: {
+        put: async () => {},
+        get: async () => null,
+      } as unknown as KVNamespace,
+      DEALS_PROD: {} as KVNamespace,
+      DEALS_STAGING: {} as KVNamespace,
+      DEALS_SOURCES: {} as KVNamespace,
+      GITHUB_TOKEN: githubToken || "",
+    } as Env);
+  return createStructuredLogger(loggerEnv, "github", `gh-${Date.now()}`);
 }
 
 /**
