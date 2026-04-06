@@ -6,6 +6,7 @@ import { validateDealFastPath } from "./validate-fast-path";
 import { recordValidationCacheMetric } from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
+import { fetchInBatches } from "../lib/utils";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -85,79 +86,50 @@ export async function validate(
     productionSnapshot?.deals.map((d) => d.id) || [],
   );
 
-  for (const deal of deals) {
-    const gateResults: Record<string, GateResult> = {};
-    let allPassed = true;
-    const failureReasons: string[] = [];
+  const validationResults = await fetchInBatches(
+    deals,
+    async (deal) => {
+      let allPassed = true;
+      const failureReasons: string[] = [];
+      const gateFailures: string[] = [];
+      let fastPathDecision = null;
+      let skipGates = false;
 
-    // Run fast-path check if enabled
-    let fastPathDecision = null;
-    let skipGates = false;
+      if (useCache) {
+        const fastPath = await validateDealFastPath(env, {
+          url: deal.url,
+          fingerprint: deal.id,
+          source: deal.source.domain,
+          traceId: ctx.trace_id,
+          metrics: ctx.metrics,
+        });
 
-    if (useCache) {
-      const fastPath = await validateDealFastPath(env, {
-        url: deal.url,
-        fingerprint: deal.id,
-        source: deal.source.domain,
-        traceId: ctx.trace_id,
-        metrics: ctx.metrics,
-      });
-
-      if (fastPath.hit && fastPath.decision) {
-        skipGates = true;
-        fastPathDecision = fastPath.decision;
-      } else {
-        fastPathDecision = fastPath; // contains persist function
-      }
-    }
-
-    // Run each gate
-    if (!skipGates) {
-      for (const gate of VALIDATION_GATES) {
-        const gateResult = await runGate(gate, deal, ctx, existingDealIds);
-        gateResults[gate] = gateResult;
-
-        if (!gateResult.passed) {
-          allPassed = false;
-          failureReasons.push(`${gate}: ${gateResult.reason}`);
-          result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+        if (fastPath.hit && fastPath.decision) {
+          skipGates = true;
+          fastPathDecision = fastPath.decision;
+        } else {
+          fastPathDecision = fastPath;
         }
       }
-    }
 
-    if (skipGates && fastPathDecision && "status" in fastPathDecision) {
-      allPassed = fastPathDecision.status === "accepted";
-      if (!allPassed) {
-        failureReasons.push(`cached_rejection: ${fastPathDecision.reason}`);
-      }
-    }
-
-    if (allPassed) {
-      // Persist to cache if it was a miss
-      if (
-        useCache &&
-        fastPathDecision &&
-        "persist" in fastPathDecision &&
-        fastPathDecision.persist
-      ) {
-        await fastPathDecision.persist({
-          status: "accepted",
-          trustScore: deal.source.trust_score,
-        });
+      if (!skipGates) {
+        for (const gate of VALIDATION_GATES) {
+          const gateResult = await runGate(gate, deal, ctx, existingDealIds);
+          if (!gateResult.passed) {
+            allPassed = false;
+            failureReasons.push(`${gate}: ${gateResult.reason}`);
+            gateFailures.push(gate);
+          }
+        }
       }
 
-      // Check for quarantine conditions
-      if (shouldQuarantine(deal)) {
-        deal.metadata.status = "quarantined";
-        result.quarantined.push(deal);
-        result.stats.quarantined++;
-      } else {
-        deal.metadata.status = "active";
-        result.valid.push(deal);
-        result.stats.valid++;
+      if (skipGates && fastPathDecision && "status" in fastPathDecision) {
+        allPassed = fastPathDecision.status === "accepted";
+        if (!allPassed) {
+          failureReasons.push(`cached_rejection: ${fastPathDecision.reason}`);
+        }
       }
-    } else {
-      // Persist to cache if it was a miss
+
       if (
         useCache &&
         fastPathDecision &&
@@ -168,14 +140,43 @@ export async function validate(
           (r) => r.includes("Deduplication Check") || r.includes("duplicate"),
         );
         await fastPathDecision.persist({
-          status: isDuplicate ? "duplicate" : "rejected",
-          reason: failureReasons.join("; "),
+          status: allPassed
+            ? "accepted"
+            : isDuplicate
+              ? "duplicate"
+              : "rejected",
+          reason: allPassed ? undefined : failureReasons.join("; "),
           trustScore: deal.source.trust_score,
         });
       }
 
-      deal.metadata.status = "rejected";
-      result.invalid.push({ deal, reasons: failureReasons });
+      const isQuarantined = allPassed && shouldQuarantine(deal);
+      if (allPassed) {
+        deal.metadata.status = isQuarantined ? "quarantined" : "active";
+      } else {
+        deal.metadata.status = "rejected";
+      }
+
+      return { deal, allPassed, failureReasons, gateFailures, isQuarantined };
+    },
+    10, // Max 10 concurrent deals to stay under 50 subrequest limit (each deal does ~3 lookups)
+  );
+
+  for (const r of validationResults) {
+    r.gateFailures.forEach((gate) => {
+      result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+    });
+
+    if (r.allPassed) {
+      if (r.isQuarantined) {
+        result.quarantined.push(r.deal);
+        result.stats.quarantined++;
+      } else {
+        result.valid.push(r.deal);
+        result.stats.valid++;
+      }
+    } else {
+      result.invalid.push({ deal: r.deal, reasons: r.failureReasons });
       result.stats.invalid++;
     }
   }

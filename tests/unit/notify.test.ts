@@ -24,6 +24,7 @@ describe("Notification System", () => {
       DEALS_STAGING: {} as KVNamespace,
       DEALS_LOG: {
         get: vi.fn(async () => []),
+        put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
       DEALS_LOCK: {} as KVNamespace,
       DEALS_SOURCES: {} as KVNamespace,
