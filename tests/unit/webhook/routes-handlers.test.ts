@@ -267,12 +267,9 @@ describe("Webhook Route Handlers", () => {
     it("should return 404 for nonexistent partner", async () => {
       const env = createEnv(kv);
       kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
-      const request = createRequest(
-        "GET",
-        "http://localhost/test",
-        undefined,
-        { "X-API-Key": "valid-key" },
-      );
+      const request = createRequest("GET", "http://localhost/test", undefined, {
+        "X-API-Key": "valid-key",
+      });
       const response = await handleGetPartner(request, env, "nonexistent");
       expect(response.status).toBe(404);
     });
@@ -293,12 +290,9 @@ describe("Webhook Route Handlers", () => {
     it("should return empty DLQ", async () => {
       const env = createEnv(kv);
       kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
-      const request = createRequest(
-        "GET",
-        "http://localhost/test",
-        undefined,
-        { "X-API-Key": "valid-key" },
-      );
+      const request = createRequest("GET", "http://localhost/test", undefined, {
+        "X-API-Key": "valid-key",
+      });
       const response = await handleGetDeadLetterQueue(request, env);
       expect(response.status).toBe(200);
     });
@@ -400,12 +394,9 @@ describe("Webhook Route Handlers", () => {
     it("should return 404 when no sync state exists", async () => {
       const env = createEnv(kv);
       kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
-      const request = createRequest(
-        "GET",
-        "http://localhost/test",
-        undefined,
-        { "X-API-Key": "valid-key" },
-      );
+      const request = createRequest("GET", "http://localhost/test", undefined, {
+        "X-API-Key": "valid-key",
+      });
       const response = await handleGetSyncState(request, env, "p1");
       expect(response.status).toBe(404);
     });
