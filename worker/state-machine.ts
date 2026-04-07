@@ -446,8 +446,11 @@ export async function getPipelineStatus(env: Env): Promise<{
   const { getLockStatus } = await import("./lib/lock");
   const { getLastRunMetadata } = await import("./lib/storage");
 
-  const lockStatus = await getLockStatus(env);
-  const lastRun = await getLastRunMetadata(env);
+  // Optimization: Parallelize lock status and metadata retrieval
+  const [lockStatus, lastRun] = await Promise.all([
+    getLockStatus(env),
+    getLastRunMetadata(env),
+  ]);
 
   return {
     locked: lockStatus.locked,

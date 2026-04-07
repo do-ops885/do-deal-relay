@@ -12,10 +12,13 @@ import type { Env, HealthStatus } from "../../types";
 import { jsonResponse } from "../utils";
 
 export async function handleHealth(env: Env): Promise<Response> {
-  const snapshot = await getProductionSnapshot(env);
-  const status = await getPipelineStatus(env);
-
-  const logs = await getRecentLogs(env, 100);
+  // Optimization: Parallelize snapshot, status and log retrieval
+  // This reduces latency by performing independent I/O operations concurrently
+  const [snapshot, status, logs] = await Promise.all([
+    getProductionSnapshot(env),
+    getPipelineStatus(env),
+    getRecentLogs(env, 100),
+  ]);
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
     (l) => l.phase === "finalize" && l.status === "complete",
@@ -73,8 +76,11 @@ export async function handleMetrics(
   env: Env,
   format: string = "prometheus",
 ): Promise<Response> {
-  const snapshot = await getProductionSnapshot(env);
-  const logs = await getRecentLogs(env, 1000);
+  // Optimization: Parallelize snapshot and log retrieval to reduce total latency
+  const [snapshot, logs] = await Promise.all([
+    getProductionSnapshot(env),
+    getRecentLogs(env, 1000),
+  ]);
 
   const runs = logs.filter((l) => l.phase === "finalize").length;
   const successes = logs.filter(
