@@ -123,8 +123,10 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to list subscriptions handler", async () => {
       const env = createEnv(kv);
+      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
       const request = new Request("http://localhost/webhooks/subscriptions", {
         method: "GET",
+        headers: { "X-API-Key": "valid-key" },
       });
       const result = await handleWebhookRoutes(
         request,
@@ -161,8 +163,10 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to DLQ handler", async () => {
       const env = createEnv(kv);
+      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
       const request = new Request("http://localhost/webhooks/dlq", {
         method: "GET",
+        headers: { "X-API-Key": "valid-key" },
       });
       const result = await handleWebhookRoutes(request, env, "/webhooks/dlq");
       expect(result).not.toBeNull();

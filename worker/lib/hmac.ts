@@ -88,7 +88,7 @@ export async function verifyHmacSignature(
 /**
  * Constant-time string comparison to prevent timing attacks
  */
-function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }

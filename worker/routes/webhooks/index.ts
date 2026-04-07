@@ -50,19 +50,19 @@ export async function handleWebhookRoutes(
 
   if (path.startsWith("/webhooks/partners/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/partners/", "").split("/")[0];
-    return handleGetPartner(env, partnerId);
+    return handleGetPartner(request, env, partnerId);
   }
 
   // Dead letter queue management
   if (path === "/webhooks/dlq" && request.method === "GET") {
-    return handleGetDeadLetterQueue(env);
+    return handleGetDeadLetterQueue(request, env);
   }
 
   if (path.startsWith("/webhooks/dlq/") && request.method === "POST") {
     const parts = path.replace("/webhooks/dlq/", "").split("/");
     const eventId = parts[0];
     const subscriptionId = parts[1];
-    return handleRetryDeadLetter(env, eventId, subscriptionId);
+    return handleRetryDeadLetter(request, env, eventId, subscriptionId);
   }
 
   // Bidirectional sync
@@ -72,7 +72,7 @@ export async function handleWebhookRoutes(
 
   if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
-    return handleGetSyncState(env, partnerId);
+    return handleGetSyncState(request, env, partnerId);
   }
 
   // Not a webhook route

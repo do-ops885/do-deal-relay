@@ -5,6 +5,7 @@
 import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
+import { timingSafeEqual } from "../../lib/hmac";
 import {
   createSubscription,
   deleteSubscription,
@@ -42,14 +43,14 @@ async function validateApiKey(request: Request, env: Env): Promise<boolean> {
   const keysData = await env.WEBHOOK_API_KEYS?.get("api-keys");
   const allowedKeys = keysData ? (JSON.parse(keysData) as string[]) : [];
 
-  // In production, use constant-time comparison to prevent timing attacks
-  return allowedKeys.includes(apiKey);
+  // Secure constant-time comparison to prevent timing attacks
+  return allowedKeys.some((key) => timingSafeEqual(key, apiKey));
 }
 
 /**
  * Middleware to require API key authentication
  */
-async function requireAuth(
+export async function requireAuth(
   request: Request,
   env: Env,
 ): Promise<Response | null> {
@@ -193,6 +194,10 @@ export async function handleListSubscriptions(
   env: Env,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const url = new URL(request.url);
     const partnerId = url.searchParams.get("partner_id") || "default";
 
@@ -279,10 +284,15 @@ export async function handleCreatePartner(
 }
 
 export async function handleGetPartner(
+  request: Request,
   env: Env,
   partnerId: string,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const partner = await getWebhookPartner(env, partnerId);
 
     if (!partner) {
@@ -315,8 +325,15 @@ export async function handleGetPartner(
 // Dead Letter Queue
 // ============================================================================
 
-export async function handleGetDeadLetterQueue(env: Env): Promise<Response> {
+export async function handleGetDeadLetterQueue(
+  request: Request,
+  env: Env,
+): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const dlq = await getDeadLetterQueue(env);
 
     return jsonResponse({
@@ -343,11 +360,16 @@ export async function handleGetDeadLetterQueue(env: Env): Promise<Response> {
 }
 
 export async function handleRetryDeadLetter(
+  request: Request,
   env: Env,
   eventId: string,
   subscriptionId: string,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const success = await retryDeadLetterEvent(env, eventId, subscriptionId);
 
     if (!success) {
