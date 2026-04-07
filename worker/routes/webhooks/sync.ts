@@ -5,6 +5,7 @@
 import type { Env } from "../../types";
 import { handleError } from "../../lib/error-handler";
 import { createSyncConfig, getSyncState } from "../../lib/webhook/index";
+import { requireAuth } from "./subscriptions";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
 // ============================================================================
@@ -16,6 +17,10 @@ export async function handleCreateSyncConfig(
   env: Env,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const body = (await request.json()) as CreateSyncConfigRequest;
 
     if (!body.partner_id || !body.direction || !body.mode) {
@@ -62,10 +67,15 @@ export async function handleCreateSyncConfig(
 }
 
 export async function handleGetSyncState(
+  request: Request,
   env: Env,
   partnerId: string,
 ): Promise<Response> {
   try {
+    // Check API key authentication
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
     const state = await getSyncState(env, partnerId);
 
     if (!state) {
