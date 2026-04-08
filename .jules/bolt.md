@@ -9,3 +9,7 @@
 ## 2026-04-07 - Parallelize independent async calls in Worker routes
 **Learning:** Worker route handlers often perform multiple independent asynchronous operations (e.g., fetching snapshots, status, and logs) sequentially. This results in additive latency that can be easily avoided when these operations do not depend on each other's results.
 **Action:** Identify independent asynchronous operations and group them using `Promise.all` to perform them concurrently. This reduces total response latency to the duration of the slowest single operation rather than the sum of all operations.
+
+## 2026-04-08 - Parallelize referral storage operations
+**Learning:** Referral search and maintenance operations (fetching objects from index keys, deactivating expired entries) were performing sequential KV operations in loops. Using `fetchInBatches` and `executeInBatches` reduces latency from O(N) to O(N/batchSize) while ensuring stability via defensive null checks and `allSettled` handling.
+**Action:** Apply `fetchInBatches` for retrieval and `executeInBatches` for bulk updates. Always include defensive null checks (e.g., `filter(r => r && r.status === status)`) when processing batched results to handle potential KV inconsistencies or race conditions.

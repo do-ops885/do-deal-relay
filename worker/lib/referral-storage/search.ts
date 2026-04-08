@@ -2,6 +2,7 @@ import { ReferralInput, ReferralResearchResult, Deal } from "../../types";
 import type { Env } from "../../types";
 import { REFERRAL_KEYS } from "./types";
 import { getReferralById } from "./crud";
+import { fetchInBatches, executeInBatches } from "../utils";
 
 // ============================================================================
 // Search and Query Operations
@@ -9,6 +10,7 @@ import { getReferralById } from "./crud";
 
 /**
  * Get all referrals for a domain
+ * Optimization: Parallel batch fetch instead of sequential loop
  */
 export async function getReferralsByDomain(
   env: Env,
@@ -22,17 +24,12 @@ export async function getReferralsByDomain(
 
   if (!index || !index[domain]) return [];
 
-  const referrals: ReferralInput[] = [];
-  for (const id of index[domain]) {
-    const referral = await getReferralById(env, id);
-    if (referral) referrals.push(referral);
-  }
-
-  return referrals;
+  return fetchInBatches(index[domain], (id) => getReferralById(env, id));
 }
 
 /**
  * Get referrals by status
+ * Optimization: Parallel batch fetch instead of sequential loop
  */
 export async function getReferralsByStatus(
   env: Env,
@@ -46,15 +43,9 @@ export async function getReferralsByStatus(
 
   if (!ids) return [];
 
-  const referrals: ReferralInput[] = [];
-  for (const id of ids) {
-    const referral = await getReferralById(env, id);
-    if (referral && referral.status === status) {
-      referrals.push(referral);
-    }
-  }
-
-  return referrals;
+  // fetchInBatches automatically filters out null/undefined results
+  const referrals = await fetchInBatches(ids, (id) => getReferralById(env, id));
+  return referrals.filter((r) => r && r.status === status);
 }
 
 /**
@@ -77,11 +68,13 @@ export async function searchReferrals(
   if (filters.status && filters.status !== "all") {
     referrals = await getReferralsByStatus(env, filters.status);
   } else {
-    // Get all - iterate through indices
-    const active = await getReferralsByStatus(env, "active");
-    const inactive = await getReferralsByStatus(env, "inactive");
-    const expired = await getReferralsByStatus(env, "expired");
-    const quarantined = await getReferralsByStatus(env, "quarantined");
+    // Get all - Optimization: Parallelize retrieval of all statuses
+    const [active, inactive, expired, quarantined] = await Promise.all([
+      getReferralsByStatus(env, "active"),
+      getReferralsByStatus(env, "inactive"),
+      getReferralsByStatus(env, "expired"),
+      getReferralsByStatus(env, "quarantined"),
+    ]);
     referrals = [...active, ...inactive, ...expired, ...quarantined];
   }
 
@@ -219,21 +212,24 @@ export async function getActiveReferralsAsDeals(env: Env): Promise<Deal[]> {
 
 /**
  * Bulk deactivate expired referrals
+ * Optimization: Parallel batch execution instead of sequential loop
  */
 export async function deactivateExpiredReferrals(env: Env): Promise<number> {
   const activeReferrals = await getReferralsByStatus(env, "active");
   const now = new Date();
-  let deactivatedCount = 0;
+  const expiredReferrals = activeReferrals.filter(
+    (r) => r.expires_at && new Date(r.expires_at) < now,
+  );
 
-  for (const referral of activeReferrals) {
-    if (referral.expires_at && new Date(referral.expires_at) < now) {
-      const { updateReferralStatus } = await import("./crud");
-      if (referral.id) {
-        await updateReferralStatus(env, referral.id, "expired", "expired");
-        deactivatedCount++;
-      }
+  if (expiredReferrals.length === 0) return 0;
+
+  const { updateReferralStatus } = await import("./crud");
+
+  const result = await executeInBatches(expiredReferrals, async (referral) => {
+    if (referral.id) {
+      await updateReferralStatus(env, referral.id, "expired", "expired");
     }
-  }
+  });
 
-  return deactivatedCount;
+  return result.success;
 }
