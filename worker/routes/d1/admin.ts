@@ -27,12 +27,15 @@ export async function authenticateD1Request(
     return false;
   }
 
-  // If WEBHOOK_API_KEYS is configured, validate against it
-  if (env.WEBHOOK_API_KEYS) {
-    const validKey = await env.WEBHOOK_API_KEYS.get(`apikey:${apiKey}`);
-    if (!validKey) {
-      return false;
-    }
+  // Require WEBHOOK_API_KEYS to be configured for all non-health requests
+  if (!env.WEBHOOK_API_KEYS) {
+    return false;
+  }
+
+  // Validate API key against stored keys
+  const validKey = await env.WEBHOOK_API_KEYS.get(`apikey:${apiKey}`);
+  if (!validKey) {
+    return false;
   }
 
   return true;
