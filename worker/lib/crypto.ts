@@ -82,10 +82,18 @@ export function calculateStringSimilarity(a: string, b: string): number {
   const setA = getBigrams(strA);
   const setB = getBigrams(strB);
 
-  const intersection = new Set([...setA].filter((x) => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
+  // Performance optimization: Calculate intersection size directly to avoid additional Set/Array allocations
+  // Uses the Inclusion-Exclusion Principle: |A ∪ B| = |A| + |B| - |A ∩ B|
+  let intersectionSize = 0;
+  const [smaller, larger] = setA.size < setB.size ? [setA, setB] : [setB, setA];
+  for (const item of smaller) {
+    if (larger.has(item)) {
+      intersectionSize++;
+    }
+  }
 
-  return intersection.size / union.size;
+  const unionSize = setA.size + setB.size - intersectionSize;
+  return intersectionSize / unionSize;
 }
 
 /**

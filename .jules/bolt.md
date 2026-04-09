@@ -13,3 +13,7 @@
 ## 2026-04-08 - Parallelize referral storage operations
 **Learning:** Referral search and maintenance operations (fetching objects from index keys, deactivating expired entries) were performing sequential KV operations in loops. Using `fetchInBatches` and `executeInBatches` reduces latency from O(N) to O(N/batchSize) while ensuring stability via defensive null checks and `allSettled` handling.
 **Action:** Apply `fetchInBatches` for retrieval and `executeInBatches` for bulk updates. Always include defensive null checks (e.g., `filter(r => r && r.status === status)`) when processing batched results to handle potential KV inconsistencies or race conditions.
+
+## 2026-04-09 - Optimize Jaccard similarity computation
+**Learning:** The `calculateStringSimilarity` function, used in O(N^2) deduplication and search loops, was creating five intermediate collections (3 arrays, 2 sets) per call. This caused high garbage collection pressure and redundant iterations.
+**Action:** Directly calculate intersection size by iterating over the smaller set and use the Inclusion-Exclusion Principle (|A ∪ B| = |A| + |B| - |A ∩ B|) to derive union size. This reduces memory allocation from O(N) to O(1) per similarity check and eliminates redundant passes.
