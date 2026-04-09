@@ -164,13 +164,6 @@ export async function authenticateRequest(
   request: Request,
   env: Env,
 ): Promise<AuthResult> {
-  // Skip auth if no API keys configured
-  const hasKeys = await env.DEALS_SOURCES.list({ prefix: "apikey:" });
-  if (hasKeys.keys.length === 0) {
-    // No keys configured - allow all (development mode)
-    return { authenticated: true, userId: "anonymous", role: "admin" };
-  }
-
   const apiKey = extractApiKey(request);
   if (!apiKey) {
     return { authenticated: false, error: "Missing API key" };
