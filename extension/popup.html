@@ -435,6 +435,30 @@
       .hidden {
         display: none !important;
       }
+
+      /* Focus visibility */
+      :focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
+      }
+
+      .btn:focus-visible,
+      .detection-item:focus-visible,
+      .manual-input:focus-visible,
+      .settings-input:focus-visible,
+      .footer-link:focus-visible,
+      .settings-btn:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
+      }
+
+      /* Detection items as buttons */
+      .detection-item {
+        width: 100%;
+        text-align: left;
+        border-width: 2px;
+        font-family: inherit;
+      }
     </style>
   </head>
   <body>
@@ -477,6 +501,7 @@
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
         <div class="section-title">✏️ Manual Entry</div>
+        <label for="manual-code" class="settings-label">Referral Code</label>
         <input
           type="text"
           class="manual-input"
@@ -492,7 +517,7 @@
       <div class="section settings-panel" id="settings-panel">
         <div class="section-title">⚙️ Settings</div>
         <div class="settings-field">
-          <label class="settings-label">API Endpoint</label>
+          <label class="settings-label" for="api-endpoint">API Endpoint</label>
           <input
             type="text"
             class="settings-input"
@@ -526,8 +551,21 @@
     </div>
 
     <div class="footer">
-      <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <a
+        href="#"
+        class="footer-link"
+        id="settings-link"
+        role="button"
+        tabindex="0"
+        >Settings</a
+      >
+      <button
+        class="settings-btn"
+        id="refresh-btn"
+        aria-label="Refresh detections"
+      >
+        🔄
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>

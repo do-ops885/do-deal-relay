@@ -201,7 +201,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "detection-item";
       item.dataset.index = i.toString();
 
@@ -452,6 +453,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.settingsLink.addEventListener("click", (e) => {
       e.preventDefault();
       toggleSettings();
+    });
+
+    elements.settingsLink.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleSettings();
+      }
     });
 
     elements.saveSettingsBtn.addEventListener("click", saveSettings);
