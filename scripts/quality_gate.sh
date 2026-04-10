@@ -67,8 +67,8 @@ if command -v yamllint >/dev/null 2>&1; then
         ERRORS+=("$yamllint_output")
     fi
 else
-    # Fallback: Basic YAML syntax check with Python
-    if command -v python3 >/dev/null 2>&1; then
+    # Fallback: Basic YAML syntax check with Python (only if PyYAML is available)
+    if command -v python3 >/dev/null 2>&1 && python3 -c "import yaml" >/dev/null 2>&1; then
         yaml_errors=0
         while IFS= read -r -d '' file; do
             if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
