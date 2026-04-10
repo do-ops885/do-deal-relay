@@ -17,11 +17,14 @@ export interface RankOptions {
 }
 
 /**
- * Calculate deal score for ranking
- * Composite score based on multiple factors
+ * Calculate detailed deal score with breakdown
+ * Performance optimization: Single pass for both total and breakdown
  */
-export function calculateDealScore(deal: Deal): number {
-  const scores = {
+export function calculateDetailedScore(deal: Deal): {
+  score: number;
+  breakdown: Record<string, number>;
+} {
+  const breakdown = {
     confidence: deal.metadata.confidence_score * 100,
     trust: deal.source.trust_score * 100,
     recency: calculateRecencyScore(deal.source.discovered_at),
@@ -30,18 +33,23 @@ export function calculateDealScore(deal: Deal): number {
   };
 
   // Weighted composite score
-  const weights = {
-    confidence: 0.25,
-    trust: 0.2,
-    recency: 0.2,
-    value: 0.2,
-    expiry: 0.15,
-  };
+  // Performance optimization: Direct summation avoids Object.entries() and reduce() allocations
+  const score =
+    breakdown.confidence * 0.25 +
+    breakdown.trust * 0.2 +
+    breakdown.recency * 0.2 +
+    breakdown.value * 0.2 +
+    breakdown.expiry * 0.15;
 
-  return Object.entries(scores).reduce(
-    (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-    0,
-  );
+  return { score, breakdown };
+}
+
+/**
+ * Calculate deal score for ranking
+ * Composite score based on multiple factors
+ */
+export function calculateDealScore(deal: Deal): number {
+  return calculateDetailedScore(deal).score;
 }
 
 /**
@@ -222,17 +230,15 @@ export function rankDeals(
   const sorted = sortDeals(filtered, options.sortBy, options.order);
 
   // Calculate scores with breakdown
-  const scores = sorted.map((deal) => ({
-    dealId: deal.id,
-    score: calculateDealScore(deal),
-    breakdown: {
-      confidence: deal.metadata.confidence_score * 100,
-      trust: deal.source.trust_score * 100,
-      recency: calculateRecencyScore(deal.source.discovered_at),
-      value: calculateValueScore(deal.reward),
-      expiry: calculateExpiryScore(deal.expiry.date),
-    },
-  }));
+  // Performance optimization: Use calculateDetailedScore to avoid doubling component calculations
+  const scores = sorted.map((deal) => {
+    const { score, breakdown } = calculateDetailedScore(deal);
+    return {
+      dealId: deal.id,
+      score,
+      breakdown,
+    };
+  });
 
   // Apply limit
   const limited = options.limit ? sorted.slice(0, options.limit) : sorted;
