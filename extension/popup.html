@@ -187,6 +187,9 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
       }
 
       .detection-item:hover {
@@ -281,6 +284,7 @@
         margin-bottom: 10px;
         font-family: "Courier New", monospace;
         transition: border-color 0.2s;
+        text-transform: uppercase;
       }
 
       .manual-input:focus {
@@ -348,6 +352,11 @@
         color: #4f46e5;
         text-decoration: none;
         font-weight: 500;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-family: inherit;
       }
 
       .footer-link:hover {
@@ -435,6 +444,23 @@
       .hidden {
         display: none !important;
       }
+
+      /* Accessibility Focus States */
+      :focus-visible {
+        outline: 3px solid #4f46e5;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+      }
+
+      .detection-item:focus-visible {
+        border-color: #4f46e5;
+      }
+
+      .btn:focus-visible,
+      .settings-btn:focus-visible,
+      .footer-link:focus-visible {
+        outline-offset: 4px;
+      }
     </style>
   </head>
   <body>
@@ -455,7 +481,7 @@
           </div>
         </div>
 
-        <div class="scan-status" id="scan-status">
+        <div class="scan-status" id="scan-status" aria-live="polite">
           <div class="status-indicator scanning"></div>
           <span class="status-text">Scanning for referral codes...</span>
         </div>
@@ -476,12 +502,15 @@
 
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
-        <div class="section-title">✏️ Manual Entry</div>
+        <label for="manual-code" class="section-title">✏️ Manual Entry</label>
         <input
           type="text"
           class="manual-input"
           id="manual-code"
           placeholder="Enter referral code..."
+          autocapitalize="characters"
+          autocorrect="off"
+          spellcheck="false"
         />
         <button class="btn btn-secondary" id="manual-btn">
           Add Code Manually
@@ -526,8 +555,12 @@
     </div>
 
     <div class="footer">
-      <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <button type="button" class="footer-link" id="settings-link">
+        Settings
+      </button>
+      <button class="settings-btn" id="refresh-btn" aria-label="Refresh">
+        🔄
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>
