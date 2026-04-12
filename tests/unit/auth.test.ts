@@ -593,15 +593,14 @@ describe("Auth", () => {
       });
     };
 
-    it("should allow all requests when no API keys configured", async () => {
+    it("should reject all requests when no API keys configured", async () => {
       mockList.mockResolvedValue({ keys: [] });
 
       const request = createRequest();
       const result = await authenticateRequest(request, mockEnv);
 
-      expect(result.authenticated).toBe(true);
-      expect(result.userId).toBe("anonymous");
-      expect(result.role).toBe("admin");
+      expect(result.authenticated).toBe(false);
+      expect(result.error).toBe("Missing API key");
     });
 
     it("should reject request with missing API key", async () => {
