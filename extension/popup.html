@@ -187,6 +187,10 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        color: inherit;
       }
 
       .detection-item:hover {
@@ -197,6 +201,15 @@
       .detection-item.selected {
         border-color: #4f46e5;
         background: #eef2ff;
+      }
+
+      .detection-item:focus-visible,
+      .btn:focus-visible,
+      .manual-input:focus-visible,
+      .settings-input:focus-visible,
+      .settings-btn:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
       }
 
       .detection-info {
@@ -281,6 +294,7 @@
         margin-bottom: 10px;
         font-family: "Courier New", monospace;
         transition: border-color 0.2s;
+        text-transform: uppercase;
       }
 
       .manual-input:focus {
@@ -435,6 +449,18 @@
       .hidden {
         display: none !important;
       }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
     </style>
   </head>
   <body>
@@ -455,7 +481,7 @@
           </div>
         </div>
 
-        <div class="scan-status" id="scan-status">
+        <div class="scan-status" id="scan-status" aria-live="polite">
           <div class="status-indicator scanning"></div>
           <span class="status-text">Scanning for referral codes...</span>
         </div>
@@ -477,11 +503,15 @@
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
         <div class="section-title">✏️ Manual Entry</div>
+        <label for="manual-code" class="sr-only">Referral Code</label>
         <input
           type="text"
           class="manual-input"
           id="manual-code"
           placeholder="Enter referral code..."
+          autocapitalize="characters"
+          autocorrect="off"
+          spellcheck="false"
         />
         <button class="btn btn-secondary" id="manual-btn">
           Add Code Manually
@@ -492,7 +522,7 @@
       <div class="section settings-panel" id="settings-panel">
         <div class="section-title">⚙️ Settings</div>
         <div class="settings-field">
-          <label class="settings-label">API Endpoint</label>
+          <label class="settings-label" for="api-endpoint">API Endpoint</label>
           <input
             type="text"
             class="settings-input"
