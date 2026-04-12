@@ -1,6 +1,5 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
-import { getProductionSnapshot } from "../lib/storage";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -35,7 +34,7 @@ interface ScoringResult {
 export async function score(
   deals: Deal[],
   ctx: PipelineContext,
-  env: Env,
+  _env: Env,
 ): Promise<ScoringResult> {
   const scoredDeals: ScoredDeal[] = [];
   let totalConfidence = 0;
@@ -43,9 +42,8 @@ export async function score(
   let maxConfidence = -Infinity;
   let highValueCount = 0;
 
-  // Get production deals for diversity calculation
-  const prodSnapshot = await getProductionSnapshot(env);
-  const allDeals = [...(prodSnapshot?.deals || []), ...deals];
+  // Performance Optimization: Removed redundant getProductionSnapshot(env) call
+  // as it was unused and incurred unnecessary KV I/O.
 
   // Calculate source diversity
   const diversityScore = calculateSourceDiversity(deals);
@@ -58,6 +56,15 @@ export async function score(
     totalCandidates,
   );
 
+  // Performance Optimization: Hoist weights and pre-calculate duplicate frequency map
+  // to reduce O(N²) complexity to O(N) in the scoring loop.
+  const weights = CONFIG.SCORING_WEIGHTS;
+  const duplicateMap = new Map<string, number>();
+  for (const d of ctx.deduped) {
+    const key = `${d.source.domain}:${d.code}`;
+    duplicateMap.set(key, (duplicateMap.get(key) || 0) + 1);
+  }
+
   for (const deal of deals) {
     // Calculate individual scores
     const validityScore = 1.0; // Already passed validation
@@ -66,10 +73,12 @@ export async function score(
     const expiryScore = deal.expiry.confidence;
 
     // Calculate duplicate penalty
-    const duplicatePenalty = calculateDuplicatePenalty(deal, ctx);
+    const duplicatePenalty = calculateOptimizedDuplicatePenalty(
+      deal,
+      duplicateMap,
+    );
 
     // Calculate final confidence score
-    const weights = CONFIG.SCORING_WEIGHTS;
     const confidenceScore =
       validityScore * weights.validity_ratio +
       uniquenessScore * weights.uniqueness_score +
@@ -183,22 +192,18 @@ function calculateRewardPlausibility(deal: Deal): number {
 }
 
 /**
- * Calculate duplicate penalty for a deal
+ * Calculate duplicate penalty for a deal using pre-calculated frequency map
+ * Complexity: O(1) lookup
  */
-function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
-  // Check if similar deal exists in this batch
-  const similarInBatch = ctx.deduped.filter(
-    (d) =>
-      d.id !== deal.id &&
-      d.source.domain === deal.source.domain &&
-      d.code === deal.code,
-  );
+function calculateOptimizedDuplicatePenalty(
+  deal: Deal,
+  duplicateMap: Map<string, number>,
+): number {
+  const key = `${deal.source.domain}:${deal.code}`;
+  const count = duplicateMap.get(key) || 0;
 
-  if (similarInBatch.length > 0) {
-    return 0.5; // Penalty for duplicates
-  }
-
-  return 0.0;
+  // If more than one deal with same domain:code exists in deduped set
+  return count > 1 ? 0.5 : 0.0;
 }
 
 /**
