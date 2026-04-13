@@ -29,18 +29,13 @@ export function calculateDealScore(deal: Deal): number {
     expiry: calculateExpiryScore(deal.expiry.date),
   };
 
-  // Weighted composite score
-  const weights = {
-    confidence: 0.25,
-    trust: 0.2,
-    recency: 0.2,
-    value: 0.2,
-    expiry: 0.15,
-  };
-
-  return Object.entries(scores).reduce(
-    (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-    0,
+  // Optimization: Direct summation avoids intermediate array and object allocations in hot path
+  return (
+    scores.confidence * 0.25 +
+    scores.trust * 0.2 +
+    scores.recency * 0.2 +
+    scores.value * 0.2 +
+    scores.expiry * 0.15
   );
 }
 

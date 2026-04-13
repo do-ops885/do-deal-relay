@@ -1,6 +1,5 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
-import { getProductionSnapshot } from "../lib/storage";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -43,10 +42,6 @@ export async function score(
   let maxConfidence = -Infinity;
   let highValueCount = 0;
 
-  // Get production deals for diversity calculation
-  const prodSnapshot = await getProductionSnapshot(env);
-  const allDeals = [...(prodSnapshot?.deals || []), ...deals];
-
   // Calculate source diversity
   const diversityScore = calculateSourceDiversity(deals);
 
@@ -58,6 +53,16 @@ export async function score(
     totalCandidates,
   );
 
+  // Optimization: Hoist scoring weights outside the loop
+  const weights = CONFIG.SCORING_WEIGHTS;
+
+  // Optimization: Pre-calculate duplicate counts to avoid O(N^2) penalty check
+  const duplicateCounts = new Map<string, number>();
+  for (const d of ctx.deduped) {
+    const key = `${d.source.domain}:${d.code}`;
+    duplicateCounts.set(key, (duplicateCounts.get(key) || 0) + 1);
+  }
+
   for (const deal of deals) {
     // Calculate individual scores
     const validityScore = 1.0; // Already passed validation
@@ -65,11 +70,13 @@ export async function score(
     const rewardPlausibility = calculateRewardPlausibility(deal);
     const expiryScore = deal.expiry.confidence;
 
-    // Calculate duplicate penalty
-    const duplicatePenalty = calculateDuplicatePenalty(deal, ctx);
+    // Calculate duplicate penalty (O(1) lookup)
+    const duplicatePenalty =
+      (duplicateCounts.get(`${deal.source.domain}:${deal.code}`) || 0) > 1
+        ? 0.5
+        : 0.0;
 
     // Calculate final confidence score
-    const weights = CONFIG.SCORING_WEIGHTS;
     const confidenceScore =
       validityScore * weights.validity_ratio +
       uniquenessScore * weights.uniqueness_score +
@@ -180,25 +187,6 @@ function calculateRewardPlausibility(deal: Deal): number {
   if (reward.type === "item") return 0.8;
 
   return 0.8;
-}
-
-/**
- * Calculate duplicate penalty for a deal
- */
-function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
-  // Check if similar deal exists in this batch
-  const similarInBatch = ctx.deduped.filter(
-    (d) =>
-      d.id !== deal.id &&
-      d.source.domain === deal.source.domain &&
-      d.code === deal.code,
-  );
-
-  if (similarInBatch.length > 0) {
-    return 0.5; // Penalty for duplicates
-  }
-
-  return 0.0;
 }
 
 /**
