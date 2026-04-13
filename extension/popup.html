@@ -179,6 +179,7 @@
 
       .detection-item {
         display: flex;
+        width: 100%;
         align-items: center;
         justify-content: space-between;
         padding: 12px;
@@ -187,11 +188,19 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        text-align: left;
+        font-family: inherit;
       }
 
       .detection-item:hover {
         border-color: #6366f1;
         background: #eef2ff;
+      }
+
+      .detection-item:focus-visible {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
       }
 
       .detection-item.selected {
