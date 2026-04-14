@@ -179,6 +179,8 @@
 
       .detection-item {
         display: flex;
+        width: 100%;
+        text-align: left;
         align-items: center;
         justify-content: space-between;
         padding: 12px;
@@ -187,11 +189,15 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        font-family: inherit;
+        color: inherit;
       }
 
-      .detection-item:hover {
+      .detection-item:hover,
+      .detection-item:focus-visible {
         border-color: #6366f1;
         background: #eef2ff;
+        outline: none;
       }
 
       .detection-item.selected {
@@ -368,6 +374,14 @@
         color: #4f46e5;
       }
 
+      /* Focus visible styles for buttons and links */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
+      }
+
       /* Toast notification */
       .toast {
         position: fixed;
@@ -417,6 +431,7 @@
         font-weight: 500;
         color: #475569;
         margin-bottom: 6px;
+        cursor: pointer;
       }
 
       .settings-input {
@@ -477,12 +492,16 @@
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
         <div class="section-title">✏️ Manual Entry</div>
-        <input
-          type="text"
-          class="manual-input"
-          id="manual-code"
-          placeholder="Enter referral code..."
-        />
+        <div class="settings-field">
+          <label class="settings-label" for="manual-code">Referral Code</label>
+          <input
+            type="text"
+            class="manual-input"
+            id="manual-code"
+            placeholder="Enter referral code..."
+            style="margin-bottom: 0"
+          />
+        </div>
         <button class="btn btn-secondary" id="manual-btn">
           Add Code Manually
         </button>
@@ -492,7 +511,7 @@
       <div class="section settings-panel" id="settings-panel">
         <div class="section-title">⚙️ Settings</div>
         <div class="settings-field">
-          <label class="settings-label">API Endpoint</label>
+          <label class="settings-label" for="api-endpoint">API Endpoint</label>
           <input
             type="text"
             class="settings-input"
@@ -527,7 +546,9 @@
 
     <div class="footer">
       <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <button class="settings-btn" id="refresh-btn" aria-label="Refresh scan">
+        🔄
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>
