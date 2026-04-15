@@ -201,7 +201,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "detection-item";
       item.dataset.index = i.toString();
 

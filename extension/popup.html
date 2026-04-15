@@ -187,6 +187,10 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+        color: inherit;
       }
 
       .detection-item:hover {
@@ -281,6 +285,7 @@
         margin-bottom: 10px;
         font-family: "Courier New", monospace;
         transition: border-color 0.2s;
+        text-transform: uppercase;
       }
 
       .manual-input:focus {
@@ -366,6 +371,19 @@
 
       .settings-btn:hover {
         color: #4f46e5;
+      }
+
+      *:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
+      }
+
+      .btn:focus-visible,
+      .detection-item:focus-visible,
+      .settings-btn:focus-visible,
+      .footer-link:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
       }
 
       /* Toast notification */
@@ -455,7 +473,7 @@
           </div>
         </div>
 
-        <div class="scan-status" id="scan-status">
+        <div class="scan-status" id="scan-status" aria-live="polite">
           <div class="status-indicator scanning"></div>
           <span class="status-text">Scanning for referral codes...</span>
         </div>
@@ -476,12 +494,14 @@
 
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
-        <div class="section-title">✏️ Manual Entry</div>
+        <label class="section-title" for="manual-code">✏️ Manual Entry</label>
         <input
           type="text"
           class="manual-input"
           id="manual-code"
           placeholder="Enter referral code..."
+          autocapitalize="characters"
+          autocorrect="off"
         />
         <button class="btn btn-secondary" id="manual-btn">
           Add Code Manually
@@ -527,7 +547,13 @@
 
     <div class="footer">
       <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <button
+        class="settings-btn"
+        id="refresh-btn"
+        aria-label="Refresh detections"
+      >
+        🔄
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>
