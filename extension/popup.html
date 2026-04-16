@@ -187,11 +187,25 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+        color: inherit;
       }
 
       .detection-item:hover {
         border-color: #6366f1;
         background: #eef2ff;
+      }
+
+      .detection-item:focus-visible,
+      .btn:focus-visible,
+      .manual-input:focus-visible,
+      .settings-input:focus-visible,
+      .footer-link:focus-visible,
+      .settings-btn:focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 2px;
       }
 
       .detection-item.selected {
