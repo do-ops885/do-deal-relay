@@ -1,6 +1,5 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
-import { getProductionSnapshot } from "../lib/storage";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -43,10 +42,6 @@ export async function score(
   let maxConfidence = -Infinity;
   let highValueCount = 0;
 
-  // Get production deals for diversity calculation
-  const prodSnapshot = await getProductionSnapshot(env);
-  const allDeals = [...(prodSnapshot?.deals || []), ...deals];
-
   // Calculate source diversity
   const diversityScore = calculateSourceDiversity(deals);
 
@@ -58,6 +53,17 @@ export async function score(
     totalCandidates,
   );
 
+  // Optimization: Pre-calculate frequency map of domain:code for O(1) penalty lookup
+  // This reduces algorithmic complexity from O(N^2) to O(N)
+  const codeFrequency = new Map<string, number>();
+  for (const d of ctx.deduped) {
+    const key = `${d.source.domain}:${d.code}`;
+    codeFrequency.set(key, (codeFrequency.get(key) || 0) + 1);
+  }
+
+  // Optimization: Hoist weights to avoid repeated property access
+  const weights = CONFIG.SCORING_WEIGHTS;
+
   for (const deal of deals) {
     // Calculate individual scores
     const validityScore = 1.0; // Already passed validation
@@ -66,10 +72,9 @@ export async function score(
     const expiryScore = deal.expiry.confidence;
 
     // Calculate duplicate penalty
-    const duplicatePenalty = calculateDuplicatePenalty(deal, ctx);
+    const duplicatePenalty = calculateDuplicatePenalty(deal, codeFrequency);
 
     // Calculate final confidence score
-    const weights = CONFIG.SCORING_WEIGHTS;
     const confidenceScore =
       validityScore * weights.validity_ratio +
       uniquenessScore * weights.uniqueness_score +
@@ -184,18 +189,19 @@ function calculateRewardPlausibility(deal: Deal): number {
 
 /**
  * Calculate duplicate penalty for a deal
+ * Optimized to O(1) using pre-calculated frequency map
  */
-function calculateDuplicatePenalty(deal: Deal, ctx: PipelineContext): number {
-  // Check if similar deal exists in this batch
-  const similarInBatch = ctx.deduped.filter(
-    (d) =>
-      d.id !== deal.id &&
-      d.source.domain === deal.source.domain &&
-      d.code === deal.code,
-  );
+function calculateDuplicatePenalty(
+  deal: Deal,
+  codeFrequency: Map<string, number>,
+): number {
+  const key = `${deal.source.domain}:${deal.code}`;
+  const count = codeFrequency.get(key) || 0;
 
-  if (similarInBatch.length > 0) {
-    return 0.5; // Penalty for duplicates
+  // If count > 1, it means there are duplicates of this domain:code in the batch
+  // Note: ctx.deduped should already be unique by domain:code due to dedupe phase
+  if (count > 1) {
+    return 0.5;
   }
 
   return 0.0;
