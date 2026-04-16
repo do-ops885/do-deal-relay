@@ -26,7 +26,8 @@ import {
   handleResearch,
   handleGetResearchResults,
 } from "./routes/referrals";
-import { jsonResponse } from "./routes/utils";
+import { jsonResponse, unauthorizedResponse } from "./routes/utils";
+import { createAuthMiddleware } from "./lib/auth";
 import {
   handleMCPRequest,
   handleMCPListTools,
@@ -104,24 +105,43 @@ export default {
 
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
+        const authMiddleware = createAuthMiddleware(env, "admin");
         const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
-        return rateLimiter(request, () => handleDiscover(env));
+        return authMiddleware(request, () =>
+          rateLimiter(request, () => handleDiscover(env)),
+        );
       }
-      if (path === "/api/status") return handleStatus(env);
-      if (path === "/api/log") return handleGetLogs(url, env);
-      if (path === "/api/analytics") return handleAnalytics(url, env);
+      if (path === "/api/status") {
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleStatus(env));
+      }
+      if (path === "/api/log") {
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleGetLogs(url, env));
+      }
+      if (path === "/api/analytics") {
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleAnalytics(url, env));
+      }
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
+        const authMiddleware = createAuthMiddleware(env);
         const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
-        return rateLimiter(request, () => handleSubmit(request, env));
+        return authMiddleware(request, () =>
+          rateLimiter(request, () => handleSubmit(request, env)),
+        );
       }
 
       // Referral API
       if (path === "/api/referrals") {
         if (request.method === "GET") return handleGetReferrals(url, env);
-        if (request.method === "POST")
-          return handleCreateReferral(request, env);
+        if (request.method === "POST") {
+          const authMiddleware = createAuthMiddleware(env);
+          return authMiddleware(request, () =>
+            handleCreateReferral(request, env),
+          );
+        }
       }
 
       const referralMatch = path.match(
@@ -131,18 +151,27 @@ export default {
         const code = referralMatch[1];
         const action = referralMatch[2];
         if (action === "deactivate" && request.method === "POST") {
-          return handleDeactivateReferral(request, code, env);
+          const authMiddleware = createAuthMiddleware(env);
+          return authMiddleware(request, () =>
+            handleDeactivateReferral(request, code, env),
+          );
         }
         if (action === "reactivate" && request.method === "POST") {
-          return handleReactivateReferral(code, env);
+          const authMiddleware = createAuthMiddleware(env);
+          return authMiddleware(request, () =>
+            handleReactivateReferral(code, env),
+          );
         }
         if (request.method === "GET") return handleGetReferralByCode(code, env);
       }
 
       // Research API
       if (path === "/api/research" && request.method === "POST") {
+        const authMiddleware = createAuthMiddleware(env);
         const rateLimiter = createRateLimitMiddleware(env, "/api/research");
-        return rateLimiter(request, () => handleResearch(request, env));
+        return authMiddleware(request, () =>
+          rateLimiter(request, () => handleResearch(request, env)),
+        );
       }
 
       // Research results API
@@ -153,32 +182,41 @@ export default {
 
       // Validation API
       if (path === "/api/validate/url" && request.method === "POST") {
-        return handleValidateUrl(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleValidateUrl(request, env));
       }
       if (path === "/api/validate/batch" && request.method === "POST") {
-        return handleValidateBatch(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleValidateBatch(request, env));
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
-        return handleGetValidationStats(env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleGetValidationStats(env));
       }
 
       const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);
       if (dealValidateMatch && request.method === "POST") {
+        const authMiddleware = createAuthMiddleware(env);
         const code = dealValidateMatch[1];
-        return handleValidateDeal(request, code, env);
+        return authMiddleware(request, () =>
+          handleValidateDeal(request, code, env),
+        );
       }
 
       // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
       if (path === "/mcp") {
-        return handleMCPRequest(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleMCPRequest(request, env));
       }
 
       // Legacy MCP v1 Endpoints (for backwards compatibility)
       if (path === "/mcp/v1/tools/list" && request.method === "POST") {
-        return handleMCPListTools(env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleMCPListTools(env));
       }
       if (path === "/mcp/v1/tools/call" && request.method === "POST") {
-        return handleMCPCall(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleMCPCall(request, env));
       }
       if (path === "/mcp/v1/info") {
         return handleMCPInfo(env);
@@ -200,7 +238,10 @@ export default {
 
       // Experience Feedback API
       if (path === "/api/experience" && request.method === "POST") {
-        return handleSubmitExperience(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () =>
+          handleSubmitExperience(request, env),
+        );
       }
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
@@ -209,7 +250,8 @@ export default {
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
-        return handleRunAggregation(env);
+        const authMiddleware = createAuthMiddleware(env, "admin");
+        return authMiddleware(request, () => handleRunAggregation(env));
       }
 
       // Email API
@@ -217,7 +259,8 @@ export default {
         return handleEmailIncoming(request, env);
       }
       if (path === "/api/email/parse" && request.method === "POST") {
-        return handleEmailParse(request, env);
+        const authMiddleware = createAuthMiddleware(env);
+        return authMiddleware(request, () => handleEmailParse(request, env));
       }
       if (path === "/api/email/help" && request.method === "GET") {
         return handleEmailHelp();

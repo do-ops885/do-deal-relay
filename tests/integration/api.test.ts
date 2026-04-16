@@ -2,6 +2,48 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env, Snapshot, Deal } from "../../worker/types";
 
+// Hardcoded test key for the mock
+const TEST_KEY = "ddr_test_key_123456789";
+
+// Mock auth module
+vi.mock("../../worker/lib/auth", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  return {
+    ...actual,
+    authenticateRequest: vi.fn(async (request: Request) => {
+      const key =
+        request.headers.get("X-API-Key") ||
+        request.headers.get("Authorization")?.replace("Bearer ", "");
+      if (key === "ddr_test_key_123456789") {
+        return { authenticated: true, userId: "test-user", role: "admin" };
+      }
+      return { authenticated: false, error: "Invalid API key" };
+    }),
+    createAuthMiddleware: vi.fn((_env, requiredRole) => {
+      return async (
+        request: Request,
+        handler: (auth: any) => Promise<Response>,
+      ) => {
+        const key =
+          request.headers.get("X-API-Key") ||
+          request.headers.get("Authorization")?.replace("Bearer ", "");
+        if (key === "ddr_test_key_123456789") {
+          const auth = {
+            authenticated: true,
+            userId: "test-user",
+            role: "admin",
+          };
+          return handler(auth);
+        }
+        return new Response(JSON.stringify({ error: "Invalid API key" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      };
+    }),
+  };
+});
+
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
   source: {
@@ -105,6 +147,7 @@ describe("API Endpoints", () => {
         put: vi.fn(async (key: string, value: string) => {
           mockKvStorage.set(`log:${key}`, value);
         }),
+        list: vi.fn(async () => ({ keys: [], list_complete: true })),
       } as unknown as KVNamespace,
       DEALS_LOCK: {
         get: vi.fn(async <T>(key: string, type?: string) => {
@@ -414,6 +457,14 @@ describe("API Endpoints", () => {
   });
 
   describe("POST /api/discover", () => {
+    it("should return 401 without API key", async () => {
+      const request = new Request("http://localhost/api/discover", {
+        method: "POST",
+      });
+      const response = await worker.fetch(request, mockEnv);
+      expect(response.status).toBe(401);
+    });
+
     it("should trigger discovery pipeline", async () => {
       mockKvStorage.set(
         "sources:registry",
@@ -437,6 +488,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: { "X-API-Key": TEST_KEY },
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -464,6 +516,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: { "X-API-Key": TEST_KEY },
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -475,8 +528,16 @@ describe("API Endpoints", () => {
   });
 
   describe("GET /api/status", () => {
-    it("should return pipeline status", async () => {
+    it("should return 401 without API key", async () => {
       const request = new Request("http://localhost/api/status");
+      const response = await worker.fetch(request, mockEnv);
+      expect(response.status).toBe(401);
+    });
+
+    it("should return pipeline status", async () => {
+      const request = new Request("http://localhost/api/status", {
+        headers: { "X-API-Key": TEST_KEY },
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -493,7 +554,9 @@ describe("API Endpoints", () => {
         expires_at: futureDate,
       });
 
-      const request = new Request("http://localhost/api/status");
+      const request = new Request("http://localhost/api/status", {
+        headers: { "X-API-Key": TEST_KEY },
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -504,6 +567,12 @@ describe("API Endpoints", () => {
   });
 
   describe("GET /api/log", () => {
+    it("should return 401 without API key", async () => {
+      const request = new Request("http://localhost/api/log?count=10");
+      const response = await worker.fetch(request, mockEnv);
+      expect(response.status).toBe(401);
+    });
+
     it("should return recent logs", async () => {
       mockKvStorage.set("log:run-1", {
         run_id: "run-1",
@@ -513,7 +582,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?count=10");
+      const request = new Request("http://localhost/api/log?count=10", {
+        headers: { "X-API-Key": TEST_KEY },
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -533,6 +604,9 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/api/log?run_id=specific-run",
+        {
+          headers: { "X-API-Key": TEST_KEY },
+        },
       );
       const response = await worker.fetch(request, mockEnv);
 
@@ -550,7 +624,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?format=jsonl");
+      const request = new Request("http://localhost/api/log?format=jsonl", {
+        headers: { "X-API-Key": TEST_KEY },
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -562,10 +638,23 @@ describe("API Endpoints", () => {
   });
 
   describe("POST /api/submit", () => {
-    it("should submit a new deal", async () => {
+    it("should return 401 without API key", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: "https://example.com", code: "TEST" }),
+      });
+      const response = await worker.fetch(request, mockEnv);
+      expect(response.status).toBe(401);
+    });
+
+    it("should submit a new deal", async () => {
+      const request = new Request("http://localhost/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": TEST_KEY,
+        },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "NEWCODE",
@@ -591,7 +680,10 @@ describe("API Endpoints", () => {
     it("should return 415 for non-JSON content type", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: {
+          "Content-Type": "text/plain",
+          "X-API-Key": TEST_KEY,
+        },
         body: "not json",
       });
 
@@ -604,7 +696,10 @@ describe("API Endpoints", () => {
     it("should return 400 for invalid body", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": TEST_KEY,
+        },
         body: JSON.stringify({ url: "not-a-url" }), // missing required fields
       });
 
@@ -622,7 +717,10 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": TEST_KEY,
+        },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "DUPLICATE",
@@ -643,6 +741,7 @@ describe("API Endpoints", () => {
         headers: {
           "Content-Type": "application/json",
           "Content-Length": "2000000", // > 1MB
+          "X-API-Key": TEST_KEY,
         },
         body: JSON.stringify({ url: "https://example.com", code: "TEST" }),
       });

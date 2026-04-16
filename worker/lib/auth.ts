@@ -194,6 +194,31 @@ export function requireAuth(
   };
 }
 
+/**
+ * Authentication middleware factory for route handlers
+ */
+export function createAuthMiddleware(
+  env: Env,
+  requiredRole?: "admin" | "user" | "readonly",
+) {
+  return async (
+    request: Request,
+    handler: (auth: AuthResult) => Promise<Response>,
+  ): Promise<Response> => {
+    const auth = await authenticateRequest(request, env);
+
+    if (!auth.authenticated) {
+      return unauthorizedResponse(auth.error || "Unauthorized");
+    }
+
+    if (requiredRole && auth.role !== requiredRole && auth.role !== "admin") {
+      return forbiddenResponse(`Required role: ${requiredRole}`);
+    }
+
+    return handler(auth);
+  };
+}
+
 // ============================================================================
 // CORS & Security Headers
 // ============================================================================
