@@ -8,6 +8,23 @@ export default defineConfig({
     teardownTimeout: 10000, // Give workers time to cleanup (increased from 5000)
     pool: "forks", // Use Node.js fork pool instead of Cloudflare Workers pool to avoid crashes
     maxWorkers: 1, // Single worker to prevent pool crashes
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      thresholds: {
+        lines: 80,
+        functions: 75,
+        branches: 70,
+        statements: 80,
+      },
+      include: ["worker/**/*.ts"],
+      exclude: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/*.d.ts",
+        "**/types.ts",
+      ],
+    },
     env: {
       NODE_ENV: "test",
     },

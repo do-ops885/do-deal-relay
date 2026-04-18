@@ -1,17 +1,18 @@
-# Deal Discovery System - Status
+# Deal Discovery System
 
-**System**: In Development
-**Version**: 0.1.3
-**Status**: Bootstrap Phase
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](package.json)
+
+**Autonomous deal discovery system with coordinated AI agents, MCP protocol, and 9 validation gates.**
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 20.0.0
 - npm or yarn
 - Wrangler CLI (`npm install -g wrangler`)
-- Cloudflare Skills (`npx skills add https://github.com/cloudflare/skills`)
 
 ### Setup
 
@@ -19,10 +20,13 @@
 # Install dependencies
 npm install
 
-# Run tests
-npm test
+# Run quality gate (silent on success)
+./scripts/quality_gate.sh
 
-# Deploy locally
+# Run tests with coverage
+npm test -- --coverage
+
+# Start development server
 npm run dev
 ```
 
@@ -38,21 +42,11 @@ curl https://your-worker.workers.dev/deals.json
 # Check health
 curl https://your-worker.workers.dev/health
 
-# Get recent logs
-curl https://your-worker.workers.dev/api/log
+# Access MCP server
+curl https://your-worker.workers.dev/mcp
 ```
 
-### Documentation
-
-- [AGENTS.md](AGENTS.md) - System specs and architecture
-- [docs/API.md](docs/API.md) - API reference
-<!-- - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide (Coming Soon) -->
-<!-- - [docs/LEGAL_COMPLIANCE.md](docs/LEGAL_COMPLIANCE.md) - Legal requirements (Coming Soon) -->
-- **Status Dashboard**: Check `/health` endpoint
-
 ## Architecture
-
-**Status**: In design/implementation phase. Not yet deployed.
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -65,64 +59,113 @@ curl https://your-worker.workers.dev/api/log
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-## Development Roadmap
+**State Machine**: `init → discover → normalize → dedupe → validate → score → stage → publish → verify → finalize`
 
-### Phase 1: Bootstrap
+**Infrastructure**: Cloudflare Workers + 5 KV namespaces + D1 Database with FTS5
 
-- [ ] Fix test infrastructure
-- [ ] Install missing dependencies
-- [ ] Validate core types
-- [ ] Basic KV storage layer
+**Schedule**: Every 6 hours via cron trigger
 
-### Phase 2: Test & Validate
+## Key Features
 
-- [ ] Write comprehensive tests
-- [ ] Run validation gates
-- [ ] Fix failing checks
-- [ ] Achieve >80% coverage
+| Feature | Status | Documentation |
+|---------|--------|---------------|
+| MCP Server (2025-11-25) | ✅ Complete | [docs/MCP.md](docs/MCP.md) |
+| D1 Database + FTS5 | ✅ Complete | `/api/d1/*` endpoints |
+| 9 Validation Gates | ✅ Complete | [agents-docs/guard-rails.md](agents-docs/guard-rails.md) |
+| Two-Phase Publish | ✅ Complete | Staging → Production |
+| Webhook System | ✅ Complete | [worker/routes/webhooks-README.md](worker/routes/webhooks-README.md) |
+| Email Integration | ✅ Complete | `/api/email/*` endpoints |
+| Expiration Automation | ✅ Complete | Scheduled validation sweeps |
+| Real Web Research | ✅ Complete | ProductHunt, GitHub, HN, Reddit APIs |
 
-### Phase 3: Deploy
+## Documentation
 
-- [ ] Configure GitHub integration
-- [ ] Set up Cloudflare Workers
-- [ ] Deploy to staging
-- [ ] Production release (v1.0.0)
+| Document | Description |
+|----------|-------------|
+| [AGENTS.md](AGENTS.md) | **Start here** - System specs, agent registry, skills |
+| [docs/API.md](docs/API.md) | REST & MCP endpoint reference |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deployment guide |
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | Quick start tutorial |
+| [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md) | Complete agent & skill catalog |
+| [agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md) | Local pre-commit/pre-push hooks |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
+| [SECURITY.md](SECURITY.md) | Security policy |
 
-## Current Configuration
+## Development
 
-- **Cron Schedule**: Every 6 hours
-- **KV Namespaces**: 5 (PROD, STAGING, LOG, LOCK, SOURCES)
-- **Max Deals**: 1000 per run
-- **Trust Threshold**: 0.3
-- **High Value**: > $100
+### Available Scripts
 
-## Agent Tools
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build TypeScript |
+| `npm test` | Run tests in watch mode |
+| `npm run test:ci` | Run tests once (for CI) |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run lint` | Type check |
+| `npm run validate` | Run validation gates |
+| `npm run format` | Format code with Prettier |
 
-- `get_deals` - Retrieve active deals
-- `get_deal_by_code` - Find specific code
-- `submit_deal` - Submit new discovery
+### Quality Gates
+
+Run `./scripts/quality_gate.sh` before every commit:
+
+- ✅ TypeScript compilation (strict mode)
+- ✅ Unit tests (80% coverage threshold)
+- ✅ Validation gates (9 checks)
+- ✅ Security scans (secrets, vulnerabilities)
+- ✅ File organization (root directory policy)
+
+### Pre-Commit Hooks
+
+```bash
+# Install git hooks (run once after clone)
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+cp scripts/pre-push-hook.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+```
+
+**Pre-commit** (10 gates): Secrets detection, file size limits, syntax validation  
+**Pre-push** (9 gates): TypeScript compilation, full test suite, security audit
+
+## Configuration
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| Cron Schedule | Every 6 hours | Automated deal discovery runs |
+| KV Namespaces | 5 | PROD, STAGING, LOG, LOCK, SOURCES |
+| Max Deals | 1000 per run | Pipeline throughput limit |
+| Trust Threshold | 0.3 | Minimum score for publication |
+| High Value | > $100 | Deals flagged as high-value |
+| Coverage Threshold | 80% lines, 75% functions | Enforced in CI |
 
 ## Safety Features
 
-- Two-phase publish (staging → production)
-- 9 validation gates
-- Distributed locking
-- Idempotency checks
-- Automatic rollback
+- **Two-Phase Publish**: Staging environment validates before production
+- **9 Validation Gates**: URL, duplicate, trust, value, expiration checks
+- **Distributed Locking**: Prevents race conditions across workers
+- **Idempotency Checks**: Safe retry on failures
+- **Automatic Rollback**: Failed deployments auto-revert
+- **Circuit Breakers**: GitHub, external API protection
 
 ## Monitoring
 
-Check `/metrics` for:
+Check `/metrics` endpoint for Prometheus-format metrics:
 
-- Total runs
-- Success rate
-- Deal counts
-- Validation failures
+- Total pipeline runs
+- Success/failure rates
+- Deal counts by status
+- Validation gate failures
+- Response times (p50, p95, p99)
 
 ## Support
 
 For issues:
 
-1. Check `/health` endpoint
-2. Review logs via `/api/log`
-3. Open GitHub Issue with trace_id
+1. Check `/health` endpoint for system status
+2. Review logs via `/api/log?limit=100`
+3. Search [agents-docs/KNOWN_ISSUES.md](agents-docs/KNOWN_ISSUES.md)
+4. Open GitHub Issue with `trace_id` from logs
+
+## License
+
+MIT - See [LICENSE](LICENSE) file

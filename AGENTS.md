@@ -1,9 +1,9 @@
 # AGENTS.md - Deal Discovery System
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
-**Version**: 0.1.3
-**Phase**: Bootstrap
-**Status**: In Development
+**Version**: 0.2.0
+**Phase**: Production Ready
+**Status**: Active Development
 
 ## Named Constants
 
@@ -140,29 +140,55 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 
 See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rules.
 
-## Reference
+## Reference Files
 
-| Resource           | Location                                                           |
-| ------------------ | ------------------------------------------------------------------ |
-| System Reference   | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
-| Agent Specs        | [agents-docs/agents/](agents-docs/agents/)                         |
-| Guard Rails        | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
-| **Local Guard Rails** | **[agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md)**    |
-| Coordination       | [agents-docs/coordination/](agents-docs/coordination/)             |
-| Execution Plan     | [plans/EXECUTION_PLAN.md](plans/EXECUTION_PLAN.md)                 |
-| Lessons Learned    | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
-| API Docs           | [docs/API.md](docs/API.md)                                         |
-| Skills             | [.agents/skills/](.agents/skills/)                                 |
+| Resource              | Location                                                           | Purpose                              |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------ |
+| System Reference      | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) | Architecture & state machine specs   |
+| Agent Registry        | [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md)   | Complete list of agents & skills     |
+| Agent Specs           | [agents-docs/agents/](agents-docs/agents/)                         | Individual agent specifications      |
+| Guard Rails (Local)   | [agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md)           | Pre-commit/pre-push hooks            |
+| Guard Rails (System)  | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           | File organization rules              |
+| Coordination          | [agents-docs/coordination/](agents-docs/coordination/)             | Multi-agent workflow patterns        |
+| Skills Guide          | [agents-docs/SKILLS.md](agents-docs/SKILLS.md)                     | Skill authoring & usage              |
+| Lessons Learned       | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   | Self-learning feedback               |
+| Known Issues          | [agents-docs/KNOWN_ISSUES.md](agents-docs/KNOWN_ISSUES.md)         | Current limitations & workarounds    |
+| Quality Standards     | [agents-docs/quality-standards.md](agents-docs/quality-standards.md)| Code quality expectations            |
+| API Documentation     | [docs/API.md](docs/API.md)                                         | REST & MCP endpoint reference        |
+| Deployment Guide      | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                           | Production deployment procedures     |
+| Skills (Canonical)    | [.agents/skills/](.agents/skills/)                                 | 45+ reusable skill modules           |
 
-## Skills
+## Agent Skills
 
-**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`, `web-doc-resolver`
+### Core Skills (Local - 45+ available)
 
-**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`, `building-mcp-server-on-cloudflare`
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| `agent-coordination` | Multi-agent orchestration | Coordinating swarm analysis |
+| `goap-agent` | Goal-Oriented Action Planning | Complex decision trees |
+| `task-decomposition` | Break down complex tasks | Large feature implementations |
+| `parallel-execution` | Concurrent task execution | Independent subtasks |
+| `web-doc-resolver` | Cost-effective web research | **Always first** for web lookups |
+| `iterative-refinement` | Code improvement cycles | Refactoring, optimization |
+| `skill-creator` | Create new skills | Adding reusable knowledge |
+| `guard-rails` | Quality enforcement | Pre-commit validation |
+| `validation-gates` | 9-point validation | Before publishing deals |
+| `distributed-locking` | Prevent race conditions | Concurrent state updates |
 
-Use: `skill <name>` to load guidance.
+**Full Registry**: See [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md) and [.agents/skills/](.agents/skills/)
 
-> **Tip**: For web research tasks, use `web-doc-resolver` skill first - it uses a cost-effective cascade (llms.txt → direct fetch → Jina AI → paid APIs only as last resort) to minimize token usage.
+### External Skills (Cloudflare)
+
+- `cloudflare` - Workers, KV, D1, R2, Workers AI
+- `agents-sdk` - Stateful agent patterns
+- `durable-objects` - Distributed state management
+- `wrangler` - CLI operations
+- `workers-best-practices` - Production patterns
+- `building-mcp-server-on-cloudflare` - MCP implementation
+
+> **Usage**: Skills auto-load when needed. Do not pre-load all skills at session start (progressive disclosure).
+
+> **Web Research Tip**: Always use `web-doc-resolver` first - it uses a cost-effective cascade (llms.txt → direct fetch → Jina AI → paid APIs only as last resort) to minimize token usage.
 
 ## Endpoints
 
@@ -262,15 +288,40 @@ See [agents-docs/LESSONS.md](agents-docs/LESSONS.md) for full format and example
 
 ## Active Agents
 
-All pipeline agents are **complete**. See [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md) for full registry.
+All pipeline agents are **complete** and production-ready. See [agents-docs/AGENTS_REGISTRY.md](agents-docs/AGENTS_REGISTRY.md) for full registry.
 
-| Agent               | Status   | Phase           | Responsibility      |
-| ------------------- | -------- | --------------- | ------------------- |
-| test-agent          | complete | Test & Validate | Integration testing |
-| validation-agent    | complete | Test & Validate | 9 validation gates  |
-| doc-agent           | complete | Test & Validate | Documentation       |
-| github-agent        | complete | Test & Validate | GitHub integration  |
-| browser-agent       | complete | Test & Validate | Browser/API testing |
+### Pipeline Agents (Core Deal Flow)
+
+| Agent | Status | Responsibility |
+|-------|--------|----------------|
+| `discovery-agent` | ✅ Complete | Deal source scanning |
+| `normalization-agent` | ✅ Complete | Data standardization |
+| `deduplication-agent` | ✅ Complete | Duplicate detection |
+| `validation-agent` | ✅ Complete | 9 validation gates |
+| `scoring-agent` | ✅ Complete | Trust & value scoring |
+| `publish-agent` | ✅ Complete | Two-phase publish |
+| `verify-agent` | ✅ Complete | Post-publish validation |
+
+### Feature Agents (Extended Capabilities)
+
+| Agent | Status | Capability |
+|-------|--------|------------|
+| `mcp-server-agent` | ✅ Complete | MCP protocol (2025-11-25) |
+| `d1-integration-agent` | ✅ Complete | D1 database + FTS5 search |
+| `real-research-agent` | ✅ Complete | ProductHunt, GitHub, HN, Reddit APIs |
+| `expiration-automation-agent` | ✅ Complete | Scheduled deal validation |
+| `webhook-agent` | ✅ Complete | Outbound webhook delivery |
+| `email-agent` | ✅ Complete | Email parsing & sending |
+| `experience-agent` | ✅ Complete | User feedback aggregation |
+
+### Utility Agents
+
+| Agent | Status | Purpose |
+|-------|--------|---------|
+| `test-agent` | ✅ Complete | Integration testing |
+| `doc-agent` | ✅ Complete | Documentation generation |
+| `github-agent` | ✅ Complete | GitHub integration |
+| `browser-agent` | ✅ Complete | Browser/API testing |
 
 ## Development Standards
 
@@ -323,6 +374,27 @@ Before marking any task complete:
 - [ ] Skill evals using real-world scenarios
 - [ ] E2E integration tests written
 
+## Key Learnings (Compact)
+
+### Critical Lessons
+1. **Documentation Drift** (LESSON-023): Run monthly swarm analysis to verify docs match implementation
+2. **Test Infrastructure**: Use `pool: "forks"` + `maxWorkers: 1` to avoid Cloudflare Workers pool crashes
+3. **Version Sync**: Add version check to CI - 71 files once had mismatched versions
+4. **Phantom Endpoints**: Verify API docs against actual routes before publishing
+5. **Progressive Disclosure**: Load skills on-demand, not at session start (instruction budget)
+
+### Detection Commands
+```bash
+# Find phantom endpoints
+grep -E "^\s*(GET|POST|PUT|DELETE)" docs/API.md | while read line; do
+  endpoint=$(echo $line | awk '{print $2}')
+  grep -r "$endpoint" worker/routes/ worker/index.ts || echo "PHANTOM: $endpoint"
+done
+
+# Check version consistency
+./scripts/generate-version.sh --check
+```
+
 ## Notes
 
 - **Permanent Reports**: Analysis findings go to `reports/` (committed, permanent record)
@@ -337,3 +409,4 @@ Before marking any task complete:
 - **Web Research**: Use `web-doc-resolver` skill for cost-effective research (free sources first, paid APIs last)
 - **MCP Server**: Full Model Context Protocol 2025-11-25 implementation available at `/mcp`
 - **D1 Database**: Full-text search and advanced queries available via `/api/d1/*`
+- **Coverage Thresholds**: 80% lines, 75% functions, 70% branches (enforced in CI)
