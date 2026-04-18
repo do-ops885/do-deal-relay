@@ -224,3 +224,14 @@ Critical for data integrity and rollback capability.
 - **v1.1.0**: Enhanced safety and quality (robots.txt, retry logic)
 - **v1.2.0**: Performance & observability (metrics, caching, circuit breakers)
 - **v1.3.0**: Feature enhancements (Phase 7 - in progress)
+
+### Phase 8: Performance Hardening ✅ COMPLETE
+
+| Optimization | Status | New Files | Impact |
+|--------------|--------|-----------|--------|
+| Scoring Hot Path | ✅ Complete | `reports/analysis/scoring-optimization.md` | O(N^2) → O(N) duplicate penalty |
+| Ranking Efficiency | ✅ Complete | `reports/analysis/ranking-optimization.md` | 50% redundant calculation reduction |
+| I/O Latency | ✅ Complete | | -1 KV subrequest/run (10-50ms) |
+| Memory Management | ✅ Complete | | Elimination of intermediate allocations in scoring loop |
+
+**Commit**: `d19a404`
