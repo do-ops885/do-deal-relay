@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { notify, notifyHighValueDeals } from "../../worker/notify";
-import { setGitHubToken } from "../../worker/lib/github";
+import { setGitHubToken } from "../../worker/lib/github/index";
 import type { Env, NotificationEvent } from "../../worker/types";
 
 describe("Notification System", () => {

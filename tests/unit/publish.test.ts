@@ -4,7 +4,7 @@ import {
   setGitHubToken,
   resetGitHubToken,
   initGitHubCircuitBreaker,
-} from "../../worker/lib/github";
+} from "../../worker/lib/github/index";
 import type { Snapshot, Deal, Env, PipelineContext } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({

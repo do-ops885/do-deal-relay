@@ -1,5 +1,5 @@
 import { CONFIG } from "./config";
-import { createGitHubIssue } from "./lib/github";
+import { createGitHubIssue } from "./lib/github/index";
 import { getRecentLogs } from "./lib/logger";
 import { createStructuredLogger } from "./lib/logger";
 import {

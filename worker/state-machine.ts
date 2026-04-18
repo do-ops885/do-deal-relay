@@ -56,7 +56,7 @@ import {
   recordRetry,
   finalizeMetrics,
   storeMetrics,
-} from "./lib/metrics";
+} from "./lib/metrics/index";
 
 /**
  * Execute full pipeline

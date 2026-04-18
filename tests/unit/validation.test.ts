@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Deal, Env } from "../../worker/types";
-import { setGitHubToken } from "../../worker/lib/github";
+import { setGitHubToken } from "../../worker/lib/github/index";
 
 // Mock implementations for validation functions
 const mockValidateUrl = vi.fn();
