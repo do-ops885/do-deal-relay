@@ -1,7 +1,7 @@
 import type { Deal, Env, LogEntry } from "../../types";
 import { getProductionSnapshot, getSourceRegistry } from "../storage";
 import { getRecentLogs } from "../logger";
-import { getRecentMetrics } from "../metrics";
+import { getRecentMetrics } from "../metrics/index";
 import type { DealAnalytics, AnalyticsSummary } from "./types";
 import {
   calculateDealsOverTime,

@@ -1,6 +1,6 @@
 import type { Deal, LogEntry } from "../../types";
 import type { DealAnalytics } from "./types";
-import { getRecentMetrics } from "../metrics";
+import { getRecentMetrics } from "../metrics/index";
 
 // ============================================================================
 // Individual Analytics Calculators

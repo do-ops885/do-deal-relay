@@ -1,6 +1,6 @@
 import { executePipeline } from "./state-machine";
 import { notify } from "./notify";
-import { setGitHubToken, initGitHubCircuitBreaker } from "./lib/github";
+import { setGitHubToken, initGitHubCircuitBreaker } from "./lib/github/index";
 import type { Env, SubmitDealBody } from "./types";
 import {
   handleHealth,

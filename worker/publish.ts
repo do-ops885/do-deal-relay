@@ -5,7 +5,7 @@ import {
   commitSnapshot,
   isSnapshotCommitted,
   verifyCommit,
-} from "./lib/github";
+} from "./lib/github/index";
 import { setLastRunMetadata } from "./lib/storage";
 import type { Env } from "./types";
 
