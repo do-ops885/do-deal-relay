@@ -1,4 +1,9 @@
-import { createMetrics, finalizeMetrics, recordPhaseTiming, storeMetrics } from "../worker/lib/metrics/index";
+import {
+  createMetrics,
+  finalizeMetrics,
+  recordPhaseTiming,
+  storeMetrics,
+} from "../worker/lib/metrics/index";
 import { PipelineMetrics, Env } from "../worker/types";
 
 async function benchmark() {
@@ -6,13 +11,24 @@ async function benchmark() {
   const run_id = `bench-${Date.now()}`;
   const metrics = createMetrics(run_id);
 
-  const phases = ["init", "discover", "normalize", "dedupe", "validate", "score", "stage", "publish", "verify", "finalize"] as const;
+  const phases = [
+    "init",
+    "discover",
+    "normalize",
+    "dedupe",
+    "validate",
+    "score",
+    "stage",
+    "publish",
+    "verify",
+    "finalize",
+  ] as const;
 
   const start = Date.now();
   for (const phase of phases) {
     const phaseStart = Date.now();
     // Simulate work
-    await new Promise(r => setTimeout(r, Math.random() * 50));
+    await new Promise((r) => setTimeout(r, Math.random() * 50));
     recordPhaseTiming(metrics, phase, Date.now() - phaseStart);
   }
 

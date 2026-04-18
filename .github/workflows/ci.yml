@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
@@ -84,7 +84,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
@@ -168,7 +168,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
@@ -195,7 +195,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"

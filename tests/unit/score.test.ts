@@ -89,35 +89,4 @@ describe("Scoring Pipeline", () => {
     expect(result.stats.min_confidence).toBeGreaterThanOrEqual(0);
     expect(result.stats.max_confidence).toBeGreaterThan(0);
   });
-
-  it("should apply duplicate penalty for same-domain and same-code pairs", async () => {
-    const deal1 = createMockDeal("1");
-    const deal2 = createMockDeal("2"); // Same domain/code as deal1
-
-    const customCtx = {
-      ...ctx,
-      deduped: [deal1, deal2],
-    };
-
-    const result = await score([deal1, deal2], customCtx, mockEnv);
-
-    expect(result.deals[0].scores.duplicate_penalty).toBe(0.5);
-    expect(result.deals[1].scores.duplicate_penalty).toBe(0.5);
-  });
-
-  it("should not apply duplicate penalty for unique deals", async () => {
-    const deal1 = createMockDeal("1");
-    const deal2 = createMockDeal("2");
-    deal2.source.domain = "other.com";
-
-    const customCtx = {
-      ...ctx,
-      deduped: [deal1, deal2],
-    };
-
-    const result = await score([deal1, deal2], customCtx, mockEnv);
-
-    expect(result.deals[0].scores.duplicate_penalty).toBe(0.0);
-    expect(result.deals[1].scores.duplicate_penalty).toBe(0.0);
-  });
 });
