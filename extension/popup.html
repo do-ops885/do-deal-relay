@@ -187,6 +187,9 @@
         border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
       }
 
       .detection-item:hover {
@@ -435,6 +438,18 @@
       .hidden {
         display: none !important;
       }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
     </style>
   </head>
   <body>
@@ -455,7 +470,7 @@
           </div>
         </div>
 
-        <div class="scan-status" id="scan-status">
+        <div class="scan-status" id="scan-status" aria-live="polite">
           <div class="status-indicator scanning"></div>
           <span class="status-text">Scanning for referral codes...</span>
         </div>
@@ -477,6 +492,7 @@
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
         <div class="section-title">✏️ Manual Entry</div>
+        <label for="manual-code" class="sr-only">Referral Code</label>
         <input
           type="text"
           class="manual-input"
@@ -527,7 +543,9 @@
 
     <div class="footer">
       <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <button class="settings-btn" id="refresh-btn" aria-label="Rescan page">
+        🔄
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>

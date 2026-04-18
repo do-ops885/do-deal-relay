@@ -201,9 +201,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "detection-item";
       item.dataset.index = i.toString();
+      item.setAttribute("aria-pressed", "false");
 
       const info = document.createElement("div");
       info.className = "detection-info";
@@ -230,8 +232,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.addEventListener("click", () => {
         elements.detectionList
           .querySelectorAll(".detection-item")
-          .forEach((el) => el.classList.remove("selected"));
+          .forEach((el) => {
+            el.classList.remove("selected");
+            el.setAttribute("aria-pressed", "false");
+          });
         item.classList.add("selected");
+        item.setAttribute("aria-pressed", "true");
         state.selectedDetection =
           state.detections[parseInt(item.dataset.index)];
       });
@@ -244,6 +250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const firstItem = elements.detectionList.querySelector(".detection-item");
       if (firstItem) {
         firstItem.classList.add("selected");
+        firstItem.setAttribute("aria-pressed", "true");
         state.selectedDetection = detections[0];
       }
     }
@@ -289,6 +296,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     elements.captureBtn.disabled = true;
     elements.captureBtn.textContent = "Submitting...";
+    elements.captureBtn.setAttribute("aria-busy", "true");
 
     try {
       await submitReferral({
@@ -308,6 +316,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } finally {
       elements.captureBtn.disabled = false;
       elements.captureBtn.textContent = "✨ Capture Selected";
+      elements.captureBtn.removeAttribute("aria-busy");
     }
   }
 
@@ -325,6 +334,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     elements.manualBtn.disabled = true;
     elements.manualBtn.textContent = "Adding...";
+    elements.manualBtn.setAttribute("aria-busy", "true");
 
     try {
       await submitReferral({
@@ -344,6 +354,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } finally {
       elements.manualBtn.disabled = false;
       elements.manualBtn.textContent = "Add Code Manually";
+      elements.manualBtn.removeAttribute("aria-busy");
     }
   }
 
