@@ -21,7 +21,7 @@ export async function safeResponseJson<T>(response: Response): Promise<T> {
 }
 
 let githubToken: string | undefined;
-let githubCircuitBreaker: CircuitBreaker | undefined;
+export let githubCircuitBreaker: CircuitBreaker | undefined;
 let githubCache: ReturnType<typeof createGitHubCache> | undefined;
 
 export function getGitHubLogger(env?: Env) {
@@ -90,9 +90,13 @@ export async function getFileContent(
     );
     if (response.status === 404) return null;
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `GitHub API error: ${response.status} ${response.statusText}`,
+      );
     }
-    const data = await safeResponseJson<{ content: string; sha: string }>(response);
+    const data = await safeResponseJson<{ content: string; sha: string }>(
+      response,
+    );
     return { content: data.content, sha: data.sha };
   };
   try {
@@ -100,7 +104,11 @@ export async function getFileContent(
     if (result && githubCache) await githubCache.set(cacheKey, result);
     return result;
   } catch (error) {
-    getGitHubLogger().error("Failed to get file content", error instanceof Error ? error : new Error(String(error)), { repo, path, branch });
+    getGitHubLogger().error(
+      "Failed to get file content",
+      error instanceof Error ? error : new Error(String(error)),
+      { repo, path, branch },
+    );
     throw error;
   }
 }
@@ -115,12 +123,18 @@ export async function commitFile(
 ): Promise<string> {
   const { baseUrl, headers } = getGitHubConfig();
   const encodedContent = btoa(unescape(encodeURIComponent(content)));
-  const body: Record<string, string> = { message, content: encodedContent, branch };
+  const body: Record<string, string> = {
+    message,
+    content: encodedContent,
+    branch,
+  };
   if (sha) body.sha = sha;
   const cb = githubCircuitBreaker;
   const execute = async () => {
     const response = await fetch(`${baseUrl}/repos/${repo}/contents/${path}`, {
-      method: "PUT", headers, body: JSON.stringify(body),
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const error = await response.text();
@@ -137,7 +151,11 @@ export async function commitFile(
     }
     return result;
   } catch (error) {
-    getGitHubLogger().error("Failed to commit file", error instanceof Error ? error : new Error(String(error)), { repo, path, branch });
+    getGitHubLogger().error(
+      "Failed to commit file",
+      error instanceof Error ? error : new Error(String(error)),
+      { repo, path, branch },
+    );
     throw error;
   }
 }
@@ -156,12 +174,25 @@ export async function commitSnapshot(
 
 [skip ci]`;
   const existing = await getFileContent(repo, CONFIG.SNAPSHOT_FILE);
-  return commitFile(repo, CONFIG.SNAPSHOT_FILE, content, message, "main", existing?.sha);
+  return commitFile(
+    repo,
+    CONFIG.SNAPSHOT_FILE,
+    content,
+    message,
+    "main",
+    existing?.sha,
+  );
 }
 
 export async function createGitHubIssue(
-  repo: string, type: string, run_id: string,
-  details: { severity: "info" | "warning" | "critical"; message: string; context?: Record<string, unknown>; },
+  repo: string,
+  type: string,
+  run_id: string,
+  details: {
+    severity: "info" | "warning" | "critical";
+    message: string;
+    context?: Record<string, unknown>;
+  },
 ): Promise<number> {
   const { baseUrl, headers } = getGitHubConfig();
   const title = `[NOTIFY] ${type} - ${run_id}`;
@@ -169,22 +200,35 @@ export async function createGitHubIssue(
   const cb = githubCircuitBreaker;
   const execute = async () => {
     const response = await fetch(`${baseUrl}/repos/${repo}/issues`, {
-      method: "POST", headers, body: JSON.stringify({ title, body, labels: [type, details.severity, "automated"] }),
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        title,
+        body,
+        labels: [type, details.severity, "automated"],
+      }),
     });
-    if (!response.ok) throw new Error(`Failed to create issue: ${response.status}`);
+    if (!response.ok)
+      throw new Error(`Failed to create issue: ${response.status}`);
     const data = await safeResponseJson<{ number: number }>(response);
     return data?.number || 0;
   };
   try {
     return cb ? await cb.execute(execute) : await execute();
   } catch (error) {
-    getGitHubLogger().error("Failed to create notification issue", error instanceof Error ? error : new Error(String(error)), { repo, type, run_id });
+    getGitHubLogger().error(
+      "Failed to create notification issue",
+      error instanceof Error ? error : new Error(String(error)),
+      { repo, type, run_id },
+    );
     throw error;
   }
 }
 
 export async function getRecentCommits(
-  repo: string, path: string, count: number = 10,
+  repo: string,
+  path: string,
+  count: number = 10,
 ): Promise<GitHubCommit[]> {
   const cacheKey = `commits:${repo}:${path}:${count}`;
   if (githubCache) {
@@ -194,27 +238,48 @@ export async function getRecentCommits(
   const { baseUrl, headers } = getGitHubConfig();
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(`${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`, { headers });
-    if (!response.ok) throw new Error(`Failed to get commits: ${response.status}`);
-    const data = await safeResponseJson<Array<{ sha: string; commit: { message: string; author: any; }; }>>(response);
-    return data.map((c) => ({ sha: c.sha, message: c.commit.message, author: c.commit.author }));
+    const response = await fetch(
+      `${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`,
+      { headers },
+    );
+    if (!response.ok)
+      throw new Error(`Failed to get commits: ${response.status}`);
+    const data =
+      await safeResponseJson<
+        Array<{ sha: string; commit: { message: string; author: any } }>
+      >(response);
+    return data.map((c) => ({
+      sha: c.sha,
+      message: c.commit.message,
+      author: c.commit.author,
+    }));
   };
   try {
     let result = cb ? await cb.execute(execute) : await execute();
     if (githubCache) await githubCache.set(cacheKey, result);
     return result;
   } catch (error) {
-    getGitHubLogger().error("Failed to get recent commits", error instanceof Error ? error : new Error(String(error)), { repo, path, count });
+    getGitHubLogger().error(
+      "Failed to get recent commits",
+      error instanceof Error ? error : new Error(String(error)),
+      { repo, path, count },
+    );
     return [];
   }
 }
 
-export async function isSnapshotCommitted(repo: string, snapshot_hash: string): Promise<boolean> {
+export async function isSnapshotCommitted(
+  repo: string,
+  snapshot_hash: string,
+): Promise<boolean> {
   const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 20);
   return commits.some((c) => c.message.includes(snapshot_hash));
 }
 
-export async function verifyCommit(repo: string, expectedSha: string): Promise<boolean> {
+export async function verifyCommit(
+  repo: string,
+  expectedSha: string,
+): Promise<boolean> {
   const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
   return commits.length > 0 && commits[0].sha === expectedSha;
 }

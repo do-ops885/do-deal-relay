@@ -3,48 +3,6 @@ import worker from "../../worker/index";
 import type { Env, Deal } from "../../worker/types";
 import type { KVNamespace, D1Database } from "@cloudflare/workers-types";
 
-// Hardcoded test key for the mock
-const TEST_KEY = "ddr_test_key_123456789";
-
-// Mock auth module
-vi.mock("../../worker/lib/auth", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-    authenticateRequest: vi.fn(async (request: Request) => {
-      const key =
-        request.headers.get("X-API-Key") ||
-        request.headers.get("Authorization")?.replace("Bearer ", "");
-      if (key === "ddr_test_key_123456789") {
-        return { authenticated: true, userId: "test-user", role: "admin" };
-      }
-      return { authenticated: false, error: "Invalid API key" };
-    }),
-    createAuthMiddleware: vi.fn((_env, requiredRole) => {
-      return async (
-        request: Request,
-        handler: (auth: any) => Promise<Response>,
-      ) => {
-        const key =
-          request.headers.get("X-API-Key") ||
-          request.headers.get("Authorization")?.replace("Bearer ", "");
-        if (key === "ddr_test_key_123456789") {
-          const auth = {
-            authenticated: true,
-            userId: "test-user",
-            role: "admin",
-          };
-          return handler(auth);
-        }
-        return new Response(JSON.stringify({ error: "Invalid API key" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
-      };
-    }),
-  };
-});
-
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
   source: {
@@ -139,10 +97,7 @@ describe("Experience API Endpoints", () => {
     it("should return 503 when D1 is not configured", async () => {
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "click",
@@ -168,10 +123,7 @@ describe("Experience API Endpoints", () => {
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "text/plain" },
         body: "not json",
       });
 
@@ -192,10 +144,7 @@ describe("Experience API Endpoints", () => {
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deal_code: "DEAL123" }),
       });
 
@@ -216,10 +165,7 @@ describe("Experience API Endpoints", () => {
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "invalid_type",
@@ -243,10 +189,7 @@ describe("Experience API Endpoints", () => {
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "click",
@@ -262,11 +205,7 @@ describe("Experience API Endpoints", () => {
 
   describe("GET /api/experience/:deal_code", () => {
     it("should return 503 when D1 is not configured", async () => {
-      const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: {
-          "X-API-Key": TEST_KEY,
-        },
-      });
+      const request = new Request("http://localhost/api/experience/DEAL123");
 
       const response = await worker.fetch(request, mockEnv);
 
@@ -292,11 +231,7 @@ describe("Experience API Endpoints", () => {
         } as unknown as D1Database,
       });
 
-      const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: {
-          "X-API-Key": TEST_KEY,
-        },
-      });
+      const request = new Request("http://localhost/api/experience/DEAL123");
 
       const response = await worker.fetch(request, envWithDb);
 
@@ -310,9 +245,6 @@ describe("Experience API Endpoints", () => {
     it("should return 503 when D1 is not configured", async () => {
       const request = new Request("http://localhost/api/experience/aggregate", {
         method: "POST",
-        headers: {
-          "X-API-Key": TEST_KEY,
-        },
       });
 
       const response = await worker.fetch(request, mockEnv);

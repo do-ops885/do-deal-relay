@@ -156,7 +156,7 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 
 ## Skills
 
-**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`, `web-doc-resolver`, `performance-optimization`
+**Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`, `web-doc-resolver`
 
 **External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`, `building-mcp-server-on-cloudflare`
 

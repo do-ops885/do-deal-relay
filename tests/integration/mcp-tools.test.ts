@@ -14,48 +14,6 @@ import worker from "../../worker/index";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
 
-// Hardcoded test key for the mock
-const TEST_KEY = "ddr_test_key_123456789";
-
-// Mock auth module
-vi.mock("../../worker/lib/auth", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-    authenticateRequest: vi.fn(async (request: Request) => {
-      const key =
-        request.headers.get("X-API-Key") ||
-        request.headers.get("Authorization")?.replace("Bearer ", "");
-      if (key === "ddr_test_key_123456789") {
-        return { authenticated: true, userId: "test-user", role: "admin" };
-      }
-      return { authenticated: false, error: "Invalid API key" };
-    }),
-    createAuthMiddleware: vi.fn((_env, requiredRole) => {
-      return async (
-        request: Request,
-        handler: (auth: any) => Promise<Response>,
-      ) => {
-        const key =
-          request.headers.get("X-API-Key") ||
-          request.headers.get("Authorization")?.replace("Bearer ", "");
-        if (key === "ddr_test_key_123456789") {
-          const auth = {
-            authenticated: true,
-            userId: "test-user",
-            role: "admin",
-          };
-          return handler(auth);
-        }
-        return new Response(JSON.stringify({ error: "Invalid API key" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
-      };
-    }),
-  };
-});
-
 // ============================================================================
 // Mock Setup
 // ============================================================================
@@ -180,10 +138,7 @@ describe("MCP Protocol E2E", () => {
     it("should return list of available MCP tools", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
 
@@ -199,10 +154,7 @@ describe("MCP Protocol E2E", () => {
     it("should include search_deals tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
 
@@ -216,10 +168,7 @@ describe("MCP Protocol E2E", () => {
     it("should include add_referral tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
 
@@ -233,10 +182,7 @@ describe("MCP Protocol E2E", () => {
     it("should include research_domain tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
 
@@ -259,10 +205,7 @@ describe("MCP Protocol E2E", () => {
 
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "search_deals",
           input: { domain: "test-deal.com" },
@@ -279,10 +222,7 @@ describe("MCP Protocol E2E", () => {
     it("should execute add_referral tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "add_referral",
           input: {
@@ -306,10 +246,7 @@ describe("MCP Protocol E2E", () => {
     it("should execute list_categories tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "list_categories",
           input: {},
@@ -326,10 +263,7 @@ describe("MCP Protocol E2E", () => {
     it("should return error for unknown tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "nonexistent_tool",
           input: {},
@@ -347,10 +281,7 @@ describe("MCP Protocol E2E", () => {
     it("should handle missing tool field", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: {} }),
       });
 
@@ -366,9 +297,6 @@ describe("MCP Protocol E2E", () => {
     it("should return server info", async () => {
       const request = new Request("http://localhost/mcp/v1/info", {
         method: "GET",
-        headers: {
-          "X-API-Key": TEST_KEY,
-        },
       });
 
       const response = await worker.fetch(request, mockEnv);
@@ -385,10 +313,7 @@ describe("MCP Protocol E2E", () => {
       // Step 1: Add a referral
       const addRequest = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "add_referral",
           input: {
@@ -409,10 +334,7 @@ describe("MCP Protocol E2E", () => {
       // Step 2: Search for the referral
       const searchRequest = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": TEST_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool: "search_deals",
           input: { domain: "chain-test.com" },
@@ -431,10 +353,7 @@ describe("MCP Protocol E2E", () => {
       await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": TEST_KEY,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tool: "add_referral",
             input: {
@@ -451,10 +370,7 @@ describe("MCP Protocol E2E", () => {
       await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": TEST_KEY,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tool: "add_referral",
             input: {
@@ -471,10 +387,7 @@ describe("MCP Protocol E2E", () => {
       const searchResponse = await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": TEST_KEY,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tool: "search_deals",
             input: { domain: "seq-test.com" },

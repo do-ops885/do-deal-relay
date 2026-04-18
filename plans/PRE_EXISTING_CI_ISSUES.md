@@ -28,7 +28,7 @@ During the browser-agent implementation, several pre-existing CI/CD issues were 
 
 ---
 
-### 2. ✅ FIXED: GitHub Actions Workflow Validation (Shellcheck)
+### 2. 🔄 PENDING: GitHub Actions Workflow Validation (Shellcheck)
 
 **Status**: 🔄 PENDING  
 **Files**: Multiple workflow files  
@@ -57,7 +57,7 @@ echo "Line 2" >> $GITHUB_STEP_SUMMARY  # Multiple redirects
 
 ---
 
-### 3. ✅ FIXED: Vitest Worker Pool Unhandled Error
+### 3. 🔄 PENDING: Vitest Worker Pool Unhandled Error
 
 **Status**: 🔄 PENDING  
 **File**: Test configuration  
@@ -81,30 +81,40 @@ Caused by: Error: Worker exited unexpectedly
 
 ---
 
-### 4. ✅ FIXED: Dependency Vulnerabilities
+### 4. 🔄 PENDING: Dependency Vulnerabilities
 
-**Status**: ✅ FIXED
-**Issue**: `npm audit` reported security vulnerabilities including a critical one in `protobufjs`.
+**Status**: 🔄 PENDING
+**Issue**: `npm audit` reports security vulnerabilities:
+- 10 moderate severity
+- 1 high severity
 
-**Solution**: Executed `npm audit fix --legacy-peer-deps`.
+**Solution**: Run `npm audit fix` or update dependencies
 
 **Effort**: Low
 
 ---
 
-### 5. ✅ FIXED: Deprecated Node.js 20 Actions
+### 5. 🔄 PENDING: Deprecated Node.js 20 Actions
 
-**Status**: ✅ FIXED
-**Issue**: GitHub Actions deprecation warning for Node.js 20.
+**Status**: 🔄 PENDING
+**Issue**: GitHub Actions deprecation warning:
+```
+Node.js 20 actions are deprecated. Actions will be forced to run with Node.js 24
+by default starting June 2nd, 2026.
+```
+
+**Affected Actions**:
+- `actions/setup-node@v4` (using Node.js 20)
 
 **Solution**: 
-- Updated all 17 workflow files to use `actions/setup-node@v5` and standardized on Node.js 24.
+- Update to `actions/setup-node@v5` with Node.js 24
+- Or set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`
 
 **Effort**: Low
 
 ---
 
-### 6. ✅ FIXED: Storage Test Error Output
+### 6. 🔄 PENDING: Storage Test Error Output
 
 **Status**: 🔄 PENDING  
 **File**: `tests/unit/storage.test.ts`  
@@ -123,7 +133,7 @@ Failed to get production snapshot: SyntaxError: Unexpected token 'i', "invalid j
 
 ---
 
-### 7. ✅ FIXED: State-Machine Test Warnings
+### 7. 🔄 PENDING: State-Machine Test Warnings
 
 **Status**: 🔄 PENDING  
 **File**: `tests/unit/state-machine.test.ts`  
@@ -157,10 +167,10 @@ After browser-agent PR #38:
 | Validate Skills | ✅ Pass | |
 | Initialize GitHub Labels | ✅ Pass | |
 | Security Scan | ✅ Pass | Fixed false positives |
-| Unit Tests | ✅ Pass | 333/333 tests pass, worker pool crashes |
-| Quality Gate | ✅ Pass | Infrastructure issues resolved via wrapper and script updates |
-| YAML Validation | ✅ Pass | Quoting issues fixed in all workflows |
-| Dependency Audit | ✅ Pass | npm audit fix applied |
+| Unit Tests | ⚠️ Pass with error | 333/333 tests pass, worker pool crashes |
+| Quality Gate | ❌ Fail | Due to test worker pool error |
+| YAML Validation | ❌ Fail | Shellcheck warnings (pre-existing) |
+| Dependency Audit | ❌ Fail | Vulnerabilities (pre-existing) |
 
 ## Notes
 

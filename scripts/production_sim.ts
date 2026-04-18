@@ -2,12 +2,7 @@ async function simulateProductionUsage() {
   console.log("Simulating Production Usage...");
   const baseUrl = process.env.WORKER_URL || "http://localhost:8787";
 
-  const endpoints = [
-    "/health",
-    "/metrics",
-    "/deals",
-    "/deals.json"
-  ];
+  const endpoints = ["/health", "/metrics", "/deals", "/deals.json"];
 
   for (const endpoint of endpoints) {
     try {

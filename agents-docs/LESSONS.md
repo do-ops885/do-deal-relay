@@ -432,21 +432,3 @@ The multi-agent workflow system exists as an internal library (`worker/lib/multi
 2. Require endpoint tests for all new routes
 3. Run SWARM analysis before major releases
 4. Document endpoints BEFORE or DURING implementation (not after)
-
-### LESSON-026: Performance Bottleneck - Quadratic Complexity and Redundant I/O
-**Date**: 2026-04-17
-**Component**: Scoring Pipeline / Ranking System
-**Issue**: Identified O(N^2) loops and redundant KV fetches in the deal scoring hot path.
-**Root Cause**:
-1. `calculateDuplicatePenalty` used `filter` on the full `ctx.deduped` array inside a loop of `N` deals, resulting in quadratic time complexity.
-2. `score` function performed a `getProductionSnapshot` KV fetch and `allDeals` construction that were never used by subsequent logic.
-3. `rankDeals` calculated total scores and breakdowns in separate passes, doubling the computational cost for components like Date parsing.
-**Solution**:
-1. **Frequency Map Optimization**: Pre-calculated a `Map<string, number>` of `domain:code` counts from `ctx.deduped` to reduce `calculateDuplicatePenalty` to O(1) lookup (O(N) total).
-2. **I/O Pruning**: Removed the unused `getProductionSnapshot` call, saving 1 KV subrequest and 10-50ms latency per run.
-3. **Unified Scoring**: Introduced `calculateDetailedScore` to return both total score and breakdown in a single pass.
-4. **Weighted Sum Optimization**: Replaced `Object.entries().reduce()` with direct property summation to eliminate intermediate object/array allocations.
-**Prevention**:
-- Use `performance-optimization` skill guidance for hot paths.
-- Audit loops for `filter`/`find` patterns over the same collection.
-- Verify that every I/O operation (especially KV fetches) is actually consumed by logic.
