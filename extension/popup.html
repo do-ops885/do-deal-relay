@@ -439,14 +439,16 @@
   </head>
   <body>
     <div class="header">
-      <h1>🎁 Referral Capture</h1>
+      <h1><span aria-hidden="true">🎁</span> Referral Capture</h1>
       <div class="subtitle">One-click code capture</div>
     </div>
 
     <div class="content">
       <!-- Current Page Section -->
       <div class="section">
-        <div class="section-title">📄 Current Page</div>
+        <div class="section-title">
+          <span aria-hidden="true">📄</span> Current Page
+        </div>
         <div class="current-page">
           <div class="favicon" id="favicon">🌐</div>
           <div class="page-info">
@@ -463,20 +465,25 @@
 
       <!-- Detected Codes Section -->
       <div class="section" id="detections-section" style="display: none">
-        <div class="section-title">🎯 Detected Codes</div>
+        <div class="section-title">
+          <span aria-hidden="true">🎯</span> Detected Codes
+        </div>
         <div class="detection-list" id="detection-list"></div>
         <button
           class="btn btn-primary"
           id="capture-btn"
           style="margin-top: 12px"
         >
-          ✨ Capture Selected
+          <span aria-hidden="true">✨</span> Capture Selected
         </button>
       </div>
 
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
-        <div class="section-title">✏️ Manual Entry</div>
+        <div class="section-title">
+          <span aria-hidden="true">✏️</span> Manual Entry
+        </div>
+        <label for="manual-code" class="hidden">Referral Code</label>
         <input
           type="text"
           class="manual-input"
@@ -490,7 +497,9 @@
 
       <!-- Settings Panel (hidden by default) -->
       <div class="section settings-panel" id="settings-panel">
-        <div class="section-title">⚙️ Settings</div>
+        <div class="section-title">
+          <span aria-hidden="true">⚙️</span> Settings
+        </div>
         <div class="settings-field">
           <label class="settings-label">API Endpoint</label>
           <input
@@ -507,7 +516,9 @@
 
       <!-- Stats Section -->
       <div class="section" id="stats-section">
-        <div class="section-title">📊 Your Stats</div>
+        <div class="section-title">
+          <span aria-hidden="true">📊</span> Your Stats
+        </div>
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-value" id="stat-captured">0</div>
@@ -527,7 +538,9 @@
 
     <div class="footer">
       <a href="#" class="footer-link" id="settings-link">Settings</a>
-      <button class="settings-btn" id="refresh-btn">🔄</button>
+      <button class="settings-btn" id="refresh-btn" aria-label="Rescan page">
+        <span aria-hidden="true">🔄</span>
+      </button>
     </div>
 
     <div class="toast" id="toast"></div>

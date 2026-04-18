@@ -128,16 +128,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           img.width = 32;
           img.height = 32;
           img.style.borderRadius = "6px";
+          img.alt = "Website icon";
           elements.favicon.textContent = "";
           elements.favicon.appendChild(img);
         } else {
           elements.favicon.textContent = "🌐";
+          elements.favicon.setAttribute("role", "img");
+          elements.favicon.setAttribute("aria-label", "Website icon");
         }
       } catch {
         elements.favicon.textContent = "🌐";
+        elements.favicon.setAttribute("role", "img");
+        elements.favicon.setAttribute("aria-label", "Website icon");
       }
     } else {
       elements.favicon.textContent = "🌐";
+      elements.favicon.setAttribute("role", "img");
+      elements.favicon.setAttribute("aria-label", "Website icon");
     }
   }
 
@@ -204,6 +211,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const item = document.createElement("div");
       item.className = "detection-item";
       item.dataset.index = i.toString();
+      item.tabIndex = 0;
+      item.role = "button";
+      item.ariaSelected = "false";
 
       const info = document.createElement("div");
       info.className = "detection-info";
@@ -227,13 +237,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.appendChild(confidence);
 
       // Selection handling
-      item.addEventListener("click", () => {
+      const selectItem = () => {
         elements.detectionList
           .querySelectorAll(".detection-item")
-          .forEach((el) => el.classList.remove("selected"));
+          .forEach((el) => {
+            el.classList.remove("selected");
+            el.ariaSelected = "false";
+          });
         item.classList.add("selected");
+        item.ariaSelected = "true";
         state.selectedDetection =
           state.detections[parseInt(item.dataset.index)];
+      };
+
+      item.addEventListener("click", selectItem);
+
+      item.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectItem();
+        }
       });
 
       elements.detectionList.appendChild(item);
@@ -244,6 +267,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const firstItem = elements.detectionList.querySelector(".detection-item");
       if (firstItem) {
         firstItem.classList.add("selected");
+        firstItem.ariaSelected = "true";
         state.selectedDetection = detections[0];
       }
     }
