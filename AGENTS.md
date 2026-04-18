@@ -38,7 +38,7 @@ npm test
 npm run dev
 ```
 
-## Local Guard Rails 
+## Local Guard Rails (NEW)
 
 Enhanced pre-commit and pre-push hooks now run the **same checks as GitHub Actions CI** locally:
 
@@ -53,7 +53,7 @@ cp scripts/pre-push-hook.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 
 See [agents-docs/GUARD_RAILS.md](agents-docs/GUARD_RAILS.md) for complete documentation.
 
-## Duplicate Issue Prevention 
+## Duplicate Issue Prevention (NEW)
 
 GitHub workflows now check for **existing open issues before creating duplicates**:
 
