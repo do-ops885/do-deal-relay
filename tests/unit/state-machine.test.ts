@@ -3,7 +3,7 @@ import { executePipeline, getPipelineStatus } from "../../worker/state-machine";
 import {
   setGitHubToken,
   initGitHubCircuitBreaker,
-} from "../../worker/lib/github";
+} from "../../worker/lib/github/index";
 import type { Deal, PipelineContext, Env, Snapshot } from "../../worker/types";
 import { PipelineError } from "../../worker/types";
 

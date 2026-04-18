@@ -9,7 +9,7 @@ import {
   verifyCommit,
   setGitHubToken,
   resetGitHubToken,
-} from "../../worker/lib/github";
+} from "../../worker/lib/github/index";
 import type { Snapshot } from "../../worker/types";
 
 const TEST_TOKEN = "test-token";

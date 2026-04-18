@@ -8,7 +8,7 @@ import {
   isExpiringSoon,
   calculateExpiryUrgency,
 } from "../../worker/lib/expiration";
-import { setGitHubToken } from "../../worker/lib/github";
+import { setGitHubToken } from "../../worker/lib/github/index";
 import type { Deal, Env } from "../../worker/types";
 
 const createMockDeal = (
