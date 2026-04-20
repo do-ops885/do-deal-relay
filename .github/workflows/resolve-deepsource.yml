@@ -1,0 +1,22 @@
+---
+name: "Resolve outdated DeepSource comments"
+
+"on":
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  resolve-outdated:
+    name: Resolve Outdated
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve outdated DeepSource threads
+        uses: Ardiannn08/resolve-outdated-comment@v1.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filter-user: "deepsource-io[bot]"
+          mode: "resolve"
