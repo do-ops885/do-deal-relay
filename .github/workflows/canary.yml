@@ -59,13 +59,15 @@ jobs:
           echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
           echo "Auto-promote: ${{ github.event.inputs.auto_promote || false }}"
 
-          echo "## Canary Deployment Configuration" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Setting | Value |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Traffic % | ${PERCENTAGE}% |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Duration | ${DURATION} minutes |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Canary Deployment Configuration"
+            echo ""
+            echo "| Setting | Value |"
+            echo "|---------|-------|"
+            echo "| Traffic % | ${PERCENTAGE}% |"
+            echo "| Duration | ${DURATION} minutes |"
+            echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-canary:
     name: Deploy Canary
@@ -139,7 +141,7 @@ jobs:
         run: |
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           DURATION="${{ needs.setup-canary.outputs.duration }}"
-          END_TIME=$(($(date +%s) + DURATION * 60))
+          END_TIME=$(( $(date +%s) + DURATION * 60 ))
 
           if [ -z "${ACCOUNT_ID}" ]; then
             echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping monitoring"
@@ -153,7 +155,7 @@ jobs:
           echo "Monitoring canary at: ${CANARY_URL}"
           echo "Duration: ${DURATION} minutes"
 
-          while [ $(date +%s) -lt ${END_TIME} ]; do
+          while [ "$(date +%s)" -lt "${END_TIME}" ]; do
             if curl -sf "${CANARY_URL}/health"; then
               HEALTHY=$((HEALTHY + 1))
               echo "[$(date +%H:%M:%S)] ✅ Canary healthy"
@@ -166,13 +168,15 @@ jobs:
             sleep 30
           done
 
-          echo ""
-          echo "## Canary Monitoring Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Healthy checks | ${HEALTHY} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Failed checks | ${FAILED} |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo ""
+            echo "## Canary Monitoring Results"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Healthy checks | ${HEALTHY} |"
+            echo "| Failed checks | ${FAILED} |"
+          } >> "$GITHUB_STEP_SUMMARY"
           {
             echo "| Success rate |"
             echo "$(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | bc 2>/dev/null || echo "N/A")%"

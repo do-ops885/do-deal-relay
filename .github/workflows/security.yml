@@ -18,6 +18,8 @@ concurrency:
 jobs:
   secret-scan:
     name: Secret Detection
+    outputs:
+      outcome: ${{ steps.secret-scan.outcome }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -96,7 +98,7 @@ jobs:
             echo "| Dependency Audit | ${DEPENDENCY_CHECK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          SECRET_SCAN_OUTCOME="${{ steps.secret-scan.outcome }}"
+          SECRET_SCAN_OUTCOME="${{ needs.secret-scan.outputs.outcome }}"
           if [[ "${SECRET_SCAN_RESULT}" == "failure" ]] || [[ "${SECRET_SCAN_OUTCOME}" == "failure" ]]; then
             {
               echo ""
