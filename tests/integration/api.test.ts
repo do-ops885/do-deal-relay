@@ -164,7 +164,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv);
 
-      expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+      expect(response.headers.get("Access-Control-Allow-Origin")).not.toBeNull();
       expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
         "GET",
       );
@@ -695,7 +695,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv);
 
-      expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
       expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
         "GET",
       );

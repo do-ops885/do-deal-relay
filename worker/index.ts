@@ -78,19 +78,19 @@ export default {
 
     try {
       // Health checks
-      if (path === "/health") return handleHealth(env);
-      if (path === "/health/ready") return handleReady(env);
-      if (path === "/health/live") return handleLive(env);
+      if (path === "/health") return handleHealth(env, request);
+      if (path === "/health/ready") return handleReady(env, request);
+      if (path === "/health/live") return handleLive(env, request);
 
       // Metrics
       if (path === "/metrics") {
         const format = url.searchParams.get("format") || "prometheus";
-        return handleMetrics(env, format);
+        return handleMetrics(env, format, request);
       }
 
       // Deals
       if (path === "/deals" || path === "/deals.json") {
-        return handleGetDeals(url, env);
+        return handleGetDeals(url, env, request);
       }
       if (path === "/deals/ranked") {
         return handleRankedDeals(url, env);
@@ -105,11 +105,11 @@ export default {
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
         const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
-        return rateLimiter(request, () => handleDiscover(env));
+        return rateLimiter(request, () => handleDiscover(env, request));
       }
-      if (path === "/api/status") return handleStatus(env);
-      if (path === "/api/log") return handleGetLogs(url, env);
-      if (path === "/api/analytics") return handleAnalytics(url, env);
+      if (path === "/api/status") return handleStatus(env, request);
+      if (path === "/api/log") return handleGetLogs(url, env, request);
+      if (path === "/api/analytics") return handleAnalytics(url, env, request);
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
@@ -224,12 +224,13 @@ export default {
       }
 
       // 404
-      return jsonResponse({ error: "Not found" }, 404);
+      return jsonResponse({ error: "Not found" }, 404, request);
     } catch (error) {
       console.error("Request handler error:", error);
       return jsonResponse(
         { error: "Internal server error", message: (error as Error).message },
         500,
+        request,
       );
     }
   },
