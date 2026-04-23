@@ -9,9 +9,12 @@ import { getPipelineStatus } from "../../state-machine";
 import { getRecentLogs } from "../../lib/logger";
 import { CONFIG } from "../../config";
 import type { Env, HealthStatus } from "../../types";
-import { jsonResponse } from "../utils";
+import { jsonResponse, SECURITY_HEADERS } from "../utils";
 
-export async function handleHealth(env: Env): Promise<Response> {
+export async function handleHealth(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   // Optimization: Parallelize snapshot, status and log retrieval
   // This reduces latency by performing independent I/O operations concurrently
   const [snapshot, status, logs] = await Promise.all([
@@ -58,23 +61,38 @@ export async function handleHealth(env: Env): Promise<Response> {
   };
 
   const statusCode = health.status === "healthy" ? 200 : 503;
-  return jsonResponse(health, statusCode);
+  return jsonResponse(health, statusCode, request);
 }
 
-export async function handleReady(env: Env): Promise<Response> {
-  const health = await handleHealth(env);
+export async function handleReady(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
+  const health = await handleHealth(env, request);
   const body = (await health.json()) as HealthStatus;
   const isReady = body.status === "healthy";
-  return jsonResponse({ ready: isReady, ...body }, isReady ? 200 : 503);
+  return jsonResponse(
+    { ready: isReady, ...body },
+    isReady ? 200 : 503,
+    request,
+  );
 }
 
-export async function handleLive(env: Env): Promise<Response> {
-  return jsonResponse({ alive: true, timestamp: new Date().toISOString() });
+export async function handleLive(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
+  return jsonResponse(
+    { alive: true, timestamp: new Date().toISOString() },
+    200,
+    request,
+  );
 }
 
 export async function handleMetrics(
   env: Env,
   format: string = "prometheus",
+  request?: Request,
 ): Promise<Response> {
   // Optimization: Parallelize snapshot and log retrieval to reduce total latency
   const [snapshot, logs] = await Promise.all([
@@ -91,18 +109,22 @@ export async function handleMetrics(
   const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
 
   if (format === "json") {
-    return jsonResponse({
-      summary: {
-        total_runs: runs,
-        successful_runs: successes,
+    return jsonResponse(
+      {
+        summary: {
+          total_runs: runs,
+          successful_runs: successes,
+        },
+        deals: {
+          active: snapshot?.stats?.active || 0,
+          discovered_total: candidates,
+          validated_total: valid,
+          duplicate_total: duplicates,
+        },
       },
-      deals: {
-        active: snapshot?.stats?.active || 0,
-        discovered_total: candidates,
-        validated_total: valid,
-        duplicate_total: duplicates,
-      },
-    });
+      200,
+      request,
+    );
   }
 
   const metrics = `
@@ -127,6 +149,9 @@ deals_active_deals ${snapshot?.stats?.active || 0}
 `.trim();
 
   return new Response(metrics, {
-    headers: { "Content-Type": "text/plain" },
+    headers: {
+      "Content-Type": "text/plain",
+      ...SECURITY_HEADERS,
+    },
   });
 }
