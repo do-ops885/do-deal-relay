@@ -60,7 +60,7 @@ export async function handleGetLogs(
         "Access-Control-Allow-Origin": getAllowedOrigin(
           request?.headers.get("Origin"),
         ),
-        "Vary": "Origin",
+        Vary: "Origin",
         ...SECURITY_HEADERS,
       },
     });
