@@ -21,27 +21,49 @@ export interface RankOptions {
  * Composite score based on multiple factors
  */
 export function calculateDealScore(deal: Deal): number {
-  const scores = {
-    confidence: deal.metadata.confidence_score * 100,
-    trust: deal.source.trust_score * 100,
-    recency: calculateRecencyScore(deal.source.discovered_at),
-    value: calculateValueScore(deal.reward),
-    expiry: calculateExpiryScore(deal.expiry.date),
-  };
+  const { score } = calculateDetailedScore(deal);
+  return score;
+}
 
-  // Weighted composite score
-  const weights = {
-    confidence: 0.25,
-    trust: 0.2,
-    recency: 0.2,
-    value: 0.2,
-    expiry: 0.15,
+/**
+ * Calculate detailed score breakdown for ranking
+ * Single-pass calculation to avoid redundant computation
+ */
+export function calculateDetailedScore(deal: Deal): {
+  score: number;
+  breakdown: {
+    confidence: number;
+    trust: number;
+    recency: number;
+    value: number;
+    expiry: number;
   };
+} {
+  const confidence = deal.metadata.confidence_score * 100;
+  const trust = deal.source.trust_score * 100;
+  const recency = calculateRecencyScore(deal.source.discovered_at);
+  const value = calculateValueScore(deal.reward);
+  const expiry = calculateExpiryScore(deal.expiry.date);
 
-  return Object.entries(scores).reduce(
-    (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-    0,
-  );
+  // Performance optimization: direct weighted summation avoids intermediate
+  // allocations from Object.entries().reduce()
+  const score =
+    confidence * 0.25 +
+    trust * 0.2 +
+    recency * 0.2 +
+    value * 0.2 +
+    expiry * 0.15;
+
+  return {
+    score,
+    breakdown: {
+      confidence,
+      trust,
+      recency,
+      value,
+      expiry,
+    },
+  };
 }
 
 /**
@@ -221,18 +243,15 @@ export function rankDeals(
   // Sort
   const sorted = sortDeals(filtered, options.sortBy, options.order);
 
-  // Calculate scores with breakdown
-  const scores = sorted.map((deal) => ({
-    dealId: deal.id,
-    score: calculateDealScore(deal),
-    breakdown: {
-      confidence: deal.metadata.confidence_score * 100,
-      trust: deal.source.trust_score * 100,
-      recency: calculateRecencyScore(deal.source.discovered_at),
-      value: calculateValueScore(deal.reward),
-      expiry: calculateExpiryScore(deal.expiry.date),
-    },
-  }));
+  // Calculate scores with breakdown (single-pass optimization)
+  const scores = sorted.map((deal) => {
+    const { score, breakdown } = calculateDetailedScore(deal);
+    return {
+      dealId: deal.id,
+      score,
+      breakdown,
+    };
+  });
 
   // Apply limit
   const limited = options.limit ? sorted.slice(0, options.limit) : sorted;
