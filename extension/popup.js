@@ -201,9 +201,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "detection-item";
       item.dataset.index = i.toString();
+      item.setAttribute("aria-pressed", i === 0 ? "true" : "false");
 
       const info = document.createElement("div");
       info.className = "detection-info";
@@ -230,8 +232,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.addEventListener("click", () => {
         elements.detectionList
           .querySelectorAll(".detection-item")
-          .forEach((el) => el.classList.remove("selected"));
+          .forEach((el) => {
+            el.classList.remove("selected");
+            el.setAttribute("aria-pressed", "false");
+          });
         item.classList.add("selected");
+        item.setAttribute("aria-pressed", "true");
         state.selectedDetection =
           state.detections[parseInt(item.dataset.index)];
       });
@@ -288,6 +294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     elements.captureBtn.disabled = true;
+    elements.captureBtn.setAttribute("aria-busy", "true");
     elements.captureBtn.textContent = "Submitting...";
 
     try {
@@ -307,6 +314,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast(`Failed to capture: ${err.message}`, "error");
     } finally {
       elements.captureBtn.disabled = false;
+      elements.captureBtn.removeAttribute("aria-busy");
       elements.captureBtn.textContent = "✨ Capture Selected";
     }
   }
@@ -324,6 +332,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     elements.manualBtn.disabled = true;
+    elements.manualBtn.setAttribute("aria-busy", "true");
     elements.manualBtn.textContent = "Adding...";
 
     try {
@@ -343,6 +352,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast(`Failed to add: ${err.message}`, "error");
     } finally {
       elements.manualBtn.disabled = false;
+      elements.manualBtn.removeAttribute("aria-busy");
       elements.manualBtn.textContent = "Add Code Manually";
     }
   }
