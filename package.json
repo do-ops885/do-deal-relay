@@ -31,7 +31,7 @@
     "artillery": "^2.0.30",
     "miniflare": "^4.20260405.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.5",
     "wrangler": "^4.79.0"
   },
