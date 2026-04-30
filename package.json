@@ -22,7 +22,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "zod": "^3.22.4"
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.14.1",
