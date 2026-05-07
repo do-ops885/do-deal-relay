@@ -32,13 +32,14 @@ describe("Security Gatekeeper", () => {
     it(`should return 401 Unauthorized for ${method} ${path} without API key`, async () => {
       const request = new Request(`https://example.com${path}`, {
         method,
-        headers: method === "POST" ? { "Content-Type": "application/json" } : {},
+        headers:
+          method === "POST" ? { "Content-Type": "application/json" } : {},
         body: method === "POST" ? JSON.stringify({}) : null,
       });
 
       const response = await worker.fetch(request, mockEnv);
       expect(response.status).toBe(401);
-      const body = await response.json() as { error: string };
+      const body = (await response.json()) as { error: string };
       expect(body.error).toBe("Missing API key");
     });
 
@@ -54,7 +55,7 @@ describe("Security Gatekeeper", () => {
 
       const response = await worker.fetch(request, mockEnv);
       expect(response.status).toBe(401);
-      const body = await response.json() as { error: string };
+      const body = (await response.json()) as { error: string };
       expect(body.error).toBe("Invalid API key format");
     });
   });
@@ -77,7 +78,7 @@ describe("Security Gatekeeper", () => {
 
     const response = await worker.fetch(request, mockEnv);
     expect(response.status).toBe(403);
-    const body = await response.json() as { error: string };
+    const body = (await response.json()) as { error: string };
     expect(body.error).toContain("Required role: admin");
   });
 });
