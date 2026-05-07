@@ -76,11 +76,10 @@ export async function storeApiKey(
     keyHash, // Store hash, not plaintext
   };
 
-  await env.DEALS_SOURCES.put(
-    `apikey:${keyHash}`,
-    JSON.stringify(metadata),
-    { expirationTtl: config.expiresAt ? undefined : 365 * 86400 }, // 1 year default
-  );
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+    expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
+  });
 
   return key;
 }
@@ -100,11 +99,21 @@ export async function verifyApiKey(
   // Hash the provided key
   const keyHash = await hashApiKey(apiKey);
 
-  // Look up in KV
-  const metadata = await env.DEALS_SOURCES.get<ApiKeyConfig>(
-    `apikey:${keyHash}`,
-    "json",
-  );
+  // Try WEBHOOK_API_KEYS first, fallback to DEALS_SOURCES
+  let metadata: ApiKeyConfig | null = null;
+  if (env.WEBHOOK_API_KEYS) {
+    metadata = await env.WEBHOOK_API_KEYS.get<ApiKeyConfig>(
+      `apikey:${keyHash}`,
+      "json",
+    );
+  }
+
+  if (!metadata) {
+    metadata = await env.DEALS_SOURCES.get<ApiKeyConfig>(
+      `apikey:${keyHash}`,
+      "json",
+    );
+  }
 
   if (!metadata) {
     return { authenticated: false, error: "Invalid API key" };
@@ -117,7 +126,8 @@ export async function verifyApiKey(
 
   // Update last used
   metadata.lastUsed = new Date().toISOString();
-  await env.DEALS_SOURCES.put(`apikey:${keyHash}`, JSON.stringify(metadata));
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata));
 
   return {
     authenticated: true,
@@ -183,15 +193,34 @@ export function requireAuth(
     const auth = await authenticateRequest(request, env);
 
     if (!auth.authenticated) {
-      return unauthorizedResponse(auth.error || "Unauthorized");
+      return unauthorizedResponse(auth.error || "Unauthorized", request);
     }
 
     if (requiredRole && auth.role !== requiredRole && auth.role !== "admin") {
-      return forbiddenResponse(`Required role: ${requiredRole}`);
+      return forbiddenResponse(`Required role: ${requiredRole}`, request);
     }
 
     return auth;
   };
+}
+
+/**
+ * Higher-order helper for inline authentication in route handlers
+ */
+export async function withAuth(
+  request: Request,
+  env: Env,
+  requiredRole: "admin" | "user" | "readonly" | undefined,
+  handler: (auth: AuthResult) => Promise<Response>,
+): Promise<Response> {
+  const middleware = requireAuth(env, requiredRole);
+  const auth = await middleware(request);
+
+  if (auth instanceof Response) {
+    return auth;
+  }
+
+  return handler(auth);
 }
 
 // ============================================================================
