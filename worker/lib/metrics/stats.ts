@@ -1,5 +1,18 @@
-import type { PipelinePhase, PipelineMetrics } from "../../types";
+import type { PipelinePhase, PipelineMetrics, Env } from "../../types";
 
+/**
+ * Get cumulative gate rejections from KV
+ */
+export async function getCumulativeGateRejections(
+  env: Env,
+): Promise<Record<string, number>> {
+  const raw = await env.DEALS_LOG.get("metrics:cumulative_gate_rejections");
+  return raw ? JSON.parse(raw) : {};
+}
+
+/**
+ * Calculate aggregate statistics from a list of pipeline metrics
+ */
 export function calculateAggregateStats(metrics: PipelineMetrics[]) {
   if (metrics.length === 0)
     return {
@@ -37,6 +50,7 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
       },
       total_errors: 0,
       total_retries: 0,
+      total_validation_gate_rejections: {} as Record<string, number>,
     };
   const successful = metrics.filter((m) => m.success);
   const phases: PipelinePhase[] = [
@@ -123,12 +137,26 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
     },
     total_errors: metrics.reduce((s, m) => s + m.errors, 0),
     total_retries: metrics.reduce((s, m) => s + m.retries, 0),
+    total_validation_gate_rejections: metrics.reduce((acc, m) => {
+      if (m.validation_gate_rejections) {
+        for (const [gate, count] of Object.entries(
+          m.validation_gate_rejections,
+        )) {
+          acc[gate] = (acc[gate] || 0) + count;
+        }
+      }
+      return acc;
+    }, {} as Record<string, number>),
   };
 }
 
+/**
+ * Format metrics for Prometheus
+ */
 export function formatMetricsForPrometheus(
   stats: ReturnType<typeof calculateAggregateStats>,
   metrics: PipelineMetrics[] = [],
+  cumulativeRejections: Record<string, number> = {},
 ): string {
   const lines: string[] = [
     `# HELP deals_pipeline_runs_total Total discovery runs`,
@@ -220,6 +248,26 @@ export function formatMetricsForPrometheus(
   lines.push(`deals_pipeline_errors_total ${stats.total_errors}`);
   lines.push(`deals_pipeline_retries_total ${stats.total_retries}`);
 
+  // Combine and expose validation gate rejections
+  const allRejections = { ...cumulativeRejections };
+  // Merge in stats rejections if not already present or to show current batch
+  for (const [gate, count] of Object.entries(stats.total_validation_gate_rejections)) {
+    // Note: If cumulativeRejections is already comprehensive, we don't want to double count.
+    // However, the requested solution specifically asked for "validation_gate_rejections"
+    // and if we only have one counter, it should be the cumulative one if available.
+    if (allRejections[gate] === undefined) {
+      allRejections[gate] = count;
+    }
+  }
+
+  if (Object.keys(allRejections).length > 0) {
+    lines.push(`# HELP validation_gate_rejections Rejections per validation gate`);
+    lines.push(`# TYPE validation_gate_rejections counter`);
+    for (const [gate, count] of Object.entries(allRejections)) {
+      lines.push(`validation_gate_rejections{gate="${gate}"} ${count}`);
+    }
+  }
+
   return lines.join("\n");
 }
 
@@ -233,6 +281,9 @@ export interface PhaseTimingStats {
   p99: number;
 }
 
+/**
+ * Get detailed phase timing statistics
+ */
 export function getDetailedPhaseTimingStats(
   metrics: PipelineMetrics[],
 ): Record<PipelinePhase, Record<"success" | "failure", PhaseTimingStats>> {
@@ -269,6 +320,9 @@ export function getDetailedPhaseTimingStats(
   return res;
 }
 
+/**
+ * Calculate basic statistics for a set of timings
+ */
 function calculateStats(timings: number[]): PhaseTimingStats {
   if (timings.length === 0) {
     return { min: 0, max: 0, avg: 0, p50: 0, p90: 0, p95: 0, p99: 0 };
@@ -289,6 +343,9 @@ function calculateStats(timings: number[]): PhaseTimingStats {
   };
 }
 
+/**
+ * Get phase timing statistics for general reporting
+ */
 export function getPhaseTimingStats(
   metrics: PipelineMetrics[],
 ): Record<
@@ -298,9 +355,6 @@ export function getPhaseTimingStats(
   const detailed = getDetailedPhaseTimingStats(metrics);
   const res = {} as any;
   for (const [p, stats] of Object.entries(detailed)) {
-    // For backward compatibility, combine success and failure for the old return type if needed,
-    // or just use success path which is the most common.
-    // Given the old one didn't distinguish, let's recalculate over all timings for this phase.
     const allTimings = metrics
       .map((m) => m.phase_timings[p as PipelinePhase])
       .filter((t) => t > 0);
