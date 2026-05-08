@@ -100,12 +100,15 @@ export async function handleMetrics(
   request?: Request,
 ): Promise<Response> {
   // Optimization: Parallelize snapshot, log and metrics retrieval to reduce total latency
-  const [snapshot, logs, pipelineMetrics, cumulativeRejections] = await Promise.all([
-    getProductionSnapshot(env),
-    getRecentLogs(env, 1000),
-    getRecentMetrics(env, 100),
-    import("../../lib/metrics/stats").then(m => m.getCumulativeGateRejections(env))
-  ]);
+  const [snapshot, logs, pipelineMetrics, cumulativeRejections] =
+    await Promise.all([
+      getProductionSnapshot(env),
+      getRecentLogs(env, 1000),
+      getRecentMetrics(env, 100),
+      import("../../lib/metrics/stats").then((m) =>
+        m.getCumulativeGateRejections(env),
+      ),
+    ]);
 
   const stats = calculateAggregateStats(pipelineMetrics);
 
@@ -139,7 +142,11 @@ export async function handleMetrics(
     );
   }
 
-  let metrics = formatMetricsForPrometheus(stats, pipelineMetrics, cumulativeRejections);
+  let metrics = formatMetricsForPrometheus(
+    stats,
+    pipelineMetrics,
+    cumulativeRejections,
+  );
 
   // Add legacy metrics for backward compatibility
   metrics += `

@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest";
 import { VALIDATION_GATES } from "../../worker/config";
 import { validate } from "../../worker/pipeline/validate";
 import { createMetrics } from "../../worker/lib/metrics/core";
-import { calculateAggregateStats, formatMetricsForPrometheus } from "../../worker/lib/metrics/stats";
+import {
+  calculateAggregateStats,
+  formatMetricsForPrometheus,
+} from "../../worker/lib/metrics/stats";
 import { Deal, Env, PipelineContext } from "../../worker/types";
 
 describe("Validation Gates Metrics", () => {
@@ -70,9 +73,11 @@ describe("Validation Gates Metrics", () => {
     expect(stats.total_validation_gate_rejections["source_trust"]).toBe(1);
 
     const prometheus = formatMetricsForPrometheus(stats);
-    expect(prometheus).toContain('validation_gate_rejections{gate="source_trust"} 1');
-    expect(prometheus).toContain('# HELP validation_gate_rejections');
-    expect(prometheus).toContain('# TYPE validation_gate_rejections counter');
+    expect(prometheus).toContain(
+      'validation_gate_rejections{gate="source_trust"} 1',
+    );
+    expect(prometheus).toContain("# HELP validation_gate_rejections");
+    expect(prometheus).toContain("# TYPE validation_gate_rejections counter");
   });
 
   it("should have all 9 gates enumerated in VALIDATION_GATES", async () => {

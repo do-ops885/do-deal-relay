@@ -137,16 +137,19 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
     },
     total_errors: metrics.reduce((s, m) => s + m.errors, 0),
     total_retries: metrics.reduce((s, m) => s + m.retries, 0),
-    total_validation_gate_rejections: metrics.reduce((acc, m) => {
-      if (m.validation_gate_rejections) {
-        for (const [gate, count] of Object.entries(
-          m.validation_gate_rejections,
-        )) {
-          acc[gate] = (acc[gate] || 0) + count;
+    total_validation_gate_rejections: metrics.reduce(
+      (acc, m) => {
+        if (m.validation_gate_rejections) {
+          for (const [gate, count] of Object.entries(
+            m.validation_gate_rejections,
+          )) {
+            acc[gate] = (acc[gate] || 0) + count;
+          }
         }
-      }
-      return acc;
-    }, {} as Record<string, number>),
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
   };
 }
 
@@ -251,7 +254,9 @@ export function formatMetricsForPrometheus(
   // Combine and expose validation gate rejections
   const allRejections = { ...cumulativeRejections };
   // Merge in stats rejections if not already present or to show current batch
-  for (const [gate, count] of Object.entries(stats.total_validation_gate_rejections)) {
+  for (const [gate, count] of Object.entries(
+    stats.total_validation_gate_rejections,
+  )) {
     // Note: If cumulativeRejections is already comprehensive, we don't want to double count.
     // However, the requested solution specifically asked for "validation_gate_rejections"
     // and if we only have one counter, it should be the cumulative one if available.
@@ -261,7 +266,9 @@ export function formatMetricsForPrometheus(
   }
 
   if (Object.keys(allRejections).length > 0) {
-    lines.push(`# HELP validation_gate_rejections Rejections per validation gate`);
+    lines.push(
+      `# HELP validation_gate_rejections Rejections per validation gate`,
+    );
     lines.push(`# TYPE validation_gate_rejections counter`);
     for (const [gate, count] of Object.entries(allRejections)) {
       lines.push(`validation_gate_rejections{gate="${gate}"} ${count}`);
