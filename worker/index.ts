@@ -61,7 +61,6 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -69,18 +68,6 @@ import { validateConfig } from "./lib/config-utils";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Validate configuration
-    try {
-      validateConfig(env);
-    } catch (error) {
-      console.error("Configuration error:", error);
-      return jsonResponse(
-        { error: "Configuration error", message: (error as Error).message },
-        500,
-        request,
-      );
-    }
-
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
@@ -263,20 +250,6 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
-    // Validate configuration
-    try {
-      validateConfig(env);
-    } catch (error) {
-      console.error("Scheduled execution configuration error:", error);
-      await notify(env, {
-        type: "system_error",
-        severity: "critical",
-        run_id: "scheduled-init",
-        message: `Configuration error: ${(error as Error).message}`,
-      });
-      return;
-    }
-
     const cron = event.cron;
     const timestamp = new Date().toISOString();
 

@@ -18,18 +18,6 @@ export function createMetrics(run_id: string): PipelineMetrics {
       verify: 0,
       finalize: 0,
     },
-    phase_results: {
-      init: "success",
-      discover: "success",
-      normalize: "success",
-      dedupe: "success",
-      validate: "success",
-      score: "success",
-      stage: "success",
-      publish: "success",
-      verify: "success",
-      finalize: "success",
-    },
     total_duration_ms: 0,
     deals_processed: {
       discovered: 0,
@@ -64,10 +52,8 @@ export function recordPhaseTiming(
   metrics: PipelineMetrics,
   phase: PipelinePhase,
   duration: number,
-  status: "success" | "failure" = "success",
 ): void {
   metrics.phase_timings[phase] = duration;
-  metrics.phase_results[phase] = status;
 }
 
 export function recordDealCount(

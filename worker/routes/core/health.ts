@@ -7,11 +7,6 @@
 import { getProductionSnapshot } from "../../lib/storage";
 import { getPipelineStatus } from "../../state-machine";
 import { getRecentLogs } from "../../lib/logger";
-import { getRecentMetrics } from "../../lib/metrics/index";
-import {
-  calculateAggregateStats,
-  formatMetricsForPrometheus,
-} from "../../lib/metrics/stats";
 import { CONFIG } from "../../config";
 import type { Env, HealthStatus } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";
@@ -139,7 +134,7 @@ export async function handleMetrics(
   // Add active deals metric which is only in snapshot
   prometheusMetrics += `\n# HELP deals_active_deals Current active deals in production
 # TYPE deals_active_deals gauge
-deals_active_deals ${snapshot?.stats.active || 0}`;
+deals_active_deals ${snapshot?.stats?.active || 0}`;
 
   return new Response(prometheusMetrics, {
     headers: {

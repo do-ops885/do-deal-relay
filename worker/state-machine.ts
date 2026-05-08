@@ -108,31 +108,12 @@ export async function executePipeline(env: Env): Promise<{
 
         // Execute phase
         const phaseStartTime = Date.now();
-        let result: PipelinePhase | FailurePath;
-        try {
-          result = await executePhase(currentPhase, ctx, env);
-          const phaseDuration = Date.now() - phaseStartTime;
+        const result = await executePhase(currentPhase, ctx, env);
+        const phaseDuration = Date.now() - phaseStartTime;
 
-          // Record metrics
-          if (ctx.metrics) {
-            recordPhaseTiming(
-              ctx.metrics,
-              currentPhase,
-              phaseDuration,
-              "success",
-            );
-          }
-        } catch (error) {
-          const phaseDuration = Date.now() - phaseStartTime;
-          if (ctx.metrics) {
-            recordPhaseTiming(
-              ctx.metrics,
-              currentPhase,
-              phaseDuration,
-              "failure",
-            );
-          }
-          throw error;
+        // Record metrics
+        if (ctx.metrics) {
+          recordPhaseTiming(ctx.metrics, currentPhase, phaseDuration);
         }
 
         if (result === "finalize") {

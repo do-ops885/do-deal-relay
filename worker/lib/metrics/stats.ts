@@ -156,7 +156,6 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
 
 export function formatMetricsForPrometheus(
   stats: ReturnType<typeof calculateAggregateStats>,
-  metrics: PipelineMetrics[] = [],
 ): string {
   const lines: string[] = [
     "# HELP deals_pipeline_runs_total Total discovery runs",
@@ -240,19 +239,12 @@ export function formatMetricsForPrometheus(
   return lines.join("\n");
 }
 
-export interface PhaseTimingStats {
-  min: number;
-  max: number;
-  avg: number;
-  p50: number;
-  p90: number;
-  p95: number;
-  p99: number;
-}
-
-export function getDetailedPhaseTimingStats(
+export function getPhaseTimingStats(
   metrics: PipelineMetrics[],
-): Record<PipelinePhase, Record<"success" | "failure", PhaseTimingStats>> {
+): Record<
+  PipelinePhase,
+  { min: number; max: number; avg: number; p95: number }
+> {
   const phases: PipelinePhase[] = [
     "init",
     "discover",
@@ -266,67 +258,20 @@ export function getDetailedPhaseTimingStats(
     "finalize",
   ];
   const res = {} as any;
-
   for (const p of phases) {
+    const timings = metrics
+      .map((m) => m.phase_timings[p])
+      .filter((t) => t > 0)
+      .sort((a, b) => a - b);
+    if (timings.length === 0) {
+      res[p] = { min: 0, max: 0, avg: 0, p95: 0 };
+      continue;
+    }
     res[p] = {
-      success: calculateStats(
-        metrics
-          .filter((m) => m.phase_results?.[p] === "success" || !m.phase_results)
-          .map((m) => m.phase_timings[p])
-          .filter((t) => t > 0),
-      ),
-      failure: calculateStats(
-        metrics
-          .filter((m) => m.phase_results?.[p] === "failure")
-          .map((m) => m.phase_timings[p])
-          .filter((t) => t > 0),
-      ),
-    };
-  }
-  return res;
-}
-
-function calculateStats(timings: number[]): PhaseTimingStats {
-  if (timings.length === 0) {
-    return { min: 0, max: 0, avg: 0, p50: 0, p90: 0, p95: 0, p99: 0 };
-  }
-  const sorted = [...timings].sort((a, b) => a - b);
-  const sum = sorted.reduce((a, b) => a + b, 0);
-  const getQuantile = (q: number) =>
-    sorted[Math.max(0, Math.ceil(sorted.length * q) - 1)];
-
-  return {
-    min: sorted[0],
-    max: sorted[sorted.length - 1],
-    avg: Math.round(sum / sorted.length),
-    p50: getQuantile(0.5),
-    p90: getQuantile(0.9),
-    p95: getQuantile(0.95),
-    p99: getQuantile(0.99),
-  };
-}
-
-export function getPhaseTimingStats(
-  metrics: PipelineMetrics[],
-): Record<
-  PipelinePhase,
-  { min: number; max: number; avg: number; p95: number }
-> {
-  const detailed = getDetailedPhaseTimingStats(metrics);
-  const res = {} as any;
-  for (const [p, stats] of Object.entries(detailed)) {
-    // For backward compatibility, combine success and failure for the old return type if needed,
-    // or just use success path which is the most common.
-    // Given the old one didn't distinguish, let's recalculate over all timings for this phase.
-    const allTimings = metrics
-      .map((m) => m.phase_timings[p as PipelinePhase])
-      .filter((t) => t > 0);
-    const statsAll = calculateStats(allTimings);
-    res[p] = {
-      min: statsAll.min,
-      max: statsAll.max,
-      avg: statsAll.avg,
-      p95: statsAll.p95,
+      min: timings[0],
+      max: timings[timings.length - 1],
+      avg: Math.round(timings.reduce((a, b) => a + b, 0) / timings.length),
+      p95: timings[Math.max(0, Math.ceil(timings.length * 0.95) - 1)],
     };
   }
   return res;

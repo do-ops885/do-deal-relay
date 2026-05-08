@@ -1,7 +1,6 @@
 import { Deal, PipelineContext, PipelineError, ErrorClass } from "../types";
 import { DealSchema } from "../types";
 import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
-import { getTrustThreshold } from "../lib/config-utils";
 import { verifyNormalization } from "./normalize";
 import { validateDealFastPath } from "./validate-fast-path";
 import {
@@ -96,7 +95,7 @@ export async function validate(
       let allPassed = true;
       const failureReasons: string[] = [];
       const gateFailures: string[] = [];
-      let fastPathDecision = null;
+      let fastPathDecision: any = null;
       let skipGates = false;
 
       if (useCache) {
@@ -128,11 +127,6 @@ export async function validate(
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);
             gateFailures.push(gate);
-            break;
-          }
-            allPassed = false;
-            failureReasons.push(`${gate}: ${gateResult.reason}`);
-            gateFailures.push(gate);
           }
         }
       }
@@ -151,7 +145,8 @@ export async function validate(
         fastPathDecision.persist
       ) {
         const isDuplicate = failureReasons.some(
-          (r) => r.includes("Deduplication Check") || r.includes("duplicate"),
+          (r: string) =>
+            r.includes("Deduplication Check") || r.includes("duplicate"),
         );
         await fastPathDecision.persist({
           status: allPassed
@@ -205,7 +200,6 @@ async function runGate(
   gate: ValidationGate,
   deal: Deal,
   ctx: PipelineContext,
-  env: Env,
   existingIds: Set<string>,
 ): Promise<GateResult> {
   switch (gate) {
@@ -216,7 +210,7 @@ async function runGate(
     case "deduplication_check":
       return gateDeduplicationCheck(deal, ctx);
     case "source_trust":
-      return gateSourceTrust(deal, env);
+      return gateSourceTrust(deal);
     case "reward_plausibility":
       return gateRewardPlausibility(deal);
     case "expiry_validation":
@@ -295,12 +289,11 @@ function gateDeduplicationCheck(deal: Deal, ctx: PipelineContext): GateResult {
 }
 
 // Gate 4: Source Trust
-function gateSourceTrust(deal: Deal, env: Env): GateResult {
-  const threshold = getTrustThreshold(env);
-  if (deal.source.trust_score < threshold) {
+function gateSourceTrust(deal: Deal): GateResult {
+  if (deal.source.trust_score < CONFIG.MIN_TRUST_SCORE) {
     return {
       passed: false,
-      reason: `Trust score ${deal.source.trust_score} below minimum ${threshold}`,
+      reason: `Trust score ${deal.source.trust_score} below minimum ${CONFIG.MIN_TRUST_SCORE}`,
     };
   }
 
@@ -482,7 +475,7 @@ function shouldQuarantine(deal: Deal): boolean {
     return true;
   }
 
-  // Anomaly detection: reward 3σ from mean (simplified)
+  // Anomaly detection: reward 3 sigma from mean (simplified)
   // In production, calculate actual mean/stddev
   if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
     if (deal.reward.value > 500) {

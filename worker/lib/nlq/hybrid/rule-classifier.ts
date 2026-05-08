@@ -5,7 +5,6 @@
 
 import { logger } from "../../global-logger";
 import { CONFIG } from "../../../config";
-import { getTrustThreshold } from "../../config-utils";
 import type { Env } from "../../../types";
 import type {
   EnhancedQuery,
@@ -79,7 +78,6 @@ export const SENTIMENT_PATTERNS = {
 export function classifyWithRules(
   query: string,
   startTime: number,
-  env?: Env,
 ): EnhancedQuery {
   const normalized = normalizeQuery(query);
 
@@ -93,7 +91,7 @@ export function classifyWithRules(
   const expansion = buildExpansions(normalized, entities);
 
   // Build filters
-  const filters = buildFiltersFromEntities(entities, env);
+  const filters = buildFiltersFromEntities(entities);
 
   // Calculate confidence
   const confidence = calculateRuleConfidence(entities, intent);
@@ -274,7 +272,6 @@ export function buildExpansions(
  */
 export function buildFiltersFromEntities(
   entities: EnhancedQuery["entities"],
-  env?: Env,
 ): QueryFilters {
   const filters: QueryFilters = {};
 
@@ -296,7 +293,7 @@ export function buildFiltersFromEntities(
           filters.minRanking = 0.8;
         } else if (impact < 0) {
           filters.sentimentFilter = "negative";
-          filters.minTrustScore = env ? getTrustThreshold(env) : 0.3;
+          filters.minTrustScore = 0.3;
         }
         break;
       }
