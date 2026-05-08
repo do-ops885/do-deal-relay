@@ -1,5 +1,6 @@
 import type { PipelinePhase, PipelineMetrics, Env } from "../../types";
 import { fetchInBatches } from "../utils";
+import { VALIDATION_GATES } from "../../config";
 
 export function createMetrics(run_id: string): PipelineMetrics {
   return {
@@ -33,6 +34,13 @@ export function createMetrics(run_id: string): PipelineMetrics {
       d1_lookup_total: 0,
       dedup_hit_total: 0,
     },
+    validation_gates: VALIDATION_GATES.reduce(
+      (acc, gate) => {
+        acc[gate] = { passed: 0, failed: 0 };
+        return acc;
+      },
+      {} as Record<string, { passed: number; failed: number }>,
+    ),
     errors: 0,
     retries: 0,
     success: false,
@@ -84,6 +92,24 @@ export function recordValidationCacheMetric(
     };
   }
   metrics.validation_cache[metric] += increment;
+}
+
+export function recordValidationGateResult(
+  metrics: PipelineMetrics,
+  gate: string,
+  passed: boolean,
+): void {
+  if (!metrics.validation_gates) {
+    metrics.validation_gates = {};
+  }
+  if (!metrics.validation_gates[gate]) {
+    metrics.validation_gates[gate] = { passed: 0, failed: 0 };
+  }
+  if (passed) {
+    metrics.validation_gates[gate].passed++;
+  } else {
+    metrics.validation_gates[gate].failed++;
+  }
 }
 
 export function finalizeMetrics(

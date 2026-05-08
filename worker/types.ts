@@ -223,6 +223,7 @@ export interface PipelineMetrics {
     d1_lookup_total: number;
     dedup_hit_total: number;
   };
+  validation_gates?: Record<string, { passed: number; failed: number }>;
   errors: number;
   retries: number;
   success: boolean;

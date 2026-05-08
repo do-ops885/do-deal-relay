@@ -3,7 +3,10 @@ import { DealSchema } from "../types";
 import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
 import { verifyNormalization } from "./normalize";
 import { validateDealFastPath } from "./validate-fast-path";
-import { recordValidationCacheMetric } from "../lib/metrics";
+import {
+  recordValidationCacheMetric,
+  recordValidationGateResult,
+} from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
 import { fetchInBatches } from "../lib/utils";
@@ -115,6 +118,11 @@ export async function validate(
       if (!skipGates) {
         for (const gate of VALIDATION_GATES) {
           const gateResult = await runGate(gate, deal, ctx, existingDealIds);
+
+          if (ctx.metrics) {
+            recordValidationGateResult(ctx.metrics, gate, gateResult.passed);
+          }
+
           if (!gateResult.passed) {
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);

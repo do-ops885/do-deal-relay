@@ -10,6 +10,11 @@ import { getRecentLogs } from "../../lib/logger";
 import { CONFIG } from "../../config";
 import type { Env, HealthStatus } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";
+import { getRecentMetrics } from "../../lib/metrics/core";
+import {
+  calculateAggregateStats,
+  formatMetricsForPrometheus,
+} from "../../lib/metrics/stats";
 
 export async function handleHealth(
   env: Env,
@@ -94,61 +99,44 @@ export async function handleMetrics(
   format: string = "prometheus",
   request?: Request,
 ): Promise<Response> {
-  // Optimization: Parallelize snapshot and log retrieval to reduce total latency
-  const [snapshot, logs] = await Promise.all([
+  // Optimization: Parallelize snapshot and metrics retrieval to reduce total latency
+  const [snapshot, metricsList] = await Promise.all([
     getProductionSnapshot(env),
-    getRecentLogs(env, 1000),
+    getRecentMetrics(env, 100),
   ]);
 
-  const runs = logs.filter((l) => l.phase === "finalize").length;
-  const successes = logs.filter(
-    (l) => l.phase === "publish" && l.status === "complete",
-  ).length;
-  const candidates = logs.reduce((sum, l) => sum + (l.candidate_count || 0), 0);
-  const valid = logs.reduce((sum, l) => sum + (l.valid_count || 0), 0);
-  const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
+  const stats = calculateAggregateStats(metricsList);
 
   if (format === "json") {
     return jsonResponse(
       {
         summary: {
-          total_runs: runs,
-          successful_runs: successes,
+          total_runs: stats.total_runs,
+          successful_runs: stats.successful_runs,
+          failed_runs: stats.failed_runs,
+          success_rate: stats.success_rate,
         },
         deals: {
           active: snapshot?.stats?.active || 0,
-          discovered_total: candidates,
-          validated_total: valid,
-          duplicate_total: duplicates,
+          avg_per_run: stats.avg_deals_per_run,
         },
+        phases: stats.avg_phase_timings,
+        validation_cache: stats.avg_validation_cache,
+        validation_gates: stats.avg_validation_gates,
       },
       200,
       request,
     );
   }
 
-  const metrics = `
-# HELP deals_runs_total Total discovery runs
-# TYPE deals_runs_total counter
-deals_runs_total ${runs}
+  let prometheusMetrics = formatMetricsForPrometheus(stats);
 
-# HELP deals_publish_success_total Successful publishes
-deals_publish_success_total ${successes}
+  // Add active deals metric which is only in snapshot
+  prometheusMetrics += `\n# HELP deals_active_deals Current active deals in production
+# TYPE deals_active_deals gauge
+deals_active_deals ${snapshot?.stats?.active || 0}`;
 
-# HELP deals_candidate_deals_total Candidate deals discovered
-deals_candidate_deals_total ${candidates}
-
-# HELP deals_valid_deals_total Valid deals after validation
-deals_valid_deals_total ${valid}
-
-# HELP deals_duplicate_deals_total Duplicate deals filtered
-deals_duplicate_deals_total ${duplicates}
-
-# HELP deals_active_deals Current active deals in production
-deals_active_deals ${snapshot?.stats?.active || 0}
-`.trim();
-
-  return new Response(metrics, {
+  return new Response(prometheusMetrics, {
     headers: {
       "Content-Type": "text/plain",
       ...SECURITY_HEADERS,

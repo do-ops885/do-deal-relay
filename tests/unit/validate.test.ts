@@ -148,4 +148,68 @@ describe("Validation Pipeline", () => {
     const ratio = calculateValidationRatio(result);
     expect(ratio).toBe(0.8);
   });
+
+  it("should record gate-level metrics correctly for multiple rejections", async () => {
+    // Custom metrics object to track
+    const testMetrics = {
+      run_id: "test-run",
+      start_time: Date.now(),
+      phase_timings: {
+        init: 0,
+        discover: 0,
+        normalize: 0,
+        dedupe: 0,
+        validate: 0,
+        score: 0,
+        stage: 0,
+        publish: 0,
+        verify: 0,
+        finalize: 0,
+      },
+      total_duration_ms: 0,
+      deals_processed: {
+        discovered: 0,
+        normalized: 0,
+        deduped: 0,
+        validated: 0,
+        scored: 0,
+        published: 0,
+      },
+      validation_gates: {
+        schema_validation: { passed: 0, failed: 0 },
+        source_trust: { passed: 0, failed: 0 },
+        reward_plausibility: { passed: 0, failed: 0 },
+      },
+      errors: 0,
+      retries: 0,
+      success: false,
+      final_phase: "init" as any,
+    };
+
+    const multiFailureCtx = {
+      ...ctx,
+      metrics: testMetrics,
+    };
+
+    const deals = [
+      createMockDeal("1", {
+        source: {
+          trust_score: 0.1,
+          url: "http://bad.com",
+          domain: "bad.com",
+          discovered_at: new Date().toISOString(),
+        }, // Fails source_trust
+        reward: { type: "cash", value: -10 }, // Fails reward_plausibility
+      }),
+    ];
+
+    await validate(deals, multiFailureCtx, mockEnv);
+
+    // Both gates should have recorded a failure
+    expect(testMetrics.validation_gates.source_trust.failed).toBe(1);
+    expect(testMetrics.validation_gates.reward_plausibility.failed).toBe(1);
+
+    // Schema validation should have passed
+    expect(testMetrics.validation_gates.schema_validation.passed).toBe(1);
+  });
 });

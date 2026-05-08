@@ -35,6 +35,10 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
         d1_lookup_total: 0,
         dedup_hit_total: 0,
       },
+      avg_validation_gates: {} as Record<
+        string,
+        { passed: number; failed: number }
+      >,
       total_errors: 0,
       total_retries: 0,
     };
@@ -56,6 +60,29 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
     avgPhaseTimings[p] = Math.round(
       metrics.reduce((s, m) => s + m.phase_timings[p], 0) / metrics.length,
     );
+  }
+  const avgValidationGates = {} as Record<
+    string,
+    { passed: number; failed: number }
+  >;
+  metrics.forEach((m) => {
+    if (m.validation_gates) {
+      for (const [gate, counts] of Object.entries(m.validation_gates)) {
+        if (!avgValidationGates[gate]) {
+          avgValidationGates[gate] = { passed: 0, failed: 0 };
+        }
+        avgValidationGates[gate].passed += counts.passed;
+        avgValidationGates[gate].failed += counts.failed;
+      }
+    }
+  });
+  for (const gate in avgValidationGates) {
+    avgValidationGates[gate].passed =
+      Math.round((avgValidationGates[gate].passed / metrics.length) * 100) /
+      100;
+    avgValidationGates[gate].failed =
+      Math.round((avgValidationGates[gate].failed / metrics.length) * 100) /
+      100;
   }
   return {
     total_runs: metrics.length,
@@ -121,6 +148,7 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
         ) / metrics.length,
       ),
     },
+    avg_validation_gates: avgValidationGates,
     total_errors: metrics.reduce((s, m) => s + m.errors, 0),
     total_retries: metrics.reduce((s, m) => s + m.retries, 0),
   };
@@ -130,22 +158,84 @@ export function formatMetricsForPrometheus(
   stats: ReturnType<typeof calculateAggregateStats>,
 ): string {
   const lines: string[] = [
+    "# HELP deals_pipeline_runs_total Total discovery runs",
+    "# TYPE deals_pipeline_runs_total counter",
     `deals_pipeline_runs_total ${stats.total_runs}`,
+
+    "# HELP deals_pipeline_successful_runs_total Successful discovery runs",
+    "# TYPE deals_pipeline_successful_runs_total counter",
     `deals_pipeline_successful_runs_total ${stats.successful_runs}`,
+
+    "# HELP deals_pipeline_failed_runs_total Failed discovery runs",
+    "# TYPE deals_pipeline_failed_runs_total counter",
     `deals_pipeline_failed_runs_total ${stats.failed_runs}`,
+
+    "# HELP deals_pipeline_success_rate Success rate of discovery runs (0-100)",
+    "# TYPE deals_pipeline_success_rate gauge",
     `deals_pipeline_success_rate ${stats.success_rate}`,
+
+    "# HELP deals_pipeline_duration_ms Average duration of discovery runs in milliseconds",
+    "# TYPE deals_pipeline_duration_ms gauge",
     `deals_pipeline_duration_ms ${stats.avg_duration_ms}`,
   ];
-  for (const [p, d] of Object.entries(stats.avg_phase_timings))
+
+  lines.push(
+    "# HELP deals_pipeline_phase_duration_ms Average duration of each pipeline phase",
+  );
+  lines.push("# TYPE deals_pipeline_phase_duration_ms gauge");
+  for (const [p, d] of Object.entries(stats.avg_phase_timings)) {
     lines.push(`deals_pipeline_phase_duration_ms{phase="${p}"} ${d}`);
-  for (const [s, c] of Object.entries(stats.avg_deals_per_run))
-    lines.push(`deals_pipeline_deals_avg{stage="${s}"} ${c}`);
-  if (stats.avg_validation_cache) {
-    for (const [t, c] of Object.entries(stats.avg_validation_cache))
-      lines.push(`deals_validation_cache_avg{type="${t}"} ${c}`);
   }
+
+  lines.push(
+    "# HELP deals_pipeline_deals_avg Average number of deals at each pipeline stage",
+  );
+  lines.push("# TYPE deals_pipeline_deals_avg gauge");
+  for (const [s, c] of Object.entries(stats.avg_deals_per_run)) {
+    lines.push(`deals_pipeline_deals_avg{stage="${s}"} ${c}`);
+  }
+
+  if (stats.avg_validation_cache) {
+    lines.push(
+      "# HELP deals_validation_cache_avg Average validation cache statistics",
+    );
+    lines.push("# TYPE deals_validation_cache_avg gauge");
+    for (const [t, c] of Object.entries(stats.avg_validation_cache)) {
+      lines.push(`deals_validation_cache_avg{type="${t}"} ${c}`);
+    }
+  }
+
+  if (stats.avg_validation_gates) {
+    lines.push(
+      "# HELP deals_pipeline_validation_gate_passed_avg Average deals passing a validation gate",
+    );
+    lines.push("# TYPE deals_pipeline_validation_gate_passed_avg gauge");
+    lines.push(
+      "# HELP deals_pipeline_validation_gate_failed_avg Average deals failing a validation gate",
+    );
+    lines.push("# TYPE deals_pipeline_validation_gate_failed_avg gauge");
+    for (const [gate, counts] of Object.entries(stats.avg_validation_gates)) {
+      lines.push(
+        `deals_pipeline_validation_gate_passed_avg{gate="${gate}"} ${counts.passed}`,
+      );
+      lines.push(
+        `deals_pipeline_validation_gate_failed_avg{gate="${gate}"} ${counts.failed}`,
+      );
+    }
+  }
+
+  lines.push(
+    "# HELP deals_pipeline_errors_total Total errors encountered across all runs",
+  );
+  lines.push("# TYPE deals_pipeline_errors_total counter");
   lines.push(`deals_pipeline_errors_total ${stats.total_errors}`);
+
+  lines.push(
+    "# HELP deals_pipeline_retries_total Total retries attempted across all runs",
+  );
+  lines.push("# TYPE deals_pipeline_retries_total counter");
   lines.push(`deals_pipeline_retries_total ${stats.total_retries}`);
+
   return lines.join("\n");
 }
 
