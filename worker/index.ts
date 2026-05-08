@@ -73,7 +73,7 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      logger.error("Configuration error", { error: (error as Error).message });
+      console.error("Configuration error:", error);
       return jsonResponse(
         { error: "Configuration error", message: (error as Error).message },
         500,
@@ -267,7 +267,7 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      logger.error("Scheduled execution configuration error", { error: (error as Error).message });
+      console.error("Scheduled execution configuration error:", error);
       await notify(env, {
         type: "system_error",
         severity: "critical",
