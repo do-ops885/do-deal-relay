@@ -73,7 +73,7 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      console.error("Configuration error:", error);
+      logger.error("Configuration error", { error: (error as Error).message });
       return jsonResponse(
         { error: "Configuration error", message: (error as Error).message },
         500,
