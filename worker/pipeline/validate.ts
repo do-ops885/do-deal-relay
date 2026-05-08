@@ -127,6 +127,11 @@ export async function validate(
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);
             gateFailures.push(gate);
+            break;
+          }
+            allPassed = false;
+            failureReasons.push(`${gate}: ${gateResult.reason}`);
+            gateFailures.push(gate);
           }
         }
       }
