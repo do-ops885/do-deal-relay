@@ -309,13 +309,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       showToast("Referral code captured successfully!", "success");
       incrementStat("captured");
+
+      // Visual feedback on button
+      elements.captureBtn.textContent = "Captured! ✅";
+      setTimeout(() => {
+        elements.captureBtn.textContent = "✨ Capture Selected";
+      }, 2000);
     } catch (err) {
       console.error("Capture error:", err);
       showToast(`Failed to capture: ${err.message}`, "error");
+      elements.captureBtn.textContent = "✨ Capture Selected";
     } finally {
       elements.captureBtn.disabled = false;
       elements.captureBtn.removeAttribute("aria-busy");
-      elements.captureBtn.textContent = "✨ Capture Selected";
     }
   }
 
@@ -348,12 +354,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast("Code added manually!", "success");
       elements.manualCode.value = "";
       incrementStat("captured");
+
+      // Visual feedback on button
+      elements.manualBtn.textContent = "Added! ✅";
+      setTimeout(() => {
+        elements.manualBtn.textContent = "Add Code Manually";
+      }, 2000);
     } catch (err) {
       showToast(`Failed to add: ${err.message}`, "error");
+      elements.manualBtn.textContent = "Add Code Manually";
     } finally {
       elements.manualBtn.disabled = false;
       elements.manualBtn.removeAttribute("aria-busy");
-      elements.manualBtn.textContent = "Add Code Manually";
     }
   }
 
