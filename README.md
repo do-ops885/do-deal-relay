@@ -93,7 +93,7 @@ curl https://your-worker.workers.dev/api/log
 - **Cron Schedule**: Every 6 hours
 - **KV Namespaces**: 5 (PROD, STAGING, LOG, LOCK, SOURCES)
 - **Max Deals**: 1000 per run
-- **Trust Threshold**: 0.3
+- **Trust Threshold**: Environment-specific (Dev: 0.1, Staging: 0.25, Prod: 0.3)
 - **High Value**: > $100
 
 ## Agent Tools

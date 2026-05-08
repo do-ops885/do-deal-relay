@@ -312,6 +312,7 @@ export interface Env {
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
+  TRUST_THRESHOLD?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
