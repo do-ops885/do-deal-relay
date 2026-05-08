@@ -273,8 +273,9 @@ async function executePhase(
     case "validate":
       const validation = await validate(ctx.deduped, ctx, env);
       ctx.validated = validation.valid;
-      if (ctx.metrics)
+      if (ctx.metrics) {
         recordDealCount(ctx.metrics, "validated", ctx.validated.length);
+      }
 
       // Log validation stats
       await appendLog(

@@ -4,7 +4,10 @@ import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
 import { getTrustThreshold } from "../lib/config-utils";
 import { verifyNormalization } from "./normalize";
 import { validateDealFastPath } from "./validate-fast-path";
-import { recordValidationCacheMetric } from "../lib/metrics";
+import {
+  recordValidationCacheMetric,
+  recordValidationGateRejection,
+} from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
 import { fetchInBatches } from "../lib/utils";
@@ -172,6 +175,9 @@ export async function validate(
   for (const r of validationResults) {
     r.gateFailures.forEach((gate) => {
       result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+      if (ctx.metrics) {
+        recordValidationGateRejection(ctx.metrics, gate);
+      }
     });
 
     if (r.allPassed) {
