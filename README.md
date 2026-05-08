@@ -124,10 +124,11 @@ curl https://your-worker.workers.dev/api/log
 
 Check `/metrics` for:
 
-- Total runs
-- Success rate
-- Deal counts
-- Validation failures
+- Total runs and success rate
+- Deal counts (discovered, validated, published)
+- **Stage Latency**: Histograms for discovery, validation, and publish stages
+- **Bottleneck Analysis**: Timing breakdown by success/failure status
+- Validation cache hits/misses
 
 ## Support
 

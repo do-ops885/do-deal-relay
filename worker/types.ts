@@ -207,6 +207,7 @@ export interface PipelineMetrics {
   start_time: number;
   end_time?: number;
   phase_timings: Record<PipelinePhase, number>;
+  phase_results: Record<PipelinePhase, "success" | "failure">;
   total_duration_ms: number;
   deals_processed: {
     discovered: number;
