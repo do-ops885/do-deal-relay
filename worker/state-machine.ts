@@ -115,12 +115,22 @@ export async function executePipeline(env: Env): Promise<{
 
           // Record metrics
           if (ctx.metrics) {
-            recordPhaseTiming(ctx.metrics, currentPhase, phaseDuration, "success");
+            recordPhaseTiming(
+              ctx.metrics,
+              currentPhase,
+              phaseDuration,
+              "success",
+            );
           }
         } catch (error) {
           const phaseDuration = Date.now() - phaseStartTime;
           if (ctx.metrics) {
-            recordPhaseTiming(ctx.metrics, currentPhase, phaseDuration, "failure");
+            recordPhaseTiming(
+              ctx.metrics,
+              currentPhase,
+              phaseDuration,
+              "failure",
+            );
           }
           throw error;
         }

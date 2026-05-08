@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { calculateAggregateStats, formatMetricsForPrometheus } from "../../worker/lib/metrics/stats";
+import {
+  calculateAggregateStats,
+  formatMetricsForPrometheus,
+} from "../../worker/lib/metrics/stats";
 import { PipelineMetrics, PipelinePhase } from "../../worker/types";
 
 describe("Latency Metrics", () => {
@@ -35,7 +38,14 @@ describe("Latency Metrics", () => {
         verify: "success",
         finalize: "success",
       },
-      deals_processed: { discovered: 10, normalized: 10, deduped: 8, validated: 5, scored: 5, published: 5 },
+      deals_processed: {
+        discovered: 10,
+        normalized: 10,
+        deduped: 8,
+        validated: 5,
+        scored: 5,
+        published: 5,
+      },
       errors: 0,
       retries: 0,
     },
@@ -70,10 +80,17 @@ describe("Latency Metrics", () => {
         verify: "success",
         finalize: "success",
       },
-      deals_processed: { discovered: 5, normalized: 5, deduped: 4, validated: 0, scored: 0, published: 0 },
+      deals_processed: {
+        discovered: 5,
+        normalized: 5,
+        deduped: 4,
+        validated: 0,
+        scored: 0,
+        published: 0,
+      },
       errors: 1,
       retries: 0,
-    }
+    },
   ];
 
   it("should calculate aggregate stats with latency correctly", () => {
@@ -91,17 +108,31 @@ describe("Latency Metrics", () => {
     const prometheus = formatMetricsForPrometheus(stats, mockMetrics);
 
     // Check for new phase duration metrics with status and quantile labels
-    expect(prometheus).toContain('deals_pipeline_phase_duration_ms{phase="discover",status="success",quantile="0.5"}');
-    expect(prometheus).toContain('deals_pipeline_phase_duration_ms{phase="validate",status="failure",quantile="0.5"}');
+    expect(prometheus).toContain(
+      'deals_pipeline_phase_duration_ms{phase="discover",status="success",quantile="0.5"}',
+    );
+    expect(prometheus).toContain(
+      'deals_pipeline_phase_duration_ms{phase="validate",status="failure",quantile="0.5"}',
+    );
 
     // Check for average and max helpers
-    expect(prometheus).toContain('deals_pipeline_phase_duration_ms_avg{phase="discover",status="success"} 175');
-    expect(prometheus).toContain('deals_pipeline_phase_duration_ms_max{phase="validate",status="success"} 300');
-    expect(prometheus).toContain('deals_pipeline_phase_duration_ms_max{phase="validate",status="failure"} 260');
+    expect(prometheus).toContain(
+      'deals_pipeline_phase_duration_ms_avg{phase="discover",status="success"} 175',
+    );
+    expect(prometheus).toContain(
+      'deals_pipeline_phase_duration_ms_max{phase="validate",status="success"} 300',
+    );
+    expect(prometheus).toContain(
+      'deals_pipeline_phase_duration_ms_max{phase="validate",status="failure"} 260',
+    );
 
     // Check for total duration quantiles
-    expect(prometheus).toContain('deals_pipeline_total_duration_ms{status="success",quantile="0.5"} 1000');
-    expect(prometheus).toContain('deals_pipeline_total_duration_ms{status="failure",quantile="0.5"} 500');
+    expect(prometheus).toContain(
+      'deals_pipeline_total_duration_ms{status="success",quantile="0.5"} 1000',
+    );
+    expect(prometheus).toContain(
+      'deals_pipeline_total_duration_ms{status="failure",quantile="0.5"} 500',
+    );
   });
 
   it("should handle empty metrics array gracefully", () => {

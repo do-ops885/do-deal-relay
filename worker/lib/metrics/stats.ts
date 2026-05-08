@@ -204,7 +204,9 @@ export function formatMetricsForPrometheus(
   } else {
     // Fallback to average phase timings if no individual metrics provided
     for (const [p, d] of Object.entries(stats.avg_phase_timings))
-      lines.push(`deals_pipeline_phase_duration_ms{phase="${p}",status="success",quantile="0.5"} ${d}`);
+      lines.push(
+        `deals_pipeline_phase_duration_ms{phase="${p}",status="success",quantile="0.5"} ${d}`,
+      );
   }
 
   for (const [s, c] of Object.entries(stats.avg_deals_per_run))
@@ -299,7 +301,9 @@ export function getPhaseTimingStats(
     // For backward compatibility, combine success and failure for the old return type if needed,
     // or just use success path which is the most common.
     // Given the old one didn't distinguish, let's recalculate over all timings for this phase.
-    const allTimings = metrics.map((m) => m.phase_timings[p as PipelinePhase]).filter((t) => t > 0);
+    const allTimings = metrics
+      .map((m) => m.phase_timings[p as PipelinePhase])
+      .filter((t) => t > 0);
     const statsAll = calculateStats(allTimings);
     res[p] = {
       min: statsAll.min,
