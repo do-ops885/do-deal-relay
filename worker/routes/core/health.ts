@@ -7,6 +7,11 @@
 import { getProductionSnapshot } from "../../lib/storage";
 import { getPipelineStatus } from "../../state-machine";
 import { getRecentLogs } from "../../lib/logger";
+import { getRecentMetrics } from "../../lib/metrics/index";
+import {
+  calculateAggregateStats,
+  formatMetricsForPrometheus,
+} from "../../lib/metrics/stats";
 import { CONFIG } from "../../config";
 import type { Env, HealthStatus } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";
@@ -94,11 +99,14 @@ export async function handleMetrics(
   format: string = "prometheus",
   request?: Request,
 ): Promise<Response> {
-  // Optimization: Parallelize snapshot and log retrieval to reduce total latency
-  const [snapshot, logs] = await Promise.all([
+  // Optimization: Parallelize snapshot, log and metrics retrieval to reduce total latency
+  const [snapshot, logs, pipelineMetrics] = await Promise.all([
     getProductionSnapshot(env),
     getRecentLogs(env, 1000),
+    getRecentMetrics(env, 100),
   ]);
+
+  const stats = calculateAggregateStats(pipelineMetrics);
 
   const runs = logs.filter((l) => l.phase === "finalize").length;
   const successes = logs.filter(
@@ -114,6 +122,8 @@ export async function handleMetrics(
         summary: {
           total_runs: runs,
           successful_runs: successes,
+          avg_duration_ms: stats.avg_duration_ms,
+          success_rate: stats.success_rate,
         },
         deals: {
           active: snapshot?.stats?.active || 0,
@@ -121,30 +131,28 @@ export async function handleMetrics(
           validated_total: valid,
           duplicate_total: duplicates,
         },
+        phases: stats.avg_phase_timings,
       },
       200,
       request,
     );
   }
 
-  const metrics = `
-# HELP deals_runs_total Total discovery runs
-# TYPE deals_runs_total counter
+  let metrics = formatMetricsForPrometheus(stats, pipelineMetrics);
+
+  // Add legacy metrics for backward compatibility
+  metrics += `
+# HELP deals_runs_total Total discovery runs (legacy)
 deals_runs_total ${runs}
-
-# HELP deals_publish_success_total Successful publishes
+# HELP deals_publish_success_total Successful publishes (legacy)
 deals_publish_success_total ${successes}
-
-# HELP deals_candidate_deals_total Candidate deals discovered
+# HELP deals_candidate_deals_total Candidate deals discovered (legacy)
 deals_candidate_deals_total ${candidates}
-
-# HELP deals_valid_deals_total Valid deals after validation
+# HELP deals_valid_deals_total Valid deals after validation (legacy)
 deals_valid_deals_total ${valid}
-
-# HELP deals_duplicate_deals_total Duplicate deals filtered
+# HELP deals_duplicate_deals_total Duplicate deals filtered (legacy)
 deals_duplicate_deals_total ${duplicates}
-
-# HELP deals_active_deals Current active deals in production
+# HELP deals_active_deals Current active deals in production (legacy)
 deals_active_deals ${snapshot?.stats?.active || 0}
 `.trim();
 
