@@ -63,11 +63,11 @@ export class HybridClassifier {
     let enhanced: EnhancedQuery;
 
     if (method === "rule") {
-      enhanced = classifyWithRules(query, startTime);
+      enhanced = classifyWithRules(query, startTime, this.env);
     } else {
       if (!this.aiEnhancer || !this.ai) {
         // Fallback to rules if AI unavailable
-        enhanced = classifyWithRules(query, startTime);
+        enhanced = classifyWithRules(query, startTime, this.env);
       } else {
         enhanced = await this.aiEnhancer.enhance(query);
       }
@@ -111,7 +111,7 @@ export class HybridClassifier {
 
     // Process simple queries with rules (fast)
     const simpleResults = simpleQueries.map((q) =>
-      classifyWithRules(q, Date.now()),
+      classifyWithRules(q, Date.now(), this.env),
     );
 
     // Process complex queries with AI

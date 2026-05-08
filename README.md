@@ -1,8 +1,8 @@
 # Deal Discovery System - Status
 
-**System**: Active
-**Version**: 0.2.0
-**Status**: Production
+**System**: In Development
+**Version**: 0.1.3
+**Status**: Bootstrap Phase
 
 ## Quick Start
 
@@ -52,7 +52,7 @@ curl https://your-worker.workers.dev/api/log
 
 ## Architecture
 
-**Status**: Deployed and Active on Cloudflare Workers.
+**Status**: In design/implementation phase. Not yet deployed.
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -67,43 +67,33 @@ curl https://your-worker.workers.dev/api/log
 
 ## Development Roadmap
 
-### Completed Phases
+### Phase 1: Bootstrap
 
-- **Phase 1: Bootstrap** ✅
-  - Fix test infrastructure
-  - Install missing dependencies
-  - Validate core types
-  - Basic KV storage layer
-- **Phase 2: Test & Validate** ✅
-  - Write comprehensive tests
-  - Run validation gates
-  - Fix failing checks
-  - Achieve >80% coverage
-- **Phase 3: Deploy** ✅
-  - Configure GitHub integration
-  - Set up Cloudflare Workers
-  - Deploy to staging
-  - Production release (v0.2.0)
+- [ ] Fix test infrastructure
+- [ ] Install missing dependencies
+- [ ] Validate core types
+- [ ] Basic KV storage layer
 
-### Next Steps
+### Phase 2: Test & Validate
 
-- [ ] Deploy MCP endpoints to staging
-- [ ] Configure D1 dual-write
-- [ ] Add production API keys for research sources (ProductHunt, GitHub, Reddit)
-- [ ] Enable cron triggers in wrangler.toml
+- [ ] Write comprehensive tests
+- [ ] Run validation gates
+- [ ] Fix failing checks
+- [ ] Achieve >80% coverage
 
-## Current Bottlenecks
+### Phase 3: Deploy
 
-- **Load Testing**: Webhook processor export compatibility issues in Artillery.
-- **Testing Gaps**: Missing KV storage API endpoints for comprehensive load testing.
-- **Cost Management**: Web research token usage (partially resolved via `web-doc-resolver` cascade).
+- [ ] Configure GitHub integration
+- [ ] Set up Cloudflare Workers
+- [ ] Deploy to staging
+- [ ] Production release (v1.0.0)
 
 ## Current Configuration
 
 - **Cron Schedule**: Every 6 hours
 - **KV Namespaces**: 5 (PROD, STAGING, LOG, LOCK, SOURCES)
 - **Max Deals**: 1000 per run
-- **Trust Threshold**: 0.3
+- **Trust Threshold**: Environment-specific (Dev: 0.1, Staging: 0.25, Prod: 0.3)
 - **High Value**: > $100
 
 ## Agent Tools
