@@ -7,6 +7,11 @@
 import { getProductionSnapshot } from "../../lib/storage";
 import { getPipelineStatus } from "../../state-machine";
 import { getRecentLogs } from "../../lib/logger";
+import { getRecentMetrics } from "../../lib/metrics/index";
+import {
+  calculateAggregateStats,
+  formatMetricsForPrometheus,
+} from "../../lib/metrics/stats";
 import { CONFIG } from "../../config";
 import type { Env, HealthStatus } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";

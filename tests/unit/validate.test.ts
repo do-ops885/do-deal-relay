@@ -116,6 +116,31 @@ describe("Validation Pipeline", () => {
     expect(result.invalid).toHaveLength(1);
   });
 
+  it("should use dynamic trust threshold from env", async () => {
+    const deals = [
+      createMockDeal("1", {
+        source: {
+          trust_score: 0.15, // Between dev (0.1) and prod (0.3)
+          url: "https://example.com/invite",
+          domain: "example.com",
+          discovered_at: "2024-03-31T00:00:00Z",
+        },
+      }),
+    ];
+
+    // Case 1: Strict environment (threshold 0.3) - Should be invalid
+    const strictEnv = { ...mockEnv, TRUST_THRESHOLD: "0.3" };
+    const strictResult = await validate(deals, ctx, strictEnv);
+    expect(strictResult.valid).toHaveLength(0);
+    expect(strictResult.invalid).toHaveLength(1);
+
+    // Case 2: Lenient environment (threshold 0.1) - Should be valid
+    const lenientEnv = { ...mockEnv, TRUST_THRESHOLD: "0.1" };
+    const lenientResult = await validate(deals, ctx, lenientEnv);
+    expect(lenientResult.valid).toHaveLength(1);
+    expect(lenientResult.invalid).toHaveLength(0);
+  });
+
   it("should quarantine high-value low-trust deals", async () => {
     const deals = [
       createMockDeal("1", {

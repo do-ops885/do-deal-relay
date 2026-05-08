@@ -1,6 +1,7 @@
 import { Deal, PipelineContext, PipelineError, ErrorClass } from "../types";
 import { DealSchema } from "../types";
 import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
+import { getTrustThreshold } from "../lib/config-utils";
 import { verifyNormalization } from "./normalize";
 import { validateDealFastPath } from "./validate-fast-path";
 import {
@@ -204,6 +205,7 @@ async function runGate(
   gate: ValidationGate,
   deal: Deal,
   ctx: PipelineContext,
+  env: Env,
   existingIds: Set<string>,
 ): Promise<GateResult> {
   switch (gate) {
@@ -214,7 +216,7 @@ async function runGate(
     case "deduplication_check":
       return gateDeduplicationCheck(deal, ctx);
     case "source_trust":
-      return gateSourceTrust(deal);
+      return gateSourceTrust(deal, env);
     case "reward_plausibility":
       return gateRewardPlausibility(deal);
     case "expiry_validation":
@@ -293,11 +295,12 @@ function gateDeduplicationCheck(deal: Deal, ctx: PipelineContext): GateResult {
 }
 
 // Gate 4: Source Trust
-function gateSourceTrust(deal: Deal): GateResult {
-  if (deal.source.trust_score < CONFIG.MIN_TRUST_SCORE) {
+function gateSourceTrust(deal: Deal, env: Env): GateResult {
+  const threshold = getTrustThreshold(env);
+  if (deal.source.trust_score < threshold) {
     return {
       passed: false,
-      reason: `Trust score ${deal.source.trust_score} below minimum ${CONFIG.MIN_TRUST_SCORE}`,
+      reason: `Trust score ${deal.source.trust_score} below minimum ${threshold}`,
     };
   }
 
