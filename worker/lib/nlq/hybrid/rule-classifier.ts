@@ -296,7 +296,7 @@ export function buildFiltersFromEntities(
           filters.minRanking = 0.8;
         } else if (impact < 0) {
           filters.sentimentFilter = "negative";
-          filters.minTrustScore = env ? getTrustThreshold(env) : 0.3;
+          filters.minTrustScore = env ? getTrustThreshold(env) : CONFIG.MIN_TRUST_SCORE;
         }
         break;
       }
