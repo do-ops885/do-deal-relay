@@ -31,11 +31,15 @@ export function validateConfig(env: Env): void {
     const parsed = parseFloat(env.TRUST_THRESHOLD);
 
     if (isNaN(parsed)) {
-      throw new Error(`Invalid TRUST_THRESHOLD: "${env.TRUST_THRESHOLD}" is not a number`);
+      throw new Error(
+        `Invalid TRUST_THRESHOLD: "${env.TRUST_THRESHOLD}" is not a number`,
+      );
     }
 
     if (parsed < 0 || parsed > 1) {
-      throw new Error(`Invalid TRUST_THRESHOLD: ${parsed} must be between 0 and 1`);
+      throw new Error(
+        `Invalid TRUST_THRESHOLD: ${parsed} must be between 0 and 1`,
+      );
     }
   }
 }

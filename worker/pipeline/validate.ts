@@ -115,7 +115,13 @@ export async function validate(
 
       if (!skipGates) {
         for (const gate of VALIDATION_GATES) {
-          const gateResult = await runGate(gate, deal, ctx, env, existingDealIds);
+          const gateResult = await runGate(
+            gate,
+            deal,
+            ctx,
+            env,
+            existingDealIds,
+          );
           if (!gateResult.passed) {
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);
