@@ -1,6 +1,3 @@
----
-name: Auto Merge
-
 "on":
   workflow_run:
     workflows: ["CI"]
@@ -21,7 +18,7 @@ env:
   REQUIRE_BRANCH_UP_TO_DATE: true
   REQUIRE_ALL_CHECKS_PASS: true
   MERGE_METHOD: squash
-  COMMIT_MESSAGE_FORMAT: "{title} (#{number})"
+  COMMIT_MESSAGE_FORMAT: "{title} (#{number})\n\n{body}"
 
 jobs:
   auto-merge:
@@ -223,7 +220,7 @@ jobs:
           fi
 
           # Format commit message
-          COMMIT_MESSAGE="${PR_TITLE} (#${PR_NUMBER})"
+          COMMIT_MESSAGE="${PR_TITLE} (#${PR_NUMBER})\n\n$(gh pr view "$PR_NUMBER" --json body --jq '.body')"
 
           echo "Enabling auto-merge for PR #${PR_NUMBER} with squash method"
 
