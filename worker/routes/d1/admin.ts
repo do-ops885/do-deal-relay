@@ -8,6 +8,7 @@ import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
 import { createStructuredLogger } from "../../lib/logger";
 import { getMigrationStatus, initDatabase } from "../../lib/d1/migrations";
+import { authenticateRequest } from "../../lib/auth";
 
 // ============================================================================
 // Authentication Middleware
@@ -21,24 +22,9 @@ export async function authenticateD1Request(
   const url = new URL(request.url);
   if (url.pathname === "/api/d1/health") return true;
 
-  // Check for API key in header
-  const apiKey = request.headers.get("X-API-Key");
-  if (!apiKey) {
-    return false;
-  }
-
-  // Require WEBHOOK_API_KEYS to be configured for all non-health requests
-  if (!env.WEBHOOK_API_KEYS) {
-    return false;
-  }
-
-  // Validate API key against stored keys
-  const validKey = await env.WEBHOOK_API_KEYS.get(`apikey:${apiKey}`);
-  if (!validKey) {
-    return false;
-  }
-
-  return true;
+  // Use unified authentication library
+  const auth = await authenticateRequest(request, env);
+  return auth.authenticated;
 }
 
 // ============================================================================

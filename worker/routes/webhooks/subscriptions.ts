@@ -5,7 +5,6 @@
 import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
-import { timingSafeEqual } from "../../lib/hmac";
 import {
   createSubscription,
   deleteSubscription,
@@ -22,30 +21,11 @@ import {
   type SubscribeRequest,
   type CreatePartnerRequest,
 } from "./types";
+import { requireAuth as unifiedRequireAuth } from "../../lib/auth";
 
 // ============================================================================
 // API Key Authentication
 // ============================================================================
-
-/**
- * Validate API key from request header
- * Expects header: X-API-Key: <api_key>
- * API keys are stored in env.WEBHOOK_API_KEYS as comma-separated list
- */
-async function validateApiKey(request: Request, env: Env): Promise<boolean> {
-  const apiKey = request.headers.get("X-API-Key");
-
-  if (!apiKey) {
-    return false;
-  }
-
-  // Get allowed API keys from KV store
-  const keysData = await env.WEBHOOK_API_KEYS?.get("api-keys");
-  const allowedKeys = keysData ? (JSON.parse(keysData) as string[]) : [];
-
-  // Secure constant-time comparison to prevent timing attacks
-  return allowedKeys.some((key) => timingSafeEqual(key, apiKey));
-}
 
 /**
  * Middleware to require API key authentication
@@ -54,13 +34,11 @@ export async function requireAuth(
   request: Request,
   env: Env,
 ): Promise<Response | null> {
-  const isValid = await validateApiKey(request, env);
+  const authMiddleware = unifiedRequireAuth(env);
+  const result = await authMiddleware(request);
 
-  if (!isValid) {
-    return jsonResponse(
-      { error: "Unauthorized. Valid X-API-Key header required." },
-      401,
-    );
+  if (result instanceof Response) {
+    return result;
   }
 
   return null; // Authentication successful
