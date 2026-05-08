@@ -1,12 +1,12 @@
 {
   "system": "Deal Discovery System",
-  "version": "0.1.1",
-  "phase": "Bootstrap",
-  "status": "IN DEVELOPMENT ⚠️ NOT PRODUCTION READY",
-  "last_updated": "2025-04-01T07:35:00Z",
+  "version": "0.1.3",
+  "phase": "Active",
+  "status": "Active / Production",
+  "last_updated": "2026-05-08T19:59:00Z",
   "deployment": {
-    "status": "not_deployed",
-    "note": "Development only - staging and production not yet active"
+    "status": "deployed",
+    "note": "Active production deployment with 166+ deploys"
   },
   "kv_namespaces": {
     "DEALS_PROD": "23ee9b8c9e2748e5880f476b8b57a524",
