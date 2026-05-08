@@ -242,9 +242,28 @@ describe("Experience API Endpoints", () => {
   });
 
   describe("POST /api/experience/aggregate", () => {
-    it("should return 503 when D1 is not configured", async () => {
+    it("should return 401 when API key is missing", async () => {
       const request = new Request("http://localhost/api/experience/aggregate", {
         method: "POST",
+      });
+
+      const response = await worker.fetch(request, mockEnv);
+
+      expect(response.status).toBe(401);
+    });
+
+    it("should return 503 when D1 is not configured and authenticated", async () => {
+      // Mock valid admin API key
+      vi.mocked(mockEnv.DEALS_SOURCES.get).mockResolvedValue({
+        userId: "admin-123",
+        role: "admin",
+      });
+
+      const request = new Request("http://localhost/api/experience/aggregate", {
+        method: "POST",
+        headers: {
+          "X-API-Key": "ddr_admin_123",
+        },
       });
 
       const response = await worker.fetch(request, mockEnv);

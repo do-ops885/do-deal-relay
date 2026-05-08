@@ -74,7 +74,7 @@
       .section-title {
         font-size: 11px;
         font-weight: 600;
-        color: #64748b;
+        color: #475569;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 12px;
@@ -117,7 +117,7 @@
 
       .page-url {
         font-size: 12px;
-        color: #64748b;
+        color: #475569;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -219,13 +219,13 @@
 
       .code-source {
         font-size: 11px;
-        color: #64748b;
+        color: #475569;
         text-transform: capitalize;
       }
 
       .confidence {
         font-size: 11px;
-        color: #22c55e;
+        color: #15803d;
         font-weight: 500;
         background: #f0fdf4;
         padding: 2px 8px;
@@ -300,7 +300,7 @@
       .empty-state {
         text-align: center;
         padding: 24px 12px;
-        color: #64748b;
+        color: #475569;
       }
 
       .empty-state-icon {
@@ -334,7 +334,7 @@
 
       .stat-label {
         font-size: 11px;
-        color: #64748b;
+        color: #475569;
         margin-top: 4px;
       }
 
@@ -347,14 +347,20 @@
         background: white;
       }
 
-      .footer-link {
+      .footer-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font-family: inherit;
         font-size: 12px;
         color: #4f46e5;
         text-decoration: none;
         font-weight: 500;
+        cursor: pointer;
       }
 
-      .footer-link:hover {
+      .footer-btn:hover {
         text-decoration: underline;
       }
 
@@ -451,6 +457,23 @@
         white-space: nowrap;
         border-width: 0;
       }
+
+      /* Focus accessibility */
+      :focus {
+        outline: none;
+      }
+
+      :focus-visible {
+        outline: none !important;
+        box-shadow:
+          0 0 0 2px #fff,
+          0 0 0 4px #4f46e5 !important;
+        border-radius: 4px;
+      }
+
+      .detection-item:focus-visible {
+        border-color: #4f46e5;
+      }
     </style>
   </head>
   <body>
@@ -462,7 +485,9 @@
     <div class="content">
       <!-- Current Page Section -->
       <div class="section">
-        <div class="section-title"><span aria-hidden="true">📄</span> Current Page</div>
+        <div class="section-title">
+          <span aria-hidden="true">📄</span> Current Page
+        </div>
         <div class="current-page">
           <div class="favicon" id="favicon">🌐</div>
           <div class="page-info">
@@ -479,7 +504,9 @@
 
       <!-- Detected Codes Section -->
       <div class="section" id="detections-section" style="display: none">
-        <div class="section-title"><span aria-hidden="true">🎯</span> Detected Codes</div>
+        <div class="section-title">
+          <span aria-hidden="true">🎯</span> Detected Codes
+        </div>
         <div class="detection-list" id="detection-list"></div>
         <button
           class="btn btn-primary"
@@ -492,13 +519,16 @@
 
       <!-- Manual Entry Section -->
       <div class="section" id="manual-section">
-        <div class="section-title"><span aria-hidden="true">✏️</span> Manual Entry</div>
+        <div class="section-title">
+          <span aria-hidden="true">✏️</span> Manual Entry
+        </div>
         <label for="manual-code" class="sr-only">Referral code</label>
         <input
           type="text"
           class="manual-input"
           id="manual-code"
           placeholder="Enter referral code..."
+          maxlength="20"
         />
         <button class="btn btn-secondary" id="manual-btn">
           Add Code Manually
@@ -507,7 +537,9 @@
 
       <!-- Settings Panel (hidden by default) -->
       <div class="section settings-panel" id="settings-panel">
-        <div class="section-title"><span aria-hidden="true">⚙️</span> Settings</div>
+        <div class="section-title">
+          <span aria-hidden="true">⚙️</span> Settings
+        </div>
         <div class="settings-field">
           <label class="settings-label">API Endpoint</label>
           <input
@@ -524,7 +556,9 @@
 
       <!-- Stats Section -->
       <div class="section" id="stats-section">
-        <div class="section-title"><span aria-hidden="true">📊</span> Your Stats</div>
+        <div class="section-title">
+          <span aria-hidden="true">📊</span> Your Stats
+        </div>
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-value" id="stat-captured">0</div>
@@ -543,7 +577,9 @@
     </div>
 
     <div class="footer">
-      <a href="#" class="footer-link" id="settings-link">Settings</a>
+      <button type="button" class="footer-btn" id="settings-link">
+        Settings
+      </button>
       <button class="settings-btn" id="refresh-btn" aria-label="Rescan page">
         🔄
       </button>
