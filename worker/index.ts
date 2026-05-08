@@ -267,7 +267,7 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      console.error("Scheduled execution configuration error:", error);
+      logger.error("Scheduled execution configuration error", { error: (error as Error).message });
       await notify(env, {
         type: "system_error",
         severity: "critical",
