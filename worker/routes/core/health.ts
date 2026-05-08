@@ -134,7 +134,7 @@ export async function handleMetrics(
   // Add active deals metric which is only in snapshot
   prometheusMetrics += `\n# HELP deals_active_deals Current active deals in production
 # TYPE deals_active_deals gauge
-deals_active_deals ${snapshot?.stats?.active || 0}`;
+deals_active_deals ${snapshot?.stats.active || 0}`;
 
   return new Response(prometheusMetrics, {
     headers: {
