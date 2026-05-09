@@ -42,4 +42,24 @@ export function validateConfig(env: Env): void {
       );
     }
   }
+
+  // Validate budget configurations
+  const budgetVars = [
+    "CANDIDATE_BUDGET_GLOBAL",
+    "CANDIDATE_BUDGET_PER_SOURCE",
+    "CANDIDATE_BUDGET_HIGH_TRUST_BONUS",
+  ] as const;
+
+  for (const varName of budgetVars) {
+    const value = env[varName];
+    if (value) {
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed)) {
+        throw new Error(`Invalid ${varName}: "${value}" is not a number`);
+      }
+      if (parsed < 0) {
+        throw new Error(`Invalid ${varName}: ${parsed} must be non-negative`);
+      }
+    }
+  }
 }

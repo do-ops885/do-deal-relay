@@ -316,6 +316,9 @@ export interface Env {
   GITHUB_TOKEN?: string;
   TRUST_THRESHOLD?: string;
   NOTIFICATION_THRESHOLD: string;
+  CANDIDATE_BUDGET_GLOBAL?: string;
+  CANDIDATE_BUDGET_PER_SOURCE?: string;
+  CANDIDATE_BUDGET_HIGH_TRUST_BONUS?: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
