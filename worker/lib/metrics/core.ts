@@ -46,6 +46,7 @@ export function createMetrics(run_id: string): PipelineMetrics {
       dedup_hit_total: 0,
     },
     validation_gate_rejections: {},
+    validation_gate_passes: {},
     errors: 0,
     retries: 0,
     success: false,
@@ -94,6 +95,18 @@ export function recordValidationGateRejection(
   }
   metrics.validation_gate_rejections[gate] =
     (metrics.validation_gate_rejections[gate] || 0) + count;
+}
+
+export function recordValidationGatePass(
+  metrics: PipelineMetrics,
+  gate: string,
+  count: number = 1,
+): void {
+  if (!metrics.validation_gate_passes) {
+    metrics.validation_gate_passes = {};
+  }
+  metrics.validation_gate_passes[gate] =
+    (metrics.validation_gate_passes[gate] || 0) + count;
 }
 
 export function recordValidationCacheMetric(
@@ -150,6 +163,25 @@ export async function storeMetrics(
 
     await env.DEALS_LOG.put(cumulativeKey, JSON.stringify(cumulative), {
       // No TTL for cumulative stats, or a long one
+      expirationTtl: 30 * 24 * 60 * 60,
+    });
+  }
+
+  // Persist cumulative gate passes in KV
+  if (metrics.validation_gate_passes) {
+    const cumulativeKey = "metrics:cumulative_gate_passes";
+    const existingRaw = await env.DEALS_LOG.get(cumulativeKey);
+    const cumulative: Record<string, number> = existingRaw
+      ? JSON.parse(existingRaw)
+      : {};
+
+    for (const [gate, count] of Object.entries(
+      metrics.validation_gate_passes,
+    )) {
+      cumulative[gate] = (cumulative[gate] || 0) + count;
+    }
+
+    await env.DEALS_LOG.put(cumulativeKey, JSON.stringify(cumulative), {
       expirationTtl: 30 * 24 * 60 * 60,
     });
   }

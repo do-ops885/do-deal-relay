@@ -11,6 +11,16 @@ export async function getCumulativeGateRejections(
 }
 
 /**
+ * Get cumulative gate passes from KV
+ */
+export async function getCumulativeGatePasses(
+  env: Env,
+): Promise<Record<string, number>> {
+  const raw = await env.DEALS_LOG.get("metrics:cumulative_gate_passes");
+  return raw ? JSON.parse(raw) : {};
+}
+
+/**
  * Calculate aggregate statistics from a list of pipeline metrics
  */
 export function calculateAggregateStats(metrics: PipelineMetrics[]) {
@@ -51,6 +61,7 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
       total_errors: 0,
       total_retries: 0,
       total_validation_gate_rejections: {} as Record<string, number>,
+      total_validation_gate_passes: {} as Record<string, number>,
     };
   const successful = metrics.filter((m) => m.success);
   const phases: PipelinePhase[] = [
@@ -150,6 +161,19 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
       },
       {} as Record<string, number>,
     ),
+    total_validation_gate_passes: metrics.reduce(
+      (acc, m) => {
+        if (m.validation_gate_passes) {
+          for (const [gate, count] of Object.entries(
+            m.validation_gate_passes,
+          )) {
+            acc[gate] = (acc[gate] || 0) + count;
+          }
+        }
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
   };
 }
 
@@ -160,6 +184,7 @@ export function formatMetricsForPrometheus(
   stats: ReturnType<typeof calculateAggregateStats>,
   metrics: PipelineMetrics[] = [],
   cumulativeRejections: Record<string, number> = {},
+  cumulativePasses: Record<string, number> = {},
 ): string {
   const lines: string[] = [
     `# HELP deals_pipeline_runs_total Total discovery runs`,
@@ -253,15 +278,21 @@ export function formatMetricsForPrometheus(
 
   // Combine and expose validation gate rejections
   const allRejections = { ...cumulativeRejections };
-  // Merge in stats rejections if not already present or to show current batch
   for (const [gate, count] of Object.entries(
     stats.total_validation_gate_rejections,
   )) {
-    // Note: If cumulativeRejections is already comprehensive, we don't want to double count.
-    // However, the requested solution specifically asked for "validation_gate_rejections"
-    // and if we only have one counter, it should be the cumulative one if available.
     if (allRejections[gate] === undefined) {
       allRejections[gate] = count;
+    }
+  }
+
+  // Combine and expose validation gate passes
+  const allPasses = { ...cumulativePasses };
+  for (const [gate, count] of Object.entries(
+    stats.total_validation_gate_passes,
+  )) {
+    if (allPasses[gate] === undefined) {
+      allPasses[gate] = count;
     }
   }
 
@@ -272,6 +303,33 @@ export function formatMetricsForPrometheus(
     lines.push(`# TYPE validation_gate_rejections counter`);
     for (const [gate, count] of Object.entries(allRejections)) {
       lines.push(`validation_gate_rejections{gate="${gate}"} ${count}`);
+    }
+  }
+
+  if (Object.keys(allPasses).length > 0) {
+    lines.push(`# HELP validation_gate_passes Passes per validation gate`);
+    lines.push(`# TYPE validation_gate_passes counter`);
+    for (const [gate, count] of Object.entries(allPasses)) {
+      lines.push(`validation_gate_passes{gate="${gate}"} ${count}`);
+    }
+
+    // Export rejection ratios
+    lines.push(
+      `# HELP validation_gate_rejection_ratio Ratio of rejections to total attempts per gate`,
+    );
+    lines.push(`# TYPE validation_gate_rejection_ratio gauge`);
+    const allGates = new Set([
+      ...Object.keys(allPasses),
+      ...Object.keys(allRejections),
+    ]);
+    for (const gate of allGates) {
+      const passes = allPasses[gate] || 0;
+      const rejections = allRejections[gate] || 0;
+      const total = passes + rejections;
+      const ratio = total > 0 ? rejections / total : 0;
+      lines.push(
+        `validation_gate_rejection_ratio{gate="${gate}"} ${ratio.toFixed(4)}`,
+      );
     }
   }
 
