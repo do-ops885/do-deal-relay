@@ -42,6 +42,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "GITHUB_REPO": "do-ops885/do-deal-relay",
+    "TRUST_THRESHOLD": "0.3",
     "NOTIFICATION_THRESHOLD": "100",
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
@@ -57,12 +58,25 @@
   ],
   // Environment-specific configurations
   "env": {
+    // Development environment for local testing
+    "dev": {
+      "name": "do-deal-relay-dev",
+      "vars": {
+        "ENVIRONMENT": "development",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "TRUST_THRESHOLD": "0.1",
+        "NOTIFICATION_THRESHOLD": "100",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "120",
+      },
+    },
     // Staging environment for pre-production testing
     "staging": {
       "name": "do-deal-relay-staging",
       "vars": {
         "ENVIRONMENT": "staging",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "TRUST_THRESHOLD": "0.25",
         "NOTIFICATION_THRESHOLD": "100",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
@@ -103,6 +117,7 @@
       "vars": {
         "ENVIRONMENT": "production",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "TRUST_THRESHOLD": "0.3",
         "NOTIFICATION_THRESHOLD": "100",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "60",

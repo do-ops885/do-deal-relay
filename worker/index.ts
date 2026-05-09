@@ -39,6 +39,7 @@ import {
   handleGetValidationStats,
   handleValidateDeal,
 } from "./routes/validation";
+import { withAuth } from "./lib/auth";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import {
   checkRateLimit,
@@ -60,6 +61,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
+import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -67,6 +69,18 @@ import {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // Validate configuration
+    try {
+      validateConfig(env);
+    } catch (error) {
+      console.error("Configuration error:", error);
+      return jsonResponse(
+        { error: "Configuration error", message: (error as Error).message },
+        500,
+        request,
+      );
+    }
+
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
@@ -104,8 +118,10 @@ export default {
 
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
-        const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
-        return rateLimiter(request, () => handleDiscover(env, request));
+        return withAuth(request, env, "admin", () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
+          return rateLimiter(request, () => handleDiscover(env, request));
+        });
       }
       if (path === "/api/status") return handleStatus(env, request);
       if (path === "/api/log") return handleGetLogs(url, env, request);
@@ -113,15 +129,20 @@ export default {
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
-        const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
-        return rateLimiter(request, () => handleSubmit(request, env));
+        return withAuth(request, env, undefined, () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
+          return rateLimiter(request, () => handleSubmit(request, env));
+        });
       }
 
       // Referral API
       if (path === "/api/referrals") {
         if (request.method === "GET") return handleGetReferrals(url, env);
-        if (request.method === "POST")
-          return handleCreateReferral(request, env);
+        if (request.method === "POST") {
+          return withAuth(request, env, undefined, () =>
+            handleCreateReferral(request, env),
+          );
+        }
       }
 
       const referralMatch = path.match(
@@ -131,18 +152,24 @@ export default {
         const code = referralMatch[1];
         const action = referralMatch[2];
         if (action === "deactivate" && request.method === "POST") {
-          return handleDeactivateReferral(request, code, env);
+          return withAuth(request, env, undefined, () =>
+            handleDeactivateReferral(request, code, env),
+          );
         }
         if (action === "reactivate" && request.method === "POST") {
-          return handleReactivateReferral(code, env);
+          return withAuth(request, env, undefined, () =>
+            handleReactivateReferral(code, env),
+          );
         }
         if (request.method === "GET") return handleGetReferralByCode(code, env);
       }
 
       // Research API
       if (path === "/api/research" && request.method === "POST") {
-        const rateLimiter = createRateLimitMiddleware(env, "/api/research");
-        return rateLimiter(request, () => handleResearch(request, env));
+        return withAuth(request, env, undefined, () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/research");
+          return rateLimiter(request, () => handleResearch(request, env));
+        });
       }
 
       // Research results API
@@ -209,7 +236,7 @@ export default {
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
-        return handleRunAggregation(env);
+        return withAuth(request, env, "admin", () => handleRunAggregation(env));
       }
 
       // Email API
@@ -236,6 +263,20 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
+    // Validate configuration
+    try {
+      validateConfig(env);
+    } catch (error) {
+      console.error("Scheduled execution configuration error:", error);
+      await notify(env, {
+        type: "system_error",
+        severity: "critical",
+        run_id: "scheduled-init",
+        message: `Configuration error: ${(error as Error).message}`,
+      });
+      return;
+    }
+
     const cron = event.cron;
     const timestamp = new Date().toISOString();
 
