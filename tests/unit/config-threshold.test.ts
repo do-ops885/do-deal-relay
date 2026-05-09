@@ -11,7 +11,11 @@ describe("Config Utilities", () => {
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
-  } as Env;
+    DEALS_KV: {},
+    METRICS_KV: {},
+    AI_GATEWAY_URL: "http://test",
+    TRUST_THRESHOLD: "0.3",
+  } as unknown as Env;
 
   describe("getTrustThreshold", () => {
     it("should return default value when TRUST_THRESHOLD is not set", () => {
@@ -40,11 +44,13 @@ describe("Config Utilities", () => {
   });
 
   describe("validateConfig", () => {
-    it("should not throw when TRUST_THRESHOLD is not set", () => {
-      expect(() => validateConfig(mockEnv)).not.toThrow();
+    it("should throw when mandatory config is missing", () => {
+      const env = { ...mockEnv } as any;
+      delete env.DEALS_KV;
+      expect(() => validateConfig(env)).toThrow("Missing required config: DEALS_KV");
     });
 
-    it("should not throw when TRUST_THRESHOLD is valid", () => {
+    it("should not throw when mandatory config is present and valid", () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "0.5" };
       expect(() => validateConfig(env)).not.toThrow();
     });
@@ -52,21 +58,21 @@ describe("Config Utilities", () => {
     it("should throw when TRUST_THRESHOLD is not a number", () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "abc" };
       expect(() => validateConfig(env)).toThrow(
-        'Invalid TRUST_THRESHOLD: "abc" is not a number',
+        "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is below 0", () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "-0.1" };
       expect(() => validateConfig(env)).toThrow(
-        "Invalid TRUST_THRESHOLD: -0.1 must be between 0 and 1",
+        "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is above 1", () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "1.1" };
       expect(() => validateConfig(env)).toThrow(
-        "Invalid TRUST_THRESHOLD: 1.1 must be between 0 and 1",
+        "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
   });

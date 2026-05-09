@@ -18,6 +18,10 @@ describe("Worker Initialization", () => {
     DEALS_LOG: { get: vi.fn(), put: vi.fn() },
     DEALS_LOCK: { get: vi.fn() },
     DEALS_SOURCES: { get: vi.fn() },
+    DEALS_KV: {},
+    METRICS_KV: {},
+    AI_GATEWAY_URL: "http://test",
+    TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 
   beforeEach(() => {
@@ -34,7 +38,7 @@ describe("Worker Initialization", () => {
       expect(response.status).toBe(500);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
-      expect(body.message).toContain("is not a number");
+      expect(body.message).toContain("must be a number between 0 and 1");
     });
 
     it("should return 500 when TRUST_THRESHOLD is out of range", async () => {
@@ -46,7 +50,7 @@ describe("Worker Initialization", () => {
       expect(response.status).toBe(500);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
-      expect(body.message).toContain("must be between 0 and 1");
+      expect(body.message).toContain("must be a number between 0 and 1");
     });
   });
 

@@ -27,20 +27,15 @@ export function getTrustThreshold(env: Env): number {
  * @throws Error if the threshold is invalid (non-numeric or out of range)
  */
 export function validateConfig(env: Env): void {
-  if (env.TRUST_THRESHOLD) {
-    const parsed = parseFloat(env.TRUST_THRESHOLD);
+  const required = ["DEALS_KV", "METRICS_KV", "AI_GATEWAY_URL", "TRUST_THRESHOLD"];
+  const missing = required.filter((k) => !env[k as keyof Env]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required config: ${missing.join(", ")}`);
+  }
 
-    if (isNaN(parsed)) {
-      throw new Error(
-        `Invalid TRUST_THRESHOLD: "${env.TRUST_THRESHOLD}" is not a number`,
-      );
-    }
-
-    if (parsed < 0 || parsed > 1) {
-      throw new Error(
-        `Invalid TRUST_THRESHOLD: ${parsed} must be between 0 and 1`,
-      );
-    }
+  const threshold = parseFloat(env.TRUST_THRESHOLD!);
+  if (isNaN(threshold) || threshold < 0 || threshold > 1) {
+    throw new Error(`TRUST_THRESHOLD must be a number between 0 and 1`);
   }
 
   // Validate budget configurations
