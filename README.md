@@ -90,6 +90,25 @@ curl https://your-worker.workers.dev/api/log
 - [x] Deploy to staging ✅
 - [ ] Production release (v1.0.0)
 
+## Configuration
+
+### Required Environment Variables
+
+The system requires the following environment variables to be set for the Worker to start:
+
+- `DEALS_KV`: KV namespace for deal storage.
+- `METRICS_KV`: KV namespace for metrics data.
+- `AI_GATEWAY_URL`: URL for the AI Gateway (e.g., Cloudflare AI Gateway).
+- `TRUST_THRESHOLD`: Minimum trust score for deals (0.0 to 1.0).
+
+### Optional Configuration
+
+- `ENVIRONMENT`: Deployment environment (development, staging, production).
+- `GITHUB_REPO`: Target repository for publishing.
+- `GITHUB_TOKEN`: GitHub API token for publishing.
+- `NOTIFICATION_THRESHOLD`: Minimum value for high-value deal notifications.
+- `CANDIDATE_BUDGET_GLOBAL`: Maximum candidates to process per run.
+
 ## Current Configuration
 
 - **Cron Schedule**: Every 6 hours

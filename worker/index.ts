@@ -69,7 +69,7 @@ import { validateConfig } from "./lib/config-utils";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Validate configuration
+    // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
     } catch (error) {
@@ -263,7 +263,7 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
-    // Validate configuration
+    // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
     } catch (error) {

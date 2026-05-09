@@ -56,10 +56,14 @@ function createMockEnv(): Env {
     DEALS_PRODUCTION: createKV(),
     DEALS_QUARANTINE: createKV(),
     API_KEYS: createKV(),
+    DEALS_KV: createKV(),
+    METRICS_KV: createKV(),
+    AI_GATEWAY_URL: "https://gateway.test",
+    TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
-  } as Env;
+  } as unknown as Env;
 }
 
 async function seedReferral(env: Env, referral: ReferralInput): Promise<void> {

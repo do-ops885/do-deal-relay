@@ -31,7 +31,14 @@ function createMockKv() {
 
 type MockKv = ReturnType<typeof createMockKv>;
 function createEnv(kv: MockKv) {
-  return { DEALS_STAGING: kv, WEBHOOK_API_KEYS: kv } as any;
+  return {
+    DEALS_STAGING: kv,
+    WEBHOOK_API_KEYS: kv,
+    DEALS_KV: kv,
+    METRICS_KV: kv,
+    AI_GATEWAY_URL: "https://gateway.test",
+    TRUST_THRESHOLD: "0.3",
+  } as any;
 }
 
 function createRequest(
