@@ -1,196 +1,88 @@
 # System Reference
 
 **System**: Deal Discovery System
-**Version**: 0.1.3
-**Phase**: Bootstrap
-**Status**: In Development
+**Version**: 0.1.3 | **Status**: Production
 
 ## Architecture
 
-### Project Structure
-
-```
-├── .github/workflows/    # CI/CD workflows
-├── .agents/skills/       # Agent coordination skills
-├── agents-docs/          # System documentation
-├── docs/                 # API documentation
-├── plans/                # Execution plans
-├── scripts/              # Utility scripts
-├── temp/                 # Analysis reports & state (gitignored)
-├── tests/                # Test suite
-└── worker/               # Cloudflare Worker source
-```
-
-### File Organization Rules
-
-**CRITICAL**: Only these files belong in root:
-
-- `.gitignore` - Git ignore patterns
-- `package.json` - NPM manifest
-- `package-lock.json` - NPM lockfile
-- `tsconfig.json` - TypeScript config
-- `vitest.config.ts` - Test runner config
-- `wrangler.jsonc` - Cloudflare Workers config
-- `README.md` - Main project documentation
-- `VERSION` - Version file
-
-**ALL other files MUST use appropriate subfolders**:
-
-- Reports/status → `temp/`
-- Documentation → `docs/` or `agents-docs/`
-- Scripts → `scripts/`
-- Tests → `tests/`
-- Source code → `worker/`
-
 ### Two-Phase Publishing
+**Staging → Production** with 9 mandatory validation gates.
 
-**Staging → Production** with 9 validation gates:
+### Validation Gates (Pass/Fail Semantics)
 
-1. Schema validation (Zod)
-2. Normalization verification
-3. Deduplication check
-4. Source trust ≥ 0.3
-5. Reward plausibility
-6. Expiry validation
-7. Second-pass validation
-8. Idempotency check
-9. Snapshot hash verification
+1. **`schema_validation`**:
+   - **Pass**: Object matches `DealSchema` (Zod).
+   - **Fail**: Missing required fields, incorrect types, or validation errors.
+2. **`normalization_verification`**:
+   - **Pass**: Domain is lowercase, code is uppercase, no tracking params (utm_, etc.) in URL, `normalized_at` exists.
+   - **Fail**: Case mismatches or tracking parameters detected.
+3. **`deduplication_check`**:
+   - **Pass**: ID is unique in batch; Domain+Code pair is unique in batch.
+   - **Fail**: Redundant deal detected.
+4. **`source_trust`**:
+   - **Pass**: `deal.source.trust_score >= TRUST_THRESHOLD` (Dev: 0.1, Staging: 0.25, Prod: 0.3).
+   - **Fail**: Source trust insufficient.
+5. **`reward_plausibility`**:
+   - **Pass**: Reward value > 0; Cash < $10k; Percent <= 100%.
+   - **Fail**: Negative, zero, or suspiciously high/impossible rewards.
+6. **`expiry_validation`**:
+   - **Pass**: `expiry.date` is null OR in the future.
+   - **Fail**: Expiration date is in the past.
+7. **`second_pass_validation`**:
+   - **Pass**: Re-validated schema on normalized data; Code length 4-50 chars.
+   - **Fail**: Normalization broke schema or code length is invalid.
+8. **`idempotency_check`**:
+   - **Pass**: Deal ID does not exist in `DEALS_PROD` snapshot.
+   - **Fail**: Deal already published.
+9. **`snapshot_hash_verification`**:
+   - **Pass**: Deal data hash matches context hash (integrity check).
+   - **Fail**: Data corrupted or tampered during pipeline.
 
-### State Machine Flow
+## Infrastructure
 
-```
-init → discover → normalize → dedupe → validate → score → stage → publish → verify → finalize
-```
+### KV Namespaces
+| Binding | ID | Role |
+| :--- | :--- | :--- |
+| `DEALS_PROD` | `23ee9b...` | Immutable production snapshots |
+| `DEALS_STAGING` | `b0db85...` | Mutable candidate deals |
+| `DEALS_LOG` | `1f1a90...` | Run history & metrics |
+| `DEALS_LOCK` | `e3ab52...` | Concurrency mutex (`discovery_lock`) |
+| `DEALS_SOURCES` | `be3c0f...` | Source registry & trust scores |
 
-### Infrastructure
+### D1 Database
+| Binding | Name | Purpose |
+| :--- | :--- | :--- |
+| `DEALS_DB` | `deals-db` | Full-text search & Referral metadata |
 
-**Cloudflare Workers** + **5 KV Namespaces**:
+## MCP Toolset (Model Context Protocol)
 
-- `DEALS_PROD` - Production deals
-- `DEALS_STAGING` - Staging area
-- `DEALS_LOG` - Pipeline logs
-- `DEALS_LOCK` - Distributed locking
-- `DEALS_SOURCES` - Source tracking
+### 1. Deals (`deals.ts`)
+- `search_deals(domain?, category?, status?, query?, limit?, sort_by?, order?, min_confidence?, min_trust?)`
+- `get_deal(code)`
+- `add_referral(code, url, domain, title?, description?, reward_type?, reward_value?, category?, expiry_date?)`
 
-**Configuration**:
+### 2. Research (`research.ts`)
+- `research_domain(domain, depth?, max_results?)`
+- `list_categories(include_descriptions?)`
+- `validate_deal(url, check_status?)`
 
-- Cron: Every 6 hours
-- Max deals per run: 1000
-- Trust threshold: 0.3
-- High value threshold: > $100
+### 3. System (`system.ts`)
+- `get_stats(days?)`
+- `get_pipeline_status()`
+- `trigger_discovery()`
+- `get_similar_deals(code?, domain?, limit?)`
+- `get_deal_highlights(limit?)`
+- `get_logs(run_id?, count?)`
 
-## Testing
+### 4. User (`user.ts`)
+- `report_deal(code, reason, comment?)`
+- `experience_deal(code, success, comment?)`
+- `natural_language_query(query, limit?, includeSql?)`
 
-### Commands
-
-```bash
-# Run all tests
-npm test
-
-# CI mode (headless)
-npm run test:ci
-
-# Type check only
-npm run lint
-
-# Validate all gates
-npm run validate
-```
-
-### Requirements
-
-- Target coverage: >80%
-- Mock external services (KV, fetch)
-- Integration tests for full pipeline
-
-## Code Style
-
-### TypeScript
-
-- Strict mode enabled
-- No implicit `any`
-- camelCase for variables
-- PascalCase for types
-
-### File Structure
-
-- **Max 500 lines per file** - split into focused sub-modules if exceeded
-- Minimal comments - code should be self-documenting
-
-### Error Handling
-
-Use custom error classes:
-
-- `FetchError` - HTTP request failures
-- `ParseError` - Data parsing errors
-- `ValidationError` - Schema validation failures
-- `ScoringError` - Trust/reward calculation errors
-- `PublishError` - Deployment failures
-- `NotificationError` - Alert delivery failures
-- `ConcurrencyError` - Lock conflicts
-- `ConfigError` - Configuration errors
-
-## Security
-
-### Guidelines
-
-- HTTPS only
-- 1MB payload limit
-- 30s timeout
-- No dynamic code execution
-
-See [guard-rails.md](guard-rails.md) for full security details.
-
-## API Endpoints
-
-| Endpoint        | Method | Description        |
-| --------------- | ------ | ------------------ |
-| `/deals`        | GET    | Active deals       |
-| `/deals.json`   | GET    | Full snapshot      |
-| `/health`       | GET    | System status      |
-| `/api/discover` | POST   | Manual trigger     |
-| `/metrics`      | GET    | Prometheus metrics |
-| `/api/status`   | GET    | Pipeline status    |
-| `/api/log`      | GET    | Query logs         |
-| `/api/submit`   | POST   | Submit deal        |
-
-## Active Agents
-
-| Agent               | Status   | Phase           | Responsibility      |
-| ------------------- | -------- | --------------- | ------------------- |
-| test-agent          | complete | Test & Validate | Integration testing |
-| validation-agent    | complete | Test & Validate | 9 validation gates  |
-| doc-agent           | complete | Test & Validate | Documentation       |
-| github-agent        | complete | Test & Validate | GitHub integration  |
-| browser-agent       | complete | Test & Validate | Browser/API testing |
-
-## Skills
-
-### Local Coordination Skills
-
-Located in `.agents/skills/`:
-
-- `agent-coordination` - Multi-agent orchestration
-- `goap-agent` - Goal-oriented planning
-- `task-decomposition` - Task breakdown
-- `parallel-execution` - Parallel workflows
-
-### External Platform Skills
-
-Installed globally:
-
-- `cloudflare` - Platform expertise (Workers, Pages, KV, D1, R2, AI)
-- `agents-sdk` - Building stateful AI agents
-- `durable-objects` - Stateful coordination
-- `wrangler` - Deployment and management
-- `workers-best-practices` - Performance optimization
-
-Use: `skill <name>` to load platform guidance.
+## State Machine
+`init` → `discover` → `normalize` → `dedupe` → `validate` → `score` → `stage` → `publish` → `verify` → `finalize`
 
 ## Related Documentation
-
-- [Architecture Overview](../AGENTS.md)
-- [Agent Specs](../agents-docs/agents/) - Individual agent docs
-- [Guard Rails](../agents-docs/guard-rails.md) - Security
-- [Coordination](../agents-docs/coordination/) - State tracking
-- [Harness](../agents-docs/HARNESS.md) - Orchestration
+- [AGENTS.md](../AGENTS.md) - Behavioral contracts
+- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) - Directory rules
+- [GUARD_RAILS.md](./GUARD_RAILS.md) - Security & constraints

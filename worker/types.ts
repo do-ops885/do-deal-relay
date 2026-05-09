@@ -207,6 +207,7 @@ export interface PipelineMetrics {
   start_time: number;
   end_time?: number;
   phase_timings: Record<PipelinePhase, number>;
+  phase_results: Record<PipelinePhase, "success" | "failure">;
   total_duration_ms: number;
   deals_processed: {
     discovered: number;
@@ -223,6 +224,7 @@ export interface PipelineMetrics {
     d1_lookup_total: number;
     dedup_hit_total: number;
   };
+  validation_gate_rejections?: Record<string, number>;
   errors: number;
   retries: number;
   success: boolean;
@@ -312,6 +314,7 @@ export interface Env {
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
+  TRUST_THRESHOLD?: string;
   NOTIFICATION_THRESHOLD: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;

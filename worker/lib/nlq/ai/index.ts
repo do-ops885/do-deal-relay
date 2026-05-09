@@ -7,6 +7,7 @@ import { sha256 } from "../../crypto";
 import { KVCache } from "../../cache";
 import { logger } from "../../global-logger";
 import { CONFIG } from "../../../config";
+import { getTrustThreshold } from "../../config-utils";
 import type { Env } from "../../../types";
 import type { EnhancedQuery, QueryFilters, AIEnhancerOptions } from "./types";
 import { extractEntities, deduplicateEntities } from "./entities";
@@ -108,7 +109,7 @@ export class AIQueryEnhancer {
     ]);
 
     // Build filters from extracted entities
-    const filters = this.buildFilters(entities);
+    const filters = this.buildFilters(entities, this.env);
 
     // Calculate overall AI confidence
     const aiConfidence = this.calculateConfidence(entities, intent);
@@ -177,7 +178,10 @@ export class AIQueryEnhancer {
     return `ai:${hash.slice(0, 32)}`;
   }
 
-  private buildFilters(entities: import("./types").Entity[]): QueryFilters {
+  private buildFilters(
+    entities: import("./types").Entity[],
+    env: Env,
+  ): QueryFilters {
     const filters: QueryFilters = {};
     const VALID_COMPARATOR_OPS = [
       "better_than",
@@ -197,7 +201,7 @@ export class AIQueryEnhancer {
             );
           } else if (impact < 0) {
             filters.sentimentFilter = "negative";
-            filters.minTrustScore = 0.3;
+            filters.minTrustScore = getTrustThreshold(env);
           }
           break;
         }
