@@ -257,6 +257,36 @@ export function formatMetricsForPrometheus(
         `deals_pipeline_total_duration_ms{status="failure",quantile="0.99"} ${failureStats.p99}`,
       );
     }
+
+    // Add requested stage_latency_ms metrics
+    lines.push(
+      `# HELP stage_latency_ms Latency per pipeline stage in milliseconds`,
+    );
+    lines.push(`# TYPE stage_latency_ms gauge`);
+    const stagesToTrack: Record<string, string> = {
+      discover: "discovery",
+      validate: "validation",
+      publish: "publish",
+    };
+
+    for (const [phase, stageName] of Object.entries(stagesToTrack)) {
+      const allTimings = metrics
+        .map((m) => m.phase_timings[phase as PipelinePhase])
+        .filter((t) => t > 0);
+
+      if (allTimings.length > 0) {
+        const s = calculateStats(allTimings);
+        lines.push(
+          `stage_latency_ms{stage="${stageName}",percentile="p50"} ${s.p50}`,
+        );
+        lines.push(
+          `stage_latency_ms{stage="${stageName}",percentile="p95"} ${s.p95}`,
+        );
+        lines.push(
+          `stage_latency_ms{stage="${stageName}",percentile="p99"} ${s.p99}`,
+        );
+      }
+    }
   } else {
     // Fallback to average phase timings if no individual metrics provided
     for (const [p, d] of Object.entries(stats.avg_phase_timings))

@@ -106,14 +106,14 @@ export async function executePipeline(env: Env): Promise<{
           await extendLock(env, trace_id, 300);
         }
 
-        // Execute phase
+        // Execute phase and instrument duration (discovery, validation, publish etc)
         const phaseStartTime = Date.now();
         let result: PipelinePhase | FailurePath;
         try {
           result = await executePhase(currentPhase, ctx, env);
           const phaseDuration = Date.now() - phaseStartTime;
 
-          // Record metrics
+          // Record metrics for per-stage latency tracking
           if (ctx.metrics) {
             recordPhaseTiming(
               ctx.metrics,
