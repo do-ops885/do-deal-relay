@@ -37,11 +37,20 @@
       "binding": "DEALS_SOURCES",
       "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
     },
+    {
+      "binding": "DEALS_KV",
+      "id": "23ee9b8c9e2748e5880f476b8b57a524",
+    },
+    {
+      "binding": "METRICS_KV",
+      "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+    },
   ],
   // Environment variables (non-secrets only - secrets use `wrangler secret`)
   "vars": {
     "ENVIRONMENT": "production",
     "GITHUB_REPO": "do-ops885/do-deal-relay",
+    "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
     "TRUST_THRESHOLD": "0.3",
     "NOTIFICATION_THRESHOLD": "100",
     "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -67,6 +76,7 @@
       "vars": {
         "ENVIRONMENT": "development",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
         "TRUST_THRESHOLD": "0.1",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -82,6 +92,7 @@
       "vars": {
         "ENVIRONMENT": "staging",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
         "TRUST_THRESHOLD": "0.25",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -111,6 +122,14 @@
           "binding": "DEALS_SOURCES",
           "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
         },
+        {
+          "binding": "DEALS_KV",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "METRICS_KV",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+        },
       ],
       "d1_databases": [
         {
@@ -126,6 +145,7 @@
       "vars": {
         "ENVIRONMENT": "production",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
         "TRUST_THRESHOLD": "0.3",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -154,6 +174,14 @@
         {
           "binding": "DEALS_SOURCES",
           "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+        },
+        {
+          "binding": "DEALS_KV",
+          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+        },
+        {
+          "binding": "METRICS_KV",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
         },
       ],
       "d1_databases": [

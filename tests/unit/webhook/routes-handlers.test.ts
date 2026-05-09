@@ -49,7 +49,10 @@ function createEnv(kv: MockKv) {
   } as any;
 }
 
-async function setupValidApiKey(kv: MockKv, key: string = "ddr_test_key_12345678901234567890") {
+async function setupValidApiKey(
+  kv: MockKv,
+  key: string = "ddr_test_key_12345678901234567890",
+) {
   const encoder = new TextEncoder();
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(key));
   const hash = Array.from(new Uint8Array(hashBuffer))
