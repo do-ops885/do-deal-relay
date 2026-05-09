@@ -289,6 +289,18 @@ deals_runs_total 42
 
 # HELP deals_active_deals Current active deals
 deals_active_deals 45
+
+# HELP validation_gate_rejections Rejections per validation gate
+# TYPE validation_gate_rejections counter
+validation_gate_rejections{gate="source_trust"} 10
+
+# HELP validation_gate_passes Passes per validation gate
+# TYPE validation_gate_passes counter
+validation_gate_passes{gate="source_trust"} 90
+
+# HELP validation_gate_rejection_ratio Ratio of rejections to total attempts per gate
+# TYPE validation_gate_rejection_ratio gauge
+validation_gate_rejection_ratio{gate="source_trust"} 0.1000
 ```
 
 **Content-Type:** `text/plain`

@@ -7,6 +7,7 @@ import { validateDealFastPath } from "./validate-fast-path";
 import {
   recordValidationCacheMetric,
   recordValidationGateRejection,
+  recordValidationGatePass,
 } from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
@@ -96,6 +97,7 @@ export async function validate(
       let allPassed = true;
       const failureReasons: string[] = [];
       const gateFailures: string[] = [];
+      const gatePasses: string[] = [];
       let fastPathDecision = null;
       let skipGates = false;
 
@@ -129,6 +131,8 @@ export async function validate(
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);
             gateFailures.push(gate);
+          } else {
+            gatePasses.push(gate);
           }
         }
       }
@@ -167,7 +171,14 @@ export async function validate(
         deal.metadata.status = "rejected";
       }
 
-      return { deal, allPassed, failureReasons, gateFailures, isQuarantined };
+      return {
+        deal,
+        allPassed,
+        failureReasons,
+        gateFailures,
+        gatePasses,
+        isQuarantined,
+      };
     },
     10, // Max 10 concurrent deals to stay under 50 subrequest limit (each deal does ~3 lookups)
   );
@@ -177,6 +188,12 @@ export async function validate(
       result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
       if (ctx.metrics) {
         recordValidationGateRejection(ctx.metrics, gate);
+      }
+    });
+
+    r.gatePasses.forEach((gate) => {
+      if (ctx.metrics) {
+        recordValidationGatePass(ctx.metrics, gate);
       }
     });
 

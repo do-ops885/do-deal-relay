@@ -225,6 +225,7 @@ export interface PipelineMetrics {
     dedup_hit_total: number;
   };
   validation_gate_rejections?: Record<string, number>;
+  validation_gate_passes?: Record<string, number>;
   errors: number;
   retries: number;
   success: boolean;

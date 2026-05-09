@@ -46,6 +46,7 @@ Every agent MUST follow these rules:
 - **Deals**: `search_deals`, `get_deal`, `add_referral`
 - **Research**: `research_domain`, `list_categories`, `validate_deal`
 - **System**: `get_stats`, `get_pipeline_status`, `trigger_discovery`, `get_logs`
+- `metrics`: `validation_gate_rejections`, `validation_gate_passes`, `validation_gate_rejection_ratio`
 - **User**: `report_deal`, `experience_deal`, `natural_language_query`
 
 Detailed schemas in [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md).
