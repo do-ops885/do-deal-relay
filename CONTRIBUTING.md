@@ -49,6 +49,7 @@ git checkout -b fix/issue-123-bug-description
 
 **Before coding:**
 - Read [`AGENTS.md`](../../AGENTS.md) for project standards
+- Review [`docs/PERFORMANCE.md`](../../docs/PERFORMANCE.md) for optimization guidelines
 - Check [`agents-docs/SKILLS.md`](../../agents-docs/SKILLS.md) for skill authoring
 - Review [`agents-docs/HARNESS.md`](../../agents-docs/HARNESS.md) for architecture
 

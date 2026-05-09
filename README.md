@@ -46,6 +46,7 @@ curl https://your-worker.workers.dev/api/log
 ### Documentation
 
 - [AGENTS.md](AGENTS.md) - System specs and architecture
+- [docs/PERFORMANCE.md](docs/PERFORMANCE.md) - Optimization playbook
 - [docs/API.md](docs/API.md) - API reference
 <!-- - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide (Coming Soon) -->
 <!-- - [docs/LEGAL_COMPLIANCE.md](docs/LEGAL_COMPLIANCE.md) - Legal requirements (Coming Soon) -->
