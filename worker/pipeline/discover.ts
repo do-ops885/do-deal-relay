@@ -3,6 +3,8 @@ import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
+import { logger } from "../lib/global-logger";
+import { getTrustThreshold } from "../lib/config-utils";
 
 // ============================================================================
 // Discovery Engine
@@ -32,23 +34,80 @@ export async function discover(
   ctx: PipelineContext,
 ): Promise<DiscoveryResult> {
   const sources = await getSourceRegistry(env);
-  const activeSources = sources.filter((s) => s.active);
+  let activeSources = sources.filter((s) => s.active);
 
   if (activeSources.length === 0) {
-    console.warn("No active sources configured");
+    logger.warn("No active sources configured", { component: "discovery" });
     return { deals: [], errors: [] };
   }
+
+  // Budget configuration
+  const globalBudget = parseInt(
+    env.CANDIDATE_BUDGET_GLOBAL || String(CONFIG.MAX_DEALS_PER_RUN),
+    10,
+  );
+  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
+  const highTrustBonus = parseInt(
+    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
+    10,
+  );
+
+  const trustThreshold = getTrustThreshold(env);
+
+  // Filter sources by trust threshold
+  activeSources = activeSources.filter((s) => {
+    if (s.classification === "blocked") return false;
+    if (s.trust_initial < trustThreshold) {
+      logger.info(`Skipping source ${s.domain} - trust below threshold`, {
+        component: "discovery",
+        trust: s.trust_initial,
+        threshold: trustThreshold,
+      });
+      return false;
+    }
+    return true;
+  });
+
+  // Sort sources by trust score descending
+  activeSources.sort((a, b) => b.trust_initial - a.trust_initial);
 
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
+  logger.info("Starting discovery with budget constraints", {
+    component: "discovery",
+    globalBudget,
+    sourceCount: activeSources.length,
+  });
+
   for (const source of activeSources) {
-    if (source.classification === "blocked") {
-      continue;
+    const remainingGlobal = globalBudget - deals.length;
+
+    if (remainingGlobal <= 0) {
+      logger.info("Global discovery budget exhausted", {
+        component: "discovery",
+        dealsFound: deals.length,
+      });
+      break;
     }
 
+    // Calculate per-source budget
+    const sourceBudget =
+      source.trust_initial > 0.7
+        ? perSourceBase + highTrustBonus
+        : perSourceBase;
+
+    const effectiveLimit = Math.min(sourceBudget, remainingGlobal);
+
+    logger.info(`Allocating budget for ${source.domain}`, {
+      component: "discovery",
+      trust: source.trust_initial,
+      budget: effectiveLimit,
+      remainingGlobal,
+    });
+
     try {
-      const result = await discoverFromSource(env, source);
+      const result = await discoverFromSource(env, source, effectiveLimit);
       deals.push(...result.deals);
       errors.push(...result.errors);
 
@@ -72,11 +131,16 @@ export async function discover(
 async function discoverFromSource(
   env: Env,
   source: SourceConfig,
+  limit: number,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
   for (const pattern of source.url_patterns) {
+    if (deals.length >= limit) {
+      break;
+    }
+
     try {
       const url = `https://${source.domain}${pattern}`;
 
@@ -123,6 +187,10 @@ async function discoverFromSource(
       }
 
       for (const item of extracted) {
+        if (deals.length >= limit) {
+          break;
+        }
+
         try {
           const deal = await buildDeal(item, source);
           deals.push(deal);
