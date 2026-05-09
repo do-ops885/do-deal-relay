@@ -223,15 +223,15 @@ jobs:
           fi
 
           # Format commit message
-          COMMIT_MESSAGE="${PR_TITLE} (#${PR_NUMBER})"
+          COMMIT_MESSAGE="${COMMIT_MESSAGE_FORMAT//\{title\}/$PR_TITLE}"
+          COMMIT_MESSAGE="${COMMIT_MESSAGE//\{number\}/$PR_NUMBER}"
 
           echo "Enabling auto-merge for PR #${PR_NUMBER} with squash method"
 
           gh pr merge "${PR_NUMBER}" \
             --squash \
             --auto \
-            --subject "${COMMIT_MESSAGE}" \
-            --body ""
+            --subject "${COMMIT_MESSAGE}"
 
           echo "✅ Auto-merge enabled successfully"
         env:
