@@ -1,72 +1,88 @@
-export function jsonResponse(data: unknown, status: number = 200): Response {
+// ============================================================================
+// Response Utility Helpers
+// ============================================================================
+
+/**
+ * Allowed origins for CORS validation
+ */
+export const ALLOWED_ORIGINS = [
+  "https://do-deal-relay.pages.dev",
+  "https://do-deal-relay.com",
+  "https://www.do-deal-relay.com",
+  "http://localhost:8787",
+  "http://localhost:3000",
+];
+
+/**
+ * Centralized security headers for all responses
+ */
+export const SECURITY_HEADERS: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy":
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:; media-src 'self'; object-src 'none'; frame-src 'none';",
+};
+
+/**
+ * Get allowed origin based on request Origin header
+ */
+export function getAllowedOrigin(origin?: string | null): string {
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    return origin;
+  }
+  return ALLOWED_ORIGINS[0]; // Default to primary production domain
+}
+
+/**
+ * Create a standardized JSON response with proper security and CORS headers
+ */
+export function jsonResponse(
+  data: unknown,
+  status: number = 200,
+  request?: Request,
+): Response {
+  const origin = request?.headers.get("Origin");
+
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
-      // CORS headers - restrict in production
-      "Access-Control-Allow-Origin": getAllowedOrigin(),
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-API-Key, X-Correlation-ID",
       "Access-Control-Allow-Credentials": "true",
-      // Security headers
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
-      "X-XSS-Protection": "1; mode=block",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
+      Vary: "Origin",
+      ...SECURITY_HEADERS,
     },
   });
 }
 
 /**
- * Get allowed origin based on environment
- * Production: Restrict to known domains
- * Development: Allow localhost
- */
-function getAllowedOrigin(): string {
-  // In production, this should check against allowed domains
-  // For now, return specific origin or use request origin in actual implementation
-  const allowedOrigins = [
-    "https://do-deal-relay.pages.dev",
-    "https://do-deal-relay.com",
-    "http://localhost:8787",
-    "http://localhost:3000",
-  ];
-
-  // For testing/development, if ENVIRONMENT is test, we can return *
-  // In actual implementation, validate against request origin
-  return "*";
-}
-
-/**
- * Create JSON response with specific origin (for authenticated endpoints)
+ * Create JSON response with specific origin (legacy helper, now uses jsonResponse)
+ * @deprecated Use jsonResponse(data, status, request) instead
  */
 export function jsonResponseWithOrigin(
   data: unknown,
   status: number = 200,
   origin?: string,
 ): Response {
-  const allowedOrigins = [
-    "https://do-deal-relay.pages.dev",
-    "https://do-deal-relay.com",
-    "http://localhost:8787",
-    "http://localhost:3000",
-  ];
-
-  const safeOrigin =
-    origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": safeOrigin,
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-API-Key, X-Correlation-ID",
       "Access-Control-Allow-Credentials": "true",
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
-      "X-XSS-Protection": "1; mode=block",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
+      Vary: "Origin",
+      ...SECURITY_HEADERS,
     },
   });
 }
@@ -78,10 +94,12 @@ export function errorResponse(
   message: string,
   status: number = 400,
   details?: Record<string, unknown>,
+  request?: Request,
 ): Response {
   return jsonResponse(
     { error: message, ...(details ? { details } : {}) },
     status,
+    request,
   );
 }
 
@@ -90,14 +108,18 @@ export function errorResponse(
  */
 export function unauthorizedResponse(
   message: string = "Unauthorized",
+  request?: Request,
 ): Response {
+  const origin = request?.headers.get("Origin");
+
   return new Response(JSON.stringify({ error: message }), {
     status: 401,
     headers: {
       "Content-Type": "application/json",
       "WWW-Authenticate": 'Bearer realm="api"',
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      Vary: "Origin",
+      ...SECURITY_HEADERS,
     },
   });
 }
@@ -105,8 +127,11 @@ export function unauthorizedResponse(
 /**
  * Create 403 Forbidden response
  */
-export function forbiddenResponse(message: string = "Forbidden"): Response {
-  return errorResponse(message, 403);
+export function forbiddenResponse(
+  message: string = "Forbidden",
+  request?: Request,
+): Response {
+  return errorResponse(message, 403, undefined, request);
 }
 
 /**
@@ -138,9 +163,7 @@ export function validateUrl(
     // If allowed domains specified, validate against them
     if (allowedDomains && allowedDomains.length > 0) {
       const hostname = parsed.hostname.replace(/^www\./, "");
-      const isAllowed = allowedDomains.some(
-        (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-      );
+      const isAllowed = allowedOriginsCheck(hostname, allowedDomains);
       if (!isAllowed) {
         return null;
       }
@@ -164,4 +187,13 @@ export function validateUrl(
   } catch {
     return null;
   }
+}
+
+function allowedOriginsCheck(
+  hostname: string,
+  allowedDomains: string[],
+): boolean {
+  return allowedDomains.some(
+    (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+  );
 }

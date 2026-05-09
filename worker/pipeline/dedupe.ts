@@ -79,17 +79,29 @@ export function deduplicate(
 
   // Second pass: semantic dedupe (similar URLs)
   const semanticUnique: Deal[] = [];
-  const semanticUrls = new Map<string, Deal>();
+  const semanticUrlsByDomain = new Map<
+    string,
+    Array<{ deal: Deal; url: URL | string }>
+  >();
 
   for (const deal of result.unique) {
     let isDuplicate = false;
     let matchedWith = "";
 
-    for (const [url, existing] of semanticUrls) {
-      const similarity = calculateUrlSimilarity(deal.url, url);
+    const domain = deal.source.domain;
+    const existingInDomain = semanticUrlsByDomain.get(domain) || [];
+    let urlToCompare: URL | string;
+    try {
+      urlToCompare = new URL(deal.url);
+    } catch {
+      urlToCompare = deal.url;
+    }
+
+    for (const existing of existingInDomain) {
+      const similarity = calculateUrlSimilarity(urlToCompare, existing.url);
       if (similarity >= CONFIG.SIMILARITY_THRESHOLD) {
         isDuplicate = true;
-        matchedWith = existing.id;
+        matchedWith = existing.deal.id;
         break;
       }
     }
@@ -101,7 +113,10 @@ export function deduplicate(
         reason: "semantic_url_similarity",
       });
     } else {
-      semanticUrls.set(deal.url, deal);
+      if (!semanticUrlsByDomain.has(domain)) {
+        semanticUrlsByDomain.set(domain, []);
+      }
+      semanticUrlsByDomain.get(domain)!.push({ deal, url: urlToCompare });
       semanticUnique.push(deal);
     }
   }
@@ -150,33 +165,58 @@ export function deduplicate(
   if (existingDeals && existingDeals.length > 0) {
     const finalUnique: Deal[] = [];
 
+    // Group existing deals by domain for faster lookup, pre-parsing URLs
+    const existingByDomain = new Map<
+      string,
+      Array<{ deal: Deal; url: URL | string }>
+    >();
+    for (const d of existingDeals) {
+      const domain = d.source.domain;
+      if (!existingByDomain.has(domain)) {
+        existingByDomain.set(domain, []);
+      }
+      let urlObj: URL | string;
+      try {
+        urlObj = new URL(d.url);
+      } catch {
+        urlObj = d.url;
+      }
+      existingByDomain.get(domain)!.push({ deal: d, url: urlObj });
+    }
+
     for (const deal of result.unique) {
       let isDuplicate = false;
       let matchedWith = "";
 
-      for (const existing of existingDeals) {
+      const existingInDomain = existingByDomain.get(deal.source.domain) || [];
+      let dealUrlObj: URL | string;
+      try {
+        dealUrlObj = new URL(deal.url);
+      } catch {
+        dealUrlObj = deal.url;
+      }
+
+      for (const existing of existingInDomain) {
         // Exact ID match
-        if (existing.id === deal.id) {
+        if (existing.deal.id === deal.id) {
           isDuplicate = true;
-          matchedWith = existing.id;
+          matchedWith = existing.deal.id;
           break;
         }
 
         // Same code from same domain
-        if (
-          existing.source.domain === deal.source.domain &&
-          existing.code === deal.code
-        ) {
+        // (already grouped by domain, so just check code)
+        if (existing.deal.code === deal.code) {
           isDuplicate = true;
-          matchedWith = existing.id;
+          matchedWith = existing.deal.id;
           break;
         }
 
         // Semantic URL match
-        const urlSim = calculateUrlSimilarity(existing.url, deal.url);
+        const urlSim = calculateUrlSimilarity(existing.url, dealUrlObj);
         if (urlSim >= CONFIG.SIMILARITY_THRESHOLD) {
           isDuplicate = true;
-          matchedWith = existing.id;
+          matchedWith = existing.deal.id;
           break;
         }
       }

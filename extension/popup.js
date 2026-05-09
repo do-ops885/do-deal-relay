@@ -201,9 +201,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "detection-item";
       item.dataset.index = i.toString();
+      item.setAttribute("aria-pressed", i === 0 ? "true" : "false");
 
       const info = document.createElement("div");
       info.className = "detection-info";
@@ -230,8 +232,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.addEventListener("click", () => {
         elements.detectionList
           .querySelectorAll(".detection-item")
-          .forEach((el) => el.classList.remove("selected"));
+          .forEach((el) => {
+            el.classList.remove("selected");
+            el.setAttribute("aria-pressed", "false");
+          });
         item.classList.add("selected");
+        item.setAttribute("aria-pressed", "true");
         state.selectedDetection =
           state.detections[parseInt(item.dataset.index)];
       });
@@ -288,6 +294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     elements.captureBtn.disabled = true;
+    elements.captureBtn.setAttribute("aria-busy", "true");
     elements.captureBtn.textContent = "Submitting...";
 
     try {
@@ -302,12 +309,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       showToast("Referral code captured successfully!", "success");
       incrementStat("captured");
+
+      // Visual feedback on button
+      elements.captureBtn.textContent = "Captured! ✅";
+      setTimeout(() => {
+        elements.captureBtn.textContent = "✨ Capture Selected";
+      }, 2000);
     } catch (err) {
       console.error("Capture error:", err);
       showToast(`Failed to capture: ${err.message}`, "error");
+      elements.captureBtn.textContent = "✨ Capture Selected";
     } finally {
       elements.captureBtn.disabled = false;
-      elements.captureBtn.textContent = "✨ Capture Selected";
+      elements.captureBtn.removeAttribute("aria-busy");
     }
   }
 
@@ -324,6 +338,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     elements.manualBtn.disabled = true;
+    elements.manualBtn.setAttribute("aria-busy", "true");
     elements.manualBtn.textContent = "Adding...";
 
     try {
@@ -339,11 +354,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast("Code added manually!", "success");
       elements.manualCode.value = "";
       incrementStat("captured");
+
+      // Visual feedback on button
+      elements.manualBtn.textContent = "Added! ✅";
+      setTimeout(() => {
+        elements.manualBtn.textContent = "Add Code Manually";
+      }, 2000);
     } catch (err) {
       showToast(`Failed to add: ${err.message}`, "error");
+      elements.manualBtn.textContent = "Add Code Manually";
     } finally {
       elements.manualBtn.disabled = false;
-      elements.manualBtn.textContent = "Add Code Manually";
+      elements.manualBtn.removeAttribute("aria-busy");
     }
   }
 

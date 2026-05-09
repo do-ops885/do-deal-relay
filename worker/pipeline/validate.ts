@@ -1,9 +1,13 @@
 import { Deal, PipelineContext, PipelineError, ErrorClass } from "../types";
 import { DealSchema } from "../types";
 import { CONFIG, VALIDATION_GATES, type ValidationGate } from "../config";
+import { getTrustThreshold } from "../lib/config-utils";
 import { verifyNormalization } from "./normalize";
 import { validateDealFastPath } from "./validate-fast-path";
-import { recordValidationCacheMetric } from "../lib/metrics";
+import {
+  recordValidationCacheMetric,
+  recordValidationGateRejection,
+} from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
 import { fetchInBatches } from "../lib/utils";
@@ -114,7 +118,13 @@ export async function validate(
 
       if (!skipGates) {
         for (const gate of VALIDATION_GATES) {
-          const gateResult = await runGate(gate, deal, ctx, existingDealIds);
+          const gateResult = await runGate(
+            gate,
+            deal,
+            ctx,
+            env,
+            existingDealIds,
+          );
           if (!gateResult.passed) {
             allPassed = false;
             failureReasons.push(`${gate}: ${gateResult.reason}`);
@@ -165,6 +175,9 @@ export async function validate(
   for (const r of validationResults) {
     r.gateFailures.forEach((gate) => {
       result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
+      if (ctx.metrics) {
+        recordValidationGateRejection(ctx.metrics, gate);
+      }
     });
 
     if (r.allPassed) {
@@ -191,6 +204,7 @@ async function runGate(
   gate: ValidationGate,
   deal: Deal,
   ctx: PipelineContext,
+  env: Env,
   existingIds: Set<string>,
 ): Promise<GateResult> {
   switch (gate) {
@@ -201,7 +215,7 @@ async function runGate(
     case "deduplication_check":
       return gateDeduplicationCheck(deal, ctx);
     case "source_trust":
-      return gateSourceTrust(deal);
+      return gateSourceTrust(deal, env);
     case "reward_plausibility":
       return gateRewardPlausibility(deal);
     case "expiry_validation":
@@ -280,11 +294,12 @@ function gateDeduplicationCheck(deal: Deal, ctx: PipelineContext): GateResult {
 }
 
 // Gate 4: Source Trust
-function gateSourceTrust(deal: Deal): GateResult {
-  if (deal.source.trust_score < CONFIG.MIN_TRUST_SCORE) {
+function gateSourceTrust(deal: Deal, env: Env): GateResult {
+  const threshold = getTrustThreshold(env);
+  if (deal.source.trust_score < threshold) {
     return {
       passed: false,
-      reason: `Trust score ${deal.source.trust_score} below minimum ${CONFIG.MIN_TRUST_SCORE}`,
+      reason: `Trust score ${deal.source.trust_score} below minimum ${threshold}`,
     };
   }
 

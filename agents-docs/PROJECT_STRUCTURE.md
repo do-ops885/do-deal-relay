@@ -1,58 +1,51 @@
 # Project Structure
 
 **Reference**: Comprehensive directory structure for the deal discovery system
-**Version**: 0.1.1
-**Last Updated**: 2026-04-02
+**Version**: 0.1.3
 
 ## Directory Tree
 
 ```
-├── CLAUDE.md, GEMINI.md, QWEN.md  # Agent CLI specs (root level)
-├── AGENTS.md                      # Master coordination hub
-├── .agents/skills/                # Coordination skills
-├── agents-docs/                   # System documentation
-│   ├── coordination/              # Handoff logs, blockers, swarm configs
-│   ├── agents/                    # Agent specifications
-│   └── handoffs/                  # Handoff templates
-├── temp/                          # State, reports, analysis docs (gitignored)
-│   ├── analysis-*.md              # Swarm analysis results
-│   └── research-*.md              # Web research results
-├── scripts/                       # CLI tools
-│   ├── cli/                       # Modular CLI implementation
-│   ├── quality_gate.sh            # Quality validation
-│   └── validate-codes.sh          # Code validation
-├── worker/                        # Cloudflare Worker source
-│   ├── lib/
-│   │   ├── referral-storage/      # Referral CRUD operations
-│   │   └── research-agent/        # Web research implementation
-│   ├── routes/                    # API route handlers
-│   ├── email/                     # Email integration
-│   └── types.ts                   # ReferralInput, Research schemas
-└── docs/                          # Documentation
-    └── API.md                     # API documentation
+├── .github/workflows/    # CI/CD pipelines
+├── .agents/skills/       # Shared agent capabilities
+├── agents-docs/          # Machine-facing specifications
+├── docs/                 # Human-facing documentation
+├── scripts/              # Automation & Quality gates
+├── tests/                # Verification suite
+├── worker/               # Core logic (Cloudflare Workers)
+│   ├── pipeline/         # State machine stages (normalize, validate, etc.)
+│   ├── lib/              # Shared utilities (mcp, auth, storage, etc.)
+│   ├── routes/           # API & MCP entry points
+│   └── types.ts          # Core type definitions
+├── reports/              # Permanent analysis (committed)
+├── plans/                # Execution plans
+├── temp/                 # Local state & logs (gitignored)
+└── public/               # Static assets
 ```
-
-## Component Descriptions
-
-| Directory                         | Purpose                                                             |
-| --------------------------------- | ------------------------------------------------------------------- |
-| **CLAUDE.md, GEMINI.md, QWEN.md** | Agent CLI specifications (root level for immediate access)          |
-| **AGENTS.md**                     | Master coordination hub with quick start, protocols, and references |
-| **.agents/skills/**               | Coordination skills for agent capabilities                          |
-| **agents-docs/**                  | System documentation, handoff logs, swarm configs, agent specs      |
-| **temp/**                         | State files, reports, analysis docs (gitignored)                    |
-| **scripts/**                      | CLI tools and validation scripts                                    |
-| **worker/**                       | Cloudflare Worker source code, API routes, storage                  |
-| **docs/**                         | API documentation and user-facing docs                              |
 
 ## Root Directory Policy
 
-**CRITICAL**: Only standard project files belong in root. All other files MUST use appropriate subfolders.
+**CRITICAL**: Only standard configuration files belong in root.
 
-For the complete policy including allowed files, required subfolders, and enforcement rules, see [Guard Rails](./guard-rails.md) - File Organization Guard Rails section.
+### Allowed Files (Root Only)
+- `.gitignore`, `.eslintignore`, `.prettierignore`
+- `package.json`, `package-lock.json`
+- `tsconfig.json`, `vitest.config.ts`, `playwright.config.ts`
+- `wrangler.jsonc`
+- `AGENTS.md`, `README.md`, `CLAUDE.md`, `GEMINI.md`, `QWEN.md`
+- `VERSION`, `NOTICE`, `LICENSE`
+
+### Folder Ownership
+| Directory | Purpose | Retention |
+| :--- | :--- | :--- |
+| `worker/` | Production source code | Permanent |
+| `agents-docs/` | Behavioral contracts | Permanent |
+| `docs/` | External documentation | Permanent |
+| `reports/` | Investigation outputs | Permanent |
+| `scripts/` | Tooling & Hooks | Permanent |
+| `temp/` | Transient session data | Session-only |
 
 ## Related Documentation
-
-- [Guard Rails](./guard-rails.md) - Complete rules and security guidelines
-- [System Reference](./SYSTEM_REFERENCE.md) - High-level architecture overview
-- [AGENTS.md](../AGENTS.md) - Coordination hub and quick start
+- [AGENTS.md](../AGENTS.md) - Master coordination hub
+- [SYSTEM_REFERENCE.md](./SYSTEM_REFERENCE.md) - Technical specs
+- [GUARD_RAILS.md](./GUARD_RAILS.md) - File & security constraints

@@ -7,15 +7,22 @@
 import { executePipeline, getPipelineStatus } from "../../state-machine";
 import { getRunLogs, getRecentLogs, exportLogsAsJSONL } from "../../lib/logger";
 import type { Env } from "../../types";
-import { jsonResponse } from "../utils";
+import { jsonResponse, getAllowedOrigin, SECURITY_HEADERS } from "../utils";
 
-export async function handleDiscover(env: Env): Promise<Response> {
+export async function handleDiscover(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const result = await executePipeline(env);
   if (result.success) {
-    return jsonResponse({
-      success: true,
-      message: "Discovery pipeline triggered",
-    });
+    return jsonResponse(
+      {
+        success: true,
+        message: "Discovery pipeline triggered",
+      },
+      200,
+      request,
+    );
   } else {
     return jsonResponse(
       {
@@ -24,16 +31,24 @@ export async function handleDiscover(env: Env): Promise<Response> {
         phase: result.phase,
       },
       500,
+      request,
     );
   }
 }
 
-export async function handleStatus(env: Env): Promise<Response> {
+export async function handleStatus(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const status = await getPipelineStatus(env);
-  return jsonResponse(status);
+  return jsonResponse(status, 200, request);
 }
 
-export async function handleGetLogs(url: URL, env: Env): Promise<Response> {
+export async function handleGetLogs(
+  url: URL,
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const format = url.searchParams.get("format") || "json";
 
   if (format === "jsonl") {
@@ -42,6 +57,11 @@ export async function handleGetLogs(url: URL, env: Env): Promise<Response> {
       headers: {
         "Content-Type": "application/x-ndjson",
         "Content-Disposition": 'attachment; filename="deals-research.jsonl"',
+        "Access-Control-Allow-Origin": getAllowedOrigin(
+          request?.headers.get("Origin"),
+        ),
+        Vary: "Origin",
+        ...SECURITY_HEADERS,
       },
     });
   }
@@ -58,5 +78,5 @@ export async function handleGetLogs(url: URL, env: Env): Promise<Response> {
     logs = await getRecentLogs(env, count);
   }
 
-  return jsonResponse({ logs, count: logs.length });
+  return jsonResponse({ logs, count: logs.length }, 200, request);
 }

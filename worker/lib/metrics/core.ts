@@ -17,6 +17,18 @@ export function createMetrics(run_id: string): PipelineMetrics {
       verify: 0,
       finalize: 0,
     },
+    phase_results: {
+      init: "success",
+      discover: "success",
+      normalize: "success",
+      dedupe: "success",
+      validate: "success",
+      score: "success",
+      stage: "success",
+      publish: "success",
+      verify: "success",
+      finalize: "success",
+    },
     total_duration_ms: 0,
     deals_processed: {
       discovered: 0,
@@ -33,6 +45,7 @@ export function createMetrics(run_id: string): PipelineMetrics {
       d1_lookup_total: 0,
       dedup_hit_total: 0,
     },
+    validation_gate_rejections: {},
     errors: 0,
     retries: 0,
     success: false,
@@ -44,8 +57,10 @@ export function recordPhaseTiming(
   metrics: PipelineMetrics,
   phase: PipelinePhase,
   duration: number,
+  status: "success" | "failure" = "success",
 ): void {
   metrics.phase_timings[phase] = duration;
+  metrics.phase_results[phase] = status;
 }
 
 export function recordDealCount(
@@ -67,6 +82,18 @@ export function recordError(metrics: PipelineMetrics): void {
 }
 export function recordRetry(metrics: PipelineMetrics): void {
   metrics.retries++;
+}
+
+export function recordValidationGateRejection(
+  metrics: PipelineMetrics,
+  gate: string,
+  count: number = 1,
+): void {
+  if (!metrics.validation_gate_rejections) {
+    metrics.validation_gate_rejections = {};
+  }
+  metrics.validation_gate_rejections[gate] =
+    (metrics.validation_gate_rejections[gate] || 0) + count;
 }
 
 export function recordValidationCacheMetric(
@@ -106,6 +133,27 @@ export async function storeMetrics(
   await env.DEALS_LOG.put(key, JSON.stringify(metrics), {
     expirationTtl: 7 * 24 * 60 * 60,
   });
+
+  // Persist cumulative gate rejections in KV
+  if (metrics.validation_gate_rejections) {
+    const cumulativeKey = "metrics:cumulative_gate_rejections";
+    const existingRaw = await env.DEALS_LOG.get(cumulativeKey);
+    const cumulative: Record<string, number> = existingRaw
+      ? JSON.parse(existingRaw)
+      : {};
+
+    for (const [gate, count] of Object.entries(
+      metrics.validation_gate_rejections,
+    )) {
+      cumulative[gate] = (cumulative[gate] || 0) + count;
+    }
+
+    await env.DEALS_LOG.put(cumulativeKey, JSON.stringify(cumulative), {
+      // No TTL for cumulative stats, or a long one
+      expirationTtl: 30 * 24 * 60 * 60,
+    });
+  }
+
   const indexKey = "metrics:index";
   const indexRaw = await env.DEALS_LOG.get(indexKey);
   const index: string[] = indexRaw ? JSON.parse(indexRaw) : [];

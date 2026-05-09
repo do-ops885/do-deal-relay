@@ -20,11 +20,15 @@ import {
 } from "../../lib/ranking";
 import { calculateStringSimilarity } from "../../lib/crypto";
 
-export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
+export async function handleGetDeals(
+  url: URL,
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404);
+    return jsonResponse({ error: "No deals available" }, 404, request);
   }
 
   const query: GetDealsQuery = {
@@ -39,7 +43,7 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
 
   const validation = GetDealsQuerySchema.safeParse(query);
   if (!validation.success) {
-    return jsonResponse({ error: "Invalid query parameters" }, 400);
+    return jsonResponse({ error: "Invalid query parameters" }, 400, request);
   }
 
   let deals = snapshot.deals;
@@ -65,10 +69,10 @@ export async function handleGetDeals(url: URL, env: Env): Promise<Response> {
   deals = deals.slice(0, query.limit);
 
   if (url.pathname === "/deals.json") {
-    return jsonResponse({ ...snapshot, deals });
+    return jsonResponse({ ...snapshot, deals }, 200, request);
   }
 
-  return jsonResponse(deals);
+  return jsonResponse(deals, 200, request);
 }
 
 /**

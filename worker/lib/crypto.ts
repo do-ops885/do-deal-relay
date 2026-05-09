@@ -99,10 +99,13 @@ export function calculateStringSimilarity(a: string, b: string): number {
 /**
  * Calculate URL similarity (for semantic deduplication)
  */
-export function calculateUrlSimilarity(urlA: string, urlB: string): number {
+export function calculateUrlSimilarity(
+  urlA: string | URL,
+  urlB: string | URL,
+): number {
   try {
-    const parsedA = new URL(urlA);
-    const parsedB = new URL(urlB);
+    const parsedA = typeof urlA === "string" ? new URL(urlA) : urlA;
+    const parsedB = typeof urlB === "string" ? new URL(urlB) : urlB;
 
     // Same domain is prerequisite
     if (parsedA.hostname !== parsedB.hostname) {
@@ -124,6 +127,9 @@ export function calculateUrlSimilarity(urlA: string, urlB: string): number {
     // Weighted average: path matters more
     return pathSim * 0.7 + paramsSim * 0.3;
   } catch {
-    return calculateStringSimilarity(urlA, urlB);
+    return calculateStringSimilarity(
+      typeof urlA === "string" ? urlA : urlA.toString(),
+      typeof urlB === "string" ? urlB : urlB.toString(),
+    );
   }
 }

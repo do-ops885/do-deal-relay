@@ -14,7 +14,11 @@ import {
 /**
  * Handle analytics dashboard endpoint - GET /api/analytics
  */
-export async function handleAnalytics(url: URL, env: Env): Promise<Response> {
+export async function handleAnalytics(
+  url: URL,
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const format = url.searchParams.get("format") || "json";
   const days = url.searchParams.has("days")
     ? parseInt(url.searchParams.get("days")!, 10)
@@ -23,11 +27,11 @@ export async function handleAnalytics(url: URL, env: Env): Promise<Response> {
   try {
     if (format === "summary") {
       const summary = await generateAnalyticsSummary(env, days);
-      return jsonResponse(summary);
+      return jsonResponse(summary, 200, request);
     }
 
     const analytics = await generateDealAnalytics(env, days);
-    return jsonResponse(analytics);
+    return jsonResponse(analytics, 200, request);
   } catch (error) {
     console.error("Analytics generation error:", error);
     return jsonResponse(
@@ -36,6 +40,7 @@ export async function handleAnalytics(url: URL, env: Env): Promise<Response> {
         message: (error as Error).message,
       },
       500,
+      request,
     );
   }
 }

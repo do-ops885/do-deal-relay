@@ -3,28 +3,16 @@
 # Claude Code Overrides
 
 ## Tool Preferences
+- **Read**: Prefer offset/limit for large files (avoid 2k+ line reads).
+- **Grep**: Use `Glob` before `Grep` for efficiency.
+- **MCP**: Primary interface for system interaction.
+- **Batching**: Group independent `Bash` calls.
 
-- Prefer `Read` with offset/limit for large files (avoid reading full 2000 lines)
-- Use `Glob` before `Grep` for broad searches
-- Batch independent `Bash` calls in parallel (single message, multiple tools)
-- Use `skill` tool to load coordination patterns
+## Constraints
+- **AGENTS.md**: Keep under 150 lines (move details to `agents-docs/`).
+- **Source Files**: Max 500 lines per file.
+- **Skills**: Load via `skill <name>` (e.g., `agent-coordination`).
 
-## Context Management
-
-- Use `/clear` between unrelated tasks
-- Load skills progressively: `skill agent-coordination`
-- Keep AGENTS.md under 150 lines; put details in agents-docs/
-- Max 500 lines per source file
-
-## Sub-Agent Usage
-
-- Delegate isolated research to sub-agents
-- Available sub-agents in `.opencode/agents/`:
-  - `discovery-agent` - Web scraping tasks
-  - `validation-agent` - Validation gates
-  - `scoring-agent` - Trust scoring
-  - `storage-agent` - KV operations
-  - `publish-agent` - Deployment tasks
-  - `notify-agent` - Alert systems
-  - `test-agent` - Test creation
-  - `bootstrap-agent` - Setup/config
+## Sub-Agents
+Available in `.opencode/agents/`:
+- `discovery-agent`, `validation-agent`, `scoring-agent`, `storage-agent`, `publish-agent`, `test-agent`.
