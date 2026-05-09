@@ -4,6 +4,7 @@ import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
+import { getTrustThreshold } from "../lib/config-utils";
 
 // ============================================================================
 // Discovery Engine
@@ -51,12 +52,16 @@ export async function discover(
     10,
   );
 
-  // Filter sources by trust threshold (0.3)
+  const trustThreshold = getTrustThreshold(env);
+
+  // Filter sources by trust threshold
   activeSources = activeSources.filter((s) => {
     if (s.classification === "blocked") return false;
-if (s.trust_initial < parseFloat(env.TRUST_THRESHOLD || "0.3")) {
+    if (s.trust_initial < trustThreshold) {
+      logger.info(`Skipping source ${s.domain} - trust below threshold`, {
         component: "discovery",
         trust: s.trust_initial,
+        threshold: trustThreshold,
       });
       return false;
     }
@@ -88,7 +93,9 @@ if (s.trust_initial < parseFloat(env.TRUST_THRESHOLD || "0.3")) {
 
     // Calculate per-source budget
     const sourceBudget =
-      source.trust_initial > 0.7 ? perSourceBase + highTrustBonus : perSourceBase;
+      source.trust_initial > 0.7
+        ? perSourceBase + highTrustBonus
+        : perSourceBase;
 
     const effectiveLimit = Math.min(sourceBudget, remainingGlobal);
 

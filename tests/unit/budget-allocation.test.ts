@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { discover } from "../../worker/pipeline/discover";
-import type {
-  PipelineContext,
-  Env,
-  SourceConfig,
-} from "../../worker/types";
+import type { PipelineContext, Env, SourceConfig } from "../../worker/types";
 import { logger } from "../../worker/lib/global-logger";
 
 describe("Budget Allocation", () => {
@@ -46,7 +42,10 @@ describe("Budget Allocation", () => {
     ...overrides,
   });
 
-  const createMockEnv = (sources: SourceConfig[], vars: Record<string, string> = {}): Env => {
+  const createMockEnv = (
+    sources: SourceConfig[],
+    vars: Record<string, string> = {},
+  ): Env => {
     mockKvStorage.set("registry", sources);
     return {
       DEALS_PROD: {
@@ -79,9 +78,21 @@ describe("Budget Allocation", () => {
     await discover(env, ctx);
 
     // Verify order of calls to fetch
-    expect(mockFetch).toHaveBeenNthCalledWith(1, "https://high.com/page", expect.any(Object));
-    expect(mockFetch).toHaveBeenNthCalledWith(2, "https://mid.com/page", expect.any(Object));
-    expect(mockFetch).toHaveBeenNthCalledWith(3, "https://low.com/page", expect.any(Object));
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://high.com/page",
+      expect.any(Object),
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://mid.com/page",
+      expect.any(Object),
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      3,
+      "https://low.com/page",
+      expect.any(Object),
+    );
   });
 
   it("should skip sources with trust below 0.3", async () => {
@@ -101,27 +112,38 @@ describe("Budget Allocation", () => {
     await discover(env, ctx);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith("https://trusted.com/page", expect.any(Object));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Skipping source untrusted.com"), expect.any(Object));
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://trusted.com/page",
+      expect.any(Object),
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Skipping source untrusted.com"),
+      expect.any(Object),
+    );
   });
 
   it("should respect per-source budget and high-trust bonus", async () => {
     const sources = [
       createMockSource({ domain: "high-trust.com", trust_initial: 0.8 }), // Should get 10 (base) + 5 (bonus) = 15
-      createMockSource({ domain: "mid-trust.com", trust_initial: 0.5 }),  // Should get 10 (base) = 10
+      createMockSource({ domain: "mid-trust.com", trust_initial: 0.5 }), // Should get 10 (base) = 10
     ];
 
     const env = createMockEnv(sources, {
       CANDIDATE_BUDGET_PER_SOURCE: "10",
       CANDIDATE_BUDGET_HIGH_TRUST_BONUS: "5",
-      CANDIDATE_BUDGET_GLOBAL: "100"
+      CANDIDATE_BUDGET_GLOBAL: "100",
     });
 
-    const generateDeals = (count: number) => JSON.stringify(
-      Array.from({ length: count }, (_, i) => ({ code: `CODE${i}`, reward_value: 10 }))
-    );
+    const generateDeals = (count: number) =>
+      JSON.stringify(
+        Array.from({ length: count }, (_, i) => ({
+          code: `CODE${i}`,
+          reward_value: 10,
+        })),
+      );
 
-    const mockFetch = vi.fn()
+    const mockFetch = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
@@ -137,8 +159,14 @@ describe("Budget Allocation", () => {
     const result = await discover(env, ctx);
 
     expect(result.deals).toHaveLength(25); // 15 + 10
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Allocating budget for high-trust.com"), expect.objectContaining({ budget: 15 }));
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Allocating budget for mid-trust.com"), expect.objectContaining({ budget: 10 }));
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Allocating budget for high-trust.com"),
+      expect.objectContaining({ budget: 15 }),
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Allocating budget for mid-trust.com"),
+      expect.objectContaining({ budget: 10 }),
+    );
   });
 
   it("should respect global budget", async () => {
@@ -150,26 +178,32 @@ describe("Budget Allocation", () => {
 
     const env = createMockEnv(sources, {
       CANDIDATE_BUDGET_PER_SOURCE: "50",
-      CANDIDATE_BUDGET_GLOBAL: "15"
+      CANDIDATE_BUDGET_GLOBAL: "15",
     });
 
-    const generateDeals = (count: number) => JSON.stringify(
-      Array.from({ length: count }, (_, i) => ({ code: `CODE${i}`, reward_value: 10 }))
-    );
+    const generateDeals = (count: number) =>
+      JSON.stringify(
+        Array.from({ length: count }, (_, i) => ({
+          code: `CODE${i}`,
+          reward_value: 10,
+        })),
+      );
 
-    const mockFetch = vi.fn()
-      .mockResolvedValue({
-        ok: true,
-        headers: new Headers({ "content-type": "application/json" }),
-        text: async () => generateDeals(20),
-      });
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ "content-type": "application/json" }),
+      text: async () => generateDeals(20),
+    });
     vi.stubGlobal("fetch", mockFetch);
 
     const result = await discover(env, ctx);
 
     expect(result.deals).toHaveLength(15);
     expect(mockFetch).toHaveBeenCalledTimes(1); // First source fills the global budget (it had 20, but budget was 15)
-    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Global discovery budget exhausted"), expect.any(Object));
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("Global discovery budget exhausted"),
+      expect.any(Object),
+    );
   });
 
   it("should use default budget values when env vars are missing", async () => {
@@ -178,9 +212,13 @@ describe("Budget Allocation", () => {
     ];
     const env = createMockEnv(sources); // No budget env vars
 
-    const generateDeals = (count: number) => JSON.stringify(
-      Array.from({ length: count }, (_, i) => ({ code: `CODE${i}`, reward_value: 10 }))
-    );
+    const generateDeals = (count: number) =>
+      JSON.stringify(
+        Array.from({ length: count }, (_, i) => ({
+          code: `CODE${i}`,
+          reward_value: 10,
+        })),
+      );
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

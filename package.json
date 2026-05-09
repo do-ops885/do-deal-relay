@@ -28,7 +28,7 @@
     "@cloudflare/vitest-pool-workers": "^0.14.1",
     "@cloudflare/workers-types": "^4.20260507.1",
     "@playwright/test": "^1.59.1",
-    "artillery": "^2.0.31",
+    "artillery": "^2.0.30",
     "miniflare": "^4.20260504.0",
     "prettier": "^3.2.5",
     "typescript": "^6.0.3",
