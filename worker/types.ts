@@ -311,14 +311,14 @@ export interface Env {
   DEALS_DB?: D1Database;
   DEALS_WEBHOOKS?: KVNamespace;
   WEBHOOK_API_KEYS?: KVNamespace;
-  DEALS_KV: KVNamespace;
-  METRICS_KV: KVNamespace;
+  DEALS_KV?: KVNamespace;
+  METRICS_KV?: KVNamespace;
   AI?: Ai;
   AI_GATEWAY_URL: string;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
-  TRUST_THRESHOLD?: string;
+  TRUST_THRESHOLD: string;
   NOTIFICATION_THRESHOLD: string;
   CANDIDATE_BUDGET_GLOBAL?: string;
   CANDIDATE_BUDGET_PER_SOURCE?: string;

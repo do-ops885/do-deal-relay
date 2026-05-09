@@ -70,10 +70,14 @@ describe("Scoring Pipeline", () => {
       get: vi.fn(async () => null),
       put: vi.fn(async () => {}),
     } as unknown as KVNamespace,
+    DEALS_KV: {} as KVNamespace,
+    METRICS_KV: {} as KVNamespace,
+    AI_GATEWAY_URL: "https://gateway.test",
+    TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
-  } as Env;
+  } as unknown as Env;
 
   it("should calculate confidence scores", async () => {
     const deals = [createMockDeal("1")];

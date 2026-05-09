@@ -47,7 +47,9 @@ describe("Config Utilities", () => {
     it("should throw when mandatory config is missing", () => {
       const env = { ...mockEnv } as any;
       delete env.DEALS_KV;
-      expect(() => validateConfig(env)).toThrow("Missing required config: DEALS_KV");
+      expect(() => validateConfig(env)).toThrow(
+        "Missing required config: DEALS_KV",
+      );
     });
 
     it("should not throw when mandatory config is present and valid", () => {

@@ -23,7 +23,9 @@ describe("Enhanced Config Validation", () => {
   it("should throw when DEALS_KV is missing", () => {
     const env = { ...validEnv } as any;
     delete env.DEALS_KV;
-    expect(() => validateConfig(env)).toThrow("Missing required config: DEALS_KV");
+    expect(() => validateConfig(env)).toThrow(
+      "Missing required config: DEALS_KV",
+    );
   });
 
   it("should throw when METRICS_KV is missing", () => {

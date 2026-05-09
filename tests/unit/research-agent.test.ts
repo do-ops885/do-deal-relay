@@ -32,9 +32,13 @@ describe("Research Agent - Real Fetching", () => {
       DEALS_LOG: createKVMock() as unknown as KVNamespace,
       DEALS_LOCK: createKVMock() as unknown as KVNamespace,
       DEALS_SOURCES: createKVMock() as unknown as KVNamespace,
+      DEALS_KV: createKVMock() as unknown as KVNamespace,
+      METRICS_KV: createKVMock() as unknown as KVNamespace,
+      AI_GATEWAY_URL: "https://gateway.test",
+      TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
-    } as Env;
+    } as unknown as Env;
 
     // Reset rate limiter
     researchRateLimiter["requests"].clear();

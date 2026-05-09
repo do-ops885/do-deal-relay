@@ -694,6 +694,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvSources,
         DEALS_STAGING: mockKvSources,
+        DEALS_KV: mockKvSources,
+        METRICS_KV: mockKvSources,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       const sourceCache = createSourceCache(env);
@@ -720,6 +724,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvProd,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvProd,
+        DEALS_KV: mockKvProd,
+        METRICS_KV: mockKvProd,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       const githubCache = createGitHubCache(env);
@@ -745,6 +753,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvSources,
         DEALS_STAGING: mockKvSources,
+        DEALS_KV: mockKvSources,
+        METRICS_KV: mockKvSources,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       const robotsCache = createRobotsTxtCache(env);
@@ -770,6 +782,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvProd,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvProd,
+        DEALS_KV: mockKvProd,
+        METRICS_KV: mockKvProd,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       const snapshotCache = createSnapshotCache(env);
@@ -795,6 +811,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvStaging,
         DEALS_PROD: mockKvStaging,
         DEALS_STAGING: mockKvStaging,
+        DEALS_KV: mockKvStaging,
+        METRICS_KV: mockKvStaging,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       const stagingCache = createStagingSnapshotCache(env);
@@ -900,6 +920,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvStaging,
+        DEALS_KV: mockKvProd,
+        METRICS_KV: mockKvProd,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       await clearAllCaches(env);
@@ -938,6 +962,10 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvStaging,
+        DEALS_KV: mockKvProd,
+        METRICS_KV: mockKvProd,
+        AI_GATEWAY_URL: "https://gateway.test",
+        TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
       // Create caches and add some metrics

@@ -38,7 +38,33 @@ function createMockKv() {
 
 type MockKv = ReturnType<typeof createMockKv>;
 function createEnv(kv: MockKv) {
-  return { DEALS_STAGING: kv, WEBHOOK_API_KEYS: kv } as any;
+  return {
+    DEALS_STAGING: kv,
+    WEBHOOK_API_KEYS: kv,
+    DEALS_SOURCES: kv,
+    DEALS_KV: kv,
+    METRICS_KV: kv,
+    AI_GATEWAY_URL: "https://gateway.test",
+    TRUST_THRESHOLD: "0.3",
+  } as any;
+}
+
+async function setupValidApiKey(kv: MockKv, key: string = "ddr_test_key_12345678901234567890") {
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(key));
+  const hash = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  kv.storage.set(
+    `apikey:${hash}`,
+    JSON.stringify({
+      userId: "test-user",
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    }),
+  );
+  return key;
 }
 
 function createRequest(
@@ -79,12 +105,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject missing required fields", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { url: "https://example.com/hook" },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleSubscribe(request, env);
       expect(response.status).toBe(400);
@@ -92,12 +118,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject invalid URL", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { url: "not-a-url", events: ["referral.created"] },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleSubscribe(request, env);
       expect(response.status).toBe(400);
@@ -105,12 +131,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject invalid event types", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { url: "https://example.com/hook", events: ["invalid.event"] },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleSubscribe(request, env);
       expect(response.status).toBe(400);
@@ -118,12 +144,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should create subscription with valid input", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { url: "https://example.com/hook", events: ["referral.created"] },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleSubscribe(request, env);
       expect(response.status).toBe(201);
@@ -146,12 +172,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject missing subscription_id", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         {},
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleUnsubscribe(request, env);
       expect(response.status).toBe(400);
@@ -159,12 +185,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should return 404 for nonexistent subscription", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { subscription_id: "sub_nonexistent" },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleUnsubscribe(request, env);
       expect(response.status).toBe(404);
@@ -187,10 +213,10 @@ describe("Webhook Route Handlers", () => {
 
     it("should return empty list when no subscriptions exist", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = new Request("http://localhost/webhooks/subscriptions", {
         method: "GET",
-        headers: { "X-API-Key": "valid-key" },
+        headers: { "X-API-Key": key },
       });
       const response = await handleListSubscriptions(request, env);
       expect(response.status).toBe(200);
@@ -198,12 +224,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should use partner_id from query params", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = new Request(
         "http://localhost/webhooks/subscriptions?partner_id=custom",
         {
           method: "GET",
-          headers: { "X-API-Key": "valid-key" },
+          headers: { "X-API-Key": key },
         },
       );
       const response = await handleListSubscriptions(request, env);
@@ -227,12 +253,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject missing name", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         {},
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleCreatePartner(request, env);
       expect(response.status).toBe(400);
@@ -240,12 +266,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should create partner with valid input", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { name: "New Partner" },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleCreatePartner(request, env);
       expect(response.status).toBe(201);
@@ -266,9 +292,9 @@ describe("Webhook Route Handlers", () => {
 
     it("should return 404 for nonexistent partner", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest("GET", "http://localhost/test", undefined, {
-        "X-API-Key": "valid-key",
+        "X-API-Key": key,
       });
       const response = await handleGetPartner(request, env, "nonexistent");
       expect(response.status).toBe(404);
@@ -289,9 +315,9 @@ describe("Webhook Route Handlers", () => {
 
     it("should return empty DLQ", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest("GET", "http://localhost/test", undefined, {
-        "X-API-Key": "valid-key",
+        "X-API-Key": key,
       });
       const response = await handleGetDeadLetterQueue(request, env);
       expect(response.status).toBe(200);
@@ -317,12 +343,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should return 404 for nonexistent DLQ entry", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         undefined,
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleRetryDeadLetter(
         request,
@@ -350,12 +376,12 @@ describe("Webhook Route Handlers", () => {
 
     it("should reject missing required fields", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
         { partner_id: "p1" },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleCreateSyncConfig(request, env);
       expect(response.status).toBe(400);
@@ -363,7 +389,7 @@ describe("Webhook Route Handlers", () => {
 
     it("should create sync config with valid input", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest(
         "POST",
         "http://localhost/test",
@@ -372,7 +398,7 @@ describe("Webhook Route Handlers", () => {
           direction: "push",
           mode: "realtime",
         },
-        { "X-API-Key": "valid-key" },
+        { "X-API-Key": key },
       );
       const response = await handleCreateSyncConfig(request, env);
       expect(response.status).toBe(201);
@@ -393,9 +419,9 @@ describe("Webhook Route Handlers", () => {
 
     it("should return 404 when no sync state exists", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = createRequest("GET", "http://localhost/test", undefined, {
-        "X-API-Key": "valid-key",
+        "X-API-Key": key,
       });
       const response = await handleGetSyncState(request, env, "p1");
       expect(response.status).toBe(404);

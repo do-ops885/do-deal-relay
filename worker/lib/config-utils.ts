@@ -27,7 +27,12 @@ export function getTrustThreshold(env: Env): number {
  * @throws Error if the threshold is invalid (non-numeric or out of range)
  */
 export function validateConfig(env: Env): void {
-  const required = ["DEALS_KV", "METRICS_KV", "AI_GATEWAY_URL", "TRUST_THRESHOLD"];
+  const required = [
+    "DEALS_KV",
+    "METRICS_KV",
+    "AI_GATEWAY_URL",
+    "TRUST_THRESHOLD",
+  ];
   const missing = required.filter((k) => !env[k as keyof Env]);
   if (missing.length > 0) {
     throw new Error(`Missing required config: ${missing.join(", ")}`);
