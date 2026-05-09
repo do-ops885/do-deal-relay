@@ -54,8 +54,7 @@ export async function discover(
   // Filter sources by trust threshold (0.3)
   activeSources = activeSources.filter((s) => {
     if (s.classification === "blocked") return false;
-    if (s.trust_initial < 0.3) {
-      logger.info(`Skipping source ${s.domain} - trust below threshold`, {
+if (s.trust_initial < parseFloat(env.TRUST_THRESHOLD || "0.3")) {
         component: "discovery",
         trust: s.trust_initial,
       });
