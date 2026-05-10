@@ -236,7 +236,11 @@ jobs:
           WRANGLER_PID=$!
 
           echo "Waiting for wrangler dev to be ready..."
-          timeout 60s bash -c 'until curl -s http://localhost:8787/health > /dev/null; do sleep 2; done' || (kill $WRANGLER_PID && exit 1)
+          timeout 60s bash -c \
+            'until curl -s http://localhost:8787/health > /dev/null; do sleep 2; done' || {
+            kill "$WRANGLER_PID"
+            exit 1
+          }
 
           npm run test:smoke
           EXIT_CODE=$?
