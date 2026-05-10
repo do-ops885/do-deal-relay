@@ -206,6 +206,9 @@ See [`AGENTS.md`](../../AGENTS.md) for complete style guide. Key points:
 SKIP_CLIPPY=true ./scripts/quality_gate.sh  # Skip Rust clippy
 SKIP_TESTS=true ./scripts/quality_gate.sh   # Skip tests
 
+# Run benchmarks
+npm run bench
+
 # Validate skills only
 ./scripts/validate-skills.sh
 ```

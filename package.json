@@ -19,6 +19,7 @@
     "test:load:smoke": "artillery run -t http://localhost:8787 --overrides '{\"config\":{\"phases\":[{\"duration\":10,\"arrivalRate\":1}],\"ensure\":{\"p95\":500,\"maxErrorRate\":5}}}' tests/load/artillery/api-endpoints.yml",
     "test:load:quick": "artillery run -t ${WORKER_URL:-http://localhost:8787} --overrides '{\"config\":{\"phases\":[{\"duration\":30,\"arrivalRate\":5}]}}' tests/load/artillery/api-endpoints.yml",
     "lint": "tsc --noEmit",
+    "bench": "vitest bench",
     "validate": "bash scripts/validate-codes.sh",
     "format": "prettier --write ."
   },
