@@ -129,6 +129,24 @@ export async function handleMetrics(
   const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
 
   if (format === "json") {
+    // Use latest run for more accurate funnel if available
+    const latestRun = pipelineMetrics[0];
+    const funnel = {
+      discovered: latestRun ? latestRun.deals_processed.discovered : candidates,
+      passed_trust_filter: latestRun
+        ? latestRun.deals_processed.passed_trust_filter
+        : 0,
+      passed_all_validation: latestRun
+        ? latestRun.deals_processed.validated
+        : valid,
+      published: latestRun ? latestRun.deals_processed.published : 0,
+      conversion_rate: "0%",
+    };
+
+    if (funnel.discovered > 0) {
+      funnel.conversion_rate = `${((funnel.published / funnel.discovered) * 100).toFixed(1)}%`;
+    }
+
     return jsonResponse(
       {
         summary: {
@@ -143,6 +161,7 @@ export async function handleMetrics(
           validated_total: valid,
           duplicate_total: duplicates,
         },
+        funnel,
         phases: stats.avg_phase_timings,
       },
       200,

@@ -8,6 +8,7 @@ import {
   recordValidationCacheMetric,
   recordValidationGateRejection,
   recordValidationGatePass,
+  recordDealCount,
 } from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { generateSnapshotHash } from "../lib/crypto";
@@ -209,6 +210,15 @@ export async function validate(
       result.invalid.push({ deal: r.deal, reasons: r.failureReasons });
       result.stats.invalid++;
     }
+  }
+
+  // Record trust filter pass count for funnel observability
+  const trustThreshold = getTrustThreshold(env);
+  const passedTrustCount = validationResults.filter(
+    (r) => r.deal.source.trust_score >= trustThreshold,
+  ).length;
+  if (ctx.metrics) {
+    recordDealCount(ctx.metrics, "passed_trust_filter", passedTrustCount);
   }
 
   return result;
