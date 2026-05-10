@@ -129,17 +129,23 @@ export async function handleMetrics(
   const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
 
   if (format === "json") {
-    // Use latest run for more accurate funnel if available
-    const latestRun = pipelineMetrics[0];
+    // Use latest run for more accurate funnel if available, fallback to consistent averages
+    const hasMetrics = pipelineMetrics && pipelineMetrics.length > 0;
+    const latestRun = hasMetrics ? pipelineMetrics[0] : null;
+
     const funnel = {
-      discovered: latestRun ? latestRun.deals_processed.discovered : candidates,
+      discovered: latestRun
+        ? latestRun.deals_processed.discovered
+        : stats.avg_deals_per_run.discovered,
       passed_trust_filter: latestRun
         ? latestRun.deals_processed.passed_trust_filter
-        : 0,
+        : stats.avg_deals_per_run.passed_trust_filter,
       passed_all_validation: latestRun
         ? latestRun.deals_processed.validated
-        : valid,
-      published: latestRun ? latestRun.deals_processed.published : 0,
+        : stats.avg_deals_per_run.validated,
+      published: latestRun
+        ? latestRun.deals_processed.published
+        : stats.avg_deals_per_run.published,
       conversion_rate: "0%",
     };
 
