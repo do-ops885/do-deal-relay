@@ -12,7 +12,7 @@ describe("Funnel Metrics", () => {
           if (key === "metrics:index") return JSON.stringify(["run-1"]);
           if (key === "metrics:run-1") return JSON.stringify(mockMetric);
           return null;
-        })
+        }),
       },
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -53,6 +53,34 @@ describe("Funnel Metrics", () => {
     expect(data.funnel.conversion_rate).toBe("20.0%");
   });
 
+  it("should fallback to aggregate stats when no latest run is available", async () => {
+    // Mock Env with empty metrics
+    const env = {
+      DEALS_PROD: { get: vi.fn() },
+      DEALS_LOG: {
+        get: vi.fn().mockImplementation((key) => {
+          if (key === "metrics:index") return JSON.stringify([]);
+          return null;
+        }),
+      },
+      ENVIRONMENT: "test",
+      GITHUB_REPO: "test/repo",
+      AI_GATEWAY_URL: "https://ai.gateway",
+      TRUST_THRESHOLD: "0.3",
+    } as unknown as Env;
+
+    const request = new Request("https://worker.com/metrics?format=json");
+    const response = await handleMetrics(env, "json", request);
+    const data = await response.json();
+
+    expect(data.funnel).toBeDefined();
+    expect(data.funnel.discovered).toBe(0);
+    expect(data.funnel.passed_trust_filter).toBe(0);
+    expect(data.funnel.passed_all_validation).toBe(0);
+    expect(data.funnel.published).toBe(0);
+    expect(data.funnel.conversion_rate).toBe("0%");
+  });
+
   it("should handle zero discovery in funnel math", async () => {
     const env = {
       DEALS_PROD: { get: vi.fn() },
@@ -61,7 +89,7 @@ describe("Funnel Metrics", () => {
           if (key === "metrics:index") return JSON.stringify(["run-zero"]);
           if (key === "metrics:run-zero") return JSON.stringify(mockMetricZero);
           return null;
-        })
+        }),
       },
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;

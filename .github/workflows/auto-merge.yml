@@ -12,7 +12,6 @@ permissions:
   contents: write
   actions: read
   checks: read
-  issues: write
 
 concurrency:
   group: auto-merge-${{ github.event.workflow_run.id }}
@@ -152,53 +151,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enforce GitHub rule checks
-        id: enforce-rules
-        if: steps.get-pr.outputs.pr_number != ''
-        run: |
-          PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
-
-          FIELDS="isDraft,mergeStateStatus,statusCheckRollup,headRefOid"
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json "$FIELDS")
-
-          IS_DRAFT=$(echo "$PR_DATA" | jq -r '.isDraft')
-          MERGE_STATE=$(echo "$PR_DATA" | jq -r '.mergeStateStatus')
-
-          if [ "$IS_DRAFT" = "true" ]; then
-            echo "❌ PR is still a draft"
-            exit 0
-          fi
-
-          if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
-            echo "❌ Merge state is not rule-compliant: $MERGE_STATE"
-            exit 0
-          fi
-
-          PENDING_COUNT=$(echo "$PR_DATA" | jq '[.statusCheckRollup[]? | select(.conclusion == null)] | length')
-          FAILED_COUNT=$(echo "$PR_DATA" | jq '
-            [.statusCheckRollup[]? | select(
-              .conclusion != null and
-              .conclusion != "SUCCESS" and
-              .conclusion != "NEUTRAL" and
-              .conclusion != "SKIPPED"
-            )] | length
-          ')
-
-          if [ "$PENDING_COUNT" -gt 0 ]; then
-            echo "❌ Required checks still pending ($PENDING_COUNT)"
-            exit 0
-          fi
-
-          if [ "$FAILED_COUNT" -gt 0 ]; then
-            echo "❌ One or more checks failed ($FAILED_COUNT)"
-            exit 0
-          fi
-
-          echo "✅ All GitHub rule checks passed"
-          echo "rules_ok=true" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Check author permissions
         id: check-permissions
         if: >
@@ -250,11 +202,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Merge PR and close linked issues
+      - name: Enable auto-merge
         if: >
           steps.get-pr.outputs.pr_number != '' &&
           steps.check-permissions.outputs.has_write_access == 'true' &&
-          steps.enforce-rules.outputs.rules_ok == 'true' &&
           !cancelled()
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
@@ -275,24 +226,14 @@ jobs:
           COMMIT_MESSAGE="${COMMIT_MESSAGE_FORMAT//\{title\}/$PR_TITLE}"
           COMMIT_MESSAGE="${COMMIT_MESSAGE//\{number\}/$PR_NUMBER}"
 
-          echo "Merging PR #${PR_NUMBER} with squash method"
+          echo "Enabling auto-merge for PR #${PR_NUMBER} with squash method"
 
           gh pr merge "${PR_NUMBER}" \
             --squash \
-            --delete-branch \
+            --auto \
             --subject "${COMMIT_MESSAGE}"
 
-          echo "✅ PR merged successfully"
-
-          # Close linked issues explicitly after merge
-          ISSUE_NUMBERS=$(gh pr view "$PR_NUMBER" \
-            --json closingIssuesReferences \
-            --jq '(.closingIssuesReferences // []) | .[] | .number' || true)
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            for issue in $ISSUE_NUMBERS; do
-              gh issue close "$issue" --comment "Closed automatically after merging PR #$PR_NUMBER."
-            done
-          fi
+          echo "✅ Auto-merge enabled successfully"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -303,7 +244,7 @@ jobs:
           steps.check-permissions.outputs.has_write_access == 'true'
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
-          echo "::notice::Auto-merge workflow merged PR #${PR_NUMBER}"
+          echo "::notice::Auto-merge enabled for PR #${PR_NUMBER}"
 
       - name: Report failure
         if: failure() && steps.get-pr.outputs.pr_number != ''

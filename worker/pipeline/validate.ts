@@ -172,6 +172,10 @@ export async function validate(
         deal.metadata.status = "rejected";
       }
 
+      const passedTrust = skipGates
+        ? (fastPathDecision as any)?.trustScore >= getTrustThreshold(env)
+        : gatePasses.includes("source_trust");
+
       return {
         deal,
         allPassed,
@@ -179,12 +183,17 @@ export async function validate(
         gateFailures,
         gatePasses,
         isQuarantined,
+        passedTrust,
       };
     },
     10, // Max 10 concurrent deals to stay under 50 subrequest limit (each deal does ~3 lookups)
   );
 
+  let passedTrustCount = 0;
   for (const r of validationResults) {
+    if ((r as any).passedTrust) {
+      passedTrustCount++;
+    }
     r.gateFailures.forEach((gate) => {
       result.stats.by_gate[gate] = (result.stats.by_gate[gate] || 0) + 1;
       if (ctx.metrics) {
@@ -213,10 +222,6 @@ export async function validate(
   }
 
   // Record trust filter pass count for funnel observability
-  const trustThreshold = getTrustThreshold(env);
-  const passedTrustCount = validationResults.filter(
-    (r) => r.deal.source.trust_score >= trustThreshold,
-  ).length;
   if (ctx.metrics) {
     recordDealCount(ctx.metrics, "passed_trust_filter", passedTrustCount);
   }
