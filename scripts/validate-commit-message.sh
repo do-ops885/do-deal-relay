@@ -19,7 +19,7 @@ fi
 
 MSG=$(cat "$COMMIT_MSG_FILE")
 # Use standard grep for better compatibility in restricted environments
-if ! echo "$MSG" | grep -qE "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?!?: .+$"; then
+if ! head -n1 "$COMMIT_MSG_FILE" | grep -qE "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?!?: .+$"; then
     echo "Error: Commit message does not follow conventional commits format."
     echo "Format: <type>(<scope>): <subject>"
     echo "Valid types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test"
