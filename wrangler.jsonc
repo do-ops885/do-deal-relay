@@ -7,7 +7,6 @@
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
   // Observability for monitoring and debugging
-  {
   "observability": {
     "logs": {
       "enabled": true,
@@ -16,7 +15,6 @@
     "traces": {
       "enabled": false
      }
-    }
   },
   // Scheduled triggers: Discovery every 6h, expiry check at 9am, weekly validation Sunday midnight
   "triggers": {
