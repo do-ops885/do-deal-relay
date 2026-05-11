@@ -59,8 +59,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run tests
-        run: ./scripts/run-tests-ci.sh
+      - name: Run tests with coverage
+        run: npm run test:coverage
         env:
           NODE_ENV: test
 

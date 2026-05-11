@@ -18,5 +18,16 @@ export default defineConfig({
       "**/dist/**",
       "**/.wrangler/**",
     ],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      exclude: [
+        "node_modules/**",
+        "tests/**",
+        "**/*.d.ts",
+        "vitest.config.ts",
+        "playwright.config.ts",
+      ],
+    },
   },
 });
