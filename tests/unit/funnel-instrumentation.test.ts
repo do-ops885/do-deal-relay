@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { validate } from "../../worker/pipeline/validate";
+import { validate } from "../../worker/validation/pipeline";
 import { calculateAggregateStats } from "../../worker/lib/metrics/stats";
 import { createMetrics } from "../../worker/lib/metrics/core";
 import { Deal, Env, PipelineContext } from "../../worker/types";

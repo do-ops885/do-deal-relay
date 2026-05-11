@@ -12,7 +12,7 @@ import { createLogBuilder, appendLog } from "./lib/logger";
 import { discover } from "./pipeline/discover";
 import { normalize } from "./pipeline/normalize";
 import { deduplicate } from "./pipeline/dedupe";
-import { validate, calculateValidationRatio } from "./pipeline/validate";
+import { validate, calculateValidationRatio } from "./validation/pipeline";
 import { score, calculateSourceDiversity } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
 import { publishSnapshot, rollbackSnapshot } from "./publish";

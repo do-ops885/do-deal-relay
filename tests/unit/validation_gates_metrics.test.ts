@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { VALIDATION_GATES } from "../../worker/config";
-import { validate } from "../../worker/pipeline/validate";
+import { validate } from "../../worker/validation/pipeline";
 import { createMetrics } from "../../worker/lib/metrics/core";
 import {
   calculateAggregateStats,
