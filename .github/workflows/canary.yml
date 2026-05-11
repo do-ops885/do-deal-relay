@@ -176,7 +176,9 @@ jobs:
             echo "|--------|-------|"
             echo "| Healthy checks | ${HEALTHY} |"
             echo "| Failed checks | ${FAILED} |"
-            echo "| Success rate | $(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | bc 2>/dev/null || echo "N/A")% |"
+            RATE=$(echo "scale=1; ${HEALTHY}*100/(${HEALTHY}+${FAILED})" | \
+              bc 2>/dev/null || echo "N/A")
+            echo "| Success rate | ${RATE}% |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ ${FAILED} -gt 5 ]; then
