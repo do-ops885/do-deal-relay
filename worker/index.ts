@@ -61,10 +61,6 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import {
-  handleTriggerWorkflow,
-  handleGetWorkflowStatus,
-} from "./routes/workflow";
 import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
@@ -254,16 +250,6 @@ export default {
         return handleEmailHelp();
       }
 
-      // Multi-Agent Workflow API
-      if (path === "/api/workflow" && request.method === "POST") {
-        return withAuth(request, env, "admin", () =>
-          handleTriggerWorkflow(request, env),
-        );
-      }
-      if (path.startsWith("/api/workflow/") && request.method === "GET") {
-        const workflowId = path.replace("/api/workflow/", "");
-        return handleGetWorkflowStatus(workflowId, env, request);
-      }
       // 404
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (error) {
