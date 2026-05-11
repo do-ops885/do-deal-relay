@@ -32,7 +32,7 @@ We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Archi
 
 2. **DECOMPOSE & PLAN (Phase 2)**
    - **Action**: Break down the problem into atomic, testable tasks. Record these in a plan file under `plans/`.
-   - **Instruction**: producer a written plan, wait for confirmation for non-trivial tasks.
+   - **Instruction**: produce a written plan, wait for confirmation for non-trivial tasks.
 
 3. **EXECUTE & COORDINATE (Phase 3)**
    - **Action**: Execute tasks systematically using the atomic commit workflow.
