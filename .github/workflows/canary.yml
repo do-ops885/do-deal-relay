@@ -157,7 +157,7 @@ jobs:
           echo "Monitoring canary at: ${CANARY_URL}"
           echo "Duration: ${DURATION} minutes"
 
-          while [ $(date +%s) -lt ${END_TIME} ]; do
+          while [ "$(date +%s)" -lt "${END_TIME}" ]; do
             if curl -sf "${CANARY_URL}/health"; then
               HEALTHY=$((HEALTHY + 1))
               echo "[$(date +%H:%M:%S)] ✅ Canary healthy"

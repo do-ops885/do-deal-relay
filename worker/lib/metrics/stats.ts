@@ -45,6 +45,7 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
       } as Record<PipelinePhase, number>,
       avg_deals_per_run: {
         discovered: 0,
+        passed_trust_filter: 0,
         normalized: 0,
         deduped: 0,
         validated: 0,
@@ -96,6 +97,12 @@ export function calculateAggregateStats(metrics: PipelineMetrics[]) {
       discovered: Math.round(
         metrics.reduce((s, m) => s + m.deals_processed.discovered, 0) /
           metrics.length,
+      ),
+      passed_trust_filter: Math.round(
+        metrics.reduce(
+          (s, m) => s + (m.deals_processed.passed_trust_filter || 0),
+          0,
+        ) / metrics.length,
       ),
       normalized: Math.round(
         metrics.reduce((s, m) => s + m.deals_processed.normalized, 0) /
