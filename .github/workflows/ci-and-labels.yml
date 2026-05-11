@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Ensure script is executable
         run: chmod +x scripts/gh-labels-creator.sh
@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup skills
         run: ./scripts/setup-skills.sh
@@ -53,28 +53,28 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup Node.js (if package.json exists)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d11999a6aee1462e71336a1420150e793574246
         with:
           node-version: "22"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@a54c9d54e019f2913e6a6a964f5933d6b1d408f6
         with:
           components: rustfmt, clippy
         if: hashFiles('Cargo.toml') != ''
 
       - name: Setup Python (if requirements.txt or pyproject.toml exists)
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce81c88
         with:
           python-version: "3.11"
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@f13310022199b66731e09bd30574971c261e479a
         with:
           go-version: "1.21"
         if: hashFiles('go.mod') != ''
@@ -99,26 +99,26 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup Node.js (if package.json exists)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d11999a6aee1462e71336a1420150e793574246
         with:
           node-version: "22"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@a54c9d54e019f2913e6a6a964f5933d6b1d408f6
         if: hashFiles('Cargo.toml') != ''
 
       - name: Setup Python (if requirements.txt or pyproject.toml exists)
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce81c88
         with:
           python-version: "3.11"
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@f13310022199b66731e09bd30574971c261e479a
         with:
           go-version: "1.21"
         if: hashFiles('go.mod') != ''
