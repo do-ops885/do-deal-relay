@@ -138,3 +138,19 @@ Example:
 - Full documentation: `docs/API.md` (NLQ section)
 - Best practices: `docs/BEST_PRACTICES.md`
 - Evaluations: `evals/evals.json`
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|------------------|
+| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
+| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
+| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+
+## Red Flags
+
+- [ ] Starting execution before a plan is approved.
+- [ ] Making multiple unrelated changes in a single commit.
+- [ ] Skipping validation gates or quality checks.
+- [ ] Lack of coordination between parallel tasks leading to conflicts.
+- [ ] Failing to update documentation after architectural changes.

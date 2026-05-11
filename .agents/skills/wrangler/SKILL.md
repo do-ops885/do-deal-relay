@@ -879,3 +879,19 @@ wrangler docs configuration
 6. **Use `.dev.vars` for local secrets**: Never commit secrets to config.
 7. **Test locally first**: `wrangler dev` with local bindings before deploying.
 8. **Use `--dry-run` before major deploys**: Validate changes without deployment.
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|------------------|
+| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
+| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
+| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+
+## Red Flags
+
+- [ ] Starting execution before a plan is approved.
+- [ ] Making multiple unrelated changes in a single commit.
+- [ ] Skipping validation gates or quality checks.
+- [ ] Lack of coordination between parallel tasks leading to conflicts.
+- [ ] Failing to update documentation after architectural changes.
