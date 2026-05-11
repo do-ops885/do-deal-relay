@@ -83,12 +83,12 @@ agents-docs/
 
 ## Document Status
 
-| Document            | Status      | Last Updated |
-| ------------------- | ----------- | ------------ |
-| API.md              | ✅ Complete | 2024-03-31   |
-| DEPLOYMENT.md       | ✅ Complete | 2024-03-31   |
-| LEGAL_COMPLIANCE.md | ✅ Complete | 2024-03-31   |
-| AGENTS.md           | ✅ Complete | 2024-03-31   |
+| Document            | Status      | Last Updated    |
+| ------------------- | ----------- | --------------- |
+| API.md              | ✅ Complete | See git history |
+| DEPLOYMENT.md       | ✅ Complete | See git history |
+| LEGAL_COMPLIANCE.md | ✅ Complete | See git history |
+| AGENTS.md           | ✅ Complete | See git history |
 
 ## Contributing
 

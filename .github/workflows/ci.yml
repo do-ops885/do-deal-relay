@@ -6,6 +6,7 @@ name: CI
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,57 +14,101 @@ concurrency:
 
 permissions:
   contents: read
-  checks: write
+
+env:
+  NODE_VERSION: "22"
 
 jobs:
-  quality-gate:
-    name: Quality Gate
+  # Stage 1: Fast quality gates (run in parallel)
+  lint:
+    name: Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run typecheck
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run fmt:check
 
-      - name: Run Quality Gate
-        run: ./scripts/quality_gate.sh
+  docs:
+    name: Docs Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
+      - name: Validate markdown
+        run: |
+          npx markdownlint-cli --config markdownlint.toml \
+            "docs/**/*.md" "README.md" "AGENTS.md" \
+            "CONTRIBUTING.md" "SECURITY.md" || true
 
+  validate-codes:
+    name: Validation Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run validate
+
+  # Stage 2: Tests (run after lint passes)
   test:
     name: Unit Tests
+    needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run tests
-        run: ./scripts/run-tests-ci.sh
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: ./scripts/run-tests-ci.sh
         env:
           NODE_ENV: test
-
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -72,242 +117,162 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-  validate-codes:
-    name: Validation Gates
+  test-e2e:
+    name: E2E Tests
+    needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium
+      - name: Start dev server
+        run: |
+          npx wrangler dev --port 8787 &
+          WRANGLER_PID=$!
+          for i in {1..30}; do
+            if curl -s http://localhost:8787/health/live > /dev/null 2>&1; then
+              SUCCESS=1; break
+            fi
+            sleep 2
+          done
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill $WRANGLER_PID; exit 1; }
+          echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
+      - name: Run E2E tests
+        run: npm run test:e2e
+        continue-on-error: true
+      - name: Stop dev server
+        if: always()
+        run: kill $WRANGLER_PID 2>/dev/null || true
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: playwright-report/
+          retention-days: 7
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run validation script
-        run: ./scripts/validate-codes.sh
+  smoke-test:
+    name: Smoke Tests
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - name: Run wrangler deploy dry-run
+        run: npx wrangler deploy --dry-run
+      - name: Run smoke tests
+        run: |
+          npx wrangler dev --port 8787 &
+          WRANGLER_PID=$!
+          for i in {1..30}; do
+            if curl -s http://localhost:8787/health/live > /dev/null; then
+              SUCCESS=1; break
+            fi
+            sleep 2
+          done
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout"; kill $WRANGLER_PID; exit 1; }
+          npm run test:smoke
+          kill $WRANGLER_PID
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    permissions:
+      security-events: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Secret Detection - TruffleHog shell script
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+      - name: npm audit
         run: |
-          # Install TruffleHog
-          INSTALL_URL="https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh"
-          curl -sSfL "${INSTALL_URL}" | sh -s -- -b /usr/local/bin
+          npm ci --legacy-peer-deps
+          npm audit --audit-level=moderate
 
-          # Handle single-commit scenario where BASE and HEAD are the same
-          BEFORE="${{ github.event.before }}"
-          SHA="${{ github.sha }}"
-          if [ "${BEFORE}" = "${SHA}" ] || [ -z "${BEFORE}" ]; then
-            echo "Single commit push - running full filesystem scan"
-            trufflehog filesystem . --only-verified --json || true
-          else
-            echo "Running incremental scan from ${BEFORE} to ${SHA}"
-            trufflehog git . --since-commit "${BEFORE}" \
-              --only-verified --json || true
-          fi
-        continue-on-error: true
-
-      - name: Check for hardcoded secrets
-        run: |
-          # Simple secret detection - checks for common patterns
-          echo "Checking for potential secrets..."
-
-          # Check for private keys (most critical)
-          FOUND=0
-          if grep -rE "BEGIN.*PRIVATE KEY" \
-            --include="*.ts" --include="*.js" --include="*.md" . 2>/dev/null | \
-            grep -v "node_modules\|test\|example\|\.d\.ts\|README\|AGENTS\|LESSONS" ; then
-            echo "⚠️  Private key patterns found - review required"
-            FOUND=1
-          fi
-
-          # Check for common API token patterns
-          if grep -rE "ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{20,}" \
-            --include="*.ts" --include="*.js" . 2>/dev/null | \
-            grep -v "node_modules\|test\|example\|\.d\.ts\|SKILL\|SKILLS" ; then
-            echo "⚠️  Potential API tokens found - review required"
-            FOUND=1
-          fi
-
-          # SC2170 fix: use string comparison
-          if [ "${FOUND}" = "1" ]; then
-            echo "⚠️  Potential secrets detected - manual review recommended"
-            # Don't fail the build, just warn
-            exit 0
-          fi
-
-          echo "✅ No obvious hardcoded secrets found"
-
-  lint:
-    name: Lint & Format Check
+  # Stage 3: Build verification
+  build:
+    name: Build
+    needs: [lint, format, test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Check formatting
-        run: npx prettier --check .
-        continue-on-error: true
-
-      - name: Type check (as lint)
-        run: npm run lint
-
-  build-check:
-    name: Build Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 1
+          name: build-output
+          path: dist/
+          retention-days: 7
 
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build TypeScript
-        run: npm run build
-
-  smoke-test:
-    name: Smoke Tests
-    runs-on: ubuntu-latest
-    needs: [build-check]
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run wrangler deploy --dry-run
-        run: npx wrangler deploy --dry-run
-
-      - name: Run smoke tests
-        run: |
-          npx wrangler dev --port 8787 &
-          WRANGLER_PID=$!
-
-          echo "Waiting for wrangler dev to be ready..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8787/health > /dev/null; then
-              SUCCESS=1
-              break
-            fi
-            sleep 2
-          done
-
-          if [ "${SUCCESS}" != "1" ]; then
-            echo "Timed out waiting for wrangler dev"
-            kill $WRANGLER_PID
-            exit 1
-          fi
-
-          npm run test:smoke
-          EXIT_CODE=$?
-
-          kill $WRANGLER_PID
-          exit $EXIT_CODE
-
+  # Stage 4: Summary
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
     needs:
       [
-        quality-gate,
-        test,
-        validate-codes,
-        security-scan,
         lint,
-        build-check,
+        format,
+        docs,
+        validate-codes,
+        test,
+        test-e2e,
         smoke-test,
+        security-scan,
+        build,
       ]
     if: always()
-
     steps:
       - name: Report Status
         run: |
-          QUALITY_GATE_RESULT="${{ needs.quality-gate.result }}"
-          TEST_RESULT="${{ needs.test.result }}"
-          VALIDATE_CODES_RESULT="${{ needs.validate-codes.result }}"
-          SECURITY_SCAN_RESULT="${{ needs.security-scan.result }}"
-          LINT_RESULT="${{ needs.lint.result }}"
-          BUILD_CHECK_RESULT="${{ needs.build-check.result }}"
-          SMOKE_TEST_RESULT="${{ needs.smoke-test.result }}"
-          {
-            echo "## CI Results"
-            echo "| Job | Status |"
-            echo "|-----|--------|"
-            echo "| Quality Gate | ${QUALITY_GATE_RESULT} |"
-            echo "| Unit Tests | ${TEST_RESULT} |"
-            echo "| Validation Gates | ${VALIDATE_CODES_RESULT} |"
-            echo "| Security Scan | ${SECURITY_SCAN_RESULT} |"
-            echo "| Lint & Format | ${LINT_RESULT} |"
-            echo "| Build Check | ${BUILD_CHECK_RESULT} |"
-            echo "| Smoke Tests | ${SMOKE_TEST_RESULT} |"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          for job in lint format docs validate-codes test test-e2e smoke-test security-scan build; do
+            result="${{ needs[job].result }}"
+            echo "| ${job} | ${result} |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Check if any required job failed
-          if [[ "${QUALITY_GATE_RESULT}" == "failure" ]] || \
-             [[ "${TEST_RESULT}" == "failure" ]] || \
-             [[ "${VALIDATE_CODES_RESULT}" == "failure" ]] || \
-             [[ "${SECURITY_SCAN_RESULT}" == "failure" ]] || \
-             [[ "${SMOKE_TEST_RESULT}" == "failure" ]]; then
-            {
-              echo ""
-              echo "❌ CI Failed - Check individual jobs for details"
-            } >> "$GITHUB_STEP_SUMMARY"
+          FAILED=0
+          for job in lint format validate-codes test test-e2e smoke-test security-scan build; do
+            result="${{ needs[job].result }}"
+            if [ "${result}" = "failure" ]; then
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" = "1" ]; then
+            echo "CI Failed - Check individual jobs for details" >> $GITHUB_STEP_SUMMARY
             exit 1
           else
-            {
-              echo ""
-              echo "✅ All CI checks passed!"
-            } >> "$GITHUB_STEP_SUMMARY"
+            echo "All CI checks passed!" >> $GITHUB_STEP_SUMMARY
           fi

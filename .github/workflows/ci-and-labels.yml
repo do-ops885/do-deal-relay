@@ -58,7 +58,7 @@ jobs:
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
@@ -80,7 +80,7 @@ jobs:
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
         if: hashFiles('package.json') != ''
 
       - name: Install dependencies (Python)
@@ -104,7 +104,7 @@ jobs:
       - name: Setup Node.js (if package.json exists)
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22"
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
@@ -124,7 +124,7 @@ jobs:
         if: hashFiles('go.mod') != ''
 
       - name: Install dependencies (Node)
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
         if: hashFiles('package.json') != ''
 
       - name: Install dependencies (Python)

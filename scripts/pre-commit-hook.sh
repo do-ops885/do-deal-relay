@@ -350,6 +350,7 @@ ALLOWED_ROOT_FILES=(
     "Makefile"
     ".codesandbox"
     ".devcontainer"
+    ".pre-commit-config.yaml"
 )
 
 ROOT_VIOLATIONS=0
