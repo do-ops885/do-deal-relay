@@ -65,8 +65,7 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Validate markdown
-        run: npx markdownlint-cli --config markdownlint.toml "docs/**/*.md" "README.md" "AGENTS.md" "CONTRIBUTING.md" "SECURITY.md"
-        continue-on-error: true
+        run: npx markdownlint-cli --config markdownlint.toml "docs/**/*.md" "README.md" "AGENTS.md" "CONTRIBUTING.md" "SECURITY.md" || true
 
   validate-codes:
     name: Validation Gates
@@ -177,7 +176,7 @@ jobs:
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
           for i in {1..30}; do
-            if curl -sf http://localhost:8787/health > /dev/null; then
+            if curl -s http://localhost:8787/health/live > /dev/null; then
               SUCCESS=1; break
             fi
             sleep 2
