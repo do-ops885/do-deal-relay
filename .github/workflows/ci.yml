@@ -236,25 +236,46 @@ jobs:
           WRANGLER_PID=$!
 
           echo "Waiting for wrangler dev to be ready..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8787/health > /dev/null; then
-              SUCCESS=1
-              break
-            fi
-            sleep 2
-          done
-
-          if [ "${SUCCESS}" != "1" ]; then
-            echo "Timed out waiting for wrangler dev"
-            kill $WRANGLER_PID
+          timeout 60s bash -c \
+            'until curl -s http://localhost:8787/health > /dev/null; do sleep 2; done' || {
+            kill "$WRANGLER_PID"
             exit 1
-          fi
+          }
 
           npm run test:smoke
           EXIT_CODE=$?
 
           kill $WRANGLER_PID
           exit $EXIT_CODE
+
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run benchmarks
+        run: npm run bench -- --run | tee benchmark-results.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.txt
 
   summary:
     name: CI Summary
@@ -268,6 +289,7 @@ jobs:
         lint,
         build-check,
         smoke-test,
+        benchmark,
       ]
     if: always()
 
@@ -281,6 +303,7 @@ jobs:
           LINT_RESULT="${{ needs.lint.result }}"
           BUILD_CHECK_RESULT="${{ needs.build-check.result }}"
           SMOKE_TEST_RESULT="${{ needs.smoke-test.result }}"
+          BENCHMARK_RESULT="${{ needs.benchmark.result }}"
           {
             echo "## CI Results"
             echo "| Job | Status |"
@@ -292,6 +315,7 @@ jobs:
             echo "| Lint & Format | ${LINT_RESULT} |"
             echo "| Build Check | ${BUILD_CHECK_RESULT} |"
             echo "| Smoke Tests | ${SMOKE_TEST_RESULT} |"
+            echo "| Benchmarks | ${BENCHMARK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           # Check if any required job failed

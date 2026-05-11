@@ -9,9 +9,19 @@ import {
 // ============================================================================
 
 function createMockKv() {
-  const storage = new Map<string, string>();
+  const storage = new Map<string, any>();
   return {
-    get: vi.fn(async (key: string) => storage.get(key) ?? null),
+    get: vi.fn(async (key: string, format?: string) => {
+      const val = storage.get(key) ?? null;
+      if (format === "json" && typeof val === "string") {
+        try {
+          return JSON.parse(val);
+        } catch {
+          return val;
+        }
+      }
+      return val;
+    }),
     put: vi.fn(async (key: string, value: string) => {
       storage.set(key, value);
     }),
@@ -130,10 +140,28 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to list subscriptions handler", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = "ddr_testkey1234567890123456789012_1705300000";
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(key),
+      );
+      const hash = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      kv.storage.set(
+        `apikey:${hash}`,
+        JSON.stringify({
+          userId: "test-user",
+          role: "admin",
+          createdAt: new Date().toISOString(),
+        }),
+      );
+
       const request = new Request("http://localhost/webhooks/subscriptions", {
         method: "GET",
-        headers: { "X-API-Key": "valid-key" },
+        headers: { "X-API-Key": key },
       });
       const result = await handleWebhookRoutes(
         request,
@@ -170,10 +198,28 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to DLQ handler", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = "ddr_testkey1234567890123456789012_1705300000";
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(key),
+      );
+      const hash = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      kv.storage.set(
+        `apikey:${hash}`,
+        JSON.stringify({
+          userId: "test-user",
+          role: "admin",
+          createdAt: new Date().toISOString(),
+        }),
+      );
+
       const request = new Request("http://localhost/webhooks/dlq", {
         method: "GET",
-        headers: { "X-API-Key": "valid-key" },
+        headers: { "X-API-Key": key },
       });
       const result = await handleWebhookRoutes(request, env, "/webhooks/dlq");
       expect(result).not.toBeNull();

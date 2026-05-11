@@ -211,7 +211,6 @@ export interface PipelineMetrics {
   total_duration_ms: number;
   deals_processed: {
     discovered: number;
-    passed_trust_filter: number;
     normalized: number;
     deduped: number;
     validated: number;

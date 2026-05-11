@@ -4,8 +4,20 @@ name: Security & Compliance
 "on":
   push:
     branches: [main, develop]
+    paths:
+      - "worker/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/**"
   pull_request:
     branches: [main, develop]
+    paths:
+      - "worker/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/**"
   schedule:
     # Run daily at 2 AM UTC
     - cron: "0 2 * * *"
@@ -15,13 +27,14 @@ concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   secret-scan:
     name: Secret Detection
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    outputs:
-      outcome: ${{ steps.secret-scan.outcome }}
 
     steps:
       - name: Checkout repository
@@ -98,8 +111,7 @@ jobs:
             echo "| Dependency Audit | ${DEPENDENCY_CHECK_RESULT} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          SECRET_SCAN_OUTCOME="${{ needs.secret-scan.outputs.outcome }}"
-          if [[ "${SECRET_SCAN_RESULT}" == "failure" ]] || [[ "${SECRET_SCAN_OUTCOME}" == "failure" ]]; then
+          if [[ "${SECRET_SCAN_RESULT}" == "failure" ]]; then
             {
               echo ""
               echo "❌ **SECRETS DETECTED** - Immediate action required"

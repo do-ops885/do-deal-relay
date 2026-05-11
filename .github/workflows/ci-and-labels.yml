@@ -91,7 +91,7 @@ jobs:
       - name: Run quality gate
         run: ./scripts/quality_gate.sh
         env:
-          SKIP_TESTS: true
+          SKIP_TESTS: true # Skip tests in CI, run separately
 
   test:
     name: Run Tests

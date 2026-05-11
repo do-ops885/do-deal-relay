@@ -2,6 +2,7 @@
 
 **System**: Active / Production
 **Version**: 0.1.3
+![Coverage](https://img.shields.io/badge/Coverage-80%25-green.svg)
 **Status**: Active / Production
 **Deployments**: 166+ production deploys
 

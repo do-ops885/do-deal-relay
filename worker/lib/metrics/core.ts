@@ -32,7 +32,6 @@ export function createMetrics(run_id: string): PipelineMetrics {
     total_duration_ms: 0,
     deals_processed: {
       discovered: 0,
-      passed_trust_filter: 0,
       normalized: 0,
       deduped: 0,
       validated: 0,
@@ -69,7 +68,6 @@ export function recordDealCount(
   metrics: PipelineMetrics,
   phase:
     | "discovered"
-    | "passed_trust_filter"
     | "normalized"
     | "deduped"
     | "validated"

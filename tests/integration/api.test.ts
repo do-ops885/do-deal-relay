@@ -56,9 +56,30 @@ describe("API Endpoints", () => {
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
-  beforeEach(() => {
+  const validApiKey = "ddr_testkey1234567890123456789012_1705300000";
+  let apiKeyHash: string;
+
+  beforeEach(async () => {
     mockKvStorage = new Map();
     vi.stubGlobal("fetch", vi.fn());
+
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode(validApiKey),
+    );
+    apiKeyHash = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    mockKvStorage.set(
+      `sources:apikey:${apiKeyHash}`,
+      JSON.stringify({
+        userId: "test-user",
+        role: "admin",
+        createdAt: new Date().toISOString(),
+      }),
+    );
 
     mockEnv = {
       DEALS_PROD: {
@@ -119,8 +140,17 @@ describe("API Endpoints", () => {
         delete: vi.fn(async () => {}),
       } as unknown as KVNamespace,
       DEALS_SOURCES: {
-        get: vi.fn(async () => null),
-        put: vi.fn(async () => {}),
+        get: vi.fn(async (key: string, type?: string) => {
+          const value = mockKvStorage.get(`sources:${key}`);
+          if (value === undefined) return null;
+          if (type === "json" && typeof value === "string") {
+            return JSON.parse(value);
+          }
+          return value;
+        }),
+        put: vi.fn(async (key: string, value: string) => {
+          mockKvStorage.set(`sources:${key}`, value);
+        }),
       } as unknown as KVNamespace,
       DEALS_KV: {} as KVNamespace,
       METRICS_KV: {} as KVNamespace,
@@ -443,6 +473,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: { "X-API-Key": validApiKey },
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -470,6 +501,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: { "X-API-Key": validApiKey },
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -571,7 +603,10 @@ describe("API Endpoints", () => {
     it("should submit a new deal", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": validApiKey,
+        },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "NEWCODE",
@@ -597,7 +632,10 @@ describe("API Endpoints", () => {
     it("should return 415 for non-JSON content type", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: {
+          "Content-Type": "text/plain",
+          "X-API-Key": validApiKey,
+        },
         body: "not json",
       });
 
@@ -610,7 +648,10 @@ describe("API Endpoints", () => {
     it("should return 400 for invalid body", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": validApiKey,
+        },
         body: JSON.stringify({ url: "not-a-url" }), // missing required fields
       });
 
@@ -628,7 +669,10 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": validApiKey,
+        },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "DUPLICATE",
@@ -648,6 +692,7 @@ describe("API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-API-Key": validApiKey,
           "Content-Length": "2000000", // > 1MB
         },
         body: JSON.stringify({ url: "https://example.com", code: "TEST" }),
