@@ -11,6 +11,7 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${ROOT_DIR}"
 
 ERRORS=()
+WARNINGS=()
 
 # Function to run a check and capture output
 run_check() {
@@ -69,16 +70,22 @@ if command -v yamllint >/dev/null 2>&1; then
 else
     # Fallback: Basic YAML syntax check with Python
     if command -v python3 >/dev/null 2>&1; then
-        yaml_errors=0
-        while IFS= read -r -d '' file; do
-            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
-                ERRORS+=("✗ YAML syntax error in: $file")
-                yaml_errors=$((yaml_errors + 1))
-            fi
-        done < <(find .github/workflows -name "*.yml" -print0 2>/dev/null)
+        # Validate that PyYAML is available before running fallback parser.
+        if python3 -c "import yaml" >/dev/null 2>&1; then
+            yaml_errors=0
+            while IFS= read -r -d '' file; do
+                if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                    ERRORS+=("✗ YAML syntax error in: $file")
+                    yaml_errors=$((yaml_errors + 1))
+                fi
+            done < <(find .github/workflows -name "*.yml" -print0 2>/dev/null)
 
-        if [ $yaml_errors -gt 0 ]; then
-            ERRORS+=("Install yamllint for better validation: pip install yamllint")
+            if [ $yaml_errors -gt 0 ]; then
+                ERRORS+=("Install yamllint for better validation: pip install yamllint")
+            fi
+        else
+            WARNINGS+=("⚠ YAML syntax validation skipped (PyYAML not installed and yamllint not found)")
+            WARNINGS+=("Install one of: pip install yamllint OR pip install pyyaml")
         fi
     fi
 fi
@@ -181,6 +188,16 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     echo "Fix the errors above before pushing to GitHub."
 
     exit 2
+fi
+
+# Print warnings without failing
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+    echo ""
+    echo "Quality Gate Warnings"
+    echo "====================="
+    for warning in "${WARNINGS[@]}"; do
+        echo "$warning"
+    done
 fi
 
 # Success: Exit silently with code 0
