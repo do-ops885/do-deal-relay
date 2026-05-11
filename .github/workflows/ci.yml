@@ -65,7 +65,10 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Validate markdown
-        run: npx markdownlint-cli --config markdownlint.toml "docs/**/*.md" "README.md" "AGENTS.md" "CONTRIBUTING.md" "SECURITY.md" || true
+        run: |
+          npx markdownlint-cli --config markdownlint.toml \
+            "docs/**/*.md" "README.md" "AGENTS.md" \
+            "CONTRIBUTING.md" "SECURITY.md" || true
 
   validate-codes:
     name: Validation Gates
