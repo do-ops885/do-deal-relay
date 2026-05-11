@@ -2,8 +2,8 @@
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
 **Version**: 0.1.3
-**Phase**: Production
-**Status**: Active / Production
+**Phase**: Testing
+**Status**: Active / Testing
 
 ## Quick Start
 
