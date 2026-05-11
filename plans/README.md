@@ -22,3 +22,5 @@
 - `status: planned` - Approved, scheduled
 - `status: in-progress` - Being implemented
 - `status: completed` - Done, archive to reports/
+
+- `GOAP_IMPROVEMENTS_2026-05-11.md`: GOAP-based gap analysis, prioritized backlog, and new feature proposal.

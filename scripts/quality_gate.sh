@@ -11,6 +11,7 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${ROOT_DIR}"
 
 ERRORS=()
+WARNINGS=()
 
 # Function to run a check and capture output
 run_check() {
@@ -185,6 +186,16 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     echo "Fix the errors above before pushing to GitHub."
 
     exit 2
+fi
+
+# Print warnings without failing
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+    echo ""
+    echo "Quality Gate Warnings"
+    echo "====================="
+    for warning in "${WARNINGS[@]}"; do
+        echo "$warning"
+    done
 fi
 
 # Success: Exit silently with code 0
