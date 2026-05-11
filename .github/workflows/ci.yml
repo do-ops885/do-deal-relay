@@ -130,10 +130,23 @@ jobs:
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium
+      - name: Start dev server
+        run: |
+          npx wrangler dev --port 8787 &
+          WRANGLER_PID=$!
+          for i in {1..30}; do
+            if curl -sf http://localhost:8787/health > /dev/null; then
+              SUCCESS=1; break
+            fi
+            sleep 2
+          done
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill $WRANGLER_PID; exit 1; }
+          echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
       - name: Run E2E tests
         run: npm run test:e2e
-        env:
-          SKIP_DEV_SERVER: "false"
+      - name: Stop dev server
+        if: always()
+        run: kill $WRANGLER_PID 2>/dev/null || true
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
