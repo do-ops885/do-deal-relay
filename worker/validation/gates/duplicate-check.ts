@@ -4,7 +4,10 @@ import { GateResult } from "../types";
 /**
  * Gate 3: Deduplication Check
  */
-export function checkDeduplication(deal: Deal, ctx: PipelineContext): GateResult {
+export function checkDeduplication(
+  deal: Deal,
+  ctx: PipelineContext,
+): GateResult {
   // Check for duplicate in current batch
   const duplicates = ctx.validated.filter(
     (d) =>

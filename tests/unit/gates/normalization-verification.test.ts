@@ -55,7 +55,10 @@ describe("normalization-verification gate", () => {
   });
 
   it("should fail if URL contains tracking parameters", () => {
-    const deal = { ...validDeal, url: "https://example.com/test?utm_source=test" };
+    const deal = {
+      ...validDeal,
+      url: "https://example.com/test?utm_source=test",
+    };
     const result = verifyNormalization(deal);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("URL contains tracking parameter");

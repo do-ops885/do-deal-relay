@@ -41,7 +41,7 @@ describe("snapshot-hash-verification gate", () => {
     const ctx: PipelineContext = {
       snapshot: { snapshot_hash: "mismatch" },
       // Store a different hash for this deal in context
-      "deal_hash_test-id": "stored-hash"
+      "deal_hash_test-id": "stored-hash",
     } as any;
 
     const result = await verifySnapshotHash(deal, ctx);
