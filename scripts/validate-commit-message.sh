@@ -27,7 +27,7 @@ if ! head -n1 "$COMMIT_MSG_FILE" | grep -qE "^(build|chore|ci|docs|feat|fix|perf
 fi
 
 # Subject length check (standard for conventional commits)
-SUBJECT=$(echo "$MSG" | head -n1)
+SUBJECT=$(head -n1 "$COMMIT_MSG_FILE")
 if [ ${#SUBJECT} -gt 72 ]; then
     echo "Error: Subject line exceeds 72 characters."
     exit 1
