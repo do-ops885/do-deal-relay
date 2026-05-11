@@ -42,17 +42,17 @@ if [ -z "$TYPE" ] || [ -z "$SUBJECT" ]; then
     exit 1
 fi
 
-if [ ${#SUBJECT} -gt 72 ]; then
-    echo "Error: Subject is too long (${#SUBJECT} > 72 chars)."
-    exit 1
-fi
-
 # Build message
 MSG="${TYPE}"
 if [ -n "$SCOPE" ]; then
     MSG="${MSG}(${SCOPE})"
 fi
 MSG="${MSG}: ${SUBJECT}"
+
+if [ ${#MSG} -gt 72 ]; then
+    echo "Error: Full subject line is too long (${#MSG} > 72 chars)."
+    exit 1
+fi
 
 # Add blank line and bodies
 if [ ${#BODIES[@]} -gt 0 ]; then
