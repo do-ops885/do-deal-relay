@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   validate,
   calculateValidationRatio,
-} from "../../worker/pipeline/validate";
+} from "../../worker/validation/pipeline";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
 
 // Cloudflare Workers KV namespace type
