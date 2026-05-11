@@ -11,6 +11,7 @@
  */
 
 import type { D1Database } from "@cloudflare/workers-types";
+import { CONFIG } from "../config";
 
 // ============================================================================
 // Types
@@ -435,7 +436,7 @@ export function createComplianceLogger(
 ): EUAIActLogger {
   const defaultConfig: ComplianceConfig = {
     systemId: "do-deal-relay",
-    systemVersion: "0.1.2",
+    systemVersion: CONFIG.VERSION,
     providerName: "do-ops",
     providerContact: "compliance@do-ops.dev",
     intendedPurpose: "Autonomous deal discovery and referral code management",
