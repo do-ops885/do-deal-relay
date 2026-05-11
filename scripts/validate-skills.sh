@@ -49,6 +49,19 @@ for skill_dir in .agents/skills/*/; do
                 FAILED=1
             fi
         fi
+
+        # Check for Rationalizations section
+        if ! grep -q "^## Rationalizations" "$skill_dir/SKILL.md"; then
+            echo "  ✗ Missing '## Rationalizations' section"
+            FAILED=1
+        fi
+
+        # Check for Red Flags section
+        if ! grep -q "^## Red Flags" "$skill_dir/SKILL.md"; then
+            echo "  ✗ Missing '## Red Flags' section"
+            FAILED=1
+        fi
+
         echo "  ✓ SKILL.md structure valid"
     fi
 done
