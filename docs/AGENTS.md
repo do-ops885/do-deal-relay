@@ -2,8 +2,8 @@
 
 **Goal**: Build autonomous deal discovery system with coordinated AI agents
 **Version**: 0.1.3
-**Phase**: Bootstrap
-**Status**: In Development
+**Phase**: Production
+**Status**: Active / Production
 
 ## Quick Start
 
@@ -99,12 +99,19 @@ See [docs/API.md](docs/API.md) for endpoint documentation.
 ### Available Scripts
 
 - `npm run dev` - Start development server
-- `npm run build` - Build TypeScript
-- `npm test` - Run tests in watch mode
+- `npm run build` - Build TypeScript (generates version)
+- `npm run typecheck` - Type check only
+- `npm run test` - Run tests with coverage
 - `npm run test:ci` - Run tests once (for CI)
-- `npm run lint` - Type check
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:e2e` - Run E2E tests (Playwright)
+- `npm run lint` - Type check + format check
+- `npm run lint:fix` - Type check + auto-fix formatting
+- `npm run fmt:check` - Check code formatting
+- `npm run fmt:fix` - Auto-fix formatting
 - `npm run validate` - Run validation gates
-- `npm run format` - Format code with Prettier
+- `npm run verify` - Run full local validation (pre-push)
+- `npm run deploy` - Deploy to production
 
 ### Quality Gates
 

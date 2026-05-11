@@ -51,8 +51,8 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0",
-  "timestamp": "2024-03-31T..."
+  "version": "<current>",
+  "timestamp": "<current>"
 }
 ```
 
