@@ -9,10 +9,8 @@
 - **Batching**: Group independent `Bash` calls.
 
 ## Constraints
-- **AGENTS.md**: Keep under 150 lines (move details to `agents-docs/`).
-- **Source Files**: Max 500 lines per file.
-- **Skills**: Load via `skill <name>` (e.g., `agent-coordination`).
+- **AGENTS.md**: Follow limits in AGENTS.md.
+- **Skills**: Load via `skill <name>` (e.g., `skill agent-coordination`).
 
 ## Sub-Agents
-Available in `.opencode/agents/`:
-- `discovery-agent`, `validation-agent`, `scoring-agent`, `storage-agent`, `publish-agent`, `test-agent`.
+Available in `.opencode/agents/` and referenced in `agents-docs/agents/`.
