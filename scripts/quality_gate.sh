@@ -74,7 +74,7 @@ else
         if python3 -c "import yaml" >/dev/null 2>&1; then
             yaml_errors=0
             while IFS= read -r -d '' file; do
-                if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                if ! python3 -c "import yaml, sys; yaml.safe_load(open(sys.argv[1]))" "$file" 2>/dev/null; then
                     ERRORS+=("✗ YAML syntax error in: $file")
                     yaml_errors=$((yaml_errors + 1))
                 fi
