@@ -53,6 +53,7 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 });
 
 describe("API Endpoints", () => {
+  const authHeader = { Authorization: "Bearer ddr_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
@@ -119,7 +120,17 @@ describe("API Endpoints", () => {
         delete: vi.fn(async () => {}),
       } as unknown as KVNamespace,
       DEALS_SOURCES: {
-        get: vi.fn(async () => null),
+        get: vi.fn(async (key: string) => {
+          if (key.startsWith("apikey:")) {
+            return {
+              userId: "test-user",
+              role: "admin",
+              createdAt: "2024-01-01T00:00:00Z",
+              rateLimit: { requestsPerMinute: 60, requestsPerHour: 1000 },
+            };
+          }
+          return null;
+        }),
         put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
       DEALS_KV: {} as KVNamespace,
@@ -443,6 +454,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: authHeader,
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -470,6 +482,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/discover", {
         method: "POST",
+        headers: authHeader,
       });
       const response = await worker.fetch(request, mockEnv);
 
@@ -571,7 +584,7 @@ describe("API Endpoints", () => {
     it("should submit a new deal", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "NEWCODE",
@@ -597,7 +610,7 @@ describe("API Endpoints", () => {
     it("should return 415 for non-JSON content type", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: { "Content-Type": "text/plain", ...authHeader },
         body: "not json",
       });
 
@@ -610,7 +623,7 @@ describe("API Endpoints", () => {
     it("should return 400 for invalid body", async () => {
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ url: "not-a-url" }), // missing required fields
       });
 
@@ -628,7 +641,7 @@ describe("API Endpoints", () => {
 
       const request = new Request("http://localhost/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           url: "https://example.com/deal",
           code: "DUPLICATE",
@@ -649,6 +662,7 @@ describe("API Endpoints", () => {
         headers: {
           "Content-Type": "application/json",
           "Content-Length": "2000000", // > 1MB
+          ...authHeader,
         },
         body: JSON.stringify({ url: "https://example.com", code: "TEST" }),
       });
