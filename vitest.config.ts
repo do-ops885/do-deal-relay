@@ -7,11 +7,7 @@ export default defineConfig({
     retry: 1, // Retry flaky tests once
     teardownTimeout: 10000, // Give workers time to cleanup (increased from 5000)
     pool: "forks", // Use Node.js fork pool instead of Cloudflare Workers pool to avoid crashes
-    poolOptions: {
-      forks: {
-        maxForks: 2, // Increase to 2 for faster tests while maintaining stability
-      },
-    },
+    maxWorkers: 2, // Increase to 2 for faster tests while maintaining stability
     env: {
       NODE_ENV: "test",
     },
