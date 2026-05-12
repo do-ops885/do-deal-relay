@@ -99,20 +99,34 @@ export async function verifyApiKey(
   // Hash the provided key
   const keyHash = await hashApiKey(apiKey);
 
+  const normalizeMetadata = (value: unknown): ApiKeyConfig | null => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value) as ApiKeyConfig;
+      } catch {
+        return null;
+      }
+    }
+    return value as ApiKeyConfig;
+  };
+
   // Try WEBHOOK_API_KEYS first, fallback to DEALS_SOURCES
   let metadata: ApiKeyConfig | null = null;
   if (env.WEBHOOK_API_KEYS) {
-    metadata = await env.WEBHOOK_API_KEYS.get<ApiKeyConfig>(
+    const raw = await env.WEBHOOK_API_KEYS.get<ApiKeyConfig | string>(
       `apikey:${keyHash}`,
       "json",
     );
+    metadata = normalizeMetadata(raw);
   }
 
   if (!metadata) {
-    metadata = await env.DEALS_SOURCES.get<ApiKeyConfig>(
+    const raw = await env.DEALS_SOURCES.get<ApiKeyConfig | string>(
       `apikey:${keyHash}`,
       "json",
     );
+    metadata = normalizeMetadata(raw);
   }
 
   if (!metadata) {
