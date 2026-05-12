@@ -22,3 +22,5 @@
 - `status: planned` - Approved, scheduled
 - `status: in-progress` - Being implemented
 - `status: completed` - Done, archive to reports/
+
+- [Plans Index](./INDEX.md): Categorized list of all active, planned, and archived plans.

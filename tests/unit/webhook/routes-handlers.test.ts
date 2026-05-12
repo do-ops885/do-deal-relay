@@ -18,7 +18,11 @@ import {
 function createMockKv() {
   const storage = new Map<string, string>();
   return {
-    get: vi.fn(async (key: string) => storage.get(key) ?? null),
+    get: vi.fn(async (key: string, type?: string) => {
+      const val = storage.get(key) ?? null;
+      if (val && type === "json") return JSON.parse(val);
+      return val;
+    }),
     put: vi.fn(async (key: string, value: string) => {
       storage.set(key, value);
     }),
@@ -44,6 +48,7 @@ function createEnv(kv: MockKv) {
     DEALS_SOURCES: kv,
     DEALS_KV: kv,
     METRICS_KV: kv,
+    DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as any;
