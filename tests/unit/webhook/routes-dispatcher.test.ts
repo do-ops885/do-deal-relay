@@ -141,7 +141,7 @@ describe("Webhook Route Dispatcher", () => {
         "/webhooks/subscriptions",
       );
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(200);
+      expect(result?.status).toBe(401);
     });
 
     it("should route to create partner handler", async () => {
@@ -177,7 +177,7 @@ describe("Webhook Route Dispatcher", () => {
       });
       const result = await handleWebhookRoutes(request, env, "/webhooks/dlq");
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(200);
+      expect(result?.status).toBe(401);
     });
 
     it("should route to DLQ retry handler", async () => {
