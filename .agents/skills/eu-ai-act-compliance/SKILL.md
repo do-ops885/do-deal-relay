@@ -213,7 +213,7 @@ interface LogRetentionPolicy {
 // Initialize compliance logger
 const logger = new AIActLogger({
   systemId: "do-deal-relay",
-  systemVersion: "0.1.2",
+   systemVersion: "0.1.3",
   providerName: "do-ops",
   providerContact: "compliance@do-ops.dev",
   intendedPurpose: "Autonomous deal discovery and research",
