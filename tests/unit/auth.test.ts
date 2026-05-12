@@ -1088,8 +1088,9 @@ describe("Auth", () => {
         },
       });
 
-      // JSON parse will throw on invalid JSON
-      await expect(authenticateRequest(request, mockEnv)).rejects.toThrow();
+      const result = await authenticateRequest(request, mockEnv);
+      expect(result.authenticated).toBe(false);
+      expect(result.error).toBe("Invalid API key");
     });
 
     it("should handle API key with special characters", async () => {
