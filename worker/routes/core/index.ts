@@ -10,6 +10,7 @@ export {
   handleSimilarDeals,
   handleRankedDeals,
   handleDealHighlights,
+  handleExplainDeal,
 } from "./deals";
 export { handleDiscover, handleStatus, handleGetLogs } from "./pipeline";
 export { handleSubmit } from "./submit";

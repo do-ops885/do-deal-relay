@@ -12,15 +12,16 @@
 **Format**: Markdown files with version headers
 
 **Rules**:
-- Files here ARE committed to git
-- Use for planned work that hasn't started yet
-- Update status as plans move to implementation
-- Archive completed plans to `reports/`
+- Files here ARE committed to git.
+- Refer to [INDEX.md](INDEX.md) for the authoritative list of active plans.
+- Update `INDEX.md` when adding or moving plans.
+- Archive completed or stale plans to `reports/archived_plans/`.
 
 **Status Tracking**:
-- `status: draft` - Initial idea/proposal
-- `status: planned` - Approved, scheduled
-- `status: in-progress` - Being implemented
-- `status: completed` - Done, archive to reports/
+- `active`: Currently being implemented.
+- `planned`: Approved for future implementation.
+- `completed`: Implementation finished (ready for archiving).
+- `archived`: Stale or deprecated.
 
-- `GOAP_IMPROVEMENTS_2026-05-11.md`: GOAP-based gap analysis, prioritized backlog, and new feature proposal.
+- [INDEX.md](INDEX.md): Canonical list of plans and their status.
+- `GOAP_IMPROVEMENTS_2026-05-11.md`: Active hardening and feature implementation.
