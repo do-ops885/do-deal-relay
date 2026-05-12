@@ -18,10 +18,9 @@
 - Archive completed or stale plans to `reports/archived_plans/`.
 
 **Status Tracking**:
-- `active`: Currently being implemented.
-- `planned`: Approved for future implementation.
-- `completed`: Implementation finished (ready for archiving).
-- `archived`: Stale or deprecated.
+- `status: draft` - Initial idea/proposal
+- `status: planned` - Approved, scheduled
+- `status: in-progress` - Being implemented
+- `status: completed` - Done, archive to reports/
 
-- [INDEX.md](INDEX.md): Canonical list of plans and their status.
-- `GOAP_IMPROVEMENTS_2026-05-11.md`: Active hardening and feature implementation.
+- [Plans Index](./INDEX.md): Categorized list of all active, planned, and archived plans.

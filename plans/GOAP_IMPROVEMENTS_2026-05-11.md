@@ -1,8 +1,8 @@
 # GOAP Improvements Plan (2026-05-11)
 
-**status**: planned  
-**owner**: agent-swarm  
-**scope**: codebase + plans/ + docs/ + agents-docs/ + skills index  
+**status**: planned
+**owner**: agent-swarm
+**scope**: codebase + plans/ + docs/ + agents-docs/ + skills index
 **method**: GOAP (Analyze → Decompose → Strategize → Coordinate → Execute → Synthesize)
 
 ---
@@ -156,11 +156,11 @@
 
 ## 8) Risks & Mitigations
 
-- **Risk**: Worker-pool fallback may hide runtime-specific bugs.  
+- **Risk**: Worker-pool fallback may hide runtime-specific bugs.
   **Mitigation**: Keep one worker-pool lane as non-blocking signal while blocking on stable lane.
 
-- **Risk**: Additional explainability storage overhead.  
+- **Risk**: Additional explainability storage overhead.
   **Mitigation**: Store compressed/minimal trace with TTL and redaction.
 
-- **Risk**: Plan churn without execution ownership.  
+- **Risk**: Plan churn without execution ownership.
   **Mitigation**: Assign owner + due date in `plans/PROGRESS.md` before each phase starts.
