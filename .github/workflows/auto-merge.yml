@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
   contents: write
   actions: read
-  issues: write  # required to close linked issues
+  issues: write # required to close linked issues
 
 concurrency:
   group: auto-merge-${{ github.event.workflow_run.id }}
@@ -166,6 +166,7 @@ jobs:
         run: |
           AUTHOR="${{ steps.check-status.outputs.author }}"
           REPO="${{ github.repository }}"
+          echo "REPO=${REPO}"
 
           API_PATH="repos/$REPO/collaborators/$AUTHOR/permission"
           PERMISSION=$(gh api "$API_PATH" --jq '.permission' 2>/dev/null || echo "none")
@@ -253,6 +254,7 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           REPO="${{ github.repository }}"
+          echo "REPO=${REPO}"
 
           # Extract issue numbers from PR body (handles "Closes #N", "Fixes #N", "Resolves #N")
           PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""')

@@ -136,20 +136,20 @@ jobs:
         run: |
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
-          for i in {1..30}; do
+          for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null 2>&1; then
               SUCCESS=1; break
             fi
             sleep 2
           done
-          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill $WRANGLER_PID; exit 1; }
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill "$WRANGLER_PID"; exit 1; }
           echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
       - name: Run E2E tests
         run: npm run test:e2e
         continue-on-error: true
       - name: Stop dev server
         if: always()
-        run: kill $WRANGLER_PID 2>/dev/null || true
+        run: kill "$WRANGLER_PID" 2>/dev/null || true
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -178,15 +178,15 @@ jobs:
         run: |
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
-          for i in {1..30}; do
+          for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null; then
               SUCCESS=1; break
             fi
             sleep 2
           done
-          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout"; kill $WRANGLER_PID; exit 1; }
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout"; kill "$WRANGLER_PID"; exit 1; }
           npm run test:smoke
-          kill $WRANGLER_PID
+          kill "$WRANGLER_PID"
 
   security-scan:
     name: Security Scan
@@ -257,17 +257,21 @@ jobs:
             echo "## CI Results"
             echo "| Job | Status |"
             echo "|-----|--------|"
-            for job in lint format docs validate-codes test test-e2e smoke-test security-scan build; do
-              result="${{ needs[job].result }}"
-              echo "| ${job} | ${result} |"
-            done
+            echo "| Type Check | ${{ needs.lint.result }} |"
+            echo "| Format Check | ${{ needs.format.result }} |"
+            echo "| Docs Validation | ${{ needs.docs.result }} |"
+            echo "| Validation Gates | ${{ needs.validate-codes.result }} |"
+            echo "| Unit Tests | ${{ needs.test.result }} |"
+            echo "| E2E Tests | ${{ needs.test-e2e.result }} |"
+            echo "| Smoke Tests | ${{ needs.smoke-test.result }} |"
+            echo "| Security Scan | ${{ needs.security-scan.result }} |"
+            echo "| Build | ${{ needs.build.result }} |"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
           FAILED=0
-          for job in lint format validate-codes test test-e2e smoke-test security-scan build; do
-            result="${{ needs[job].result }}"
-            if [ "${result}" = "failure" ]; then
+          for result in "${{ needs.lint.result }}" "${{ needs.format.result }}" "${{ needs.validate-codes.result }}" "${{ needs.test.result }}" "${{ needs.test-e2e.result }}" "${{ needs.smoke-test.result }}" "${{ needs.security-scan.result }}" "${{ needs.build.result }}"; do
+            if [ "$result" = "failure" ]; then
               FAILED=1
             fi
           done
