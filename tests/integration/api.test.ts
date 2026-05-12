@@ -53,6 +53,7 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 });
 
 describe("API Endpoints", () => {
+  const authHeader = { Authorization: "Bearer ddr_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
   const TEST_API_KEY = "ddr_test_key_12345678901234567890";
@@ -303,7 +304,7 @@ describe("API Endpoints", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const request = new Request("http://localhost/api/discover", {
-        method: "POST",
+    https://github.com/do-ops885/do-deal-relay/pull/177/conflict?name=tests%252Fintegration%252Fapi.test.ts&ancestor_oid=5cb7dd54c7c6870cb135a6253a295df9e4efe3cd&base_oid=cf29e99c0764121da90f6b86894458e4afd01e3a&head_oid=a544702f12c2c391296399a466179788fbbadc9b    method: "POST",
         headers: { "X-API-Key": TEST_API_KEY },
       });
       const response = await worker.fetch(request, mockEnv);

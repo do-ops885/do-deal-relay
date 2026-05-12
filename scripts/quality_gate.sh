@@ -204,5 +204,15 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     exit 2
 fi
 
+# Print warnings without failing
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+    echo ""
+    echo "Quality Gate Warnings"
+    echo "====================="
+    for warning in "${WARNINGS[@]}"; do
+        echo "$warning"
+    done
+fi
+
 # Success: Exit silently with code 0
 exit 0

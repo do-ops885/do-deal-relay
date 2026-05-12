@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -55,10 +55,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -75,10 +75,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -92,10 +92,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -104,13 +104,13 @@ jobs:
         env:
           NODE_ENV: test
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: coverage
           path: coverage/
           retention-days: 7
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           files: ./coverage/lcov.info
@@ -123,10 +123,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -136,23 +136,23 @@ jobs:
         run: |
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
-          for i in {1..30}; do
+          for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null 2>&1; then
               SUCCESS=1; break
             fi
             sleep 2
           done
-          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill $WRANGLER_PID; exit 1; }
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill "$WRANGLER_PID"; exit 1; }
           echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
       - name: Run E2E tests
         run: npm run test:e2e
         continue-on-error: true
       - name: Stop dev server
         if: always()
-        run: kill $WRANGLER_PID 2>/dev/null || true
+        run: kill "$WRANGLER_PID" 2>/dev/null || true
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: e2e-results
           path: playwright-report/
@@ -164,10 +164,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -178,15 +178,15 @@ jobs:
         run: |
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
-          for i in {1..30}; do
+          for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null; then
               SUCCESS=1; break
             fi
             sleep 2
           done
-          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout"; kill $WRANGLER_PID; exit 1; }
+          [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout"; kill "$WRANGLER_PID"; exit 1; }
           npm run test:smoke
-          kill $WRANGLER_PID
+          kill "$WRANGLER_PID"
 
   security-scan:
     name: Security Scan
@@ -195,11 +195,11 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
         with:
           scan-type: fs
           scan-ref: .
@@ -217,17 +217,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: build-output
           path: dist/
@@ -253,26 +253,32 @@ jobs:
     steps:
       - name: Report Status
         run: |
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          for job in lint format docs validate-codes test test-e2e smoke-test security-scan build; do
-            result="${{ needs[job].result }}"
-            echo "| ${job} | ${result} |" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CI Results"
+            echo "| Job | Status |"
+            echo "|-----|--------|"
+            echo "| Type Check | ${{ needs.lint.result }} |"
+            echo "| Format Check | ${{ needs.format.result }} |"
+            echo "| Docs Validation | ${{ needs.docs.result }} |"
+            echo "| Validation Gates | ${{ needs.validate-codes.result }} |"
+            echo "| Unit Tests | ${{ needs.test.result }} |"
+            echo "| E2E Tests | ${{ needs.test-e2e.result }} |"
+            echo "| Smoke Tests | ${{ needs.smoke-test.result }} |"
+            echo "| Security Scan | ${{ needs.security-scan.result }} |"
+            echo "| Build | ${{ needs.build.result }} |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           FAILED=0
-          for job in lint format validate-codes test test-e2e smoke-test security-scan build; do
-            result="${{ needs[job].result }}"
-            if [ "${result}" = "failure" ]; then
+          for result in "${{ needs.lint.result }}" "${{ needs.format.result }}" "${{ needs.validate-codes.result }}" "${{ needs.test.result }}" "${{ needs.test-e2e.result }}" "${{ needs.smoke-test.result }}" "${{ needs.security-scan.result }}" "${{ needs.build.result }}"; do
+            if [ "$result" = "failure" ]; then
               FAILED=1
             fi
           done
 
           if [ "$FAILED" = "1" ]; then
-            echo "CI Failed - Check individual jobs for details" >> $GITHUB_STEP_SUMMARY
+            echo "CI Failed - Check individual jobs for details" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           else
-            echo "All CI checks passed!" >> $GITHUB_STEP_SUMMARY
+            echo "All CI checks passed!" >> "$GITHUB_STEP_SUMMARY"
           fi

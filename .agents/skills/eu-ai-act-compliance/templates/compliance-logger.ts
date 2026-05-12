@@ -405,7 +405,7 @@ export const DefaultRetentionPolicy: LogRetentionPolicy = {
 export async function example(): Promise<void> {
   const logger = new AIActLogger({
     systemId: "do-deal-relay",
-    systemVersion: "0.1.2",
+    systemVersion: "{{VERSION}}",
     providerName: "do-ops",
     providerContact: "compliance@do-ops.dev",
     intendedPurpose: "Autonomous deal discovery and referral code management",

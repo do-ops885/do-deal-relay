@@ -31,6 +31,12 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 10
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup GitHub CLI
         run: gh auth status
         env:
@@ -160,6 +166,7 @@ jobs:
         run: |
           AUTHOR="${{ steps.check-status.outputs.author }}"
           REPO="${{ github.repository }}"
+          echo "REPO=${REPO}"
 
           API_PATH="repos/$REPO/collaborators/$AUTHOR/permission"
           PERMISSION=$(gh api "$API_PATH" --jq '.permission' 2>/dev/null || echo "none")
@@ -247,6 +254,7 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           REPO="${{ github.repository }}"
+          echo "REPO=${REPO}"
 
           # Extract issue numbers from PR body (handles "Closes #N", "Fixes #N", "Resolves #N")
           PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""')

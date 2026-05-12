@@ -2,8 +2,8 @@
 
 ## System Overview
 
-**Status**: Production Ready ✅  
-**Version**: 0.1.1  
+**Status**: Development Ready (Not Production) ⚠️  
+**Version**: 0.1.3  
 **Architecture**: Cloudflare Workers + 5 KV Namespaces  
 **Pipeline**: 10-phase state machine with handoff coordination
 
@@ -158,7 +158,9 @@ init → discover → normalize → dedupe → validate → score → stage → 
 1. Complete integration testing for new features
 2. Deploy to staging
 3. Monitor analytics data quality
-4. Consider Phase 8: Advanced features (search, recommendations, ML scoring)
+4. Run full validation suite
+5. Promote to production
+6. Consider Phase 8: Advanced features (search, recommendations, ML scoring)
 
 ## Key Learnings
 
@@ -196,18 +198,36 @@ Critical for data integrity and rollback capability.
 - Prometheus format for ecosystem integration
 - Correlation IDs for distributed tracing
 
-## Quality Gates (10)
+## Quality Gates (12)
 
-1. TypeScript compilation
-2. Secret detection
-3. File size limits (≤500 LOC)
-4. Required files present
-5. JSON validity
-6. Schema version consistency
-7. Security pattern checks
-8. Test coverage >80%
-9. No TODO/FIXME in production
-10. Dependency vulnerability scan
+The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
+
+1. TypeScript compilation (`npm run lint`)
+2. Unit tests (`scripts/run-tests-ci.sh`)
+3. Validation gate orchestration check (`npm run validate`)
+4. Directory organization (`scripts/check-directory-organization.sh`)
+5. Build check (`npm run build`)
+6. Prettier format check (`npx prettier --check`)
+7. YAML syntax validation (`yamllint` or fallback)
+8. GitHub Actions workflow validation (`actionlint` or fallback)
+9. Secret detection (Regex patterns)
+10. Dependency audit (`npm audit`)
+11. Skill symlinks integrity (`scripts/validate-skills.sh`)
+12. Git hooks installation (Local only)
+
+## Validation Gates (9)
+
+The per-deal validation pipeline in `worker/validation/pipeline.ts` enforces 9 gates:
+
+1. `schema_validation`
+2. `normalization_verification`
+3. `deduplication_check`
+4. `source_trust`
+5. `reward_plausibility`
+6. `expiry_validation`
+7. `second_pass_validation`
+8. `idempotency_check`
+9. `snapshot_hash_verification`
 
 ## Next Steps
 
@@ -220,7 +240,6 @@ Critical for data integrity and rollback capability.
 ## System Evolution
 
 - **v0.1.0-alpha**: Initial deployment with basic pipeline
-- **v1.0.0**: Production-ready with 10 validation gates
-- **v1.1.0**: Enhanced safety and quality (robots.txt, retry logic)
-- **v1.2.0**: Performance & observability (metrics, caching, circuit breakers)
-- **v1.3.0**: Feature enhancements (Phase 7 - in progress)
+- **v0.1.1**: Production-ready with 10 validation gates
+- **v0.1.2**: Enhanced safety and quality (robots.txt, retry logic)
+- **v0.1.3**: Performance & observability (metrics, caching, circuit breakers) + Feature enhancements (Phase 7 - complete)

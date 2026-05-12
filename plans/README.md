@@ -12,10 +12,10 @@
 **Format**: Markdown files with version headers
 
 **Rules**:
-- Files here ARE committed to git
-- Use for planned work that hasn't started yet
-- Update status as plans move to implementation
-- Archive completed plans to `reports/`
+- Files here ARE committed to git.
+- Refer to [INDEX.md](INDEX.md) for the authoritative list of active plans.
+- Update `INDEX.md` when adding or moving plans.
+- Archive completed or stale plans to `reports/archived_plans/`.
 
 **Status Tracking**:
 - `status: draft` - Initial idea/proposal

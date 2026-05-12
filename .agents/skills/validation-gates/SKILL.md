@@ -1,117 +1,43 @@
 ---
 name: validation-gates
-description: Multi-gate validation framework for progressive quality assurance. Use for implementing 10-gate validation pipelines, quality checkpoints, and automated quality gates in CI/CD workflows.
+description: Multi-gate validation framework for progressive quality assurance. Use for implementing mandatory system gates and local quality gates.
 ---
 
 # Validation Gates
 
-Implement progressive quality assurance through configurable validation gates.
+Implement and maintain the 9 mandatory validation gates of the deal discovery pipeline.
 
-## Quick Start
+## When to Use
+Activate when modifying the worker pipeline (`worker/validation/`) or adding new deal types.
 
-```typescript
-import { ValidationPipeline, Gate } from './validation-gates';
+## Instructions
+1. **Gate Integrity**: Never bypass any of the 9 mandatory gates.
+2. **Modular Logic**: Each gate should live in `worker/validation/gates/` as a standalone module.
+3. **Fail-Fast**: Gates should be ordered by execution cost (fastest/cheapest first).
+4. **Context Preservation**: Use `ValidationContext` to pass state between gates.
 
-const pipeline = new ValidationPipeline([
-  Gate.syntax(),
-  Gate.tests({ coverage: 80 }),
-  Gate.security(),
-  Gate.performance(),
-]);
+## The 9 Mandatory Gates
+1. `schema_validation`: Structural integrity.
+2. `normalization_verification`: Canonical format.
+3. `deduplication_check`: Uniqueness.
+4. `source_trust`: Trust score >= threshold.
+5. `reward_plausibility`: Value sanity check.
+6. `expiry_validation`: Freshness.
+7. `second_pass_validation`: AI-powered verification.
+8. `idempotency_check`: Double-run prevention.
+9. `snapshot_hash_verification`: Data consistency.
 
-const result = await pipeline.run(code);
-```
+## Rationalizations
 
-## Gate Types
+| Concern | Counter-Argument |
+|---------|------------------|
+| "9 gates is too slow." | Latency is optimized via parallel execution and fast-path caching. Integrity is paramount. |
+| "I can merge normalization and schema check." | Decoupled gates are easier to test and debug. |
+| "Trust score check is redundant." | Source trust is our primary defense against spam. |
 
-| Gate | Purpose | Config Options |
-|------|---------|----------------|
-| syntax | Code compilation/parsing | language, strict |
-| lint | Style enforcement | rules, fix |
-| tests | Test execution | coverage, timeout |
-| security | Vulnerability scan | level, ignore |
-| performance | Speed benchmarks | threshold, metrics |
-| integration | System tests | endpoints, data |
-| docs | Documentation check | required, paths |
-| deps | Dependency audit | outdated, vulns |
-| size | Bundle size check | maxBytes, gzip |
-| final | Pre-deployment | all-pass |
+## Red Flags
 
-## The 10-Gate System
-
-```
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│  Gate 1 │ → │  Gate 2 │ → │  Gate 3 │ → │  Gate 4 │ → │  Gate 5 │
-│ Syntax  │   │  Lint   │   │  Tests  │   │ Security│   │Perform. │
-└─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘
-     ↓
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│  Gate 6 │ → │  Gate 7 │ → │  Gate 8 │ → │  Gate 9 │ → │ Gate 10 │
-│Integrate│   │   Docs  │   │   Deps  │   │   Size  │   │  Final  │
-└─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘
-```
-
-## Usage Patterns
-
-**Sequential Gates** (default):
-```typescript
-const pipeline = new ValidationPipeline(gates, { mode: 'sequential' });
-// Stops on first failure
-```
-
-**Parallel Gates**:
-```typescript
-const pipeline = new ValidationPipeline(gates, { mode: 'parallel' });
-// Runs all, reports all failures
-```
-
-**Conditional Gates**:
-```typescript
-Gate.tests({ runIf: (ctx) => ctx.hasTests })
-```
-
-## Configuration
-
-```typescript
-interface GateConfig {
-  name: string;
-  enabled: boolean;
-  required: boolean;      // Fail pipeline if this gate fails
-  timeout: number;        // ms
-  retry: number;          // Retry attempts
-  condition?: (ctx) => boolean;
-}
-```
-
-## Results Format
-
-```typescript
-interface ValidationResult {
-  passed: boolean;
-  gates: GateResult[];
-  summary: {
-    total: number;
-    passed: number;
-    failed: number;
-    skipped: number;
-    duration: number;
-  };
-  artifacts: Map<string, unknown>;
-}
-```
-
-## Best Practices
-
-1. **Order matters** - Fast checks first (syntax, lint)
-2. **Required vs Optional** - Only block on critical gates
-3. **Caching** - Cache results of unchanged files
-4. **Incremental** - Run only affected gates on partial changes
-
-## Integration
-
-- CI/CD pipelines
-- Pre-commit hooks
-- Pull request checks
-- Deployment approvals
-
-See [templates/pipeline.ts](templates/pipeline.ts) and [examples/ci-integration.ts](examples/ci-integration.ts) for complete examples.
+- [ ] Adding logic to `pipeline.ts` instead of a standalone gate module.
+- [ ] Hardcoding thresholds inside gate logic (use `Env` or `config.ts`).
+- [ ] Missing unit tests in `tests/unit/gates/`.
+- [ ] Bypassing the gate registry in `worker/validation/gates/index.ts`.

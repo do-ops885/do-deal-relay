@@ -277,10 +277,11 @@ if echo "$STAGED_FILES" | grep -qE "\.(ts|tsx|js|jsx)$"; then
     # Run affected tests only (quick mode)
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
         info "Running tests..."
-        if npm run test:ci 2>&1 | tail -20 | grep -q "passed"; then
+        if npm run test:ci >/tmp/ddr-test-ci.log 2>&1; then
             success "Tests passing"
         else
             error "Tests failed - run 'npm run test:ci' for details"
+            tail -20 /tmp/ddr-test-ci.log
         fi
     fi
 else
@@ -342,6 +343,7 @@ ALLOWED_ROOT_FILES=(
     ".editorconfig"
     ".prettierrc"
     ".prettierignore"
+    "commitlint.config.cjs"
     ".eslintrc*"
     ".nvmrc"
     ".node-version"
