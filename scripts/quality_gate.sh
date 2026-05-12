@@ -70,11 +70,10 @@ if command -v yamllint >/dev/null 2>&1; then
 else
     # Fallback: Basic YAML syntax check with Python
     if command -v python3 >/dev/null 2>&1; then
-        # Validate that PyYAML is available before running fallback parser.
         if python3 -c "import yaml" >/dev/null 2>&1; then
             yaml_errors=0
             while IFS= read -r -d '' file; do
-                if ! python3 -c "import yaml, sys; yaml.safe_load(open(sys.argv[1]))" "$file" 2>/dev/null; then
+                if ! python3 -c "import sys, yaml; yaml.safe_load(open(sys.argv[1]))" "$file" 2>/dev/null; then
                     ERRORS+=("✗ YAML syntax error in: $file")
                     yaml_errors=$((yaml_errors + 1))
                 fi
@@ -84,8 +83,7 @@ else
                 ERRORS+=("Install yamllint for better validation: pip install yamllint")
             fi
         else
-            WARNINGS+=("⚠ YAML syntax validation skipped (PyYAML not installed and yamllint not found)")
-            WARNINGS+=("Install one of: pip install yamllint OR pip install pyyaml")
+            echo "⚠ YAML validation skipped: python3-yaml not installed; install yamllint"
         fi
     fi
 fi
