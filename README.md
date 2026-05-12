@@ -66,6 +66,11 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
+## Safety & Quality
+
+- **9 Validation Gates**: Per-deal integrity checks (schema, trust, dedupe, etc.)
+- **12 Quality Gates**: System-wide CI/CD checks (tests, lint, security, audit)
+
 ## CI/CD Pipeline
 
 | Workflow | Trigger | Purpose |

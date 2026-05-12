@@ -19,6 +19,7 @@ import {
   type SortOrder,
 } from "../../lib/ranking";
 import { calculateStringSimilarity } from "../../lib/crypto";
+import { explainDeal } from "../../lib/explainability";
 
 export async function handleGetDeals(
   url: URL,
@@ -263,4 +264,29 @@ export async function handleDealHighlights(
       recently_added_count: recentlyAdded.length,
     },
   });
+}
+
+/**
+ * Handle deal explainability endpoint - GET /api/deals/:id/explain
+ */
+export async function handleExplainDeal(
+  dealId: string,
+  env: Env,
+  request?: Request,
+): Promise<Response> {
+  const snapshot = await getProductionSnapshot(env);
+
+  if (!snapshot) {
+    return jsonResponse({ error: "No deals available" }, 404, request);
+  }
+
+  const deal = snapshot.deals.find((d) => d.id === dealId);
+
+  if (!deal) {
+    return jsonResponse({ error: "Deal not found" }, 404, request);
+  }
+
+  const explanation = explainDeal(deal);
+
+  return jsonResponse(explanation, 200, request);
 }

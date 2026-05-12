@@ -25,6 +25,16 @@ if echo "$OUTPUT" | grep -qE "Tests.*[0-9]+ passed.*\([0-9]+\)"; then
         echo "⚠️  Note: Vitest worker pool crashed during cleanup (non-critical, tests passed)"
     fi
 
+    # Ensure we don't have failing tests hidden in the output
+    if echo "$OUTPUT" | grep -q "failed"; then
+       # Verify it's not just "0 failed"
+       if echo "$OUTPUT" | grep -qE "[1-9][0-9]* failed"; then
+           echo "❌ Some tests actually failed despite the success pattern"
+           echo "$OUTPUT"
+           exit 1
+       fi
+    fi
+
     exit 0
 else
     echo "❌ Tests failed"
