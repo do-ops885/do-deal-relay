@@ -52,22 +52,25 @@ All agent-driven changes MUST use the helper script:
 ### Commit Types
 `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 
-## Quality Gates
+## Quality Gates (System Infrastructure)
 
-- **Scripts**: `./scripts/quality_gate.sh` (Runs lint, test, validation, directory check, build)
-- **Skills**: `./scripts/validate-skills.sh` (Enforces frontmatter, Rationalizations, Red Flags)
-- **CI Rehearsal**: `./scripts/run_act_local.sh` (Optional local GHA execution via `act`)
+The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
+1. TypeScript compilation
+2. Unit tests
+3. Validation gate orchestration check
+4. Directory organization
+5. Build check
+6. Prettier format check
+7. YAML syntax validation
+8. GitHub Actions workflow validation
+9. Secret detection
+10. Dependency audit (`npm audit`)
+11. Skill symlinks integrity
+12. Git hooks installation
 
-## Repository Structure Rules
+## Validation Gates (Per-Deal Logic)
 
-- **Allowed in root**: Only standard config files (package.json, wrangler.jsonc, etc.).
-- **Documentation**: MUST be in `docs/` or `agents-docs/`.
-- **Plans/Reports**: MUST be in `plans/` or `reports/`.
-- **Skills**: Canonical source is `.agents/skills/`.
-
-## Validation Gates (System Logic)
-
-The system enforces 9 mandatory validation gates in the worker pipeline:
+The system enforces 9 mandatory validation gates in the worker pipeline (`worker/validation/pipeline.ts`):
 1. `schema_validation`
 2. `normalization_verification`
 3. `deduplication_check`
@@ -77,6 +80,13 @@ The system enforces 9 mandatory validation gates in the worker pipeline:
 7. `second_pass_validation`
 8. `idempotency_check`
 9. `snapshot_hash_verification`
+
+## Repository Structure Rules
+
+- **Allowed in root**: Only standard config files (package.json, wrangler.jsonc, etc.).
+- **Documentation**: MUST be in `docs/` or `agents-docs/`.
+- **Plans/Reports**: MUST be in `plans/` or `reports/`.
+- **Skills**: Canonical source is `.agents/skills/`.
 
 ## Agent Guidance
 

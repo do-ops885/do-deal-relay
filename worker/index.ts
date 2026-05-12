@@ -15,6 +15,7 @@ import {
   handleRankedDeals,
   handleDealHighlights,
   handleSimilarDeals,
+  handleExplainDeal,
   handleAnalytics,
 } from "./routes/core";
 import {
@@ -187,6 +188,12 @@ export default {
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
         return handleGetValidationStats(env);
+      }
+
+      const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
+      if (dealExplainMatch && request.method === "GET") {
+        const dealId = dealExplainMatch[1];
+        return handleExplainDeal(dealId, env, request);
       }
 
       const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);

@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup Node.js
-        uses: actions/setup-node@1d11999a6aee1462e71336a1420150e793574246
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
           cache: "npm"
@@ -68,7 +68,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check-updates.outputs.outdated_count > 0
-        uses: peter-evans/create-pull-request@050213f57368f7405e3240e53a3c9480a4732104
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore(deps): update dependencies"
