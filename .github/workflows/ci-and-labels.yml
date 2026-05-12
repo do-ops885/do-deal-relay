@@ -62,7 +62,7 @@ jobs:
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8
         with:
           components: rustfmt, clippy
         if: hashFiles('Cargo.toml') != ''
@@ -108,7 +108,7 @@ jobs:
         if: hashFiles('package.json') != ''
 
       - name: Setup Rust (if Cargo.toml exists)
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8
         if: hashFiles('Cargo.toml') != ''
 
       - name: Setup Python (if requirements.txt or pyproject.toml exists)
