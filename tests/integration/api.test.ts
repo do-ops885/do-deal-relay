@@ -403,7 +403,7 @@ describe("API Endpoints", () => {
         },
         DEALS_LOCK: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        }
+        },
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");
