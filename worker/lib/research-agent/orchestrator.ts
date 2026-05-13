@@ -3,6 +3,7 @@ import {
   ReferralResearchResult,
   WebResearchRequest,
   ReferralInput,
+  PipelineError,
 } from "../../types";
 import { CONFIG } from "../../config";
 import {
@@ -177,11 +178,20 @@ export async function executeReferralResearch(
   // Normalize query
   const normalizedQuery = normalizeResearchQuery(request.query, request.domain);
 
-  // Get API keys for potential real fetching
   const apiKeys = getApiKeys(env);
+  // Get API keys for potential real fetching
   const hasApiKeys = Boolean(
     apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
   );
+
+  // Guard: If real fetching explicitly requested but no API keys available
+  if (request.options?.use_real_fetching === true && !hasApiKeys) {
+    throw new PipelineError(
+      "ConfigError",
+      "use_real_fetching requires API keys to be configured",
+      "init",
+    );
+  }
   // Auto-enable real fetching when API keys are available, unless explicitly disabled
   const useRealFetching = request.options?.use_real_fetching ?? hasApiKeys;
 
@@ -509,7 +519,7 @@ export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
   depth: WebResearchRequest["depth"] = "thorough",
-  useRealFetching = false,
+  useRealFetching = false, // Internal bulk helper - simulation is intentional for performance/cost
 ): Promise<ReferralResearchResult> {
   const request: WebResearchRequest = {
     query: `${domain} referral code invite program`,

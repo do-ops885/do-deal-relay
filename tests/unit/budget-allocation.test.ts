@@ -233,7 +233,7 @@ describe("Budget Allocation", () => {
 
     const result = await discover(env, ctx);
 
-    // Default PER_SOURCE is 100
-    expect(result.deals).toHaveLength(100);
+    // Default PER_SOURCE is 50 (reduced from 100 per perf recommendations)
+    expect(result.deals).toHaveLength(50);
   });
 });

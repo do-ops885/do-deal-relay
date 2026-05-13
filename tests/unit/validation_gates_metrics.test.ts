@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { VALIDATION_GATES } from "../../worker/config";
-import { validate } from "../../worker/validation/pipeline";
+import { validate, reorderGatesByCost } from "../../worker/validation/pipeline";
 import { createMetrics } from "../../worker/lib/metrics/core";
 import {
   calculateAggregateStats,
@@ -96,6 +96,67 @@ describe("Validation Gates Metrics", () => {
     expect(prometheus).toContain(
       "# TYPE validation_gate_rejection_ratio gauge",
     );
+  });
+
+  it("should reorder gates by cost with fast gates before medium before slow", () => {
+    const ordered = reorderGatesByCost(VALIDATION_GATES);
+
+    // Fast gates: schema_validation, normalization_verification, reward_plausibility
+    const fastGates = [
+      "schema_validation",
+      "normalization_verification",
+      "reward_plausibility",
+    ];
+    // Medium gates: source_trust, deduplication_check, idempotency_check
+    const mediumGates = [
+      "source_trust",
+      "deduplication_check",
+      "idempotency_check",
+    ];
+
+    // Find the last fast gate index and first medium gate index
+    const lastFastIdx = Math.max(
+      ...fastGates.map((g) => ordered.indexOf(g as any)),
+    );
+    const firstMediumIdx = Math.min(
+      ...mediumGates.map((g) => ordered.indexOf(g as any)),
+    );
+
+    // All fast gates should appear before any medium gate
+    expect(lastFastIdx).toBeLessThan(firstMediumIdx);
+
+    // Find last medium index and first slow index
+    const slowGates = [
+      "expiry_validation",
+      "second_pass_validation",
+      "snapshot_hash_verification",
+    ];
+    const lastMediumIdx = Math.max(
+      ...mediumGates.map((g) => ordered.indexOf(g as any)),
+    );
+    const firstSlowIdx = Math.min(
+      ...slowGates.map((g) => ordered.indexOf(g as any)),
+    );
+
+    // All medium gates should appear before any slow gate
+    expect(lastMediumIdx).toBeLessThan(firstSlowIdx);
+
+    // All 9 gates should be present
+    expect(ordered).toHaveLength(9);
+
+    // Should not mutate the original array
+    expect(VALIDATION_GATES[0]).toBe("schema_validation");
+  });
+
+  it("should handle empty gate list", () => {
+    const result = reorderGatesByCost([]);
+    expect(result).toEqual([]);
+  });
+
+  it("should handle unknown gates gracefully", () => {
+    const result = reorderGatesByCost(["unknown_gate" as any]);
+    // Unknown gates fall into 'slow' bucket
+    expect(result).toEqual(["unknown_gate"]);
   });
 
   it("should have all 9 gates enumerated in VALIDATION_GATES", async () => {

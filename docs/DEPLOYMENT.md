@@ -187,6 +187,8 @@ Each command returns a JSON object with the namespace ID:
 
 Copy the returned IDs into `wrangler.jsonc` under the appropriate environment block. The current production IDs are:
 
+#### Production Environment
+
 | Binding        | ID                               |
 | -------------- | -------------------------------- |
 | DEALS_PROD     | `23ee9b8c9e2748e5880f476b8b57a524` |
@@ -194,6 +196,16 @@ Copy the returned IDs into `wrangler.jsonc` under the appropriate environment bl
 | DEALS_LOG      | `1f1a901fd6fb4dffbdcc86aa4a914ba8` |
 | DEALS_LOCK     | `e3ab520eafd5430ab72978e78bdd257e` |
 | DEALS_SOURCES  | `be3c0fc148b749b49a59aa7cfa23e3ac` |
+
+#### Staging Environment
+
+| Binding        | ID                               |
+| -------------- | -------------------------------- |
+| DEALS_PROD     | `b0db85b92fae45c1895152737ab72649` |
+| DEALS_STAGING  | `b0db85b92fae45c1895152737ab72649` |
+| DEALS_LOG      | `76296ec3db649ce88fda702b2661ba08` |
+| DEALS_LOCK     | `43fe4464ef6780963114c35e5939f2fc` |
+| DEALS_SOURCES  | `6459eeaa19a573ca72c52e2ba1ad909b` |
 
 ### Automated KV Setup (GitHub Actions)
 
