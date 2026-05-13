@@ -199,7 +199,6 @@ jobs:
           scan-ref: .
           severity: CRITICAL,HIGH
           exit-code: 1
-          cache: true
       - name: npm audit
         run: |
           npm ci --legacy-peer-deps
