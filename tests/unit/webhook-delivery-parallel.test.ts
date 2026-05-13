@@ -46,8 +46,8 @@ describe("Webhook Delivery Optimization", () => {
 
     mockEnv = {
       DEALS_WEBHOOKS: mockKv,
-      DEALS_KV: mockKv,
-      METRICS_KV: mockKv,
+      DEALS_PROD: mockKv,
+      DEALS_LOG: mockKv,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;

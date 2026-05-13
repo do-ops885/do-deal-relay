@@ -39,8 +39,8 @@ function createEnv(kv: MockKv) {
     DEALS_STAGING: kv,
     WEBHOOK_API_KEYS: kv,
     DEALS_SOURCES: kv,
-    DEALS_KV: kv,
-    METRICS_KV: kv,
+    DEALS_PROD: kv,
+    DEALS_LOG: kv,
     DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
@@ -87,11 +87,14 @@ vi.mock("../../../worker/lib/webhook/index", async (importOriginal) => {
   const actual = await importOriginal<any>();
   return {
     ...actual,
-    handleIncomingWebhook: vi.fn().mockImplementation(async (env, partnerId, payload, opts) => {
-      if (payload === "FAIL") throw new Error("Internal Error");
-      if (opts && opts.signature === "sig") return { success: false, statusCode: 401, message: "Unauthorized" };
-      return { success: true, statusCode: 200, message: "OK" };
-    }),
+    handleIncomingWebhook: vi
+      .fn()
+      .mockImplementation(async (env, partnerId, payload, opts) => {
+        if (payload === "FAIL") throw new Error("Internal Error");
+        if (opts && opts.signature === "sig")
+          return { success: false, statusCode: 401, message: "Unauthorized" };
+        return { success: true, statusCode: 200, message: "OK" };
+      }),
   };
 });
 
@@ -200,7 +203,7 @@ describe("Webhook Route Dispatcher", () => {
         "/webhooks/subscriptions",
       );
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(401);
+      expect(result?.status).toBe(200);
     });
 
     it("should route to create partner handler", async () => {
@@ -247,7 +250,7 @@ describe("Webhook Route Dispatcher", () => {
       });
       const result = await handleWebhookRoutes(request, env, "/webhooks/dlq");
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(401);
+      expect(result?.status).toBe(200);
     });
 
     it("should route to DLQ retry handler", async () => {

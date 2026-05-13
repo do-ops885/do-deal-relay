@@ -96,8 +96,6 @@ describe("API Endpoints", () => {
       DEALS_LOCK: mockKvFactory("lock"),
       DEALS_SOURCES: mockKvFactory("sources"),
       WEBHOOK_API_KEYS: mockKvFactory("sources"),
-      DEALS_KV: mockKvFactory("prod"),
-      METRICS_KV: mockKvFactory("log"),
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
@@ -304,7 +302,7 @@ describe("API Endpoints", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const request = new Request("http://localhost/api/discover", {
-    https://github.com/do-ops885/do-deal-relay/pull/177/conflict?name=tests%252Fintegration%252Fapi.test.ts&ancestor_oid=5cb7dd54c7c6870cb135a6253a295df9e4efe3cd&base_oid=cf29e99c0764121da90f6b86894458e4afd01e3a&head_oid=a544702f12c2c391296399a466179788fbbadc9b    method: "POST",
+        method: "POST",
         headers: { "X-API-Key": TEST_API_KEY },
       });
       const response = await worker.fetch(request, mockEnv);
@@ -398,12 +396,22 @@ describe("API Endpoints", () => {
         DEALS_PROD: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
         },
+        DEALS_LOG: {
+          get: vi.fn().mockRejectedValue(new Error("KV error")),
+          put: vi.fn().mockRejectedValue(new Error("KV error")),
+          list: vi.fn().mockRejectedValue(new Error("KV error")),
+        },
+        DEALS_LOCK: {
+          get: vi.fn().mockRejectedValue(new Error("KV error")),
+        }
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, errorEnv);
 
-      expect(response.status).toBe(500); // Internal server error due to KV failure in Promise.all
+      // The health handler has its own try-catch around getProductionSnapshot,
+      // but other calls in Promise.all might still throw and trigger the outer catch.
+      expect(response.status).toBe(500);
     });
   });
 });

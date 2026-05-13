@@ -117,8 +117,6 @@ describe("Publish Module", () => {
         get: vi.fn(async () => null),
         put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
-      DEALS_KV: {} as KVNamespace,
-      METRICS_KV: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",

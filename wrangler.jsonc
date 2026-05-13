@@ -42,14 +42,6 @@
       "binding": "DEALS_SOURCES",
       "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
     },
-    {
-      "binding": "DEALS_KV",
-      "id": "23ee9b8c9e2748e5880f476b8b57a524",
-    },
-    {
-      "binding": "METRICS_KV",
-      "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
-    },
   ],
   // Environment variables (non-secrets only - secrets use `wrangler secret`)
   "vars": {
@@ -109,7 +101,7 @@
       "kv_namespaces": [
         {
           "binding": "DEALS_PROD",
-          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+          "id": "b0db85b92fae45c1895152737ab72649",
         },
         {
           "binding": "DEALS_STAGING",
@@ -117,7 +109,7 @@
         },
         {
           "binding": "DEALS_LOG",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8-staging",
         },
         {
           "binding": "DEALS_LOCK",
@@ -126,14 +118,6 @@
         {
           "binding": "DEALS_SOURCES",
           "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
-        },
-        {
-          "binding": "DEALS_KV",
-          "id": "b0db85b92fae45c1895152737ab72649",
-        },
-        {
-          "binding": "METRICS_KV",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
         },
       ],
       "d1_databases": [
@@ -179,14 +163,6 @@
         {
           "binding": "DEALS_SOURCES",
           "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
-        },
-        {
-          "binding": "DEALS_KV",
-          "id": "23ee9b8c9e2748e5880f476b8b57a524",
-        },
-        {
-          "binding": "METRICS_KV",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
         },
       ],
       "d1_databases": [
