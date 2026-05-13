@@ -203,10 +203,14 @@ export async function recordSourceValidation(
 export async function batchRecordSourceValidation(
   env: Env,
   results: Array<{ domain: string; success: boolean }>,
+  existingRegistry?: SourceConfig[],
 ): Promise<void> {
   if (results.length === 0) return;
 
-  const registry = await getSourceRegistry(env);
+  // Use the already-read registry if provided, so in-memory updates
+  // (like discovery_count or last_discovery) are not lost by a
+  // second KV read. Falls back to reading fresh if not provided.
+  const registry = existingRegistry ?? (await getSourceRegistry(env));
 
   for (const { domain, success } of results) {
     const source = registry.find((s) => s.domain === domain);

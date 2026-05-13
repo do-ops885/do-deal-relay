@@ -132,8 +132,10 @@ export async function discover(
 
   // Flush all queued source validation records in a single KV write per source
   // This replaces the old per-pattern KV writes (O(N)) with batched writes (O(1))
+  // Pass the existing registry so in-memory updates (discovery_count, last_discovery)
+  // are preserved and not lost by a second KV read.
   if (validationResults.length > 0) {
-    await batchRecordSourceValidation(env, validationResults);
+    await batchRecordSourceValidation(env, validationResults, sources);
   }
 
   return { deals, errors };
