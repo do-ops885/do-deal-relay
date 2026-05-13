@@ -46,9 +46,9 @@ export async function discover(
     env.CANDIDATE_BUDGET_GLOBAL || String(CONFIG.MAX_DEALS_PER_RUN),
     10,
   );
-  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
+  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "50", 10);
   const highTrustBonus = parseInt(
-    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
+    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "100",
     10,
   );
 

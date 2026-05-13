@@ -19,7 +19,7 @@ export const CONFIG = {
   FETCH_TIMEOUT_MS: 30_000, // 30 seconds
   RESEARCH_FETCH_TIMEOUT_MS: 15_000, // 15 seconds for research
   MAX_RETRIES: 3,
-  MAX_DEALS_PER_RUN: 500, // Reduced from 1000 per perf recommendations
+  MAX_DEALS_PER_RUN: 250, // Reduced from 500 per perf recommendations
 
   // User Agent for web requests
   USER_AGENT: "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",

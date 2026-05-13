@@ -233,7 +233,7 @@ async function runGate(
  *   Medium (simple KV/D1 lookups): source_trust, deduplication_check, idempotency_check
  *   Slow (comparisons, snapshot work): expiry_validation, second_pass_validation, snapshot_hash_verification
  */
-function reorderGatesByCost(
+export function reorderGatesByCost(
   gates: readonly ValidationGate[],
 ): ValidationGate[] {
   const fast: ValidationGate[] = [];
