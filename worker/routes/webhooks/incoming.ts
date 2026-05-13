@@ -18,11 +18,6 @@ export async function handleIncomingWebhookRequest(
   partnerId: string,
 ): Promise<Response> {
   try {
-    // Validate method
-    if (request.method !== "POST") {
-      return jsonResponse({ error: "Method Not Allowed" }, 405);
-    }
-
     // Validate content type
     const contentType = request.headers.get("content-type");
     if (!contentType?.includes("application/json")) {

@@ -181,6 +181,29 @@ jobs:
           npm run test:smoke
           kill "$WRANGLER_PID"
 
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          version: latest
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1
+      - name: npm audit
+        run: |
+          npm ci --legacy-peer-deps
+          npm audit --audit-level=moderate
+
   # Stage 3: Build verification
   build:
     name: Build
@@ -208,7 +231,17 @@ jobs:
     name: CI Summary
     runs-on: ubuntu-latest
     needs:
-      [lint, format, docs, validate-codes, test, test-e2e, smoke-test, build]
+      [
+        lint,
+        format,
+        docs,
+        validate-codes,
+        test,
+        test-e2e,
+        smoke-test,
+        security-scan,
+        build,
+      ]
     if: always()
     steps:
       - name: Report Status
@@ -230,7 +263,16 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           FAILED=0
-          for result in "${{ needs.lint.result }}" "${{ needs.format.result }}" "${{ needs.validate-codes.result }}" "${{ needs.test.result }}" "${{ needs.test-e2e.result }}" "${{ needs.smoke-test.result }}" "${{ needs.security-scan.result }}" "${{ needs.build.result }}"; do
+          for result in \
+            "${{ needs.lint.result }}" \
+            "${{ needs.format.result }}" \
+            "${{ needs.validate-codes.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.test-e2e.result }}" \
+            "${{ needs.smoke-test.result }}" \
+            "${{ needs.security-scan.result }}" \
+            "${{ needs.build.result }}"; \
+          do
             if [ "$result" = "failure" ]; then
               FAILED=1
             fi
