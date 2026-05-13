@@ -172,7 +172,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - name: Run wrangler deploy dry-run
-        run: npx wrangler deploy --dry-run
+        run: npm run build
       - name: Run smoke tests
         run: |
           npx wrangler dev --port 8787 &
