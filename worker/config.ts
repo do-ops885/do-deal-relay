@@ -19,7 +19,7 @@ export const CONFIG = {
   FETCH_TIMEOUT_MS: 30_000, // 30 seconds
   RESEARCH_FETCH_TIMEOUT_MS: 15_000, // 15 seconds for research
   MAX_RETRIES: 3,
-  MAX_DEALS_PER_RUN: 1000,
+  MAX_DEALS_PER_RUN: 500, // Reduced from 1000 per perf recommendations
 
   // User Agent for web requests
   USER_AGENT: "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
@@ -60,7 +60,7 @@ export const CONFIG = {
   },
 
   // Validation thresholds
-  MIN_TRUST_SCORE: 0.3,
+  MIN_TRUST_SCORE: 0.35,
   MIN_CONFIDENCE_SCORE: 0.5,
   SIMILARITY_THRESHOLD: 0.8,
   MAX_REWARD_VALUE: 10000, // $10K cap for sanity

@@ -77,7 +77,11 @@ export async function validate(
       }
 
       if (!skipGates) {
-        for (const gate of VALIDATION_GATES) {
+        // Optimization: Reorder gates so cheap rule-based checks run first,
+        // and expensive (AI-backed) gates run later. This minimizes compute
+        // on candidates that will be rejected by quick deterministic checks.
+        const orderedGates = reorderGatesByCost(VALIDATION_GATES);
+        for (const gate of orderedGates) {
           const gateResult = await runGate(
             gate,
             deal,
@@ -218,6 +222,44 @@ async function runGate(
     default:
       return { passed: false, reason: "Unknown gate" };
   }
+}
+
+/**
+ * Reorder validation gates so cheap rule-based checks run before expensive AI-backed ones.
+ * This minimizes wasted compute on candidates that will be rejected early.
+ *
+ * Gate cost tiers:
+ *   Fast (deterministic, no I/O): schema_validation, normalization_verification, price_sanity
+ *   Medium (simple KV/D1 lookups): source_trust, deduplication_check, idempotency_check
+ *   Slow (comparisons, snapshot work): expiry_validation, second_pass_validation, snapshot_hash_verification
+ */
+function reorderGatesByCost(
+  gates: readonly ValidationGate[],
+): ValidationGate[] {
+  const fast: ValidationGate[] = [];
+  const medium: ValidationGate[] = [];
+  const slow: ValidationGate[] = [];
+
+  for (const gate of gates) {
+    if (
+      gate === "schema_validation" ||
+      gate === "normalization_verification" ||
+      gate === "reward_plausibility"
+    ) {
+      fast.push(gate);
+    } else if (
+      gate === "source_trust" ||
+      gate === "deduplication_check" ||
+      gate === "idempotency_check"
+    ) {
+      medium.push(gate);
+    } else {
+      // expiry_validation, second_pass_validation, snapshot_hash_verification
+      slow.push(gate);
+    }
+  }
+
+  return [...fast, ...medium, ...slow];
 }
 
 /**
