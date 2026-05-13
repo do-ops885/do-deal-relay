@@ -78,15 +78,21 @@ describe("API Endpoints", () => {
 
   async function setupTestApiKey() {
     const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode("ddr_test_key_123"));
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode("ddr_test_key_123"),
+    );
     const hash = Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    mockKvStorage.set("sources:apikey:" + hash, JSON.stringify({
-      userId: "test-user",
-      role: "admin",
-      createdAt: new Date().toISOString(),
-    }));
+    mockKvStorage.set(
+      "sources:apikey:" + hash,
+      JSON.stringify({
+        userId: "test-user",
+        role: "admin",
+        createdAt: new Date().toISOString(),
+      }),
+    );
   }
 
   beforeEach(async () => {
