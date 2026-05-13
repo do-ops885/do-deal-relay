@@ -863,7 +863,7 @@ function findFirstMatch(text: string, patterns: RegExp[]): string | null {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
     if (match) {
-      return match[1] ?? match[0] ?? null;
+return match[1] ?? match[0];
     }
   }
   return null;
