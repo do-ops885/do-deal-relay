@@ -111,7 +111,7 @@ export function buildStructuredQuery(
   // Extract status
   const statusEntities = getTopEntities(entities, "status");
   const status =
-    statusEntities.length > 0
+    statusEntities.length > 0 && statusEntities[0]
       ? (statusEntities[0].value as "active" | "quarantined" | "rejected")
       : "active";
 

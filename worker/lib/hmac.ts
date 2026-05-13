@@ -114,7 +114,7 @@ export function parseSignatureHeader(
   }
 
   const [algorithm, signature] = parts;
-  if (algorithm !== "sha256") {
+  if (algorithm !== "sha256" || signature === undefined) {
     return null;
   }
 

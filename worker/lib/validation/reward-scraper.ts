@@ -261,7 +261,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   // Try cash patterns
   for (const pattern of REWARD_PATTERNS.cash) {
     const match = text.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       const value = parseValue(match[1]);
       const currency = detectCurrency(text, match.index || 0);
       candidates.push({
@@ -276,7 +276,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   // Try percent patterns
   for (const pattern of REWARD_PATTERNS.percent) {
     const match = text.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       const value = parseFloat(match[1]);
       candidates.push({
         type: "percent",
@@ -289,7 +289,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   // Try credit patterns
   for (const pattern of REWARD_PATTERNS.credit) {
     const match = text.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       const value = parseValue(match[1]);
       candidates.push({
         type: "credit",
@@ -302,7 +302,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   // Try item patterns (free items)
   for (const pattern of REWARD_PATTERNS.item) {
     const match = text.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       candidates.push({
         type: "item",
         value: match[1].trim(),
@@ -315,7 +315,10 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   const structuredReward = extractFromStructuredData(html);
   if (structuredReward) {
     candidates.push({
-      ...structuredReward,
+      type: structuredReward.type,
+      value: structuredReward.value,
+      currency: structuredReward.currency,
+      description: structuredReward.description,
       confidence: 0.9, // Higher confidence for structured data
     });
   }
@@ -328,6 +331,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   // Sort by confidence and return best
   candidates.sort((a, b) => b.confidence - a.confidence);
   const best = candidates[0];
+  if (!best) return null;
 
   // Look for description context
   const description = findRewardDescription(text, best);
@@ -385,7 +389,7 @@ function extractFromStructuredData(
   const jsonLdMatch = html.match(
     /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i,
   );
-  if (jsonLdMatch) {
+  if (jsonLdMatch && jsonLdMatch[1]) {
     try {
       const data = JSON.parse(jsonLdMatch[1]);
       if (data["@type"] === "Offer" && data.price) {
@@ -407,13 +411,15 @@ function extractFromStructuredData(
   if (metaDescription) {
     // Try to extract from description
     const desc = metaDescription[1];
-    for (const pattern of REWARD_PATTERNS.cash) {
-      const match = desc.match(pattern);
-      if (match) {
-        return {
-          type: "cash",
-          value: parseValue(match[1]),
-        };
+    if (desc) {
+      for (const pattern of REWARD_PATTERNS.cash) {
+        const match = desc.match(pattern);
+        if (match && match[1] !== undefined) {
+          return {
+            type: "cash",
+            value: parseValue(match[1]),
+          };
+        }
       }
     }
   }

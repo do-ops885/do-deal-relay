@@ -446,16 +446,16 @@ export async function getDealStats(db: D1Database): Promise<DealStats> {
   );
 
   const stats =
-    statsResult.success && statsResult.data
+    statsResult.success && statsResult.data && statsResult.data[0]
       ? statsResult.data[0]
       : { total: 0, active: 0, quarantined: 0, rejected: 0, expired: 0 };
 
   return {
-    total: stats.total || 0,
-    active: stats.active || 0,
-    quarantined: stats.quarantined || 0,
-    rejected: stats.rejected || 0,
-    expired: stats.expired || 0,
+    total: stats.total ?? 0,
+    active: stats.active ?? 0,
+    quarantined: stats.quarantined ?? 0,
+    rejected: stats.rejected ?? 0,
+    expired: stats.expired ?? 0,
     byDomain: domainResult.success ? domainResult.data || [] : [],
     byCategory: await getCategoriesWithCounts(db),
     byRewardType: rewardResult.success ? rewardResult.data || [] : [],

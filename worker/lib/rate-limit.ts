@@ -100,7 +100,7 @@ export async function checkRateLimit(
   identifier: string,
   endpoint: string,
 ): Promise<RateLimitResult> {
-  const config = ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  const config = ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
@@ -274,7 +274,7 @@ export function createRateLimitMiddleware(
  * @returns Rate limit configuration
  */
 export function getRateLimitConfig(endpoint: string): RateLimitConfig {
-  return ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  return ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
 }
 
 /**
@@ -291,7 +291,7 @@ export async function resetRateLimit(
   identifier: string,
   endpoint: string,
 ): Promise<void> {
-  const config = ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  const config = ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;

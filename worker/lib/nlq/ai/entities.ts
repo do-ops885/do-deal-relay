@@ -103,7 +103,7 @@ export function extractRuleBasedEntities(
   // Comparator extraction
   for (const { pattern, operation } of COMPARATOR_PATTERNS) {
     const match = query.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       entities.push({
         type: "comparator",
         value: match[1],
@@ -117,11 +117,14 @@ export function extractRuleBasedEntities(
   const domainPattern = /\b(\w+\.com?|app\.\w+|co\.\w+)\b/gi;
   let domainMatch: RegExpExecArray | null;
   while ((domainMatch = domainPattern.exec(query)) !== null) {
-    entities.push({
-      type: "domain",
-      value: domainMatch[1],
-      confidence: 0.9,
-    });
+    const domain = domainMatch[1];
+    if (domain !== undefined) {
+      entities.push({
+        type: "domain",
+        value: domain,
+        confidence: 0.9,
+      });
+    }
   }
 
   // Category extraction

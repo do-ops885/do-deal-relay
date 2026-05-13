@@ -109,25 +109,29 @@ function extractRewards(tokens: Token[], config: NLQConfig): ExtractedEntity[] {
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
+    if (!token) continue;
 
     // Look for currency symbols followed by numbers
     if (token.type === "currency" && i + 1 < tokens.length) {
       const nextToken = tokens[i + 1];
-      if (nextToken.type === "number") {
+      if (nextToken && nextToken.type === "number") {
         let value = parseFloat(nextToken.value);
         let operator: ComparisonOperator = "gte";
 
         // Check for + operator indicating "or more"
-        if (i + 2 < tokens.length && tokens[i + 2].value === "+") {
+        const nextNextToken = tokens[i + 2];
+        const nextNextNextToken = tokens[i + 3];
+        if (nextNextToken && nextNextToken.value === "+") {
           operator = "gte";
         }
         // Check for range pattern (e.g., "$50-$100")
         else if (
-          i + 3 < tokens.length &&
-          tokens[i + 2].value === "-" &&
-          tokens[i + 3].type === "number"
+          nextNextToken &&
+          nextNextToken.value === "-" &&
+          nextNextNextToken &&
+          nextNextNextToken.type === "number"
         ) {
-          value = parseFloat(tokens[i + 3].value);
+          value = parseFloat(nextNextNextToken.value);
           operator = "lte";
         }
 
@@ -155,10 +159,11 @@ function extractRewards(tokens: Token[], config: NLQConfig): ExtractedEntity[] {
       for (let j = i + 1; j < Math.min(i + 3, tokens.length); j++) {
         const nextToken = tokens[j];
         if (
-          nextToken.normalized.includes("bonus") ||
-          nextToken.normalized.includes("reward") ||
-          nextToken.normalized.includes("credit") ||
-          nextToken.normalized.includes("point")
+          nextToken &&
+          (nextToken.normalized.includes("bonus") ||
+            nextToken.normalized.includes("reward") ||
+            nextToken.normalized.includes("credit") ||
+            nextToken.normalized.includes("point"))
         ) {
           entities.push({
             type: "reward_value",
@@ -196,7 +201,8 @@ function extractRewards(tokens: Token[], config: NLQConfig): ExtractedEntity[] {
       token.normalized === "percentage"
     ) {
       // Check preceding number
-      if (i > 0 && tokens[i - 1].type === "number") {
+      const prevToken = tokens[i - 1];
+      if (prevToken && prevToken.type === "number") {
         entities.push({
           type: "reward_type",
           value: "percent",
@@ -220,16 +226,19 @@ function extractDomains(tokens: Token[]): ExtractedEntity[] {
   ];
 
   for (const token of tokens) {
+    if (!token) continue;
     // Check for explicit domain patterns
     for (const pattern of domainPatterns) {
       const match = token.value.match(pattern);
       if (match) {
-        const domain = match[1] || match[0];
-        entities.push({
-          type: "domain",
-          value: domain.toLowerCase(),
-          confidence: 0.9,
-        });
+        const domain = match[1] ?? match[0];
+        if (domain) {
+          entities.push({
+            type: "domain",
+            value: domain.toLowerCase(),
+            confidence: 0.9,
+          });
+        }
       }
     }
 
@@ -288,6 +297,7 @@ function extractStatus(tokens: Token[]): ExtractedEntity[] {
   ];
 
   for (const token of tokens) {
+    if (!token) continue;
     for (const [pattern, status] of statusPatterns) {
       if (pattern.test(token.value)) {
         entities.push({
@@ -314,7 +324,7 @@ function extractDates(tokens: Token[]): ExtractedEntity[] {
   const text = tokens.map((t) => t.value).join(" ");
 
   const match = text.match(expiringPattern);
-  if (match) {
+  if (match && match[2] !== undefined && match[3] !== undefined) {
     const amount = parseInt(match[2], 10);
     const unit = match[3].toLowerCase();
     let days = amount;

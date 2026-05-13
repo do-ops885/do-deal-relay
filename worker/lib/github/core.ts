@@ -281,5 +281,6 @@ export async function verifyCommit(
   expectedSha: string,
 ): Promise<boolean> {
   const commits = await getRecentCommits(repo, CONFIG.SNAPSHOT_FILE, 1);
-  return commits.length > 0 && commits[0].sha === expectedSha;
+  const latestCommit = commits[0];
+  return latestCommit !== undefined && latestCommit.sha === expectedSha;
 }

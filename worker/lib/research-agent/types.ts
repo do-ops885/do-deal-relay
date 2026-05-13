@@ -476,13 +476,13 @@ export function generatePotentialCodes(
   for (let i = 0; i < count; i++) {
     const sampleCode = generateSampleCode(domain, i);
     const urlFormat =
-      knownProgram.urlFormats[0] || `https://${domain}/invite/{code}`;
+      knownProgram.urlFormats[0] ?? `https://${domain}/invite/{code}`;
 
     codes.push({
       code: sampleCode,
       url: urlFormat.replace("{code}", sampleCode),
       typicalReward:
-        knownProgram.typicalRewards[i % knownProgram.typicalRewards.length] ||
+        knownProgram.typicalRewards[i % knownProgram.typicalRewards.length] ??
         "Unknown reward",
     });
   }
@@ -560,11 +560,13 @@ export function generateSimulatedReward(source: string): string {
     twitter: ["Early access", "Beta invite", "Discount code"],
   };
 
-  const sourceRewards = rewards[source] || ["Unknown reward"];
+  const sourceRewards = rewards[source] ?? ["Unknown reward"];
   // Using crypto.getRandomValues for secure random selection (not security-critical but consistent)
   const array = new Uint8Array(1);
   crypto.getRandomValues(array);
-  return sourceRewards[array[0] % sourceRewards.length];
+  const firstByte = array[0];
+  if (firstByte === undefined) return "Unknown reward";
+  return sourceRewards[firstByte % sourceRewards.length] ?? "Unknown reward";
 }
 
 export function deduplicateCodes(
@@ -584,13 +586,13 @@ export function extractRewardValue(rewardSummary?: string): number | undefined {
 
   // Extract numeric values from reward summary
   const matches = rewardSummary.match(/\$?([\d,]+(?:\.\d{2})?)/);
-  if (matches) {
+  if (matches && matches[1] !== undefined) {
     return parseFloat(matches[1].replace(/,/g, ""));
   }
 
   // Extract percentages
   const percentMatch = rewardSummary.match(/(\d+)%/);
-  if (percentMatch) {
+  if (percentMatch && percentMatch[1] !== undefined) {
     return parseInt(percentMatch[1], 10);
   }
 
