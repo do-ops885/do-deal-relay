@@ -109,15 +109,18 @@
         },
         {
           "binding": "DEALS_LOG",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8-staging",
+          // Environment-isolated: staging-specific logging
+          "id": "76296ec3db649ce88fda702b2661ba08",
         },
         {
           "binding": "DEALS_LOCK",
-          "id": "e3ab520eafd5430ab72978e78bdd257e",
+          // Environment-isolated: prevents cross-env pipeline lock contention
+          "id": "43fe4464ef6780963114c35e5939f2fc",
         },
         {
           "binding": "DEALS_SOURCES",
-          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+          // Environment-isolated: experimental sources shouldn't pollute production
+          "id": "6459eeaa19a573ca72c52e2ba1ad909b",
         },
       ],
       "d1_databases": [
