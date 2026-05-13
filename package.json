@@ -30,6 +30,7 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
+    "protobufjs": "8.2.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {

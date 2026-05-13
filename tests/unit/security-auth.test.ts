@@ -35,8 +35,8 @@ describe("Security: Authentication Bypasses Fixed", () => {
           // list should not even be called now
           list: vi.fn(),
         },
-        DEALS_KV: {} as KVNamespace,
-        METRICS_KV: {} as KVNamespace,
+        DEALS_PROD: {} as KVNamespace,
+        DEALS_LOG: {} as KVNamespace,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;

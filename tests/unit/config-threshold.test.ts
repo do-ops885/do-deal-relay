@@ -11,8 +11,8 @@ describe("Config Utilities", () => {
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
-    DEALS_KV: {},
-    METRICS_KV: {},
+    DEALS_PROD: {},
+    DEALS_LOG: {},
     AI_GATEWAY_URL: "http://test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
@@ -46,9 +46,9 @@ describe("Config Utilities", () => {
   describe("validateConfig", () => {
     it("should throw when mandatory config is missing", () => {
       const env = { ...mockEnv } as any;
-      delete env.DEALS_KV;
+      delete env.DEALS_PROD;
       expect(() => validateConfig(env)).toThrow(
-        "Missing required config: DEALS_KV",
+        "Missing required config: DEALS_PROD",
       );
     });
 

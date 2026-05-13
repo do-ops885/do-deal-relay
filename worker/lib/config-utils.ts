@@ -28,8 +28,8 @@ export function getTrustThreshold(env: Env): number {
  */
 export function validateConfig(env: Env): void {
   const required = [
-    "DEALS_KV",
-    "METRICS_KV",
+    "DEALS_PROD",
+    "DEALS_LOG",
     "AI_GATEWAY_URL",
     "TRUST_THRESHOLD",
   ];
