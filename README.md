@@ -89,8 +89,8 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DEALS_KV` | Yes | KV namespace for deal storage |
-| `METRICS_KV` | Yes | KV namespace for metrics |
+| `DEALS_PROD` | Yes | KV namespace for deal storage |
+| `DEALS_LOG` | Yes | KV namespace for metrics |
 | `AI_GATEWAY_URL` | Yes | AI Gateway URL |
 | `TRUST_THRESHOLD` | Yes | Minimum trust score (0.0–1.0) |
 | `ENVIRONMENT` | No | deployment environment |

@@ -32,12 +32,12 @@ describe("Auth", () => {
       put: mockPut,
       list: mockList,
     },
-    DEALS_KV: {
+    DEALS_PROD: {
       get: mockGet,
       put: mockPut,
       list: mockList,
     },
-    METRICS_KV: {
+    DEALS_LOG: {
       get: mockGet,
       put: mockPut,
       list: mockList,

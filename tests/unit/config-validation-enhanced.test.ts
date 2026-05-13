@@ -7,8 +7,8 @@ describe("Enhanced Config Validation", () => {
   const mockKV = {} as KVNamespace;
 
   const validEnv = {
-    DEALS_KV: mockKV,
-    METRICS_KV: mockKV,
+    DEALS_PROD: mockKV,
+    DEALS_LOG: mockKV,
     AI_GATEWAY_URL: "https://gateway.ai",
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
@@ -20,19 +20,19 @@ describe("Enhanced Config Validation", () => {
     expect(() => validateConfig(validEnv)).not.toThrow();
   });
 
-  it("should throw when DEALS_KV is missing", () => {
+  it("should throw when DEALS_PROD is missing", () => {
     const env = { ...validEnv } as any;
-    delete env.DEALS_KV;
+    delete env.DEALS_PROD;
     expect(() => validateConfig(env)).toThrow(
-      "Missing required config: DEALS_KV",
+      "Missing required config: DEALS_PROD",
     );
   });
 
-  it("should throw when METRICS_KV is missing", () => {
+  it("should throw when DEALS_LOG is missing", () => {
     const env = { ...validEnv } as any;
-    delete env.METRICS_KV;
+    delete env.DEALS_LOG;
     expect(() => validateConfig(env)).toThrow(
-      "Missing required config: METRICS_KV",
+      "Missing required config: DEALS_LOG",
     );
   });
 
@@ -54,10 +54,10 @@ describe("Enhanced Config Validation", () => {
 
   it("should throw when multiple variables are missing", () => {
     const env = { ...validEnv } as any;
-    delete env.DEALS_KV;
-    delete env.METRICS_KV;
+    delete env.DEALS_PROD;
+    delete env.DEALS_LOG;
     expect(() => validateConfig(env)).toThrow(
-      "Missing required config: DEALS_KV, METRICS_KV",
+      "Missing required config: DEALS_PROD, DEALS_LOG",
     );
   });
 

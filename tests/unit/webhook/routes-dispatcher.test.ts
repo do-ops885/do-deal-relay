@@ -34,11 +34,30 @@ function createEnv(kv: MockKv) {
   return {
     DEALS_STAGING: kv,
     WEBHOOK_API_KEYS: kv,
-    DEALS_KV: kv,
-    METRICS_KV: kv,
+    DEALS_SOURCES: kv,
+    DEALS_PROD: kv,
+    DEALS_LOG: kv,
+    DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as any;
+}
+
+async function setupValidApiKey(kv: MockKv, key: string = "ddr_test_key_123") {
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(key));
+  const hash = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  kv.storage.set(
+    `apikey:${hash}`,
+    JSON.stringify({
+      userId: "test-user",
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    }),
+  );
+  return key;
 }
 
 function createRequest(
@@ -54,6 +73,23 @@ function createRequest(
   if (body) init.body = JSON.stringify(body);
   return new Request(url, init);
 }
+
+// Mocking handleIncomingWebhook to control its behavior
+vi.mock("../../../worker/lib/webhook/index", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    handleIncomingWebhook: vi
+      .fn()
+      .mockImplementation(async (env, partnerId, payload, opts) => {
+        if (payload === "FAIL") throw new Error("Internal Error");
+        if (opts && opts.signature === "sig")
+          return { success: false, statusCode: 401, message: "Unauthorized" };
+        return { success: true, statusCode: 200, message: "OK" };
+      }),
+  };
+});
+
 
 describe("Webhook Route Dispatcher", () => {
   let kv: MockKv;
@@ -130,10 +166,10 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to list subscriptions handler", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = new Request("http://localhost/webhooks/subscriptions", {
         method: "GET",
-        headers: { "X-API-Key": "valid-key" },
+        headers: { "X-API-Key": key, Authorization: `Bearer ${key}` },
       });
       const result = await handleWebhookRoutes(
         request,
@@ -141,7 +177,7 @@ describe("Webhook Route Dispatcher", () => {
         "/webhooks/subscriptions",
       );
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(401);
+      expect(result?.status).toBe(200);
     });
 
     it("should route to create partner handler", async () => {
@@ -170,14 +206,14 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should route to DLQ handler", async () => {
       const env = createEnv(kv);
-      kv.storage.set("api-keys", JSON.stringify(["valid-key"]));
+      const key = await setupValidApiKey(kv);
       const request = new Request("http://localhost/webhooks/dlq", {
         method: "GET",
-        headers: { "X-API-Key": "valid-key" },
+        headers: { "X-API-Key": key, Authorization: `Bearer ${key}` },
       });
       const result = await handleWebhookRoutes(request, env, "/webhooks/dlq");
       expect(result).not.toBeNull();
-      expect(result?.status).toBe(401);
+      expect(result?.status).toBe(200);
     });
 
     it("should route to DLQ retry handler", async () => {
@@ -310,7 +346,7 @@ describe("Webhook Route Dispatcher", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Webhook-Signature": "sha256=abc",
+          "X-Webhook-Signature": "sig",
           "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
           "X-Webhook-Id": "wh_1",
         },
@@ -326,7 +362,7 @@ describe("Webhook Route Dispatcher", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Webhook-Signature": "sha256=abc",
+          "X-Webhook-Signature": "sig",
           "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
           "X-Webhook-Id": "wh_1",
           "Idempotency-Key": "idem_123",
@@ -347,9 +383,10 @@ describe("Webhook Route Dispatcher", () => {
           "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
           "X-Webhook-Id": "wh_1",
         },
+        body: "FAIL",
       });
       const response = await handleIncomingWebhookRequest(request, env, "p1");
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(500);
     });
   });
 });

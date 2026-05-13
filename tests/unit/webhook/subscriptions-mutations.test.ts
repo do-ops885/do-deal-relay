@@ -41,8 +41,8 @@ type MockKv = ReturnType<typeof createMockKv>;
 function createEnv(kv: MockKv) {
   return {
     DEALS_STAGING: kv,
-    DEALS_KV: kv,
-    METRICS_KV: kv,
+    DEALS_PROD: kv,
+    DEALS_LOG: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as any;

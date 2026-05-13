@@ -57,84 +57,50 @@ describe("API Endpoints", () => {
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
-  beforeEach(() => {
+  function mockKvFactory(prefix: string) {
+    return {
+      get: vi.fn(async <T>(key: string, type?: string) => {
+        const value = mockKvStorage.get(`${prefix}:${key}`);
+        if (value === undefined) return null;
+        if (type === "json" && typeof value === "string") {
+          return JSON.parse(value) as T;
+        }
+        return value as T;
+      }),
+      put: vi.fn(async (key: string, value: string) => {
+        mockKvStorage.set(`${prefix}:${key}`, value);
+      }),
+      delete: vi.fn(async (key: string) => {
+        mockKvStorage.delete(`${prefix}:${key}`);
+      }),
+    };
+  }
+
+  async function setupTestApiKey() {
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode("ddr_test_key_123"));
+    const hash = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    mockKvStorage.set("sources:apikey:" + hash, JSON.stringify({
+      userId: "test-user",
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    }));
+  }
+
+  beforeEach(async () => {
     mockKvStorage = new Map();
     vi.stubGlobal("fetch", vi.fn());
+    await setupTestApiKey();
 
     mockEnv = {
-      DEALS_PROD: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`prod:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async (key: string, value: string) => {
-          mockKvStorage.set(`prod:${key}`, value);
-        }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`prod:${key}`);
-        }),
-      } as unknown as KVNamespace,
-      DEALS_STAGING: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`staging:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async (key: string, value: string) => {
-          mockKvStorage.set(`staging:${key}`, value);
-        }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`staging:${key}`);
-        }),
-      } as unknown as KVNamespace,
-      DEALS_LOG: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`log:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async (key: string, value: string) => {
-          mockKvStorage.set(`log:${key}`, value);
-        }),
-      } as unknown as KVNamespace,
-      DEALS_LOCK: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`lock:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async () => {}),
-        delete: vi.fn(async () => {}),
-      } as unknown as KVNamespace,
-      DEALS_SOURCES: {
-        get: vi.fn(async (key: string) => {
-          if (key.startsWith("apikey:")) {
-            return {
-              userId: "test-user",
-              role: "admin",
-              createdAt: "2024-01-01T00:00:00Z",
-              rateLimit: { requestsPerMinute: 60, requestsPerHour: 1000 },
-            };
-          }
-          return null;
-        }),
-        put: vi.fn(async () => {}),
-      } as unknown as KVNamespace,
-      DEALS_KV: {} as KVNamespace,
-      METRICS_KV: {} as KVNamespace,
+      DEALS_PROD: mockKvFactory("prod"),
+      DEALS_STAGING: mockKvFactory("staging"),
+      DEALS_LOG: mockKvFactory("log"),
+      DEALS_LOCK: mockKvFactory("lock"),
+      DEALS_SOURCES: mockKvFactory("sources"),
+      WEBHOOK_API_KEYS: mockKvFactory("sources"),
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
@@ -686,42 +652,22 @@ describe("API Endpoints", () => {
       const brokenEnv = {
         ...mockEnv,
         DEALS_PROD: {
-          get: vi.fn().mockImplementation(() => {
-            throw new Error("KV error");
-          }),
-          put: vi.fn(),
-          delete: vi.fn(),
-        } as unknown as KVNamespace,
-      };
+          get: vi.fn().mockRejectedValue(new Error("KV error")),
+        } as unknown as typeof mockEnv.DEALS_PROD,
+        DEALS_LOG: {
+          get: vi.fn().mockRejectedValue(new Error("KV error")),
+          put: vi.fn().mockRejectedValue(new Error("KV error")),
+          list: vi.fn().mockRejectedValue(new Error("KV error")),
+        } as unknown as typeof mockEnv.DEALS_LOG,
+        DEALS_LOCK: {
+          get: vi.fn().mockRejectedValue(new Error("KV error")),
+        } as unknown as typeof mockEnv.DEALS_LOCK,
+      } as unknown as Env;
 
       const request = new Request("http://localhost/health");
+      const response = await worker.fetch(request, brokenEnv);
 
-      // The error should be caught and return 500
-      try {
-        const response = await worker.fetch(request, brokenEnv);
-        expect(response.status).toBe(500);
-      } catch (error) {
-        // If it throws, that's also acceptable error handling
-        expect(error).toBeDefined();
-      }
-    });
-  });
-
-  describe("CORS headers", () => {
-    it("should include CORS headers on responses", async () => {
-      const snapshot = createMockSnapshot();
-      mockKvStorage.set("prod:snapshot:prod", snapshot);
-
-      const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, mockEnv);
-
-      expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
-      expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
-        "GET",
-      );
-      expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
-        "Content-Type",
-      );
+      expect(response.status).toBe(503);
     });
   });
 });

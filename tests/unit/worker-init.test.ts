@@ -18,8 +18,8 @@ describe("Worker Initialization", () => {
     DEALS_LOG: { get: vi.fn(), put: vi.fn() },
     DEALS_LOCK: { get: vi.fn() },
     DEALS_SOURCES: { get: vi.fn() },
-    DEALS_KV: {},
-    METRICS_KV: {},
+    DEALS_PROD: {},
+    DEALS_LOG: {},
     AI_GATEWAY_URL: "http://test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
