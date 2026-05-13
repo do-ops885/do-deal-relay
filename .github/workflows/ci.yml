@@ -192,13 +192,14 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Trivy
-        run: |
-          # Use direct binary download instead of piped install script for reliability
-          curl -sSfL https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.tar.gz \
-            | sudo tar xzf - -C /usr/local/bin trivy
-      - name: Trivy filesystem scan
-        run: |
-          trivy fs --severity CRITICAL,HIGH --exit-code 1 .
+        uses: aquasecurity/trivy-action@d710430a6722fafdaf7aed8ef924a16d2a448d75
+        with:
+          version: latest
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          cache: true
       - name: npm audit
         run: |
           npm ci --legacy-peer-deps
