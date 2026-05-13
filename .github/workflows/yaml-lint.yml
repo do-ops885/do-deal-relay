@@ -35,8 +35,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install YAML tooling
-        run: pip install yamllint pyyaml
+      - name: Install yamllint
+        run: pip install yamllint
 
       - name: Run yamllint
         run: |

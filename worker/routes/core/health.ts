@@ -22,11 +22,19 @@ export async function handleHealth(
 ): Promise<Response> {
   // Optimization: Parallelize snapshot, status and log retrieval
   // This reduces latency by performing independent I/O operations concurrently
-  const [snapshot, status, logs] = await Promise.all([
+  const results = await Promise.allSettled([
     getProductionSnapshot(env),
     getPipelineStatus(env),
     getRecentLogs(env, 100),
   ]);
+
+  const snapshot = results[0].status === "fulfilled" ? results[0].value : null;
+  const status =
+    results[1].status === "fulfilled"
+      ? results[1].value
+      : { locked: false, last_run: null };
+  const logs =
+    results[2].status === "fulfilled" ? (results[2].value as any[]) : [];
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
     (l) => l.phase === "finalize" && l.status === "complete",
