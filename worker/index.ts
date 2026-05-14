@@ -127,7 +127,9 @@ export default {
         });
       }
       if (path === "/api/status") {
-        return withAuth(request, env, "admin", () => handleStatus(env, request));
+        return withAuth(request, env, "admin", () =>
+          handleStatus(env, request),
+        );
       }
       if (path === "/api/log") {
         return withAuth(request, env, "admin", () =>
