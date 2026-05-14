@@ -13,6 +13,7 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 
 - [GOAP Improvements (2026-05-11)](GOAP_IMPROVEMENTS_2026-05-11.md) - CI/CD hardening, governance alignment, and explainability API.
 - [Multi-Agent Workflow](multi-agent-workflow.md) - Orchestration of parallel agents.
+- [Dependabot npm Integration](dependabot-npm-integration.md) - Adding npm ecosystem to Dependabot.
 
 ## Planned Plans
 
