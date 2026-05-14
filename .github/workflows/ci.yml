@@ -96,7 +96,7 @@ jobs:
         env:
           NODE_ENV: test
       - name: Upload coverage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: coverage
           path: coverage/
@@ -143,7 +143,7 @@ jobs:
         run: kill "$WRANGLER_PID" 2>/dev/null || true
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: e2e-results
           path: playwright-report/
@@ -217,7 +217,7 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: build-output
           path: dist/
