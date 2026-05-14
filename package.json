@@ -43,7 +43,7 @@
     "prettier": "^3.2.5",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5",
-    "wrangler": "^4.79.0"
+    "wrangler": "^4.90.1"
   },
   "overrides": {
     "fast-xml-parser": "5.7.1",
