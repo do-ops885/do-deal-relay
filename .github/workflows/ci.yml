@@ -15,9 +15,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  NODE_VERSION: "22"
-
 jobs:
   # Stage 1: Fast quality gates (run in parallel)
   lint:
@@ -30,7 +27,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run typecheck
 
@@ -44,7 +41,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run fmt:check
 
@@ -58,7 +55,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Validate markdown
@@ -77,7 +74,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run validate
 
@@ -93,7 +90,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: ./scripts/run-tests-ci.sh
         env:
@@ -123,7 +120,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium
       - name: Start dev server
@@ -169,7 +166,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - name: Run wrangler deploy dry-run
         run: npm run build
@@ -223,7 +220,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - name: Upload build artifacts
