@@ -120,7 +120,10 @@ export async function notifyExpiringDeals(env: Env): Promise<{
     }
 
     // Group by urgency
-    const byUrgencyLevel: Record<"critical" | "high" | "medium" | "low", ExpiringDeal[]> = {
+    const byUrgencyLevel: Record<
+      "critical" | "high" | "medium" | "low",
+      ExpiringDeal[]
+    > = {
       critical: [],
       high: [],
       medium: [],

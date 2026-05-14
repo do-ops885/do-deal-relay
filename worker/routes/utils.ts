@@ -35,7 +35,7 @@ export function getAllowedOrigin(origin?: string | null): string {
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return origin;
   }
-  return ALLOWED_ORIGINS[0]; // Default to primary production domain
+  return ALLOWED_ORIGINS[0]!; // Default to primary production domain
 }
 
 /**
