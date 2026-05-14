@@ -4,7 +4,7 @@
   "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
   "type": "module",
   "scripts": {
-    "build": "bash scripts/generate-version.sh && wrangler deploy --dry-run --env production --outdir dist",
+    "build": "bash scripts/generate-version.sh && tsc",
     "build:watch": "bash scripts/generate-version.sh && tsc --watch",
     "deploy": "wrangler deploy",
     "dev": "bash scripts/generate-version.sh && wrangler dev",

@@ -138,15 +138,9 @@ jobs:
           done
           [ "${SUCCESS:-0}" = "1" ] || { echo "Timeout waiting for dev server"; kill "$WRANGLER_PID"; exit 1; }
           echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
-      # E2E tests are allowed to fail to prevent blocking CI due to potential flakiness.
-      # Failures are tracked and reported as warnings for investigation.
       - name: Run E2E tests
-        id: e2e
         run: npm run test:e2e
         continue-on-error: true
-      - name: Report E2E flakiness
-        if: steps.e2e.outcome == 'failure'
-        run: echo "::warning::E2E tests failed - investigate flakiness"
       - name: Stop dev server
         if: always()
         run: kill "$WRANGLER_PID" 2>/dev/null || true
@@ -172,7 +166,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - name: Run wrangler deploy dry-run
-        run: npm run build
+        run: npx wrangler deploy --dry-run
       - name: Run smoke tests
         run: |
           npx wrangler dev --port 8787 &
@@ -198,8 +192,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Trivy
-        # v0.36.0
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           version: latest
           scan-type: fs

@@ -10,7 +10,6 @@ import {
   getSourceConfig,
   updateSourceTrust,
   recordSourceValidation,
-  batchRecordSourceValidation,
   getDealById,
   getDealsByCode,
   getDealsByCategory,
@@ -432,67 +431,6 @@ describe("Storage Layer", () => {
         .mock.calls[0];
       const updatedRegistry = JSON.parse(putCall[1]);
       expect(updatedRegistry[0].validation_failure_count).toBe(1);
-    });
-
-    it("should batch record source validations for multiple domains", async () => {
-      const sources = [
-        createMockSource({ domain: "domain-a.com" }),
-        createMockSource({ domain: "domain-b.com" }),
-      ];
-      mockKvStorage.set(
-        "sources:registry",
-        JSON.parse(JSON.stringify(sources)),
-      );
-
-      await batchRecordSourceValidation(mockEnv, [
-        { domain: "domain-a.com", success: true },
-        { domain: "domain-b.com", success: false },
-      ]);
-
-      // Should only write once (batched)
-      expect(mockEnv.DEALS_SOURCES.put).toHaveBeenCalledTimes(1);
-
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-
-      const domainA = updatedRegistry.find(
-        (s: any) => s.domain === "domain-a.com",
-      );
-      const domainB = updatedRegistry.find(
-        (s: any) => s.domain === "domain-b.com",
-      );
-
-      expect(domainA.validation_success_count).toBe(1);
-      expect(domainA.validation_failure_count).toBeUndefined();
-      expect(domainB.validation_failure_count).toBe(1);
-      expect(domainB.validation_success_count).toBeUndefined();
-    });
-
-    it("should skip batch when results array is empty", async () => {
-      const putSpy = mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>;
-
-      await batchRecordSourceValidation(mockEnv, []);
-
-      expect(putSpy).not.toHaveBeenCalled();
-    });
-
-    it("should use existing registry if provided", async () => {
-      const existingRegistry = [createMockSource({ domain: "existing.com" })];
-
-      await batchRecordSourceValidation(
-        mockEnv,
-        [{ domain: "existing.com", success: true }],
-        existingRegistry,
-      );
-
-      // Should NOT read from KV since registry was provided
-      expect(mockEnv.DEALS_SOURCES.get).not.toHaveBeenCalled();
-
-      const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
-        .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].validation_success_count).toBe(1);
     });
 
     it("should clamp trust score to valid range", async () => {

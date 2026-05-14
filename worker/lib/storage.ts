@@ -197,38 +197,6 @@ export async function recordSourceValidation(
 }
 
 /**
- * Batch record validation results for multiple sources.
- * Reduces KV reads/writes from O(N) to O(1) per batch by reading the registry once.
- */
-export async function batchRecordSourceValidation(
-  env: Env,
-  results: Array<{ domain: string; success: boolean }>,
-  existingRegistry?: SourceConfig[],
-): Promise<void> {
-  if (results.length === 0) return;
-
-  // Use the already-read registry if provided, so in-memory updates
-  // (like discovery_count or last_discovery) are not lost by a
-  // second KV read. Falls back to reading fresh if not provided.
-  const registry = existingRegistry ?? (await getSourceRegistry(env));
-
-  for (const { domain, success } of results) {
-    const source = registry.find((s) => s.domain === domain);
-    if (source) {
-      if (success) {
-        source.validation_success_count =
-          (source.validation_success_count || 0) + 1;
-      } else {
-        source.validation_failure_count =
-          (source.validation_failure_count || 0) + 1;
-      }
-    }
-  }
-
-  await updateSourceRegistry(env, registry);
-}
-
-/**
  * Get deal by ID
  */
 export async function getDealById(env: Env, id: string): Promise<Deal | null> {
