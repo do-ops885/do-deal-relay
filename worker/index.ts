@@ -99,8 +99,10 @@ export default {
 
       // Metrics
       if (path === "/metrics") {
-        const format = url.searchParams.get("format") || "prometheus";
-        return handleMetrics(env, format, request);
+        return withAuth(request, env, "admin", () => {
+          const format = url.searchParams.get("format") || "prometheus";
+          return handleMetrics(env, format, request);
+        });
       }
 
       // Deals
@@ -124,9 +126,21 @@ export default {
           return rateLimiter(request, () => handleDiscover(env, request));
         });
       }
-      if (path === "/api/status") return handleStatus(env, request);
-      if (path === "/api/log") return handleGetLogs(url, env, request);
-      if (path === "/api/analytics") return handleAnalytics(url, env, request);
+      if (path === "/api/status") {
+        return withAuth(request, env, "admin", () =>
+          handleStatus(env, request),
+        );
+      }
+      if (path === "/api/log") {
+        return withAuth(request, env, "admin", () =>
+          handleGetLogs(url, env, request),
+        );
+      }
+      if (path === "/api/analytics") {
+        return withAuth(request, env, "admin", () =>
+          handleAnalytics(url, env, request),
+        );
+      }
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
@@ -187,7 +201,9 @@ export default {
         return handleValidateBatch(request, env);
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
-        return handleGetValidationStats(env);
+        return withAuth(request, env, "admin", () =>
+          handleGetValidationStats(env),
+        );
       }
 
       const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);

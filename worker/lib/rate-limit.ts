@@ -161,13 +161,9 @@ export async function checkRateLimit(
  * @returns Client identifier string
  */
 export function getClientIdentifier(request: Request): string {
-  // Try API key first
-  const apiKey = request.headers.get("X-API-Key");
-  if (apiKey) {
-    return `api:${apiKey.slice(0, 8)}`; // Use first 8 chars of API key
-  }
-
-  // Fall back to IP address
+  // Use IP address for reliable identification.
+  // Security: We must not trust unvalidated headers like X-API-Key for rate limiting
+  // as it allows attackers to bypass limits by rotating arbitrary strings.
   const forwarded = request.headers.get("CF-Connecting-IP");
   const ip = forwarded || "unknown";
 
