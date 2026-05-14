@@ -1,4 +1,4 @@
-import { Env, LogEntry } from "../../types";
+import { Env, LogEntry } from "../../pipeline/types"
 import {
   LOG_INDEX_KEY,
   LOG_KEY_PREFIX,

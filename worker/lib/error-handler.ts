@@ -3,8 +3,8 @@
 // ============================================================================
 
 import { logger } from "./global-logger";
-import { PipelineError } from "../types";
-import type { ErrorClass, PipelinePhase } from "../types";
+import { PipelineError } from "../pipeline/types"
+import type { ErrorClass, PipelinePhase } from "../pipeline/types"
 
 interface ErrorContext {
   component?: string;

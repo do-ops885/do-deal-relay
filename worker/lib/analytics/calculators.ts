@@ -1,4 +1,4 @@
-import type { Deal, LogEntry } from "../../types";
+import type { Deal, LogEntry } from "../../pipeline/types"
 import type { DealAnalytics } from "./types";
 import { getRecentMetrics } from "../metrics/index";
 

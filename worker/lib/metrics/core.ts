@@ -1,4 +1,4 @@
-import type { PipelinePhase, PipelineMetrics, Env } from "../../types";
+import type { PipelinePhase, PipelineMetrics, Env } from "../../pipeline/types"
 import { fetchInBatches } from "../utils";
 
 export function createMetrics(run_id: string): PipelineMetrics {

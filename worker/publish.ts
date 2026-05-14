@@ -1,4 +1,4 @@
-import { Snapshot, PipelineContext, PipelineError, ErrorClass } from "./types";
+import { Snapshot, PipelineContext, PipelineError, ErrorClass } from "./pipeline/types";
 import { CONFIG } from "./config";
 import { promoteToProduction, revertProduction } from "./lib/storage";
 import {

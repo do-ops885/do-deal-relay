@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "../../types";
+import { Deal, PipelineContext } from "../../pipeline/types";
 import { GateResult } from "../types";
 
 /**

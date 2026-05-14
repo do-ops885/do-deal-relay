@@ -1,4 +1,4 @@
-import { Deal, Snapshot, PipelineContext } from "../types";
+import { Deal, Snapshot, PipelineContext } from "./types";
 import { SnapshotSchema } from "../types";
 import { CONFIG } from "../config";
 import {

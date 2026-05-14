@@ -1,4 +1,4 @@
-import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
+import { Deal, SourceConfig, PipelineError, PipelineContext } from "./types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
