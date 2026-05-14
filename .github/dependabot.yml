@@ -39,8 +39,8 @@ updates:
     ignore:
       - dependency-name: "*"
         versions:
-          - "*-alpha"
-          - "*-beta"
+          - "*-alpha*"
+          - "*-beta*"
           - "*-rc*"
 
   # Terraform (if used)
@@ -129,6 +129,6 @@ updates:
     ignore:
       - dependency-name: "*"
         versions:
-          - "*-alpha"
-          - "*-beta"
+          - "*-alpha*"
+          - "*-beta*"
           - "*-rc*"
