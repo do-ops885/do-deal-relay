@@ -45,7 +45,10 @@ export async function handleSubmit(
   const existing = await getDealsByCode(env, body.code);
   if (existing.length > 0) {
     return jsonResponse(
-      { error: "Deal with this code already exists", existing: existing[0].id },
+      {
+        error: "Deal with this code already exists",
+        existing: existing[0]?.id,
+      },
       409,
     );
   }

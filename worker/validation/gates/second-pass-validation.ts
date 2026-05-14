@@ -11,7 +11,7 @@ export function validateSecondPass(deal: Deal): GateResult {
   if (!result.success) {
     return {
       passed: false,
-      reason: `Second-pass validation failed: ${result.error.errors[0].message}`,
+      reason: `Second-pass validation failed: ${result.error.errors[0]?.message ?? "Unknown error"}`,
     };
   }
 

@@ -365,6 +365,7 @@ export async function handleValidateDeal(
 
     // Use first matching deal
     const deal = deals[0];
+    if (!deal) return errorResponse("Deal not found", 404);
 
     // Perform validations
     const results: {

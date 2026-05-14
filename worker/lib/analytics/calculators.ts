@@ -18,7 +18,7 @@ export function calculateDealsOverTime(
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = date.toISOString().split("T")[0] ?? date.toISOString();
 
     // Count deals discovered on this date (from logs)
     const dayStart = new Date(date);

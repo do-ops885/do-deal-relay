@@ -164,8 +164,8 @@ export default {
         /^\/api\/referrals\/([^/]+)(?:\/(deactivate|reactivate))?$/,
       );
       if (referralMatch) {
-        const code = referralMatch[1];
-        const action = referralMatch[2];
+        const code = referralMatch[1] ?? "";
+        const action = referralMatch[2] ?? "";
         if (action === "deactivate" && request.method === "POST") {
           return withAuth(request, env, undefined, () =>
             handleDeactivateReferral(request, code, env),
@@ -208,13 +208,13 @@ export default {
 
       const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
       if (dealExplainMatch && request.method === "GET") {
-        const dealId = dealExplainMatch[1];
+        const dealId = dealExplainMatch[1] ?? "";
         return handleExplainDeal(dealId, env, request);
       }
 
       const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);
       if (dealValidateMatch && request.method === "POST") {
-        const code = dealValidateMatch[1];
+        const code = dealValidateMatch[1] ?? "";
         return handleValidateDeal(request, code, env);
       }
 
@@ -255,7 +255,8 @@ export default {
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
-        return handleGetExperience(experienceMatch[1], env);
+        if (experienceMatch[1] !== undefined)
+          return handleGetExperience(experienceMatch[1], env);
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {

@@ -126,35 +126,44 @@ export class HybridClassifier {
     const results: ClassifierResult[] = [];
 
     for (let i = 0; i < simpleQueries.length; i++) {
-      results.push({
-        query: simpleResults[i],
-        method: "rule",
-        confidence: simpleResults[i].aiConfidence,
-        processingTimeMs: simpleResults[i].processingTimeMs,
-        appliedFilters: this.determineFilters(simpleResults[i]),
-      });
+      const result = simpleResults[i];
+      if (result) {
+        results.push({
+          query: result,
+          method: "rule",
+          confidence: result.aiConfidence,
+          processingTimeMs: result.processingTimeMs,
+          appliedFilters: this.determineFilters(result),
+        });
+      }
     }
 
     for (let i = 0; i < complexQueries.length; i++) {
-      results.push({
-        query: complexResults[i],
-        method: "ai",
-        confidence: complexResults[i].aiConfidence,
-        processingTimeMs: complexResults[i].processingTimeMs,
-        appliedFilters: this.determineFilters(complexResults[i]),
-      });
+      const result = complexResults[i];
+      if (result) {
+        results.push({
+          query: result,
+          method: "ai",
+          confidence: result.aiConfidence,
+          processingTimeMs: result.processingTimeMs,
+          appliedFilters: this.determineFilters(result),
+        });
+      }
     }
 
     // Restore original order
-    const ordered: ClassifierResult[] = new Array(queries.length);
+    const ordered: ClassifierResult[] = [];
     let simpleIdx = 0;
     let complexIdx = 0;
 
     for (let i = 0; i < queries.length; i++) {
-      if (selectMethod(queries[i], this.options) === "rule") {
-        ordered[i] = results[simpleIdx++];
+      const query = queries[i];
+      if (query !== undefined && selectMethod(query, this.options) === "rule") {
+        const result = results[simpleIdx++];
+        if (result) ordered.push(result);
       } else {
-        ordered[i] = results[simpleQueries.length + complexIdx++];
+        const result = results[simpleQueries.length + complexIdx++];
+        if (result) ordered.push(result);
       }
     }
 

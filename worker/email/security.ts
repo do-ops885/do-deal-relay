@@ -422,7 +422,7 @@ export function sanitizeContent(content: string): string {
  */
 export function getSenderDomain(email: string): string | null {
   const match = email.match(/@(.+)$/);
-  return match ? match[1].toLowerCase() : null;
+  return match && match[1] ? match[1].toLowerCase() : null;
 }
 
 /**

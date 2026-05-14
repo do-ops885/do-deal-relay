@@ -7,10 +7,6 @@ import { CONFIG } from "../../worker/config";
 import type { Env } from "../../worker/types";
 
 describe("Config Utilities", () => {
-  // Base mock env without TRUST_THRESHOLD — the first test verifies
-  // that getTrustThreshold falls back to CONFIG.MIN_TRUST_SCORE (0.35)
-  // when the env var is not set. Each test overrides TRUST_THRESHOLD as
-  // needed.
   const mockEnv = {
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
@@ -18,6 +14,7 @@ describe("Config Utilities", () => {
     DEALS_PROD: {},
     DEALS_LOG: {},
     AI_GATEWAY_URL: "http://test",
+    TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 
   describe("getTrustThreshold", () => {

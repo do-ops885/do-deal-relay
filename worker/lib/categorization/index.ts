@@ -16,15 +16,17 @@ export function autoCategorize(deal: Deal): DealMetadata {
   );
 
   // Always include top category if score >= 2
-  if (sortedCategories.length > 0 && sortedCategories[0][1] >= 2) {
-    categories.push(sortedCategories[0][0]);
+  const topCategory = sortedCategories[0];
+  if (topCategory && topCategory[1] >= 2) {
+    categories.push(topCategory[0]);
 
     // Include second category if score is close (within 50%)
-    if (sortedCategories.length > 1) {
-      const topScore = sortedCategories[0][1];
-      const secondScore = sortedCategories[1][1];
+    const secondCategory = sortedCategories[1];
+    if (secondCategory) {
+      const topScore = topCategory[1];
+      const secondScore = secondCategory[1];
       if (secondScore >= topScore * 0.5 && secondScore >= 2) {
-        categories.push(sortedCategories[1][0]);
+        categories.push(secondCategory[0]);
       }
     }
   }

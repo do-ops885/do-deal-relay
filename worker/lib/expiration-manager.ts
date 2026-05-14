@@ -213,7 +213,7 @@ export async function runExpirationCheck(
   // Priority: 7d first (critical), then 30d, then 90d
   for (const window of [7, 30, 90] as const) {
     const windowDeals = expiringByWindow[`${window}d`];
-    if (windowDeals.length > 0) {
+    if (windowDeals && windowDeals.length > 0) {
       expiringDeals.push(...windowDeals);
 
       // Only send notifications for 7d and 30d windows

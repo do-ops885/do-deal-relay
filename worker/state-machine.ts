@@ -93,7 +93,9 @@ export async function executePipeline(env: Env): Promise<{
 
     // Execute phases
     while (phaseIndex < PHASES.length) {
-      currentPhase = PHASES[phaseIndex];
+      const p = PHASES[phaseIndex];
+      if (!p) break;
+      currentPhase = p;
 
       // Log phase start
       const logBuilder = createLogBuilder(run_id, trace_id)

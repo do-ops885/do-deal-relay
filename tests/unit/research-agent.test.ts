@@ -269,7 +269,6 @@ describe("Research Agent - Real Fetching", () => {
           use_real_fetching: true,
         },
       };
-      mockEnv.GITHUB_API_TOKEN = "test-token";
 
       const result = await executeReferralResearch(mockEnv, request);
 

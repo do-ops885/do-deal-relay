@@ -1,7 +1,7 @@
 import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
-import { getSourceRegistry, batchRecordSourceValidation } from "../lib/storage";
+import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
@@ -46,9 +46,9 @@ export async function discover(
     env.CANDIDATE_BUDGET_GLOBAL || String(CONFIG.MAX_DEALS_PER_RUN),
     10,
   );
-  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "50", 10);
+  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
   const highTrustBonus = parseInt(
-    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "100",
+    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
     10,
   );
 
@@ -80,9 +80,6 @@ export async function discover(
     sourceCount: activeSources.length,
   });
 
-  // Per-invocation scope to avoid module-level state pollution across Workers requests
-  const validationResults: Array<{ domain: string; success: boolean }> = [];
-
   for (const source of activeSources) {
     const remainingGlobal = globalBudget - deals.length;
 
@@ -110,12 +107,7 @@ export async function discover(
     });
 
     try {
-      const result = await discoverFromSource(
-        env,
-        source,
-        effectiveLimit,
-        validationResults,
-      );
+      const result = await discoverFromSource(env, source, effectiveLimit);
       deals.push(...result.deals);
       errors.push(...result.errors);
 
@@ -130,23 +122,16 @@ export async function discover(
     }
   }
 
-  // Flush all queued source validation records in a single KV write per source
-  // This replaces the old per-pattern KV writes (O(N)) with batched writes (O(1))
-  // Pass the existing registry so in-memory updates (discovery_count, last_discovery)
-  // are preserved and not lost by a second KV read.
-  if (validationResults.length > 0) {
-    await batchRecordSourceValidation(env, validationResults, sources);
-  }
-
   return { deals, errors };
-} /**
+}
+
+/**
  * Discover deals from a single source
  */
 async function discoverFromSource(
   env: Env,
   source: SourceConfig,
   limit: number,
-  validationResults: Array<{ domain: string; success: boolean }>,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
@@ -217,14 +202,14 @@ async function discoverFromSource(
         }
       }
 
-      // Queue success instead of writing to KV immediately
-      validationResults.push({ domain: source.domain, success: true });
+      // Record success
+      await recordSourceValidation(env, source.domain, true);
     } catch (error) {
       errors.push({
         url: `${source.domain}${pattern}`,
         error: (error as Error).message,
       });
-      validationResults.push({ domain: source.domain, success: false });
+      await recordSourceValidation(env, source.domain, false);
     }
   }
 
@@ -253,6 +238,7 @@ function parseHTMLContent(
   let match;
   while ((match = codePattern.exec(content)) !== null) {
     const code = match[1];
+    if (code === undefined) continue;
 
     // Find associated URL
     const urlMatch = content
@@ -266,17 +252,22 @@ function parseHTMLContent(
 
     deals.push({
       code,
-      url: urlMatch ? urlMatch[0] : `https://${source.domain}/invite/${code}`,
+      url:
+        urlMatch && urlMatch[0]
+          ? urlMatch[0]
+          : `https://${source.domain}/invite/${code}`,
       title: extractTitle(content, code),
       description: extractDescription(content, code),
-      reward_type: rewardMatch
-        ? rewardMatch[3] === "%"
-          ? "percent"
-          : "cash"
-        : "credit",
-      reward_value: rewardMatch
-        ? parseFloat(rewardMatch[1].replace(",", ""))
-        : 0,
+      reward_type:
+        rewardMatch && rewardMatch[3]
+          ? rewardMatch[3] === "%"
+            ? "percent"
+            : "cash"
+          : "credit",
+      reward_value:
+        rewardMatch && rewardMatch[1]
+          ? parseFloat(rewardMatch[1].replace(",", ""))
+          : 0,
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
     });
@@ -395,10 +386,10 @@ function extractContent(
 function extractTitle(content: string, code: string): string {
   const context = extractContent(content, code);
   const titleMatch = context.match(/<title>([^<]+)/i);
-  if (titleMatch) return titleMatch[1].trim();
+  if (titleMatch && titleMatch[1]) return titleMatch[1].trim();
 
   const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
-  if (h1Match) return h1Match[1].trim();
+  if (h1Match && h1Match[1]) return h1Match[1].trim();
 
   return "Referral Deal";
 }
@@ -408,10 +399,10 @@ function extractDescription(content: string, code: string): string {
   const metaMatch = context.match(
     /<meta[^>]*description[^>]*content="([^"]+)"/i,
   );
-  if (metaMatch) return metaMatch[1].trim();
+  if (metaMatch && metaMatch[1]) return metaMatch[1].trim();
 
   const pMatch = context.match(/<p[^>]*>([^<]+)/i);
-  if (pMatch) return pMatch[1].trim();
+  if (pMatch && pMatch[1]) return pMatch[1].trim();
 
   return `Use referral code ${code}`;
 }

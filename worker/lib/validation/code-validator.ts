@@ -172,7 +172,7 @@ export function validateCodeFormat(
   }
 
   // Get provider format
-  const format = PROVIDER_FORMATS[provider] || PROVIDER_FORMATS.generic;
+  const format = PROVIDER_FORMATS[provider] ?? PROVIDER_FORMATS.generic!;
 
   // Check length
   if (trimmedCode.length < format.minLength) {
@@ -471,25 +471,33 @@ function levenshteinDistance(str1: string, str2: string): number {
     matrix[i] = [i];
   }
 
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j;
+  const firstRow = matrix[0];
+  if (firstRow) {
+    for (let j = 0; j <= str1.length; j++) {
+      firstRow[j] = j;
+    }
   }
 
   for (let i = 1; i <= str2.length; i++) {
     for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1, // deletion
-        );
+      const prevRow = matrix[i - 1];
+      const currRow = matrix[i];
+      if (prevRow && currRow) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          currRow[j] = prevRow[j - 1] ?? 0;
+        } else {
+          currRow[j] =
+            Math.min(
+              (prevRow[j - 1] ?? 0) + 1, // substitution
+              (currRow[j - 1] ?? 0) + 1, // insertion
+              (prevRow[j] ?? 0) + 1, // deletion
+            ) ?? 0;
+        }
       }
     }
   }
 
-  return matrix[str2.length][str1.length];
+  return matrix[str2.length]?.[str1.length] ?? 0;
 }
 
 // ============================================================================
