@@ -88,6 +88,8 @@ describe("Validation Pipeline", () => {
       put: async () => {},
       delete: async () => {},
     } as unknown as KVNamespace,
+    DEALS_PROD: {} as KVNamespace,
+    DEALS_LOG: {} as KVNamespace,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",

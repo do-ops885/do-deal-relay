@@ -1,4 +1,4 @@
-import type { Deal, Env, LogEntry } from "../../pipeline/types"
+import type { Deal, Env, LogEntry } from "../../types";
 import { getProductionSnapshot, getSourceRegistry } from "../storage";
 import { getRecentLogs } from "../logger";
 import { getRecentMetrics } from "../metrics/index";

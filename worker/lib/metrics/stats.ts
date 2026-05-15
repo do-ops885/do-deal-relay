@@ -1,4 +1,4 @@
-import type { PipelinePhase, PipelineMetrics, Env } from "../../pipeline/types"
+import type { PipelinePhase, PipelineMetrics, Env } from "../../types";
 
 /**
  * Get cumulative gate rejections from KV

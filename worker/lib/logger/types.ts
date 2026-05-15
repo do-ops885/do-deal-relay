@@ -1,4 +1,4 @@
-import { LogEntry } from "../../pipeline/types"
+import { LogEntry } from "../../types";
 
 export const LOG_KEY_PREFIX = "log:";
 export const LOG_INDEX_KEY = "log:index";

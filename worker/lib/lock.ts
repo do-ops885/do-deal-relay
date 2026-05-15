@@ -1,5 +1,5 @@
 import { CONFIG } from "../config";
-import { PipelineError, ErrorClass } from "../pipeline/types"
+import { PipelineError, ErrorClass } from "../types";
 import type { Env } from "../types";
 
 // ============================================================================

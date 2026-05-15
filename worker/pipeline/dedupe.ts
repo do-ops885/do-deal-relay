@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "./types";
+import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
 import {
   calculateUrlSimilarity,

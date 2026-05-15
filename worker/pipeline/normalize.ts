@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "./types";
+import { Deal, PipelineContext } from "../types";
 import { generateDealId } from "../lib/crypto";
 import { batchAutoCategorize } from "../lib/categorization";
 

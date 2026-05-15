@@ -1,7 +1,7 @@
-import { Deal, SourceConfig, PipelineError, PipelineContext } from "./types";
+import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
-import { getSourceRegistry, updateSourceRegistry } from "../lib/storage";
+import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
@@ -122,10 +122,6 @@ export async function discover(
     }
   }
 
-  // Persist all source registry updates (discovery counts, timestamps, and validation metrics)
-  // in a single batch update to minimize KV write subrequests.
-  await updateSourceRegistry(env, sources);
-
   return { deals, errors };
 }
 
@@ -207,15 +203,13 @@ async function discoverFromSource(
       }
 
       // Record success
-      source.validation_success_count =
-        (source.validation_success_count || 0) + 1;
+      await recordSourceValidation(env, source.domain, true);
     } catch (error) {
       errors.push({
         url: `${source.domain}${pattern}`,
         error: (error as Error).message,
       });
-      source.validation_failure_count =
-        (source.validation_failure_count || 0) + 1;
+      await recordSourceValidation(env, source.domain, false);
     }
   }
 

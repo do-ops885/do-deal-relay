@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "../pipeline/types";
+import { Deal, PipelineContext } from "../types";
 
 export interface ValidationResult {
   valid: Deal[];

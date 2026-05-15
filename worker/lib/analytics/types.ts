@@ -1,4 +1,4 @@
-import type { Deal, LogEntry } from "../../pipeline/types"
+import type { Deal, LogEntry } from "../../types";
 
 // ============================================================================
 // Analytics Types

@@ -1,4 +1,4 @@
-import { Env, LogEntry, LogEntrySchema, PipelinePhase } from "../../pipeline/types"
+import { Env, LogEntry, LogEntrySchema, PipelinePhase } from "../../types";
 import { LOG_INDEX_KEY, LOG_KEY_PREFIX, LogIndex } from "./types";
 
 export async function appendLog(

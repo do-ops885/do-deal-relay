@@ -15,7 +15,6 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 - [Multi-Agent Workflow](multi-agent-workflow.md) - Orchestration of parallel agents.
 - [Dependabot npm Integration](dependabot-npm-integration.md) - Adding npm ecosystem to Dependabot.
 - [Comparison Caching](comparison-caching.md) - Optimization of deal comparison fields across pipeline stages.
-- [Comparison Caching](comparison-caching.md) - Optimization of deal comparison fields across pipeline stages.
 
 ## Planned Plans
 

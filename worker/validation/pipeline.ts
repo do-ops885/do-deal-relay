@@ -1,4 +1,4 @@
-import { Deal, PipelineContext, Env } from "../pipeline/types";
+import { Deal, PipelineContext, Env } from "../types";
 import { VALIDATION_GATES, type ValidationGate, CONFIG } from "../config";
 import { getTrustThreshold } from "../lib/config-utils";
 import { validateDealFastPath } from "../pipeline/validate-fast-path";

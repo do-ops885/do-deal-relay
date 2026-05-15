@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "../pipeline/types"
+import { Deal, PipelineContext } from "../types";
 
 /**
  * Interface for the deal status explanation

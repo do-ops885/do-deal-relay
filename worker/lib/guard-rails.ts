@@ -1,4 +1,4 @@
-import { Deal, PipelineError, ErrorClass } from "../pipeline/types"
+import { Deal, PipelineError, ErrorClass } from "../types";
 import { CONFIG } from "../config";
 
 // ============================================================================
