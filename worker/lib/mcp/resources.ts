@@ -388,13 +388,20 @@ export function matchResourceTemplate(
   const paramRegex = /\{([^}]+)\}/g;
   let paramMatch;
   while ((paramMatch = paramRegex.exec(template)) !== null) {
-    paramNames.push(paramMatch[1]);
+    const paramName = paramMatch[1];
+    if (paramName !== undefined) {
+      paramNames.push(paramName);
+    }
   }
 
   // Build result object
   const result: { [key: string]: string } = {};
   for (let i = 0; i < paramNames.length; i++) {
-    result[paramNames[i]] = match[i + 1];
+    const name = paramNames[i];
+    const value = match[i + 1];
+    if (name !== undefined && value !== undefined) {
+      result[name] = value;
+    }
   }
 
   return result;

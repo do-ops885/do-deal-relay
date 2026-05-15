@@ -240,6 +240,7 @@ export class D1Client {
     }
 
     const firstRow = rows[0];
+    if (!firstRow) return { success: true, lastRowIds: [] };
     const columns = Object.keys(firstRow);
     const placeholders = columns.map(() => "?").join(", ");
     const sql = `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${placeholders})`;
@@ -316,7 +317,9 @@ export class D1Client {
 
     try {
       for (let i = 0; i < operations.length; i++) {
-        const result = await operations[i]();
+        const op = operations[i];
+        if (!op) continue;
+        const result = await op();
         results.push(result);
       }
 
@@ -326,7 +329,9 @@ export class D1Client {
       if (compensation) {
         for (let i = 0; i < results.length && i < compensation.length; i++) {
           try {
-            await compensation[i](results[i]);
+            const comp = compensation[i];
+            const res = results[i];
+            if (comp && res !== undefined) await comp(res);
           } catch (compError) {
             console.error("Compensation failed:", compError);
           }

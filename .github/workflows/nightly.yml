@@ -9,9 +9,6 @@ name: Nightly Tests
 permissions:
   contents: read
 
-env:
-  NODE_VERSION: "22"
-
 jobs:
   full-test-suite:
     name: Full Test Suite
@@ -21,7 +18,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - run: npm run test:ci
       - run: npx playwright install --with-deps chromium
@@ -44,7 +41,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ".nvmrc"
       - run: npm ci --legacy-peer-deps
       - name: Run load test smoke
         run: npm run test:load:smoke

@@ -26,7 +26,7 @@ describe("Smoke Tests - HTTP Endpoints", () => {
   });
 
   describe("GET /metrics", () => {
-    it("returns 200 with required metric keys (JSON format)", async () => {
+    it("returns 200 or 401 (Protected)", async () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/metrics?format=json`);
@@ -34,14 +34,18 @@ describe("Smoke Tests - HTTP Endpoints", () => {
         expect(true).toBe(true);
         return;
       }
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as any;
-      expect(body).toHaveProperty("summary");
-      expect(body.summary).toHaveProperty("total_runs");
-      expect(body.summary).toHaveProperty("success_rate");
+
+      // 401 is now expected because /metrics is protected
+      expect([200, 401]).toContain(res.status);
+
+      if (res.status === 200) {
+        const body = (await res.json()) as any;
+        expect(body).toHaveProperty("summary");
+        expect(body.summary).toHaveProperty("total_runs");
+      }
     });
 
-    it("returns 200 with Prometheus text format", async () => {
+    it("returns 200 or 401 with Prometheus text format", async () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/metrics`);
@@ -49,9 +53,14 @@ describe("Smoke Tests - HTTP Endpoints", () => {
         expect(true).toBe(true);
         return;
       }
-      expect(res.status).toBe(200);
-      const text = await res.text();
-      expect(text).toContain("deals_active_deals");
+
+      // 401 is now expected because /metrics is protected
+      expect([200, 401]).toContain(res.status);
+
+      if (res.status === 200) {
+        const text = await res.text();
+        expect(text).toContain("deals_active_deals");
+      }
     });
   });
 

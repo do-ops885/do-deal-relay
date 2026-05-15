@@ -72,6 +72,9 @@ describe("Funnel Instrumentation & Aggregation", () => {
       TRUST_THRESHOLD: "0.3",
       DEALS_LOG: { get: async () => null, put: async () => {} },
       DEALS_PROD: { get: async () => null, put: async () => {} },
+      DEALS_LOCK: { get: async () => null, put: async () => {} },
+      DEALS_STAGING: { get: async () => null, put: async () => {} },
+      DEALS_SOURCES: { get: async () => null, put: async () => {} },
     } as unknown as Env;
 
     await validate(mockDeals, ctx, env);

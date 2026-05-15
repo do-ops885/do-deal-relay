@@ -641,23 +641,26 @@ export async function fetchGenericPageContent(
 function parseHtmlContent(url: string, html: string): PageContentResult {
   // Extract title
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const title = titleMatch ? titleMatch[1].trim() : "";
+  const title = titleMatch?.[1] ? titleMatch[1].trim() : "";
 
   // Extract meta description
   const metaDescMatch = html.match(
     /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i,
   );
-  const description = metaDescMatch ? metaDescMatch[1].trim() : "";
+  const description = metaDescMatch?.[1] ? metaDescMatch[1].trim() : "";
 
   // Extract all meta tags
   const metaTags: MetaTags = {};
   const metaRegex = /<meta[^>]*>/gi;
   let metaMatch;
   while ((metaMatch = metaRegex.exec(html)) !== null) {
-    const nameMatch = metaMatch[0].match(/name=["']([^"']*)["']/i);
-    const contentMatch = metaMatch[0].match(/content=["']([^"']*)["']/i);
-    if (nameMatch && contentMatch) {
-      metaTags[nameMatch[1]] = contentMatch[1];
+    const tag = metaMatch[0];
+    if (tag) {
+      const nameMatch = tag.match(/name=["']([^"']*)["']/i);
+      const contentMatch = tag.match(/content=["']([^"']*)["']/i);
+      if (nameMatch?.[1] && contentMatch?.[1]) {
+        metaTags[nameMatch[1]] = contentMatch[1];
+      }
     }
   }
 
@@ -678,7 +681,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
   let linkMatch;
   while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
-    const text = linkMatch[2].trim();
+    const text = linkMatch[2]?.trim() ?? "";
     if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
       // Convert relative URLs to absolute
       const absoluteUrl = href.startsWith("http")
@@ -830,7 +833,8 @@ function extractWithContext(
 
     let match;
     while ((match = pattern.exec(content)) !== null) {
-      const matchedText = match[1] || match[0]; // Use capture group 1 if exists
+      const matchedText = match[1] ?? match[0]; // Use capture group 1 if exists
+      if (!matchedText) continue;
       const key = matchedText.toLowerCase();
 
       if (seen.has(key)) continue;
@@ -859,7 +863,7 @@ function findFirstMatch(text: string, patterns: RegExp[]): string | null {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
     if (match) {
-      return match[1] || match[0];
+      return match[1] ?? match[0] ?? null;
     }
   }
   return null;

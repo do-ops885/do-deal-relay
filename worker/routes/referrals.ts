@@ -388,7 +388,7 @@ export async function handleResearch(
     });
     return jsonResponse(
       { error: "Research failed", message: err.message },
-      err.errorClass === "ConfigError" ? 400 : 500,
+      500,
     );
   }
 }

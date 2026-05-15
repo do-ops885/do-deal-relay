@@ -1,0 +1,21 @@
+# Default: all files require review
+* @do-ops885
+
+# Core pipeline logic
+/worker/pipeline/ @do-ops885
+/worker/ @do-ops885
+
+# CI/CD and deployment configs
+/.github/workflows/ @do-ops885
+/.github/dependabot.yml @do-ops885
+
+# Wrangler config (contains KV namespace IDs and env vars)
+/wrangler.jsonc @do-ops885
+
+# Security-sensitive files
+/SECURITY.md @do-ops885
+/.github/SECURITY.md @do-ops885
+
+# Dependency management
+/package.json @do-ops885
+/package-lock.json @do-ops885

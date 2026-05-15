@@ -56,7 +56,7 @@ export function extractReferralUrl(
           let code: string | null = null;
           if (servicePattern.code.inUrl) {
             const match = url.match(servicePattern.code.inUrl);
-            if (match) {
+            if (match && match[1] !== undefined) {
               code = match[1];
             }
           }
@@ -73,7 +73,7 @@ export function extractReferralUrl(
       const match = url.match(pattern);
       if (match) {
         // For query parameter patterns, extract the code
-        const code = match[1] || null;
+        const code = match[1] ?? null;
         return { url, code };
       }
     }
@@ -165,7 +165,7 @@ export function extractCode(
   // Try service-specific body pattern first
   if (servicePattern?.code.inBody) {
     const match = combined.match(servicePattern.code.inBody);
-    if (match) {
+    if (match && match[1] !== undefined) {
       return match[1];
     }
   }
@@ -173,7 +173,7 @@ export function extractCode(
   // Try generic patterns
   for (const pattern of GENERIC_PATTERNS.codePatterns) {
     const match = combined.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       return match[1];
     }
   }
@@ -199,7 +199,7 @@ export function extractReward(
   // Try service-specific pattern
   if (servicePattern?.reward) {
     const match = combined.match(servicePattern.reward);
-    if (match) {
+    if (match && match[1] !== undefined) {
       return match[1].trim();
     }
   }
@@ -207,7 +207,7 @@ export function extractReward(
   // Try generic patterns
   for (const pattern of GENERIC_PATTERNS.rewardPatterns) {
     const match = combined.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       return match[1].trim();
     }
   }
@@ -233,7 +233,7 @@ export function extractExpiry(
   // Try service-specific pattern
   if (servicePattern?.expiry) {
     const match = combined.match(servicePattern.expiry);
-    if (match) {
+    if (match && match[1] !== undefined) {
       const parsed = parseDate(match[1]);
       if (parsed) return parsed;
     }
@@ -242,7 +242,7 @@ export function extractExpiry(
   // Try generic patterns
   for (const pattern of GENERIC_PATTERNS.expiryPatterns) {
     const match = combined.match(pattern);
-    if (match) {
+    if (match && match[1] !== undefined) {
       const parsed = parseDate(match[1]);
       if (parsed) return parsed;
     }
@@ -264,19 +264,35 @@ function parseDate(dateStr: string): string | null {
     // MM/DD/YYYY
     {
       regex: /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
-      parser: (m: RegExpMatchArray) =>
-        `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`,
+      parser: (m: RegExpMatchArray) => {
+        const m1 = m[1];
+        const m2 = m[2];
+        const m3 = m[3];
+        return m1 && m2 && m3
+          ? `${m3}-${m1.padStart(2, "0")}-${m2.padStart(2, "0")}`
+          : null;
+      },
     },
     // DD.MM.YYYY (German/European)
     {
       regex: /(\d{1,2})\.(\d{1,2})\.(\d{4})/,
-      parser: (m: RegExpMatchArray) =>
-        `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`,
+      parser: (m: RegExpMatchArray) => {
+        const m1 = m[1];
+        const m2 = m[2];
+        const m3 = m[3];
+        return m1 && m2 && m3
+          ? `${m3}-${m2.padStart(2, "0")}-${m1.padStart(2, "0")}`
+          : null;
+      },
     },
     // Month DD, YYYY
     {
       regex: /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})/,
       parser: (m: RegExpMatchArray) => {
+        const m1 = m[1];
+        const m2 = m[2];
+        const m3 = m[3];
+        if (!m1 || !m2 || !m3) return null;
         const monthNames = [
           "january",
           "february",
@@ -292,14 +308,17 @@ function parseDate(dateStr: string): string | null {
           "december",
         ];
         const month =
-          monthNames.findIndex((n) => m[1].toLowerCase().includes(n)) + 1;
+          monthNames.findIndex((n) => m1.toLowerCase().includes(n)) + 1;
         return month > 0
-          ? `${m[3]}-${month.toString().padStart(2, "0")}-${m[2].padStart(2, "0")}`
+          ? `${m3}-${month.toString().padStart(2, "0")}-${m2.padStart(2, "0")}`
           : null;
       },
     },
     // YYYY-MM-DD
-    { regex: /(\d{4})-(\d{2})-(\d{2})/, parser: (m: RegExpMatchArray) => m[0] },
+    {
+      regex: /(\d{4})-(\d{2})-(\d{2})/,
+      parser: (m: RegExpMatchArray) => m[0] ?? null,
+    },
   ];
 
   for (const format of formats) {
@@ -319,7 +338,7 @@ function parseDate(dateStr: string): string | null {
   // Try native date parsing as fallback
   const nativeDate = new Date(cleanStr);
   if (!isNaN(nativeDate.getTime())) {
-    return nativeDate.toISOString().split("T")[0];
+    return nativeDate.toISOString().split("T")[0] ?? null;
   }
 
   return null;

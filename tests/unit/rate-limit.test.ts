@@ -40,6 +40,8 @@ describe("Rate Limiting", () => {
       } as unknown as KVNamespace,
       DEALS_PROD: {} as KVNamespace,
       DEALS_LOG: {} as KVNamespace,
+      DEALS_STAGING: {} as KVNamespace,
+      DEALS_SOURCES: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
@@ -117,14 +119,17 @@ describe("Rate Limiting", () => {
   });
 
   describe("getClientIdentifier", () => {
-    it("should extract API key from header", () => {
+    it("should ignore unvalidated API key from header and use IP", () => {
       const request = new Request("http://localhost/api/test", {
-        headers: { "X-API-Key": "test-api-key-12345" },
+        headers: {
+          "X-API-Key": "test-api-key-12345",
+          "CF-Connecting-IP": "192.168.1.1",
+        },
       });
 
       const identifier = getClientIdentifier(request);
 
-      expect(identifier).toBe("api:test-api"); // First 8 chars
+      expect(identifier).toBe("ip:192.168.1.1");
     });
 
     it("should fall back to IP address", () => {

@@ -135,7 +135,7 @@ function extractField(lines: string[], fieldName: string): string | undefined {
   for (const line of lines) {
     const match = line.match(pattern);
     if (match) {
-      return match[1].trim();
+      return match[1]?.trim() ?? undefined;
     }
   }
 

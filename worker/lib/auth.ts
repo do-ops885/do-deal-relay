@@ -256,9 +256,9 @@ const ALLOWED_ORIGINS = [
  * Get allowed origin from request
  */
 export function getAllowedOrigin(requestOrigin: string | null): string {
-  if (!requestOrigin) return ALLOWED_ORIGINS[0];
+  if (!requestOrigin) return ALLOWED_ORIGINS[0]!;
   if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
-  return ALLOWED_ORIGINS[0]; // Default to first allowed
+  return ALLOWED_ORIGINS[0]!; // Default to first allowed
 }
 
 /**

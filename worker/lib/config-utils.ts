@@ -30,6 +30,7 @@ export function validateConfig(env: Env): void {
   const required = [
     "DEALS_PROD",
     "DEALS_LOG",
+    "DEALS_LOCK",
     "AI_GATEWAY_URL",
     "TRUST_THRESHOLD",
   ];

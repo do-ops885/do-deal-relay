@@ -221,11 +221,14 @@ export function extractEntitiesWithRules(
   const domainPattern = /\b([a-z]+\.com?|app\.[a-z]+)\b/gi;
   let match: RegExpExecArray | null;
   while ((match = domainPattern.exec(query)) !== null) {
-    entities.push({
-      type: "domain",
-      value: match[1],
-      confidence: 0.85,
-    });
+    const domain = match[1];
+    if (domain !== undefined) {
+      entities.push({
+        type: "domain",
+        value: domain,
+        confidence: 0.85,
+      });
+    }
   }
 
   return entities;
