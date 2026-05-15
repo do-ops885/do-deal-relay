@@ -38,7 +38,7 @@
     "@cloudflare/workers-types": "^4.20260507.1",
     "@playwright/test": "^1.59.1",
     "@vitest/coverage-v8": "^4.1.6",
-    "artillery": "^2.0.30",
+    "artillery": "^2.0.31",
     "js-yaml": "^4.1.1",
     "miniflare": "^4.20260504.0",
     "minimatch": "^10.2.5",
