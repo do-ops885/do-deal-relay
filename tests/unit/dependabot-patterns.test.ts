@@ -5,7 +5,7 @@ import yaml from "js-yaml";
 
 describe("Dependabot Patterns and Wildcards", () => {
   const content = fs.readFileSync(".github/dependabot.yml", "utf8");
-  const config = yaml.load(content) as any;
+  const config = yaml.load(content, { schema: yaml.JSON_SCHEMA }) as any;
 
   const npmUpdate = config.updates.find(
     (u: any) => u["package-ecosystem"] === "npm",
