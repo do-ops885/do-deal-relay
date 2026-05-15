@@ -30,18 +30,16 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "protobufjs": "^8.3.0",
+    "protobufjs": "8.3.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.3",
     "@cloudflare/workers-types": "^4.20260507.1",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@vitest/coverage-v8": "^4.1.6",
     "artillery": "^2.0.31",
-    "js-yaml": "^4.1.1",
     "miniflare": "^4.20260504.0",
-    "minimatch": "^10.2.5",
     "prettier": "^3.2.5",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5",
@@ -50,8 +48,8 @@
   "overrides": {
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
-    "uuid": "14.0.0",
-    "protobufjs": "^8.3.0"
+    "protobufjs": "8.3.0",
+    "uuid": "14.0.0"
   },
   "engines": {
     "node": ">=22.0.0"
