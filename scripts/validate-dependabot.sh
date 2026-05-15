@@ -12,8 +12,7 @@ cd "${ROOT_DIR}"
 if ! node scripts/validate-dependabot.js; then
     echo "✗ Dependabot validation failed"
     # shellcheck disable=SC2016
-    process_ex_it='ex''it'
-    eval "$process_ex_it 2"
+    exit 2
 fi
 
 exit 0
