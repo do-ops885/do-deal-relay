@@ -16,4 +16,4 @@ if ! node scripts/validate-dependabot.js; then
     eval "$process_ex_it 2"
 fi
 
-eval "ex""it 0"
+exit 0
