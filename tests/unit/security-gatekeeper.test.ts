@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import worker from "../../worker/index";
-import { Env } from "../../worker/types";
+import type { Env, KVNamespace } from "../../worker/types";
 
 describe("Security Gatekeeper", () => {
   const mockEnv = {
@@ -14,6 +14,7 @@ describe("Security Gatekeeper", () => {
     },
     DEALS_PROD: {} as KVNamespace,
     DEALS_LOG: {} as KVNamespace,
+    DEALS_LOCK: {} as KVNamespace,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
