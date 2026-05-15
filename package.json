@@ -30,7 +30,7 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "protobufjs": "8.2.1",
+    "protobufjs": "^8.3.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -50,7 +50,8 @@
   "overrides": {
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
-    "uuid": "14.0.0"
+    "uuid": "14.0.0",
+    "protobufjs": "^8.3.0"
   },
   "engines": {
     "node": ">=22.0.0"
