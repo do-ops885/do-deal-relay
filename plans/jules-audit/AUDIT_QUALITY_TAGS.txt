@@ -1,9 +1,0 @@
-worker/config.ts:36:    HACKERNEWS: 100,
-worker/routes/webhooks.ts:4:// DEPRECATED: This file is a thin wrapper. Use worker/routes/webhooks/index.ts
-scripts/validate-codes.sh:137:# Gate 6: Check for TODO comments
-scripts/validate-codes.sh:138:echo "Gate 6: TODO/FIXME Check"
-scripts/validate-codes.sh:139:TODOS=$(timeout "${GREP_TIMEOUT}" grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | wc -l || echo "0")
-scripts/validate-codes.sh:140:if [ "$TODOS" -eq 0 ]; then
-scripts/validate-codes.sh:141:    print_status 0 "No TODO/FIXME comments found"
-scripts/validate-codes.sh:143:    print_warning "Found $TODOS TODO/FIXME comments (review recommended)"
-tests/unit/d1-queries.test.ts:726:    // TODO: Fix getDealStats tests - complex multi-query function with session handling

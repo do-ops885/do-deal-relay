@@ -23,7 +23,6 @@ run_check() {
 
     # Run command and capture output
     output=$(eval "$cmd" 2>&1) || exit_code=$?
-    echo "Checking $name..."
 
     if [ $exit_code -ne 0 ]; then
         ERRORS+=("✗ $name failed (exit $exit_code)")
