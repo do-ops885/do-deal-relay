@@ -15,6 +15,7 @@ describe("Security Gatekeeper", () => {
     DEALS_PROD: {} as KVNamespace,
     DEALS_LOG: {} as KVNamespace,
     DEALS_LOCK: {} as KVNamespace,
+    DEALS_STAGING: {} as KVNamespace,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;

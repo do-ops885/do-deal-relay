@@ -15,6 +15,8 @@ describe("Funnel Metrics", () => {
         }),
       },
       DEALS_LOCK: { get: vi.fn(), put: vi.fn() },
+      DEALS_STAGING: { get: vi.fn() },
+      DEALS_SOURCES: { get: vi.fn() },
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
@@ -65,6 +67,8 @@ describe("Funnel Metrics", () => {
         }),
       },
       DEALS_LOCK: { get: vi.fn(), put: vi.fn() },
+      DEALS_STAGING: { get: vi.fn() },
+      DEALS_SOURCES: { get: vi.fn() },
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
@@ -94,6 +98,8 @@ describe("Funnel Metrics", () => {
         }),
       },
       DEALS_LOCK: { get: vi.fn(), put: vi.fn() },
+      DEALS_STAGING: { get: vi.fn() },
+      DEALS_SOURCES: { get: vi.fn() },
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 

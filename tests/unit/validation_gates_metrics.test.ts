@@ -60,6 +60,18 @@ describe("Validation Gates Metrics", () => {
         get: async () => null,
         put: async () => {},
       },
+      DEALS_LOCK: {
+        get: async () => null,
+        put: async () => {},
+      },
+      DEALS_STAGING: {
+        get: async () => null,
+        put: async () => {},
+      },
+      DEALS_SOURCES: {
+        get: async () => null,
+        put: async () => {},
+      },
     } as unknown as Env;
 
     const result = await validate(mockDeals, ctx, env);
@@ -169,6 +181,18 @@ describe("Validation Gates Metrics", () => {
         put: async () => {},
       },
       DEALS_PROD: {
+        get: async () => null,
+        put: async () => {},
+      },
+      DEALS_LOCK: {
+        get: async () => null,
+        put: async () => {},
+      },
+      DEALS_STAGING: {
+        get: async () => null,
+        put: async () => {},
+      },
+      DEALS_SOURCES: {
         get: async () => null,
         put: async () => {},
       },
