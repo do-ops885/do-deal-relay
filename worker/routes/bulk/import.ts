@@ -158,6 +158,7 @@ export async function handleBulkImport(
 
     for (let i = 0; i < body.deals.length; i++) {
       const item = body.deals[i];
+      if (!item) continue;
       const result = await processBulkImportItem(item, i, env);
       results.push(result);
 

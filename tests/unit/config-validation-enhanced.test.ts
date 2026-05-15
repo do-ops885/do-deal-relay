@@ -9,6 +9,7 @@ describe("Enhanced Config Validation", () => {
   const validEnv = {
     DEALS_PROD: mockKV,
     DEALS_LOG: mockKV,
+    DEALS_LOCK: mockKV,
     AI_GATEWAY_URL: "https://gateway.ai",
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
@@ -33,6 +34,14 @@ describe("Enhanced Config Validation", () => {
     delete env.DEALS_LOG;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: DEALS_LOG",
+    );
+  });
+
+  it("should throw when DEALS_LOCK is missing", () => {
+    const env = { ...validEnv } as any;
+    delete env.DEALS_LOCK;
+    expect(() => validateConfig(env)).toThrow(
+      "Missing required config: DEALS_LOCK",
     );
   });
 

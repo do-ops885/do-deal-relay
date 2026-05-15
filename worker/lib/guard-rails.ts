@@ -342,7 +342,10 @@ export async function runGuardRails(
   if (stage === "processing") {
     // Safety checks on each deal
     for (let i = 0; i < Math.min(deals.length, 10); i++) {
-      const safetyCheck = await checkSafety(deals[i]);
+      const deal = deals[i];
+      if (!deal) continue;
+
+      const safetyCheck = await checkSafety(deal);
       if (!safetyCheck.passed) {
         checks.push({
           name: `safety_check_${i}`,
@@ -350,7 +353,7 @@ export async function runGuardRails(
           severity: "fatal",
           message: safetyCheck.message,
         });
-        fatalErrors.push(`Deal ${deals[i].id}: ${safetyCheck.message}`);
+        fatalErrors.push(`Deal ${deal.id}: ${safetyCheck.message}`);
       }
     }
   }

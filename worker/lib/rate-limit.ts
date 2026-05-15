@@ -100,7 +100,7 @@ export async function checkRateLimit(
   identifier: string,
   endpoint: string,
 ): Promise<RateLimitResult> {
-  const config = ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  const config = ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
@@ -161,13 +161,9 @@ export async function checkRateLimit(
  * @returns Client identifier string
  */
 export function getClientIdentifier(request: Request): string {
-  // Try API key first
-  const apiKey = request.headers.get("X-API-Key");
-  if (apiKey) {
-    return `api:${apiKey.slice(0, 8)}`; // Use first 8 chars of API key
-  }
-
-  // Fall back to IP address
+  // Use IP address for reliable identification.
+  // Security: We must not trust unvalidated headers like X-API-Key for rate limiting
+  // as it allows attackers to bypass limits by rotating arbitrary strings.
   const forwarded = request.headers.get("CF-Connecting-IP");
   const ip = forwarded || "unknown";
 
@@ -274,7 +270,7 @@ export function createRateLimitMiddleware(
  * @returns Rate limit configuration
  */
 export function getRateLimitConfig(endpoint: string): RateLimitConfig {
-  return ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  return ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
 }
 
 /**
@@ -291,7 +287,7 @@ export async function resetRateLimit(
   identifier: string,
   endpoint: string,
 ): Promise<void> {
-  const config = ENDPOINT_LIMITS[endpoint] || ENDPOINT_LIMITS.default;
+  const config = ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;

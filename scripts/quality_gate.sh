@@ -167,6 +167,9 @@ if [ -z "${SKIP_TESTS:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ] && [ ! -f ".git/hook
     ERRORS+=("Run: cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit")
 fi
 
+# Check 13: Dependabot configuration validation
+run_check "Dependabot config" "${SCRIPT_DIR}/validate-dependabot.sh"
+
 # If there are errors, output them and exit with failure
 if [ ${#ERRORS[@]} -gt 0 ]; then
     echo ""

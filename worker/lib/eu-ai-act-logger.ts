@@ -458,5 +458,5 @@ export function getRetentionPolicy(systemType?: string): number {
     legal: 3650, // 10 years for legal proceedings
   };
 
-  return policies[systemType || "default"] || policies.default;
+  return policies[systemType || "default"] ?? policies.default!;
 }

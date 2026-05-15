@@ -27,7 +27,7 @@ export async function handleWebhookRoutes(
   // Incoming webhooks (public, signature verified)
   if (path.startsWith("/webhooks/incoming/") && request.method === "POST") {
     const partnerId = path.replace("/webhooks/incoming/", "").split("/")[0];
-    return handleIncomingWebhookRequest(request, env, partnerId);
+    if (partnerId) return handleIncomingWebhookRequest(request, env, partnerId);
   }
 
   // Subscription management (requires API key auth)
@@ -50,7 +50,7 @@ export async function handleWebhookRoutes(
 
   if (path.startsWith("/webhooks/partners/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/partners/", "").split("/")[0];
-    return handleGetPartner(request, env, partnerId);
+    if (partnerId) return handleGetPartner(request, env, partnerId);
   }
 
   // Dead letter queue management
@@ -62,7 +62,8 @@ export async function handleWebhookRoutes(
     const parts = path.replace("/webhooks/dlq/", "").split("/");
     const eventId = parts[0];
     const subscriptionId = parts[1];
-    return handleRetryDeadLetter(request, env, eventId, subscriptionId);
+    if (eventId && subscriptionId)
+      return handleRetryDeadLetter(request, env, eventId, subscriptionId);
   }
 
   // Bidirectional sync
@@ -72,7 +73,7 @@ export async function handleWebhookRoutes(
 
   if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
-    return handleGetSyncState(request, env, partnerId);
+    if (partnerId) return handleGetSyncState(request, env, partnerId);
   }
 
   // Not a webhook route

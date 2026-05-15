@@ -99,8 +99,10 @@ export default {
 
       // Metrics
       if (path === "/metrics") {
-        const format = url.searchParams.get("format") || "prometheus";
-        return handleMetrics(env, format, request);
+        return withAuth(request, env, "admin", () => {
+          const format = url.searchParams.get("format") || "prometheus";
+          return handleMetrics(env, format, request);
+        });
       }
 
       // Deals
@@ -124,9 +126,21 @@ export default {
           return rateLimiter(request, () => handleDiscover(env, request));
         });
       }
-      if (path === "/api/status") return handleStatus(env, request);
-      if (path === "/api/log") return handleGetLogs(url, env, request);
-      if (path === "/api/analytics") return handleAnalytics(url, env, request);
+      if (path === "/api/status") {
+        return withAuth(request, env, "admin", () =>
+          handleStatus(env, request),
+        );
+      }
+      if (path === "/api/log") {
+        return withAuth(request, env, "admin", () =>
+          handleGetLogs(url, env, request),
+        );
+      }
+      if (path === "/api/analytics") {
+        return withAuth(request, env, "admin", () =>
+          handleAnalytics(url, env, request),
+        );
+      }
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
@@ -150,8 +164,8 @@ export default {
         /^\/api\/referrals\/([^/]+)(?:\/(deactivate|reactivate))?$/,
       );
       if (referralMatch) {
-        const code = referralMatch[1];
-        const action = referralMatch[2];
+        const code = referralMatch[1] ?? "";
+        const action = referralMatch[2] ?? "";
         if (action === "deactivate" && request.method === "POST") {
           return withAuth(request, env, undefined, () =>
             handleDeactivateReferral(request, code, env),
@@ -187,18 +201,20 @@ export default {
         return handleValidateBatch(request, env);
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
-        return handleGetValidationStats(env);
+        return withAuth(request, env, "admin", () =>
+          handleGetValidationStats(env),
+        );
       }
 
       const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
       if (dealExplainMatch && request.method === "GET") {
-        const dealId = dealExplainMatch[1];
+        const dealId = dealExplainMatch[1] ?? "";
         return handleExplainDeal(dealId, env, request);
       }
 
       const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);
       if (dealValidateMatch && request.method === "POST") {
-        const code = dealValidateMatch[1];
+        const code = dealValidateMatch[1] ?? "";
         return handleValidateDeal(request, code, env);
       }
 
@@ -239,7 +255,8 @@ export default {
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
-        return handleGetExperience(experienceMatch[1], env);
+        if (experienceMatch[1] !== undefined)
+          return handleGetExperience(experienceMatch[1], env);
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {

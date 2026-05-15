@@ -39,8 +39,8 @@ updates:
     ignore:
       - dependency-name: "*"
         versions:
-          - "*-alpha"
-          - "*-beta"
+          - "*-alpha*"
+          - "*-beta*"
           - "*-rc*"
 
   # Terraform (if used)
@@ -92,3 +92,43 @@ updates:
       - "pre-commit"
     commit-message:
       prefix: "ci"
+
+  # npm Ecosystem
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "deps"
+      - "npm"
+    commit-message:
+      prefix: "chore"
+    groups:
+      cloudflare:
+        patterns:
+          - "@cloudflare/*"
+          - "wrangler"
+          - "miniflare"
+        update-types:
+          - "minor"
+          - "patch"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "playwright"
+          - "@playwright/*"
+          - "artillery"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - "*-alpha*"
+          - "*-beta*"
+          - "*-rc*"

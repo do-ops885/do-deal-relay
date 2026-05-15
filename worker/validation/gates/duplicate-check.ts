@@ -16,7 +16,10 @@ export function checkDeduplication(
   );
 
   if (duplicates.length > 0) {
-    return { passed: false, reason: `Duplicate detected: ${duplicates[0].id}` };
+    return {
+      passed: false,
+      reason: `Duplicate detected: ${duplicates[0]?.id}`,
+    };
   }
 
   return { passed: true };

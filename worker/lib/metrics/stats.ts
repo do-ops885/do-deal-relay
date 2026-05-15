@@ -435,13 +435,13 @@ function calculateStats(timings: number[]): PhaseTimingStats {
     sorted[Math.max(0, Math.ceil(sorted.length * q) - 1)];
 
   return {
-    min: sorted[0],
-    max: sorted[sorted.length - 1],
+    min: sorted[0] ?? 0,
+    max: sorted[sorted.length - 1] ?? 0,
     avg: Math.round(sum / sorted.length),
-    p50: getQuantile(0.5),
-    p90: getQuantile(0.9),
-    p95: getQuantile(0.95),
-    p99: getQuantile(0.99),
+    p50: getQuantile(0.5) ?? 0,
+    p90: getQuantile(0.9) ?? 0,
+    p95: getQuantile(0.95) ?? 0,
+    p99: getQuantile(0.99) ?? 0,
   };
 }
 
