@@ -128,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           img.width = 32;
           img.height = 32;
           img.style.borderRadius = "6px";
+          img.alt = ""; // Decorative image
           elements.favicon.textContent = "";
           elements.favicon.appendChild(img);
         } else {
@@ -450,10 +451,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function toggleSettings() {
-    elements.settingsPanel.classList.toggle("active");
+    const isActive = elements.settingsPanel.classList.toggle("active");
     elements.manualSection.classList.toggle("hidden");
-    elements.settingsLink.textContent =
-      elements.settingsPanel.classList.contains("active") ? "Back" : "Settings";
+    elements.settingsLink.textContent = isActive ? "Back" : "Settings";
+    elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
   }
 
   // ============================================================================

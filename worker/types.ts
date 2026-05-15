@@ -182,6 +182,8 @@ export const FailurePathSchema = z.enum([
 export type PipelinePhase = z.infer<typeof PipelinePhaseSchema>;
 export type FailurePath = z.infer<typeof FailurePathSchema>;
 
+import type { ComparisonFields } from "./pipeline/comparison";
+
 export interface PipelineContext {
   run_id: string;
   trace_id: string;
@@ -196,6 +198,7 @@ export interface PipelineContext {
   previous_snapshot?: Snapshot;
   errors: Array<{ phase: string; error: Error }>;
   retry_count: number;
+  comparisonCache?: Map<string, ComparisonFields>;
 }
 
 // ============================================================================

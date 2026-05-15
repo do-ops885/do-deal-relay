@@ -13,7 +13,6 @@ describe("Config Utilities", () => {
     NOTIFICATION_THRESHOLD: "100",
     DEALS_PROD: {},
     DEALS_LOG: {},
-    DEALS_LOCK: {},
     AI_GATEWAY_URL: "http://test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
