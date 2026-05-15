@@ -524,7 +524,6 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/api/log?run_id=specific-run",
-
       );
       const response = await worker.fetch(request, mockEnv);
 
