@@ -6,7 +6,7 @@ const DEPENDABOT_PATH = ".github/dependabot.yml";
 try {
   if (!fs.existsSync(DEPENDABOT_PATH)) {
     console.error("Error: .github/dependabot.yml not found");
-    process["ex" + "it"](1);
+    process.exit(1);
   }
 
   const content = fs.readFileSync(DEPENDABOT_PATH, "utf8");
