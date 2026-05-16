@@ -112,4 +112,4 @@ export async function main(): Promise<void> {
 }
 
 // Run CLI
-main();
+void main();

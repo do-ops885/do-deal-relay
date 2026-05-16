@@ -147,7 +147,7 @@ export async function handleCreateReferral(
         title: (bodyMetadata.title as string) || `${domain} Referral`,
         description:
           (bodyMetadata.description as string) || `Referral code for ${domain}`,
-        reward_type: bodyMetadata?.reward_type || "unknown",
+        reward_type: bodyMetadata.reward_type || "unknown",
         reward_value: bodyMetadata.reward_value as string | number | undefined,
         currency: bodyMetadata.currency as string | undefined,
         category: (bodyMetadata.category as string[]) || ["general"],

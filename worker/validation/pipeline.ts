@@ -1,4 +1,5 @@
 import { Deal, PipelineContext, Env } from "../types";
+import type { ValidationCacheEntry } from "../types/validation-cache";
 import { VALIDATION_GATES, type ValidationGate, CONFIG } from "../config";
 import { getTrustThreshold } from "../lib/config-utils";
 import { validateDealFastPath } from "../pipeline/validate-fast-path";
@@ -130,7 +131,11 @@ export async function validate(
       }
 
       const passedTrust = skipGates
-        ? (fastPathDecision as any)?.trustScore >= getTrustThreshold(env)
+        ? fastPathDecision != null &&
+          (fastPathDecision as ValidationCacheEntry).trustScore != null
+          ? (fastPathDecision as ValidationCacheEntry).trustScore! >=
+            getTrustThreshold(env)
+          : false
         : gatePasses.includes("source_trust");
 
       return {
@@ -148,7 +153,7 @@ export async function validate(
 
   let passedTrustCount = 0;
   for (const r of validationResults) {
-    if ((r as any).passedTrust) {
+    if (r.passedTrust) {
       passedTrustCount++;
     }
     r.gateFailures.forEach((gate) => {

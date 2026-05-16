@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
   contents: write
   checks: read
-  issues: write  # required to close linked issues
+  issues: write # required to close linked issues
 
 # Serialize runs for the same commit. Multiple check suites on a single
 # commit completing at roughly the same time will queue here; the first

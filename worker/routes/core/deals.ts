@@ -53,7 +53,7 @@ export async function handleGetDeals(
   if (query.category) {
     deals = deals.filter((d) =>
       d.metadata.category.some(
-        (c) => c.toLowerCase() === query.category!.toLowerCase(),
+        (c) => c.toLowerCase() === query.category?.toLowerCase(),
       ),
     );
   }
