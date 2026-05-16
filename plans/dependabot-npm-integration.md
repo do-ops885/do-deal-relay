@@ -1,6 +1,7 @@
 # ADR: Dependabot npm Integration
 
-**status**: active
+**status**: completed
+**completed**: 2026-05-17
 **owner**: jules
 **scope**: .github/dependabot.yml, package.json
 **method**: GOAP (Analyze → Decompose → Strategize → Coordinate → Execute → Synthesize)

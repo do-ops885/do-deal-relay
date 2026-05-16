@@ -11,25 +11,33 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 
 ## Active Plans
 
-- [Sprint v0.1.5](sprint-v0.1.5.md) - CI/CD stability fixes (quality gate, TruffleHog, CodeQL).
-- [GOAP Improvements (2026-05-11)](GOAP_IMPROVEMENTS_2026-05-11.md) - CI/CD hardening, governance alignment, and explainability API.
-- [Multi-Agent Workflow](multi-agent-workflow.md) - Orchestration of parallel agents.
-- [Comparison Caching](comparison-caching.md) - Optimization of deal comparison fields across pipeline stages.
+- [Sprint v0.1.5](sprint-v0.1.5.md) — CI/CD stability fixes (quality gate, TruffleHog, CodeQL).
 
 ## Planned Plans
 
-- [GitHub Automation](github-automation-plan.md) - Enhancing PR and issue automation.
-- [Manual Entry UX Enhancements](manual-entry-ux-implementation.md) - Browser extension UX improvements.
+- [GOAP Improvements (2026-05-11)](GOAP_IMPROVEMENTS_2026-05-11.md) — CI/CD hardening, governance alignment, explainability API.
+- [GitHub Automation](github-automation-plan.md) — Enhancing PR and issue automation.
+- [Manual Entry UX Enhancements (ADR-002)](manual-entry-ux-implementation.md) — Browser extension UX improvements.
+  - [ADR-002: Manual Entry UX Enhancements](ADR-002-manual-entry-ux-enhancements.md) — Decision record.
 
 ## Completed Plans
-- [Dependabot npm Integration](dependabot-npm-integration.md) — npm ecosystem configured in dependabot.yml with weekly schedule, grouping, and labels.
 
-
-- [ADR-003: Patch Release v0.1.4](ADR-003-patch-release-v0.1.4.md) — All PR feedback addressed, all issues implemented, v0.1.4 shipped.
+- [Comparison Caching](comparison-caching.md) — ADR accepted and implemented (PR #224).
+- [Dependabot npm Integration](dependabot-npm-integration.md) — npm ecosystem configured in dependabot.yml.
+- [ADR-003: Patch Release v0.1.4](ADR-003-patch-release-v0.1.4.md) — All PR feedback addressed, v0.1.4 shipped.
 - [Patch Release v0.1.4 Execution](patch-release-v0.1.4-execution.md) — 8 phases completed, tag v0.1.4 pushed.
-- [Swarm PR Register](swarm-pr-register.md) — All PRs (#225, #220, #223, #219, #216, #210, #208, #206) stabilized and merged.
+- [Swarm PR Register](swarm-pr-register.md) — All 8 PRs stabilized and merged.
 - [Swarm Execution Plan](swarm-execution-plan.md) — PR stabilization swarm completed.
+- [Swarm Status Report](swarm-status-report.md) — Full PR stabilization status report with compatibility matrix.
 - [PR #225 Stabilization](pr-225-stabilization.md) — Dependabot validation PR stabilized and merged.
+
+## Archived Plans
+
+- [Multi-Agent Workflow](multi-agent-workflow.md) — Historical execution report (2026-04): codebase audit, git workflow, pre-existing CI issues.
+
+## Archived Directories
+
+- `jules-audit/` — Jules audit snapshots (pre-check, quality, deps, docs, tests).
 
 ## Completed & Archived (Moved to `reports/`)
 

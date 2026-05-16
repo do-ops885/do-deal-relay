@@ -1,5 +1,8 @@
 # ADR: Comparison Caching for Pipeline Optimization
 
+**status**: completed
+**implemented**: PR #224 — perf(dedupe): introduce comparison cache infrastructure
+
 ## Context
 The deal discovery pipeline performs several phases (normalization, deduplication, validation, scoring) that involve repetitive string transformations and complex comparisons.
 Specifically, `calculateStringSimilarity` and `calculateUrlSimilarity` are called frequently in hot loops, especially during deduplication and similarity-based ranking. These functions perform normalization, bigram generation, and URL parsing on every call, even for the same deal.
