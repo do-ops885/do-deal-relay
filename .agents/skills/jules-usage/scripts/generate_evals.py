@@ -482,6 +482,12 @@ def main():
     with open(EVALS_JSON, "w") as f:
         json.dump(generated, f, indent=2)
 
+    # Apply formatting to match repo standards
+    try:
+        subprocess.run(["npx", "prettier", "--write", str(EVALS_JSON)], check=True, capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
     print(f"✅ Generated {eval_count} eval cases from skill content")
     print(f"   Source: {SKILL_MD}")
     print(f"   Output: {EVALS_JSON}")
