@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-05-16T14:49:42.232599",
+  "timestamp": "2026-05-16T16:28:18.691264",
   "total_skills": 43,
-  "passed": 1,
-  "passed_with_warnings": 30,
+  "passed": 2,
+  "passed_with_warnings": 29,
   "failed": 12,
   "skills": {
     "agent-browser": {
@@ -428,23 +428,21 @@
     },
     "jules-usage": {
       "name": "jules-usage",
-      "status": "passed_with_warnings",
+      "status": "passed",
       "checks": {
         "skill_md_exists": true,
         "has_frontmatter": true,
         "has_##_overview": true,
         "has_##_quick_start": true,
         "line_count": 126,
-        "examples_count": 0,
+        "examples_count": 1,
         "has_references": true,
         "has_scripts": true,
         "has_test_script": true,
         "tests_passed": true
       },
       "errors": [],
-      "warnings": [
-        "No examples directory"
-      ]
+      "warnings": []
     },
     "metrics-pipeline": {
       "name": "metrics-pipeline",
