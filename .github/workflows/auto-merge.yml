@@ -2,19 +2,21 @@
 name: Auto Merge
 
 "on":
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  check_suite:
+    types: [completed]
 
 permissions:
   pull-requests: write
   contents: write
-  actions: read
+  checks: read
   issues: write  # required to close linked issues
 
+# Serialize runs for the same commit. Multiple check suites on a single
+# commit completing at roughly the same time will queue here; the first
+# run that reaches the merge step wins, all subsequent ones exit early
+# at step 1 (PR is already merged / no longer open).
 concurrency:
-  group: auto-merge-${{ github.event.workflow_run.id }}
+  group: auto-merge-${{ github.event.check_suite.head_sha }}
   cancel-in-progress: false
 
 env:
@@ -26,10 +28,13 @@ jobs:
   auto-merge:
     name: Auto Merge PR
     runs-on: ubuntu-latest
-    # Fast-exit: only proceed if the triggering workflow itself succeeded
+    # Fast-exit if the suite that just completed is itself non-passing.
+    # At least one check is already broken — no need to query the rest.
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
+      contains(
+        fromJSON('["success","neutral","skipped"]'),
+        github.event.check_suite.conclusion
+      )
     timeout-minutes: 10
     steps:
       - name: Checkout repository
@@ -43,25 +48,35 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 1: Resolve the PR for this workflow run ──────────────────────
+      # ── Step 1: Resolve the PR for this check suite ───────────────────────
+      # Head SHA and branch come directly from the event payload — no extra
+      # API call needed. PR number is taken from the event's pull_requests
+      # array when present; falls back to a SHA-based search so fork PRs
+      # (where head_branch can be ambiguous) are handled correctly.
       - name: Get PR information
         id: get-pr
         run: |
-          RUN_ID="${{ github.event.workflow_run.id }}"
-          RUN_DATA=$(gh run view "$RUN_ID" --json headBranch,headSha)
-          HEAD_BRANCH=$(echo "$RUN_DATA" | jq -r '.headBranch')
-          HEAD_SHA=$(echo "$RUN_DATA" | jq -r '.headSha')
+          HEAD_SHA="${{ github.event.check_suite.head_sha }}"
+          HEAD_BRANCH="${{ github.event.check_suite.head_branch }}"
+          REPO="${{ github.repository }}"
 
           echo "Head branch: ${HEAD_BRANCH}"
           echo "Head SHA:    ${HEAD_SHA}"
 
-          PR_FIELDS="number,title,headRefName,baseRefName,mergeStateStatus"
-          PR_FIELDS="${PR_FIELDS},mergeable,reviewDecision,author,autoMergeRequest,headRefOid"
-          PR_DATA=$(gh pr list --head "$HEAD_BRANCH" --json "$PR_FIELDS")
-          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.[0].number // empty')
+          # Fast path: PR number embedded in the event payload
+          PR_NUMBER="${{ github.event.check_suite.pull_requests[0].number }}"
+
+          # Slow path: search open PRs by head SHA (covers fork PRs and
+          # cases where the event payload omits pull_requests)
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR in event payload — searching by SHA…"
+            PR_NUMBER=$(gh api "repos/${REPO}/pulls" \
+              --jq ".[] | select(.head.sha == \"${HEAD_SHA}\") | .number" \
+              | head -1)
+          fi
 
           if [ -z "$PR_NUMBER" ]; then
-            echo "No PR found for branch: ${HEAD_BRANCH} — skipping"
+            echo "No open PR found for SHA ${HEAD_SHA} — skipping"
             exit 0
           fi
 
@@ -73,39 +88,39 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 2: Confirm the PR head still matches the workflow SHA ─────────
-      # Prevents acting on a stale run when the branch received a new push
-      # while CI was in flight.
-      - name: Verify PR head matches workflow SHA
+      # ── Step 2: Confirm PR head still matches the event SHA ───────────────
+      # Prevents acting on a stale suite when the branch received a new push
+      # while checks were in flight.
+      - name: Verify PR head matches event SHA
         id: verify-head
         if: steps.get-pr.outputs.pr_number != ''
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
-          WORKFLOW_SHA="${{ steps.get-pr.outputs.head_sha }}"
+          EVENT_SHA="${{ steps.get-pr.outputs.head_sha }}"
 
           PR_HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid')
 
-          if [ "${WORKFLOW_SHA}" != "${PR_HEAD_SHA}" ]; then
-            echo "❌ SHA mismatch — branch was updated after CI started, skipping"
-            echo "   Workflow SHA : ${WORKFLOW_SHA}"
-            echo "   PR head SHA  : ${PR_HEAD_SHA}"
+          if [ "${EVENT_SHA}" != "${PR_HEAD_SHA}" ]; then
+            echo "❌ SHA mismatch — branch was updated after checks started, skipping"
+            echo "   Event SHA : ${EVENT_SHA}"
+            echo "   PR head   : ${PR_HEAD_SHA}"
             echo "sha_matched=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "✅ PR head matches workflow SHA (${WORKFLOW_SHA})"
+          echo "✅ PR head matches event SHA (${EVENT_SHA})"
           echo "sha_matched=true" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Step 3: ALL checks on the commit must be completed + green ─────────
-      # This is the primary gate that was missing in the original workflow.
-      # It queries every check run on the head SHA — not just the CI workflow
-      # that triggered this job — and fails fast if any check is pending,
-      # failed, cancelled, or timed out.
+      # Queries every check run on the head SHA. Fires on every check suite
+      # completion, so if any suite is still pending this step blocks the
+      # merge until the next suite completes and re-triggers the job.
       #
-      # Accepted conclusions for non-blocking checks: success, neutral, skipped
-      # Everything else (failure, cancelled, timed_out, action_required) blocks.
+      # Accepted conclusions: success, neutral, skipped
+      # Blocking conclusions: failure, cancelled, timed_out, action_required, stale
+      # TOTAL == 0 after filtering is treated as an unsafe state and aborts.
       - name: Verify all checks pass on head SHA
         id: verify-checks
         if: >
@@ -116,9 +131,8 @@ jobs:
           HEAD_SHA="${{ steps.get-pr.outputs.head_sha }}"
           CURRENT_RUN="${{ github.run_id }}"
 
-          echo "Checking all runs for SHA: ${HEAD_SHA}"
+          echo "Fetching all check runs for SHA: ${HEAD_SHA}"
 
-          # Fetch every check run for this commit (paginated)
           ALL_CHECKS=$(gh api \
             "repos/${REPO}/commits/${HEAD_SHA}/check-runs" \
             --paginate \
@@ -129,44 +143,54 @@ jobs:
             exit 0
           fi
 
-          # Exclude the current auto-merge workflow run from the evaluation so
-          # it never blocks itself.
+          # Exclude this auto-merge run so it never blocks itself
           FILTERED=$(echo "$ALL_CHECKS" | jq --arg run "$CURRENT_RUN" \
             'select(.details_url | test($run) | not)')
 
-          # Any check that hasn't finished yet
+          TOTAL=$(echo "$FILTERED" | jq -s 'length')
+
+          # Safety: if filtering removed everything we cannot make a safe
+          # decision — abort rather than merge blindly
+          if [ "${TOTAL}" -eq 0 ]; then
+            echo "⚠️  All check runs were filtered out (total=0) — cannot verify safely, skipping"
+            exit 0
+          fi
+
+          # Checks that have not finished yet
           PENDING=$(echo "$FILTERED" | \
             jq -r 'select(.status != "completed") | "  • \(.name) [\(.status)]"')
 
-          # Any check that finished with a blocking conclusion
-          BLOCKING_CONCLUSIONS='["failure","cancelled","timed_out","action_required","stale"]'
+          # Checks that finished with a blocking conclusion
+          BLOCKING='["failure","cancelled","timed_out","action_required","stale"]'
           FAILED=$(echo "$FILTERED" | \
-            jq -r --argjson bad "$BLOCKING_CONCLUSIONS" \
+            jq -r --argjson bad "$BLOCKING" \
             'select(.status == "completed" and ([.conclusion] | inside($bad))) |
              "  • \(.name) [\(.conclusion)]"')
 
           if [ -n "$PENDING" ]; then
-            echo "❌ One or more checks are still pending:"
+            echo "❌ One or more checks are still in progress — will not merge:"
             echo "$PENDING"
             echo "all_checks_passed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [ -n "$FAILED" ]; then
-            echo "❌ One or more checks did not pass:"
+            echo "❌ One or more checks failed — will not merge:"
             echo "$FAILED"
             echo "all_checks_passed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          TOTAL=$(echo "$FILTERED" | jq -s 'length')
           echo "✅ All ${TOTAL} check(s) passed on ${HEAD_SHA}"
           echo "all_checks_passed=true" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 4: Validate PR merge readiness ───────────────────────────────
-      - name: Check PR merge status
+      # ── Step 4: Validate PR eligibility ───────────────────────────────────
+      # Checks structural blockers (conflicts, branch staleness, change
+      # requests). Does NOT require CLEAN merge state here — that is
+      # re-verified in the merge step after the bot approval is posted.
+      - name: Check PR eligibility
         id: check-status
         if: >
           steps.get-pr.outputs.pr_number != '' &&
@@ -174,7 +198,7 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
 
-          FIELDS="number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author,autoMergeRequest"
+          FIELDS="number,title,headRefName,baseRefName,mergeStateStatus,mergeable,reviewDecision,author"
           PR_DATA=$(gh pr view "$PR_NUMBER" --json "$FIELDS")
 
           MERGE_STATE=$(echo "$PR_DATA" | jq -r '.mergeStateStatus')
@@ -183,7 +207,6 @@ jobs:
           AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
           BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
           PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
-          AUTO_MERGE_ON=$(echo "$PR_DATA" | jq '.autoMergeRequest != null')
 
           echo "PR #${PR_NUMBER} status:"
           echo "  Base branch    : ${BASE_REF}"
@@ -191,7 +214,6 @@ jobs:
           echo "  Mergeable      : ${MERGEABLE}"
           echo "  Review decision: ${REVIEW_DECISION}"
           echo "  Author         : ${AUTHOR}"
-          echo "  Auto-merge on  : ${AUTO_MERGE_ON}"
 
           # Only auto-merge into main or develop
           if [ "${BASE_REF}" != "main" ] && [ "${BASE_REF}" != "develop" ]; then
@@ -205,13 +227,9 @@ jobs:
             exit 0
           fi
 
-          # GitHub considers CLEAN the only fully-green merge state.
-          # UNSTABLE means non-required checks failed; we treat that as a
-          # blocker too so that only a fully green SHA gets merged.
-          # BLOCKED covers missing required reviews or failing required checks.
-          # DIRTY means merge conflicts.
-          if [ "${MERGE_STATE}" != "CLEAN" ] && [ "${MERGE_STATE}" != "HAS_HOOKS" ]; then
-            echo "❌ Merge state is '${MERGE_STATE}' (expected CLEAN or HAS_HOOKS) — skipping"
+          # Hard blockers: merge conflicts
+          if [ "${MERGE_STATE}" = "DIRTY" ]; then
+            echo "❌ PR has merge conflicts — skipping"
             exit 0
           fi
 
@@ -221,17 +239,16 @@ jobs:
           fi
 
           if [ "${REVIEW_DECISION}" = "CHANGES_REQUESTED" ]; then
-            echo "❌ Changes requested — skipping auto-merge"
+            echo "❌ Changes requested — skipping"
             exit 0
           fi
 
-          echo "✅ PR is ready for auto-merge"
+          echo "✅ PR is eligible for merge"
           {
-            echo "mergeable=true"
+            echo "eligible=true"
             echo "author=${AUTHOR}"
             echo "base_ref=${BASE_REF}"
             echo "pr_title=${PR_TITLE}"
-            echo "auto_merge_on=${AUTO_MERGE_ON}"
           } >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -241,7 +258,7 @@ jobs:
         id: check-permissions
         if: >
           steps.get-pr.outputs.pr_number != '' &&
-          steps.check-status.outputs.mergeable == 'true'
+          steps.check-status.outputs.eligible == 'true'
         run: |
           AUTHOR="${{ steps.check-status.outputs.author }}"
           REPO="${{ github.repository }}"
@@ -272,9 +289,9 @@ jobs:
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           BOT_LOGIN="github-actions[bot]"
 
+          JQ_FILTER='[.reviews[] | select(.author.login == $login and .state == "APPROVED")] | length'
           ALREADY_APPROVED=$(gh pr view "$PR_NUMBER" --json reviews \
-            --jq --arg login "$BOT_LOGIN" \
-            '[.reviews[] | select(.author.login == $login and .state == "APPROVED")] | length')
+            --jq "$JQ_FILTER" --arg login "$BOT_LOGIN")
 
           if [ "${ALREADY_APPROVED}" -gt 0 ]; then
             echo "PR #${PR_NUMBER} already approved by bot — skipping"
@@ -286,47 +303,102 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 7: Enable auto-merge (idempotent) ────────────────────────────
-      # Re-verifies the SHA one final time immediately before scheduling the
-      # merge to close the window between step 2 and now.
-      - name: Enable auto-merge
-        id: enable-merge
+      # ── Step 7: Final verification + direct merge ─────────────────────────
+      # Owns the actual merge decision. Re-runs SHA guard, full check-run
+      # verification, and merge state check immediately before the merge API
+      # call — closing the window between step 3 and now.
+      #
+      # --auto is intentionally absent. GitHub's native auto-merge delegates
+      # the merge decision to branch protection rules, which may not require
+      # every workflow. Merging directly here guarantees no merge ever happens
+      # when any check is failing or pending.
+      - name: Verify checks and merge
+        id: merge
         if: >
           steps.get-pr.outputs.pr_number != '' &&
           steps.check-permissions.outputs.has_write_access == 'true'
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
-          WORKFLOW_SHA="${{ steps.get-pr.outputs.head_sha }}"
+          EVENT_SHA="${{ steps.get-pr.outputs.head_sha }}"
+          REPO="${{ github.repository }}"
+          CURRENT_RUN="${{ github.run_id }}"
 
-          # Final SHA guard — re-read live head before touching merge state
+          # ── Guard 1: Re-verify SHA hasn't moved since step 2 ──────────────
           CURRENT_HEAD=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid')
-          if [ "${WORKFLOW_SHA}" != "${CURRENT_HEAD}" ]; then
-            echo "❌ PR head moved since verification — aborting to avoid merging wrong commit"
-            echo "   Expected: ${WORKFLOW_SHA}"
-            echo "   Current : ${CURRENT_HEAD}"
+          if [ "${EVENT_SHA}" != "${CURRENT_HEAD}" ]; then
+            echo "❌ PR head moved between verification and merge — aborting"
+            echo "   Expected : ${EVENT_SHA}"
+            echo "   Current  : ${CURRENT_HEAD}"
+            exit 0
+          fi
+          echo "✅ SHA confirmed: ${EVENT_SHA}"
+
+          # ── Guard 2: Re-verify ALL checks are still green ─────────────────
+          # Catches any check that began failing between step 3 and now.
+          echo "Re-verifying check runs before merge…"
+
+          ALL_CHECKS=$(gh api \
+            "repos/${REPO}/commits/${EVENT_SHA}/check-runs" \
+            --paginate \
+            --jq '.check_runs[]')
+
+          FILTERED=$(echo "$ALL_CHECKS" | jq --arg run "$CURRENT_RUN" \
+            'select(.details_url | test($run) | not)')
+
+          TOTAL=$(echo "$FILTERED" | jq -s 'length')
+
+          if [ "${TOTAL}" -eq 0 ]; then
+            echo "⚠️  All check runs were filtered out (total=0) — cannot verify safely, aborting"
             exit 0
           fi
 
-          AUTO_MERGE_ON="${{ steps.check-status.outputs.auto_merge_on }}"
-          if [ "${AUTO_MERGE_ON}" = "true" ]; then
-            echo "Auto-merge already enabled for PR #${PR_NUMBER} — nothing to do"
-            echo "merge_enabled=true" >> "$GITHUB_OUTPUT"
+          PENDING=$(echo "$FILTERED" | \
+            jq -r 'select(.status != "completed") | "  • \(.name) [\(.status)]"')
+
+          BLOCKING='["failure","cancelled","timed_out","action_required","stale"]'
+          FAILED=$(echo "$FILTERED" | \
+            jq -r --argjson bad "$BLOCKING" \
+            'select(.status == "completed" and ([.conclusion] | inside($bad))) |
+             "  • \(.name) [\(.conclusion)]"')
+
+          if [ -n "$PENDING" ]; then
+            echo "❌ Check(s) still running at merge time — aborting:"
+            echo "$PENDING"
             exit 0
           fi
 
+          if [ -n "$FAILED" ]; then
+            echo "❌ Check(s) failed at merge time — aborting:"
+            echo "$FAILED"
+            exit 0
+          fi
+
+          echo "✅ All ${TOTAL} check(s) still green"
+
+          # ── Guard 3: Merge state must be CLEAN after bot approval ─────────
+          MERGE_STATE=$(gh pr view "$PR_NUMBER" --json mergeStateStatus \
+            --jq '.mergeStateStatus')
+
+          if [ "${MERGE_STATE}" != "CLEAN" ] && [ "${MERGE_STATE}" != "HAS_HOOKS" ]; then
+            echo "❌ Merge state is '${MERGE_STATE}' after approval — aborting"
+            exit 0
+          fi
+
+          echo "✅ Merge state: ${MERGE_STATE}"
+
+          # ── Merge ─────────────────────────────────────────────────────────
           PR_TITLE="${{ steps.check-status.outputs.pr_title }}"
           COMMIT_MESSAGE=$(echo "${COMMIT_MESSAGE_FORMAT}" | \
             awk -v title="${PR_TITLE}" -v number="${PR_NUMBER}" \
             '{gsub(/{title}/, title); gsub(/{number}/, number); print}')
 
-          echo "Enabling auto-merge for PR #${PR_NUMBER} (method: ${MERGE_METHOD})"
+          echo "Merging PR #${PR_NUMBER} (method: ${MERGE_METHOD})"
           gh pr merge "${PR_NUMBER}" \
             --"${MERGE_METHOD}" \
-            --auto \
             --subject "${COMMIT_MESSAGE}"
 
-          echo "✅ Auto-merge enabled"
-          echo "merge_enabled=true" >> "$GITHUB_OUTPUT"
+          echo "✅ PR #${PR_NUMBER} merged"
+          echo "merged=true" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -334,10 +406,9 @@ jobs:
       - name: Close linked issues
         if: >
           steps.get-pr.outputs.pr_number != '' &&
-          steps.enable-merge.outputs.merge_enabled == 'true'
+          steps.merge.outputs.merged == 'true'
         run: |
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
-          REPO="${{ github.repository }}"
 
           PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""')
           ISSUE_NUMBERS=$(echo "$PR_BODY" | \
@@ -365,7 +436,7 @@ jobs:
 
             echo "Closing issue #${ISSUE_NUMBER}"
             gh issue close "$ISSUE_NUMBER" \
-              --comment "Closed automatically: linked PR #${PR_NUMBER} was merged via auto-merge."
+              --comment "Closed automatically: linked PR #${PR_NUMBER} was merged."
             echo "✅ Closed issue #${ISSUE_NUMBER}"
           done
         env:
@@ -376,9 +447,9 @@ jobs:
         if: >
           success() &&
           steps.get-pr.outputs.pr_number != '' &&
-          steps.check-permissions.outputs.has_write_access == 'true'
+          steps.merge.outputs.merged == 'true'
         run: |
-          echo "::notice::Auto-merge enabled for PR #${{ steps.get-pr.outputs.pr_number }}"
+          echo "::notice::PR #${{ steps.get-pr.outputs.pr_number }} merged successfully"
 
       - name: Report failure
         if: failure() && steps.get-pr.outputs.pr_number != ''
