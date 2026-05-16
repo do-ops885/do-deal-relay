@@ -97,7 +97,7 @@
       ]
     }
   },
-  "last_handoff": "swarm-three-suggestions-complete",
+  "last_handoff": "swarm-fix-as-any-casts-complete",
   "blockers": [],
   "pending_tasks": [
     "E2E: Run Playwright tests against deployed worker (full suite requires production bindings)"
@@ -160,7 +160,9 @@
     "Playwright E2E tests: 16/26 pass locally (auth/CORS/404), 10 fail (need production KV/D1 bindings)",
     "Guard Rail 6 enhanced: Prettier formatting check added to pre-commit hook (staged .ts/.js/.json/.yaml/.yml/.md)",
     "Pre-commit hook restructured: Prettier check moved before TypeScript, HAS_TS_FILES flag for cleaner output",
-    "as any audit report created: reports/as-any-audit.md — 7 casts across 4 files, with replacement suggestions"
+    "as any audit report created: reports/as-any-audit.md — 7 casts across 4 files, with replacement suggestions",
+    "Swarm fix as any casts: replaced 5 P0/P1 casts with proper types (Deal[], SortField, SortOrder, Experience[], string)",
+    "Commit f22cf49: as any casts fixed in search.ts (3), experience.ts (1), report.ts (1) — TypeScript 0 errors"
   ],
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "evals_auto_generated": true,
