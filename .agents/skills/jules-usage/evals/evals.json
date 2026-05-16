@@ -1,28 +1,33 @@
 {
   "skill_name": "jules-usage",
   "version": "1.0.0",
-  "description": "Use the Jules CLI with this repository; install it when absent, run repo checks, label long-running GitHub tasks for Jules, and leave PR guidance for feedback-driven fixes.",
+  "description": "Use the Jules CLI with this repository; install it when absent, create sessions for long-running tasks, label GitHub issues for Jules, and leave PR guidance for feedback-driven fixes.",
+  "generated_by": "scripts/generate_evals.py",
   "evals": [
     {
       "id": "jules-install-check",
-      "name": "Jules CLI Installation Check",
+      "name": "CLI Installation Check",
       "prompt": "Check if Jules CLI is installed and usable in this environment",
       "expected_output": "Report of Jules CLI availability with version and available commands",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Checks for jules using command -v or equivalent",
         "Reports jules CLI version or installation status",
-        "Lists available jules commands (new, remote, teleport, login, logout)",
+        "Lists available jules commands",
         "Does not depend on non-existent commands like 'check' or 'status'",
         "Provides fallback guidance if jules is not available"
       ]
     },
     {
       "id": "jules-install-fallback",
-      "name": "Jules CLI Installation Fallback",
+      "name": "CLI Installation Fallback",
       "prompt": "Jules CLI is not available - install it and set up the environment for repo validation",
       "expected_output": "Installation attempt via npm with clear fallback path",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Attempts npm install -g @jules/cli",
         "Checks for npm/corepack availability before attempting install",
@@ -33,24 +38,28 @@
     },
     {
       "id": "jules-repo-verification",
-      "name": "Repository Verification with Jules",
+      "name": "Repository Verification",
       "prompt": "Verify the current repository state using Jules CLI for a long-running validation task",
       "expected_output": "Repo validation initiated via jules new or equivalent",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Uses gh to confirm repo context (gh auth status, gh repo view)",
         "Verifies the repo name with gh repo view --json nameWithOwner",
-        "Uses jules new (not jules check repo) to assign a session",
+        "Uses jules new to assign a session",
         "Or uses jules remote new to create a remote session",
         "Reports success or failure with exact command output"
       ]
     },
     {
       "id": "jules-github-issue-labeling",
-      "name": "GitHub Issue Labeling for Jules",
+      "name": "GitHub Issue Labeling",
       "prompt": "Label a GitHub issue with 'jules' for a long-running e2e validation task",
       "expected_output": "Issue labeled with jules after confirming capacity",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Verifies Jules is available before adding the label",
         "Uses gh issue create or gh issue edit to add label",
@@ -61,10 +70,12 @@
     },
     {
       "id": "jules-pr-guidance",
-      "name": "PR Comment Guidance for Jules",
+      "name": "PR Comment Guidance",
       "prompt": "A pull request has feedback that needs Jules to address. Leave instructions for Jules to fix the PR.",
       "expected_output": "PR comment with exact Jules instruction for feedback-driven fixes",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Uses the exact Jules trigger phrase: @jules address and analyze feedback for impact the codebase, if has impact change, git commit, git push all changes back to the branch",
         "Includes sufficient context about the PR and existing feedback",
@@ -75,24 +86,28 @@
     },
     {
       "id": "jules-task-capacity",
-      "name": "Jules Task Capacity Check",
+      "name": "Task Capacity Check",
       "prompt": "Check if Jules has available task capacity before assigning a new task",
       "expected_output": "Task capacity report or fallback guidance",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
-        "Attempts jules status or equivalent capacity check command",
+        "Attempts jules remote list or equivalent capacity check command",
         "Does not proceed if 3 tasks are already running",
-        "If jules status unavailable, reports alternative method",
+        "If jules remote list unavailable, reports alternative method",
         "If task creation fails after labeling, removes and re-adds label only after capacity is free",
         "Reports clear guidance on capacity limits"
       ]
     },
     {
       "id": "jules-api-fallback",
-      "name": "Jules REST API Fallback",
+      "name": "REST API Fallback",
       "prompt": "Jules CLI is not available, use the REST API fallback for repo validation",
       "expected_output": "REST API call to Jules with authentication",
-      "files": [],
+      "files": [
+        "SKILL.md"
+      ],
       "assertions": [
         "Checks for JULES_API_KEY environment variable before proceeding",
         "Uses curl with x-goog-api-key header (not Authorization: Bearer)",
@@ -102,18 +117,37 @@
       ]
     },
     {
-      "id": "jules-script-execution",
-      "name": "Jules API Script Execution",
+      "id": "jules-script-jules_api_request",
+      "name": "Script: jules_api_request.sh",
       "prompt": "Run the jules_api_request.sh script to validate the repository",
       "expected_output": "Successful execution of the API request script",
-      "files": [".agents/skills/jules-usage/scripts/jules_api_request.sh"],
+      "files": [
+        "scripts/jules_api_request.sh"
+      ],
       "assertions": [
         "Script executes without shell errors",
         "Script validates required arguments (endpoint and payload)",
         "Script checks for JULES_API_KEY environment variable",
-        "Reports clear error messages when JULES_API_KEY is missing",
-        "Reports usage instructions when arguments are missing",
-        "Exits with appropriate error codes for failures"
+        "Reports clear error messages when arguments or prerequisites are missing",
+        "Exits with appropriate error codes for failures",
+        "Has valid shell syntax (bash -n)"
+      ]
+    },
+    {
+      "id": "jules-script-jules_start_session",
+      "name": "Script: jules_start_session.sh",
+      "prompt": "Run the jules_start_session.sh script to start a Jules session",
+      "expected_output": "Jules session started with CLI or API fallback",
+      "files": [
+        "scripts/jules_start_session.sh"
+      ],
+      "assertions": [
+        "Script executes without shell errors",
+        "Has CLI \u2192 API fallback logic (checks for jules CLI first)",
+        "Uses gh for repo metadata",
+        "Reports clear error messages when prerequisites are missing",
+        "Exits with appropriate error codes for failures",
+        "Has valid shell syntax (bash -n)"
       ]
     },
     {
@@ -142,6 +176,52 @@
         "Does not proceed with validation without credentials",
         "Provides guidance on setting up JULES_API_KEY",
         "Exits with appropriate non-zero error code"
+      ]
+    },
+    {
+      "id": "jules-edge-case-install-failure",
+      "name": "Edge Case: CLI Install Failure",
+      "prompt": "Jules CLI install fails or is unavailable in the runtime environment",
+      "expected_output": "Clear report of the failure with alternative options",
+      "files": [],
+      "assertions": [
+        "Detects that jules CLI is not available",
+        "Reports the exact installation failure output",
+        "Suggests REST API fallback option",
+        "Checks for JULES_API_KEY before suggesting API fallback",
+        "Exits with appropriate non-zero error code if no fallback available"
+      ]
+    },
+    {
+      "id": "jules-reference-api-reference",
+      "name": "Reference: api-reference.md",
+      "prompt": "Use the api-reference.md reference to look up Jules CLI commands or API details",
+      "expected_output": "Accurate command or API reference from api-reference.md",
+      "files": [
+        "references/api-reference.md"
+      ],
+      "assertions": [
+        "Reference document exists and is accessible",
+        "Contains accurate jules CLI commands (no deprecated 'check' or 'status' commands)",
+        "Contains accurate API details (base URL, auth header, endpoints)",
+        "Includes error handling guidance",
+        "References are consistent with SKILL.md"
+      ]
+    },
+    {
+      "id": "jules-reference-commands",
+      "name": "Reference: commands.md",
+      "prompt": "Use the commands.md reference to look up Jules CLI commands or API details",
+      "expected_output": "Accurate command or API reference from commands.md",
+      "files": [
+        "references/commands.md"
+      ],
+      "assertions": [
+        "Reference document exists and is accessible",
+        "Contains accurate jules CLI commands (no deprecated 'check' or 'status' commands)",
+        "Contains accurate API details (base URL, auth header, endpoints)",
+        "Includes error handling guidance",
+        "References are consistent with SKILL.md"
       ]
     }
   ]
