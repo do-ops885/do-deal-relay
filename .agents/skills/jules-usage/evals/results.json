@@ -87,14 +87,46 @@
     "passed": 40,
     "failed": 0,
     "test_categories": [
-      {"name": "SKILL.md structure", "passed": true, "details": "All structure checks pass"},
-      {"name": "commands.md reference", "passed": true, "details": "All command references accurate"},
-      {"name": "evals.json structure", "passed": true, "details": "10 eval cases, all with required fields"},
-      {"name": "jules_api_request.sh structure", "passed": true, "details": "Valid shebang, error handling, API key check"},
-      {"name": "jules_start_session.sh structure", "passed": true, "details": "Valid shebang, CLI→API fallback, gh integration"},
-      {"name": "Shell script syntax", "passed": true, "details": "Both scripts pass bash -n syntax check"},
-      {"name": "Workflow documentation", "passed": true, "details": "All 14 documented workflows verified"},
-      {"name": "Script executability", "passed": true, "details": "Both scripts are executable"}
+      {
+        "name": "SKILL.md structure",
+        "passed": true,
+        "details": "All structure checks pass"
+      },
+      {
+        "name": "commands.md reference",
+        "passed": true,
+        "details": "All command references accurate"
+      },
+      {
+        "name": "evals.json structure",
+        "passed": true,
+        "details": "10 eval cases, all with required fields"
+      },
+      {
+        "name": "jules_api_request.sh structure",
+        "passed": true,
+        "details": "Valid shebang, error handling, API key check"
+      },
+      {
+        "name": "jules_start_session.sh structure",
+        "passed": true,
+        "details": "Valid shebang, CLI→API fallback, gh integration"
+      },
+      {
+        "name": "Shell script syntax",
+        "passed": true,
+        "details": "Both scripts pass bash -n syntax check"
+      },
+      {
+        "name": "Workflow documentation",
+        "passed": true,
+        "details": "All 14 documented workflows verified"
+      },
+      {
+        "name": "Script executability",
+        "passed": true,
+        "details": "Both scripts are executable"
+      }
     ]
   },
   "integration_verification": {
