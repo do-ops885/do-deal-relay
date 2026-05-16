@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
   contents: write
   actions: read
-  issues: write # required to close linked issues
+  issues: write  # required to close linked issues
 
 concurrency:
   group: auto-merge-${{ github.event.workflow_run.id }}
