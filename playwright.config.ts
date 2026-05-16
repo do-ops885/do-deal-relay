@@ -22,12 +22,14 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
+  // Note: webServer is disabled by default to allow manual control or CI setup
+  // to seed the environment before tests run.
   webServer: process.env.SKIP_DEV_SERVER
     ? undefined
     : {
         command: "npm run dev",
-        url: "http://localhost:8787/health",
-        reuseExistingServer: !process.env.CI,
+        url: "http://localhost:8787/health/live",
+        reuseExistingServer: true,
         timeout: 120000,
       },
 });
