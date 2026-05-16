@@ -29,7 +29,11 @@
     "codeql_verified_working": true,
     "ci_blockers_investigated": true,
     "changelog_auto_script_created": true,
-    "agents_md_quality_gate_count_fixed": true
+    "agents_md_quality_gate_count_fixed": true,
+    "traces_enabled": true,
+    "waf_security_docs_added": true,
+    "stale_issues_237_238_closed": true,
+    "obs_adr_004_written": true
   },
   "active_agents": [],
   "current_phase": "v0.1.5-ci-fixes",
@@ -73,10 +77,13 @@
   "last_handoff": "swarm-v0.1.5-ci-fixes",
   "blockers": [],
   "pending_tasks": [
-    "Validate TruffleHog fix with single-commit PR",
-    "Execute v0.1.5 sprint: fix CI quality gate, TruffleHog, CodeQL"
+    "Validate TruffleHog fix with single-commit PR"
   ],
   "completed_tasks": [
+    "Enable observability traces + head_sampling_rate in wrangler.jsonc",
+    "Add WAF/edge security setup documentation to DEPLOYMENT.md (Section 12)",
+    "Close stale issues #237, #238 — fork-environment expected failures",
+    "Write ADR-004 for observability enablement and edge security",
     "Investigate CI quality gate — all passing on main, added coverage race fix",
     "Investigate TruffleHog workflow — applied security-summary conclusion fix",
     "Investigate CodeQL — already enabled and passing (5/5 runs)",
