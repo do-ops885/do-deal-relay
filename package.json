@@ -4,6 +4,7 @@
   "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
   "type": "module",
   "scripts": {
+    "benchmark": "tsx scripts/benchmark_pipeline.ts",
     "build": "bash scripts/generate-version.sh && tsc",
     "build:watch": "bash scripts/generate-version.sh && tsc --watch",
     "deploy": "wrangler deploy",

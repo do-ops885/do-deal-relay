@@ -58,16 +58,23 @@ The discovery funnel tracks how many candidates survive each stage:
 
 ---
 
-## ⏱️ Running Benchmarks Locally
+## ⏱️ Running Benchmarks
 
+### Local Benchmarks
 Before submitting a performance-related PR, run the pipeline benchmark:
 
 ```bash
 # Run the local pipeline simulator
-npx tsx scripts/benchmark_pipeline.ts
+npm run benchmark
 ```
 
 Compare the `Phase Timings` output before and after your changes. Look for significant reductions in the specific phase you targeted without regressions in others.
+
+### CI Benchmarks
+Performance benchmarks are run automatically every Sunday at 00:00 UTC via GitHub Actions (`.github/workflows/benchmarks.yml`).
+
+- **Baseline (v0.1.4)**: 5,600-5,750 deals/sec
+- **Regression Threshold**: 5,000 deals/sec (Failure triggered if throughput falls below this)
 
 ---
 
