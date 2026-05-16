@@ -23,10 +23,14 @@
     "release_workflow_expected_failure": true,
     "changelog_header_fixed": true,
     "sprint_v015_plan_written": true,
-    "eu_ai_act_compliance_logged": true
+    "eu_ai_act_compliance_logged": true,
+    "ci_quality_gate_coverage_fixed": true,
+    "trufflehog_security_fix_applied": true,
+    "codeql_verified_working": true,
+    "ci_blockers_investigated": true
   },
   "active_agents": [],
-  "current_phase": "post-release-cleanup",
+  "current_phase": "v0.1.5-ci-fixes",
   "version": "0.1.4",
   "release_status": "stable",
   "agent_status": {
@@ -51,14 +55,25 @@
       "status": "complete",
       "progress": 100,
       "log_entries": 2
+    },
+    "ci-fix-agent": {
+      "status": "complete",
+      "progress": 100,
+      "fixes_applied": ["quality_gate_coverage_race","trufflehog_security_summary"],
+      "investigations_completed": ["quality_gate","trufflehog","codeql"]
     }
   },
-  "last_handoff": "swarm-suggestions-v0.1.4",
+  "last_handoff": "swarm-v0.1.5-ci-fixes",
   "blockers": [],
   "pending_tasks": [
-    "Execute v0.1.5 sprint: fix CI quality gate, TruffleHog, CodeQL"
+    "Validate TruffleHog fix with single-commit PR",
+    "Continue with v0.1.5 sprint: P1/P2 tasks"
   ],
   "completed_tasks": [
+    "Investigate CI quality gate — all passing on main, added coverage race fix",
+    "Investigate TruffleHog workflow — applied security-summary conclusion fix",
+    "Investigate CodeQL — already enabled and passing (5/5 runs)",
+    "Update sprint plan v0.1.5 with verified blocker statuses",
     "Fix PR #220 — cache sorting logic inversion + rollback.yml security",
     "Fix PR #223 — verify upload-artifact v7.0.1 exists, remove --legacy-peer-deps",
     "Remove --legacy-peer-deps from all 11 workflow files",
