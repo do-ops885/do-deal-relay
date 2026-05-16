@@ -13,6 +13,12 @@ import { ValidationIndexRepository } from "../lib/validation-cache/index-reposit
 import type { ValidationCacheEntry } from "../types/validation-cache";
 import { recordValidationCacheMetric } from "../lib/metrics";
 
+/**
+ * Result of the fast-path validation phase.
+ * @property valid - Whether the deal passed fast-path validation
+ * @property error - Error message if validation failed
+ * @property metrics - Optional metrics captured during validation
+ */
 export interface FastPathResult {
   hit: boolean;
   source: "kv:url" | "kv:fingerprint" | "d1" | "none";

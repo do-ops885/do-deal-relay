@@ -53,7 +53,7 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 });
 
 describe("API Endpoints", () => {
-  const authHeader = { Authorization: "Bearer ddr_test_key_123" };
+  const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
@@ -80,7 +80,7 @@ describe("API Endpoints", () => {
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest(
       "SHA-256",
-      encoder.encode("ddr_test_key_123"),
+      encoder.encode("ddr_admin_test_key_123"),
     );
     const hash = Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
@@ -542,9 +542,7 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/api/log?run_id=specific-run",
-        {
-          headers: authHeader,
-        },
+        { headers: authHeader },
       );
       const response = await worker.fetch(request, mockEnv);
 

@@ -1,9 +1,18 @@
+// Rate Limit Constants
+const DEFAULT_HN_RATE_LIMIT = 100;
+const DEFAULT_REDDIT_RATE_LIMIT = 60;
+const DEFAULT_PH_RATE_LIMIT = 30;
+const DEFAULT_GITHUB_RATE_LIMIT = 30;
 // ============================================================================
 // Configuration Constants
 // ============================================================================
 
 import { VERSION } from "./version";
 
+/**
+ * Global configuration constants for the Deal Discovery System.
+ * Includes timing, limits, scoring weights, and validation thresholds.
+ */
 export const CONFIG = {
   // System
   VERSION,
@@ -25,16 +34,17 @@ export const CONFIG = {
   USER_AGENT: "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
 
   // Research settings
+  DISCOVERY_BATCH_WINDOW: 500,
   RESEARCH_MAX_SOURCES_PER_QUERY: 5,
   RESEARCH_MIN_CONFIDENCE: 0.3,
   RESEARCH_CACHE_TTL_MINUTES: 60,
 
   // API Rate Limits
   API_RATE_LIMITS: {
-    PRODUCTHUNT: 30, // requests per minute
-    GITHUB: 30,
-    HACKERNEWS: 100,
-    REDDIT: 60,
+    PRODUCTHUNT: DEFAULT_PH_RATE_LIMIT, // requests per minute
+    GITHUB: DEFAULT_GITHUB_RATE_LIMIT,
+    HACKERNEWS: DEFAULT_HN_RATE_LIMIT,
+    REDDIT: DEFAULT_REDDIT_RATE_LIMIT,
   },
 
   // Retry settings
@@ -64,6 +74,25 @@ export const CONFIG = {
   MIN_CONFIDENCE_SCORE: 0.5,
   SIMILARITY_THRESHOLD: 0.8,
   MAX_REWARD_VALUE: 10000, // $10K cap for sanity
+  MAX_CODE_LENGTH: 50,
+  PLAUSIBILITY_THRESHOLDS: {
+    CASH_LOW: 50,
+    CASH_MEDIUM: 100,
+    CASH_HIGH: 500,
+    PERCENT_MIN_OPTIMAL: 10,
+    PERCENT_MAX_OPTIMAL: 50,
+    OPTIMAL_SOURCE_COUNT: 5,
+    DIVERSITY_MULTIPLIER: 2,
+    PERCENT_MIN_THRESHOLD: 5,
+    REWARD_PLAUSIBILITY_DEFAULT: 0.8,
+    CREDIT_PLAUSIBILITY: 0.9,
+    ITEM_PLAUSIBILITY: 0.8,
+    SUSPICIOUS_REWARD_PLAUSIBILITY: 0.5,
+    DUPLICATE_PENALTY_VALUE: 0.5,
+    PLAUSIBILITY_MEDIUM: 0.9,
+    PLAUSIBILITY_HIGH: 0.7,
+    PLAUSIBILITY_LOW: 0.7,
+  },
 
   // Trust model
   TRUST_BOUNDS: {
