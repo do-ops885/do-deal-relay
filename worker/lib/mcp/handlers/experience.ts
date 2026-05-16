@@ -1,6 +1,13 @@
 import { z } from "zod";
 import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
+
+interface Experience {
+  success: boolean;
+  comment?: string;
+  timestamp: string;
+  source: string;
+}
 import {
   getReferralByCode,
   storeReferralInput,
@@ -41,7 +48,7 @@ export async function handleExperienceDeal(
 
   // Update referral metadata with the experience
   referral.metadata = referral.metadata || {};
-  const experiences = (referral.metadata.experiences as any[]) || [];
+  const experiences = (referral.metadata.experiences as Experience[]) || [];
 
   experiences.push({
     success,

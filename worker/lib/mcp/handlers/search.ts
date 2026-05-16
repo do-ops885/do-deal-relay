@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { Env } from "../../../types";
+import type { Deal, Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { searchReferrals, referralToDeal } from "../../referral-storage/search";
-import { rankDeals } from "../../ranking";
+import { rankDeals, type SortField, type SortOrder } from "../../ranking";
 
 export const SearchDealsInputSchema = z.object({
   domain: z
@@ -86,9 +86,9 @@ export async function handleSearchDeals(
   });
 
   // Use rankDeals for advanced filtering and sorting
-  const rankingResult = rankDeals(deals as any, {
-    sortBy: (sort_by || "confidence") as any,
-    order: (order || "desc") as any,
+  const rankingResult = rankDeals(deals as Deal[], {
+    sortBy: (sort_by || "confidence") as SortField,
+    order: (order || "desc") as SortOrder,
     limit: limit || 10,
     minConfidence: min_confidence,
     minTrustScore: min_trust,

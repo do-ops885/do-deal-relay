@@ -289,6 +289,7 @@ jobs:
           PR_NUMBER="${{ steps.get-pr.outputs.pr_number }}"
           BOT_LOGIN="github-actions[bot]"
 
+          # shellcheck disable=SC2016
           JQ_FILTER='[.reviews[] | select(.author.login == $login and .state == "APPROVED")] | length'
           ALREADY_APPROVED=$(gh pr view "$PR_NUMBER" --json reviews \
             --jq "$JQ_FILTER" --arg login "$BOT_LOGIN")

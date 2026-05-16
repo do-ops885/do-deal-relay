@@ -43,7 +43,7 @@ export async function handleReportDeal(
   const result = await deactivateReferral(
     env,
     code,
-    reason as any,
+    reason as string,
     undefined,
     comment,
   );

@@ -127,7 +127,7 @@ jobs:
         run: |
           # Generate a stable test key for this job
           KEY="ddr_ci_test_key_$(date +%s)"
-          echo "TEST_API_KEY=$KEY" >> $GITHUB_ENV
+          echo "TEST_API_KEY=$KEY" >> "$GITHUB_ENV"
 
           # Hash the test key (SHA-256)
           HASH=$(echo -n "$KEY" | openssl dgst -sha256 | sed 's/.*= //')
@@ -146,7 +146,7 @@ jobs:
         run: |
           npx wrangler dev --port 8787 > wrangler.log 2>&1 &
           WRANGLER_PID=$!
-          echo "WRANGLER_PID=$WRANGLER_PID" >> $GITHUB_ENV
+          echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
 
           # Wait for health check to pass
           for _i in {1..30}; do
@@ -222,7 +222,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install Trivy
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 #   # v0.36.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           version: latest
           scan-type: fs

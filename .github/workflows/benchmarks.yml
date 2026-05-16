@@ -39,19 +39,24 @@ jobs:
             SUCCESS=$(jq -r '.success' benchmark-report.json)
             RUN_ID=$(jq -r '.run_id' benchmark-report.json)
 
-            echo "## Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
-            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Run ID | $RUN_ID |" >> $GITHUB_STEP_SUMMARY
-            echo "| Throughput | $THROUGHPUT deals/sec |" >> $GITHUB_STEP_SUMMARY
-            echo "| Threshold | $THRESHOLD deals/sec |" >> $GITHUB_STEP_SUMMARY
-            echo "| Status | $([ "$SUCCESS" = "true" ] && echo "✅ PASS" || echo "❌ FAIL") |" >> $GITHUB_STEP_SUMMARY
-
-            echo "### Phase Timings (1000 deals)" >> $GITHUB_STEP_SUMMARY
-            echo "| Phase | Duration (ms) |" >> $GITHUB_STEP_SUMMARY
-            echo "|-------|---------------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.phase_timings | to_entries[] | "| \(.key) | \(.value) |"' benchmark-report.json >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Performance Benchmark Results"
+              echo "| Metric | Value |"
+              echo "|--------|-------|"
+              echo "| Run ID | $RUN_ID |"
+              echo "| Throughput | $THROUGHPUT deals/sec |"
+              echo "| Threshold | $THRESHOLD deals/sec |"
+              echo "| Status | $([ "$SUCCESS" = "true" ] && echo "✅ PASS" || echo "❌ FAIL") |"
+              echo "### Phase Timings (1000 deals)"
+              echo "| Phase | Duration (ms) |"
+              echo "|-------|---------------|"
+              jq -r \
+                '.phase_timings | to_entries[] | "| \(.key) | \(.value) |"' \
+                benchmark-report.json
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "## Performance Benchmark Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Benchmark report not found." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Performance Benchmark Failed"
+              echo "Benchmark report not found."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi

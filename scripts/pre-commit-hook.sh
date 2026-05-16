@@ -264,8 +264,31 @@ echo ""
 # ============================================
 echo "Guard Rail 6: Code Quality"
 
+# Prettier formatting check on staged files
+PRETTIER_FILES=$(echo "$STAGED_FILES" | grep -E '\.(ts|js|json|yaml|yml|md)$' || true)
+if [ -n "$PRETTIER_FILES" ]; then
+    info "Checking formatting on staged files..."
+    if command -v npx >/dev/null 2>&1; then
+        FORMAT_ERRORS=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                if ! npx prettier --check "$file" >/dev/null 2>&1; then
+                    warning "Formatting issue in: $file"
+                    warning "  ↳ Run: npx prettier --write $file"
+                    FORMAT_ERRORS=1
+                fi
+            fi
+        done <<< "$PRETTIER_FILES"
+        if [ $FORMAT_ERRORS -eq 0 ]; then
+            success "All staged files are properly formatted"
+        fi
+    fi
+fi
+
 # TypeScript compilation
+HAS_TS_FILES=false
 if echo "$STAGED_FILES" | grep -qE "\.(ts|tsx|js|jsx)$"; then
+    HAS_TS_FILES=true
     info "TypeScript/JavaScript files changed - running checks..."
 
     # TypeScript compilation check
@@ -286,7 +309,9 @@ if echo "$STAGED_FILES" | grep -qE "\.(ts|tsx|js|jsx)$"; then
             tail -20 /tmp/ddr-test-ci.log
         fi
     fi
-else
+fi
+
+if [ "$HAS_TS_FILES" = false ]; then
     success "No TypeScript/JavaScript changes (skipping)"
 fi
 echo ""
