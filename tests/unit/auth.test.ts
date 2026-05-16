@@ -42,6 +42,11 @@ describe("Auth", () => {
       put: mockPut,
       list: mockList,
     },
+    DEALS_LOCK: {
+      get: mockGet,
+      put: mockPut,
+      list: mockList,
+    },
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;

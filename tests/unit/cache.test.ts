@@ -696,6 +696,7 @@ describe("KVCache", () => {
         DEALS_STAGING: mockKvSources,
         DEALS_PROD: mockKvSources,
         DEALS_LOG: mockKvSources,
+        DEALS_LOCK: mockKvSources,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
@@ -726,6 +727,7 @@ describe("KVCache", () => {
         DEALS_STAGING: mockKvProd,
         DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
+        DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
@@ -813,6 +815,7 @@ describe("KVCache", () => {
         DEALS_STAGING: mockKvStaging,
         DEALS_PROD: mockKvStaging,
         DEALS_LOG: mockKvStaging,
+        DEALS_LOCK: mockKvStaging,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
@@ -922,6 +925,7 @@ describe("KVCache", () => {
         DEALS_STAGING: mockKvStaging,
         DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
+        DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
@@ -964,6 +968,7 @@ describe("KVCache", () => {
         DEALS_STAGING: mockKvStaging,
         DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
+        DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;

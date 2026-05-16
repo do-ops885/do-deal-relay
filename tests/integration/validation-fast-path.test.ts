@@ -26,6 +26,7 @@ describe("validateDealFastPath", () => {
       DEALS_DB: mockDb,
       DEALS_PROD: mockKv,
       DEALS_LOG: mockKv,
+      DEALS_LOCK: mockKv,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
