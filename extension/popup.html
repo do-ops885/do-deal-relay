@@ -577,7 +577,14 @@
     </div>
 
     <div class="footer">
-      <button type="button" class="footer-btn" id="settings-link">
+      <button
+        type="button"
+        class="footer-btn"
+        id="settings-link"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-controls="settings-panel"
+      >
         Settings
       </button>
       <button class="settings-btn" id="refresh-btn" aria-label="Rescan page">
@@ -585,7 +592,7 @@
       </button>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="popup.js"></script>
   </body>
