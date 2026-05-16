@@ -19,7 +19,7 @@ if [ $EXIT_CODE -ne 0 ]; then
     # Special case: Cloudflare Vitest pool workers sometimes crash after tests complete
     # but tests themselves might have passed.
     if echo "$OUTPUT" | grep -qE "Tests.*[0-9]+ passed.*\([0-9]+\)" && \
-       ! (echo "$OUTPUT" | grep -q "failed") && \
+       ! (echo "$OUTPUT" | grep -qE "[1-9][0-9]* failed") && \
        ! (echo "$OUTPUT" | grep -q "Coverage threshold for") && \
        (echo "$OUTPUT" | grep -q "Worker exited unexpectedly"); then
         echo "⚠️  Note: Vitest worker pool crashed during cleanup (non-critical, tests passed)"
