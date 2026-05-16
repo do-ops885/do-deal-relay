@@ -20,5 +20,22 @@ export default defineConfig({
       "**/dist/**",
       "**/.wrangler/**",
     ],
+    coverage: {
+      provider: "v8",
+      include: ["worker/**/*.ts"],
+      exclude: [
+        "worker/**/*.test.ts",
+        "worker/**/*.d.ts",
+        "worker/index.ts", // entry point, covered by E2E
+      ],
+      reporter: ["text", "lcov", "html"],
+      reportsDirectory: "./coverage",
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
+      },
+    },
   },
 });

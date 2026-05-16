@@ -107,6 +107,14 @@ describe("API Endpoints", () => {
       DEALS_LOCK: mockKvFactory("lock"),
       DEALS_SOURCES: mockKvFactory("sources"),
       WEBHOOK_API_KEYS: mockKvFactory("sources"),
+      DEALS_DB: {
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnThis(),
+          first: vi.fn(),
+          run: vi.fn().mockResolvedValue({ success: true }),
+          all: vi.fn().mockResolvedValue({ results: [] }),
+        }),
+      } as any,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
@@ -173,7 +181,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/metrics");
+      const request = new Request("http://localhost/metrics", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -186,7 +196,9 @@ describe("API Endpoints", () => {
     });
 
     it("should handle missing snapshot gracefully", async () => {
-      const request = new Request("http://localhost/metrics");
+      const request = new Request("http://localhost/metrics", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -467,7 +479,9 @@ describe("API Endpoints", () => {
 
   describe("GET /api/status", () => {
     it("should return pipeline status", async () => {
-      const request = new Request("http://localhost/api/status");
+      const request = new Request("http://localhost/api/status", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -484,7 +498,9 @@ describe("API Endpoints", () => {
         expires_at: futureDate,
       });
 
-      const request = new Request("http://localhost/api/status");
+      const request = new Request("http://localhost/api/status", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -504,7 +520,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?count=10");
+      const request = new Request("http://localhost/api/log?count=10", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -524,6 +542,9 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/api/log?run_id=specific-run",
+        {
+          headers: authHeader,
+        },
       );
       const response = await worker.fetch(request, mockEnv);
 
@@ -541,7 +562,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?format=jsonl");
+      const request = new Request("http://localhost/api/log?format=jsonl", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
