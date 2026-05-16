@@ -6,8 +6,22 @@ Production: `https://your-worker.workers.dev`
 
 ## Authentication
 
-No authentication required for public endpoints.
-For admin endpoints (future), API key via header: `X-API-Key: your-key`
+Most endpoints require authentication via an API key. We support two ways to provide the key:
+
+1. `X-API-Key` header
+2. `Authorization: Bearer <key>` header
+
+**API Key Format:** Keys must start with the `ddr_` prefix.
+
+### Roles
+- `admin`: Full access to all endpoints including system administration.
+- `user`: Access to submission and research endpoints.
+- `readonly`: Access to public data endpoints only.
+
+Publicly accessible endpoints (no auth required):
+- `GET /health`
+- `GET /deals`
+- `GET /deals.json`
 
 ## Endpoints
 
@@ -253,6 +267,42 @@ Get active deals (filtered array).
 
 ---
 
+### GET /api/deals/:id/explain
+
+Get detailed reasoning trace for a deal's confidence score.
+
+**Parameters:**
+
+- `id` (string): The unique deal ID
+
+**Response:**
+
+```json
+{
+  "dealId": "sha256-hash",
+  "score": 0.85,
+  "factors": [
+    {
+      "name": "confidence",
+      "score": 0.9,
+      "weight": 0.3,
+      "contribution": 0.27,
+      "description": "High AI confidence in deal extraction"
+    },
+    {
+      "name": "trust",
+      "score": 0.8,
+      "weight": 0.25,
+      "contribution": 0.2,
+      "description": "Trusted source domain"
+    }
+  ],
+  "summary": "This deal has high confidence due to verified source and strong extraction patterns."
+}
+```
+
+---
+
 ### GET /deals.json
 
 Get full snapshot with metadata.
@@ -485,21 +535,113 @@ Submit a new deal for validation.
 }
 ```
 
-**Response:**
+**Response (201 Created):**
 
 ```json
 {
   "success": true,
   "message": "Deal submitted for review",
-  "code": "CODE123"
+  "deal_id": "ref_abc123",
+  "code": "CODE123",
+  "status": "quarantined"
 }
 ```
 
 **Status Codes:**
 
-- 202: Submitted for review
+- 201: Created successfully
 - 400: Invalid request
 - 409: Deal already exists
+
+---
+
+## Validation API
+
+Endpoints for validating URLs and referral codes.
+
+### POST /api/validate/url
+
+Validate a single URL for reachability and patterns.
+
+**Request Body:**
+
+```json
+{
+  "url": "https://example.com/invite/CODE123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "url": "https://example.com/invite/CODE123",
+  "valid": true,
+  "status": 200,
+  "domain": "example.com"
+}
+```
+
+### POST /api/validate/batch
+
+Batch validate multiple URLs.
+
+**Request Body:**
+
+```json
+{
+  "urls": ["https://url1.com", "https://url2.com"],
+  "checkRewards": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "summary": {
+    "total": 2,
+    "valid": 2,
+    "invalid": 0
+  },
+  "urls": [...]
+}
+```
+
+### GET /api/validation/stats
+
+Get system-wide validation statistics.
+
+**Response:**
+
+```json
+{
+  "validation": {
+    "total": 1500,
+    "valid": 1420,
+    "invalid": 80
+  },
+  "providers": {
+    "supported": ["trading212", "robinhood", "coinbase"]
+  }
+}
+```
+
+### POST /api/deals/:code/validate
+
+Deep validation of an existing deal by its code.
+
+**Response:**
+
+```json
+{
+  "deal": { ... },
+  "valid": true,
+  "issues": [],
+  "url": { ... },
+  "code": { ... }
+}
+```
 
 ---
 

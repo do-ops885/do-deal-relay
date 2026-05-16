@@ -65,7 +65,7 @@
 
 | Requirement                  | Minimum Version | Purpose                        |
 | ---------------------------- | --------------- | ------------------------------ |
-| Node.js                      | 24.x            | Runtime & build tooling        |
+| Node.js                      | 22.x            | Runtime & build tooling        |
 | npm                          | 10.x+           | Package management             |
 | Wrangler CLI                 | 4.79.0+         | Cloudflare Workers deployment  |
 | Cloudflare account           | Free tier OK    | Workers, KV, D1 hosting        |

@@ -36,8 +36,12 @@ updates:
       - "docker"
     commit-message:
       prefix: "chore"
-    # Removed the invalid ignore block. 
-    # Dependabot ignores alphas/betas/RCs by default for Docker.
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - "*-alpha*"
+          - "*-beta*"
+          - "*-rc*"
 
   # Terraform (if used)
   - package-ecosystem: "terraform"
@@ -122,5 +126,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Removed the invalid ignore block. 
-    # Dependabot ignores alphas/betas/RCs by default for npm.
+    ignore:
+      - dependency-name: "*"
+        versions:
+          - "*-alpha*"
+          - "*-beta*"
+          - "*-rc*"

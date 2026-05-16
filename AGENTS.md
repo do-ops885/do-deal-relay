@@ -94,4 +94,3 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 - **Architectural Consistency**: Preserve existing state-machine and modular gate architecture.
 - **Incremental Changes**: Make small, verified changes.
 - **Verification**: Always use read-only tools to confirm the effect of your changes.
-

@@ -47,6 +47,7 @@ function createMockEnv(): Env {
     API_KEYS: kv,
     DEALS_PROD: kv,
     DEALS_LOG: kv,
+    DEALS_LOCK: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     D1: {} as D1Database,
