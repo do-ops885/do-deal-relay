@@ -3,7 +3,7 @@
 ## System Overview
 
 **Status**: Development Ready (Not Production) ⚠️  
-**Version**: 0.1.3  
+**Version**: 0.1.4  
 **Architecture**: Cloudflare Workers + 5 KV Namespaces  
 **Pipeline**: 10-phase state machine with handoff coordination
 
@@ -57,58 +57,7 @@
 
 **Commit**: `2cebe71`
 
-## Current Metrics
-
-- **Tests**: 148/148 passing (was 207)
-- **Validation Gates**: 10/10 implemented (was 9)
-- **Security Grade**: A-
-- **TypeScript**: Strict mode, no errors
-- **Code Coverage**: Comprehensive test suite
-- **Lines of Code**: ~6,000+ across all modules
-
-## Architecture Components
-
-### Pipeline Phases (10)
-
-```
-init → discover → normalize → dedupe → validate → score → stage → publish → verify → finalize
-```
-
-### KV Namespaces (5)
-
-| Namespace     | Purpose                            |
-| ------------- | ---------------------------------- |
-| DEALS_PROD    | Production deal snapshots          |
-| DEALS_STAGING | Staging area for two-phase publish |
-| DEALS_LOG     | Structured logs and metrics        |
-| DEALS_LOCK    | Distributed locking                |
-| DEALS_SOURCES | Source registry and trust scores   |
-
-### API Endpoints
-
-| Endpoint      | Method | Purpose                      |
-| ------------- | ------ | ---------------------------- |
-| /health       | GET    | Comprehensive health status  |
-| /health/ready | GET    | Kubernetes readiness probe   |
-| /health/live  | GET    | Kubernetes liveness probe    |
-| /metrics      | GET    | Prometheus metrics           |
-| /deals        | GET    | List active deals (filtered) |
-| /deals.json   | GET    | Raw deals JSON               |
-| /api/discover | POST   | Trigger discovery            |
-| /api/status   | GET    | Pipeline status              |
-| /api/log      | GET    | Recent logs                  |
-| /api/submit   | POST   | Manual deal submission       |
-
-### Resilience Patterns
-
-- **Circuit Breaker**: GitHub API, Telegram, per-source discovery
-- **Retry Logic**: Exponential backoff for source fetching
-- **Caching**: Source registry (5min), GitHub (1min), robots.txt (1hr), snapshots (30sec)
-- **Graceful Degradation**: Fallback from Telegram to GitHub Issues
-
-## Active Phase
-
-### Phase 7: Feature Enhancements ✅ COMPLETE
+### Phase 7: Feature Enhancements ✅
 
 | Feature                       | Priority | Status | Description                                 |
 | ----------------------------- | -------- | ------ | ------------------------------------------- |
@@ -153,14 +102,94 @@ init → discover → normalize → dedupe → validate → score → stage → 
 - Normalize phase now includes auto-categorization
 - Finalize phase includes expiration checks
 
+### Phase 8: Patch Release v0.1.4 ✅
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| PR #220 fix | ✅ Merged | cleanup.yml cache sorting logic inversion + rollback.yml template injection security |
+| PR #223 fix | ✅ Merged | upload-artifact v7.0.1 verification, workflow fix |
+| `--legacy-peer-deps` removal | ✅ Complete | Removed from all 11 workflow files + 2 doc files |
+| perf(dedupe) pre-partitioning | ✅ Complete | Domain+reward+value tier bucketing, URL parsing cache |
+| perf(scoring) metadata churn | ✅ Complete | For-of loops, pre-allocated arrays, in-place mutation |
+| Adaptive per-source budgets | ✅ Complete | Trust score bonus, validation rate ±50/25/−25%, discovery maturity +10–20% |
+| Benchmark reporting | ✅ Complete | Multi-deal-size simulation, phase breakdown, bottleneck detection |
+| Version bump | ✅ Complete | 0.1.3 → 0.1.4 in VERSION, worker/version.ts, package.json |
+| Release workflow fix | ✅ Complete | package.json version sync (0.1.3 → 0.1.4), tag recreated |
+
+**Commits**: `8a6fd7e`, `a61f986`, `74d5639`
+**Tag**: `v0.1.4`
+
+## Current Metrics
+
+- **Test Coverage**: 98 test files, 1650/1656 tests passing
+- **Validation Gates**: 9/9 implemented (per-deal pipeline)
+- **Quality Gates**: 12/12 passing (system-wide)
+- **Security Grade**: A-
+- **TypeScript**: Strict mode, no errors (0 type errors)
+- **Lines of Code**: ~6,500+ across all modules
+- **Benchmark**: ~5,600–5,750 deals/sec for batch sizes 500–1000
+
+## Architecture Components
+
+### Pipeline Phases (10)
+
+```
+init → discover → normalize → dedupe → validate → score → stage → publish → verify → finalize
+```
+
+### KV Namespaces (5)
+
+| Namespace     | Purpose                            |
+| ------------- | ---------------------------------- |
+| DEALS_PROD    | Production deal snapshots          |
+| DEALS_STAGING | Staging area for two-phase publish |
+| DEALS_LOG     | Structured logs and metrics        |
+| DEALS_LOCK    | Distributed locking                |
+| DEALS_SOURCES | Source registry and trust scores   |
+
+### API Endpoints
+
+| Endpoint      | Method | Purpose                      |
+| ------------- | ------ | ---------------------------- |
+| /health       | GET    | Comprehensive health status  |
+| /health/ready | GET    | Kubernetes readiness probe   |
+| /health/live  | GET    | Kubernetes liveness probe    |
+| /metrics      | GET    | Prometheus metrics           |
+| /deals        | GET    | List active deals (filtered) |
+| /deals.json   | GET    | Raw deals JSON               |
+| /deals/ranked | GET    | Ranked deals with filtering  |
+| /deals/highlights | GET | Top deals, expiring soon   |
+| /api/discover | POST   | Trigger discovery            |
+| /api/status   | GET    | Pipeline status              |
+| /api/log      | GET    | Recent logs                  |
+| /api/submit   | POST   | Manual deal submission       |
+| /api/analytics| GET    | Analytics dashboard          |
+
+### Resilience Patterns
+
+- **Circuit Breaker**: GitHub API, Telegram, per-source discovery
+- **Retry Logic**: Exponential backoff for source fetching
+- **Caching**: Source registry (5min), GitHub (1min), robots.txt (1hr), snapshots (30sec)
+- **Graceful Degradation**: Fallback from Telegram to GitHub Issues
+
 ## Next Steps
 
-1. Complete integration testing for new features
-2. Deploy to staging
-3. Monitor analytics data quality
-4. Run full validation suite
-5. Promote to production
-6. Consider Phase 8: Advanced features (search, recommendations, ML scoring)
+### Sprint v0.1.5 (Planned)
+
+**P0 — CI/CD Stability:**
+- Fix CI quality gate — reproduce CI environment with `act`, patch script for CI compatibility
+- Fix TruffleHog workflow — security-summary job `exit 1` when secret-scan reports failure
+- Enable CodeQL — API enablement or manual settings change
+
+**P1 — Developer Experience:**
+- Auto-generate CHANGELOG from conventional commits
+- Review AGENTS.md for stale references
+
+**P2 — Feature Work:**
+- Complete pending browser-agent tests
+- Evaluate next enhancements from benchmark data
+
+See [plans/sprint-v0.1.5.md](plans/sprint-v0.1.5.md) for full execution plan.
 
 ## Key Learnings
 
@@ -198,6 +227,17 @@ Critical for data integrity and rollback capability.
 - Prometheus format for ecosystem integration
 - Correlation IDs for distributed tracing
 
+### 6. Package.json Version Sync
+
+- Always verify `package.json` version matches `VERSION` file and git tag before release
+- The v0.1.4 Release workflow failed because `package.json` wasn't bumped — all other version files were correct
+
+### 7. EU AI Act Compliance Logging
+
+- Maintain append-only JSONL log at `agents-docs/coordination/ai-act-log.jsonl`
+- Each AI system operation (release, hotfix, discovery) gets a structured entry per Article 12
+- Retention: minimum 180 days per Article 19
+
 ## Quality Gates (12)
 
 The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
@@ -229,17 +269,10 @@ The per-deal validation pipeline in `worker/validation/pipeline.ts` enforces 9 g
 8. `idempotency_check`
 9. `snapshot_hash_verification`
 
-## Next Steps
-
-1. Complete Phase 7 feature enhancements
-2. Run full validation suite
-3. Deploy to staging
-4. Run integration tests
-5. Promote to production
-
 ## System Evolution
 
 - **v0.1.0-alpha**: Initial deployment with basic pipeline
 - **v0.1.1**: Production-ready with 10 validation gates
 - **v0.1.2**: Enhanced safety and quality (robots.txt, retry logic)
 - **v0.1.3**: Performance & observability (metrics, caching, circuit breakers) + Feature enhancements (Phase 7 - complete)
+- **v0.1.4**: Patch release — PR fixes, perf improvements (dedupe/scoring), adaptive budgets, benchmark reporting, --legacy-peer-deps removal
