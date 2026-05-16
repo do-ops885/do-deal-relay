@@ -115,7 +115,7 @@ export function deduplicate(
     if (!partitions.has(pkey)) {
       partitions.set(pkey, []);
     }
-    partitions.get(pkey)!.push({ deal, url: precomputeUrlKey(deal.url) });
+    partitions.get(pkey)?.push({ deal, url: precomputeUrlKey(deal.url) });
   }
 
   const semanticUnique: Deal[] = [];

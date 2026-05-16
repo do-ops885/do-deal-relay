@@ -227,4 +227,4 @@ async function validateUrlPreservation(): Promise<void> {
 }
 
 // Run validation
-validateUrlPreservation();
+void validateUrlPreservation();

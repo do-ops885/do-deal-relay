@@ -117,7 +117,7 @@ export async function handleValidateUrl(
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
     const response = jsonResponse(result, result.valid ? 200 : 400);
-    headers.forEach((value, key) => response.headers.set(key, value));
+    headers.forEach((value, key) => { response.headers.set(key, value); });
 
     return response;
   } catch (error) {
@@ -222,7 +222,7 @@ export async function handleValidateBatch(
       result,
       urlResults.errors.length > 0 ? 207 : 200,
     );
-    headers.forEach((value, key) => response.headers.set(key, value));
+    headers.forEach((value, key) => { response.headers.set(key, value); });
 
     return response;
   } catch (error) {
@@ -429,7 +429,7 @@ export async function handleValidateDeal(
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
     const response = jsonResponse(results, results.valid ? 200 : 400);
-    headers.forEach((value, key) => response.headers.set(key, value));
+    headers.forEach((value, key) => { response.headers.set(key, value); });
 
     return response;
   } catch (error) {

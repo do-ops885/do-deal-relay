@@ -17,4 +17,4 @@ export { main } from "./cli/index.js";
 import { main } from "./cli/index.js";
 
 // Run CLI
-main();
+void main();

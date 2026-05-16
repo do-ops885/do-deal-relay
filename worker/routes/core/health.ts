@@ -13,7 +13,7 @@ import {
   formatMetricsForPrometheus,
 } from "../../lib/metrics/stats";
 import { CONFIG } from "../../config";
-import type { Env, HealthStatus } from "../../types";
+import type { Env, HealthStatus, LogEntry } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";
 
 export async function handleHealth(
@@ -34,7 +34,7 @@ export async function handleHealth(
       ? results[1].value
       : { locked: false, last_run: null };
   const logs =
-    results[2].status === "fulfilled" ? (results[2].value as any[]) : [];
+    results[2].status === "fulfilled" ? (results[2].value as LogEntry[]) : [];
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
     (l) => l.phase === "finalize" && l.status === "complete",
@@ -69,7 +69,7 @@ export async function handleHealth(
     metrics: {
       total_runs_24h: recentRuns,
       success_rate_24h: recentRuns > 0 ? successfulRuns / recentRuns : 0,
-      avg_deals_per_run: snapshot?.stats?.active || 0,
+      avg_deals_per_run: snapshot?.stats.active || 0,
     },
   };
 
@@ -170,7 +170,7 @@ export async function handleMetrics(
           success_rate: stats.success_rate,
         },
         deals: {
-          active: snapshot?.stats?.active || 0,
+          active: snapshot?.stats.active || 0,
           discovered_total: candidates,
           validated_total: valid,
           duplicate_total: duplicates,
@@ -203,7 +203,7 @@ deals_valid_deals_total ${valid}
 # HELP deals_duplicate_deals_total Duplicate deals filtered (legacy)
 deals_duplicate_deals_total ${duplicates}
 # HELP deals_active_deals Current active deals in production (legacy)
-deals_active_deals ${snapshot?.stats?.active || 0}
+deals_active_deals ${snapshot?.stats.active || 0}
 `.trim();
 
   return new Response(metrics, {
