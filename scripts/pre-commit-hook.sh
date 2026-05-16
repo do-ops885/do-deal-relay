@@ -72,7 +72,9 @@ BLOCKED_PATTERNS=(
 
 BLOCKED_FOUND=0
 for pattern in "${BLOCKED_PATTERNS[@]}"; do
-    if echo "$STAGED_FILES" | grep -qE "${pattern//\*/.*}"; then
+    # Escape regex metacharacters (dot, etc.) then replace * with .*
+    escaped_pattern=$(printf '%s' "$pattern" | sed 's/\([.+^${}()|\\]\)/\\\1/g; s/\*/.*/g')
+    if echo "$STAGED_FILES" | grep -qE "$escaped_pattern"; then
         error "Attempting to commit blocked pattern: $pattern"
         BLOCKED_FOUND=1
     fi
@@ -397,10 +399,10 @@ while IFS= read -r file; do
         fi
     fi
 
-    # Scripts should be in scripts/
+    # Scripts should be in scripts/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
     if [[ "$file" == *.sh ]]; then
-        if [[ "$file" != scripts/* ]]; then
-            error "Shell script outside scripts/: $file"
+        if [[ "$file" != scripts/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
+            error "Shell script outside allowed directories: $file"
             MISPLACED=1
         fi
     fi

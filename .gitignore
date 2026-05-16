@@ -241,6 +241,10 @@ state.*.json
 .agents/skills/.lock
 skills-lock.json
 
+# Skill auto-generated evaluation/test results
+.agents/skills/evals/results.json
+.agents/skills/*/evals/test_results.json
+
 # Temporary agent outputs
 temp/BIDIRECTIONAL_*
 temp/SWARM_*
