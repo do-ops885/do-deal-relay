@@ -38,6 +38,9 @@ run_check "TypeScript compilation" "npm run lint"
 
 # Check 2: Unit tests (matches CI test job) - skip if SKIP_TESTS is set
 if [ -z "${SKIP_TESTS:-}" ]; then
+    # Clean up any stale coverage artifacts before running tests
+    # Prevents race conditions from parallel runs removing coverage dir mid-test
+    rm -rf "${ROOT_DIR}/coverage"
     run_check "Unit tests" "${SCRIPT_DIR}/run-tests-ci.sh"
 fi
 
