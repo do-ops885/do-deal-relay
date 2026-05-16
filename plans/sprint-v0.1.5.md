@@ -48,6 +48,7 @@ outcome: ${{ steps.secret-scan.conclusion }}
 Using `conclusion` correctly reflects that `continue-on-error: true` means the failure is expected and handled.
 
 **Validation**: ✅ PR #249 created with single commit, Security workflow passed, PR merged by `github-actions`.
+- Second validation (v2): Triggered via single-commit PR on branch `test/trufflehog-validation-v2` to re-confirm `conclusion` logic.
 
 ### Blocker 3: CodeQL Not Enabled
 
