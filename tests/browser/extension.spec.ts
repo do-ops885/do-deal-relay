@@ -79,7 +79,9 @@ test.describe("Extension Popup UI Tests", () => {
   });
 
   test("popup displays page title correctly", async ({ page }) => {
-    await expect(page.locator("#page-title")).toHaveText("Test Page - Referral Program");
+    await expect(page.locator("#page-title")).toHaveText(
+      "Test Page - Referral Program",
+    );
   });
 
   test("popup displays page URL correctly", async ({ page }) => {
@@ -114,8 +116,8 @@ test.describe("Extension Popup UI Tests", () => {
     const manualInput = page.locator("#manual-code");
     await manualInput.fill("manual-123!");
     await page.evaluate(() => {
-       const el = document.getElementById("manual-code");
-       el.dispatchEvent(new Event("input", { bubbles: true }));
+      const el = document.getElementById("manual-code");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await expect(manualInput).toHaveValue("MANUAL123");
   });
@@ -125,13 +127,15 @@ test.describe("Extension Popup UI Tests", () => {
     const charCounter = page.locator("#char-counter");
     await manualInput.fill("CODE");
     await page.evaluate(() => {
-       const el = document.getElementById("manual-code");
-       el.dispatchEvent(new Event("input", { bubbles: true }));
+      const el = document.getElementById("manual-code");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await expect(charCounter).toHaveText("4/20");
   });
 
-  test("manual entry button state depends on input length", async ({ page }) => {
+  test("manual entry button state depends on input length", async ({
+    page,
+  }) => {
     const manualInput = page.locator("#manual-code");
     const manualBtn = page.locator("#manual-btn");
 
@@ -141,16 +145,16 @@ test.describe("Extension Popup UI Tests", () => {
     // Still disabled for 1-2 chars
     await manualInput.fill("AB");
     await page.evaluate(() => {
-       const el = document.getElementById("manual-code");
-       el.dispatchEvent(new Event("input", { bubbles: true }));
+      const el = document.getElementById("manual-code");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await expect(manualBtn).toBeDisabled();
 
     // Enabled after 3 chars
     await manualInput.fill("ABC");
     await page.evaluate(() => {
-       const el = document.getElementById("manual-code");
-       el.dispatchEvent(new Event("input", { bubbles: true }));
+      const el = document.getElementById("manual-code");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await expect(manualBtn).toBeEnabled();
   });
