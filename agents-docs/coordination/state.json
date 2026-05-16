@@ -27,7 +27,9 @@
     "ci_quality_gate_coverage_fixed": true,
     "trufflehog_security_fix_applied": true,
     "codeql_verified_working": true,
-    "ci_blockers_investigated": true
+    "ci_blockers_investigated": true,
+    "changelog_auto_script_created": true,
+    "agents_md_quality_gate_count_fixed": true
   },
   "active_agents": [],
   "current_phase": "v0.1.5-ci-fixes",
@@ -61,13 +63,18 @@
       "progress": 100,
       "fixes_applied": ["quality_gate_coverage_race","trufflehog_security_summary"],
       "investigations_completed": ["quality_gate","trufflehog","codeql"]
+    },
+    "changelog-agent": {
+      "status": "complete",
+      "progress": 100,
+      "script_created": "generate-changelog.sh"
     }
   },
   "last_handoff": "swarm-v0.1.5-ci-fixes",
   "blockers": [],
   "pending_tasks": [
     "Validate TruffleHog fix with single-commit PR",
-    "Continue with v0.1.5 sprint: P1/P2 tasks"
+    "Execute v0.1.5 sprint: fix CI quality gate, TruffleHog, CodeQL"
   ],
   "completed_tasks": [
     "Investigate CI quality gate — all passing on main, added coverage race fix",
@@ -92,7 +99,9 @@
     "Check CI workflow run status — 1 failed: Release workflow (now fixed)",
     "Write v0.1.5 sprint plan with actionable CI fix strategies",
     "Fix CHANGELOG header ('this template' -> 'this project')",
-    "Add EU AI Act compliance log entries for v0.1.4 release operations"
+    "Add EU AI Act compliance log entries for v0.1.4 release operations",
+    "Create auto-CHANGELOG script (scripts/generate-changelog.sh)",
+    "Update AGENTS.md quality gate count (12 -> 13)"
   ],
   "timestamp": "2026-05-16T12:20:00Z"
 }
