@@ -20,10 +20,13 @@
     "benchmark_script_validated": true,
     "changelog_updated_v014": true,
     "quality_gate_passing": true,
-    "release_workflow_expected_failure": true
+    "release_workflow_expected_failure": true,
+    "changelog_header_fixed": true,
+    "sprint_v015_plan_written": true,
+    "eu_ai_act_compliance_logged": true
   },
   "active_agents": [],
-  "current_phase": "release-complete",
+  "current_phase": "post-release-cleanup",
   "version": "0.1.4",
   "release_status": "stable",
   "agent_status": {
@@ -42,13 +45,18 @@
     "doc-agent": {
       "status": "complete",
       "progress": 100,
-      "files_updated": 3
+      "files_updated": 5
+    },
+    "compliance-agent": {
+      "status": "complete",
+      "progress": 100,
+      "log_entries": 2
     }
   },
-  "last_handoff": "post-release-v0.1.4",
+  "last_handoff": "swarm-suggestions-v0.1.4",
   "blockers": [],
   "pending_tasks": [
-    "Plan v0.1.5 sprint"
+    "Execute v0.1.5 sprint: fix CI quality gate, TruffleHog, CodeQL"
   ],
   "completed_tasks": [
     "Fix PR #220 — cache sorting logic inversion + rollback.yml security",
@@ -67,7 +75,9 @@
     "Close issues #186, #187, #188, #190, #193",
     "Investigate failed Release workflow and fix root cause",
     "Check CI workflow run status — 1 failed: Release workflow (now fixed)",
-    "Write v0.1.5 sprint plan"
+    "Write v0.1.5 sprint plan with actionable CI fix strategies",
+    "Fix CHANGELOG header ('this template' -> 'this project')",
+    "Add EU AI Act compliance log entries for v0.1.4 release operations"
   ],
-  "timestamp": "2026-05-16T12:10:00Z"
+  "timestamp": "2026-05-16T12:20:00Z"
 }
