@@ -77,7 +77,7 @@
   "last_handoff": "swarm-v0.1.5-ci-fixes",
   "blockers": [],
   "pending_tasks": [
-    "E2E: Fix Playwright tests for local dev or run against deployed worker"
+    "E2E: Run Playwright tests against deployed worker"
   ],
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
@@ -114,7 +114,10 @@
     "Investigate Playwright e2e tests — require deployed worker (KV/D1 unavailable locally)",
     "Investigate wrangler dev port mismatch (8788 vs expected 8787)",
     "Create 10 GitHub issues for e2e and long-running tasks",
-    "Update sprint v0.1.5 with TruffleHog validation status and browser tests findings"
+    "Update sprint v0.1.5 with TruffleHog validation status and browser tests findings",
+    "Close issue #243 — CodeQL cleanup (only one CodeQL workflow file exists)",
+    "Fix wrangler dev port — added --port 8787 to dev script in package.json",
+    "jules labels added to all 10 issues (#239-#248)"
   ],
   "timestamp": "2026-05-16T14:30:00Z"
 }

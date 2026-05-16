@@ -56,8 +56,9 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 **Root Cause**: The workflow file (`codeql.yml`) was correctly configured with `build-mode: none` — no manual build steps needed for `actions` or `javascript-typescript`. CodeQL auto-enabled when the workflow was pushed to main.
 
 **Notes**:
-- The older `CodeQL` workflow (ID: 255789862) may still be in the repo — consider removing if `CodeQL Advanced` supersedes it.
+- No older workflow file exists — only `.github/workflows/codeql.yml` (CodeQL Advanced). Reference to `ID: 255789862` was a workflow run ID, not a separate file.
 - No action needed — CodeQL analysis runs on every push and PR to main and on a weekly schedule.
+- Issue #243 closed: no cleanup needed.
 
 ## Sprint Goals
 
@@ -78,7 +79,8 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 7. **Edge security documentation** — Add WAF/API Shield/rate limiting docs to DEPLOYMENT.md
 8. **Close stale issues** — #237, #238 (fork-environment expected failures)
 9. **Browser tests** — Investigate: Playwright tests require deployed worker (KV/D1 unavailable locally); worker returns 503/degraded on /health in local dev
-10. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
+10. **Wrangler dev port** — Fixed dev script to use `--port 8787` consistent with Playwright config
+11. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
 
 ## Execution Strategy
 
