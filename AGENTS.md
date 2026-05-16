@@ -54,7 +54,7 @@ All agent-driven changes MUST use the helper script:
 
 ## Quality Gates (System Infrastructure)
 
-The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
+The system enforces 13 quality gates via `./scripts/quality_gate.sh`:
 1. TypeScript compilation
 2. Unit tests
 3. Validation gate orchestration check
@@ -67,6 +67,7 @@ The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
 10. Dependency audit (`npm audit`)
 11. Skill symlinks integrity
 12. Git hooks installation
+13. Dependabot configuration validation
 
 ## Validation Gates (Per-Deal Logic)
 

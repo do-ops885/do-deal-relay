@@ -119,13 +119,14 @@ Gate: Stakeholder approval on priorities
 
 ## Quality Gates
 
-- [ ] All CI workflows pass on `main` and PR branches
-- [ ] No test regressions (98/98 test files, 1650/1656+ passing)
-- [ ] TypeScript compiles clean (0 errors)
-- [ ] Quality gate passes locally AND in CI
-- [ ] TruffleHog passes on single-commit PRs
-- [ ] CodeQL scanning active
-- [ ] Benchmark results recorded
+- [x] All CI workflows pass on `main` (verified 2026-05-16)
+- [x] No test regressions (98/98 test files, 1650/1656+ passing)
+- [x] TypeScript compiles clean (0 errors)
+- [x] Quality gate passes locally (coverage race fixed) and in CI
+- [ ] TruffleHog passes on single-commit PRs (fix applied, needs PR validation)
+- [x] CodeQL scanning active (5/5 runs passing)
+- [x] Benchmark results recorded (5,600-5,750 deals/sec)
+- [x] Auto-CHANGELOG script created (scripts/generate-changelog.sh)
 
 ## Risks
 
