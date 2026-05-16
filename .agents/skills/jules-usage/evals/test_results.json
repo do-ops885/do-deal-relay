@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-05-16T16:29:44.684785",
-  "total": 40,
-  "passed": 40,
+  "timestamp": "2026-05-16T17:29:53.275380",
+  "total": 46,
+  "passed": 46,
   "failed": 0,
   "results": [
     {
@@ -20,9 +20,9 @@
       "detail": "All core sections found"
     },
     {
-      "name": "Under 250 lines (126)",
+      "name": "Under 250 lines (139)",
       "passed": true,
-      "detail": "Line count: 126"
+      "detail": "Line count: 139"
     },
     {
       "name": "Uses correct jules CLI commands",
@@ -40,6 +40,36 @@
       "detail": "Correct commands: True, no deprecated: True"
     },
     {
+      "name": "generate_evals.py exists",
+      "passed": true,
+      "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/scripts/generate_evals.py"
+    },
+    {
+      "name": "generate_evals.py runs successfully",
+      "passed": true,
+      "detail": "Exit code 0"
+    },
+    {
+      "name": "evals.json has 'generated_by' field",
+      "passed": true,
+      "detail": "generated_by: scripts/generate_evals.py"
+    },
+    {
+      "name": "Generated 14 eval cases",
+      "passed": true,
+      "detail": "Found 14 eval cases (minimum 8)"
+    },
+    {
+      "name": "All eval cases have required fields",
+      "passed": true,
+      "detail": "id, name, prompt, expected_output, assertions in all cases"
+    },
+    {
+      "name": "All eval cases have >= 3 assertions",
+      "passed": true,
+      "detail": "All evals have meaningful assertion counts"
+    },
+    {
       "name": "evals.json exists",
       "passed": true,
       "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/evals/evals.json"
@@ -50,9 +80,9 @@
       "detail": "evals key present: True"
     },
     {
-      "name": "Has 10 eval cases",
+      "name": "Has 14 eval cases",
       "passed": true,
-      "detail": "Found 10 eval cases (minimum 8 recommended)"
+      "detail": "Found 14 eval cases (minimum 8 recommended)"
     },
     {
       "name": "All eval cases have required fields",

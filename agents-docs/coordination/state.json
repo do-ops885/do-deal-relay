@@ -1,5 +1,6 @@
 {
   "world_state": {
+    "jules_api_docs_corrected": true,
     "repo_created": true,
     "tests_written": true,
     "tests_passing": true,
@@ -65,16 +66,37 @@
     "ci-fix-agent": {
       "status": "complete",
       "progress": 100,
-      "fixes_applied": ["quality_gate_coverage_race","trufflehog_security_summary"],
-      "investigations_completed": ["quality_gate","trufflehog","codeql"]
+      "fixes_applied": [
+        "quality_gate_coverage_race",
+        "trufflehog_security_summary"
+      ],
+      "investigations_completed": [
+        "quality_gate",
+        "trufflehog",
+        "codeql"
+      ]
     },
     "changelog-agent": {
       "status": "complete",
       "progress": 100,
       "script_created": "generate-changelog.sh"
+    },
+    "eval-generator": {
+      "status": "complete",
+      "progress": 100,
+      "deliverables": [
+        "generate_evals.py",
+        "test.py (updated)",
+        "pre-commit-hook.sh (GR10)",
+        "plans/jules-usage-evals-auto-generation.md"
+      ],
+      "commits": [
+        "decd16b",
+        "c34c006"
+      ]
     }
   },
-  "last_handoff": "swarm-v0.1.5-ci-fixes",
+  "last_handoff": "swarm-jules-evals-auto-gen-complete",
   "blockers": [],
   "pending_tasks": [
     "E2E: Run Playwright tests against deployed worker"
@@ -82,14 +104,14 @@
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
     "Add WAF/edge security setup documentation to DEPLOYMENT.md (Section 12)",
-    "Close stale issues #237, #238 — fork-environment expected failures",
+    "Close stale issues #237, #238 \u2014 fork-environment expected failures",
     "Write ADR-004 for observability enablement and edge security",
-    "Investigate CI quality gate — all passing on main, added coverage race fix",
-    "Investigate TruffleHog workflow — applied security-summary conclusion fix",
-    "Investigate CodeQL — already enabled and passing (5/5 runs)",
+    "Investigate CI quality gate \u2014 all passing on main, added coverage race fix",
+    "Investigate TruffleHog workflow \u2014 applied security-summary conclusion fix",
+    "Investigate CodeQL \u2014 already enabled and passing (5/5 runs)",
     "Update sprint plan v0.1.5 with verified blocker statuses",
-    "Fix PR #220 — cache sorting logic inversion + rollback.yml security",
-    "Fix PR #223 — verify upload-artifact v7.0.1 exists, remove --legacy-peer-deps",
+    "Fix PR #220 \u2014 cache sorting logic inversion + rollback.yml security",
+    "Fix PR #223 \u2014 verify upload-artifact v7.0.1 exists, remove --legacy-peer-deps",
     "Remove --legacy-peer-deps from all 11 workflow files",
     "perf(dedupe): stronger pre-partitioning with domain+reward+value tier bucketing",
     "perf(scoring): reduce metadata churn with for-of loops, pre-allocated arrays, in-place mutation",
@@ -103,21 +125,32 @@
     "Recreate v0.1.4 tag with corrected package.json",
     "Close issues #186, #187, #188, #190, #193",
     "Investigate failed Release workflow and fix root cause",
-    "Check CI workflow run status — 1 failed: Release workflow (now fixed)",
+    "Check CI workflow run status \u2014 1 failed: Release workflow (now fixed)",
     "Write v0.1.5 sprint plan with actionable CI fix strategies",
     "Fix CHANGELOG header ('this template' -> 'this project')",
     "Add EU AI Act compliance log entries for v0.1.4 release operations",
     "Create auto-CHANGELOG script (scripts/generate-changelog.sh)",
     "Update AGENTS.md quality gate count (12 -> 13)",
-    "Validate TruffleHog fix via PR #249 (merged — Security workflow passed)",
+    "Validate TruffleHog fix via PR #249 (merged \u2014 Security workflow passed)",
     "Add jules label to e2e + long-running GitHub issues #239-#248",
-    "Investigate Playwright e2e tests — require deployed worker (KV/D1 unavailable locally)",
+    "Investigate Playwright e2e tests \u2014 require deployed worker (KV/D1 unavailable locally)",
     "Investigate wrangler dev port mismatch (8788 vs expected 8787)",
     "Create 10 GitHub issues for e2e and long-running tasks",
     "Update sprint v0.1.5 with TruffleHog validation status and browser tests findings",
-    "Close issue #243 — CodeQL cleanup (only one CodeQL workflow file exists)",
-    "Fix wrangler dev port — added --port 8787 to dev script in package.json",
-    "jules labels added to all 10 issues (#239-#248)"
+    "Close issue #243 \u2014 CodeQL cleanup (only one CodeQL workflow file exists)",
+    "Fix wrangler dev port \u2014 added --port 8787 to dev script in package.json",
+    "jules labels added to all 10 issues (#239-#248)",
+    "evals.json auto-generated from skill content via scripts/generate_evals.py",
+    "results.json auto-generated from test output via scripts/test.py",
+    "Guard Rail 10 added to pre-commit hook for eval freshness check",
+    "Drift warnings in generate_evals.py when workflow patterns no longer match",
+    "Guard Rail 11 header numbering fixed",
+    "Dead code removed from test.py (unused category_map)"
   ],
-  "timestamp": "2026-05-16T14:30:00Z"
+  "timestamp": "2026-05-16T17:15:00Z",
+  "evals_auto_generated": true,
+  "results_json_auto_generated": true,
+  "guard_rail_10_eval_freshness": true,
+  "guard_rail_11_numbering_fixed": true,
+  "drift_warnings_implemented": true
 }

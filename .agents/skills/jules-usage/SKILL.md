@@ -49,7 +49,9 @@ gh issue edit <NUMBER> --add-label jules
    - `npm install -g @jules/cli`
    - Verify with `jules --help` after installation.
 5. If the Jules CLI installation fails or cannot be used, fall back to the Jules REST API.
-   - Ensure `JULES_API_KEY` or equivalent Jules API credentials are available.
+   - Ensure `JULES_API_KEY` is set (get your key from `https://jules.google.com/settings`).
+   - Use `x-goog-api-key` header (not `Authorization: Bearer`).
+   - The base URL is `https://jules.googleapis.com/v1alpha`.
    - Consult the official Jules API docs at `https://jules.google/docs/api/` for exact endpoints and payloads.
 6. If neither CLI nor API access is available, stop and report the failure clearly.
 
@@ -78,10 +80,13 @@ gh issue edit <NUMBER> --add-label jules
   - `jules remote list` — List active remote sessions.
   - `jules teleport <remote-url>` — Clone a repository and apply session changes, or apply to an existing repo.
 - If the CLI is unavailable, use the Jules REST API to perform the equivalent repo validation.
-  - Example pattern:
-    - `curl -H "Authorization: Bearer $JULES_API_KEY" -H "Content-Type: application/json" \
-      -d '{"repo":"'$repo'","path":"."}' \
-      https://api.jules.google/v1/repo/check`
+  - Example pattern (correct API):
+    - `curl -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" \
+      https://jules.googleapis.com/v1alpha/sessions`
+  - Available resources: `Sessions`, `Activities` (under `/sessions/{id}/activities`), `Sources`, `Types`.
+  - Pagination uses `pageSize` and `pageToken` query parameters.
+  - Errors return Google-style format: `{"error": {"code": 400, "message": "...", "status": "INVALID_ARGUMENT"}}`.
+  - HTTP codes: 200 (OK), 400 (bad request), 401 (unauthorized), 403 (forbidden), 404 (not found), 429 (rate limited), 500 (server error).
   - Confirm the exact endpoint and request shape against `https://jules.google/docs/api/`.
 - If a Jules task fails to create because of a full queue or service issue, report the failure and retry later.
 - Do not proceed to automation without confirming the command or API request succeeds.
@@ -124,3 +129,11 @@ gh issue edit <NUMBER> --add-label jules
 ## References
 
 See `references/commands.md` for example `gh` and `jules` commands, plus task-capacity and failure-handling guidance.
+
+## Jules API Reference (REST)
+
+See `references/api-reference.md` for the complete Jules REST API reference, including:
+- Full JSON schemas for Sessions, Activities, and Sources (from live API calls)
+- Endpoint tables, authentication details, error handling
+- Live test results (2026-05-16): `GET /sessions` (200), `GET /activities` (200), `GET /sources` (200)
+- Pagination with `pageSize` and `pageToken`

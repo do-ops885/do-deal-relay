@@ -8,7 +8,9 @@ fi
 
 if [[ $# -lt 2 ]]; then
   echo "Usage: $0 <endpoint> <json-payload> [extra-curl-args...]" >&2
-  echo "Example: $0 /v1/repo/check '{"repo":"owner/name","path":"."}'" >&2
+  echo "Example: $0 /sessions '{"pageSize":10}'" >&2
+  echo "Base URL: https://jules.googleapis.com/v1alpha" >&2
+  echo "Auth: x-goog-api-key header (NOT Authorization: Bearer)" >&2
   exit 1
 fi
 
@@ -17,7 +19,7 @@ payload="$2"
 shift 2
 
 curl -sS \
-  -H "Authorization: Bearer $JULES_API_KEY" \
+  -H "x-goog-api-key: $JULES_API_KEY" \
   -H "Content-Type: application/json" \
-  -d "$payload" \
-  "https://api.jules.google$endpoint" "$@"
+  ${payload:+-d "$payload"} \
+  "https://jules.googleapis.com/v1alpha$endpoint" "$@"
