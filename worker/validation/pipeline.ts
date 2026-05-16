@@ -131,9 +131,11 @@ export async function validate(
       }
 
       const passedTrust = skipGates
-        ? (fastPathDecision != null && (fastPathDecision as ValidationCacheEntry).trustScore != null
-            ? (fastPathDecision as ValidationCacheEntry).trustScore! >= getTrustThreshold(env)
-            : false)
+        ? fastPathDecision != null &&
+          (fastPathDecision as ValidationCacheEntry).trustScore != null
+          ? (fastPathDecision as ValidationCacheEntry).trustScore! >=
+            getTrustThreshold(env)
+          : false
         : gatePasses.includes("source_trust");
 
       return {

@@ -88,7 +88,9 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
-    headers.forEach((value, key) => { response.headers.set(key, value); });
+    headers.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
 
     return response;
   }
@@ -203,7 +205,9 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
 
     // Add rate limit headers to successful response
     const headers = createRateLimitHeaders(rateLimitResult);
-    headers.forEach((value, key) => { response.headers.set(key, value); });
+    headers.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
 
     return response;
   } catch (error) {
