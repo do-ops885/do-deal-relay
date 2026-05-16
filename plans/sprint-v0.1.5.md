@@ -47,8 +47,7 @@ outcome: ${{ steps.secret-scan.conclusion }}
 ```
 Using `conclusion` correctly reflects that `continue-on-error: true` means the failure is expected and handled.
 
-**Remaining work**:
-- [ ] Validate: Create test PR with single commit, verify TruffleHog scan passes
+**Validation**: ✅ PR #249 created with single commit, Security workflow passed, PR merged by `github-actions`.
 
 ### Blocker 3: CodeQL Not Enabled
 
@@ -78,7 +77,7 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 6. **Observability enablement** — Enable traces in wrangler.jsonc, add head_sampling_rate to logs
 7. **Edge security documentation** — Add WAF/API Shield/rate limiting docs to DEPLOYMENT.md
 8. **Close stale issues** — #237, #238 (fork-environment expected failures)
-9. **Browser tests** — Complete pending browser-agent work from coordination state
+9. **Browser tests** — Investigate: Playwright tests require deployed worker (KV/D1 unavailable locally); worker returns 503/degraded on /health in local dev
 10. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
 
 ## Execution Strategy
@@ -126,7 +125,7 @@ Gate: Stakeholder approval on priorities
 - [x] No test regressions (98/98 test files, 1650/1656+ passing)
 - [x] TypeScript compiles clean (0 errors)
 - [x] Quality gate passes locally (coverage race fixed) and in CI
-- [ ] TruffleHog passes on single-commit PRs (fix applied, needs PR validation)
+- [x] TruffleHog passes on single-commit PRs (fix validated via PR #249)
 - [x] CodeQL scanning active (5/5 runs passing)
 - [x] Benchmark results recorded (5,600-5,750 deals/sec)
 - [x] Auto-CHANGELOG script created (scripts/generate-changelog.sh)
