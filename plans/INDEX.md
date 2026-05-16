@@ -19,10 +19,11 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 ## Planned Plans
 
 - [GitHub Automation](github-automation-plan.md) - Enhancing PR and issue automation.
-- [Dependabot npm Integration](dependabot-npm-integration.md) - Adding npm ecosystem to Dependabot.
 - [Manual Entry UX Enhancements](manual-entry-ux-implementation.md) - Browser extension UX improvements.
 
 ## Completed Plans
+- [Dependabot npm Integration](dependabot-npm-integration.md) — npm ecosystem configured in dependabot.yml with weekly schedule, grouping, and labels.
+
 
 - [ADR-003: Patch Release v0.1.4](ADR-003-patch-release-v0.1.4.md) — All PR feedback addressed, all issues implemented, v0.1.4 shipped.
 - [Patch Release v0.1.4 Execution](patch-release-v0.1.4-execution.md) — 8 phases completed, tag v0.1.4 pushed.
