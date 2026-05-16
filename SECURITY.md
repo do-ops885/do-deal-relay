@@ -17,7 +17,7 @@ or discussions.**
 Use [GitHub Private Security Advisories][advisory] to report vulnerabilities
 privately to the maintainers.
 
-[advisory]: https://github.com/do-ops885/do-deal-relay/security/advisories/new
+[advisory]: ../../security/advisories/new
 
 ### What to include
 

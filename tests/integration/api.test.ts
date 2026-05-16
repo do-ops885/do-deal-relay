@@ -532,7 +532,10 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?run_id=specific-run", { headers: authHeader });
+      const request = new Request(
+        "http://localhost/api/log?run_id=specific-run",
+        { headers: authHeader },
+      );
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);

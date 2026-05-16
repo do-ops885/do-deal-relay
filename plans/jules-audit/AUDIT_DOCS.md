@@ -10,7 +10,7 @@ worker/config.ts:export const CONFIG = {
 worker/config.ts:export const DEFAULT_SOURCES = [
 worker/config.ts:export const ERROR_MESSAGES = {
 worker/config.ts:export const VALIDATION_GATES = [
-worker/config.ts:export type ValidationGate = [typeof VALIDATION_GATES](number);
+worker/config.ts:export type ValidationGate = (typeof VALIDATION_GATES)[number];
 worker/validation/pipeline.ts:export function shouldQuarantine(deal: Deal): boolean {
 worker/validation/pipeline.ts:export function calculateValidationRatio(result: ValidationResult): number {
 worker/validation/types.ts:export interface ValidationResult {

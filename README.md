@@ -12,7 +12,7 @@ Autonomous AI-agent deal discovery system on Cloudflare Workers.
 
 ### Prerequisites
 
-- Node.js 22.x
+- Node.js >= 20.0.0
 - npm
 - Wrangler CLI (`npm install -g wrangler`)
 
@@ -33,7 +33,6 @@ npm install
 | `npm run test:e2e` | Run E2E tests (Playwright) |
 | `npm run lint` | Type check + format check |
 | `npm run lint:fix` | Type check + auto-fix formatting |
-| `npm run validate` | Run validation gates |
 | `npm run verify` | Run full local validation (pre-push) |
 | `npm run deploy` | Deploy to production |
 
@@ -92,16 +91,10 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 |----------|----------|-------------|
 | `DEALS_PROD` | Yes | KV namespace for deal storage |
 | `DEALS_LOG` | Yes | KV namespace for metrics |
-| `DEALS_STAGING` | Yes | KV namespace for staging deals |
-| `DEALS_LOCK` | Yes | KV namespace for distributed locking |
-| `DEALS_SOURCES` | Yes | KV namespace for source registry |
 | `AI_GATEWAY_URL` | Yes | AI Gateway URL |
 | `TRUST_THRESHOLD` | Yes | Minimum trust score (0.0–1.0) |
-| `ENVIRONMENT` | No | Deployment environment |
-| `DEALS_DB` | No | D1 Database for persistent storage |
-| `GITHUB_TOKEN` | No | GitHub PAT for repository operations |
+| `ENVIRONMENT` | No | deployment environment |
 | `CANDIDATE_BUDGET_GLOBAL` | No | Max candidates per run |
-| `EMAIL_WEBHOOK_SECRET` | No | Secret for incoming email verification |
 
 ### Current Settings
 
