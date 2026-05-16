@@ -414,9 +414,52 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 10: GitHub Actions Workflow Validation
+# GUARD RAIL 10: Skill Eval Freshness
 # ============================================
-echo "Guard Rail 10: GitHub Actions Workflow Validation"
+echo "Guard Rail 10: Skill Eval Freshness"
+
+# Auto-regenerate evals.json when skill content changes
+SKILL_EVALS_REGEN=0
+while IFS= read -r file; do
+    if [[ "$file" == .agents/skills/*/SKILL.md ]] || \
+       [[ "$file" == .agents/skills/*/scripts/*.sh ]] || \
+       [[ "$file" == .agents/skills/*/references/*.md ]]; then
+        SKILL_DIR=$(echo "$file" | cut -d/ -f1-4)
+        EVALS_FILE="$SKILL_DIR/evals/evals.json"
+        GEN_SCRIPT="$SKILL_DIR/scripts/generate_evals.py"
+
+        if [ -f "$GEN_SCRIPT" ] && [ -f "$EVALS_FILE" ]; then
+            # Save current evals.json content
+            if [ -f "$EVALS_FILE" ]; then
+                cp "$EVALS_FILE" /tmp/evals-before.json 2>/dev/null || true
+            fi
+
+            # Regenerate evals from skill content
+            python3 "$GEN_SCRIPT" > /dev/null 2>&1
+
+            # Compare with previous version
+            if [ -f /tmp/evals-before.json ]; then
+                if ! diff -q "$EVALS_FILE" /tmp/evals-before.json > /dev/null 2>&1; then
+                    info "Skill content changed in: $file"
+                    warning "  ↳ evals.json regenerated. Stage the update:"
+                    warning "  ↳ git add $EVALS_FILE"
+                    SKILL_EVALS_REGEN=1
+                fi
+                rm -f /tmp/evals-before.json
+            fi
+        fi
+    fi
+done <<< "$STAGED_FILES"
+
+if [ $SKILL_EVALS_REGEN -eq 0 ]; then
+    success "All skill evals are fresh (no regeneration needed)"
+fi
+echo ""
+
+# ============================================
+# GUARD RAIL 11: GitHub Actions Workflow Validation
+# ============================================
+echo "Guard Rail 11: GitHub Actions Workflow Validation"
 
 if echo "$STAGED_FILES" | grep -q ".github/workflows"; then
     info "Workflow files changed - validating..."
