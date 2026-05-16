@@ -208,15 +208,30 @@ def extract_workflows(content: str) -> list[dict]:
         },
     ]
 
+    missing_keywords = {}  # track which keywords are missing for warnings
     for pattern in workflow_patterns:
-        present = all(kw.lower() in content.lower() for kw in pattern["keywords"])
-        if present:
+        missing = [kw for kw in pattern["keywords"] if kw.lower() not in content.lower()]
+        if not missing:
             workflows.append({
                 "id": pattern["id"],
                 "name": pattern["name"],
                 "present": True,
                 "assertions": pattern["assertions"],
             })
+        else:
+            missing_keywords[pattern["id"]] = {
+                "name": pattern["name"],
+                "missing": missing,
+            }
+
+    # Warn about workflow evals that are no longer generated
+    if missing_keywords:
+        print(f"\n⚠️  Workflow eval drift detected — {len(missing_keywords)} eval(s) no longer match skill content:")
+        for eid, info in missing_keywords.items():
+            print(f"   - {info['name']} ({eid})")
+            for kw in info["missing"]:
+                print(f"     ↳ missing keyword: '{kw}'")
+            print(f"     ↳ Action: update keyword pattern in extract_workflows() or add missing content to SKILL.md")
 
     return workflows
 
