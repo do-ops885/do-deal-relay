@@ -47,6 +47,9 @@ jobs:
       - name: Validate skills
         run: ./scripts/validate-skills.sh
 
+      - name: Check evals freshness
+        run: bash scripts/check-evals-freshness.sh
+
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
