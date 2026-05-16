@@ -16,8 +16,8 @@ endpoint="$1"
 payload="$2"
 shift 2
 
-curl -sS \ 
-  -H "Authorization: Bearer $JULES_API_KEY" \ 
-  -H "Content-Type: application/json" \ 
-  -d "$payload" \ 
+curl -sS \
+  -H "Authorization: Bearer $JULES_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "$payload" \
   "https://api.jules.google$endpoint" "$@"

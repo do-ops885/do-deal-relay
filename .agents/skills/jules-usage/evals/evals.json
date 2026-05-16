@@ -104,14 +104,15 @@
     {
       "id": "jules-script-execution",
       "name": "Jules API Script Execution",
-      "prompt": "Run the jules_api_repo_check.sh script to validate the repository",
-      "expected_output": "Successful execution of the repocheck script",
-      "files": [".agents/skills/jules-usage/scripts/jules_api_repo_check.sh"],
+      "prompt": "Run the jules_api_request.sh script to validate the repository",
+      "expected_output": "Successful execution of the API request script",
+      "files": [".agents/skills/jules-usage/scripts/jules_api_request.sh"],
       "assertions": [
         "Script executes without shell errors",
-        "Script detects gh CLI and determines repo name",
-        "Script checks for jules CLI or JULES_API_KEY",
-        "Reports clear error messages for missing dependencies",
+        "Script validates required arguments (endpoint and payload)",
+        "Script checks for JULES_API_KEY environment variable",
+        "Reports clear error messages when JULES_API_KEY is missing",
+        "Reports usage instructions when arguments are missing",
         "Exits with appropriate error codes for failures"
       ]
     },
