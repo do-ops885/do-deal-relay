@@ -30,7 +30,9 @@ test.describe("Authentication (401)", () => {
     expect(body.error).toBe("Invalid API key format");
   });
 
-  test("GET /metrics returns 401 with non-existent key", async ({ request }) => {
+  test("GET /metrics returns 401 with non-existent key", async ({
+    request,
+  }) => {
     const response = await request.get("/metrics", {
       headers: { "X-API-Key": "ddr_nonexistent_key_123456789" },
     });
@@ -111,7 +113,7 @@ test.describe("Successful Authenticated Access", () => {
 test.describe("Authentication Methods", () => {
   test("Accepts Bearer token in Authorization header", async ({ request }) => {
     const response = await request.get("/api/status", {
-      headers: { "Authorization": `Bearer ${ADMIN_KEY}` },
+      headers: { Authorization: `Bearer ${ADMIN_KEY}` },
     });
     expect(response.status()).toBe(200);
   });
