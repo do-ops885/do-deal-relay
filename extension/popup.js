@@ -19,6 +19,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
   };
 
+  const SUPPORTED_CATEGORIES = [
+    "Finance",
+    "Shopping",
+    "Travel",
+    "Food Delivery",
+    "Transportation",
+    "Entertainment",
+    "Health",
+    "Education",
+    "Software",
+    "Cloud Storage",
+    "Communication",
+  ];
+
+  const DOMAIN_CATEGORY_MAP = {
+    "trading212.com": "Finance",
+    "robinhood.com": "Finance",
+    "coinbase.com": "Finance",
+    "amazon.com": "Shopping",
+    "ebay.com": "Shopping",
+    "airbnb.com": "Travel",
+    "booking.com": "Travel",
+    "doordash.com": "Food Delivery",
+    "ubereats.com": "Food Delivery",
+    "uber.com": "Transportation",
+    "lyft.com": "Transportation",
+    "netflix.com": "Entertainment",
+    "spotify.com": "Entertainment",
+  };
+
   // ============================================================================
   // DOM Element References
   // ============================================================================
@@ -33,7 +63,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     captureBtn: document.getElementById("capture-btn"),
     manualSection: document.getElementById("manual-section"),
     manualCode: document.getElementById("manual-code"),
+    manualCategory: document.getElementById("manual-category"),
     manualBtn: document.getElementById("manual-btn"),
+    manualError: document.getElementById("manual-error"),
+    charCounter: document.getElementById("char-counter"),
+    categoryList: document.getElementById("category-list"),
     settingsPanel: document.getElementById("settings-panel"),
     settingsLink: document.getElementById("settings-link"),
     apiEndpoint: document.getElementById("api-endpoint"),
@@ -62,6 +96,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Update page info
     updatePageInfo(tab);
+
+    // Populate categories
+    populateCategories();
+
+    // Suggest category
+    suggestCategory(tab);
 
     // Request detections from content script
     await requestDetections(tab);
@@ -326,21 +366,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function showManualError(message) {
+    elements.manualError.textContent = message;
+    elements.manualError.classList.remove("hidden");
+    elements.manualCode.classList.add("error");
+  }
+
   async function captureManual() {
     const code = elements.manualCode.value.trim();
+    const category = elements.manualCategory.value.trim() || "general";
+
     if (!code) {
-      showToast("Please enter a referral code", "error");
+      showManualError("Please enter a referral code");
       return;
     }
 
-    if (!/^[A-Z0-9]+$/i.test(code)) {
-      showToast("Code must be alphanumeric only", "error");
+    if (code.length < 3) {
+      showManualError("Code must be at least 3 characters");
       return;
     }
 
     elements.manualBtn.disabled = true;
     elements.manualBtn.setAttribute("aria-busy", "true");
+    const originalText = elements.manualBtn.textContent;
     elements.manualBtn.textContent = "Adding...";
+    elements.manualError.classList.add("hidden");
 
     try {
       await submitReferral({
@@ -350,22 +400,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         title: state.currentTab.title,
         source: "manual",
         confidence: 1.0,
+        category: category.toLowerCase(),
       });
 
       showToast("Code added manually!", "success");
       elements.manualCode.value = "";
+      elements.charCounter.textContent = "0/20";
       incrementStat("captured");
 
       // Visual feedback on button
       elements.manualBtn.textContent = "Added! ✅";
+      elements.manualBtn.classList.add("btn-success");
+
       setTimeout(() => {
-        elements.manualBtn.textContent = "Add Code Manually";
+        elements.manualBtn.textContent = originalText;
+        elements.manualBtn.classList.remove("btn-success");
+        // Only disable if the input is still empty (e.g. user hasn't started typing a new one)
+        if (elements.manualCode.value.trim().length === 0) {
+          elements.manualBtn.disabled = true;
+        }
       }, 2000);
     } catch (err) {
-      showToast(`Failed to add: ${err.message}`, "error");
-      elements.manualBtn.textContent = "Add Code Manually";
-    } finally {
+      console.error("Manual capture error:", err);
+      showManualError(`Failed to add: ${err.message}`);
+      elements.manualBtn.textContent = originalText;
       elements.manualBtn.disabled = false;
+    } finally {
       elements.manualBtn.removeAttribute("aria-busy");
     }
   }
@@ -386,7 +446,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       metadata: {
         title: data.title || "Unknown",
         reward_type: "unknown",
-        category: ["general"],
+        category: data.category ? [data.category] : ["general"],
         confidence_score: data.confidence || 0.8,
         detection_source: data.source || "manual",
       },
@@ -450,9 +510,57 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 3000);
   }
 
+  function populateCategories() {
+    elements.categoryList.textContent = "";
+    SUPPORTED_CATEGORIES.forEach((cat) => {
+      const option = document.createElement("option");
+      option.value = cat;
+      elements.categoryList.appendChild(option);
+    });
+  }
+
+  function suggestCategory(tab) {
+    if (!tab.url) return;
+
+    try {
+      const url = new URL(tab.url);
+      const hostname = url.hostname.replace("www.", "");
+
+      // Try exact match
+      if (DOMAIN_CATEGORY_MAP[hostname]) {
+        elements.manualCategory.value = DOMAIN_CATEGORY_MAP[hostname];
+        return;
+      }
+
+      // Try partial match
+      for (const [domain, cat] of Object.entries(DOMAIN_CATEGORY_MAP)) {
+        if (hostname.includes(domain) || domain.includes(hostname)) {
+          elements.manualCategory.value = cat;
+          return;
+        }
+      }
+
+      // Keywords in title or URL
+      const context = (tab.title + " " + tab.url).toLowerCase();
+      if (context.includes("bank") || context.includes("invest")) {
+        elements.manualCategory.value = "Finance";
+      } else if (context.includes("shop") || context.includes("store")) {
+        elements.manualCategory.value = "Shopping";
+      } else if (context.includes("food") || context.includes("eat")) {
+        elements.manualCategory.value = "Food Delivery";
+      }
+    } catch (e) {
+      console.error("Error suggesting category:", e);
+    }
+  }
+
   function toggleSettings() {
     const isActive = elements.settingsPanel.classList.toggle("active");
-    elements.manualSection.classList.toggle("hidden");
+    if (isActive) {
+      elements.manualSection.classList.add("hidden");
+    } else {
+      elements.manualSection.classList.remove("hidden");
+    }
     elements.settingsLink.textContent = isActive ? "Back" : "Settings";
     elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
   }
@@ -468,7 +576,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Manual entry
     elements.manualBtn.addEventListener("click", captureManual);
     elements.manualCode.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") captureManual();
+      if (e.key === "Enter" && !elements.manualBtn.disabled) captureManual();
+    });
+
+    // Real-time cleaning and character counter
+    elements.manualCode.addEventListener("input", (e) => {
+      const input = e.target;
+      let value = input.value.toUpperCase();
+      // Only allow alphanumeric
+      value = value.replace(/[^A-Z0-9]/g, "");
+
+      // Update value if changed
+      if (input.value !== value) {
+        input.value = value;
+      }
+
+      // Update counter
+      const length = value.length;
+      elements.charCounter.textContent = `${length}/20`;
+
+      // Toggle button state
+      elements.manualBtn.disabled = length < 3;
+
+      // Clear error state when typing
+      elements.manualError.classList.add("hidden");
+      elements.manualCode.classList.remove("error");
     });
 
     // Settings

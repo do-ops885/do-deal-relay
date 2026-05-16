@@ -25,9 +25,31 @@ const mockChromeAPI = {
       set: async () => {},
     },
   },
+  tabs: {
+    query: async () => [
+      {
+        id: 1,
+        title: "Test Page - Referral Program",
+        url: "https://example.com/referral/TEST123",
+        favIconUrl: "https://example.com/favicon.ico",
+      },
+    ],
+    sendMessage: async () => ({
+      referrals: [
+        {
+          code: "TEST123",
+          source: "url",
+          confidence: 0.95,
+        },
+      ],
+    }),
+  },
+  scripting: {
+    executeScript: async () => [{ result: true }],
+  },
   runtime: {
     sendMessage: async () => ({
-      detections: [
+      referrals: [
         {
           type: "referral_code",
           value: "TEST123",
@@ -57,13 +79,11 @@ test.describe("Extension Popup UI Tests", () => {
   });
 
   test("popup displays page title correctly", async ({ page }) => {
-    const pageTitle = await page.locator("#page-title").textContent();
-    expect(pageTitle).toBe("Test Page - Referral Program");
+    await expect(page.locator("#page-title")).toHaveText("Test Page - Referral Program");
   });
 
   test("popup displays page URL correctly", async ({ page }) => {
-    const pageUrl = await page.locator("#page-url").textContent();
-    expect(pageUrl).toContain("example.com");
+    await expect(page.locator("#page-url")).toContainText("example.com");
   });
 
   test("scan status is visible", async ({ page }) => {
@@ -90,10 +110,49 @@ test.describe("Extension Popup UI Tests", () => {
     await expect(captureBtn).toBeEnabled();
   });
 
-  test("manual code input accepts text", async ({ page }) => {
+  test("manual code input cleans and uppercases text", async ({ page }) => {
     const manualInput = page.locator("#manual-code");
-    await manualInput.fill("MANUAL123");
+    await manualInput.fill("manual-123!");
+    await page.evaluate(() => {
+       const el = document.getElementById("manual-code");
+       el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await expect(manualInput).toHaveValue("MANUAL123");
+  });
+
+  test("manual code input updates character counter", async ({ page }) => {
+    const manualInput = page.locator("#manual-code");
+    const charCounter = page.locator("#char-counter");
+    await manualInput.fill("CODE");
+    await page.evaluate(() => {
+       const el = document.getElementById("manual-code");
+       el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(charCounter).toHaveText("4/20");
+  });
+
+  test("manual entry button state depends on input length", async ({ page }) => {
+    const manualInput = page.locator("#manual-code");
+    const manualBtn = page.locator("#manual-btn");
+
+    // Initially disabled
+    await expect(manualBtn).toBeDisabled();
+
+    // Still disabled for 1-2 chars
+    await manualInput.fill("AB");
+    await page.evaluate(() => {
+       const el = document.getElementById("manual-code");
+       el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(manualBtn).toBeDisabled();
+
+    // Enabled after 3 chars
+    await manualInput.fill("ABC");
+    await page.evaluate(() => {
+       const el = document.getElementById("manual-code");
+       el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(manualBtn).toBeEnabled();
   });
 
   test("settings panel can be toggled", async ({ page }) => {
@@ -105,6 +164,7 @@ test.describe("Extension Popup UI Tests", () => {
 
     // Click to open
     await settingsLink.click();
+    await page.waitForSelector("#settings-panel.active");
     await expect(settingsPanel).toBeVisible();
 
     // Click again to close
@@ -186,7 +246,7 @@ test.describe("Extension Content Script Tests", () => {
       <html>
         <body>
           <h1>Referral Program</h1>
-          <p>Use code REF456 to get $50 off!</p>
+          <p>Use code REF456 to get 0 off!</p>
           <div>Share your code: SHARE789</div>
         </body>
       </html>
@@ -218,9 +278,9 @@ test.describe("Extension Content Script Tests", () => {
       (window as any).__testDetections = matches;
     });
 
-    const detections = await page.evaluate(
+    const detections = (await page.evaluate(
       () => (window as any).__testDetections,
-    );
+    )) as any[];
     expect(detections.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -240,9 +300,9 @@ test.describe("Extension Content Script Tests", () => {
       (window as any).__testDetections = [];
     });
 
-    const detections = await page.evaluate(
+    const detections = (await page.evaluate(
       () => (window as any).__testDetections,
-    );
+    )) as any[];
     expect(detections).toHaveLength(0);
   });
 });
