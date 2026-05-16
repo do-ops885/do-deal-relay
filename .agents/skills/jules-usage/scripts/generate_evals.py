@@ -482,6 +482,16 @@ def main():
     with open(EVALS_JSON, "w") as f:
         json.dump(generated, f, indent=2)
 
+    # Format with Prettier if available to ensure consistency with CI
+    try:
+        subprocess.run(
+            ["npx", "prettier", "--write", str(EVALS_JSON)],
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
     print(f"✅ Generated {eval_count} eval cases from skill content")
     print(f"   Source: {SKILL_MD}")
     print(f"   Output: {EVALS_JSON}")
