@@ -42,9 +42,11 @@
       "files_updated": 3
     }
   },
-  "last_handoff": "patch-release-v0.1.4",
+  "last_handoff": "post-release-v0.1.4",
   "blockers": [],
-  "pending_tasks": [],
+  "pending_tasks": [
+    "Plan v0.1.5 sprint"
+  ],
   "completed_tasks": [
     "Fix PR #220 — cache sorting logic inversion + rollback.yml security",
     "Fix PR #223 — verify upload-artifact v7.0.1 exists, remove --legacy-peer-deps",
@@ -56,7 +58,13 @@
     "Bump version to 0.1.4 (patch release)",
     "All 98 test files passing (1650/1656)",
     "All 12 quality gates passing",
-    "TypeScript compilation clean (0 errors)"
+    "TypeScript compilation clean (0 errors)",
+    "Fix package.json version to 0.1.4",
+    "Recreate v0.1.4 tag with corrected package.json",
+    "Close issues #186, #187, #188, #190, #193",
+    "Investigate failed Release workflow and fix root cause",
+    "Check CI workflow run status — 1 failed: Release workflow (now fixed)",
+    "Write v0.1.5 sprint plan"
   ],
-  "timestamp": "2026-05-16T12:00:00Z"
+  "timestamp": "2026-05-16T12:10:00Z"
 }
