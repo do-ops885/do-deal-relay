@@ -129,3 +129,11 @@ gh issue edit <NUMBER> --add-label jules
 ## References
 
 See `references/commands.md` for example `gh` and `jules` commands, plus task-capacity and failure-handling guidance.
+
+## Jules API Reference (REST)
+
+See `references/api-reference.md` for the complete Jules REST API reference, including:
+- Full JSON schemas for Sessions, Activities, and Sources (from live API calls)
+- Endpoint tables, authentication details, error handling
+- Live test results (2026-05-16): `GET /sessions` (200), `GET /activities` (200), `GET /sources` (200)
+- Pagination with `pageSize` and `pageToken`

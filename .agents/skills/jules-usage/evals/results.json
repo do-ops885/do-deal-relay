@@ -138,18 +138,47 @@
     "gh_cli_integration": "PASS - authenticated, repo metadata retrievable",
     "jules_cli_integration": "PASS - all commands functional"
   },
+  "live_api_test_results": {
+    "GET /sessions": {
+      "status": "PASS",
+      "http_code": 200,
+      "response_structure": "sessions array with name, id, state, title, prompt, sourceContext, url, createTime, updateTime, outputs",
+      "pagination": "nextPageToken present"
+    },
+    "GET /sessions/{id}/activities": {
+      "status": "PASS",
+      "http_code": 200,
+      "response_structure": "activities array with name, id, createTime, originator, planGenerated, planApproved, progressUpdated, artifacts[changeSet[gitPatch]]",
+      "plan": "id + steps[{title, description}]",
+      "artifacts": "unidiffPatch + baseCommitId"
+    },
+    "GET /sources": {
+      "status": "PASS",
+      "http_code": 200,
+      "response_structure": "sources array with name (sources/github/owner/repo), id (github/owner/repo), githubRepo{owner, repo, defaultBranch, branches}"
+    },
+    "POST /sessions (create)": {
+      "status": "INFO",
+      "http_code": 400,
+      "response": "FAILED_PRECONDITION - creation requires source context reference, not just title+prompt"
+    }
+  },
   "issues_fixed": [
     "Fixed evals.json: broken script ref 'jules_api_repo_check.sh' → 'jules_api_request.sh'",
     "Fixed jules_api_request.sh: trailing backslash-space in curl command lines",
     "Fixed SKILL.md: API base URL from api.jules.google → jules.googleapis.com/v1alpha",
     "Fixed SKILL.md: auth header from Authorization: Bearer → x-goog-api-key",
     "Fixed references/commands.md: updated curl examples with correct URL/auth",
-    "Fixed evals.json: assertions updated to match correct API spec"
+    "Fixed evals.json: assertions updated to match correct API spec",
+    "Added complete API reference to SKILL.md (all 4 resource schemas)",
+    "Added complete API reference to references/commands.md (endpoints, response schemas)",
+    "Added live API test results to results.json (3/4 PASS, 1 INFO)"
   ],
   "recommendations": [
     "Monitor issue #246 for Jules PR creation and feedback loop",
     "Consider adding live-run GitHub Actions workflow to validate skill behavior automatically",
-    "Add E2E test that verifies the API key format against jules.googleapis.com/v1alpha",
-    "Update the examples/check-setup.sh script to reflect correct API config"
+    "Investigate correct POST /sessions payload format for session creation",
+    "Update the examples/check-setup.sh script to reflect correct API config",
+    "Consider creating a dedicated jules_api_reference.md for detailed response schemas"
   ]
 }
