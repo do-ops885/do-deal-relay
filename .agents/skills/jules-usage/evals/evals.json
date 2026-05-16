@@ -95,9 +95,9 @@
       "files": [],
       "assertions": [
         "Checks for JULES_API_KEY environment variable before proceeding",
-        "Uses curl with Bearer token authentication",
-        "Makes request to https://api.jules.google/v1/repo/check",
-        "Includes repo name and path in request body",
+        "Uses curl with x-goog-api-key header (not Authorization: Bearer)",
+        "Uses correct base URL: https://jules.googleapis.com/v1alpha",
+        "Makes request to correct endpoint (e.g., /sessions, /sources)",
         "Reports exact API response or error"
       ]
     },

@@ -19,9 +19,14 @@ The following commands are examples for checking repo context, validating reposi
 - `jules remote list` — List active remote sessions.
 - `jules teleport <remote-url>` — Clone and apply session changes, or apply to existing repo.
 - If the CLI is unavailable, use the Jules REST API with `JULES_API_KEY`.
-  - `curl -H "Authorization: Bearer $JULES_API_KEY" -H "Content-Type: application/json" \
-    -d '{"repo":"'$repo'","path":"."}' \
-    https://api.jules.google/v1/repo/check`
+  - Base URL: `https://jules.googleapis.com/v1alpha`
+  - Auth header: `x-goog-api-key: $JULES_API_KEY` (not `Authorization: Bearer`)
+  - Get API key from: `https://jules.google.com/settings`
+  - `curl -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" \
+    https://jules.googleapis.com/v1alpha/sessions`
+  - Resources: Sessions, Activities (`/sessions/{id}/activities`), Sources, Types
+  - Pagination: `pageSize` and `pageToken` query parameters
+  - Error format: `{"error": {"code": ..., "message": "...", "status": "..."}}`
   - Confirm the exact endpoint and payload via `https://jules.google/docs/api/`.
 
 ## Jules task capacity checks
@@ -29,7 +34,9 @@ The following commands are examples for checking repo context, validating reposi
 - `jules remote list` — List active remote sessions to check capacity.
 - `jules --help` — Discover available commands if the interface changes.
 - API fallback:
-  - `curl -H "Authorization: Bearer $JULES_API_KEY" https://api.jules.google/v1/tasks`
+  - `curl -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" \
+    https://jules.googleapis.com/v1alpha/sessions`
+  - Sessions list shows active tasks and capacity.
   - Confirm active task count and capacity through the Jules API if CLI is unavailable.
   - If the service reports that 3 tasks are already running, do not add the label yet.
 

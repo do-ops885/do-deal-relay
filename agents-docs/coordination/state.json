@@ -1,5 +1,6 @@
 {
   "world_state": {
+    "jules_api_docs_corrected": true,
     "repo_created": true,
     "tests_written": true,
     "tests_passing": true,

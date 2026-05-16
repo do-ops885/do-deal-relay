@@ -304,7 +304,7 @@ def test_skill_workflow_documentation():
             "Jules session via jules new": "jules new" in content,
             "Remote session management": "jules remote" in content,
             "Teleport changes": "jules teleport" in content,
-            "REST API fallback": "api.jules.google" in content,
+            "REST API fallback": "jules.googleapis.com/v1alpha" in content,
             "Issue labeling": "label" in content and "jules" in content.lower(),
             "PR comment guidance": "@jules address and analyze feedback" in content,
             "Edge case: non-GitHub repo": "If the repository is not a git repository" in content or "repo metadata is unavailable" in content,

@@ -57,8 +57,8 @@
       "id": "jules-api-fallback",
       "name": "Jules REST API Fallback",
       "status": "PASS",
-      "evidence": "Script jules_api_request.sh exists, has valid syntax, checks for JULES_API_KEY, has correct curl command with Bearer auth.",
-      "live_run_result": "Script passes bash -n syntax check. JULES_API_KEY check present. Endpoint template: https://api.jules.google{v1/repo/check} documented."
+      "evidence": "Script jules_api_request.sh exists, has valid syntax, checks for JULES_API_KEY, uses correct x-goog-api-key header and jules.googleapis.com/v1alpha base URL.",
+      "live_run_result": "Script passes bash -n syntax check. Auth: x-goog-api-key. Base URL: https://jules.googleapis.com/v1alpha. API key source: jules.google.com/settings."
     },
     {
       "id": "jules-script-execution",
@@ -140,11 +140,16 @@
   },
   "issues_fixed": [
     "Fixed evals.json: broken script ref 'jules_api_repo_check.sh' → 'jules_api_request.sh'",
-    "Fixed jules_api_request.sh: trailing backslash-space in curl command lines"
+    "Fixed jules_api_request.sh: trailing backslash-space in curl command lines",
+    "Fixed SKILL.md: API base URL from api.jules.google → jules.googleapis.com/v1alpha",
+    "Fixed SKILL.md: auth header from Authorization: Bearer → x-goog-api-key",
+    "Fixed references/commands.md: updated curl examples with correct URL/auth",
+    "Fixed evals.json: assertions updated to match correct API spec"
   ],
   "recommendations": [
     "Monitor issue #246 for Jules PR creation and feedback loop",
     "Consider adding live-run GitHub Actions workflow to validate skill behavior automatically",
-    "Expand edge-case testing with mock environments for non-GitHub scenarios"
+    "Add E2E test that verifies the API key format against jules.googleapis.com/v1alpha",
+    "Update the examples/check-setup.sh script to reflect correct API config"
   ]
 }

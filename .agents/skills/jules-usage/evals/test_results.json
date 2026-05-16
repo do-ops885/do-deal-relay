@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-16T16:29:44.684785",
+  "timestamp": "2026-05-16T16:50:03.547401",
   "total": 40,
   "passed": 40,
   "failed": 0,
@@ -20,9 +20,9 @@
       "detail": "All core sections found"
     },
     {
-      "name": "Under 250 lines (126)",
+      "name": "Under 250 lines (131)",
       "passed": true,
-      "detail": "Line count: 126"
+      "detail": "Line count: 131"
     },
     {
       "name": "Uses correct jules CLI commands",
