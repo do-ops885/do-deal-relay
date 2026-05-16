@@ -107,6 +107,14 @@ describe("API Endpoints", () => {
       DEALS_LOCK: mockKvFactory("lock"),
       DEALS_SOURCES: mockKvFactory("sources"),
       WEBHOOK_API_KEYS: mockKvFactory("sources"),
+      DEALS_DB: {
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnThis(),
+          first: vi.fn(),
+          run: vi.fn().mockResolvedValue({ success: true }),
+          all: vi.fn().mockResolvedValue({ results: [] }),
+        }),
+      } as any,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
