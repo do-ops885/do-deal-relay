@@ -53,7 +53,7 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 });
 
 describe("API Endpoints", () => {
-  const authHeader = { Authorization: "Bearer ddr_test_key_123" };
+  const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
@@ -80,7 +80,7 @@ describe("API Endpoints", () => {
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest(
       "SHA-256",
-      encoder.encode("ddr_test_key_123"),
+      encoder.encode("ddr_admin_test_key_123"),
     );
     const hash = Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
@@ -173,7 +173,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/metrics");
+      const request = new Request("http://localhost/metrics", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -186,7 +188,9 @@ describe("API Endpoints", () => {
     });
 
     it("should handle missing snapshot gracefully", async () => {
-      const request = new Request("http://localhost/metrics");
+      const request = new Request("http://localhost/metrics", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -467,7 +471,9 @@ describe("API Endpoints", () => {
 
   describe("GET /api/status", () => {
     it("should return pipeline status", async () => {
-      const request = new Request("http://localhost/api/status");
+      const request = new Request("http://localhost/api/status", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -484,7 +490,9 @@ describe("API Endpoints", () => {
         expires_at: futureDate,
       });
 
-      const request = new Request("http://localhost/api/status");
+      const request = new Request("http://localhost/api/status", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -504,7 +512,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?count=10");
+      const request = new Request("http://localhost/api/log?count=10", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -522,9 +532,7 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request(
-        "http://localhost/api/log?run_id=specific-run",
-      );
+      const request = new Request("http://localhost/api/log?run_id=specific-run", { headers: authHeader });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -541,7 +549,9 @@ describe("API Endpoints", () => {
         status: "complete",
       });
 
-      const request = new Request("http://localhost/api/log?format=jsonl");
+      const request = new Request("http://localhost/api/log?format=jsonl", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);

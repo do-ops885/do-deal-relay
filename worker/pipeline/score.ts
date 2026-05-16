@@ -73,7 +73,10 @@ export async function score(
     // Calculate duplicate penalty (O(1) lookup)
     // Uses the pre-calculated frequency map
     const key = `${deal.source.domain}:${deal.code}`;
-    const duplicatePenalty = (duplicateMap.get(key) || 0) > 1 ? 0.5 : 0.0;
+    const duplicatePenalty =
+      (duplicateMap.get(key) || 0) > 1
+        ? CONFIG.PLAUSIBILITY_THRESHOLDS.DUPLICATE_PENALTY_VALUE
+        : 0.0;
 
     // Calculate final confidence score
     const confidenceScore =
@@ -138,10 +141,18 @@ export function calculateSourceDiversity(deals: Deal[]): number {
 
   // Reward having deals from multiple sources
   // Max score at ~5 different domains for 10 deals (ratio = 0.5)
-  const optimalRatio = Math.min(domains.size / 5, 1.0);
+  const optimalRatio = Math.min(
+    domains.size / CONFIG.PLAUSIBILITY_THRESHOLDS.OPTIMAL_SOURCE_COUNT,
+    1.0,
+  );
 
   // Combined score: diversity * optimal ratio
-  return Math.min(1.0, diversity * 2) * optimalRatio;
+  return (
+    Math.min(
+      1.0,
+      diversity * CONFIG.PLAUSIBILITY_THRESHOLDS.DIVERSITY_MULTIPLIER,
+    ) * optimalRatio
+  );
 }
 
 /**
@@ -164,28 +175,41 @@ function calculateRewardPlausibility(deal: Deal): number {
 
   // Cash rewards: lower is more plausible (except 0)
   if (reward.type === "cash" && typeof reward.value === "number") {
-    if (reward.value === 0) return 0.5; // Suspicious but possible
-    if (reward.value <= 50) return 1.0;
-    if (reward.value <= 100) return 0.9;
-    if (reward.value <= 500) return 0.7;
-    return 0.5; // Very high, suspicious
+    if (reward.value === 0)
+      return CONFIG.PLAUSIBILITY_THRESHOLDS.SUSPICIOUS_REWARD_PLAUSIBILITY; // Suspicious but possible
+    const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
+    if (reward.value <= t.CASH_LOW) return 1.0;
+    if (reward.value <= t.CASH_MEDIUM)
+      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_MEDIUM;
+    if (reward.value <= t.CASH_HIGH)
+      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_HIGH;
+    return CONFIG.PLAUSIBILITY_THRESHOLDS.SUSPICIOUS_REWARD_PLAUSIBILITY; // Very high, suspicious
   }
 
   // Percent rewards: 10-50% is most plausible
   if (reward.type === "percent" && typeof reward.value === "number") {
-    if (reward.value >= 10 && reward.value <= 50) return 1.0;
-    if (reward.value > 50) return 0.8;
-    if (reward.value >= 5) return 0.9;
-    return 0.7; // Very low percent
+    const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
+    if (
+      reward.value >= t.PERCENT_MIN_OPTIMAL &&
+      reward.value <= t.PERCENT_MAX_OPTIMAL
+    )
+      return 1.0;
+    if (reward.value > t.PERCENT_MAX_OPTIMAL)
+      return CONFIG.PLAUSIBILITY_THRESHOLDS.REWARD_PLAUSIBILITY_DEFAULT;
+    if (reward.value >= CONFIG.PLAUSIBILITY_THRESHOLDS.PERCENT_MIN_THRESHOLD)
+      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_MEDIUM;
+    return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_HIGH; // TODO: extract this too?
   }
 
   // Credit: usually reasonable
-  if (reward.type === "credit") return 0.9;
+  if (reward.type === "credit")
+    return CONFIG.PLAUSIBILITY_THRESHOLDS.CREDIT_PLAUSIBILITY;
 
   // Item: hard to assess
-  if (reward.type === "item") return 0.8;
+  if (reward.type === "item")
+    return CONFIG.PLAUSIBILITY_THRESHOLDS.ITEM_PLAUSIBILITY;
 
-  return 0.8;
+  return CONFIG.PLAUSIBILITY_THRESHOLDS.REWARD_PLAUSIBILITY_DEFAULT;
 }
 
 /**
@@ -197,7 +221,9 @@ function isHighValue(deal: Deal): boolean {
   }
 
   if (deal.reward.type === "percent" && typeof deal.reward.value === "number") {
-    return deal.reward.value > 50;
+    return (
+      deal.reward.value > CONFIG.PLAUSIBILITY_THRESHOLDS.PERCENT_MAX_OPTIMAL
+    );
   }
 
   return false;
