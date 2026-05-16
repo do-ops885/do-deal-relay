@@ -195,7 +195,7 @@ GitHub Actions has resource limits that affect our CI/CD pipeline:
 
 **Workarounds Implemented**:
 - `fetch-depth: 1` in checkout for faster clones
-- `npm ci --legacy-peer-deps` for reproducible installs
+- `npm ci` for reproducible installs
 - Selective caching strategy in workflows
 
 **Documentation**:

@@ -1,4 +1,4 @@
-import { Deal, PipelineContext } from "../types";
+import { Deal, DealMetadata, PipelineContext } from "../types";
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
@@ -30,22 +30,24 @@ interface ScoringResult {
 
 /**
  * Calculate confidence and trust scores for all deals
+ *
+ * Performance: minimizes object churn by mutating in-place and
+ * pre-allocating the result array to avoid dynamic resizing.
  */
 export async function score(
   deals: Deal[],
   ctx: PipelineContext,
   env: Env,
 ): Promise<ScoringResult> {
-  const scoredDeals: ScoredDeal[] = [];
+  const n = deals.length;
+  const scoredDeals: ScoredDeal[] = new Array(n);
   let totalConfidence = 0;
   let minConfidence = Infinity;
   let maxConfidence = -Infinity;
   let highValueCount = 0;
 
-  // Calculate source diversity
+  // Pre-calculate shared scores once
   const diversityScore = calculateSourceDiversity(deals);
-
-  // Calculate uniqueness from deduplication phase
   const totalCandidates = ctx.candidates.length;
   const duplicateCount = totalCandidates - deals.length;
   const uniquenessScore = calculateUniquenessScore(
@@ -53,32 +55,28 @@ export async function score(
     totalCandidates,
   );
 
-  // Performance optimization: pre-calculate frequency map for O(1) penalty lookup
-  // This reduces complexity from O(N^2) to O(N) by avoiding nested filter()
+  // Pre-calculate duplicate frequency map for O(1) penalty lookup
   const duplicateMap = new Map<string, number>();
-  for (const d of ctx.deduped) {
+  for (const d of deals) {
     const key = `${d.source.domain}:${d.code}`;
     duplicateMap.set(key, (duplicateMap.get(key) || 0) + 1);
   }
 
   const weights = CONFIG.SCORING_WEIGHTS;
 
+  let idx = 0;
   for (const deal of deals) {
-    // Calculate individual scores
-    const validityScore = 1.0; // Already passed validation
+    const validityScore = 1.0;
     const trustScore = deal.source.trust_score;
     const rewardPlausibility = calculateRewardPlausibility(deal);
     const expiryScore = deal.expiry.confidence;
 
-    // Calculate duplicate penalty (O(1) lookup)
-    // Uses the pre-calculated frequency map
     const key = `${deal.source.domain}:${deal.code}`;
     const duplicatePenalty =
       (duplicateMap.get(key) || 0) > 1
         ? CONFIG.PLAUSIBILITY_THRESHOLDS.DUPLICATE_PENALTY_VALUE
         : 0.0;
 
-    // Calculate final confidence score
     const confidenceScore =
       validityScore * weights.validity_ratio +
       uniquenessScore * weights.uniqueness_score +
@@ -88,18 +86,17 @@ export async function score(
       rewardPlausibility * weights.reward_plausibility +
       expiryScore * weights.expiry_confidence;
 
-    // Track stats
     totalConfidence += confidenceScore;
-    minConfidence = Math.min(minConfidence, confidenceScore);
-    maxConfidence = Math.max(maxConfidence, confidenceScore);
+    if (confidenceScore < minConfidence) minConfidence = confidenceScore;
+    if (confidenceScore > maxConfidence) maxConfidence = confidenceScore;
 
-    // Check if high value
-    if (isHighValue(deal)) {
-      highValueCount++;
-    }
+    if (isHighValue(deal)) highValueCount++;
 
-    // Create scored deal
-    const scoredDeal: ScoredDeal = {
+    // Mutate metadata in-place instead of spreading the entire deal
+    (deal.metadata as DealMetadata).confidence_score = confidenceScore;
+
+    // Build the ScoredDeal wrapper with minimal allocations
+    scoredDeals[idx] = {
       ...deal,
       scores: {
         validity: validityScore,
@@ -110,21 +107,16 @@ export async function score(
         reward_plausibility: rewardPlausibility,
         expiry: expiryScore,
       },
-      metadata: {
-        ...deal.metadata,
-        confidence_score: confidenceScore,
-      },
     };
-
-    scoredDeals.push(scoredDeal);
+    idx++;
   }
 
   return {
     deals: scoredDeals,
     stats: {
-      avg_confidence: deals.length > 0 ? totalConfidence / deals.length : 0,
-      min_confidence: deals.length > 0 ? minConfidence : 0,
-      max_confidence: deals.length > 0 ? maxConfidence : 0,
+      avg_confidence: n > 0 ? totalConfidence / n : 0,
+      min_confidence: n > 0 ? minConfidence : 0,
+      max_confidence: n > 0 ? maxConfidence : 0,
       high_value_count: highValueCount,
     },
   };
@@ -138,15 +130,10 @@ export function calculateSourceDiversity(deals: Deal[]): number {
 
   const domains = new Set(deals.map((d) => d.source.domain));
   const diversity = domains.size / deals.length;
-
-  // Reward having deals from multiple sources
-  // Max score at ~5 different domains for 10 deals (ratio = 0.5)
   const optimalRatio = Math.min(
     domains.size / CONFIG.PLAUSIBILITY_THRESHOLDS.OPTIMAL_SOURCE_COUNT,
     1.0,
   );
-
-  // Combined score: diversity * optimal ratio
   return (
     Math.min(
       1.0,
@@ -163,8 +150,7 @@ export function calculateUniquenessScore(
   totalCandidates: number,
 ): number {
   if (totalCandidates === 0) return 1.0;
-  const uniqueRatio = (totalCandidates - duplicates) / totalCandidates;
-  return Math.min(1.0, uniqueRatio);
+  return Math.min(1.0, (totalCandidates - duplicates) / totalCandidates);
 }
 
 /**
@@ -172,44 +158,31 @@ export function calculateUniquenessScore(
  */
 function calculateRewardPlausibility(deal: Deal): number {
   const reward = deal.reward;
+  const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
 
-  // Cash rewards: lower is more plausible (except 0)
   if (reward.type === "cash" && typeof reward.value === "number") {
-    if (reward.value === 0)
-      return CONFIG.PLAUSIBILITY_THRESHOLDS.SUSPICIOUS_REWARD_PLAUSIBILITY; // Suspicious but possible
-    const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
+    if (reward.value === 0) return t.SUSPICIOUS_REWARD_PLAUSIBILITY;
     if (reward.value <= t.CASH_LOW) return 1.0;
-    if (reward.value <= t.CASH_MEDIUM)
-      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_MEDIUM;
-    if (reward.value <= t.CASH_HIGH)
-      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_HIGH;
-    return CONFIG.PLAUSIBILITY_THRESHOLDS.SUSPICIOUS_REWARD_PLAUSIBILITY; // Very high, suspicious
+    if (reward.value <= t.CASH_MEDIUM) return t.PLAUSIBILITY_MEDIUM;
+    if (reward.value <= t.CASH_HIGH) return t.PLAUSIBILITY_HIGH;
+    return t.SUSPICIOUS_REWARD_PLAUSIBILITY;
   }
 
-  // Percent rewards: 10-50% is most plausible
   if (reward.type === "percent" && typeof reward.value === "number") {
-    const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
     if (
       reward.value >= t.PERCENT_MIN_OPTIMAL &&
       reward.value <= t.PERCENT_MAX_OPTIMAL
     )
       return 1.0;
     if (reward.value > t.PERCENT_MAX_OPTIMAL)
-      return CONFIG.PLAUSIBILITY_THRESHOLDS.REWARD_PLAUSIBILITY_DEFAULT;
-    if (reward.value >= CONFIG.PLAUSIBILITY_THRESHOLDS.PERCENT_MIN_THRESHOLD)
-      return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_MEDIUM;
-    return CONFIG.PLAUSIBILITY_THRESHOLDS.PLAUSIBILITY_HIGH; // TODO: extract this too?
+      return t.REWARD_PLAUSIBILITY_DEFAULT;
+    if (reward.value >= t.PERCENT_MIN_THRESHOLD) return t.PLAUSIBILITY_MEDIUM;
+    return t.PLAUSIBILITY_HIGH;
   }
 
-  // Credit: usually reasonable
-  if (reward.type === "credit")
-    return CONFIG.PLAUSIBILITY_THRESHOLDS.CREDIT_PLAUSIBILITY;
-
-  // Item: hard to assess
-  if (reward.type === "item")
-    return CONFIG.PLAUSIBILITY_THRESHOLDS.ITEM_PLAUSIBILITY;
-
-  return CONFIG.PLAUSIBILITY_THRESHOLDS.REWARD_PLAUSIBILITY_DEFAULT;
+  if (reward.type === "credit") return t.CREDIT_PLAUSIBILITY;
+  if (reward.type === "item") return t.ITEM_PLAUSIBILITY;
+  return t.REWARD_PLAUSIBILITY_DEFAULT;
 }
 
 /**
@@ -219,20 +192,16 @@ function isHighValue(deal: Deal): boolean {
   if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
     return deal.reward.value > CONFIG.HIGH_VALUE_THRESHOLD;
   }
-
   if (deal.reward.type === "percent" && typeof deal.reward.value === "number") {
     return (
       deal.reward.value > CONFIG.PLAUSIBILITY_THRESHOLDS.PERCENT_MAX_OPTIMAL
     );
   }
-
   return false;
 }
 
 /**
  * Update source trust scores based on validation results
- * Stub: trust evolution requires persistent source registry storage
- * Currently logs the adjustment that would be applied
  */
 export async function evolveSourceTrust(
   env: Env,

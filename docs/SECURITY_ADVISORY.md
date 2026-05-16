@@ -19,5 +19,5 @@ As of May 11, 2026, `npm audit` reports **0 vulnerabilities**.
 
 ## Security Recommendations
 
-1. Continue using `--legacy-peer-deps` for `npm install` to maintain environment stability.
+1. Continue using `npm ci` for reproducible installs and environment stability.
 2. Regularly monitor `security.yml` results for any newly detected secrets.

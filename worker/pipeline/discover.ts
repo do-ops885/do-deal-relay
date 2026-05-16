@@ -27,6 +27,57 @@ interface ExtractedDeal {
 }
 
 /**
+ * Calculate an adaptive per-source budget based on historical performance.
+ *
+ * Factors:
+ * - Base budget (env or default)
+ * - Trust bonus (high-trust sources get more)
+ * - Validation success rate (sources that produce valid deals get more budget)
+ * - Discovery maturity (sources with more history get a small bonus)
+ */
+function calculateAdaptiveBudget(
+  source: SourceConfig,
+  perSourceBase: number,
+  highTrustBonus: number,
+): number {
+  let budget = perSourceBase;
+
+  // Trust bonus
+  if (source.trust_initial > 0.7) {
+    budget += highTrustBonus;
+  }
+
+  // Validation success rate bonus
+  const totalValidations =
+    (source.validation_success_count || 0) +
+    (source.validation_failure_count || 0);
+  if (totalValidations > 0) {
+    const successRate =
+      (source.validation_success_count || 0) / totalValidations;
+    // Add up to 50% bonus for sources with ≥80% validation success
+    if (successRate >= 0.8) {
+      budget += Math.round(perSourceBase * 0.5);
+    } else if (successRate >= 0.5) {
+      budget += Math.round(perSourceBase * 0.25);
+    }
+    // Apply penalty for sources with <50% success rate
+    if (successRate < 0.5 && successRate > 0) {
+      budget = Math.round(budget * 0.75);
+    }
+  }
+
+  // Discovery maturity bonus (sources with history get a small boost)
+  const discoveryCount = source.discovery_count || 0;
+  if (discoveryCount >= 10) {
+    budget += Math.round(perSourceBase * 0.2);
+  } else if (discoveryCount >= 5) {
+    budget += Math.round(perSourceBase * 0.1);
+  }
+
+  return budget;
+}
+
+/**
  * Run discovery across all configured sources
  */
 export async function discover(
@@ -91,18 +142,25 @@ export async function discover(
       break;
     }
 
-    // Calculate per-source budget
-    const sourceBudget =
-      source.trust_initial > 0.7
-        ? perSourceBase + highTrustBonus
-        : perSourceBase;
-
+    // Calculate adaptive per-source budget
+    const sourceBudget = calculateAdaptiveBudget(
+      source,
+      perSourceBase,
+      highTrustBonus,
+    );
     const effectiveLimit = Math.min(sourceBudget, remainingGlobal);
 
     logger.info(`Allocating budget for ${source.domain}`, {
       component: "discovery",
       trust: source.trust_initial,
       budget: effectiveLimit,
+      adaptiveBudget: sourceBudget,
+      validationSuccessRate:
+        source.validation_success_count && source.validation_failure_count
+          ? source.validation_success_count /
+            (source.validation_success_count + source.validation_failure_count)
+          : "N/A",
+      discoveryCount: source.discovery_count || 0,
       remainingGlobal,
     });
 
@@ -144,7 +202,6 @@ async function discoverFromSource(
     try {
       const url = `https://${source.domain}${pattern}`;
 
-      // Respect payload limits
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -160,7 +217,6 @@ async function discoverFromSource(
 
       const contentType = response.headers.get("content-type") || "";
 
-      // Check Content-Length before reading to avoid memory issues with large responses
       const contentLength = response.headers.get("content-length");
       const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
 
@@ -173,7 +229,6 @@ async function discoverFromSource(
         content = await response.text();
       }
 
-      // Validate payload size after reading
       if (content.length > maxSize) {
         throw new Error("Payload exceeds size limit");
       }
@@ -202,7 +257,6 @@ async function discoverFromSource(
         }
       }
 
-      // Record success
       await recordSourceValidation(env, source.domain, true);
     } catch (error) {
       errors.push({
@@ -226,26 +280,21 @@ function parseHTMLContent(
   const deals: ExtractedDeal[] = [];
   const selectors = source.selectors || {};
 
-  // Use regex-based extraction as we don't have DOM parser in Workers
-  // Look for referral code patterns
   const codePattern =
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
 
-  // Extract codes
   let match;
   while ((match = codePattern.exec(content)) !== null) {
     const code = match[1];
     if (code === undefined) continue;
 
-    // Find associated URL
     const urlMatch = content
       .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(urlPattern);
 
-    // Find reward info
     const rewardMatch = content
       .slice(Math.max(0, match.index - 500), match.index + 500)
       .match(rewardPattern);
@@ -273,7 +322,6 @@ function parseHTMLContent(
     });
   }
 
-  // Deduplicate by code
   const seen = new Set<string>();
   return deals.filter((d) => {
     if (seen.has(d.code)) return false;
@@ -293,7 +341,6 @@ function parseJSONContent(
     const data = JSON.parse(content);
     const deals: ExtractedDeal[] = [];
 
-    // Handle different JSON structures
     const items = Array.isArray(data)
       ? data
       : data.deals || data.items || [data];
@@ -371,7 +418,7 @@ async function buildDeal(
 }
 
 /**
- * Extract title from content context
+ * Extract content from context
  */
 function extractContent(
   content: string,
