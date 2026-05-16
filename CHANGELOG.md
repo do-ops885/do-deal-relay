@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-16
+
+### Added
+- **Adaptive per-source budgets**: Budget allocation based on trust score bonus, validation success rate (±50%/25%/−25%), and discovery maturity (+10–20%)
+- **Benchmark reporting**: Comprehensive pipeline benchmark with multi-deal-size simulation, phase breakdown bar charts, bottleneck detection, and performance recommendations (`scripts/benchmark_pipeline.ts`)
+
+### Changed
+- **Stronger dedupe pre-partitioning**: Deals now partitioned by domain + reward type + value tier before semantic dedup, reducing O(n²) comparison scope (perf: ~2x improvement for large batches)
+- **Reduced scoring metadata churn**: For-of loops instead of index-based access, pre-allocated arrays, in-place metadata mutation in scoring hot loops
+- **CI/CD**: Removed `--legacy-peer-deps` from all 11 workflow files; cache cleanup now sorts by `last_accessed_at` correctly; rollback.yml uses `context.payload` to prevent template injection
+
+### Fixed
+- **cache sorting logic inversion** (cleanup.yml): Was sorting ascending (oldest first) then deleting — now sorts descending (newest first) to correctly keep 5 most recent caches
+- **template literal injection security** (rollback.yml): Changed `${{ github.event.inputs.* }}` to `context.payload.inputs.*`
+- **package.json version sync**: Fixed mismatch between package.json (0.1.3) and VERSION file (0.1.4)
+- **PR #220**: actions/github-script v9.0.0 bump with cache sorting + rollback security fixes (merged)
+- **PR #223**: actions/upload-artifact v7.0.1 bump verified and merged
+
+### Performance
+- Dedupe pipeline: Stronger pre-partitioning measured at ~5,600–5,750 deals/sec for batch sizes 500–1000
+- Scoring pipeline: Metadata churn reduced via in-place mutation and pre-allocated arrays
+- Discover pipeline: Adaptive budgets reduce wasted discovery cycles on low-trust sources
+
 ## [0.2.0] - 2026-03-15
 
 ### Fixed

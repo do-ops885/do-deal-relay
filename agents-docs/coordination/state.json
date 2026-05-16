@@ -17,7 +17,10 @@
     "perf_dedupe_improved": true,
     "perf_scoring_improved": true,
     "adaptive_budgets_implemented": true,
-    "benchmark_reporting_implemented": true
+    "benchmark_script_validated": true,
+    "changelog_updated_v014": true,
+    "quality_gate_passing": true,
+    "release_workflow_expected_failure": true
   },
   "active_agents": [],
   "current_phase": "release-complete",
