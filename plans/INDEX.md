@@ -12,6 +12,7 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 ## Active Plans
 
 - [Sprint v0.1.5](sprint-v0.1.5.md) — CI/CD stability fixes (quality gate, TruffleHog, CodeQL).
+- [ADR-004: Observability Enablement](ADR-004-observability-enablement.md) — Enable traces, document WAF/edge security.
 
 ## Planned Plans
 

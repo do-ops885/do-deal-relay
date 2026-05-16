@@ -658,7 +658,75 @@ fi
 
 ---
 
-## 12. EU AI Act Compliance
+## 12. Edge Security Configuration
+
+Beyond the in-worker middleware (API key auth, rate limiting, security headers), the following **Cloudflare platform-level** security features should be configured in the dashboard:
+
+### Cloudflare WAF (Web Application Firewall)
+
+Configure custom WAF rules to block common attack patterns before they reach your worker:
+
+1. **Dashboard** → Security → WAF → Custom rules
+2. Recommended rules to add:
+
+| Rule Name | Field | Operator | Value | Action |
+|-----------|-------|----------|-------|--------|
+| Block SQLi | `http.request.uri` | matches regex | `(?i)(union.*select|select.*from|insert.*into|drop\\s+table)` | Block |
+| Block XSS | `http.request.uri` | matches regex | `(?i)(<script|<iframe|onerror=|onload=)` | Block |
+| Block Path Traversal | `http.request.uri` | matches regex | `(\.\./|\.\.\\)` | Block |
+| Block Admin IP | `http.request.uri` | contains | `/admin` | Challenge (or whitelist IPs) |
+
+### API Shield
+
+Enforce API schema validation for incoming requests:
+
+1. **Dashboard** → Security → API Shield
+2. Enable **Schema Validation** for your API endpoints
+3. Upload gRPC/REST schema or use endpoint learning mode
+4. Enable **mutual TLS** (mTLS) for administrative endpoints if needed
+
+### Rate Limiting (Edge-Level)
+
+Add Cloudflare-managed rate limits to offload worker CPU:
+
+1. **Dashboard** → Security → Rate Limiting
+2. Create rules for sensitive endpoints:
+
+| Endpoint | Threshold | Period | Action |
+|----------|-----------|--------|--------|
+| `/api/*` | 1000 requests | 1 minute | Block |
+| `/api/discover` | 10 requests | 1 hour | Block |
+| `/api/analytics` | 100 requests | 1 minute | Block |
+
+### Turnstile (CAPTCHA Alternative)
+
+Add Turnstile to any admin/API UIs:
+
+1. **Dashboard** → Turnstile → Add site
+2. Set hostname to your worker domain
+3. Integrate widget via `cf-turnstile` JavaScript library
+4. Server-side validation via `POST https://challenges.cloudflare.com/turnstile/v0/siteverify`
+
+### DDoS Protection
+
+Cloudflare DDoS protection is auto-enabled on all plans. Verify:
+
+1. **Dashboard** → Security → DDoS
+2. Ensure **DDoS Attack Protection** is ON
+3. Review **DDoS Alerts** if traffic spikes
+
+### Bot Fight Mode
+
+For API-only workers like this, Bot Fight Mode can block automated scrapers:
+
+1. **Dashboard** → Security → Bots
+2. Enable **Bot Fight Mode** (Free) or **Bot Management** (Enterprise)
+
+> **Note**: WAF rules require Cloudflare proxying (orange cloud) on your DNS record. If your worker runs solely on `workers.dev` domain, some WAF features may have limited effect. For full edge security, add a custom domain and proxy through Cloudflare.
+
+---
+
+## 13. EU AI Act Compliance
 
 The system includes EU AI Act compliance logging (Regulation (EU) 2024/1689):
 

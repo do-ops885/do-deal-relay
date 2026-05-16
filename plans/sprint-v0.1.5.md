@@ -75,8 +75,11 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 
 ### P2: Feature Work
 
-6. **Browser tests** — Complete pending browser-agent work from coordination state
-7. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
+6. **Observability enablement** — Enable traces in wrangler.jsonc, add head_sampling_rate to logs
+7. **Edge security documentation** — Add WAF/API Shield/rate limiting docs to DEPLOYMENT.md
+8. **Close stale issues** — #237, #238 (fork-environment expected failures)
+9. **Browser tests** — Complete pending browser-agent work from coordination state
+10. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
 
 ## Execution Strategy
 

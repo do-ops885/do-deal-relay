@@ -11,9 +11,11 @@
     "logs": {
       "enabled": true,
       "invocation_logs": true,
+      "head_sampling_rate": 1,
     },
     "traces": {
-      "enabled": false,
+      "enabled": true,
+      "head_sampling_rate": 1,
     },
   },
   // Scheduled triggers: Discovery every 6h, expiry check at 9am, weekly validation Sunday midnight
