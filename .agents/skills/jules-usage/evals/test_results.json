@@ -1,0 +1,208 @@
+{
+  "timestamp": "2026-05-16T14:54:57.912360",
+  "total": 40,
+  "passed": 40,
+  "failed": 0,
+  "results": [
+    {
+      "name": "SKILL.md exists",
+      "passed": true,
+      "detail": "SKILL.md found at /workspaces/do-deal-relay/.agents/skills/jules-usage/SKILL.md"
+    },
+    {
+      "name": "Has YAML frontmatter",
+      "passed": true,
+      "detail": "Frontmatter starts with ---"
+    },
+    {
+      "name": "Has core sections",
+      "passed": true,
+      "detail": "All core sections found"
+    },
+    {
+      "name": "Under 250 lines (126)",
+      "passed": true,
+      "detail": "Line count: 126"
+    },
+    {
+      "name": "Uses correct jules CLI commands",
+      "passed": true,
+      "detail": "Correct commands found: True, deprecated commands removed: True"
+    },
+    {
+      "name": "commands.md exists",
+      "passed": true,
+      "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/references/commands.md"
+    },
+    {
+      "name": "Accurate jules commands in reference",
+      "passed": true,
+      "detail": "Correct commands: True, no deprecated: True"
+    },
+    {
+      "name": "evals.json exists",
+      "passed": true,
+      "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/evals/evals.json"
+    },
+    {
+      "name": "Has 'evals' key",
+      "passed": true,
+      "detail": "evals key present: True"
+    },
+    {
+      "name": "Has 10 eval cases",
+      "passed": true,
+      "detail": "Found 10 eval cases (minimum 8 recommended)"
+    },
+    {
+      "name": "All eval cases have required fields",
+      "passed": true,
+      "detail": "id, prompt, expected_output, and assertions present in all cases"
+    },
+    {
+      "name": "jules_api_request.sh exists",
+      "passed": true,
+      "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/scripts/jules_api_request.sh"
+    },
+    {
+      "name": "Has valid shebang",
+      "passed": true,
+      "detail": "#!/usr/bin/env bash found"
+    },
+    {
+      "name": "Has error handling (set -euo pipefail)",
+      "passed": true,
+      "detail": "Error handling enabled"
+    },
+    {
+      "name": "Checks for JULES_API_KEY",
+      "passed": true,
+      "detail": "API key validation present"
+    },
+    {
+      "name": "Has usage instructions",
+      "passed": true,
+      "detail": "Usage instructions found"
+    },
+    {
+      "name": "jules_start_session.sh exists",
+      "passed": true,
+      "detail": "Found at /workspaces/do-deal-relay/.agents/skills/jules-usage/scripts/jules_start_session.sh"
+    },
+    {
+      "name": "Has valid shebang",
+      "passed": true,
+      "detail": "Shebang found"
+    },
+    {
+      "name": "Has error handling",
+      "passed": true,
+      "detail": "Error handling enabled"
+    },
+    {
+      "name": "Uses correct jules commands (no deprecated 'check repo')",
+      "passed": true,
+      "detail": "No deprecated commands"
+    },
+    {
+      "name": "Has CLI \u2192 API fallback logic",
+      "passed": true,
+      "detail": "CLI check: True, API fallback: True"
+    },
+    {
+      "name": "Uses gh for repo metadata",
+      "passed": true,
+      "detail": "gh repo view found"
+    },
+    {
+      "name": "jules_start_session.sh has valid shell syntax",
+      "passed": true,
+      "detail": "Syntax OK"
+    },
+    {
+      "name": "jules_api_request.sh has valid shell syntax",
+      "passed": true,
+      "detail": "Syntax OK"
+    },
+    {
+      "name": "Workflow documented: gh installation check",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: jules installation check",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: npm install fallback",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Repo setup verification",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Jules session via jules new",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Remote session management",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Teleport changes",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: REST API fallback",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Issue labeling",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: PR comment guidance",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Edge case: non-GitHub repo",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Edge case: install failure",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Red flags section",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "Workflow documented: Rationalizations section",
+      "passed": true,
+      "detail": "Found in SKILL.md"
+    },
+    {
+      "name": "jules_start_session.sh is executable",
+      "passed": true,
+      "detail": "Executable"
+    },
+    {
+      "name": "jules_api_request.sh is executable",
+      "passed": true,
+      "detail": "Executable"
+    }
+  ]
+}

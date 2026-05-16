@@ -40,3 +40,7 @@ third_party/
 
 # Test outputs
 coverage/
+
+# Auto-generated skill evaluation JSON results
+.agents/skills/evals/results.json
+.agents/skills/*/evals/test_results.json

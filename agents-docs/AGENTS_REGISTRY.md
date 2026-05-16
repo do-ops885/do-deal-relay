@@ -12,6 +12,7 @@ Centralized registry of all sub-agents and skills.
 | [`iterative-refinement`](../.agents/skills/iterative-refinement/) | `.agents/skills/` | Iterative code improvement patterns |
 | [`parallel-execution`](../.agents/skills/parallel-execution/) | `.agents/skills/` | Parallel task execution patterns |
 | [`skill-creator`](../.agents/skills/skill-creator/) | `.agents/skills/` | Create new skills with proper structure |
+| [`jules-usage`](../.agents/skills/jules-usage/) | `.agents/skills/` | Use the Jules CLI for repo validation, long-running tasks, and GitHub feedback coordination |
 | [`task-decomposition`](../.agents/skills/task-decomposition/) | `.agents/skills/` | Break complex tasks into manageable steps |
 | [`web-doc-resolver`](../.agents/skills/web-doc-resolver/) | `.agents/skills/` | Cost-effective web research (free sources first) |
 | [`web-search-researcher`](../.agents/skills/web-search-researcher/) | `.agents/skills/` | Deep web search when needed |

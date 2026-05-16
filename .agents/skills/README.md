@@ -42,6 +42,7 @@ Validate symlinks are intact:
 | [`parallel-execution/`](parallel-execution/) | Parallel task execution patterns |
 | [`shell-script-quality/`](shell-script-quality/) | Shell script linting (ShellCheck) and testing (BATS) |
 | [`skill-creator/`](skill-creator/) | Create new skills with proper structure and best practices |
+| [`jules-usage/`](jules-usage/) | Use the Jules CLI for repo validation, long-running tasks, and GitHub feedback coordination |
 | [`task-decomposition/`](task-decomposition/) | Break complex tasks into manageable steps |
 | [`web-doc-resolver/`](web-doc-resolver/) | Resolve and fetch web documentation with cascade fallback |
 | [`web-search-researcher/`](web-search-researcher/) | Research topics using web search with systematic methodology |
