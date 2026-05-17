@@ -379,14 +379,16 @@ export async function deactivateReferral(
 
 /**
  * Reactivate referral with dual-write
+ * Accepts an optional pre-fetched referral to avoid redundant storage reads.
  */
 export async function reactivateReferral(
   env: Env,
   code: string,
   notes?: string,
+  existingReferral?: ReferralInput | null,
 ): Promise<ReferralInput | null> {
   // Reactivate in KV first
-  const result = await reactivateInKV(env, code, notes);
+  const result = await reactivateInKV(env, code, notes, existingReferral);
 
   // Also reactivate in D1 if available
   if (useD1Writes(env) && env.DEALS_DB && result) {

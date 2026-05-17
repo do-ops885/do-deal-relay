@@ -155,13 +155,16 @@ export async function deactivateReferral(
 
 /**
  * Reactivate a referral code
+ * Accepts an optional pre-fetched referral to avoid redundant storage reads
+ * when the caller has already performed a getReferralByCode lookup.
  */
 export async function reactivateReferral(
   env: Env,
   code: string,
   notes?: string,
+  existingReferral?: ReferralInput | null,
 ): Promise<ReferralInput | null> {
-  const referral = await getReferralByCode(env, code);
+  const referral = existingReferral ?? (await getReferralByCode(env, code));
   if (!referral) return null;
 
   const now = new Date().toISOString();

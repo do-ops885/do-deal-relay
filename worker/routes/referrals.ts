@@ -322,8 +322,11 @@ export async function handleReactivateReferral(
       );
     }
 
-    const referral = await reactivateReferral(env, code);
+    // Pass the already-fetched referral to avoid redundant storage read
+    const referral = await reactivateReferral(env, code, undefined, existing);
 
+    // Defensive fallback — should not occur since existence is verified above,
+    // but satisfies the type checker and guards against concurrent deletion.
     if (!referral) {
       return jsonResponse({ error: "Referral not found" }, 404, request);
     }
