@@ -304,12 +304,14 @@ describe("validateDealFastPath", () => {
       await validateDealFastPath(env, {
         url: "https://example.com/metrics-deal",
         fingerprint: "fp-metrics",
-        metrics: { run_id: "test-run-1" } as unknown as PipelineMetrics,
+        metrics: {
+          run_id: "test-run-1",
+          start_time: Date.now(),
+          success: false,
+        } as unknown as PipelineMetrics,
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-1" }),
         "hit_total",
         1,
@@ -332,19 +334,19 @@ describe("validateDealFastPath", () => {
       await validateDealFastPath(env, {
         url: "https://example.com/other",
         fingerprint: "fp-dupe",
-        metrics: { run_id: "test-run-2" } as unknown as PipelineMetrics,
+        metrics: {
+          run_id: "test-run-2",
+          start_time: Date.now(),
+          success: false,
+        } as unknown as PipelineMetrics,
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-2" }),
         "hit_total",
         1,
       );
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-2" }),
         "dedup_hit_total",
         1,
@@ -358,12 +360,14 @@ describe("validateDealFastPath", () => {
       await validateDealFastPath(env, {
         url: "https://example.com/miss",
         fingerprint: "fp-miss",
-        metrics: { run_id: "test-run-3" } as unknown as PipelineMetrics,
+        metrics: {
+          run_id: "test-run-3",
+          start_time: Date.now(),
+          success: false,
+        } as unknown as PipelineMetrics,
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-3" }),
         "miss_total",
         1,
@@ -382,12 +386,14 @@ describe("validateDealFastPath", () => {
       await validateDealFastPath(env, {
         url: "https://example.com/d1-metrics",
         fingerprint: "fp-d1-metrics",
-        metrics: { run_id: "test-run-4" } as unknown as PipelineMetrics,
+        metrics: {
+          run_id: "test-run-4",
+          start_time: Date.now(),
+          success: false,
+        } as unknown as PipelineMetrics,
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-4" }),
         "d1_lookup_total",
         1,
@@ -401,16 +407,18 @@ describe("validateDealFastPath", () => {
       const result = await validateDealFastPath(env, {
         url: "https://example.com/persist-metrics",
         fingerprint: "fp-persist-metrics",
-        metrics: { run_id: "test-run-5" } as unknown as PipelineMetrics,
+        metrics: {
+          run_id: "test-run-5",
+          start_time: Date.now(),
+          success: false,
+        } as unknown as PipelineMetrics,
       });
 
       await result.persist!({
         status: "accepted",
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).toHaveBeenCalledWith(
+      expect(metricsModule.recordValidationCacheMetric).toHaveBeenCalledWith(
         expect.objectContaining({ run_id: "test-run-5" }),
         "write_total",
         1,
@@ -426,9 +434,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-no-metrics",
       });
 
-      expect(
-        metricsModule.recordValidationCacheMetric,
-      ).not.toHaveBeenCalled();
+      expect(metricsModule.recordValidationCacheMetric).not.toHaveBeenCalled();
     });
   });
 });
