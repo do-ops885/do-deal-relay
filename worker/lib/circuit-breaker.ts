@@ -1,4 +1,5 @@
 import type { Env } from "../types";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Circuit Breaker Pattern for External Service Calls
@@ -62,7 +63,12 @@ function recordStateChange(
   const metrics = getMetrics(name);
   metrics.stateChanges++;
   metrics.lastStateChange = `${from} → ${to} at ${new Date().toISOString()}`;
-  console.log(`[CircuitBreaker:${name}] State changed: ${from} → ${to}`);
+  logger.info(`Circuit breaker "${name}" state changed: ${from} → ${to}`, {
+    component: "circuit-breaker",
+    name,
+    from,
+    to,
+  });
 }
 
 function recordCall(
@@ -320,7 +326,10 @@ export class CircuitBreaker {
       halfOpenCalls: 0,
     };
     await this.saveState(newState);
-    console.log(`[CircuitBreaker:${this.name}] Manually reset to closed`);
+    logger.info(`Circuit breaker "${this.name}" manually reset to closed`, {
+      component: "circuit-breaker",
+      name: this.name,
+    });
   }
 }
 

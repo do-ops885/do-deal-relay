@@ -7,6 +7,29 @@ import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const DISCOVERY_CONSTANTS = {
+  HIGH_TRUST_THRESHOLD: 0.7,
+  VALIDATION_SUCCESS_THRESHOLD_HIGH: 0.8,
+  VALIDATION_SUCCESS_THRESHOLD_MEDIUM: 0.5,
+  BONUS_SUCCESS_HIGH: 0.5, // 50%
+  BONUS_SUCCESS_MEDIUM: 0.25, // 25%
+  PENALTY_SUCCESS_LOW: 0.75, // 25% penalty
+  MATURITY_THRESHOLD_HIGH: 10,
+  MATURITY_THRESHOLD_MEDIUM: 5,
+  BONUS_MATURITY_HIGH: 0.2, // 20%
+  BONUS_MATURITY_MEDIUM: 0.1, // 10%
+  CONTEXT_WINDOW: 500,
+  DESCRIPTION_CONTEXT_WINDOW: 300,
+  EXPIRY_CONFIDENCE_DATE: 0.8,
+  EXPIRY_CONFIDENCE_UNKNOWN: 0.3,
+  MIN_CODE_LENGTH: 6,
+  MAX_CODE_LENGTH: 20,
+} as const;
+
+// ============================================================================
 // Discovery Engine
 // ============================================================================
 
@@ -43,7 +66,7 @@ function calculateAdaptiveBudget(
   let budget = perSourceBase;
 
   // Trust bonus
-  if (source.trust_initial > 0.7) {
+  if (source.trust_initial > DISCOVERY_CONSTANTS.HIGH_TRUST_THRESHOLD) {
     budget += highTrustBonus;
   }
 
@@ -54,24 +77,37 @@ function calculateAdaptiveBudget(
   if (totalValidations > 0) {
     const successRate =
       (source.validation_success_count || 0) / totalValidations;
-    // Add up to 50% bonus for sources with ≥80% validation success
-    if (successRate >= 0.8) {
-      budget += Math.round(perSourceBase * 0.5);
-    } else if (successRate >= 0.5) {
-      budget += Math.round(perSourceBase * 0.25);
+    // Add bonus for sources with high validation success
+    if (successRate >= DISCOVERY_CONSTANTS.VALIDATION_SUCCESS_THRESHOLD_HIGH) {
+      budget += Math.round(
+        perSourceBase * DISCOVERY_CONSTANTS.BONUS_SUCCESS_HIGH,
+      );
+    } else if (
+      successRate >= DISCOVERY_CONSTANTS.VALIDATION_SUCCESS_THRESHOLD_MEDIUM
+    ) {
+      budget += Math.round(
+        perSourceBase * DISCOVERY_CONSTANTS.BONUS_SUCCESS_MEDIUM,
+      );
     }
-    // Apply penalty for sources with <50% success rate
-    if (successRate < 0.5 && successRate > 0) {
-      budget = Math.round(budget * 0.75);
+    // Apply penalty for sources with low success rate
+    if (
+      successRate < DISCOVERY_CONSTANTS.VALIDATION_SUCCESS_THRESHOLD_MEDIUM &&
+      successRate > 0
+    ) {
+      budget = Math.round(budget * DISCOVERY_CONSTANTS.PENALTY_SUCCESS_LOW);
     }
   }
 
   // Discovery maturity bonus (sources with history get a small boost)
   const discoveryCount = source.discovery_count || 0;
-  if (discoveryCount >= 10) {
-    budget += Math.round(perSourceBase * 0.2);
-  } else if (discoveryCount >= 5) {
-    budget += Math.round(perSourceBase * 0.1);
+  if (discoveryCount >= DISCOVERY_CONSTANTS.MATURITY_THRESHOLD_HIGH) {
+    budget += Math.round(
+      perSourceBase * DISCOVERY_CONSTANTS.BONUS_MATURITY_HIGH,
+    );
+  } else if (discoveryCount >= DISCOVERY_CONSTANTS.MATURITY_THRESHOLD_MEDIUM) {
+    budget += Math.round(
+      perSourceBase * DISCOVERY_CONSTANTS.BONUS_MATURITY_MEDIUM,
+    );
   }
 
   return budget;
@@ -280,8 +316,10 @@ function parseHTMLContent(
   const deals: ExtractedDeal[] = [];
   const selectors = source.selectors || {};
 
-  const codePattern =
-    /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
+  const codePattern = new RegExp(
+    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
+    "gi",
+  );
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
@@ -292,11 +330,17 @@ function parseHTMLContent(
     if (code === undefined) continue;
 
     const urlMatch = content
-      .slice(Math.max(0, match.index - 500), match.index + 500)
+      .slice(
+        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+      )
       .match(urlPattern);
 
     const rewardMatch = content
-      .slice(Math.max(0, match.index - 500), match.index + 500)
+      .slice(
+        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+      )
       .match(rewardPattern);
 
     deals.push({
@@ -404,7 +448,9 @@ async function buildDeal(
     },
     expiry: {
       date: extracted.expiry_date,
-      confidence: extracted.expiry_date ? 0.8 : 0.3,
+      confidence: extracted.expiry_date
+        ? DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_DATE
+        : DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_UNKNOWN,
       type: extracted.expiry_date ? "hard" : "unknown",
     },
     metadata: {
@@ -423,7 +469,7 @@ async function buildDeal(
 function extractContent(
   content: string,
   code: string,
-  window: number = 500,
+  window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
 ): string {
   const index = content.indexOf(code);
   if (index === -1) return "";
@@ -442,7 +488,11 @@ function extractTitle(content: string, code: string): string {
 }
 
 function extractDescription(content: string, code: string): string {
-  const context = extractContent(content, code, 300);
+  const context = extractContent(
+    content,
+    code,
+    DISCOVERY_CONSTANTS.DESCRIPTION_CONTEXT_WINDOW,
+  );
   const metaMatch = context.match(
     /<meta[^>]*description[^>]*content="([^"]+)"/i,
   );

@@ -1,0 +1,50 @@
+worker/state-machine.ts:          await new Promise((r) => setTimeout(r, 1000 * ctx.retry_count));
+worker/pipeline/discover.ts:      budget += Math.round(perSourceBase * 0.25);
+worker/pipeline/discover.ts:    // Apply penalty for sources with <50% success rate
+worker/pipeline/discover.ts:      budget = Math.round(budget * 0.75);
+worker/pipeline/discover.ts:  if (discoveryCount >= 10) {
+worker/pipeline/discover.ts:    10,
+worker/pipeline/discover.ts:  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
+worker/pipeline/discover.ts:    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
+worker/pipeline/discover.ts:    10,
+worker/pipeline/discover.ts:      if (contentLength && parseInt(contentLength, 10) > maxSize) {
+worker/pipeline/discover.ts:      .slice(Math.max(0, match.index - 500), match.index + 500)
+worker/pipeline/discover.ts:      .slice(Math.max(0, match.index - 500), match.index + 500)
+worker/pipeline/discover.ts:  window: number = 500,
+worker/pipeline/normalize.ts:    .slice(0, 1000); // Max length
+worker/pipeline/dedupe.ts:    if (deal.reward.value <= 25) valueTier = "low";
+worker/pipeline/dedupe.ts:    else if (deal.reward.value <= 100) valueTier = "medium";
+worker/pipeline/dedupe.ts:    else if (deal.reward.value <= 500) valueTier = "high";
+worker/config.ts:const DEFAULT_HN_RATE_LIMIT = 100;
+worker/config.ts:const DEFAULT_REDDIT_RATE_LIMIT = 60;
+worker/config.ts:const DEFAULT_PH_RATE_LIMIT = 30;
+worker/config.ts:const DEFAULT_GITHUB_RATE_LIMIT = 30;
+worker/config.ts:  LOCK_TTL_SECONDS: 300, // 5 minutes
+worker/config.ts:  FETCH_TIMEOUT_MS: 30_000, // 30 seconds
+worker/config.ts:  RESEARCH_FETCH_TIMEOUT_MS: 15_000, // 15 seconds for research
+worker/config.ts:  MAX_DEALS_PER_RUN: 1000,
+worker/config.ts:  DISCOVERY_BATCH_WINDOW: 500,
+worker/config.ts:  RESEARCH_CACHE_TTL_MINUTES: 60,
+worker/config.ts:  RETRY_DELAY_MS: 1000,
+worker/config.ts:  MAX_RETRY_DELAY_MS: 30000,
+worker/config.ts:  KV_BATCH_SIZE: 25, // Cloudflare Workers subrequest limit is 50, we use 25 for safety margin
+worker/config.ts:  CI_POLL_MAX_ATTEMPTS: 18,
+worker/config.ts:  CI_POLL_INTERVAL_MS: 10000,
+worker/config.ts:    source_diversity: 0.15,
+worker/config.ts:    historical_trust: 0.15,
+worker/config.ts:  MAX_REWARD_VALUE: 10000, // $10K cap for sanity
+worker/config.ts:  MAX_CODE_LENGTH: 50,
+worker/config.ts:    CASH_LOW: 50,
+worker/config.ts:    CASH_MEDIUM: 100,
+worker/config.ts:    CASH_HIGH: 500,
+worker/config.ts:    PERCENT_MIN_OPTIMAL: 10,
+worker/config.ts:    PERCENT_MAX_OPTIMAL: 50,
+worker/config.ts:  HIGH_VALUE_THRESHOLD: 100, // $100
+worker/config.ts:  NLQ_MAX_QUERY_LENGTH: 500,
+worker/config.ts:  NLQ_RULE_MAX_QUERY_LENGTH: 100,
+worker/config.ts:  NLQ_DEFAULT_LIMIT: 20,
+worker/config.ts:  NLQ_MAX_LIMIT: 100,
+worker/config.ts:  NLQ_RATE_LIMIT_PER_MINUTE: 30,
+worker/config.ts:  NLQ_AI_MAX_TOKENS_LONG: 500,
+worker/config.ts:  NLQ_AI_MAX_TOKENS_SHORT: 100,
+worker/config.ts:  NLQ_AI_CONFIDENCE_THRESHOLD: 0.75,

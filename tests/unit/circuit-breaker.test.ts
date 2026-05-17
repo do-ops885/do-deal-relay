@@ -198,7 +198,7 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("open");
       });
 
-      it("should log state change when transitioning to open", async () => {
+      it("should track state change when transitioning to open", async () => {
         const cb = new CircuitBreaker(
           "test-cb",
           { failureThreshold: 1 },
@@ -212,9 +212,9 @@ describe("Circuit Breaker", () => {
           // expected
         }
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining("State changed: closed → open"),
-        );
+        const metrics = cb.getMetrics();
+        expect(metrics.stateChanges).toBe(1);
+        expect(metrics.lastStateChange).toContain("closed → open");
       });
 
       it("should track state changes in metrics", async () => {
@@ -369,7 +369,7 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("half-open");
       });
 
-      it("should log state change when transitioning to half-open", async () => {
+      it("should track state change when transitioning to half-open", async () => {
         const cb = new CircuitBreaker(
           "test-cb",
           { failureThreshold: 1, resetTimeoutMs: 30000 },
@@ -388,9 +388,8 @@ describe("Circuit Breaker", () => {
 
         await cb.execute(vi.fn().mockResolvedValue("success"));
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining("State changed: open → half-open"),
-        );
+        const metrics = cb.getMetrics();
+        expect(metrics.lastStateChange).toContain("open → half-open");
       });
 
       it("should use default reset timeout of 30 seconds", async () => {
@@ -538,7 +537,7 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("closed");
       });
 
-      it("should log state change when transitioning to closed", async () => {
+      it("should track state change when transitioning to closed", async () => {
         const cb = new CircuitBreaker(
           "test-cb",
           { failureThreshold: 1, resetTimeoutMs: 30000, halfOpenMaxCalls: 1 },
@@ -556,9 +555,8 @@ describe("Circuit Breaker", () => {
 
         await cb.execute(vi.fn().mockResolvedValue("success"));
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining("State changed: half-open → closed"),
-        );
+        const metrics = cb.getMetrics();
+        expect(metrics.lastStateChange).toContain("half-open → closed");
       });
 
       it("should allow normal operations after closing", async () => {
@@ -621,7 +619,7 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("open");
       });
 
-      it("should log state change when transitioning back to open", async () => {
+      it("should track state change when transitioning back to open", async () => {
         const cb = new CircuitBreaker(
           "test-cb",
           { failureThreshold: 1, resetTimeoutMs: 30000, halfOpenMaxCalls: 1 },
@@ -644,9 +642,8 @@ describe("Circuit Breaker", () => {
           // expected
         }
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining("State changed: half-open → open"),
-        );
+        const metrics = cb.getMetrics();
+        expect(metrics.lastStateChange).toContain("half-open → open");
       });
 
       it("should reset success count when transitioning back to open", async () => {
@@ -748,13 +745,16 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("open");
       });
 
-      it("should log reset action", async () => {
+      it("should log reset action via structured logger", async () => {
         const cb = new CircuitBreaker("test-cb", {}, mockEnv);
         await cb.reset();
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Manually reset to closed"),
+          expect.stringContaining(
+            '"message":"Circuit breaker \\"test-cb\\" manually reset to closed"',
+          ),
         );
+        expect(await cb.getState()).toBe("closed");
       });
 
       it("should work without environment", async () => {

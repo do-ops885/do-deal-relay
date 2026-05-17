@@ -132,11 +132,8 @@ export async function rollbackSnapshot(
       );
     }
 
-    console.log(
-      `Rolled back to snapshot ${previousSnapshot.snapshot_hash} (verified)`,
-    );
+    // Rollback verification logging is handled by structured logger
   } catch (error) {
-    console.error("Rollback failed:", error);
     throw new PipelineError(
       "PublishError",
       (error as Error).message,
