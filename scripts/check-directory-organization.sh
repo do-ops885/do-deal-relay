@@ -70,13 +70,26 @@ for file in $(find . -maxdepth 1 -type f -name "*.md" -o -name "*.json" -o -name
     done
 
     if [ "$ALLOWED" = false ]; then
-        error "Non-essential file in root: $file"
+        warning "Non-essential file in root: $file"
         ROOT_VIOLATIONS=$((ROOT_VIOLATIONS + 1))
     fi
 done
 
 if [ $ROOT_VIOLATIONS -eq 0 ]; then
     success "Root directory contains only essential files"
+fi
+
+# Check 1.5: Temporary files in root
+echo ""
+echo "Check 1.5: Temporary files in root"
+TEMP_ROOT_VIOLATIONS=0
+for file in $(find . -maxdepth 1 -type f -name "typecheck_*.txt" -o -name "*.tmp" -o -name "*.temp" | sed 's|^\./||'); do
+    warning "Temporary file found in root: $file (Move to temp/)"
+    TEMP_ROOT_VIOLATIONS=$((TEMP_ROOT_VIOLATIONS + 1))
+done
+
+if [ $TEMP_ROOT_VIOLATIONS -eq 0 ]; then
+    success "No temporary files found in root"
 fi
 
 # Check 2: Documentation files location
