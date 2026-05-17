@@ -745,11 +745,15 @@ describe("Circuit Breaker", () => {
         expect(await cb.getState()).toBe("open");
       });
 
-      it("should not log reset action directly to console", async () => {
+      it("should log reset action via structured logger", async () => {
         const cb = new CircuitBreaker("test-cb", {}, mockEnv);
         await cb.reset();
 
-        expect(consoleSpy).not.toHaveBeenCalled();
+        expect(consoleSpy).toHaveBeenCalledWith(
+          expect.stringContaining(
+            '"message":"Circuit breaker \\"test-cb\\" manually reset to closed"',
+          ),
+        );
         expect(await cb.getState()).toBe("closed");
       });
 

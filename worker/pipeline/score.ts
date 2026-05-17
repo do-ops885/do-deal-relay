@@ -1,6 +1,7 @@
-import { Deal, DealMetadata, PipelineContext } from "../types";
+import { Deal, DealMetadata, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
-import type { Env } from "../types";
+import { updateSourceTrust } from "../lib/storage";
+import { logger } from "../lib/global-logger";
 
 // ============================================================================
 // Scoring Pipeline
@@ -213,5 +214,20 @@ export async function evolveSourceTrust(
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
   const sources = new Set(deals.map((d) => d.source.domain));
-  // Trust evolution logging is handled by structured logger in pipeline
+
+  for (const domain of sources) {
+    try {
+      await updateSourceTrust(env, domain, adjustment);
+      logger.info(`Evolved trust for ${domain}`, {
+        domain,
+        adjustment,
+        allValid,
+      });
+    } catch (error) {
+      logger.error(`Failed to evolve trust for ${domain}`, {
+        domain,
+        error: (error as Error).message,
+      });
+    }
+  }
 }
