@@ -38,7 +38,7 @@
     "obs_adr_004_written": true
   },
   "active_agents": [],
-  "current_phase": "v0.1.6-planning-complete",
+  "current_phase": "v0.1.6-performance-swarm-complete",
   "version": "0.1.5",
   "release_status": "stable",
   "agent_status": {
@@ -98,12 +98,11 @@
       ]
     }
   },
-  "last_handoff": "swarm-suggestions-round-4-complete",
+  "last_handoff": "swarm-suggestions-round-5-complete",
   "blockers": [],
   "pending_tasks": [
-    "Execute v0.1.6 performance optimizations: discover, dedupe, validate phases",
-    "Add CI benchmark step to release workflow",
-    "Create local dev KV seeding script"
+    "Execute P1 performance optimizations: dedupe (16.9%) and validate (14.0%) bottlenecks",
+    "Add E2E health check job to release.yml for post-deploy verification"
   ],
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
@@ -187,7 +186,13 @@
     "Added E2E test API key seeding step to deploy-production.yml CI workflow",
     "Updated benchmark script to import VERSION dynamically from worker/version.ts",
     "Wrote v0.1.6 sprint plan with benchmark analysis, P0-P3 improvement roadmap",
-    "Updated coordination state for swarm round 4 completion"
+    "Updated coordination state for swarm round 4 completion",
+    "Optimized discover phase: parallel URL pattern fetches with concurrency limit, memoized extractContent with contentCache",
+    "Fixed discover.ts issues: contentCache.clear() per-run, removed race condition in parallel URL fetching, post-batch limit truncation",
+    "Added benchmark job to release.yml: runs pipeline benchmark with 5,000 deals/sec threshold, uploads report artifact, adds to release summary",
+    "Created scripts/seed-local-kv.sh: consolidated KV seeding with --local/--remote/--e2e-only/--verify-only modes",
+    "Fixed benchmark_pipeline.ts: dynamic VERSION import from worker/version.ts (was hardcoded 0.1.4)",
+    "Updated coordination state for swarm round 5 completion"
   ],
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "evals_auto_generated": true,
