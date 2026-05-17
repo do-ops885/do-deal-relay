@@ -401,7 +401,10 @@ export function getDetailedPhaseTimingStats(
     "verify",
     "finalize",
   ];
-  const res = {} as any;
+  const res = {} as Record<
+    PipelinePhase,
+    Record<"success" | "failure", PhaseTimingStats>
+  >;
 
   for (const p of phases) {
     res[p] = {
@@ -455,13 +458,17 @@ export function getPhaseTimingStats(
   { min: number; max: number; avg: number; p95: number }
 > {
   const detailed = getDetailedPhaseTimingStats(metrics);
-  const res = {} as any;
+  const res = {} as Record<
+    PipelinePhase,
+    { min: number; max: number; avg: number; p95: number }
+  >;
   for (const [p, stats] of Object.entries(detailed)) {
+    const phase = p as PipelinePhase;
     const allTimings = metrics
-      .map((m) => m.phase_timings[p as PipelinePhase])
+      .map((m) => m.phase_timings[phase])
       .filter((t) => t > 0);
     const statsAll = calculateStats(allTimings);
-    res[p] = {
+    res[phase] = {
       min: statsAll.min,
       max: statsAll.max,
       avg: statsAll.avg,

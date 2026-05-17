@@ -94,6 +94,7 @@ for file in $(find . -name "*.md" -not -path "./node_modules/*" -not -path "./.g
        [[ "$file" == .github/* ]] || \
        [[ "$file" == .agents/skills/* ]] || \
        [[ "$file" == temp/* ]] || \
+       [[ "$file" == test-results/* ]] || \
        [[ "$file" == public/* ]] || \
        [[ "$file" == */README.md ]] || \
        [[ "$file" == */webhooks-README.md ]] || \
