@@ -160,23 +160,31 @@ export default {
         }
       }
 
-      const referralMatch = path.match(
-        /^\/api\/referrals\/([^/]+)(?:\/(deactivate|reactivate))?$/,
+      // Referral Action Routes (deactivate/reactivate)
+      const referralActionMatch = path.match(
+        /^\/api\/referrals\/([^/]+)\/(deactivate|reactivate)$/,
       );
-      if (referralMatch) {
-        const code = referralMatch[1] ?? "";
-        const action = referralMatch[2] ?? "";
-        if (action === "deactivate" && request.method === "POST") {
+      if (referralActionMatch && request.method === "POST") {
+        const code = referralActionMatch[1];
+        const action = referralActionMatch[2];
+
+        if (code && action === "deactivate") {
           return withAuth(request, env, undefined, () =>
             handleDeactivateReferral(request, code, env),
           );
         }
-        if (action === "reactivate" && request.method === "POST") {
+        if (code && action === "reactivate") {
           return withAuth(request, env, undefined, () =>
             handleReactivateReferral(code, env),
           );
         }
-        if (request.method === "GET") return handleGetReferralByCode(code, env);
+      }
+
+      // Referral Detail Route (GET by code)
+      const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
+      if (referralDetailMatch && request.method === "GET") {
+        const code = referralDetailMatch[1];
+        if (code) return handleGetReferralByCode(code, env);
       }
 
       // Research API
