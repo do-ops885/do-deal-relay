@@ -38,8 +38,8 @@
     "obs_adr_004_written": true
   },
   "active_agents": [],
-  "current_phase": "v0.1.7-deployed-playwright",
-  "version": "0.1.4",
+  "current_phase": "v0.1.5-release-complete",
+  "version": "0.1.5",
   "release_status": "stable",
   "agent_status": {
     "feature-implementer": {
@@ -98,11 +98,10 @@
       ]
     }
   },
-  "last_handoff": "swarm-suggestions-round-2-complete",
+  "last_handoff": "swarm-suggestions-round-3-complete",
   "blockers": [],
   "pending_tasks": [
-    "Seed KV/D1 data to resolve Playwright auth test failures (7/26 failing)",
-    "Review and update sprint plan v0.1.5 with latest status"
+    "Review and plan v0.1.6 features based on benchmark data"
   ],
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
@@ -175,7 +174,13 @@
     "Production deploy: https://do-deal-relay.do-it-119.workers.dev (version 157ae43e)",
     "Playwright E2E: 19/26 pass against deployed worker (7 auth failures need KV seeding)",
     "Sprint plan v0.1.5 verified — already comprehensive",
-    "Updated coordination state + handoff for round 2 swarm"
+    "Updated coordination state + handoff for round 2 swarm",
+    "Auth KV key investigation: root cause found — wrangler kv key put defaults to local, needs --remote flag",
+    "Seeded remote KV namespace with 3 test API keys (admin, user, expired) using --remote flag",
+    "Production deploy with auth-verified worker (version 46e48872)",
+    "Playwright E2E 26/26 all passing against deployed worker (was 19/26, auth fixed)",
+    "Version bumped 0.1.4 → 0.1.5 across package.json, VERSION, worker/version.ts",
+    "Updated sprint plan v0.1.5 with production deploy, E2E results, auth fix documentation"
   ],
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "evals_auto_generated": true,

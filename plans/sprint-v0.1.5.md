@@ -1,18 +1,18 @@
 # Sprint Plan: v0.1.5
 
-**Date**: 2026-05-16
-**Status**: Planning
+**Date**: 2026-05-17
+**Status**: Released — v0.1.5 deployed to production
 **Strategy**: GOAP with parallel swarm coordination
 
-## Current State (Verified 2026-05-16)
+## Current State (Verified 2026-05-17)
 
-- **v0.1.4 released** — All PRs merged, all open issues closed, tag v0.1.4 pushed
+- **v0.1.5 released** — Version bumped, deployed, E2E 26/26 passing
 - **CI + Labels Setup**: ✅ 5/5 passes on main
 - **CodeQL Advanced**: ✅ 5/5 passes
 - **Security & Compliance**: ✅ 4/5 passes, 1 cancelled — no failures
-- **Quality gate**: ✅ Passes with `SKIP_TESTS=1`. Full tests pass (coverage race fixed).
-- **Release workflow**: ⚠️ Expected — missing Cloudflare secrets in fork
+- **Quality gate**: ✅ All 13 gates pass locally (2 pre-existing test env stderr messages non-blocking)
 - **TypeScript**: 0 errors
+- **Production deployed**: ✅ [https://do-deal-relay.do-it-119.workers.dev](https://do-deal-relay.do-it-119.workers.dev)
 
 ## Historical Blockers — Root Cause Analysis
 
@@ -63,25 +63,18 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 
 ## Sprint Goals
 
-### P0: CI/CD Stability
+### P0: CI/CD Stability — All Complete ✅
 
-1. **[Fix CI quality gate](blob:fix-ci-quality-gate)** — Debug and fix `quality_gate.sh` in CI environment
-2. **[Fix TruffleHog workflow](blob:fix-trufflehog)** — Prevent single-commit pushes from failing CI
-3. **[Enable CodeQL](blob:enable-codeql)** — Enable GitHub CodeQL scanning in repo settings
+### P1: Developer Experience — All Complete ✅
 
-### P1: Developer Experience
+### P2: Feature Work — All Complete ✅
 
-4. **Auto-generate CHANGELOG** — Script to extract conventional commits into changelog entries
-5. **Review AGENTS.md** — Clean up stale references, update with v0.1.4 changes
+### P3: Production & E2E (Added v0.1.5)
 
-### P2: Feature Work
-
-6. **Observability enablement** — Enable traces in wrangler.jsonc, add head_sampling_rate to logs
-7. **Edge security documentation** — Add WAF/API Shield/rate limiting docs to DEPLOYMENT.md
-8. **Close stale issues** — #237, #238 (fork-environment expected failures)
-9. **Browser tests** — Investigate: Playwright tests require deployed worker (KV/D1 unavailable locally); worker returns 503/degraded on /health in local dev
-10. **Wrangler dev port** — Fixed dev script to use `--port 8787` consistent with Playwright config
-11. **Evaluate next enhancements** — Based on benchmark data from v0.1.4
+12. **Production deploy** ✅ — Deployed to https://do-deal-relay.do-it-119.workers.dev
+13. **Playwright E2E 26/26 passing** ✅ — Seeded remote KV with `--remote` flag for auth keys
+14. **Auth KV seeding** ✅ — Root cause: `wrangler kv key put` defaults to local. Used `--remote` to seed production KV.
+15. **Version bump 0.1.5** ✅ — Consistent across package.json, VERSION, worker/version.ts
 
 ## Execution Strategy
 
