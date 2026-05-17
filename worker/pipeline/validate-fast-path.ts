@@ -1,5 +1,5 @@
 // worker/pipeline/validate-fast-path.ts
-import type { Env } from "../types";
+import type { Env, PipelineMetrics } from "../types";
 import {
   buildFingerprintKey,
   buildUrlCacheKey,
@@ -37,7 +37,7 @@ export async function validateDealFastPath(
     fingerprint: string;
     source?: string;
     traceId?: string;
-    metrics?: any;
+    metrics?: unknown;
   },
 ): Promise<FastPathResult> {
   // Use STAGING_KV for validation cache as proposed, or fallback to DEALS_LOG if STAGING_KV is not ideal
@@ -65,9 +65,17 @@ export async function validateDealFastPath(
 
   if (cachedByFingerprint?.status === "duplicate") {
     if (input.metrics)
-      recordValidationCacheMetric(input.metrics, "hit_total", 1);
+      recordValidationCacheMetric(
+        input.metrics as PipelineMetrics,
+        "hit_total",
+        1,
+      );
     if (input.metrics)
-      recordValidationCacheMetric(input.metrics, "dedup_hit_total", 1);
+      recordValidationCacheMetric(
+        input.metrics as PipelineMetrics,
+        "dedup_hit_total",
+        1,
+      );
     return {
       hit: true,
       source: "kv:fingerprint",
@@ -80,16 +88,28 @@ export async function validateDealFastPath(
     cachedByUrl?.status === "rejected"
   ) {
     if (input.metrics)
-      recordValidationCacheMetric(input.metrics, "hit_total", 1);
+      recordValidationCacheMetric(
+        input.metrics as PipelineMetrics,
+        "hit_total",
+        1,
+      );
     return { hit: true, source: "kv:url", decision: cachedByUrl };
   }
 
   if (input.metrics)
-    recordValidationCacheMetric(input.metrics, "miss_total", 1);
+    recordValidationCacheMetric(
+      input.metrics as PipelineMetrics,
+      "miss_total",
+      1,
+    );
 
   if (indexedByFingerprint) {
     if (input.metrics)
-      recordValidationCacheMetric(input.metrics, "d1_lookup_total", 1);
+      recordValidationCacheMetric(
+        input.metrics as PipelineMetrics,
+        "d1_lookup_total",
+        1,
+      );
     const entry: ValidationCacheEntry = {
       status: indexedByFingerprint.status,
       reason: indexedByFingerprint.reason ?? undefined,
@@ -115,7 +135,11 @@ export async function validateDealFastPath(
     source: "none",
     persist: async (decision) => {
       if (input.metrics)
-        recordValidationCacheMetric(input.metrics, "write_total", 1);
+        recordValidationCacheMetric(
+          input.metrics as PipelineMetrics,
+          "write_total",
+          1,
+        );
       const entry: ValidationCacheEntry = {
         ...decision,
         fingerprint: input.fingerprint,
