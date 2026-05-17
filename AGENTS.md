@@ -88,6 +88,7 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 - **Documentation**: MUST be in `docs/` or `agents-docs/`.
 - **Plans/Reports**: MUST be in `plans/` or `reports/`.
 - **Skills**: Canonical source is `.agents/skills/`.
+- **Temporary Files**: MUST be in `temp/`. Diagnostic or transient files (e.g., `typecheck_*.txt`) in the root are forbidden.
 
 ## Agent Guidance
 
