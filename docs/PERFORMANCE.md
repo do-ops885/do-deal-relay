@@ -90,7 +90,7 @@ Performance benchmarks are run automatically every Sunday at 00:00 UTC via GitHu
 
 ## ⚠️ Common Pitfalls
 
-- **AI Gate Costs**: AI-based validation gates are 10-100x slower than rule-based gates. Use rule-based gates first as "fast paths."
+- **AI Gate Costs**: AI-based validation gates are 10.1.4x slower than rule-based gates. Use rule-based gates first as "fast paths."
 - **KV Read Patterns**: Avoid reading KV keys one-by-one in a loop. Use `Promise.all` or batching logic.
 - **6h Cron Overlap**: If a run takes > 5 minutes, it may overlap with locking logic. Keep the end-to-end duration as low as possible.
 - **Memory Limits**: Cloudflare Workers have a 128MB limit. Avoid loading thousands of deals into memory at once.

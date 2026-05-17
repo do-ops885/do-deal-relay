@@ -1,7 +1,7 @@
 # Email API
 
 **Feature**: Email-based referral management with command parsing and security validation
-**Version**: 0.1.3
+**Version**: 0.1.4
 **Status**: Implemented
 
 ## Overview

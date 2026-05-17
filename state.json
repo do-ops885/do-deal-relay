@@ -74,7 +74,7 @@
     "Production readiness review"
   ],
   "reminders": [
-    "VERSION 0.1.1 - NOT PRODUCTION READY",
+    "VERSION 0.1.4 - NOT PRODUCTION READY",
     "All endpoints subject to change",
     "Requires full review before deployment",
     "Documentation in progress"

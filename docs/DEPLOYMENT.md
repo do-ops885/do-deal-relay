@@ -353,8 +353,8 @@ git merge develop
 git push origin main
 
 # Or deploy with a version tag
-git tag v0.1.3
-git push origin v0.1.3
+git tag v0.1.4
+git push origin v0.1.4
 ```
 
 ### Manual Production Deploy via Workflow Dispatch
@@ -477,7 +477,7 @@ curl -s "${PROD_URL}/mcp/v1/info" | jq .
 {
   "status": "healthy",
   "environment": "production",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "timestamp": "2026-04-04T..."
 }
 ```

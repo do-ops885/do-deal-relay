@@ -1,7 +1,7 @@
 # Experience Feedback
 
 **Feature**: Track user/agent interactions with deals and aggregate satisfaction scores
-**Version**: 0.1.3
+**Version**: 0.1.4
 **Status**: Implemented
 
 ## Overview

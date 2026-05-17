@@ -488,7 +488,7 @@ For privacy questions: [contact info]
 
 ### FTC Violations
 
-- Civil penalties up to $50,120 per violation (2024)
+- Civil penalties up to $50.1.4 per violation (2024)
 - Injunctions requiring compliance
 - Refund requirements for consumers
 - Reputational damage

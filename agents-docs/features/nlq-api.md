@@ -1,7 +1,7 @@
 # Natural Language Query (NLQ) API
 
 **Feature**: Convert natural language queries into structured database searches
-**Version**: 0.1.3
+**Version**: 0.1.4
 **Status**: Implemented
 
 ## Overview
