@@ -151,6 +151,109 @@ describe("Referral Deactivation", () => {
     expect(body.referral.status).toBe("active");
   });
 
+  it("should return 409 when reactivating an already active referral", async () => {
+    // Seed an active referral
+    const referral = {
+      id: "active-123",
+      code: "ALREADY_ACTIVE",
+      status: "active",
+      url: "https://example.com/ref",
+      domain: "example.com",
+    };
+    mockKvStorage.set(
+      "sources:referral:input:active-123",
+      JSON.stringify(referral),
+    );
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({ already_active: "active-123" }),
+    );
+
+    const request = new Request(
+      "http://localhost/api/referrals/ALREADY_ACTIVE/reactivate",
+      {
+        method: "POST",
+        headers: {
+          ...authHeader,
+        },
+      },
+    );
+
+    const response = await worker.fetch(request, mockEnv);
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe("Conflict");
+  });
+
+  it("should handle Deactivate -> Reactivate round-trip", async () => {
+    // Seed an active referral
+    const referral = {
+      id: "round-trip-123",
+      code: "ROUND_TRIP",
+      status: "active",
+      url: "https://example.com/ref",
+      domain: "example.com",
+    };
+    mockKvStorage.set(
+      "sources:referral:input:round-trip-123",
+      JSON.stringify(referral),
+    );
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({ round_trip: "round-trip-123" }),
+    );
+
+    // 1. Deactivate
+    const deactivateRequest = new Request(
+      "http://localhost/api/referrals/ROUND_TRIP/deactivate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          id: "round-trip-123",
+          reason: "Testing round-trip",
+        }),
+      },
+    );
+
+    const deactivateResponse = await worker.fetch(deactivateRequest, mockEnv);
+    expect(deactivateResponse.status).toBe(200);
+
+    // Verify it's inactive
+    const getRequest1 = new Request("http://localhost/api/referrals/ROUND_TRIP", {
+      method: "GET",
+    });
+    const getResponse1 = await worker.fetch(getRequest1, mockEnv);
+    const body1 = await getResponse1.json();
+    expect(body1.referral.status).toBe("inactive");
+
+    // 2. Reactivate
+    const reactivateRequest = new Request(
+      "http://localhost/api/referrals/ROUND_TRIP/reactivate",
+      {
+        method: "POST",
+        headers: {
+          ...authHeader,
+        },
+      },
+    );
+
+    const reactivateResponse = await worker.fetch(reactivateRequest, mockEnv);
+    expect(reactivateResponse.status).toBe(200);
+
+    // Verify it's active again
+    const getRequest2 = new Request("http://localhost/api/referrals/ROUND_TRIP", {
+      method: "GET",
+    });
+    const getResponse2 = await worker.fetch(getRequest2, mockEnv);
+    const body2 = await getResponse2.json();
+    expect(body2.referral.status).toBe("active");
+  });
+
   it("should return referral details via GET /api/referrals/:code", async () => {
     // Seed a referral
     const referral = {
