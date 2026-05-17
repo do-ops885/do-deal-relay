@@ -1,7 +1,7 @@
 # Webhook System
 
 **Feature**: Bidirectional webhook integration for partner referrals with delivery guarantees
-**Version**: 0.1.3
+**Version**: 0.1.4
 **Status**: Implemented
 
 ## Overview
