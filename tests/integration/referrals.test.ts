@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import worker from "../worker/index";
-import type { Env } from "../worker/types";
+import worker from "../../worker/index";
+import type { Env } from "../../worker/types";
 
 describe("Referral Deactivation", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
@@ -29,9 +29,17 @@ describe("Referral Deactivation", () => {
     mockKvStorage = new Map();
     // Set up auth
     const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode("ddr_admin_test_key_123"));
-    const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    mockKvStorage.set("sources:apikey:" + hash, JSON.stringify({ role: "admin", userId: "test-user" }));
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode("ddr_admin_test_key_123"),
+    );
+    const hash = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    mockKvStorage.set(
+      "sources:apikey:" + hash,
+      JSON.stringify({ role: "admin", userId: "test-user" }),
+    );
 
     mockEnv = {
       DEALS_SOURCES: mockKvFactory("sources"),
@@ -50,7 +58,7 @@ describe("Referral Deactivation", () => {
       TRUST_THRESHOLD: "0.5",
       NOTIFICATION_THRESHOLD: "10",
       ENVIRONMENT: "test",
-      GITHUB_REPO: "test/repo"
+      GITHUB_REPO: "test/repo",
     } as unknown as Env;
   });
 
@@ -61,19 +69,25 @@ describe("Referral Deactivation", () => {
       code: "MYCODE",
       status: "active",
       url: "https://example.com/ref",
-      domain: "example.com"
+      domain: "example.com",
     };
     mockKvStorage.set("sources:referral:input:123", JSON.stringify(referral));
-    mockKvStorage.set("sources:referral:index:code", JSON.stringify({ "mycode": "123" }));
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({ mycode: "123" }),
+    );
 
-    const request = new Request("http://localhost/api/referrals/MYCODE/deactivate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeader
+    const request = new Request(
+      "http://localhost/api/referrals/MYCODE/deactivate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({ id: "123", reason: "test" }),
       },
-      body: JSON.stringify({ id: "123", reason: "test" })
-    });
+    );
 
     const response = await worker.fetch(request, mockEnv);
     const body = await response.json();
@@ -88,14 +102,17 @@ describe("Referral Deactivation", () => {
   });
 
   it("should return 404 for non-existent referral deactivation", async () => {
-    const request = new Request("http://localhost/api/referrals/NONEXISTENT/deactivate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeader
+    const request = new Request(
+      "http://localhost/api/referrals/NONEXISTENT/deactivate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({ id: "999", reason: "test" }),
       },
-      body: JSON.stringify({ id: "999", reason: "test" })
-    });
+    );
 
     const response = await worker.fetch(request, mockEnv);
     expect(response.status).toBe(404);
