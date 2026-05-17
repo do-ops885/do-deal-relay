@@ -161,7 +161,11 @@ describe("Referral Deactivation", () => {
   });
 
   it("should return 409 when reactivating an already active referral", async () => {
-    seedReferral({ id: "active-123", code: "ALREADY_ACTIVE", status: "active" });
+    seedReferral({
+      id: "active-123",
+      code: "ALREADY_ACTIVE",
+      status: "active",
+    });
 
     const request = createAuthenticatedPostRequest(
       "/api/referrals/ALREADY_ACTIVE/reactivate",
@@ -187,7 +191,11 @@ describe("Referral Deactivation", () => {
   });
 
   it("should handle Deactivate -> Reactivate round-trip", async () => {
-    seedReferral({ id: "round-trip-123", code: "ROUND_TRIP", status: "active" });
+    seedReferral({
+      id: "round-trip-123",
+      code: "ROUND_TRIP",
+      status: "active",
+    });
 
     // 1. Deactivate
     const deactivateRequest = createAuthenticatedPostRequest(
