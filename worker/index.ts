@@ -183,7 +183,7 @@ export default {
       // Referral Detail Route (GET by code)
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
-        const code = referralDetailMatch[1] ?? "";
+        const code = referralDetailMatch[1];
         return handleGetReferralByCode(code, env);
       }
 
