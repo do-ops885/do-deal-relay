@@ -135,6 +135,14 @@ const quality = GuardRails.quality({
 });
 ```
 
+
+## Directory Hygiene Policy
+
+| Rule | Pattern | Allowed Location | Severity |
+|------|---------|------------------|----------|
+| no-root-temp-files | `typecheck_*.txt`, `*.tmp`, `*.temp` | `temp/` | warning |
+| root-folder-hygiene | Non-essential config/docs | Root (`/`) | warning |
+
 ## Results Format
 
 ```typescript
