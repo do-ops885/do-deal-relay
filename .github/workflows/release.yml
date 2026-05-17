@@ -305,7 +305,10 @@ jobs:
   deploy-production:
     name: Deploy to Production
     needs: [validate-version, create-release, run-benchmark, verify-deployment]
-    if: needs.verify-deployment.outputs.status == 'passed' || needs.verify-deployment.outputs.status == '' || needs.verify-deployment.result == 'skipped'
+    if: >
+      needs.verify-deployment.outputs.status == 'passed' ||
+      needs.verify-deployment.outputs.status == '' ||
+      needs.verify-deployment.result == 'skipped'
     uses: ./.github/workflows/deploy-production.yml
     with:
       confirm_deploy: true
