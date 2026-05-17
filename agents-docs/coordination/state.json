@@ -38,9 +38,9 @@
     "obs_adr_004_written": true
   },
   "active_agents": [],
-  "current_phase": "ci-fixes-and-root-cause-resolution-complete",
-  "version": "0.1.5",
-  "commit": "2b022fc",
+  "current_phase": "v0.1.6-release-complete",
+  "version": "0.1.6",
+  "commit": "HEAD",
   "release_status": "stable",
   "agent_status": {
     "feature-implementer": {
@@ -99,7 +99,7 @@
       ]
     }
   },
-  "last_handoff": "swarm-ci-fixes-complete",
+  "last_handoff": "v0.1.6-release-complete",
   "blockers": [],
   "pending_tasks": [
     "Re-run benchmark to measure combined performance improvement",
@@ -164,6 +164,10 @@
     "Swarm CI fixes: all 4 workflow YAML files reformatted by Prettier — Prettier, yamllint, TypeScript, evals freshness all pass simultaneously",
     "Commit 2b022fc pushed to origin/main: root-cause fixes for CI conflicts",
     "Swarm execution completed: quality gate verified, CI checks monitored, PR merged",
+    "v0.1.6 release: version bumped 0.1.5 → 0.1.6 across package.json, VERSION, worker/version.ts",
+    "v0.1.6 release: CHANGELOG updated with full release notes (56 commits since v0.1.4)",
+    "v0.1.6 release: sprint plan updated with all P0-P3 goals marked complete",
+    "v0.1.6 release: coordination state updated for release completion",
     "Playwright version conflict resolved: added @playwright/test to npm overrides (^1.60.0)",
     "Playwright E2E tests: 16/26 pass locally (auth/CORS/404), 10 fail (need production KV/D1 bindings)",
     "Guard Rail 6 enhanced: Prettier formatting check added to pre-commit hook (staged .ts/.js/.json/.yaml/.yml/.md)",

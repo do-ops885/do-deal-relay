@@ -41,8 +41,16 @@ third_party/
 # Test outputs
 coverage/
 
+.prettierignore
+
 # YAML lint config (Prettier doesn't recognize .yamllint extension)
 .yamllint
+
+# VERSION file (no extension — Prettier can't infer parser)
+VERSION
+
+# Coordination state & handoff log (JSONL format — Prettier doesn't support)
+agents-docs/coordination/handoff-log.jsonl
 
 # Auto-generated skill evaluation JSON results
 .agents/skills/evals/results.json
