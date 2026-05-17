@@ -1,7 +1,7 @@
 # State Management
 
 **Reference**: Active state files and their purposes
-**Version**: 0.1.4
+**Version**: 0.1.1
 **Last Updated**: 2026-04-02
 
 ## State Files

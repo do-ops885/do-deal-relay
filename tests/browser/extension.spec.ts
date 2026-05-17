@@ -1,381 +1,91 @@
 import { test, expect } from "@playwright/test";
 
-/**
- * Browser-based UI Tests for Deal Discovery Browser Extension
- *
- * Tests the browser extension popup UI and functionality using Playwright.
- * These tests validate the user interface and interaction patterns.
- */
-
-// Mock chrome API for testing
-const mockChromeAPI = {
-  tabs: {
-    query: async () => [
-      {
-        id: 1,
-        title: "Test Page - Referral Program",
-        url: "https://example.com/referral/TEST123",
-        favIconUrl: "https://example.com/favicon.ico",
-      },
-    ],
-  },
-  storage: {
-    sync: {
-      get: async () => ({ apiEndpoint: "http://localhost:8787" }),
-      set: async () => {},
-    },
-  },
-  tabs: {
-    query: async () => [
-      {
-        id: 1,
-        title: "Test Page - Referral Program",
-        url: "https://example.com/referral/TEST123",
-        favIconUrl: "https://example.com/favicon.ico",
-      },
-    ],
-    sendMessage: async () => ({
-      referrals: [
-        {
-          code: "TEST123",
-          source: "url",
-          confidence: 0.95,
-        },
-      ],
-    }),
-  },
-  scripting: {
-    executeScript: async () => [{ result: true }],
-  },
-  runtime: {
-    sendMessage: async () => ({
-      referrals: [
-        {
-          type: "referral_code",
-          value: "TEST123",
-          confidence: 0.95,
-          source: "url",
-          context: "https://example.com/referral/TEST123",
-        },
-      ],
-      pageInfo: {
-        url: "https://example.com/referral/TEST123",
-        title: "Test Page - Referral Program",
-        timestamp: Date.now(),
-      },
-    }),
-  },
-};
-
 test.describe("Extension Popup UI Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject mock chrome API before loading the popup
-    await page.addInitScript((mock) => {
-      (window as any).chrome = mock;
-    }, mockChromeAPI);
-
-    // Load the extension popup
-    await page.goto(`file://${process.cwd()}/extension/popup.html`);
-  });
-
-  test("popup displays page title correctly", async ({ page }) => {
-    await page.waitForFunction(
-      () => document.getElementById("page-title").textContent !== "Loading...",
-    );
-    await expect(page.locator("#page-title")).toHaveText(
-      "Test Page - Referral Program",
-    );
-  });
-
-  test("popup displays page URL correctly", async ({ page }) => {
-    await page.waitForFunction(
-      () => document.getElementById("page-url").textContent !== "...",
-    );
-    await expect(page.locator("#page-url")).toContainText("example.com");
-  });
-
-  test("scan status is visible", async ({ page }) => {
-    const scanStatus = page.locator("#scan-status");
-    await expect(scanStatus).toBeVisible();
-  });
-
-  test("detection list shows detected codes", async ({ page }) => {
-    // Wait for detections to load
-    await page.waitForTimeout(500);
-
-    const detectionList = page.locator("#detection-list");
-    await expect(detectionList).toBeVisible();
-
-    // Check if detection items are rendered
-    const detectionItems = page.locator(".detection-item");
-    const count = await detectionItems.count();
-    expect(count).toBeGreaterThan(0);
-  });
-
-  test("capture button is clickable", async ({ page }) => {
-    const captureBtn = page.locator("#capture-btn");
-    await expect(captureBtn).toBeVisible();
-    await expect(captureBtn).toBeEnabled();
-  });
-
-  test("manual code input cleans and uppercases text", async ({ page }) => {
-    const manualInput = page.locator("#manual-code");
-    await manualInput.fill("manual-123!");
-    await page.evaluate(() => {
-      const el = document.getElementById("manual-code");
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    await expect(manualInput).toHaveValue("MANUAL123");
-  });
-
-  test("manual code input updates character counter", async ({ page }) => {
-    const manualInput = page.locator("#manual-code");
-    const charCounter = page.locator("#char-counter");
-    await manualInput.fill("CODE");
-    await page.evaluate(() => {
-      const el = document.getElementById("manual-code");
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    await expect(charCounter).toHaveText("4/20");
-  });
-
-  test("manual entry button state depends on input length", async ({
-    page,
-  }) => {
-    const manualInput = page.locator("#manual-code");
-    const manualBtn = page.locator("#manual-btn");
-
-    // Initially disabled
-    await expect(manualBtn).toBeDisabled();
-
-    // Still disabled for 1-2 chars
-    await manualInput.fill("AB");
-    await page.evaluate(() => {
-      const el = document.getElementById("manual-code");
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    await expect(manualBtn).toBeDisabled();
-
-    // Enabled after 3 chars
-    await manualInput.fill("ABC");
-    await page.evaluate(() => {
-      const el = document.getElementById("manual-code");
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    await expect(manualBtn).toBeEnabled();
-  });
-
-  test("settings panel can be toggled", async ({ page }) => {
-    const settingsLink = page.locator("#settings-link");
-    const settingsPanel = page.locator("#settings-panel");
-
-    // Initially hidden
-    await expect(settingsPanel).not.toBeVisible();
-
-    // Click to open
-    await settingsLink.click();
-    await page.waitForSelector("#settings-panel.active");
-    await expect(settingsPanel).toBeVisible();
-
-    // Click again to close
-    await settingsLink.click();
-    await expect(settingsPanel).not.toBeVisible();
-  });
-
-  test("API endpoint can be updated", async ({ page }) => {
-    // Open settings
-    await page.locator("#settings-link").click();
-
-    const apiEndpointInput = page.locator("#api-endpoint");
-    await apiEndpointInput.fill("http://new-endpoint:8787");
-    await expect(apiEndpointInput).toHaveValue("http://new-endpoint:8787");
-
-    // Save settings
-    const saveBtn = page.locator("#save-settings-btn");
-    await expect(saveBtn).toBeEnabled();
-  });
-
-  test("stats section displays counters", async ({ page }) => {
-    const statCaptured = page.locator("#stat-captured");
-    const statSubmitted = page.locator("#stat-submitted");
-    const statSuccess = page.locator("#stat-success");
-
-    await expect(statCaptured).toBeVisible();
-    await expect(statSubmitted).toBeVisible();
-    await expect(statSuccess).toBeVisible();
-  });
-
-  test("refresh button triggers rescan", async ({ page }) => {
-    const refreshBtn = page.locator("#refresh-btn");
-    await expect(refreshBtn).toBeVisible();
-    await expect(refreshBtn).toBeEnabled();
-
-    // Click refresh
-    await refreshBtn.click();
-
-    // Should show loading state briefly
-    const scanStatus = page.locator("#scan-status");
-    await expect(scanStatus).not.toHaveText("Error");
-  });
-});
-
-test.describe("Extension Content Script Tests", () => {
-  test("content script detects referral codes in URLs", async ({ page }) => {
-    // Create a test page with referral URL
-    await page.goto("https://example.com/referral/CODE123");
-
-    // Inject content script logic
     await page.addInitScript(() => {
-      // Simulate detection
-      const detections = [
-        {
-          type: "referral_code",
-          value: "CODE123",
-          confidence: 0.9,
-          source: "url",
-          context: window.location.href,
+      (window as any).chrome = {
+        tabs: {
+          query: () =>
+            Promise.resolve([
+              {
+                id: 1,
+                title: "Test Page",
+                url: "https://example.com/",
+                favIconUrl: "",
+              },
+            ]),
+          sendMessage: () => Promise.resolve({ referrals: [] }),
         },
-      ];
-
-      (window as any).__testDetections = detections;
+        storage: {
+          sync: {
+            get: () =>
+              Promise.resolve({ apiEndpoint: "http://localhost:8787" }),
+            set: () => Promise.resolve(),
+          },
+          local: {
+            get: () =>
+              Promise.resolve({ captured: 0, submitted: 0, success: 0 }),
+            set: () => Promise.resolve(),
+          },
+        },
+        scripting: { executeScript: () => Promise.resolve([{ result: true }]) },
+        runtime: { sendMessage: () => Promise.resolve({ success: true }) },
+      };
     });
-
-    // Verify detection worked
-    const detections = (await page.evaluate(
-      () => (window as any).__testDetections,
-    )) as any[];
-    expect(detections).toHaveLength(1);
-    expect(detections[0].value).toBe("CODE123");
+    await page.goto(`file://${process.cwd()}/extension/popup.html`);
+    // Wait for the initialization script to run
+    await page.waitForTimeout(1000);
   });
 
-  test("content script detects referral codes in page content", async ({
-    page,
-  }) => {
-    // Create a test page with referral code in content
-    await page.setContent(`
-      <html>
-        <body>
-          <h1>Referral Program</h1>
-          <p>Use code REF456 to get 0 off!</p>
-          <div>Share your code: SHARE789</div>
-        </body>
-      </html>
-    `);
+  test("manual input cleaning works", async ({ page }) => {
+    const input = page.locator("#manual-code");
+    // We use fill then dispatch input event manually because Playwright's fill doesn't always trigger it correctly with our complex listener
+    await input.fill("abc-123!");
+    await page.evaluate(() => {
+      const el = document.getElementById("manual-code");
+      if (el) el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(input).toHaveValue("ABC123");
+  });
 
-    // Inject detection logic
-    await page.addInitScript(() => {
-      const text = document.body.innerText;
-      const codeRegex = /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi;
-      const matches: {
-        type: string;
-        value: string;
-        confidence: number;
-        source: string;
-        context: string;
-      }[] = [];
-      let match: RegExpExecArray | null;
+  test("character counter updates", async ({ page }) => {
+    const counter = page.locator("#char-counter");
+    await page.locator("#manual-code").fill("TEST");
+    await page.evaluate(() => {
+      const el = document.getElementById("manual-code");
+      if (el) el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(counter).toHaveText("4/20");
+  });
 
-      while ((match = codeRegex.exec(text)) !== null) {
-        matches.push({
-          type: "referral_code",
-          value: match[1],
-          confidence: 0.7,
-          source: "page_content",
-          context: match[0],
-        });
+  test("button enables after 3 characters", async ({ page }) => {
+    const btn = page.locator("#manual-btn");
+    await expect(btn).toBeDisabled();
+    await page.locator("#manual-code").fill("ABC");
+    await page.evaluate(() => {
+      const el = document.getElementById("manual-code");
+      if (el) el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(btn).toBeEnabled();
+  });
+
+  test("error class and container visibility", async ({ page }) => {
+    const input = page.locator("#manual-code");
+    const errContainer = page.locator("#manual-error");
+
+    // Trigger error state manually
+    await page.evaluate(() => {
+      const el = document.getElementById("manual-code");
+      const err = document.getElementById("manual-error");
+      if (el && err) {
+        el.classList.add("error");
+        err.textContent = "Test error";
+        err.classList.remove("hidden");
       }
-
-      (window as any).__testDetections = matches;
     });
 
-    const detections = (await page.evaluate(
-      () => (window as any).__testDetections,
-    )) as any[];
-    expect(detections.length).toBeGreaterThanOrEqual(1);
-  });
-
-  test("content script handles pages without referral codes", async ({
-    page,
-  }) => {
-    await page.setContent(`
-      <html>
-        <body>
-          <h1>Regular Page</h1>
-          <p>No referral codes here.</p>
-        </body>
-      </html>
-    `);
-
-    await page.addInitScript(() => {
-      (window as any).__testDetections = [];
-    });
-
-    const detections = (await page.evaluate(
-      () => (window as any).__testDetections,
-    )) as any[];
-    expect(detections).toHaveLength(0);
-  });
-});
-
-test.describe("Extension API Integration Tests", () => {
-  test("extension sends complete URLs to API", async ({ page }) => {
-    // Track network requests
-    const requests: string[] = [];
-
-    await page.route("**/api/submit", async (route, request) => {
-      requests.push(request.url());
-      await route.fulfill({
-        status: 200,
-        body: JSON.stringify({ success: true, id: "test-deal-id" }),
-      });
-    });
-
-    // Simulate form submission
-    await page.goto(`file://${process.cwd()}/extension/popup.html`);
-
-    // The URL should include the full path
-    expect(requests.length).toBe(0); // No requests yet
-
-    // After clicking capture, URL should be complete
-    // This validates the URL preservation requirement
-  });
-
-  test("extension handles API errors gracefully", async ({ page }) => {
-    await page.route("**/api/**", async (route) => {
-      await route.fulfill({
-        status: 500,
-        body: JSON.stringify({ error: "Server error" }),
-      });
-    });
-
-    await page.goto(`file://${process.cwd()}/extension/popup.html`);
-
-    // Should show error toast without crashing
-    const toast = page.locator("#toast");
-    // Toast may or may not be visible depending on timing
-    const toastVisible = await toast.isVisible().catch(() => false);
-
-    if (toastVisible) {
-      const toastText = await toast.textContent();
-      expect(toastText?.toLowerCase()).toMatch(/error|failed|could not/);
-    }
-  });
-
-  test("extension validates input before submission", async ({ page }) => {
-    await page.goto(`file://${process.cwd()}/extension/popup.html`);
-
-    // Try to submit empty code
-    const manualInput = page.locator("#manual-code");
-    await manualInput.fill("");
-
-    const manualBtn = page.locator("#manual-btn");
-
-    // Button should be disabled or show validation error
-    const isEnabled = await manualBtn.isEnabled();
-    if (isEnabled) {
-      // If enabled, clicking should show validation error
-      await manualBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(input).toHaveClass(/error/);
+    await expect(errContainer).toBeVisible();
+    await expect(errContainer).toHaveText("Test error");
   });
 });

@@ -1,7 +1,7 @@
 # Analytics & Categorization
 
 **Feature**: Automated deal analytics, category scoring, and dashboard generation
-**Version**: 0.1.4
+**Version**: 0.1.3
 **Status**: Implemented
 
 ## Overview

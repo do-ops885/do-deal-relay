@@ -84,33 +84,43 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================================
 
   async function init() {
-    // Load settings
-    await loadSettings();
+    try {
+      // Load settings
+      await loadSettings();
 
-    // Get current tab
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    state.currentTab = tab;
+      // Get current tab
+      const tabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
 
-    // Update page info
-    updatePageInfo(tab);
+      if (tabs && tabs.length > 0) {
+        const tab = tabs[0];
+        state.currentTab = tab;
 
-    // Populate categories
-    populateCategories();
+        // Update page info
+        updatePageInfo(tab);
 
-    // Suggest category
-    suggestCategory(tab);
+        // Populate categories
+        populateCategories();
 
-    // Request detections from content script
-    await requestDetections(tab);
+        // Suggest category
+        suggestCategory(tab);
 
-    // Load stats
-    loadStats();
+        // Request detections from content script
+        requestDetections(tab).catch((err) =>
+          console.error("Detection error:", err),
+        );
+      }
 
-    // Setup event listeners
-    setupEventListeners();
+      // Load stats
+      loadStats();
+
+      // Setup event listeners
+      setupEventListeners();
+    } catch (error) {
+      console.error("Initialization error:", error);
+    }
   }
 
   // ============================================================================
@@ -119,10 +129,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadSettings() {
     const result = await chrome.storage.sync.get(["apiEndpoint"]);
-    if (result.apiEndpoint) {
+    if (result && result.apiEndpoint) {
       state.settings.apiEndpoint = result.apiEndpoint;
     }
-    elements.apiEndpoint.value = state.settings.apiEndpoint;
+    if (elements.apiEndpoint) {
+      elements.apiEndpoint.value = state.settings.apiEndpoint;
+    }
   }
 
   async function saveSettings() {
@@ -143,22 +155,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================================
 
   function updatePageInfo(tab) {
-    elements.pageTitle.textContent = tab.title || "Unknown";
+    if (elements.pageTitle) {
+      elements.pageTitle.textContent = tab.title || "Unknown";
+    }
 
     // Show hostname in a readable format
-    try {
-      const url = new URL(tab.url);
-      elements.pageUrl.textContent = url.hostname;
-    } catch {
-      elements.pageUrl.textContent = "Invalid URL";
+    if (elements.pageUrl) {
+      try {
+        const url = new URL(tab.url);
+        elements.pageUrl.textContent = url.hostname.replace(/^www\./, "");
+      } catch {
+        elements.pageUrl.textContent = "Invalid URL";
+      }
     }
 
     // Try to get favicon - using DOM API to prevent XSS
-    if (tab.favIconUrl) {
-      // Validate URL before using
+    if (tab.favIconUrl && elements.favicon) {
       try {
         const faviconUrl = new URL(tab.favIconUrl);
-        // Only allow http and https protocols
         if (
           faviconUrl.protocol === "http:" ||
           faviconUrl.protocol === "https:"
@@ -177,7 +191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch {
         elements.favicon.textContent = "🌐";
       }
-    } else {
+    } else if (elements.favicon) {
       elements.favicon.textContent = "🌐";
     }
   }
@@ -187,33 +201,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================================
 
   async function requestDetections(tab) {
-    // Update status to scanning
     updateScanStatus("scanning", "Scanning for referral codes...");
 
     try {
       // Check if content script is loaded
       const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: () => {
-          // Check if detector exists
-          return typeof window.__referralDetector !== "undefined";
-        },
+        func: () => typeof window.__referralDetector !== "undefined",
       });
 
       const isDetectorLoaded = results?.[0]?.result;
 
       if (!isDetectorLoaded) {
-        // Inject content script if not loaded
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ["content.js"],
         });
-
-        // Wait a moment for script to initialize
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
-      // Now request detections
       const response = await chrome.tabs.sendMessage(tab.id, {
         action: "getDetections",
       });
@@ -231,16 +237,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function showDetections(detections) {
+    if (!elements.detectionsSection) return;
+
     elements.detectionsSection.style.display = "block";
     updateScanStatus(
       "found",
       `${detections.length} referral code${detections.length > 1 ? "s" : ""} found`,
     );
 
-    // Clear existing content
     elements.detectionList.textContent = "";
 
-    // Build detection items using DOM API to prevent XSS
     detections.forEach((d, i) => {
       const item = document.createElement("button");
       item.type = "button";
@@ -269,7 +275,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.appendChild(info);
       item.appendChild(confidence);
 
-      // Selection handling
       item.addEventListener("click", () => {
         elements.detectionList
           .querySelectorAll(".detection-item")
@@ -286,7 +291,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.detectionList.appendChild(item);
     });
 
-    // Auto-select first detection
     if (detections.length > 0) {
       const firstItem = elements.detectionList.querySelector(".detection-item");
       if (firstItem) {
@@ -297,22 +301,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function showNoDetections() {
-    elements.detectionsSection.style.display = "none";
+    if (elements.detectionsSection)
+      elements.detectionsSection.style.display = "none";
     updateScanStatus("none", "No referral codes detected on this page");
   }
 
   function updateScanStatus(status, text) {
+    if (!elements.scanStatus) return;
+
     const indicatorClass =
       status === "found"
         ? "found"
         : status === "scanning"
           ? "scanning"
           : "none";
-
-    // Clear existing content
     elements.scanStatus.textContent = "";
 
-    // Create indicator using DOM API
     const indicator = document.createElement("div");
     indicator.className = `status-indicator ${indicatorClass}`;
 
@@ -323,10 +327,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.scanStatus.appendChild(indicator);
     elements.scanStatus.appendChild(statusText);
   }
-
-  // ============================================================================
-  // Capture Functionality
-  // ============================================================================
 
   async function captureSelected() {
     if (!state.selectedDetection) {
@@ -341,7 +341,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       await submitReferral({
         code: state.selectedDetection.code,
-        url: state.currentTab.url, // CRITICAL: Complete URL
+        url: state.currentTab.url,
         domain: new URL(state.currentTab.url).hostname,
         title: state.currentTab.title,
         source: state.selectedDetection.source,
@@ -351,7 +351,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast("Referral code captured successfully!", "success");
       incrementStat("captured");
 
-      // Visual feedback on button
       elements.captureBtn.textContent = "Captured! ✅";
       setTimeout(() => {
         elements.captureBtn.textContent = "✨ Capture Selected";
@@ -367,9 +366,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function showManualError(message) {
-    elements.manualError.textContent = message;
-    elements.manualError.classList.remove("hidden");
-    elements.manualCode.classList.add("error");
+    if (elements.manualError) {
+      elements.manualError.textContent = message;
+      elements.manualError.classList.remove("hidden");
+    }
+    if (elements.manualCode) {
+      elements.manualCode.classList.add("error");
+    }
   }
 
   async function captureManual() {
@@ -390,12 +393,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.manualBtn.setAttribute("aria-busy", "true");
     const originalText = elements.manualBtn.textContent;
     elements.manualBtn.textContent = "Adding...";
-    elements.manualError.classList.add("hidden");
+
+    if (elements.manualError) elements.manualError.classList.add("hidden");
+    if (elements.manualCode) elements.manualCode.classList.remove("error");
 
     try {
       await submitReferral({
         code: code.toUpperCase(),
-        url: state.currentTab.url, // CRITICAL: Complete URL
+        url: state.currentTab.url,
         domain: new URL(state.currentTab.url).hostname,
         title: state.currentTab.title,
         source: "manual",
@@ -405,20 +410,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       showToast("Code added manually!", "success");
       elements.manualCode.value = "";
-      elements.charCounter.textContent = "0/20";
+      if (elements.charCounter) elements.charCounter.textContent = "0/20";
       incrementStat("captured");
 
-      // Visual feedback on button
       elements.manualBtn.textContent = "Added! ✅";
-      elements.manualBtn.classList.add("btn-success");
 
       setTimeout(() => {
         elements.manualBtn.textContent = originalText;
-        elements.manualBtn.classList.remove("btn-success");
-        // Only disable if the input is still empty (e.g. user hasn't started typing a new one)
-        if (elements.manualCode.value.trim().length === 0) {
-          elements.manualBtn.disabled = true;
-        }
+        elements.manualBtn.disabled =
+          elements.manualCode.value.trim().length < 3;
       }, 2000);
     } catch (err) {
       console.error("Manual capture error:", err);
@@ -430,16 +430,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ============================================================================
-  // API Submission
-  // ============================================================================
-
   async function submitReferral(data) {
-    // Build the API payload
-    // CRITICAL: url field must contain COMPLETE FULL URL
     const payload = {
       code: data.code,
-      url: data.url, // COMPLETE URL: https://picnic.app/de/freunde-rabatt/DOMI6869
+      url: data.url,
       domain: data.domain,
       source: "extension",
       submitted_by: "browser-extension",
@@ -452,9 +446,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
     };
 
-    console.log("Submitting referral with complete URL:", payload.url);
-
-    // Send to background script for API submission
     const response = await chrome.runtime.sendMessage({
       action: "submitToAPI",
       data: payload,
@@ -464,7 +455,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       throw new Error(response.error || "Unknown error");
     }
 
-    // Track submission
     incrementStat("submitted");
     if (response.referral?.status === "active") {
       incrementStat("success");
@@ -473,34 +463,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     return response;
   }
 
-  // ============================================================================
-  // Stats Management
-  // ============================================================================
-
   async function loadStats() {
     const stats = await chrome.storage.local.get([
       "captured",
       "submitted",
       "success",
     ]);
-    elements.statCaptured.textContent = stats.captured || 0;
-    elements.statSubmitted.textContent = stats.submitted || 0;
-    elements.statSuccess.textContent = stats.success || 0;
+    if (elements.statCaptured)
+      elements.statCaptured.textContent = stats.captured || 0;
+    if (elements.statSubmitted)
+      elements.statSubmitted.textContent = stats.submitted || 0;
+    if (elements.statSuccess)
+      elements.statSuccess.textContent = stats.success || 0;
   }
 
   async function incrementStat(key) {
     const result = await chrome.storage.local.get([key]);
     const value = (result[key] || 0) + 1;
     await chrome.storage.local.set({ [key]: value });
-    document.getElementById(`stat-${key}`).textContent = value;
+    const el = document.getElementById(`stat-${key}`);
+    if (el) el.textContent = value;
   }
-
-  // ============================================================================
-  // UI Helpers
-  // ============================================================================
 
   function showToast(message, type = "") {
     const toast = elements.toast;
+    if (!toast) return;
     toast.textContent = message;
     toast.className = `toast ${type}`;
     toast.classList.add("show");
@@ -511,6 +498,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function populateCategories() {
+    if (!elements.categoryList) return;
     elements.categoryList.textContent = "";
     SUPPORTED_CATEGORIES.forEach((cat) => {
       const option = document.createElement("option");
@@ -520,34 +508,42 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function suggestCategory(tab) {
-    if (!tab.url) return;
+    if (!tab || !tab.url || !elements.manualCategory) return;
 
     try {
       const url = new URL(tab.url);
-      const hostname = url.hostname.replace("www.", "");
+      const hostname = url.hostname.toLowerCase();
+      const cleanHostname = hostname.replace(/^www\./, "");
 
-      // Try exact match
-      if (DOMAIN_CATEGORY_MAP[hostname]) {
-        elements.manualCategory.value = DOMAIN_CATEGORY_MAP[hostname];
+      if (DOMAIN_CATEGORY_MAP[cleanHostname]) {
+        elements.manualCategory.value = DOMAIN_CATEGORY_MAP[cleanHostname];
         return;
       }
 
-      // Try partial match
       for (const [domain, cat] of Object.entries(DOMAIN_CATEGORY_MAP)) {
-        if (hostname.includes(domain) || domain.includes(hostname)) {
+        if (cleanHostname.endsWith("." + domain)) {
           elements.manualCategory.value = cat;
           return;
         }
       }
 
-      // Keywords in title or URL
       const context = (tab.title + " " + tab.url).toLowerCase();
-      if (context.includes("bank") || context.includes("invest")) {
+
+      if (/(bank|invest|crypto|trading|wallet|broker)/i.test(context)) {
         elements.manualCategory.value = "Finance";
-      } else if (context.includes("shop") || context.includes("store")) {
-        elements.manualCategory.value = "Shopping";
-      } else if (context.includes("food") || context.includes("eat")) {
+        return;
+      }
+      if (/(food|delivery|eats|restaurant|takeout|grocery)/i.test(context)) {
         elements.manualCategory.value = "Food Delivery";
+        return;
+      }
+      if (/(shop|store|checkout|deals|coupon|voucher)/i.test(context)) {
+        elements.manualCategory.value = "Shopping";
+        return;
+      }
+      if (/(hotel|flight|travel|vacation|stay|booking)/i.test(context)) {
+        elements.manualCategory.value = "Travel";
+        return;
       }
     } catch (error) {
       console.error("Error suggesting category:", error);
@@ -555,73 +551,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function toggleSettings() {
+    if (!elements.settingsPanel || !elements.manualSection) return;
     const isActive = elements.settingsPanel.classList.toggle("active");
     if (isActive) {
       elements.manualSection.classList.add("hidden");
     } else {
       elements.manualSection.classList.remove("hidden");
     }
-    elements.settingsLink.textContent = isActive ? "Back" : "Settings";
-    elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
+    if (elements.settingsLink) {
+      elements.settingsLink.textContent = isActive ? "Back" : "Settings";
+      elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
+    }
   }
-
-  // ============================================================================
-  // Event Listeners
-  // ============================================================================
 
   function setupEventListeners() {
-    // Capture button
-    elements.captureBtn.addEventListener("click", captureSelected);
+    if (elements.captureBtn)
+      elements.captureBtn.addEventListener("click", captureSelected);
+    if (elements.manualBtn)
+      elements.manualBtn.addEventListener("click", captureManual);
+    if (elements.manualCode) {
+      elements.manualCode.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !elements.manualBtn.disabled) captureManual();
+      });
 
-    // Manual entry
-    elements.manualBtn.addEventListener("click", captureManual);
-    elements.manualCode.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && !elements.manualBtn.disabled) captureManual();
-    });
+      elements.manualCode.addEventListener("input", (e) => {
+        const input = e.target;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
 
-    // Real-time cleaning and character counter
-    elements.manualCode.addEventListener("input", (e) => {
-      const input = e.target;
-      let value = input.value.toUpperCase();
-      // Only allow alphanumeric
-      value = value.replace(/[^A-Z0-9]/g, "");
+        let value = input.value.toUpperCase();
+        value = value.replace(/[^A-Z0-9]/g, "");
 
-      // Update value if changed
-      if (input.value !== value) {
-        input.value = value;
-      }
+        if (input.value !== value) {
+          input.value = value;
+          input.setSelectionRange(start, end);
+        }
 
-      // Update counter
-      const length = value.length;
-      elements.charCounter.textContent = `${length}/20`;
+        const length = value.length;
+        if (elements.charCounter)
+          elements.charCounter.textContent = `${length}/20`;
+        if (elements.manualBtn) elements.manualBtn.disabled = length === 0;
 
-      // Toggle button state
-      elements.manualBtn.disabled = length < 3;
+        if (elements.manualError) elements.manualError.classList.add("hidden");
+        elements.manualCode.classList.remove("error");
+      });
+    }
 
-      // Clear error state when typing
-      elements.manualError.classList.add("hidden");
-      elements.manualCode.classList.remove("error");
-    });
+    if (elements.settingsLink) {
+      elements.settingsLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleSettings();
+      });
+    }
 
-    // Settings
-    elements.settingsLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      toggleSettings();
-    });
+    if (elements.saveSettingsBtn)
+      elements.saveSettingsBtn.addEventListener("click", saveSettings);
 
-    elements.saveSettingsBtn.addEventListener("click", saveSettings);
-
-    // Refresh
-    elements.refreshBtn.addEventListener("click", async () => {
-      updateScanStatus("scanning", "Rescanning...");
-      await requestDetections(state.currentTab);
-      showToast("Page rescanned", "success");
-    });
+    if (elements.refreshBtn) {
+      elements.refreshBtn.addEventListener("click", async () => {
+        updateScanStatus("scanning", "Rescanning...");
+        if (state.currentTab) await requestDetections(state.currentTab);
+        showToast("Page rescanned", "success");
+      });
+    }
   }
-
-  // ============================================================================
-  // Start
-  // ============================================================================
 
   init().catch(console.error);
 });
