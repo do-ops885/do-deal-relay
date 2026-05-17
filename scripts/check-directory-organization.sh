@@ -83,7 +83,7 @@ fi
 echo ""
 echo "Check 1.5: Temporary files in root"
 TEMP_ROOT_VIOLATIONS=0
-for file in $(find . -maxdepth 1 -type f -name "typecheck_*.txt" -o -name "*.tmp" -o -name "*.temp" | sed 's|^\./||'); do
+for file in $(find . -maxdepth 1 -type f \( -name "typecheck_*.txt" -o -name "*.tmp" -o -name "*.temp" \) | sed 's|^\./||'); do
     warning "Temporary file found in root: $file (Move to temp/)"
     TEMP_ROOT_VIOLATIONS=$((TEMP_ROOT_VIOLATIONS + 1))
 done
