@@ -2,7 +2,7 @@
 
 **Document Type**: Technical Constraints and Workarounds
 **Created**: 2026-04-03
-**Version**: 0.1.2
+**Version**: 0.1.4
 **Status**: Permanent Reference
 
 ---
