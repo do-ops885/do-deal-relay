@@ -527,7 +527,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const hostname = url.hostname.replace("www.", "");
 
       // Try exact match
-      if (DOMAIN_CATEGORY_MAP[hostname]) {
+      if (Object.prototype.hasOwnProperty.call(DOMAIN_CATEGORY_MAP, hostname)) {
         elements.manualCategory.value = DOMAIN_CATEGORY_MAP[hostname];
         return;
       }
