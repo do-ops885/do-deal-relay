@@ -263,8 +263,15 @@ jobs:
           AUTHOR="${{ steps.check-status.outputs.author }}"
           REPO="${{ github.repository }}"
 
+          # Improved permission check with jq default and null handling.
+          # jq's // operator returns "none" when .permission is null/absent.
           PERMISSION=$(gh api "repos/$REPO/collaborators/$AUTHOR/permission" \
-            --jq '.permission' 2>/dev/null || echo "none")
+            --jq '.permission // "none"' 2>/dev/null || echo "none")
+
+          # Handle empty or null results from the API
+          if [ -z "$PERMISSION" ] || [ "$PERMISSION" = "null" ]; then
+            PERMISSION="none"
+          fi
 
           echo "Author '${AUTHOR}' permission level: ${PERMISSION}"
 
@@ -272,6 +279,7 @@ jobs:
              [ "${PERMISSION}" != "write" ] && \
              [ "${PERMISSION}" != "maintain" ]; then
             echo "❌ Author lacks write access (${PERMISSION}) — skipping for external contributor"
+            echo "has_write_access=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
