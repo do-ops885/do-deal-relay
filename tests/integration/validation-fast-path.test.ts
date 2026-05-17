@@ -306,7 +306,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-metrics",
         metrics: {
           run_id: "test-run-1",
-          start_time: Date.now(),
+          start_time: 1000,
           success: false,
         } as unknown as PipelineMetrics,
       });
@@ -336,7 +336,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-dupe",
         metrics: {
           run_id: "test-run-2",
-          start_time: Date.now(),
+          start_time: 1000,
           success: false,
         } as unknown as PipelineMetrics,
       });
@@ -362,7 +362,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-miss",
         metrics: {
           run_id: "test-run-3",
-          start_time: Date.now(),
+          start_time: 1000,
           success: false,
         } as unknown as PipelineMetrics,
       });
@@ -388,7 +388,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-d1-metrics",
         metrics: {
           run_id: "test-run-4",
-          start_time: Date.now(),
+          start_time: 1000,
           success: false,
         } as unknown as PipelineMetrics,
       });
@@ -409,7 +409,7 @@ describe("validateDealFastPath", () => {
         fingerprint: "fp-persist-metrics",
         metrics: {
           run_id: "test-run-5",
-          start_time: Date.now(),
+          start_time: 1000,
           success: false,
         } as unknown as PipelineMetrics,
       });
