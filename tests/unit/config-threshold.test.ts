@@ -14,6 +14,8 @@ describe("Config Utilities", () => {
     DEALS_PROD: {},
     DEALS_LOG: {},
     DEALS_LOCK: {},
+    DEALS_STAGING: {},
+    DEALS_SOURCES: {},
     AI_GATEWAY_URL: "http://test",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
