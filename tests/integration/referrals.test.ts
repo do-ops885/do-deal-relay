@@ -117,4 +117,64 @@ describe("Referral Deactivation", () => {
     const response = await worker.fetch(request, mockEnv);
     expect(response.status).toBe(404);
   });
+
+  it("should reactivate a referral via POST /api/referrals/:code/reactivate", async () => {
+    // Seed an inactive referral
+    const referral = {
+      id: "456",
+      code: "INACTIVE",
+      status: "inactive",
+      url: "https://example.com/ref",
+      domain: "example.com",
+    };
+    mockKvStorage.set("sources:referral:input:456", JSON.stringify(referral));
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({ inactive: "456" }),
+    );
+
+    const request = new Request(
+      "http://localhost/api/referrals/INACTIVE/reactivate",
+      {
+        method: "POST",
+        headers: {
+          ...authHeader,
+        },
+      },
+    );
+
+    const response = await worker.fetch(request, mockEnv);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.referral.status).toBe("active");
+  });
+
+  it("should return referral details via GET /api/referrals/:code", async () => {
+    // Seed a referral
+    const referral = {
+      id: "789",
+      code: "GETME",
+      status: "active",
+      url: "https://example.com/ref",
+      domain: "example.com",
+    };
+    mockKvStorage.set("sources:referral:input:789", JSON.stringify(referral));
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({ getme: "789" }),
+    );
+
+    const request = new Request("http://localhost/api/referrals/GETME", {
+      method: "GET",
+    });
+
+    const response = await worker.fetch(request, mockEnv);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.referral.code).toBe("GETME");
+    expect(body.referral.id).toBe("789");
+  });
 });

@@ -168,12 +168,12 @@ export default {
         const code = referralActionMatch[1];
         const action = referralActionMatch[2];
 
-        if (action === "deactivate") {
+        if (code && action === "deactivate") {
           return withAuth(request, env, undefined, () =>
             handleDeactivateReferral(request, code, env),
           );
         }
-        if (action === "reactivate") {
+        if (code && action === "reactivate") {
           return withAuth(request, env, undefined, () =>
             handleReactivateReferral(code, env),
           );
@@ -184,7 +184,7 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
-        return handleGetReferralByCode(code, env);
+        if (code) return handleGetReferralByCode(code, env);
       }
 
       // Research API
