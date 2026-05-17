@@ -38,7 +38,7 @@
     "obs_adr_004_written": true
   },
   "active_agents": [],
-  "current_phase": "v0.1.5-release-complete",
+  "current_phase": "v0.1.6-planning-complete",
   "version": "0.1.5",
   "release_status": "stable",
   "agent_status": {
@@ -98,10 +98,12 @@
       ]
     }
   },
-  "last_handoff": "swarm-suggestions-round-3-complete",
+  "last_handoff": "swarm-suggestions-round-4-complete",
   "blockers": [],
   "pending_tasks": [
-    "Review and plan v0.1.6 features based on benchmark data"
+    "Execute v0.1.6 performance optimizations: discover, dedupe, validate phases",
+    "Add CI benchmark step to release workflow",
+    "Create local dev KV seeding script"
   ],
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
@@ -180,7 +182,12 @@
     "Production deploy with auth-verified worker (version 46e48872)",
     "Playwright E2E 26/26 all passing against deployed worker (was 19/26, auth fixed)",
     "Version bumped 0.1.4 → 0.1.5 across package.json, VERSION, worker/version.ts",
-    "Updated sprint plan v0.1.5 with production deploy, E2E results, auth fix documentation"
+    "Updated sprint plan v0.1.5 with production deploy, E2E results, auth fix documentation",
+    "Ran pipeline benchmark: 5,618 deals/sec at 1,000 deals (above 5,000 threshold), bottlenecks: discover 28.1%, dedupe 16.9%, validate 14.0%",
+    "Added E2E test API key seeding step to deploy-production.yml CI workflow",
+    "Updated benchmark script to import VERSION dynamically from worker/version.ts",
+    "Wrote v0.1.6 sprint plan with benchmark analysis, P0-P3 improvement roadmap",
+    "Updated coordination state for swarm round 4 completion"
   ],
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "evals_auto_generated": true,

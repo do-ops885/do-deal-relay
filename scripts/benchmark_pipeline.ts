@@ -3,6 +3,7 @@ import {
   finalizeMetrics,
   recordPhaseTiming,
 } from "../worker/lib/metrics/index";
+import { VERSION } from "../worker/version";
 import * as fs from "fs";
 
 interface BenchmarkResult {
@@ -32,7 +33,7 @@ async function benchmark() {
   const jsonPath = jsonIndex !== -1 ? args[jsonIndex + 1] : null;
 
   console.log("=".repeat(60));
-  console.log("  Pipeline Benchmark v0.1.4");
+  console.log(`  Pipeline Benchmark v${VERSION}`);
   console.log(`  Threshold: ${threshold} deals/sec`);
   console.log("=".repeat(60));
 
@@ -150,7 +151,7 @@ async function benchmark() {
     const report: BenchmarkReport = {
       run_id,
       timestamp: new Date().toISOString(),
-      version: "0.1.4",
+      version: VERSION,
       results,
       phase_timings: phaseTimings as Record<string, number>,
       total_duration_ms: total,
