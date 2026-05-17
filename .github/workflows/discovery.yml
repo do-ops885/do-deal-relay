@@ -106,7 +106,13 @@ jobs:
             ACCOUNT_ID="do-it-119"
           fi
 
-          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          # Prefer explicit worker host secret; fall back to account-derived subdomain
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
+          if [ -n "${WORKER_HOST}" ]; then
+            STAGING_URL="https://${WORKER_HOST}"
+          else
+            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          fi
 
           # Health check
           echo "Checking staging health..."
