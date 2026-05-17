@@ -527,7 +527,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const hostname = url.hostname.replace("www.", "");
 
       // Try exact match
-      if (Object.prototype.hasOwnProperty.call(DOMAIN_CATEGORY_MAP, hostname)) {
+      if (DOMAIN_CATEGORY_MAP[hostname]) {
         elements.manualCategory.value = DOMAIN_CATEGORY_MAP[hostname];
         return;
       }
@@ -535,7 +535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Try partial match
       for (const [domain, cat] of Object.entries(DOMAIN_CATEGORY_MAP)) {
         if (hostname.includes(domain) || domain.includes(hostname)) {
-        if (hostname === domain || hostname.endsWith("." + domain)) {
+          elements.manualCategory.value = cat;
           return;
         }
       }
@@ -549,8 +549,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else if (context.includes("food") || context.includes("eat")) {
         elements.manualCategory.value = "Food Delivery";
       }
-    } catch (e) {
-      console.error("Error suggesting category:", e);
+    } catch (error) {
+      console.error("Error suggesting category:", error);
     }
   }
 

@@ -79,12 +79,18 @@ test.describe("Extension Popup UI Tests", () => {
   });
 
   test("popup displays page title correctly", async ({ page }) => {
+    await page.waitForFunction(
+      () => document.getElementById("page-title").textContent !== "Loading...",
+    );
     await expect(page.locator("#page-title")).toHaveText(
       "Test Page - Referral Program",
     );
   });
 
   test("popup displays page URL correctly", async ({ page }) => {
+    await page.waitForFunction(
+      () => document.getElementById("page-url").textContent !== "...",
+    );
     await expect(page.locator("#page-url")).toContainText("example.com");
   });
 
