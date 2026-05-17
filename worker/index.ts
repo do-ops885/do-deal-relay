@@ -165,7 +165,7 @@ export default {
         /^\/api\/referrals\/([^/]+)\/(deactivate|reactivate)$/,
       );
       if (referralActionMatch && request.method === "POST") {
-        const code = referralActionMatch[1] ?? "";
+        const code = referralActionMatch[1];
         const action = referralActionMatch[2];
 
         if (action === "deactivate") {
