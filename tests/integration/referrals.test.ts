@@ -224,9 +224,12 @@ describe("Referral Deactivation", () => {
     expect(deactivateResponse.status).toBe(200);
 
     // Verify it's inactive
-    const getRequest1 = new Request("http://localhost/api/referrals/ROUND_TRIP", {
-      method: "GET",
-    });
+    const getRequest1 = new Request(
+      "http://localhost/api/referrals/ROUND_TRIP",
+      {
+        method: "GET",
+      },
+    );
     const getResponse1 = await worker.fetch(getRequest1, mockEnv);
     const body1 = await getResponse1.json();
     expect(body1.referral.status).toBe("inactive");
@@ -246,9 +249,12 @@ describe("Referral Deactivation", () => {
     expect(reactivateResponse.status).toBe(200);
 
     // Verify it's active again
-    const getRequest2 = new Request("http://localhost/api/referrals/ROUND_TRIP", {
-      method: "GET",
-    });
+    const getRequest2 = new Request(
+      "http://localhost/api/referrals/ROUND_TRIP",
+      {
+        method: "GET",
+      },
+    );
     const getResponse2 = await worker.fetch(getRequest2, mockEnv);
     const body2 = await getResponse2.json();
     expect(body2.referral.status).toBe("active");
