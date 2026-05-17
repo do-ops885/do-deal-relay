@@ -292,9 +292,44 @@
         border-color: #4f46e5;
       }
 
+      .manual-input.error {
+        border-color: #ef4444;
+        background-color: #fef2f2;
+      }
+
       .manual-input::placeholder {
         color: #94a3b8;
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .input-wrapper {
+        position: relative;
+        margin-bottom: 8px;
+      }
+
+      .char-counter {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        color: #94a3b8;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        pointer-events: none;
+      }
+
+      .manual-error {
+        font-size: 12px;
+        color: #ef4444;
+        margin-bottom: 8px;
+        padding: 8px;
+        background: #fef2f2;
+        border-radius: 6px;
+        border: 1px solid #fee2e2;
+      }
+
+      .no-margin {
+        margin-bottom: 0 !important;
       }
 
       .empty-state {
@@ -458,6 +493,20 @@
         border-width: 0;
       }
 
+      /* Responsive adjustments */
+      @media (max-width: 400px) {
+        body {
+          width: 100vw;
+          min-width: 320px;
+        }
+        .content {
+          padding: 12px;
+        }
+        .section {
+          padding: 12px;
+        }
+      }
+
       /* Focus accessibility */
       :focus {
         outline: none;
@@ -522,15 +571,36 @@
         <div class="section-title">
           <span aria-hidden="true">✏️</span> Manual Entry
         </div>
-        <label for="manual-code" class="sr-only">Referral code</label>
-        <input
-          type="text"
-          class="manual-input"
-          id="manual-code"
-          placeholder="Enter referral code..."
-          maxlength="20"
-        />
-        <button class="btn btn-secondary" id="manual-btn">
+
+        <div id="manual-error" class="manual-error hidden" role="alert"></div>
+
+        <div class="input-wrapper">
+          <label for="manual-code" class="sr-only">Referral code</label>
+          <input
+            type="text"
+            class="manual-input no-margin"
+            id="manual-code"
+            placeholder="Enter referral code..."
+            maxlength="20"
+          />
+          <div class="char-counter" id="char-counter">0/20</div>
+        </div>
+
+        <div class="input-wrapper">
+          <label for="manual-category" class="sr-only">Category</label>
+          <input
+            type="text"
+            class="manual-input"
+            id="manual-category"
+            placeholder="Category (e.g. Finance)"
+            list="category-list"
+          />
+          <datalist id="category-list">
+            <!-- Populated by JS -->
+          </datalist>
+        </div>
+
+        <button class="btn btn-secondary" id="manual-btn" disabled>
           Add Code Manually
         </button>
       </div>

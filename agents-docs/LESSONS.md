@@ -21,7 +21,7 @@
 1. **Stale Analysis**: Feature gap report wasn't updated as implementation progressed
 2. **Documentation-First Approach**: Endpoints were documented before implementation
 3. **No Automated Verification**: No process to verify docs match code
-4. **Version Drift**: 3 different versions (0.1.4, 0.1.4, 0.1.4) across documentation
+4. **Version Drift**: 3 different versions (0.1.0, 0.1.2, 0.1.1) across documentation
 
 **Impact**:
 - Developers spending time on "missing" features that exist
@@ -215,7 +215,7 @@ The TruffleHog GitHub Action requires different commits between base and head to
 - deploy-production.yml line 232: JavaScript template literal bug - `${tag}` inside single quotes wouldn't interpolate
 - deploy-staging.yml line 50: Missing LESSON-022 protection (vitest crashes)
 - dependencies.yml lines 59-62: Missing LESSON-022 protection
-- package.json version 0.1.4 didn't match VERSION file (0.2.0)
+- package.json version 0.1.2 didn't match VERSION file (0.2.0)
 - Outdated GitHub Action versions (codecov@v4, create-pr@v6)
 - Missing timeout-minutes on 6 jobs (ci-and-labels.yml, yaml-lint.yml)
 
