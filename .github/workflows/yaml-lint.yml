@@ -40,9 +40,7 @@ jobs:
 
       - name: Run yamllint
         run: |
-          yamllint -d \
-            "{extends: default, rules: {line-length: {max: 120}, indentation: {spaces: 2}}}" \
-            .github/workflows/ || (echo "❌ YAML lint failed" && exit 1)
+          yamllint .github/workflows/ || (echo "❌ YAML lint failed" && exit 1)
 
   actionlint:
     name: GitHub Actions Workflow Validation

@@ -31,10 +31,14 @@ while IFS= read -r gen_script; do
 
     # Regenerate evals from skill content
     if python3 "$gen_script" > /dev/null 2>&1; then
+        # Run Prettier on generated output to match project formatting
+        if command -v npx >/dev/null 2>&1; then
+            npx prettier --write "$evals_file" > /dev/null 2>&1 || true
+        fi
         # Compare with previous version
         if ! diff -q "$evals_file" "$tmp_before" > /dev/null 2>&1; then
             echo "   ❌ evals.json is STALE — skill content changed but evals.json was not updated"
-            echo "   ↳ Run: python3 $gen_script"
+            echo "   ↳ Run: python3 $gen_script && npx prettier --write $evals_file"
             echo "   ↳ Then commit the updated evals.json"
             ERRORS=$((ERRORS + 1))
         else
