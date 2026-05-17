@@ -63,17 +63,8 @@ jobs:
           sleep 15
 
           # Health check
-          # Prefer an explicit worker host secret (CLOUDFLARE_WORKER_HOST)
-          # e.g. do-deal-relay.do-it-119.workers.dev
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-
-          if [ -n "${WORKER_HOST}" ]; then
-            HEALTH_URL="https://${WORKER_HOST}/health"
-          else
-            HEALTH_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
-          fi
-
+          HEALTH_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
           echo "Checking health at: ${HEALTH_URL}"
 
           for i in {1..5}; do
@@ -91,17 +82,10 @@ jobs:
 
       - name: Run smoke tests on staging
         run: |
-          # Prefer explicit host secret; fall back to account-derived subdomain
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
 
-          if [ -n "${WORKER_HOST}" ]; then
-            STAGING_URL="https://${WORKER_HOST}"
-          else
-            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
-          fi
-
-          echo "Running smoke tests on staging (target: ${STAGING_URL})..."
+          echo "Running smoke tests on staging..."
 
           # Test health endpoint
           curl -sf "${STAGING_URL}/health" || exit 1
@@ -124,17 +108,9 @@ jobs:
       - name: Notify on success
         if: success()
         run: |
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-
-          if [ -n "${WORKER_HOST}" ]; then
-            URL="https://${WORKER_HOST}"
-          else
-            URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
-          fi
-
           echo "Staging deployment completed successfully"
-          echo "URL: ${URL}"
+          echo "URL: https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
 
       - name: Notify on failure
         if: failure()
