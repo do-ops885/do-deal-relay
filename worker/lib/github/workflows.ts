@@ -20,7 +20,9 @@ export async function getWorkflowRuns(
     );
     if (!response.ok)
       throw new Error(`Failed to get workflow runs: ${response.status}`);
-    const data = await safeResponseJson<{ workflow_runs: WorkflowRun[] }>(response);
+    const data = await safeResponseJson<{ workflow_runs: WorkflowRun[] }>(
+      response,
+    );
     return (data?.workflow_runs || []).map((run) => ({
       id: run.id,
       name: run.name,
