@@ -222,9 +222,90 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [validate-version, create-release, run-benchmark]
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.verify.outputs.status }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to staging for verification
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Wait for staging propagation
+        run: sleep 15
+
+      - name: Run full deployment verification
+        id: verify
+        run: |
+          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -z "${ACCOUNT_ID}" ]; then
+            echo "⚠️  CLOUDFLARE_ACCOUNT_ID not set, skipping verification"
+            echo "status=skipped" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          chmod +x scripts/verify-deployment.sh
+          if bash scripts/verify-deployment.sh "${ACCOUNT_ID}" staging; then
+            echo "✅ Staging verification passed — proceeding to production"
+            echo "status=passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ Staging verification failed — aborting production deploy"
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Add verification to release summary
+        if: always()
+        run: |
+          STATUS="${{ steps.verify.outputs.status }}"
+          {
+            echo "## Deployment Verification"
+            echo ""
+            case "${STATUS}" in
+              passed)  echo "✅ All 8 endpoints verified on staging" ;;
+              skipped) echo "⚠️  Verification skipped (no CLOUDFLARE_ACCOUNT_ID)" ;;
+              failed)  echo "❌ Staging verification failed" ;;
+              *)       echo "⚠️  Unknown status: ${STATUS}" ;;
+            esac
+            echo ""
+            echo "### Endpoints Tested"
+            echo "- GET /health"
+            echo "- GET /metrics"
+            echo "- GET /deals"
+            echo "- GET /deals.json"
+            echo "- GET /api/status"
+            echo "- GET /api/log"
+            echo "- POST /api/discover"
+            echo "- POST /api/submit"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy-production:
     name: Deploy to Production
-    needs: [validate-version, create-release, run-benchmark]
+    needs: [validate-version, create-release, run-benchmark, verify-deployment]
+    if: needs.verify-deployment.outputs.status == 'passed' || needs.verify-deployment.outputs.status == '' || needs.verify-deployment.result == 'skipped'
     uses: ./.github/workflows/deploy-production.yml
     with:
       confirm_deploy: true

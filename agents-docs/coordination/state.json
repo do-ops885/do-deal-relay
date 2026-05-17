@@ -38,7 +38,7 @@
     "obs_adr_004_written": true
   },
   "active_agents": [],
-  "current_phase": "v0.1.6-performance-swarm-complete",
+  "current_phase": "v0.1.6-optimization-swarm-complete",
   "version": "0.1.5",
   "release_status": "stable",
   "agent_status": {
@@ -98,11 +98,11 @@
       ]
     }
   },
-  "last_handoff": "swarm-suggestions-round-5-complete",
+  "last_handoff": "swarm-suggestions-round-6-complete",
   "blockers": [],
   "pending_tasks": [
-    "Execute P1 performance optimizations: dedupe (16.9%) and validate (14.0%) bottlenecks",
-    "Add E2E health check job to release.yml for post-deploy verification"
+    "Re-run benchmark to measure combined performance improvement",
+    "Consider re-benchmarking and bumping to v0.1.6"
   ],
   "completed_tasks": [
     "Enable observability traces + head_sampling_rate in wrangler.jsonc",
@@ -192,7 +192,11 @@
     "Added benchmark job to release.yml: runs pipeline benchmark with 5,000 deals/sec threshold, uploads report artifact, adds to release summary",
     "Created scripts/seed-local-kv.sh: consolidated KV seeding with --local/--remote/--e2e-only/--verify-only modes",
     "Fixed benchmark_pipeline.ts: dynamic VERSION import from worker/version.ts (was hardcoded 0.1.4)",
-    "Updated coordination state for swarm round 5 completion"
+    "Updated coordination state for swarm round 5 completion",
+    "Optimized dedupe phase: precomputeDealKeys() helper pre-computes partition/URL keys once, partitionByKey() helper, Map<Deal,number> O(1) index lookup replacing indexOf O(n), cached URL keys across all 3 passes",
+    "Optimized validate phase: extracted validateSingleDeal() helper, runs 5 independent sync gates in parallel via Promise.all (schema, normalization, trust, price, expiry), runs 4 async gates sequentially with short-circuit on failure, fixed fastPathDecision type from any to FastPathResult|ValidationCacheEntry|null",
+    "Added verify-deployment job to release.yml: deploys tag to staging, runs scripts/verify-deployment.sh (8 endpoints tested), deploy-production depends on verification passing",
+    "Updated coordination state for swarm round 6 completion"
   ],
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "evals_auto_generated": true,

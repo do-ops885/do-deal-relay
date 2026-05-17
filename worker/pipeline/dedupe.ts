@@ -48,6 +48,42 @@ function buildPartitionKey(deal: Deal): string {
 }
 
 /**
+ * Pre-compute partition keys and URL keys for an array of deals.
+ * Returns two Maps to avoid re-computing keys across multiple passes.
+ */
+function precomputeDealKeys(deals: Deal[]): {
+  partitionKeys: Map<Deal, string>;
+  urlKeys: Map<Deal, URL | string>;
+} {
+  const partitionKeys = new Map<Deal, string>();
+  const urlKeys = new Map<Deal, URL | string>();
+  for (const deal of deals) {
+    partitionKeys.set(deal, buildPartitionKey(deal));
+    urlKeys.set(deal, precomputeUrlKey(deal.url));
+  }
+  return { partitionKeys, urlKeys };
+}
+
+/**
+ * Partition deals into buckets by their pre-computed partition key.
+ * Returns both the bucket map and the ordered list for iteration.
+ */
+function partitionByKey(
+  items: Array<{ deal: Deal; url: URL | string }>,
+  partitionKeys: Map<Deal, string>,
+): Map<string, Array<{ deal: Deal; url: URL | string }>> {
+  const partitions = new Map<string, Array<{ deal: Deal; url: URL | string }>>();
+  for (const item of items) {
+    const pkey = partitionKeys.get(item.deal) || "";
+    if (!partitions.has(pkey)) {
+      partitions.set(pkey, []);
+    }
+    partitions.get(pkey)?.push(item);
+  }
+  return partitions;
+}
+
+/**
  * Deduplicate deals using multiple strategies
  */
 export function deduplicate(
@@ -102,21 +138,17 @@ export function deduplicate(
     result.unique.push(deal);
   }
 
-  // Second pass: semantic dedupe (similar URLs) with pre-partitioning
-  // Partition the unique deals into smaller buckets by domain + reward type + value tier
-  // This reduces the O(n²) comparison space significantly.
-  const partitions = new Map<
-    string,
-    Array<{ deal: Deal; url: URL | string }>
-  >();
+  // Pre-compute all keys once for the unique deals (used across all passes)
+  const { partitionKeys: uniquePartitionKeys, urlKeys: uniqueUrlKeys } =
+    precomputeDealKeys(result.unique);
 
-  for (const deal of result.unique) {
-    const pkey = buildPartitionKey(deal);
-    if (!partitions.has(pkey)) {
-      partitions.set(pkey, []);
-    }
-    partitions.get(pkey)?.push({ deal, url: precomputeUrlKey(deal.url) });
-  }
+  // Second pass: semantic dedupe (similar URLs) with pre-partitioning
+  // Partition the unique deals into smaller buckets by pre-computed keys
+  const uniqueWithKeys = result.unique.map((deal) => ({
+    deal,
+    url: uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url),
+  }));
+  const partitions = partitionByKey(uniqueWithKeys, uniquePartitionKeys);
 
   const semanticUnique: Deal[] = [];
   for (const [, bucket] of partitions) {
@@ -146,9 +178,10 @@ export function deduplicate(
   }
   result.unique = semanticUnique;
 
-  // Third pass: cross-source dedupe (same deal from different sources)
-  const crossSourceUnique: Deal[] = [];
+  // Pre-compute cross-source keys for the semantic unique deals
   const crossSourceKeys = new Map<string, Deal>();
+  const crossSourceIndex = new Map<Deal, number>();
+  const crossSourceUnique: Deal[] = [];
 
   for (const deal of result.unique) {
     const key = createCrossSourceKey(deal);
@@ -156,8 +189,8 @@ export function deduplicate(
 
     if (existing) {
       if (deal.source.trust_score > existing.source.trust_score) {
-        const idx = crossSourceUnique.indexOf(existing);
-        if (idx !== -1) {
+        const idx = crossSourceIndex.get(existing);
+        if (idx !== undefined) {
           result.duplicates.push({
             deal: existing,
             matched_with: deal.id,
@@ -165,6 +198,8 @@ export function deduplicate(
           });
           crossSourceUnique[idx] = deal;
           crossSourceKeys.set(key, deal);
+          crossSourceIndex.set(deal, idx);
+          crossSourceIndex.delete(existing);
         }
       } else {
         result.duplicates.push({
@@ -175,6 +210,7 @@ export function deduplicate(
       }
     } else {
       crossSourceKeys.set(key, deal);
+      crossSourceIndex.set(deal, crossSourceUnique.length);
       crossSourceUnique.push(deal);
     }
   }
@@ -182,29 +218,28 @@ export function deduplicate(
 
   // Fourth pass: dedupe against existing production deals
   if (existingDeals && existingDeals.length > 0) {
-    const existingWithKeys = new Map<
-      string,
-      Array<{ deal: Deal; url: URL | string }>
-    >();
-    for (const d of existingDeals) {
-      const pkey = buildPartitionKey(d);
-      if (!existingWithKeys.has(pkey)) {
-        existingWithKeys.set(pkey, []);
-      }
-      existingWithKeys
-        .get(pkey)!
-        .push({ deal: d, url: precomputeUrlKey(d.url) });
-    }
+    // Pre-compute keys for existing deals and partition into buckets
+    const { partitionKeys: existingPartitionKeys, urlKeys: existingUrlKeys } =
+      precomputeDealKeys(existingDeals);
+
+    const existingWithKeys = existingDeals.map((d) => ({
+      deal: d,
+      url: existingUrlKeys.get(d) || precomputeUrlKey(d.url),
+    }));
+    const existingPartitions = partitionByKey(
+      existingWithKeys,
+      existingPartitionKeys,
+    );
 
     const finalUnique: Deal[] = [];
     for (const deal of result.unique) {
       let isDuplicate = false;
       let matchedWith = "";
-      const pkey = buildPartitionKey(deal);
-      const existingInBucket = existingWithKeys.get(pkey) || [];
+      const pkey = uniquePartitionKeys.get(deal) || buildPartitionKey(deal);
+      const existingInBucket = existingPartitions.get(pkey) || [];
 
       if (existingInBucket.length > 0) {
-        const dealUrlObj = precomputeUrlKey(deal.url);
+        const dealUrlObj = uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
         for (const existing of existingInBucket) {
           if (
             existing.deal.id === deal.id ||
