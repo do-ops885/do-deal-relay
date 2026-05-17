@@ -465,9 +465,9 @@ while IFS= read -r file; do
             # Compare with previous version
             if [ -f /tmp/evals-before.json ]; then
                 if ! diff -q "$EVALS_FILE" /tmp/evals-before.json > /dev/null 2>&1; then
+                    git add "$EVALS_FILE"
                     info "Skill content changed in: $file"
-                    warning "  ↳ evals.json regenerated. Stage the update:"
-                    warning "  ↳ git add $EVALS_FILE"
+                    info "  ↳ evals.json regenerated and auto-staged"
                     SKILL_EVALS_REGEN=1
                 fi
                 rm -f /tmp/evals-before.json

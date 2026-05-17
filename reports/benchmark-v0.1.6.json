@@ -1,0 +1,52 @@
+{
+  "run_id": "bench-1779024290093",
+  "timestamp": "2026-05-17T13:24:50.435Z",
+  "version": "0.1.5",
+  "results": [
+    {
+      "deals": 10,
+      "duration_ms": 23,
+      "deals_per_second": 435
+    },
+    {
+      "deals": 50,
+      "duration_ms": 15,
+      "deals_per_second": 3333
+    },
+    {
+      "deals": 100,
+      "duration_ms": 20,
+      "deals_per_second": 5000
+    },
+    {
+      "deals": 500,
+      "duration_ms": 93,
+      "deals_per_second": 5376
+    },
+    {
+      "deals": 1000,
+      "duration_ms": 188,
+      "deals_per_second": 5319
+    }
+  ],
+  "phase_timings": {
+    "init": 10,
+    "discover": 53,
+    "normalize": 12,
+    "dedupe": 31,
+    "validate": 25,
+    "score": 13,
+    "stage": 12,
+    "publish": 11,
+    "verify": 11,
+    "finalize": 10
+  },
+  "total_duration_ms": 188,
+  "threshold_deals_per_sec": 5000,
+  "success": true,
+  "bottlenecks": [
+    "⚠  discover: 53ms (28.2% of total) — consider optimization",
+    "⚠  dedupe: 31ms (16.5% of total) — consider optimization",
+    "⚠  validate: 25ms (13.3% of total) — consider optimization"
+  ]
+}

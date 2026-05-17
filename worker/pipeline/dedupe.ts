@@ -72,7 +72,10 @@ function partitionByKey(
   items: Array<{ deal: Deal; url: URL | string }>,
   partitionKeys: Map<Deal, string>,
 ): Map<string, Array<{ deal: Deal; url: URL | string }>> {
-  const partitions = new Map<string, Array<{ deal: Deal; url: URL | string }>>();
+  const partitions = new Map<
+    string,
+    Array<{ deal: Deal; url: URL | string }>
+  >();
   for (const item of items) {
     const pkey = partitionKeys.get(item.deal) || "";
     if (!partitions.has(pkey)) {
@@ -239,7 +242,8 @@ export function deduplicate(
       const existingInBucket = existingPartitions.get(pkey) || [];
 
       if (existingInBucket.length > 0) {
-        const dealUrlObj = uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
+        const dealUrlObj =
+          uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
         for (const existing of existingInBucket) {
           if (
             existing.deal.id === deal.id ||

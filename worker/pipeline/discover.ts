@@ -232,99 +232,110 @@ async function discoverFromSource(
   limit: number,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
-  const errors: Array<{ url: string; error: string }> = [];    // Process URL patterns in parallel with a concurrency limit.
-    // Uses sequential batch iteration to avoid race conditions on the limit check,
-    // while fetching within each batch in parallel. After each batch, the total
-    // is truncated if it exceeded the limit (due to concurrent fulfillment).
-    const CONCURRENCY = 3;
-    let batchIndex = 0;
-    while (batchIndex < source.url_patterns.length && deals.length < limit) {
-      const batch = source.url_patterns.slice(batchIndex, batchIndex + CONCURRENCY);
-      batchIndex += CONCURRENCY;
+  const errors: Array<{ url: string; error: string }> = []; // Process URL patterns in parallel with a concurrency limit.
+  // Uses sequential batch iteration to avoid race conditions on the limit check,
+  // while fetching within each batch in parallel. After each batch, the total
+  // is truncated if it exceeded the limit (due to concurrent fulfillment).
+  const CONCURRENCY = 3;
+  let batchIndex = 0;
+  while (batchIndex < source.url_patterns.length && deals.length < limit) {
+    const batch = source.url_patterns.slice(
+      batchIndex,
+      batchIndex + CONCURRENCY,
+    );
+    batchIndex += CONCURRENCY;
 
-      const results = await Promise.allSettled(
-        batch.map(async (pattern) => {
-          try {
-            const url = `https://${source.domain}${pattern}`;
+    const results = await Promise.allSettled(
+      batch.map(async (pattern) => {
+        try {
+          const url = `https://${source.domain}${pattern}`;
 
-            const response = await fetch(url, {
-              method: "GET",
-              headers: {
-                "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-                Accept: "text/html,application/json",
-              },
-              signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
-            });
-
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
-
-            const contentType = response.headers.get("content-type") || "";
-            const contentLength = response.headers.get("content-length");
-            const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
-
-            let content: string;
-            if (contentLength && parseInt(contentLength, 10) > maxSize) {
-              throw new Error(
-                `Payload exceeds size limit: ${contentLength} bytes (max: ${maxSize})`,
-              );
-            } else {
-              content = await response.text();
-            }
-
-            if (content.length > maxSize) {
-              throw new Error("Payload exceeds size limit");
-            }
-
-            const extracted: ExtractedDeal[] = contentType.includes("application/json")
-              ? parseJSONContent(content, source)
-              : parseHTMLContent(content, source);
-
-            const patternDeals: Deal[] = [];
-            const patternErrors: Array<{ url: string; error: string }> = [];
-
-            for (const item of extracted) {
-              try {
-                const deal = await buildDeal(item, source);
-                patternDeals.push(deal);
-              } catch (error) {
-                patternErrors.push({
-                  url: item.url,
-                  error: `Build failed: ${(error as Error).message}`,
-                });
-              }
-            }
-
-            await recordSourceValidation(env, source.domain, true);
-            return { patternDeals, patternErrors };
-          } catch (error) {
-            await recordSourceValidation(env, source.domain, false);
-            return {
-              patternDeals: [],
-              patternErrors: [{ url: `${source.domain}${pattern}`, error: (error as Error).message }],
-            };
-          }
-        }),
-      );
-
-      for (const result of results) {
-        if (result.status === "fulfilled") {
-          deals.push(...result.value.patternDeals);
-          errors.push(...result.value.patternErrors);
-        } else {
-          errors.push({
-            url: source.domain,
-            error: result.reason?.message || "Unknown error in parallel fetch",
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              "User-Agent":
+                "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+              Accept: "text/html,application/json",
+            },
+            signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
           });
-        }
-      }
 
-      // Truncate if we exceeded the limit due to concurrent fulfillment
-      if (deals.length > limit) {
-        deals.length = limit;
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const contentType = response.headers.get("content-type") || "";
+          const contentLength = response.headers.get("content-length");
+          const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
+
+          let content: string;
+          if (contentLength && parseInt(contentLength, 10) > maxSize) {
+            throw new Error(
+              `Payload exceeds size limit: ${contentLength} bytes (max: ${maxSize})`,
+            );
+          } else {
+            content = await response.text();
+          }
+
+          if (content.length > maxSize) {
+            throw new Error("Payload exceeds size limit");
+          }
+
+          const extracted: ExtractedDeal[] = contentType.includes(
+            "application/json",
+          )
+            ? parseJSONContent(content, source)
+            : parseHTMLContent(content, source);
+
+          const patternDeals: Deal[] = [];
+          const patternErrors: Array<{ url: string; error: string }> = [];
+
+          for (const item of extracted) {
+            try {
+              const deal = await buildDeal(item, source);
+              patternDeals.push(deal);
+            } catch (error) {
+              patternErrors.push({
+                url: item.url,
+                error: `Build failed: ${(error as Error).message}`,
+              });
+            }
+          }
+
+          await recordSourceValidation(env, source.domain, true);
+          return { patternDeals, patternErrors };
+        } catch (error) {
+          await recordSourceValidation(env, source.domain, false);
+          return {
+            patternDeals: [],
+            patternErrors: [
+              {
+                url: `${source.domain}${pattern}`,
+                error: (error as Error).message,
+              },
+            ],
+          };
+        }
+      }),
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        deals.push(...result.value.patternDeals);
+        errors.push(...result.value.patternErrors);
+      } else {
+        errors.push({
+          url: source.domain,
+          error: result.reason?.message || "Unknown error in parallel fetch",
+        });
       }
     }
+
+    // Truncate if we exceeded the limit due to concurrent fulfillment
+    if (deals.length > limit) {
+      deals.length = limit;
+    }
+  }
 
   return { deals, errors };
 }

@@ -114,13 +114,7 @@ async function validateSingleDeal(
     // Run async gates sequentially (they may depend on previous gate state)
     if (allPassed) {
       for (const gate of asyncGates) {
-        const gateResult = await runGate(
-          gate,
-          deal,
-          ctx,
-          env,
-          existingDealIds,
-        );
+        const gateResult = await runGate(gate, deal, ctx, env, existingDealIds);
         if (!gateResult.passed) {
           allPassed = false;
           failureReasons.push(`${gate}: ${gateResult.reason}`);
@@ -143,11 +137,7 @@ async function validateSingleDeal(
       (r) => r.includes("Deduplication Check") || r.includes("duplicate"),
     );
     await fastPathDecision.persist({
-      status: allPassed
-        ? "accepted"
-        : isDuplicate
-          ? "duplicate"
-          : "rejected",
+      status: allPassed ? "accepted" : isDuplicate ? "duplicate" : "rejected",
       reason: allPassed ? undefined : failureReasons.join("; "),
       trustScore: deal.source.trust_score,
     });
