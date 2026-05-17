@@ -41,8 +41,10 @@
     "@playwright/test": "^1.60.0",
     "@vitest/coverage-v8": "^4.1.6",
     "artillery": "^2.0.31",
+    "js-yaml": "^4.1.1",
     "miniflare": "^4.20260515.0",
     "prettier": "^3.8.3",
+    "tsx": "^4.22.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5",
     "wrangler": "^4.92.0"

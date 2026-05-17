@@ -1,7 +1,7 @@
 # System Reference
 
 **System**: Deal Discovery System
-**Version**: 0.1.3 | **Status**: Production
+**Version**: 0.1.4 | **Status**: Production
 
 ## Architecture
 

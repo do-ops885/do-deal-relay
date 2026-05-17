@@ -1,6 +1,6 @@
 {
   "system": "Deal Discovery System",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "phase": "Active",
   "status": "Active / Production",
   "last_updated": "2026-05-08T19:59:00Z",
@@ -74,7 +74,7 @@
     "Production readiness review"
   ],
   "reminders": [
-    "VERSION 0.1.1 - NOT PRODUCTION READY",
+    "VERSION 0.1.4 - NOT PRODUCTION READY",
     "All endpoints subject to change",
     "Requires full review before deployment",
     "Documentation in progress"
