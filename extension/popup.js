@@ -535,7 +535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Try partial match
       for (const [domain, cat] of Object.entries(DOMAIN_CATEGORY_MAP)) {
         if (hostname.includes(domain) || domain.includes(hostname)) {
-          elements.manualCategory.value = cat;
+        if (hostname === domain || hostname.endsWith("." + domain)) {
           return;
         }
       }
