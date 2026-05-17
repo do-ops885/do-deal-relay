@@ -134,13 +134,13 @@ describe("Expiration Module", () => {
 
       // Setup production snapshot
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 2,
           active: 2,
@@ -175,13 +175,13 @@ describe("Expiration Module", () => {
       });
 
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 2,
           active: 2,
@@ -209,13 +209,13 @@ describe("Expiration Module", () => {
       });
 
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 1,
           active: 1,
@@ -240,13 +240,13 @@ describe("Expiration Module", () => {
       noExpiry.expiry.date = undefined;
 
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 1,
           active: 1,
@@ -284,13 +284,13 @@ describe("Expiration Module", () => {
       });
 
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 3,
           active: 3,
@@ -420,13 +420,13 @@ describe("Expiration Module", () => {
       });
 
       const snapshot = {
-        version: "0.1.4",
+        version: "0.1.1",
         generated_at: "2024-03-31T00:00:00Z",
         run_id: "test-run",
         trace_id: "test-trace",
         snapshot_hash: "abc123",
         previous_hash: "",
-        schema_version: "0.1.4",
+        schema_version: "0.1.1",
         stats: {
           total: 1,
           active: 1,

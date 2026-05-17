@@ -1,4 +1,4 @@
-# Context Management and Back-Pressure (v0.1.4)
+# Context Management and Back-Pressure
 
 **Reference doc** - loaded on demand, not by default.
 

@@ -482,13 +482,9 @@ def main():
     with open(EVALS_JSON, "w") as f:
         json.dump(generated, f, indent=2)
 
-    # Format with Prettier if available to ensure consistency with CI
+    # Apply formatting to match repo standards
     try:
-        subprocess.run(
-            ["npx", "prettier", "--write", str(EVALS_JSON)],
-            capture_output=True,
-            check=True,
-        )
+        subprocess.run(["npx", "prettier", "--write", str(EVALS_JSON)], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 

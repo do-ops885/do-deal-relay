@@ -1,7 +1,7 @@
 # Project Structure
 
 **Reference**: Comprehensive directory structure for the deal discovery system
-**Version**: 0.1.4
+**Version**: 0.1.3
 
 ## Directory Tree
 
