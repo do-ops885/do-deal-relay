@@ -213,9 +213,5 @@ export async function evolveSourceTrust(
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
   const sources = new Set(deals.map((d) => d.source.domain));
-  for (const domain of sources) {
-    console.log(
-      `Trust evolution for ${domain}: ${adjustment > 0 ? "+" : ""}${adjustment} (${allValid ? "success" : "failure"})`,
-    );
-  }
+  // Trust evolution logging is handled by structured logger in pipeline
 }

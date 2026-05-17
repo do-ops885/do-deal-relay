@@ -164,8 +164,16 @@ function getApiKeys(env: Env) {
 // ============================================================================
 
 /**
- * Execute web research for referral codes
- * Supports both real fetching and simulation modes with parallel research
+ * Execute web research for referral codes.
+ *
+ * This function orchestrates research across multiple sources (Product Hunt, Reddit, GitHub, etc.)
+ * using both simulation and real fetching if API keys are provided. It handles normalization,
+ * deduplication, and caching of results.
+ *
+ * @param env - The Cloudflare Worker environment bindings.
+ * @param request - The research request configuration.
+ * @returns A promise that resolves to the aggregated research results.
+ * @throws {PipelineError} If research execution fails critically.
  */
 export async function executeReferralResearch(
   env: Env,
@@ -438,7 +446,15 @@ function applySourceConfidence(
 }
 
 /**
- * Convert discovered research codes to ReferralInput for storage
+ * Convert discovered research codes to ReferralInput for storage.
+ *
+ * Maps raw research results into the internal ReferralInput format, calculating
+ * unique IDs and initial metadata. It also persists each new referral to KV storage.
+ *
+ * @param env - The Cloudflare Worker environment bindings.
+ * @param researchResult - The result object from executeReferralResearch.
+ * @param filterConfidence - Minimum confidence score (0-1) to include a code. Defaults to 0.5.
+ * @returns A promise resolving to an array of mapped ReferralInput objects.
  */
 export async function convertResearchToReferrals(
   env: Env,
@@ -503,7 +519,16 @@ export async function convertResearchToReferrals(
 }
 
 /**
- * Research all possible referral codes for a domain
+ * Research all possible referral codes for a domain.
+ *
+ * A convenience wrapper around executeReferralResearch that generates a broad query
+ * for a specific domain.
+ *
+ * @param env - The Cloudflare Worker environment bindings.
+ * @param domain - The domain to research (e.g., 'notion.so').
+ * @param depth - Depth of research ('shallow', 'normal', 'thorough'). Defaults to 'thorough'.
+ * @param useRealFetching - Whether to attempt live API calls. Defaults to false.
+ * @returns A promise resolving to the domain-specific research results.
  */
 export async function researchAllReferralPossibilities(
   env: Env,

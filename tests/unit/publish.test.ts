@@ -397,16 +397,15 @@ describe("Publish Module", () => {
       );
     });
 
-    it("should log rollback success", async () => {
+    it("should complete rollback successfully", async () => {
       const previousSnapshot = createMockSnapshot({
         snapshot_hash: "prev-hash-123",
       });
 
       await rollbackSnapshot(mockEnv, previousSnapshot);
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining("Rolled back to snapshot"),
-      );
+      // Verify it didn't throw and completed the expected work
+      expect(mockEnv.DEALS_PROD.put).toHaveBeenCalled();
     });
   });
 
