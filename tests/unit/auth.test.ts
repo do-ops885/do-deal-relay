@@ -281,20 +281,27 @@ describe("Auth", () => {
       });
 
       const [, , options] = mockPut.mock.calls[0];
-      expect(options).toEqual({ expirationTtl: 365 * 86400 });
+      expect(options.expirationTtl).toBe(365 * 86400);
+      expect(options.metadata).toBeDefined();
+      expect(options.metadata.userId).toBe(baseConfig.userId);
+      expect(options.metadata.role).toBe(baseConfig.role);
     });
 
-    it("should not set TTL when expiresAt is provided", async () => {
+    it("should set absolute expiration when expiresAt is provided", async () => {
       mockPut.mockResolvedValue(undefined);
 
+      const expiresAt = new Date(Date.now() + 86400000);
       await storeApiKey(mockEnv, {
         ...baseConfig,
         key: "",
-        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        expiresAt: expiresAt.toISOString(),
       });
 
       const [, , options] = mockPut.mock.calls[0];
-      expect(options).toEqual({ expirationTtl: undefined });
+      expect(options.expiration).toBe(Math.floor(expiresAt.getTime() / 1000));
+      expect(options.expirationTtl).toBeUndefined();
+      expect(options.metadata).toBeDefined();
+      expect(options.metadata.expiresAt).toBe(expiresAt.toISOString());
     });
 
     it("should preserve all metadata fields", async () => {
@@ -798,7 +805,7 @@ describe("Auth", () => {
       }
     });
 
-    it("should reject user from accessing readonly-only endpoint", async () => {
+    it("should allow user to access readonly endpoint (role hierarchy)", async () => {
       mockGet.mockResolvedValue({
         userId: "user-123",
         role: "user",
@@ -812,10 +819,10 @@ describe("Auth", () => {
       });
       const result = await middleware(request);
 
-      // Current implementation doesn't support role hierarchy
-      expect(result instanceof Response).toBe(true);
-      if (result instanceof Response) {
-        expect(result.status).toBe(403);
+      // Role hierarchy: admin > user > readonly
+      expect("authenticated" in result).toBe(true);
+      if ("authenticated" in result) {
+        expect(result.authenticated).toBe(true);
       }
     });
 

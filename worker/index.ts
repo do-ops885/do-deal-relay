@@ -317,9 +317,10 @@ export default {
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
-        if (experienceMatch[1] !== undefined)
+        const experienceId = experienceMatch[1];
+        if (experienceId !== undefined)
           return withAuth(request, env, "readonly", () =>
-            handleGetExperience(experienceMatch[1]!, env),
+            handleGetExperience(experienceId, env),
           );
       }
 

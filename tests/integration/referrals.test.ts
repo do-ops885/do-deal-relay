@@ -211,6 +211,7 @@ describe("Referral Deactivation", () => {
       "http://localhost/api/referrals/ROUND_TRIP",
       {
         method: "GET",
+        headers: authHeader,
       },
     );
     const getResponse1 = await worker.fetch(getRequest1, mockEnv);
@@ -230,6 +231,7 @@ describe("Referral Deactivation", () => {
       "http://localhost/api/referrals/ROUND_TRIP",
       {
         method: "GET",
+        headers: authHeader,
       },
     );
     const getResponse2 = await worker.fetch(getRequest2, mockEnv);
@@ -242,6 +244,7 @@ describe("Referral Deactivation", () => {
 
     const request = new Request("http://localhost/api/referrals/GETME", {
       method: "GET",
+      headers: authHeader,
     });
 
     const response = await worker.fetch(request, mockEnv);

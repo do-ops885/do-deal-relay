@@ -133,13 +133,13 @@ describe("Experience API Endpoints", () => {
     (env.DEALS_SOURCES.put as any) = mockPut;
 
     if (env.WEBHOOK_API_KEYS) {
-        (env.WEBHOOK_API_KEYS.get as any) = mockGet;
-        (env.WEBHOOK_API_KEYS.put as any) = mockPut;
+      (env.WEBHOOK_API_KEYS.get as any) = mockGet;
+      (env.WEBHOOK_API_KEYS.put as any) = mockPut;
     } else {
-        env.WEBHOOK_API_KEYS = {
-            get: mockGet,
-            put: mockPut
-        } as any;
+      env.WEBHOOK_API_KEYS = {
+        get: mockGet,
+        put: mockPut,
+      } as any;
     }
   }
 
@@ -159,7 +159,7 @@ describe("Experience API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...authHeader
+          ...authHeader,
         },
         body: JSON.stringify({
           deal_code: "DEAL123",
@@ -189,7 +189,7 @@ describe("Experience API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
-          ...authHeader
+          ...authHeader,
         },
         body: "not json",
       });
@@ -214,7 +214,7 @@ describe("Experience API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...authHeader
+          ...authHeader,
         },
         body: JSON.stringify({ deal_code: "DEAL123" }),
       });
@@ -239,7 +239,7 @@ describe("Experience API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...authHeader
+          ...authHeader,
         },
         body: JSON.stringify({
           deal_code: "DEAL123",
@@ -267,7 +267,7 @@ describe("Experience API Endpoints", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...authHeader
+          ...authHeader,
         },
         body: JSON.stringify({
           deal_code: "DEAL123",
@@ -285,7 +285,7 @@ describe("Experience API Endpoints", () => {
   describe("GET /api/experience/:deal_code", () => {
     it("should return 503 when D1 is not configured", async () => {
       const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: authHeader
+        headers: authHeader,
       });
 
       const response = await worker.fetch(request, mockEnv);
@@ -314,7 +314,7 @@ describe("Experience API Endpoints", () => {
       await setupTestApiKeys(envWithDb);
 
       const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: authHeader
+        headers: authHeader,
       });
 
       const response = await worker.fetch(request, envWithDb);
