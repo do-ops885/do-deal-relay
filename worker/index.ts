@@ -175,7 +175,7 @@ export default {
         }
         if (code && action === "reactivate") {
           return withAuth(request, env, undefined, () =>
-            handleReactivateReferral(code, env),
+            handleReactivateReferral(request, code, env),
           );
         }
       }

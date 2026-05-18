@@ -1,5 +1,5 @@
 // worker/pipeline/validate-fast-path.ts
-import type { Env } from "../types";
+import type { Env, PipelineMetrics } from "../types";
 import {
   buildFingerprintKey,
   buildUrlCacheKey,
@@ -37,7 +37,7 @@ export async function validateDealFastPath(
     fingerprint: string;
     source?: string;
     traceId?: string;
-    metrics?: any;
+    metrics?: PipelineMetrics;
   },
 ): Promise<FastPathResult> {
   // Use STAGING_KV for validation cache as proposed, or fallback to DEALS_LOG if STAGING_KV is not ideal
