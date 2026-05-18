@@ -400,6 +400,10 @@ export async function handleConversationMessage(
   advanceConversationStep(userId);
   const nextStep = conversation.steps[nextStepIndex];
 
+  if (!nextStep) {
+    return { success: true, message: "Conversation completed." };
+  }
+
   return {
     success: true,
     message: nextStep.question,
