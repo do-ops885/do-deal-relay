@@ -253,13 +253,13 @@ export default {
       }
 
       // Webhook routes
-      if (path.includes("/webhooks/")) {
+      if (path.startsWith("/webhooks/") || path.startsWith("/api/webhooks/")) {
         const rateLimiter = createRateLimitMiddleware(env, "webhooks");
         const webhookResponse = await rateLimiter(request, async () => {
           const result = await handleWebhookRoutes(request, env, path);
           return result || jsonResponse({ error: "Not found" }, 404, request);
         });
-        if (webhookResponse) return webhookResponse;
+        return webhookResponse;
       }
 
       // Experience Feedback API

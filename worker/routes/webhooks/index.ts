@@ -25,8 +25,8 @@ export async function handleWebhookRoutes(
   path: string,
 ): Promise<Response | null> {
   // Normalize path by removing /api prefix if present
-  const normalizedPath = path.startsWith("/api")
-    ? path.replace("/api", "")
+  const normalizedPath = path.startsWith("/api/")
+    ? path.replace("/api/", "/")
     : path;
 
   // Incoming webhooks (public, signature verified)
@@ -46,7 +46,12 @@ export async function handleWebhookRoutes(
     /^\/webhooks\/(deals|referrals|research|system)\/([^/]+)$/,
   );
   if (notificationMatch && request.method === "POST") {
-    const partnerId = request.headers.get("X-Partner-Id") || "system";
+    const entityType = notificationMatch[1] ?? "system";
+    const action = notificationMatch[2] ?? "";
+    // Source partnerId from header with fallback derived from URL context
+    const partnerId =
+      request.headers.get("X-Partner-Id") ||
+      (entityType === "system" ? "system" : entityType);
     return handleIncomingWebhookRequest(request, env, partnerId);
   }
 
