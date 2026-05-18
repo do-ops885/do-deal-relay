@@ -25,7 +25,7 @@ export async function handleWebhookRoutes(
   path: string,
 ): Promise<Response | null> {
   // Normalize path by removing /api prefix if present
-  const normalizedPath = path.startsWith("/api") ? path.replace("/api", "") : path;
+  const normalizedPath = path.startsWith("/api/") ? path.replace("/api/", "/") : path;
 
   // Incoming webhooks (public, signature verified)
   if (normalizedPath.startsWith("/webhooks/incoming/") && request.method === "POST") {
