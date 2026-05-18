@@ -341,7 +341,7 @@ export async function fetchRedditDeals(
     const requestUrl = new URL(
       `https://oauth.reddit.com/r/${subredditQuery}/search`,
     );
-    requestUrl.searchParams.set("q", searchQuery);
+    requestUrl.searchParams.set("q", sanitizeQuery(searchQuery));
     requestUrl.searchParams.set("sort", "new");
     requestUrl.searchParams.set("limit", String(limit));
     requestUrl.searchParams.set("raw_json", "1");
@@ -402,7 +402,7 @@ export async function fetchRedditPublic(
   try {
     // Use Reddit's JSON endpoint (has CORS restrictions in browsers but works in workers)
     const requestUrl = new URL("https://www.reddit.com/r/deals/search.json");
-    requestUrl.searchParams.set("q", searchQuery);
+    requestUrl.searchParams.set("q", sanitizeQuery(searchQuery));
     requestUrl.searchParams.set("sort", "new");
     requestUrl.searchParams.set("limit", String(limit));
 
