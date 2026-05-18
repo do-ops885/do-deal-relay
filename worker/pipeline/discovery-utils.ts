@@ -1,9 +1,4 @@
-import {
-  Deal,
-  SourceConfig,
-  PipelineContext,
-  Env,
-} from "../types";
+import { Deal, SourceConfig, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { generateDealId } from "../lib/crypto";
 import { extractBySelectors } from "../lib/html-utils";
@@ -193,16 +188,14 @@ export function parseHTMLContent(
           : `https://${source.domain}/invite/${code}`,
       title: extractTitle(content, code),
       description: extractDescription(content, code),
-      reward_type:
-        rewardMatch?.[3]
-          ? rewardMatch[3] === "%"
-            ? "percent"
-            : "cash"
-          : "credit",
-      reward_value:
-        rewardMatch?.[1]
-          ? parseFloat(rewardMatch[1].replace(",", ""))
-          : 0,
+      reward_type: rewardMatch?.[3]
+        ? rewardMatch[3] === "%"
+          ? "percent"
+          : "cash"
+        : "credit",
+      reward_value: rewardMatch?.[1]
+        ? parseFloat(rewardMatch[1].replace(",", ""))
+        : 0,
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
     });
