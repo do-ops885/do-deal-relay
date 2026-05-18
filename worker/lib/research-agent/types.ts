@@ -13,6 +13,7 @@ export interface ResearchSource {
     reward: RegExp[];
     url: RegExp[];
   };
+  selectors?: Record<string, string>;
   priority: number;
   // API-specific configuration
   apiConfig?: SourceApiConfig;
@@ -321,6 +322,11 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
         /\$[\d,]+(?:\.\d{2})?/g,
       ],
       url: [/\/invite\/([A-Z0-9_-]+)/gi, /\/refer\/([A-Z0-9_-]+)/gi],
+    },
+    selectors: {
+      code: ".referral-code, [data-referral-code], .invite-code",
+      reward: ".reward-info, .bonus-text, .promo-reward",
+      url: "a.referral-link, a.invite-link",
     },
     priority: 1,
     apiConfig: {

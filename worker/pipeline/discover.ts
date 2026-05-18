@@ -2,6 +2,7 @@ import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
+import { extractBySelectors } from "../lib/html-utils";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
@@ -350,6 +351,49 @@ function parseHTMLContent(
   const deals: ExtractedDeal[] = [];
   const selectors = source.selectors || {};
 
+  // 1. Try CSS selectors if available
+  if (source.selectors && Object.keys(source.selectors).length > 0) {
+    const extracted = extractBySelectors(content, source.selectors);
+    if (extracted["code"] && extracted["code"].length > 0) {
+      for (let i = 0; i < extracted["code"].length; i++) {
+        const code = extracted["code"][i];
+        if (!code) continue;
+
+        const reward =
+          extracted["reward"]?.[i] || extracted["reward"]?.[0] || "";
+        const url =
+          extracted["url"]?.[i] ||
+          extracted["url"]?.[0] ||
+          `https://${source.domain}/invite/${code}`;
+
+        // Simple heuristic for reward parsing from selector text
+        const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
+        const rewardValue = rewardValueMatch?.[1]
+          ? parseFloat(rewardValueMatch[1].replace(",", ""))
+          : 0;
+        const rewardCurrency = reward.match(/USD|EUR|GBP/)
+          ? reward.match(/USD|EUR|GBP/)?.[0]
+          : undefined;
+        const isPercent = reward.includes("%");
+
+        deals.push({
+          code,
+          url,
+          title: extractTitle(content, code),
+          description: extractDescription(content, code),
+          reward_type: isPercent
+            ? "percent"
+            : rewardValue > 0
+              ? "cash"
+              : "credit",
+          reward_value: rewardValue,
+          reward_currency: rewardCurrency,
+        });
+      }
+    }
+  }
+
+  // 2. Always run regex extraction as it might find more codes
   const codePattern = new RegExp(
     `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
     "gi",

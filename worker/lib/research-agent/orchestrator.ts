@@ -5,12 +5,12 @@ import {
   ReferralInput,
 } from "../../types";
 import { CONFIG } from "../../config";
+import { fetchFromSource } from "./fetcher";
 import {
-  fetchFromSource,
   extractReferralsFromContent,
-  researchRateLimiter,
-  ExtractedReferral,
-} from "./fetcher";
+  type ExtractedReferral,
+} from "./extractor";
+import { researchRateLimiter } from "./rate-limiter";
 import {
   ResearchSource,
   RESEARCH_SOURCES,
@@ -555,5 +555,9 @@ export async function researchAllReferralPossibilities(
 }
 
 // Re-export fetcher types and functions
-export { fetchFromSource, extractReferralsFromContent, researchRateLimiter };
-export type { ExtractedReferral };
+export { fetchFromSource };
+export {
+  extractReferralsFromContent,
+  type ExtractedReferral,
+} from "./extractor";
+export { researchRateLimiter } from "./rate-limiter";

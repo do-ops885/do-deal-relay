@@ -29,13 +29,14 @@ export {
 // Fetcher functions
 export {
   type FetchResult,
-  type ExtractedReferral,
   fetchProductHuntDeals,
   fetchGitHubTrending,
   fetchHackerNewsDeals,
   fetchRedditDeals,
   fetchGenericPageContent,
 } from "./fetcher";
+
+export { type ExtractedReferral } from "./extractor";
 
 // Types
 export type {
