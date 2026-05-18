@@ -354,16 +354,18 @@ function parseHTMLContent(
   // 1. Try CSS selectors if available
   if (source.selectors && Object.keys(source.selectors).length > 0) {
     const extracted = extractBySelectors(content, source.selectors);
-    if (extracted["code"] && extracted["code"].length > 0) {
-      for (let i = 0; i < extracted["code"].length; i++) {
-        const code = extracted["code"][i];
+    const codes = extracted["code"];
+    if (codes && codes.length > 0) {
+      for (let i = 0; i < codes.length; i++) {
+        const code = codes[i];
         if (!code) continue;
 
-        const reward =
-          extracted["reward"]?.[i] || extracted["reward"]?.[0] || "";
+        const rewards = extracted["reward"];
+        const urls = extracted["url"];
+        const reward = (rewards && rewards[i]) || (rewards && rewards[0]) || "";
         const url =
-          extracted["url"]?.[i] ||
-          extracted["url"]?.[0] ||
+          (urls && urls[i]) ||
+          (urls && urls[0]) ||
           `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
@@ -377,7 +379,7 @@ function parseHTMLContent(
         const isPercent = reward.includes("%");
 
         deals.push({
-          code,
+          code: code.toUpperCase(),
           url,
           title: extractTitle(content, code),
           description: extractDescription(content, code),
@@ -390,36 +392,37 @@ function parseHTMLContent(
           reward_currency: rewardCurrency,
         });
       }
+
+      // Selector extraction succeeded — return early, use regex only as fallback
+      const seen = new Set<string>();
+      return deals.filter((d) => {
+        if (seen.has(d.code)) return false;
+        seen.add(d.code);
+        return true;
+      });
     }
   }
 
-  // 2. Always run regex extraction as it might find more codes
-  const codePattern = new RegExp(
-    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
-    "gi",
-  );
-  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
+  // 2. Fallback: regex extraction when selectors are unavailable or found nothing
+  const codePattern =
+    /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
+  const urlPattern = /https?:\/\/[^\s"<>]+/i;
   const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+    /(?:reward|bonus|get|earn)\s+\$?(\d[\d,]*\.?\d*)\s*(USD|EUR|GBP|%)?/i;
 
-  let match;
-  while ((match = codePattern.exec(content)) !== null) {
-    const code = match[1];
-    if (code === undefined) continue;
+  for (const codeMatch of content.matchAll(codePattern)) {
+    const code = codeMatch[1];
+    if (!code) continue;
 
-    const urlMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(urlPattern);
+    const contextSlice = content.slice(
+      Math.max(0, codeMatch.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+      codeMatch.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+    );
 
-    const rewardMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(rewardPattern);
+    const urlMatch = contextSlice.match(urlPattern);
+    const rewardMatch = contextSlice.match(rewardPattern);
+    const rewardValue = rewardMatch?.[1];
+    const rewardCurrency = rewardMatch?.[2];
 
     deals.push({
       code,
@@ -430,17 +433,10 @@ function parseHTMLContent(
       title: extractTitle(content, code),
       description: extractDescription(content, code),
       reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
-            ? "percent"
-            : "cash"
-          : "credit",
-      reward_value:
-        rewardMatch && rewardMatch[1]
-          ? parseFloat(rewardMatch[1].replace(",", ""))
-          : 0,
+        rewardCurrency === "%" ? "percent" : rewardCurrency ? "cash" : "credit",
+      reward_value: rewardValue ? parseFloat(rewardValue.replace(",", "")) : 0,
       reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+        rewardCurrency && rewardCurrency !== "%" ? rewardCurrency : undefined,
     });
   }
 
