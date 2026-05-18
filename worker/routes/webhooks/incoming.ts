@@ -70,12 +70,18 @@ export async function handleIncomingWebhookRequest(
     const payload = await request.text();
 
     // Process webhook (HMAC already verified at route level)
-    const result = await handleIncomingWebhook(env, partnerId, payload, {
-      signature,
-      timestamp,
-      webhookId,
-      idempotencyKey,
-    }, true);
+    const result = await handleIncomingWebhook(
+      env,
+      partnerId,
+      payload,
+      {
+        signature,
+        timestamp,
+        webhookId,
+        idempotencyKey,
+      },
+      true,
+    );
 
     return jsonResponse(
       {

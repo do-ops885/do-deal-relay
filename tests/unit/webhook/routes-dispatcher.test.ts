@@ -376,15 +376,17 @@ describe("Webhook Route Dispatcher", () => {
       const env = createEnv(kv);
       // Set up a partner so partner lookup succeeds
       const partnerSecret = "whsec_test_secret";
-      const partners = [{
-        id: "p1",
-        name: "Test Partner",
-        secret: partnerSecret,
-        active: true,
-        allowed_events: ["referral.created"],
-        rate_limit_per_minute: 60,
-        created_at: new Date().toISOString(),
-      }];
+      const partners = [
+        {
+          id: "p1",
+          name: "Test Partner",
+          secret: partnerSecret,
+          active: true,
+          allowed_events: ["referral.created"],
+          rate_limit_per_minute: 60,
+          created_at: new Date().toISOString(),
+        },
+      ];
       kv.storage.set("webhook_partners", JSON.stringify(partners));
 
       // Compute valid HMAC signature for the FAIL payload
@@ -399,7 +401,9 @@ describe("Webhook Route Dispatcher", () => {
         ["sign"],
       );
       const sigBuffer = await crypto.subtle.sign(
-        "HMAC", key, encoder.encode(signedPayload),
+        "HMAC",
+        key,
+        encoder.encode(signedPayload),
       );
       const signature = Array.from(new Uint8Array(sigBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
