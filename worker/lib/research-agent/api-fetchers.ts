@@ -13,6 +13,14 @@ import {
 } from "./transformers";
 
 /**
+ * Sanitize a search query to prevent injection attacks.
+ * Removes special characters used in GraphQL injection and SSRF.
+ */
+function sanitizeQuery(query: string): string {
+  return query.replace(/[{}"$\\]/g, "").trim().slice(0, 200);
+}
+
+/**
  * Fetch deals from ProductHunt GraphQL API
  */
 export async function fetchProductHuntDeals(
@@ -69,7 +77,7 @@ export async function fetchProductHuntDeals(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ query, variables: { limit, searchQuery } }),
+      body: JSON.stringify({ query, variables: { limit, searchQuery: sanitizeQuery(searchQuery) } }),
       signal: AbortSignal.timeout(10000),
     });
 
@@ -132,7 +140,7 @@ export async function fetchGitHubTrending(
   const startTime = Date.now();
 
   // Build search query with referral-related terms
-  const query = `${searchQuery} referral OR invite OR promo`;
+  const query = `${sanitizeQuery(searchQuery)} referral OR invite OR promo`;
 
   const headers: { [key: string]: string } = {
     Accept: "application/vnd.github+json",
@@ -202,7 +210,7 @@ export async function fetchHackerNewsDeals(
 
   try {
     const requestUrl = new URL("https://hn.algolia.com/api/v1/search");
-    requestUrl.searchParams.set("query", searchQuery);
+    requestUrl.searchParams.set("query", sanitizeQuery(searchQuery));
     requestUrl.searchParams.set("tags", "story");
     requestUrl.searchParams.set("hitsPerPage", String(limit));
 
