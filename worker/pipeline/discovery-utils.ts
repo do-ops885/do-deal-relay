@@ -223,12 +223,12 @@ export function parseHTMLContent(
         const code = codes[i];
         if (!code) continue;
 
-        const rewards = extracted["reward"];
-        const reward = rewards[i] || rewards?.[0] || "";
+        const rewards = extracted["reward"] || [];
+        const reward = rewards[i] || rewards[0] || "";
 
-        const urls = extracted["url"];
+        const urls = extracted["url"] || [];
         const url =
-          urls[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
+          urls[i] || urls[0] || `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
         const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
