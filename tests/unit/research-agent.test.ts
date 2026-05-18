@@ -278,6 +278,42 @@ describe("Research Agent - Real Fetching", () => {
       expect(result.research_metadata.errors).toBeDefined();
       expect(result.research_metadata.errors!.length).toBeGreaterThan(0);
     });
+
+    it("should auto-enable real fetching in production environment", async () => {
+      mockEnv.ENVIRONMENT = "production";
+
+      const request: WebResearchRequest = {
+        query: "test referral",
+        depth: "quick",
+        sources: ["producthunt"],
+        max_results: 5,
+      };
+
+      // Mock fetch to simulate attempt
+      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+
+      const result = await executeReferralResearch(mockEnv, request);
+
+      expect(result.research_metadata.used_real_fetching).toBe(true);
+    });
+
+    it("should auto-enable real fetching when RESEARCH_USE_REAL_FETCHING is true", async () => {
+      mockEnv.RESEARCH_USE_REAL_FETCHING = "true";
+
+      const request: WebResearchRequest = {
+        query: "test referral",
+        depth: "quick",
+        sources: ["producthunt"],
+        max_results: 5,
+      };
+
+      // Mock fetch to simulate attempt
+      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+
+      const result = await executeReferralResearch(mockEnv, request);
+
+      expect(result.research_metadata.used_real_fetching).toBe(true);
+    });
   });
 
   describe("convertResearchToReferrals", () => {
