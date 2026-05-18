@@ -364,7 +364,7 @@ function parseHTMLContent(
         const urls = extracted["url"];
         const reward = rewards?.[i] || rewards?.[0] || "";
         const url =
-          urls[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
+          urls?.[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
         const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
