@@ -23,18 +23,16 @@ export async function getWorkflowRuns(
     const data = await safeResponseJson<{
       workflow_runs: Record<string, unknown>[];
     }>(response);
-    return (data?.workflow_runs || []).map(
-      (run): WorkflowRun => ({
-        id: run.id as number,
-        name: run.name as string,
-        head_sha: run.head_sha as string,
-        status: run.status as WorkflowRun["status"],
-        conclusion: run.conclusion as WorkflowRun["conclusion"],
-        html_url: run.html_url as string,
-        created_at: run.created_at as string,
-        updated_at: run.updated_at as string,
-      }),
-    );
+    return (data?.workflow_runs || []).map((run: any) => ({
+      id: run.id,
+      name: run.name,
+      head_sha: run.head_sha,
+      status: run.status,
+      conclusion: run.conclusion,
+      html_url: run.html_url,
+      created_at: run.created_at,
+      updated_at: run.updated_at,
+    }));
   };
   try {
     return cb ? await cb.execute(execute) : await execute();

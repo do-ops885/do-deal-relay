@@ -6,12 +6,10 @@ import { batchAutoCategorize } from "../lib/categorization";
 // Constants
 // ============================================================================
 
-/**
- * Module-level literal regex for code format validation.
- * Using a literal avoids the overhead of constructing a new RegExp
- * inside a loop and eliminates ReDoS risks from dynamic constructors.
- */
-const CODE_FORMAT_PATTERN = /^[A-Z0-9_-]{4,50}$/;
+const NORMALIZE_CONSTANTS = {
+  MIN_CODE_LENGTH: 4,
+  MAX_CODE_LENGTH: 50,
+} as const;
 
 // ============================================================================
 // Normalization Pipeline
@@ -174,7 +172,11 @@ export function verifyNormalization(deals: Deal[]): {
     }
 
     // Check code format (alphanumeric, reasonable length)
-    if (!CODE_FORMAT_PATTERN.test(deal.code)) {
+    if (
+      !new RegExp(
+        `^[A-Z0-9_-]{${NORMALIZE_CONSTANTS.MIN_CODE_LENGTH},${NORMALIZE_CONSTANTS.MAX_CODE_LENGTH}}$`,
+      ).test(deal.code)
+    ) {
       issues.push(`Deal ${deal.id}: suspicious code format ${deal.code}`);
     }
 
