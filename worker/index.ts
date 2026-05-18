@@ -258,7 +258,7 @@ export default {
         const webhookResponse = await rateLimiter(request, () =>
           handleWebhookRoutes(request, env, path),
         );
-        if (webhookResponse) return webhookResponse;
+        return webhookResponse;
       }
 
       // Experience Feedback API
