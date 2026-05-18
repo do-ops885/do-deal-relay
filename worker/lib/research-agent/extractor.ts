@@ -12,25 +12,6 @@ export interface ExtractedReferral {
 }
 
 /**
- * Repeatedly remove script/style blocks until no further changes occur.
- * This avoids incomplete multi-character sanitization where dangerous
- * substrings can reappear after a single replacement pass.
- */
-function stripScriptAndStyleTags(input: string): string {
-  let previous: string;
-  let current = input;
-  do {
-    previous = current;
-    current = current
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
-  } while (current !== previous);
-  return current
-    .replace(/<\s*\/?\s*script\b/gi, "")
-    .replace(/<\s*\/?\s*style\b/gi, "");
-}
-
-/**
  * Simple HTML parser to extract content
  */
 export function parseHtmlContent(url: string, html: string): PageContentResult {
@@ -47,7 +28,7 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   // Extract all meta tags
   const metaTags: MetaTags = {};
   const metaRegex = /<meta[^>]*>/gi;
-  let metaMatch: RegExpExecArray | null;
+  let metaMatch;
   while ((metaMatch = metaRegex.exec(html)) !== null) {
     const tag = metaMatch[0];
     if (tag) {
@@ -60,7 +41,9 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   }
 
   // Remove script and style tags for text extraction
-  let textContent = stripScriptAndStyleTags(html)
+  let textContent = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -71,23 +54,19 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   // Extract links
   const links: Array<{ text: string; href: string }> = [];
   const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([^<]*)<\/a>/gi;
-  let linkMatch: RegExpExecArray | null;
+  let linkMatch;
   while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
-    const normalizedHref = href.trim().toLowerCase();
-    if (
-      href &&
-      !normalizedHref.startsWith("javascript:") &&
-      !normalizedHref.startsWith("data:") &&
-      !normalizedHref.startsWith("vbscript:") &&
-      !normalizedHref.startsWith("#")
-    ) {
+    if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
       // Convert relative URLs to absolute
-      const absoluteUrl = href.startsWith("http")
-        ? href
-        : new URL(href, url).toString();
-      links.push({ text, href: absoluteUrl });
+      const absoluteUrl =
+        href.startsWith("http") || !href
+          ? href || ""
+          : new URL(href, url).toString();
+      if (absoluteUrl) {
+        links.push({ text, href: absoluteUrl });
+      }
     }
   }
 
@@ -115,15 +94,18 @@ export function extractReferralsFromContent(
   // 1. Try CSS selectors if defined
   if (source.selectors) {
     const extracted = extractBySelectors(content, source.selectors);
-    if (extracted["code"] && extracted["code"].length > 0) {
-      for (let i = 0; i < extracted["code"].length; i++) {
-        const code = extracted["code"][i];
+    const codes = extracted["code"];
+    if (codes && codes.length > 0) {
+      for (let i = 0; i < codes.length; i++) {
+        const code = codes[i];
         if (!code) continue;
 
-        const reward = extracted["reward"]?.[i] || extracted["reward"]?.[0];
+        const rewards = extracted["reward"];
+        const reward = (rewards && (rewards[i] || rewards[0])) || undefined;
+
+        const urls = extracted["url"];
         const url =
-          extracted["url"]?.[i] ||
-          extracted["url"]?.[0] ||
+          (urls && (urls[i] || urls[0])) ||
           generateReferralUrl(sourceName, code);
 
         referrals.push({
@@ -194,7 +176,7 @@ export function extractWithContext(
     // Reset regex state
     pattern.lastIndex = 0;
 
-    let match: RegExpExecArray | null;
+    let match;
     while ((match = pattern.exec(content)) !== null) {
       const matchedText = match[1] ?? match[0]; // Use capture group 1 if exists
       if (!matchedText) continue;

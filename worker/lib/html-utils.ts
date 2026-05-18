@@ -24,14 +24,7 @@ export function extractBySelectors(
   for (const [key, selector] of Object.entries(selectors)) {
     const elements = $(selector);
     result[key] = elements
-      .map((_, el) => {
-        // For <a> tags, extract the href attribute instead of text content
-        if ($(el).is("a")) {
-          const href = $(el).attr("href");
-          if (href) return href;
-        }
-        return $(el).text().trim();
-      })
+      .map((_, el) => $(el).text().trim())
       .get()
       .filter((text) => text.length > 0);
   }
@@ -67,7 +60,9 @@ export function extractFromHtml(
       if (!result[key] || result[key].length === 0) {
         const matches: string[] = [];
         for (const pattern of patterns) {
-          for (const match of html.matchAll(pattern)) {
+          pattern.lastIndex = 0;
+          let match;
+          while ((match = pattern.exec(html)) !== null) {
             const matchedText = match[1] ?? match[0];
             if (matchedText) {
               matches.push(matchedText.trim());

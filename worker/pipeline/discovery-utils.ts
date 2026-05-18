@@ -1,4 +1,9 @@
-import { Deal, SourceConfig } from "../types";
+import {
+  Deal,
+  SourceConfig,
+  PipelineContext,
+  Env,
+} from "../types";
 import { CONFIG } from "../config";
 import { generateDealId } from "../lib/crypto";
 import { extractBySelectors } from "../lib/html-utils";
@@ -97,6 +102,157 @@ export function calculateAdaptiveBudget(
   }
 
   return budget;
+}
+
+/**
+ * Parse HTML content using selectors
+ */
+export function parseHTMLContent(
+  content: string,
+  source: SourceConfig,
+): ExtractedDeal[] {
+  const deals: ExtractedDeal[] = [];
+
+  // 1. Try CSS selectors if available
+  if (source.selectors && Object.keys(source.selectors).length > 0) {
+    const extracted = extractBySelectors(content, source.selectors);
+    const codes = extracted["code"];
+    if (codes && codes.length > 0) {
+      for (let i = 0; i < codes.length; i++) {
+        const code = codes[i];
+        if (!code) continue;
+
+        const rewardArr = extracted["reward"];
+        const reward = (rewardArr && (rewardArr[i] || rewardArr[0])) || "";
+
+        const urlArr = extracted["url"];
+        const url =
+          (urlArr && (urlArr[i] || urlArr[0])) ||
+          `https://${source.domain}/invite/${code}`;
+
+        // Simple heuristic for reward parsing from selector text
+        const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
+        const rewardValue = rewardValueMatch?.[1]
+          ? parseFloat(rewardValueMatch[1].replace(",", ""))
+          : 0;
+        const rewardCurrency = reward.match(/USD|EUR|GBP/)
+          ? reward.match(/USD|EUR|GBP/)?.[0]
+          : undefined;
+        const isPercent = reward.includes("%");
+
+        deals.push({
+          code,
+          url,
+          title: extractTitle(content, code),
+          description: extractDescription(content, code),
+          reward_type: isPercent
+            ? "percent"
+            : rewardValue > 0
+              ? "cash"
+              : "credit",
+          reward_value: rewardValue,
+          reward_currency: rewardCurrency,
+        });
+      }
+    }
+  }
+
+  // 2. Always run regex extraction as it might find more codes
+  const codePattern = new RegExp(
+    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
+    "gi",
+  );
+  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
+  const rewardPattern =
+    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+
+  let match;
+  while ((match = codePattern.exec(content)) !== null) {
+    const code = match[1];
+    if (code === undefined) continue;
+
+    const urlMatch = content
+      .slice(
+        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+      )
+      .match(urlPattern);
+
+    const rewardMatch = content
+      .slice(
+        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+      )
+      .match(rewardPattern);
+
+    deals.push({
+      code,
+      url:
+        urlMatch && urlMatch[0]
+          ? urlMatch[0]
+          : `https://${source.domain}/invite/${code}`,
+      title: extractTitle(content, code),
+      description: extractDescription(content, code),
+      reward_type:
+        rewardMatch?.[3]
+          ? rewardMatch[3] === "%"
+            ? "percent"
+            : "cash"
+          : "credit",
+      reward_value:
+        rewardMatch?.[1]
+          ? parseFloat(rewardMatch[1].replace(",", ""))
+          : 0,
+      reward_currency:
+        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+    });
+  }
+
+  const seen = new Set<string>();
+  return deals.filter((d) => {
+    if (seen.has(d.code)) return false;
+    seen.add(d.code);
+    return true;
+  });
+}
+
+/**
+ * Parse JSON content
+ */
+export function parseJSONContent(
+  content: string,
+  source: SourceConfig,
+): ExtractedDeal[] {
+  try {
+    const data = JSON.parse(content);
+    const deals: ExtractedDeal[] = [];
+
+    const items = Array.isArray(data)
+      ? data
+      : data.deals || data.items || [data];
+
+    for (const item of items) {
+      if (item.code || item.referral_code || item.invite_code) {
+        deals.push({
+          code: item.code || item.referral_code || item.invite_code,
+          url:
+            item.url ||
+            item.link ||
+            `https://${source.domain}/invite/${item.code}`,
+          title: item.title || item.name || `${source.domain} Referral`,
+          description: item.description || `Referral code for ${source.domain}`,
+          reward_type: item.reward_type || (item.percent ? "percent" : "cash"),
+          reward_value: item.reward_value || item.amount || item.bonus || 0,
+          reward_currency: item.currency || item.reward_currency,
+          expiry_date: item.expiry || item.expires_at,
+        });
+      }
+    }
+
+    return deals;
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -203,161 +359,4 @@ export function extractDescription(content: string, code: string): string {
   if (pMatch?.[1]) return pMatch[1].trim();
 
   return `Use referral code ${code}`;
-}
-
-/**
- * Parse HTML content using selectors first, with regex as fallback
- */
-export function parseHTMLContent(
-  content: string,
-  source: SourceConfig,
-): ExtractedDeal[] {
-  const deals: ExtractedDeal[] = [];
-
-  // 1. Try CSS selectors if available (primary strategy)
-  if (Object.keys(source.selectors || {}).length > 0) {
-    const extracted = extractBySelectors(content, source.selectors!);
-    const codes = extracted["code"] || [];
-    if (codes.length > 0) {
-      for (let i = 0; i < codes.length; i++) {
-        const code = codes[i];
-        if (!code) continue;
-
-        const rewards = extracted["reward"] || [];
-        const reward = rewards[i] || rewards[0] || "";
-
-        const urls = extracted["url"] || [];
-        const url =
-          urls[i] || urls[0] || `https://${source.domain}/invite/${code}`;
-
-        // Simple heuristic for reward parsing from selector text
-        const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
-        const rewardValue = rewardValueMatch?.[1]
-          ? parseFloat(rewardValueMatch[1].replace(",", ""))
-          : 0;
-        const rewardCurrency = reward.match(/USD|EUR|GBP/)
-          ? reward.match(/USD|EUR|GBP/)?.[0]
-          : undefined;
-        const isPercent = reward.includes("%");
-
-        deals.push({
-          code: code.toUpperCase(),
-          url,
-          title: extractTitle(content, code),
-          description: extractDescription(content, code),
-          reward_type: isPercent
-            ? "percent"
-            : rewardValue > 0
-              ? "cash"
-              : "credit",
-          reward_value: rewardValue,
-          reward_currency: rewardCurrency,
-        });
-      }
-      // Selector extraction succeeded — return early, use regex only as fallback
-      const seen = new Set<string>();
-      return deals.filter((d) => {
-        if (seen.has(d.code)) return false;
-        seen.add(d.code);
-        return true;
-      });
-    }
-  }
-
-  // 2. Fallback: regex extraction when selectors are unavailable or found nothing
-  const codePattern = new RegExp(
-    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
-    "gi",
-  );
-  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
-  const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
-
-  let match;
-  while ((match = codePattern.exec(content)) !== null) {
-    const code = match[1];
-    if (code === undefined) continue;
-
-    const urlMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(urlPattern);
-
-    const rewardMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(rewardPattern);
-
-    deals.push({
-      code: code.toUpperCase(),
-      url:
-        urlMatch && urlMatch[0]
-          ? urlMatch[0]
-          : `https://${source.domain}/invite/${code}`,
-      title: extractTitle(content, code),
-      description: extractDescription(content, code),
-      reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
-            ? "percent"
-            : "cash"
-          : "credit",
-      reward_value:
-        rewardMatch && rewardMatch[1]
-          ? parseFloat(rewardMatch[1].replace(",", ""))
-          : 0,
-      reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
-    });
-  }
-
-  const seen = new Set<string>();
-  return deals.filter((d) => {
-    if (seen.has(d.code)) return false;
-    seen.add(d.code);
-    return true;
-  });
-}
-
-/**
- * Parse JSON content
- */
-export function parseJSONContent(
-  content: string,
-  source: SourceConfig,
-): ExtractedDeal[] {
-  try {
-    const data = JSON.parse(content);
-    const deals: ExtractedDeal[] = [];
-
-    const items = Array.isArray(data)
-      ? data
-      : data.deals || data.items || [data];
-
-    for (const item of items) {
-      if (item.code || item.referral_code || item.invite_code) {
-        deals.push({
-          code: item.code || item.referral_code || item.invite_code,
-          url:
-            item.url ||
-            item.link ||
-            `https://${source.domain}/invite/${item.code}`,
-          title: item.title || item.name || `${source.domain} Referral`,
-          description: item.description || `Referral code for ${source.domain}`,
-          reward_type: item.reward_type || (item.percent ? "percent" : "cash"),
-          reward_value: item.reward_value || item.amount || item.bonus || 0,
-          reward_currency: item.currency || item.reward_currency,
-          expiry_date: item.expiry || item.expires_at,
-        });
-      }
-    }
-
-    return deals;
-  } catch {
-    return [];
-  }
 }
