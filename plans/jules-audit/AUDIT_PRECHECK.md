@@ -1,3 +1,4 @@
-Status: PASS
-
-No pre-existing issues found by the quality gate.
+Checking formatting...
+All matched files use Prettier code style!
+⚠ YAML validation skipped: python3-yaml not installed; install yamllint
+PASS
