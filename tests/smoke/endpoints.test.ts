@@ -65,7 +65,7 @@ describe("Smoke Tests - HTTP Endpoints", () => {
   });
 
   describe("GET /deals", () => {
-    it("returns 200 or 404", async () => {
+    it("returns 200, 401, or 404", async () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/deals`);
@@ -73,11 +73,12 @@ describe("Smoke Tests - HTTP Endpoints", () => {
         expect(true).toBe(true);
         return;
       }
-      expect([200, 404]).toContain(res.status);
+      // 401 is expected when auth is required, 200 if auth passes, 404 if no deals
+      expect([200, 401, 404]).toContain(res.status);
       if (res.status === 200) {
         const body = await res.json();
         expect(Array.isArray(body)).toBe(true);
-      } else {
+      } else if (res.status === 404) {
         const body = (await res.json()) as any;
         expect(body).toHaveProperty("error");
       }
