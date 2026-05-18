@@ -253,7 +253,7 @@ export default {
       }
 
       // Webhook routes
-      if (path.includes("/webhooks/")) {
+      if (path.startsWith("/webhooks/") || path.startsWith("/api/webhooks/")) {
         const rateLimiter = createRateLimitMiddleware(env, "webhooks");
         const webhookResponse = await rateLimiter(request, () =>
           handleWebhookRoutes(request, env, path),
