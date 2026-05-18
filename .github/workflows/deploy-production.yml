@@ -192,19 +192,29 @@ jobs:
           echo "Seeding E2E test API keys to production KV..."
 
           # Admin key (ddr_admin_test_key_0000000000000000)
+          ADMIN_JSON='{"userId":"e2e-admin","role":"admin",'
+          ADMIN_JSON+='"createdAt":"2025-01-01T00:00:00Z",'
+          ADMIN_JSON+='"rateLimit":{"requestsPerMinute":100,"requestsPerHour":5000}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:36c3c6ac0ed11d5c316838ec88764dba53d2f790446970e30cc50d30afa79a3c' \
-            '{"userId":"e2e-admin","role":"admin","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":100,"requestsPerHour":5000}}'
+            "${ADMIN_JSON}"
 
           # User key (ddr_user_test_key_0000000000000000)
+          USER_JSON='{"userId":"e2e-user","role":"user",'
+          USER_JSON+='"createdAt":"2025-01-01T00:00:00Z",'
+          USER_JSON+='"rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:6d06b29066b183fe10b2978d8e3ad5c2bac0f57740c7f1978fba0edec32dc414' \
-            '{"userId":"e2e-user","role":"user","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
+            "${USER_JSON}"
 
           # Expired key (ddr_expired_test_key_0000000000000000)
+          EXPIRED_JSON='{"userId":"e2e-expired","role":"user",'
+          EXPIRED_JSON+='"createdAt":"2020-01-01T00:00:00Z",'
+          EXPIRED_JSON+='"expiresAt":"2021-01-01T00:00:00Z",'
+          EXPIRED_JSON+='"rateLimit":{"requestsPerMinute":1,"requestsPerHour":10}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:8440f560ecef5acc8a755f55176b2847008907591fab695d3d2e0fd0255502fe' \
-            '{"userId":"e2e-expired","role":"user","createdAt":"2020-01-01T00:00:00Z","expiresAt":"2021-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":1,"requestsPerHour":10}}'
+            "${EXPIRED_JSON}"
 
           echo "✅ E2E test API keys seeded successfully"
 
@@ -393,8 +403,9 @@ jobs:
 
             ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
             if [ -n "${ACCOUNT_ID}" ] && [ -n "${CLOUDFLARE_API_TOKEN}" ]; then
+              CF_API_BASE="https://api.cloudflare.com/client/v4"
               ROLLBACK_RESPONSE=$(curl -sf -X POST \
-                "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/do-deal-relay/deployments/rollback" \
+                "${CF_API_BASE}/accounts/${ACCOUNT_ID}/workers/scripts/do-deal-relay/deployments/rollback" \
                 -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
                 -H "Content-Type: application/json")
 
