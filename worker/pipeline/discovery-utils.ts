@@ -1,6 +1,5 @@
 import { Deal, SourceConfig } from "../types";
 import { generateDealId } from "../lib/crypto";
-import { generateDealId } from "../lib/crypto";
 
 // ============================================================================
 // Constants
@@ -21,8 +20,6 @@ export const DISCOVERY_CONSTANTS = {
   DESCRIPTION_CONTEXT_WINDOW: 300,
   EXPIRY_CONFIDENCE_DATE: 0.8,
   EXPIRY_CONFIDENCE_UNKNOWN: 0.3,
-  MIN_CODE_LENGTH: 6,
-  MAX_CODE_LENGTH: 20,
 } as const;
 
 export interface ExtractedDeal {
@@ -145,26 +142,39 @@ export async function buildDeal(
 }
 
 /**
- * Extract content from context with memoization.
+ * Per-invocation content cache, scoped inside parseHTMLContent to avoid
+ * cross-page data corruption and unbounded memory growth in the
+ * Cloudflare Worker global scope.
  */
-export const contentCache = new Map<string, string>();
+const extractContentCache = new Map<string, string>();
+
+/**
+ * Clear the content extraction cache. Should be called once per pipeline
+ * run or page parse to prevent stale entries from accumulating.
+ */
+export function clearContentCache(): void {
+  extractContentCache.clear();
+}
 
 export function extractContent(
   content: string,
   code: string,
   window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
 ): string {
-  const cacheKey = `${code}:${window}`;
-  const cached = contentCache.get(cacheKey);
+  // Include a content hash in the key so that the same code found on
+  // different pages does not return a stale cached result.
+  const contentHash = content.length.toString(36);
+  const cacheKey = `${contentHash}:${code}:${window}`;
+  const cached = extractContentCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
   const index = content.indexOf(code);
   if (index === -1) {
-    contentCache.set(cacheKey, "");
+    extractContentCache.set(cacheKey, "");
     return "";
   }
   const result = content.slice(Math.max(0, index - window), index + window);
-  contentCache.set(cacheKey, result);
+  extractContentCache.set(cacheKey, result);
   return result;
 }
 
@@ -204,29 +214,32 @@ export function parseHTMLContent(
   source: SourceConfig,
 ): ExtractedDeal[] {
   const deals: ExtractedDeal[] = [];
-  const codePattern = /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
-  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
-  const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
 
-  let match;
-  while ((match = codePattern.exec(content)) !== null) {
-    const code = match[1];
+  // Use literal RegExp patterns to avoid ReDoS risks from dynamic constructors
+  // and to allow the engine to compile them once at module load.
+  const codePattern =
+    /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
+  const urlPattern = /https?:\/\/[^\s"<>]+/i;
+  const rewardPattern =
+    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/i;
+
+  // Use matchAll for clean, type-safe iteration instead of
+  // error-prone while-loop assignment with global regex.
+  for (const codeMatch of content.matchAll(codePattern)) {
+    const code = codeMatch[1];
     if (code === undefined) continue;
 
-    const urlMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(urlPattern);
+    const contextSlice = content.slice(
+      Math.max(0, codeMatch.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
+      codeMatch.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+    );
 
-    const rewardMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(rewardPattern);
+    const urlMatch = contextSlice.match(urlPattern);
+
+    const rewardMatch = contextSlice.match(rewardPattern);
+    // rewardMatch indices: [0]=full, [1]=value, [2]=currency_or_percent
+    const rewardValue = rewardMatch?.[1];
+    const rewardCurrency = rewardMatch?.[2];
 
     deals.push({
       code,
@@ -237,19 +250,15 @@ export function parseHTMLContent(
       title: extractTitle(content, code),
       description: extractDescription(content, code),
       reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
-            ? "percent"
-            : "cash"
-          : "credit",
-      reward_value:
-        rewardMatch && rewardMatch[1]
-          ? parseFloat(rewardMatch[1].replace(",", ""))
-          : 0,
+        rewardCurrency === "%" ? "percent" : rewardCurrency ? "cash" : "credit",
+      reward_value: rewardValue ? parseFloat(rewardValue.replace(",", "")) : 0,
       reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+        rewardCurrency && rewardCurrency !== "%" ? rewardCurrency : undefined,
     });
   }
+
+  // Clear the content cache after each page parse to prevent memory leaks
+  clearContentCache();
 
   const seen = new Set<string>();
   return deals.filter((d) => {

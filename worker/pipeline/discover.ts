@@ -9,7 +9,7 @@ import {
   buildDeal,
   parseHTMLContent,
   parseJSONContent,
-  contentCache,
+  clearContentCache,
 } from "./discovery-utils";
 
 // ============================================================================
@@ -67,7 +67,7 @@ export async function discover(
   activeSources.sort((a, b) => b.trust_initial - a.trust_initial);
 
   // Clear module-level content cache for fresh discovery run
-  contentCache.clear();
+  clearContentCache();
 
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
