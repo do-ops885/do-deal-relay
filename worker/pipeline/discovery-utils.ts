@@ -220,14 +220,18 @@ export function parseHTMLContent(
   const codePattern =
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/i;
+  // Simplified pattern: match reward value (digits, optional decimals) and optional currency
+  // Avoids nested quantifiers that Codacy flags as potentially unsafe.
   const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/i;
+    /(?:reward|bonus|get|earn)\s+\$?(\d[\d,]*\.?\d*)\s*(USD|EUR|GBP|%)?/i;
 
   // Use matchAll for clean, type-safe iteration instead of
   // error-prone while-loop assignment with global regex.
   for (const codeMatch of content.matchAll(codePattern)) {
+    // matchAll returns RegExpMatchArray where capture groups are string | undefined;
+    // since the regex always has a capture group, we assert string when present.
     const code = codeMatch[1];
-    if (code === undefined) continue;
+    if (!code) continue;
 
     const contextSlice = content.slice(
       Math.max(0, codeMatch.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),

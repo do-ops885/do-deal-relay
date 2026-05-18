@@ -6,11 +6,6 @@ import { batchAutoCategorize } from "../lib/categorization";
 // Constants
 // ============================================================================
 
-const NORMALIZE_CONSTANTS = {
-  MIN_CODE_LENGTH: 4,
-  MAX_CODE_LENGTH: 50,
-} as const;
-
 /**
  * Module-level literal regex for code format validation.
  * Using a literal avoids the overhead of constructing a new RegExp
