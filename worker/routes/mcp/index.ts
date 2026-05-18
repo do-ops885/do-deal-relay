@@ -197,7 +197,10 @@ export async function handleMCPRequest(
 
       case "notifications/initialized":
         // Notification, no response needed
-        return new Response(null, { status: 202, headers: getMCPCORSHeaders(request.headers.get("Origin")) });
+        return new Response(null, {
+          status: 202,
+          headers: getMCPCORSHeaders(request.headers.get("Origin")),
+        });
 
       default:
         return createJSONResponse(

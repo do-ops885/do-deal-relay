@@ -27,10 +27,11 @@ interface BenchmarkReport {
 async function benchmark() {
   const args = process.argv.slice(2);
   const thresholdIndex = args.indexOf("--threshold");
-  const thresholdStr = thresholdIndex !== -1 ? args[thresholdIndex + 1] : undefined;
+  const thresholdStr =
+    thresholdIndex !== -1 ? args[thresholdIndex + 1] : undefined;
   const threshold = thresholdStr ? parseInt(thresholdStr, 10) : 5000;
   const jsonIndex = args.indexOf("--json");
-  const jsonPath = jsonIndex !== -1 ? args[jsonIndex + 1] ?? null : null;
+  const jsonPath = jsonIndex !== -1 ? (args[jsonIndex + 1] ?? null) : null;
 
   console.log("=".repeat(60));
   console.log(`  Pipeline Benchmark v${VERSION}`);

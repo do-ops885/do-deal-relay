@@ -116,7 +116,9 @@ export function getAllowedOrigin(origin?: string | null): string {
 /**
  * Build CORS headers for a given origin (or default)
  */
-export function getMCPCORSHeaders(origin?: string | null): Record<string, string> {
+export function getMCPCORSHeaders(
+  origin?: string | null,
+): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": getAllowedOrigin(origin),
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",

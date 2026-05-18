@@ -161,7 +161,9 @@ function formatTable(data: unknown[]): string {
   const rows = data.map((row) =>
     keys
       .map((k) =>
-        String((row as Record<string, unknown>)[k] || "").padEnd(widths[k] ?? 0),
+        String((row as Record<string, unknown>)[k] || "").padEnd(
+          widths[k] ?? 0,
+        ),
       )
       .join(" | "),
   );

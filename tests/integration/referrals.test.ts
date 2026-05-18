@@ -124,7 +124,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     if (response.status !== 200) {
       console.log("Error response:", JSON.stringify(body, null, 2));
@@ -153,7 +153,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
@@ -172,7 +172,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     expect(response.status).toBe(409);
     expect(body.error).toBe("Conflict");
@@ -184,7 +184,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     expect(response.status).toBe(404);
     expect(body.error).toBe("Referral not found");
@@ -214,7 +214,7 @@ describe("Referral Deactivation", () => {
       },
     );
     const getResponse1 = await worker.fetch(getRequest1, mockEnv);
-    const body1 = await getResponse1.json();
+    const body1 = (await getResponse1.json()) as any;
     expect(body1.referral.status).toBe("inactive");
 
     // 2. Reactivate
@@ -233,7 +233,7 @@ describe("Referral Deactivation", () => {
       },
     );
     const getResponse2 = await worker.fetch(getRequest2, mockEnv);
-    const body2 = await getResponse2.json();
+    const body2 = (await getResponse2.json()) as any;
     expect(body2.referral.status).toBe("active");
   });
 
@@ -245,7 +245,7 @@ describe("Referral Deactivation", () => {
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(body.referral.code).toBe("GETME");
