@@ -110,7 +110,7 @@ export const helpCommand: CommandHandler = {
     }
 
     // Show specific command help
-    const commandName = args[0].toLowerCase();
+    const commandName = args[0]!.toLowerCase();
     const command = allCommands.find(
       (c) => c.name === commandName || c.aliases?.includes(commandName),
     );

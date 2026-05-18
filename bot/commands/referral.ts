@@ -31,7 +31,7 @@ export const addCommand: CommandHandler = {
 
     // Smart parsing: if only one arg, extract code from URL
     if (args.length === 1) {
-      url = args[0];
+      url = args[0]!;
       try {
         const parsedUrl = new URL(url);
         // Extract code from path (e.g., /invite/CODE or /ref/CODE)
@@ -44,8 +44,8 @@ export const addCommand: CommandHandler = {
         };
       }
     } else {
-      code = args[0];
-      url = args[1];
+      code = args[0]!;
+      url = args[1]!;
     }
 
     // Validate URL
@@ -144,8 +144,8 @@ export const searchCommand: CommandHandler = {
               : ref.status === "quarantined"
                 ? "⏳"
                 : "🚫";
-          const reward = ref.metadata.reward_value
-            ? ` - ${ref.metadata.reward_value}`
+          const reward = ref.metadata?.reward_value
+            ? ` - ${ref.metadata?.reward_value}`
             : "";
           return `${i + 1}. \`${ref.code}\`${reward}\n   ${statusIcon} ${ref.status}`;
         })
@@ -187,7 +187,7 @@ export const getCommand: CommandHandler = {
       };
     }
 
-    const code = args[0];
+    const code = args[0]!;
 
     try {
       const response = await api.getReferral(code);
@@ -202,8 +202,8 @@ export const getCommand: CommandHandler = {
               ? "⌛ Expired"
               : "🚫 Inactive";
 
-      const reward = ref.metadata.reward_value
-        ? `🎁 **Reward**: ${ref.metadata.reward_value}${ref.metadata.currency ? ` ${ref.metadata.currency}` : ""}\n`
+      const reward = ref.metadata?.reward_value
+        ? `🎁 **Reward**: ${ref.metadata?.reward_value}${ref.metadata?.currency ? ` ${ref.metadata?.currency}` : ""}\n`
         : "";
 
       const deactivated = ref.deactivated_at
@@ -220,9 +220,9 @@ export const getCommand: CommandHandler = {
           `${reward}` +
           `📊 **Status**: ${statusIcon}\n` +
           `🆔 **ID**: \`${ref.id}\`\n` +
-          `📅 **Added**: ${formatDate(ref.submitted_at)}\n` +
+          `📅 **Added**: ${formatDate(ref.submitted_at ?? "")}\n` +
           `${deactivated}` +
-          (ref.metadata.notes ? `📝 **Notes**: ${ref.metadata.notes}\n` : ""),
+          (ref.metadata?.notes ? `📝 **Notes**: ${ref.metadata?.notes}\n` : ""),
         buttons:
           ref.status === "active"
             ? [
@@ -269,7 +269,7 @@ export const deactivateCommand: CommandHandler = {
       };
     }
 
-    const code = args[0];
+    const code = args[0]!;
     const reason =
       (args[1] as
         | "expired"
@@ -321,7 +321,7 @@ export const reactivateCommand: CommandHandler = {
       };
     }
 
-    const code = args[0];
+    const code = args[0]!;
 
     try {
       const response = await api.reactivateReferral(code);

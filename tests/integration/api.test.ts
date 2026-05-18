@@ -676,7 +676,7 @@ describe("API Endpoints", () => {
     });
 
     it("should handle KV errors gracefully", async () => {
-            const brokenEnv = {
+      const brokenEnv = {
         ...mockEnv,
         DEALS_PROD: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
