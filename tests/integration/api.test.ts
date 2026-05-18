@@ -676,19 +676,19 @@ describe("API Endpoints", () => {
     });
 
     it("should handle KV errors gracefully", async () => {
-      const brokenEnv = {
+            const brokenEnv = {
         ...mockEnv,
         DEALS_PROD: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_PROD,
+        } as any,
         DEALS_LOG: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
           put: vi.fn().mockRejectedValue(new Error("KV error")),
           list: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_LOG,
+        } as any,
         DEALS_LOCK: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_LOCK,
+        } as any,
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");

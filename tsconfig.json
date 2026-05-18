@@ -18,9 +18,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./worker",
-    "types": ["@cloudflare/workers-types"]
+    "rootDir": ".",
+    "types": ["@cloudflare/workers-types", "@playwright/test", "vitest"]
   },
-  "include": ["worker/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["worker/**/*.ts", "bot/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
