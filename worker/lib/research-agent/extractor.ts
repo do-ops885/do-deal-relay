@@ -12,6 +12,23 @@ export interface ExtractedReferral {
 }
 
 /**
+ * Repeatedly remove script/style blocks until no further changes occur.
+ * This avoids incomplete multi-character sanitization where dangerous
+ * substrings can reappear after a single replacement pass.
+ */
+function stripScriptAndStyleTags(input: string): string {
+  let previous: string;
+  let current = input;
+  do {
+    previous = current;
+    current = current
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+  } while (current !== previous);
+  return current;
+}
+
+/**
  * Simple HTML parser to extract content
  */
 export function parseHtmlContent(url: string, html: string): PageContentResult {
@@ -41,9 +58,7 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   }
 
   // Remove script and style tags for text extraction
-  let textContent = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+  let textContent = stripScriptAndStyleTags(html)
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
