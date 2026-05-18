@@ -336,7 +336,7 @@ describe("Webhook Route Dispatcher", () => {
         body: "{}",
       });
       const response = await handleIncomingWebhookRequest(request, env, "p1");
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(401);
     });
 
     it("should process request with all required headers", async () => {

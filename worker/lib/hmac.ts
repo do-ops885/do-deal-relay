@@ -45,6 +45,35 @@ export async function generateHmacSignature(
 }
 
 /**
+ * Unified webhook signature verification for Request objects
+ */
+export async function verifyWebhookSignature(
+  request: Request,
+  secret: string,
+): Promise<SignatureResult> {
+  const signatureHeader = request.headers.get("x-webhook-signature");
+  const timestampHeader = request.headers.get("x-webhook-timestamp");
+
+  if (!signatureHeader || !timestampHeader) {
+    return { valid: false, error: "Missing signature or timestamp headers" };
+  }
+
+  const parsed = parseSignatureHeader(signatureHeader);
+  if (!parsed) {
+    return { valid: false, error: "Invalid signature header format" };
+  }
+
+  const body = await request.clone().text();
+  const timestamp = parseInt(timestampHeader, 10);
+
+  if (isNaN(timestamp)) {
+    return { valid: false, error: "Invalid timestamp" };
+  }
+
+  return await verifyHmacSignature(body, parsed.signature, secret, timestamp);
+}
+
+/**
  * Verify HMAC-SHA256 signature with timing-safe comparison
  * Includes timestamp validation to prevent replay attacks
  */

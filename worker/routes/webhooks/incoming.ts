@@ -43,7 +43,7 @@ export async function handleIncomingWebhookRequest(
             "X-Webhook-Id",
           ],
         },
-        400,
+        401,
       );
     }
 
