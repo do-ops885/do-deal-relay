@@ -282,7 +282,7 @@ describe("Auth", () => {
 
       const [, , options] = mockPut.mock.calls[0];
       expect(options).toMatchObject({ expirationTtl: 365 * 86400 });
-      expect(options).toHaveProperty('metadata');
+      expect(options).toHaveProperty("metadata");
     });
 
     it("should use absolute expiration when expiresAt is provided", async () => {
@@ -296,9 +296,11 @@ describe("Auth", () => {
       });
 
       const [, , options] = mockPut.mock.calls[0];
-      expect(options).toHaveProperty('expiration');
-      expect(options.expiration).toBe(Math.floor(new Date(expiresAt).getTime() / 1000));
-      expect(options).toHaveProperty('metadata');
+      expect(options).toHaveProperty("expiration");
+      expect(options.expiration).toBe(
+        Math.floor(new Date(expiresAt).getTime() / 1000),
+      );
+      expect(options).toHaveProperty("metadata");
     });
 
     it("should preserve all metadata fields", async () => {
