@@ -52,10 +52,18 @@ export async function handleIncomingWebhookRequest(
       );
     }
 
-    // Get headers for downstream processing
+    // Validate webhook ID header (verifyWebhookSignature already checked signature + timestamp)
+    const webhookId = request.headers.get("x-webhook-id");
+    if (!webhookId) {
+      return jsonResponse(
+        { error: "Missing required headers", required: ["X-Webhook-Id"] },
+        401,
+      );
+    }
+
+    // Get remaining headers for downstream processing
     const signature = request.headers.get("x-webhook-signature") || "";
     const timestamp = request.headers.get("x-webhook-timestamp") || "";
-    const webhookId = request.headers.get("x-webhook-id") || "";
     const idempotencyKey = request.headers.get("idempotency-key") || undefined;
 
     // Read payload
