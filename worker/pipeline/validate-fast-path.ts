@@ -37,7 +37,7 @@ export async function validateDealFastPath(
     fingerprint: string;
     source?: string;
     traceId?: string;
-    metrics?: any;
+    metrics?: unknown;
   },
 ): Promise<FastPathResult> {
   // Use STAGING_KV for validation cache as proposed, or fallback to DEALS_LOG if STAGING_KV is not ideal
