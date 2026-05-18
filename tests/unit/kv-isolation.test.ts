@@ -32,14 +32,16 @@ describe("KV Isolation Validation", () => {
     mockKV.get.mockResolvedValue("production");
 
     // We need to re-import to get fresh state if we want to bypass the cache
-    const { validateKVIsolation } = await import("../../worker/lib/config-utils");
+    const { validateKVIsolation } =
+      await import("../../worker/lib/config-utils");
     await expect(validateKVIsolation(validEnv)).resolves.not.toThrow();
   });
 
   it("should pass if KVs have no environment tag (backward compatibility)", async () => {
     mockKV.get.mockResolvedValue(null);
 
-    const { validateKVIsolation } = await import("../../worker/lib/config-utils");
+    const { validateKVIsolation } =
+      await import("../../worker/lib/config-utils");
     await expect(validateKVIsolation(validEnv)).resolves.not.toThrow();
   });
 
@@ -49,7 +51,8 @@ describe("KV Isolation Validation", () => {
       return Promise.resolve(null);
     });
 
-    const { validateKVIsolation } = await import("../../worker/lib/config-utils");
+    const { validateKVIsolation } =
+      await import("../../worker/lib/config-utils");
     await expect(validateKVIsolation(validEnv)).rejects.toThrow(
       'KV Isolation Failure: DEALS_PROD is tagged for "staging" but worker is running in "production"',
     );
@@ -58,7 +61,8 @@ describe("KV Isolation Validation", () => {
   it("should skip validation in development", async () => {
     const devEnv = { ...validEnv, ENVIRONMENT: "development" };
 
-    const { validateKVIsolation } = await import("../../worker/lib/config-utils");
+    const { validateKVIsolation } =
+      await import("../../worker/lib/config-utils");
     await validateKVIsolation(devEnv);
 
     expect(mockKV.get).not.toHaveBeenCalled();
