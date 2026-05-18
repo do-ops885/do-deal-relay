@@ -28,8 +28,8 @@ export async function handleCreateApiKey(
       );
     }
 
-    const validRoles = ["admin", "user", "readonly"] as const;
-    if (!validRoles.includes(body.role as any)) {
+    const validRoles: readonly string[] = ["admin", "user", "readonly"];
+    if (!validRoles.includes(body.role ?? "")) {
       return jsonResponse(
         { error: `Invalid role. Must be one of: ${validRoles.join(", ")}` },
         400,

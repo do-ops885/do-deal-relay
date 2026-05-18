@@ -108,9 +108,21 @@ export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const keys: ApiKeyConfig[] = [];
 
   for (const key of list.keys) {
+    // Use metadata from kv.list (single call) instead of individual gets (N+1 pattern)
     const metadata = key.metadata as ApiKeyConfig | undefined;
     if (metadata) {
       keys.push(metadata);
+    } else {
+      // Fallback: fetch metadata individually only when not included in list response
+      const value = await kv.get(key.name);
+      if (value) {
+        try {
+          const parsed = JSON.parse(value) as ApiKeyConfig;
+          keys.push(parsed);
+        } catch {
+          // Skip malformed entries
+        }
+      }
     }
   }
 
