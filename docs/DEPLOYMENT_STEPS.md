@@ -115,13 +115,13 @@ curl https://do-deal-relay.<your-subdomain>.workers.dev/deals
 
 ### Staging (Required)
 
-| Binding       | ID (example)                             |
-| ------------- | ---------------------------------------- |
-| DEALS_PROD    | b0db85b92fae45c1895152737ab72649-staging-prod |
-| DEALS_STAGING | b0db85b92fae45c1895152737ab72649-staging      |
-| DEALS_LOG     | 1f1a901fd6fb4dffbdcc86aa4a914ba8-staging      |
-| DEALS_LOCK    | e3ab520eafd5430ab72978e78bdd257e-staging      |
-| DEALS_SOURCES | be3c0fc148b749b49a59aa7cfa23e3ac-staging      |
+| Binding       | ID (example)                     |
+| ------------- | -------------------------------- |
+| DEALS_PROD    | a1b2c3d4e5f6789012345678abcdef01 |
+| DEALS_STAGING | b2c3d4e5f6789012345678abcdef0123 |
+| DEALS_LOG     | c3d4e5f6789012345678abcdef012345 |
+| DEALS_LOCK    | d4e5f6789012345678abcdef01234567 |
+| DEALS_SOURCES | e5f6789012345678abcdef0123456789 |
 
 ## Post-Deployment Monitoring
 

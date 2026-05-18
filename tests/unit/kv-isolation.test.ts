@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { validateKVIsolation } from "../../worker/lib/config-utils";
 import type { Env } from "../../worker/types";
-import type { KVNamespace } from "@cloudflare/workers-types";
 
 describe("KV Isolation Validation", () => {
   let mockKV: any;
