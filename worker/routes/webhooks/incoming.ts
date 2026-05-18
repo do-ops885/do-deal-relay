@@ -6,6 +6,8 @@ import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
 import { handleIncomingWebhook } from "../../lib/webhook/index";
+import { verifyWebhookSignature } from "../../lib/hmac";
+import { getWebhookPartner } from "../../lib/webhook/subscriptions";
 import { jsonResponse } from "./types";
 
 // ============================================================================
@@ -27,36 +29,59 @@ export async function handleIncomingWebhookRequest(
       );
     }
 
-    // Get headers
-    const signature = request.headers.get("x-webhook-signature") || "";
-    const timestamp = request.headers.get("x-webhook-timestamp") || "";
-    const webhookId = request.headers.get("x-webhook-id") || "";
-    const idempotencyKey = request.headers.get("idempotency-key") || undefined;
+    // Look up partner for secret (needed for HMAC verification)
+    const partner = await getWebhookPartner(env, partnerId);
+    if (!partner) {
+      return jsonResponse({ error: "Unknown partner" }, 401);
+    }
+    if (!partner.active) {
+      return jsonResponse({ error: "Partner deactivated" }, 403);
+    }
 
-    if (!signature || !timestamp || !webhookId) {
+    // Verify webhook signature at request boundary (defense-in-depth)
+    const verification = await verifyWebhookSignature(request, partner.secret);
+    if (!verification.valid) {
+      logger.warn("Webhook signature verification failed", {
+        component: "webhook",
+        partner_id: partnerId,
+        error: verification.error,
+      });
       return jsonResponse(
-        {
-          error: "Missing required headers",
-          required: [
-            "X-Webhook-Signature",
-            "X-Webhook-Timestamp",
-            "X-Webhook-Id",
-          ],
-        },
-        400,
+        { error: `Invalid webhook signature: ${verification.error}` },
+        401,
       );
     }
+
+    // Validate webhook ID header (verifyWebhookSignature already checked signature + timestamp)
+    const webhookId = request.headers.get("x-webhook-id");
+    if (!webhookId) {
+      return jsonResponse(
+        { error: "Missing required headers", required: ["X-Webhook-Id"] },
+        401,
+      );
+    }
+
+    // Get remaining headers for downstream processing
+    const signature = request.headers.get("x-webhook-signature") || "";
+    const timestamp = request.headers.get("x-webhook-timestamp") || "";
+    const idempotencyKey = request.headers.get("idempotency-key") || undefined;
 
     // Read payload
     const payload = await request.text();
 
-    // Process webhook
-    const result = await handleIncomingWebhook(env, partnerId, payload, {
-      signature,
-      timestamp,
-      webhookId,
-      idempotencyKey,
-    });
+    // Process webhook (HMAC already verified at route level)
+    const result = await handleIncomingWebhook(
+      env,
+      partnerId,
+      payload,
+      {
+        signature,
+        timestamp,
+        webhookId,
+        idempotencyKey,
+      },
+      true,
+    );
 
     return jsonResponse(
       {
