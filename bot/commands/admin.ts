@@ -110,7 +110,7 @@ export const helpCommand: CommandHandler = {
     }
 
     const aliases =
-      command.aliases && command.aliases.length > 0
+    const commandName = args[0]?.toLowerCase();
         ? `\n**Aliases**: ${command.aliases.map((a) => `\/${a}`).join(", ")}`
         : "";
 
