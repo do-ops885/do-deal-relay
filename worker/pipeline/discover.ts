@@ -191,9 +191,7 @@ async function discoverFromSource(
             throw new Error("Payload exceeds size limit");
           }
 
-          const extracted: ExtractedDeal[] = contentType.includes(
-            "application/json",
-          )
+          const extracted = contentType.includes("application/json")
             ? parseJSONContent(content, source)
             : parseHTMLContent(content, source);
 

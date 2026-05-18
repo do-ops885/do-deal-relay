@@ -62,7 +62,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig } from "./lib/config-utils";
+import { validateConfig, validateKVIsolation } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -73,6 +73,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
@@ -175,7 +176,7 @@ export default {
         }
         if (code && action === "reactivate") {
           return withAuth(request, env, undefined, () =>
-            handleReactivateReferral(code, env),
+            handleReactivateReferral(request, code, env),
           );
         }
       }
@@ -253,14 +254,8 @@ export default {
       }
 
       // Webhook routes
-      if (path.startsWith("/webhooks/") || path.startsWith("/api/webhooks/")) {
-        const rateLimiter = createRateLimitMiddleware(env, "webhooks");
-        const webhookResponse = await rateLimiter(request, async () => {
-          const result = await handleWebhookRoutes(request, env, path);
-          return result || jsonResponse({ error: "Not found" }, 404, request);
-        });
-        return webhookResponse;
-      }
+      const webhookResponse = await handleWebhookRoutes(request, env, path);
+      if (webhookResponse) return webhookResponse;
 
       // Experience Feedback API
       if (path === "/api/experience" && request.method === "POST") {
@@ -304,6 +299,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Scheduled execution configuration error:", error);
       await notify(env, {

@@ -1,4 +1,4 @@
-import { Deal, SourceConfig, PipelineContext, Env } from "../types";
+import { Deal, SourceConfig } from "../types";
 import { CONFIG } from "../config";
 import { generateDealId } from "../lib/crypto";
 import { extractBySelectors } from "../lib/html-utils";
@@ -100,7 +100,113 @@ export function calculateAdaptiveBudget(
 }
 
 /**
- * Parse HTML content using selectors
+ * Build a complete Deal from extracted data
+ */
+export async function buildDeal(
+  extracted: ExtractedDeal,
+  source: SourceConfig,
+): Promise<Deal> {
+  const domain = source.domain;
+  const now = new Date().toISOString();
+
+  const id = await generateDealId(
+    domain,
+    extracted.code,
+    extracted.reward_type,
+  );
+
+  return {
+    id,
+    source: {
+      url: extracted.url,
+      domain,
+      discovered_at: now,
+      trust_score: source.trust_initial,
+    },
+    title: extracted.title,
+    description: extracted.description,
+    code: extracted.code,
+    url: extracted.url,
+    reward: {
+      type: extracted.reward_type as "cash" | "credit" | "percent" | "item",
+      value: extracted.reward_value,
+      currency: extracted.reward_currency,
+    },
+    expiry: {
+      date: extracted.expiry_date,
+      confidence: extracted.expiry_date
+        ? DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_DATE
+        : DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_UNKNOWN,
+      type: extracted.expiry_date ? "hard" : "unknown",
+    },
+    metadata: {
+      category: ["referral", "signup"],
+      tags: [domain, extracted.reward_type],
+      normalized_at: now,
+      confidence_score: source.trust_initial,
+      status: "active",
+    },
+  };
+}
+
+/**
+ * Extract content from context with memoization.
+ */
+const contentCache = new Map<string, string>();
+
+export function clearContentCache(): void {
+  contentCache.clear();
+}
+
+function extractContent(
+  content: string,
+  code: string,
+  window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+): string {
+  const cacheKey = `${code}:${window}`;
+  const cached = contentCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const index = content.indexOf(code);
+  if (index === -1) {
+    contentCache.set(cacheKey, "");
+    return "";
+  }
+  const result = content.slice(Math.max(0, index - window), index + window);
+  contentCache.set(cacheKey, result);
+  return result;
+}
+
+export function extractTitle(content: string, code: string): string {
+  const context = extractContent(content, code);
+  const titleMatch = context.match(/<title>([^<]+)/i);
+  if (titleMatch?.[1]) return titleMatch[1].trim();
+
+  const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
+  if (h1Match?.[1]) return h1Match[1].trim();
+
+  return "Referral Deal";
+}
+
+export function extractDescription(content: string, code: string): string {
+  const context = extractContent(
+    content,
+    code,
+    DISCOVERY_CONSTANTS.DESCRIPTION_CONTEXT_WINDOW,
+  );
+  const metaMatch = context.match(
+    /<meta[^>]*description[^>]*content="([^"]+)"/i,
+  );
+  if (metaMatch?.[1]) return metaMatch[1].trim();
+
+  const pMatch = context.match(/<p[^>]*>([^<]+)/i);
+  if (pMatch?.[1]) return pMatch[1].trim();
+
+  return `Use referral code ${code}`;
+}
+
+/**
+ * Parse HTML content using selectors first, with regex as fallback
  */
 export function parseHTMLContent(
   content: string,
@@ -108,7 +214,7 @@ export function parseHTMLContent(
 ): ExtractedDeal[] {
   const deals: ExtractedDeal[] = [];
 
-  // 1. Try CSS selectors if available
+  // 1. Try CSS selectors if available (primary strategy)
   if (Object.keys(source.selectors || {}).length > 0) {
     const extracted = extractBySelectors(content, source.selectors!);
     const codes = extracted["code"] || [];
@@ -118,11 +224,11 @@ export function parseHTMLContent(
         if (!code) continue;
 
         const rewards = extracted["reward"];
-        const reward = rewards?.[i] || rewards?.[0] || "";
+        const reward = rewards[i] || rewards?.[0] || "";
 
         const urls = extracted["url"];
         const url =
-          urls?.[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
+          urls[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
         const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
@@ -254,110 +360,4 @@ export function parseJSONContent(
   } catch {
     return [];
   }
-}
-
-/**
- * Build a complete Deal from extracted data
- */
-export async function buildDeal(
-  extracted: ExtractedDeal,
-  source: SourceConfig,
-): Promise<Deal> {
-  const domain = source.domain;
-  const now = new Date().toISOString();
-
-  const id = await generateDealId(
-    domain,
-    extracted.code,
-    extracted.reward_type,
-  );
-
-  return {
-    id,
-    source: {
-      url: extracted.url,
-      domain,
-      discovered_at: now,
-      trust_score: source.trust_initial,
-    },
-    title: extracted.title,
-    description: extracted.description,
-    code: extracted.code,
-    url: extracted.url,
-    reward: {
-      type: extracted.reward_type as "cash" | "credit" | "percent" | "item",
-      value: extracted.reward_value,
-      currency: extracted.reward_currency,
-    },
-    expiry: {
-      date: extracted.expiry_date,
-      confidence: extracted.expiry_date
-        ? DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_DATE
-        : DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_UNKNOWN,
-      type: extracted.expiry_date ? "hard" : "unknown",
-    },
-    metadata: {
-      category: ["referral", "signup"],
-      tags: [domain, extracted.reward_type],
-      normalized_at: now,
-      confidence_score: source.trust_initial,
-      status: "active",
-    },
-  };
-}
-
-/**
- * Extract content from context with memoization.
- */
-const contentCache = new Map<string, string>();
-
-export function clearContentCache(): void {
-  contentCache.clear();
-}
-
-function extractContent(
-  content: string,
-  code: string,
-  window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-): string {
-  const cacheKey = `${code}:${window}`;
-  const cached = contentCache.get(cacheKey);
-  if (cached !== undefined) return cached;
-
-  const index = content.indexOf(code);
-  if (index === -1) {
-    contentCache.set(cacheKey, "");
-    return "";
-  }
-  const result = content.slice(Math.max(0, index - window), index + window);
-  contentCache.set(cacheKey, result);
-  return result;
-}
-
-export function extractTitle(content: string, code: string): string {
-  const context = extractContent(content, code);
-  const titleMatch = context.match(/<title>([^<]+)/i);
-  if (titleMatch?.[1]) return titleMatch[1].trim();
-
-  const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
-  if (h1Match?.[1]) return h1Match[1].trim();
-
-  return "Referral Deal";
-}
-
-export function extractDescription(content: string, code: string): string {
-  const context = extractContent(
-    content,
-    code,
-    DISCOVERY_CONSTANTS.DESCRIPTION_CONTEXT_WINDOW,
-  );
-  const metaMatch = context.match(
-    /<meta[^>]*description[^>]*content="([^"]+)"/i,
-  );
-  if (metaMatch?.[1]) return metaMatch[1].trim();
-
-  const pMatch = context.match(/<p[^>]*>([^<]+)/i);
-  if (pMatch?.[1]) return pMatch[1].trim();
-
-  return `Use referral code ${code}`;
 }
