@@ -27,9 +27,9 @@ export function extractBySelectors(
       .map((_, el) => {
         // For <a> tags, extract the href attribute instead of text content
         // so that URL selectors return actual links rather than link text.
-        const href = $(el).attr("href");
-        if (href) {
-          return href;
+        if ($(el).is("a")) {
+          const href = $(el).attr("href");
+          if (href) return href;
         }
         return $(el).text().trim();
       })

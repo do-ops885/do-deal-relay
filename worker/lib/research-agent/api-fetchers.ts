@@ -133,7 +133,6 @@ export async function fetchGitHubTrending(
 
   // Build search query with referral-related terms
   const query = `${searchQuery} referral OR invite OR promo`;
-  const encodedQuery = encodeURIComponent(query);
 
   const headers: { [key: string]: string } = {
     Accept: "application/vnd.github+json",
@@ -145,14 +144,18 @@ export async function fetchGitHubTrending(
   }
 
   try {
-    const response = await fetch(
-      `https://api.github.com/search/repositories?q=${encodedQuery}&sort=stars&order=desc&per_page=${limit}`,
-      {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(10000),
-      },
-    );
+    // Use URL constructor to safely build the request URL and prevent SSRF
+    const requestUrl = new URL("https://api.github.com/search/repositories");
+    requestUrl.searchParams.set("q", query);
+    requestUrl.searchParams.set("sort", "stars");
+    requestUrl.searchParams.set("order", "desc");
+    requestUrl.searchParams.set("per_page", String(limit));
+
+    const response = await fetch(requestUrl.toString(), {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(10000),
+    });
 
     const fetchDurationMs = Date.now() - startTime;
 

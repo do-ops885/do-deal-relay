@@ -352,21 +352,19 @@ function parseHTMLContent(
   const selectors = source.selectors || {};
 
   // 1. Try CSS selectors if available
-  if (source.selectors && Object.keys(source.selectors).length > 0) {
-    const extracted = extractBySelectors(content, source.selectors);
-    const codes = extracted["code"];
-    if (codes && codes.length > 0) {
+  if (Object.keys(selectors).length > 0) {
+    const extracted = extractBySelectors(content, selectors);
+    const codes = extracted["code"] || [];
+    if (codes.length > 0) {
       for (let i = 0; i < codes.length; i++) {
         const code = codes[i];
         if (!code) continue;
 
         const rewards = extracted["reward"];
         const urls = extracted["url"];
-        const reward = (rewards && rewards[i]) || (rewards && rewards[0]) || "";
+        const reward = rewards?.[i] || rewards?.[0] || "";
         const url =
-          (urls && urls[i]) ||
-          (urls && urls[0]) ||
-          `https://${source.domain}/invite/${code}`;
+          urls?.[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
         const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
@@ -425,7 +423,7 @@ function parseHTMLContent(
     const rewardCurrency = rewardMatch?.[2];
 
     deals.push({
-      code,
+      code: code.toUpperCase(),
       url:
         urlMatch && urlMatch[0]
           ? urlMatch[0]

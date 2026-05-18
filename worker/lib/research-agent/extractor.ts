@@ -168,7 +168,7 @@ export function extractWithContext(
     // Reset regex state
     pattern.lastIndex = 0;
 
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = pattern.exec(content)) !== null) {
       const matchedText = match[1] ?? match[0]; // Use capture group 1 if exists
       if (!matchedText) continue;
