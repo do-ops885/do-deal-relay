@@ -1,9 +1,4 @@
-import {
-  Deal,
-  SourceConfig,
-  PipelineContext,
-  Env,
-} from "../types";
+import { Deal, SourceConfig, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { generateDealId } from "../lib/crypto";
 import { extractBySelectors } from "../lib/html-utils";
@@ -114,19 +109,20 @@ export function parseHTMLContent(
   const deals: ExtractedDeal[] = [];
 
   // 1. Try CSS selectors if available
-  if (source.selectors && Object.keys(source.selectors).length > 0) {
-    const extracted = extractBySelectors(content, source.selectors);
-    const codes = extracted["code"];
-    if (codes && codes.length > 0) {
+  if (Object.keys(source.selectors || {}).length > 0) {
+    const extracted = extractBySelectors(content, source.selectors!);
+    const codes = extracted["code"] || [];
+    if (codes.length > 0) {
       for (let i = 0; i < codes.length; i++) {
         const code = codes[i];
         if (!code) continue;
 
-        const rewardArr = extracted["reward"];
-        const reward = (rewardArr && (rewardArr[i] || rewardArr[0])) || "";
+        const rewards = extracted["reward"];
+        const reward = rewards?.[i] || rewards?.[0] || "";
 
-        const urlArr = extracted["url"];
-        const url = (urlArr && (urlArr[i] || urlArr[0])) || `https://${source.domain}/invite/${code}`;
+        const urls = extracted["url"];
+        const url =
+          urls?.[i] || urls?.[0] || `https://${source.domain}/invite/${code}`;
 
         // Simple heuristic for reward parsing from selector text
         const rewardValueMatch = reward.match(/\$?([0-9,]+(?:\.[0-9]+)?)/);
@@ -139,7 +135,7 @@ export function parseHTMLContent(
         const isPercent = reward.includes("%");
 
         deals.push({
-          code,
+          code: code.toUpperCase(),
           url,
           title: extractTitle(content, code),
           description: extractDescription(content, code),
@@ -152,10 +148,17 @@ export function parseHTMLContent(
           reward_currency: rewardCurrency,
         });
       }
+      // Selector extraction succeeded — return early, use regex only as fallback
+      const seen = new Set<string>();
+      return deals.filter((d) => {
+        if (seen.has(d.code)) return false;
+        seen.add(d.code);
+        return true;
+      });
     }
   }
 
-  // 2. Always run regex extraction as it might find more codes
+  // 2. Fallback: regex extraction when selectors are unavailable or found nothing
   const codePattern = new RegExp(
     `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
     "gi",
@@ -184,7 +187,7 @@ export function parseHTMLContent(
       .match(rewardPattern);
 
     deals.push({
-      code,
+      code: code.toUpperCase(),
       url:
         urlMatch && urlMatch[0]
           ? urlMatch[0]

@@ -34,8 +34,8 @@ export async function fetchProductHuntDeals(
   }
 
   const query = `
-    query {
-      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) {
+    query($limit: Int!, $searchQuery: String!) {
+      posts(first: $limit, order: RANKING, search: {query: $searchQuery}) {
         edges {
           node {
             id
@@ -69,7 +69,7 @@ export async function fetchProductHuntDeals(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, variables: { limit, searchQuery } }),
       signal: AbortSignal.timeout(10000),
     });
 
@@ -133,7 +133,6 @@ export async function fetchGitHubTrending(
 
   // Build search query with referral-related terms
   const query = `${searchQuery} referral OR invite OR promo`;
-  const encodedQuery = encodeURIComponent(query);
 
   const headers: { [key: string]: string } = {
     Accept: "application/vnd.github+json",
@@ -145,14 +144,17 @@ export async function fetchGitHubTrending(
   }
 
   try {
-    const response = await fetch(
-      `https://api.github.com/search/repositories?q=${encodedQuery}&sort=stars&order=desc&per_page=${limit}`,
-      {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(10000),
-      },
-    );
+    const requestUrl = new URL("https://api.github.com/search/repositories");
+    requestUrl.searchParams.set("q", query);
+    requestUrl.searchParams.set("sort", "stars");
+    requestUrl.searchParams.set("order", "desc");
+    requestUrl.searchParams.set("per_page", String(limit));
+
+    const response = await fetch(requestUrl.toString(), {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(10000),
+    });
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -198,19 +200,19 @@ export async function fetchHackerNewsDeals(
 ): Promise<FetchResult> {
   const startTime = Date.now();
 
-  const encodedQuery = encodeURIComponent(searchQuery);
-
   try {
-    const response = await fetch(
-      `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(8000),
+    const requestUrl = new URL("https://hn.algolia.com/api/v1/search");
+    requestUrl.searchParams.set("query", searchQuery);
+    requestUrl.searchParams.set("tags", "story");
+    requestUrl.searchParams.set("hitsPerPage", String(limit));
+
+    const response = await fetch(requestUrl.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
       },
-    );
+      signal: AbortSignal.timeout(8000),
+    });
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -327,19 +329,23 @@ export async function fetchRedditDeals(
   try {
     // Search across multiple subreddits
     const subredditQuery = subreddits.join("+");
-    const encodedQuery = encodeURIComponent(searchQuery);
 
-    const response = await fetch(
-      `https://oauth.reddit.com/r/${subredditQuery}/search?q=${encodedQuery}&sort=new&limit=${limit}&raw_json=1`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
-        },
-        signal: AbortSignal.timeout(10000),
-      },
+    const requestUrl = new URL(
+      `https://oauth.reddit.com/r/${subredditQuery}/search`,
     );
+    requestUrl.searchParams.set("q", searchQuery);
+    requestUrl.searchParams.set("sort", "new");
+    requestUrl.searchParams.set("limit", String(limit));
+    requestUrl.searchParams.set("raw_json", "1");
+
+    const response = await fetch(requestUrl.toString(), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -387,19 +393,19 @@ export async function fetchRedditPublic(
 
   try {
     // Use Reddit's JSON endpoint (has CORS restrictions in browsers but works in workers)
-    const encodedQuery = encodeURIComponent(searchQuery);
+    const requestUrl = new URL("https://www.reddit.com/r/deals/search.json");
+    requestUrl.searchParams.set("q", searchQuery);
+    requestUrl.searchParams.set("sort", "new");
+    requestUrl.searchParams.set("limit", String(limit));
 
-    const response = await fetch(
-      `https://www.reddit.com/r/deals/search.json?q=${encodedQuery}&sort=new&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "DealDiscoveryBot/1.0",
-        },
-        signal: AbortSignal.timeout(10000),
+    const response = await fetch(requestUrl.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "DealDiscoveryBot/1.0",
       },
-    );
+      signal: AbortSignal.timeout(10000),
+    });
 
     const fetchDurationMs = Date.now() - startTime;
 
