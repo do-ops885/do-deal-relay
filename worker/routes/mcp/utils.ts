@@ -110,7 +110,7 @@ export function getAllowedOrigin(origin?: string | null): string {
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return origin;
   }
-  return ALLOWED_ORIGINS[0]!;
+  return ALLOWED_ORIGINS[0] ?? "https://do-deal-relay.com";
 }
 
 /**

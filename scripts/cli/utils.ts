@@ -36,8 +36,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
         result.flags[flag] = true;
         i++;
       }
-    } else if (arg!.startsWith("-")) {
-      const flag = arg!.slice(1);
+    } else if (arg.startsWith("-")) {
+      const flag = arg.slice(1);
       const nextArg = args[i + 1];
       if (nextArg && !nextArg.startsWith("-")) {
         result.flags[flag] = nextArg;
