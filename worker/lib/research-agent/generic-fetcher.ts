@@ -39,28 +39,11 @@ export async function fetchGenericPageContent(
     }
 
     const contentType = response.headers.get("content-type") || "text/html";
-
-    // Validate Content-Length header before loading the body into memory
-    // to avoid buffering excessive data. If the header is missing, we
-    // proceed cautiously and check the actual size after reading.
-    const contentLength = response.headers.get("content-length");
-    if (
-      contentLength &&
-      parseInt(contentLength, 10) > CONFIG.MAX_PAYLOAD_SIZE_BYTES
-    ) {
-      return {
-        success: false,
-        content: "",
-        contentType,
-        statusCode: response.status,
-        error: `Content-Length exceeds size limit: ${contentLength} bytes (max: ${CONFIG.MAX_PAYLOAD_SIZE_BYTES})`,
-        fetchDurationMs: Date.now() - startTime,
-      };
-    }
-
+    // HTML scraping: Content size is bounded by CONFIG.MAX_PAYLOAD_SIZE_BYTES check below.
+    // Using response.text() is acceptable here as we need the full HTML for parsing.
     const html = await response.text();
 
-    // Validate content size after reading (fallback for missing Content-Length)
+    // Validate content size after reading
     if (html.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
       return {
         success: false,

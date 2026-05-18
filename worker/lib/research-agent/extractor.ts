@@ -28,7 +28,8 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   // Extract all meta tags
   const metaTags: MetaTags = {};
   const metaRegex = /<meta[^>]*>/gi;
-  for (const metaMatch of html.matchAll(metaRegex)) {
+  let metaMatch;
+  while ((metaMatch = metaRegex.exec(html)) !== null) {
     const tag = metaMatch[0];
     if (tag) {
       const nameMatch = tag.match(/name=["']([^"']*)["']/i);
@@ -53,7 +54,8 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   // Extract links
   const links: Array<{ text: string; href: string }> = [];
   const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([^<]*)<\/a>/gi;
-  for (const linkMatch of html.matchAll(linkRegex)) {
+  let linkMatch;
+  while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
     if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
@@ -168,7 +170,7 @@ export function extractWithContext(
     // Reset regex state
     pattern.lastIndex = 0;
 
-    let match: RegExpExecArray | null;
+    let match;
     while ((match = pattern.exec(content)) !== null) {
       const matchedText = match[1] ?? match[0]; // Use capture group 1 if exists
       if (!matchedText) continue;
