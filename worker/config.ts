@@ -302,4 +302,4 @@ export const VALIDATION_GATES = [
 /**
  * Type representing a valid validation gate name.
  */
-export type ValidationGate = typeof VALIDATION_GATES[number];
+export type ValidationGate = (typeof VALIDATION_GATES)[number];
