@@ -1,5 +1,5 @@
 import { Deal, SourceConfig } from "../types";
-import { CONFIG } from "../config";
+import { generateDealId } from "../lib/crypto";
 import { generateDealId } from "../lib/crypto";
 
 // ============================================================================
