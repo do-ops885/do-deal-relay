@@ -87,7 +87,6 @@ jobs:
 
           echo "❌ Staging health check failed after 5 attempts"
           exit 1
-        continue-on-error: true
 
       - name: Run smoke tests on staging
         run: |

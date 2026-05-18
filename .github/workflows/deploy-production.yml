@@ -53,7 +53,6 @@ jobs:
 
       - name: Full test suite
         run: npm run test:ci
-        continue-on-error: true
 
       - name: Run quality gate
         run: ./scripts/quality_gate.sh
@@ -363,11 +362,56 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          echo "Attempting to rollback..."
-          # Get deployment list and rollback to previous
-          wrangler deployments list --name do-deal-relay \
-            --env production || true
-          echo "Please manually rollback via Cloudflare dashboard if needed"
+          echo "Attempting automatic rollback to previous deployment..."
+
+          # Use wrangler rollback to revert to the previous version
+          if npx wrangler rollback --env production 2>&1; then
+            echo "✅ Automatic rollback initiated successfully"
+
+            # Wait for rollback to propagate
+            sleep 15
+
+            # Verify rollback health
+            ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+            HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
+            echo "Verifying rollback health at: ${HEALTH_URL}"
+
+            for i in {1..5}; do
+              if curl -sf "${HEALTH_URL}"; then
+                echo "✅ Rollback health check passed"
+                exit 0
+              fi
+              echo "Attempt $i failed, retrying..."
+              sleep 10
+            done
+
+            echo "❌ Rollback deployed but health check failed"
+            exit 1
+          else
+            echo "❌ wrangler rollback failed"
+            echo "Attempting rollback via Cloudflare API as fallback..."
+
+            ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+            if [ -n "${ACCOUNT_ID}" ] && [ -n "${CLOUDFLARE_API_TOKEN}" ]; then
+              ROLLBACK_RESPONSE=$(curl -sf -X POST \
+                "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/do-deal-relay/deployments/rollback" \
+                -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                -H "Content-Type: application/json")
+
+              if echo "${ROLLBACK_RESPONSE}" | grep -q '"success":true'; then
+                echo "✅ API rollback initiated successfully"
+                exit 0
+              else
+                echo "❌ API rollback also failed"
+                echo "Manual rollback required via Cloudflare dashboard"
+                exit 1
+              fi
+            fi
+
+            echo "Cannot perform rollback - missing Cloudflare credentials"
+            echo "Please manually rollback via Cloudflare dashboard"
+            exit 1
+          fi
 
       - name: Create rollback notification
         if: steps.rollback.outcome == 'failure' || failure()
