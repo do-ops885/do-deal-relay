@@ -14,6 +14,7 @@
  */
 
 import type { Env } from "../types";
+import { AuthResult } from "../lib/auth";
 import { jsonResponse, errorResponse } from "./utils";
 import {
   checkRateLimit,
@@ -77,8 +78,9 @@ interface ValidateDealBody {
 export async function handleValidateUrl(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,
@@ -140,8 +142,9 @@ export async function handleValidateUrl(
 export async function handleValidateBatch(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,
@@ -326,8 +329,9 @@ export async function handleValidateDeal(
   request: Request,
   code: string,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,

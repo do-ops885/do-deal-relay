@@ -233,7 +233,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals");
+      const request = new Request("http://localhost/deals", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -243,7 +245,9 @@ describe("API Endpoints", () => {
     });
 
     it("should return 404 when no snapshot exists", async () => {
-      const request = new Request("http://localhost/deals");
+      const request = new Request("http://localhost/deals", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(404);
@@ -276,7 +280,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?category=referral");
+      const request = new Request("http://localhost/deals?category=referral", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -312,7 +318,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?min_reward=50");
+      const request = new Request("http://localhost/deals?min_reward=50", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -339,7 +347,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?limit=5");
+      const request = new Request("http://localhost/deals?limit=5", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -351,7 +361,9 @@ describe("API Endpoints", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?limit=invalid");
+      const request = new Request("http://localhost/deals?limit=invalid", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
@@ -366,7 +378,9 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals.json");
+      const request = new Request("http://localhost/deals.json", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
@@ -405,6 +419,7 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/deals.json?category=referral",
+        { headers: authHeader },
       );
       const response = await worker.fetch(request, mockEnv);
 

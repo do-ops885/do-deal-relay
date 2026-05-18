@@ -12,6 +12,8 @@
  */
 
 import type { Env } from "../types";
+import type { AuthResult } from "./auth";
+import { hashApiKey } from "./auth";
 
 // ============================================================================
 // Configuration
@@ -153,17 +155,24 @@ export async function checkRateLimit(
 /**
  * Extract client identifier from request.
  *
- * Tries to get API key from header first, then falls back to IP address.
+ * Tries to use authenticated user/key ID first, then falls back to IP address.
  * This allows authenticated users to have separate rate limits from
  * anonymous users.
  *
  * @param request - HTTP request object
+ * @param auth - Optional authentication result
  * @returns Client identifier string
  */
-export function getClientIdentifier(request: Request): string {
-  // Use IP address for reliable identification.
-  // Security: We must not trust unvalidated headers like X-API-Key for rate limiting
-  // as it allows attackers to bypass limits by rotating arbitrary strings.
+export async function getClientIdentifier(
+  request: Request,
+  auth?: AuthResult,
+): Promise<string> {
+  // If authenticated, use a hash of the API key or userId
+  if (auth?.authenticated && auth.userId) {
+    return `user:${auth.userId}`;
+  }
+
+  // Fallback to IP address for reliable identification.
   const forwarded = request.headers.get("CF-Connecting-IP");
   const ip = forwarded || "unknown";
 
@@ -222,12 +231,13 @@ export function createRateLimitHeaders(result: RateLimitResult): Headers {
 export function createRateLimitMiddleware(
   env: Env,
   endpoint: string,
+  auth?: AuthResult,
 ): (request: Request, handler: () => Promise<Response>) => Promise<Response> {
   return async (
     request: Request,
     handler: () => Promise<Response>,
   ): Promise<Response> => {
-    const clientId = getClientIdentifier(request);
+    const clientId = await getClientIdentifier(request, auth);
     const result = await checkRateLimit(env, clientId, endpoint);
 
     if (!result.allowed) {

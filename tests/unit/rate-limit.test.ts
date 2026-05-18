@@ -119,7 +119,7 @@ describe("Rate Limiting", () => {
   });
 
   describe("getClientIdentifier", () => {
-    it("should ignore unvalidated API key from header and use IP", () => {
+    it("should ignore unvalidated API key from header and use IP", async () => {
       const request = new Request("http://localhost/api/test", {
         headers: {
           "X-API-Key": "test-api-key-12345",
@@ -127,27 +127,43 @@ describe("Rate Limiting", () => {
         },
       });
 
-      const identifier = getClientIdentifier(request);
+      const identifier = await getClientIdentifier(request);
 
       expect(identifier).toBe("ip:192.168.1.1");
     });
 
-    it("should fall back to IP address", () => {
+    it("should fall back to IP address", async () => {
       const request = new Request("http://localhost/api/test", {
         headers: { "CF-Connecting-IP": "192.168.1.1" },
       });
 
-      const identifier = getClientIdentifier(request);
+      const identifier = await getClientIdentifier(request);
 
       expect(identifier).toBe("ip:192.168.1.1");
     });
 
-    it("should use unknown if no identifier available", () => {
+    it("should use unknown if no identifier available", async () => {
       const request = new Request("http://localhost/api/test");
 
-      const identifier = getClientIdentifier(request);
+      const identifier = await getClientIdentifier(request);
 
       expect(identifier).toBe("ip:unknown");
+    });
+
+    it("should use user ID if authenticated", async () => {
+      const request = new Request("http://localhost/api/test", {
+        headers: { "CF-Connecting-IP": "192.168.1.1" },
+      });
+
+      const auth = {
+        authenticated: true,
+        userId: "user-123",
+        role: "user" as const,
+      };
+
+      const identifier = await getClientIdentifier(request, auth);
+
+      expect(identifier).toBe("user:user-123");
     });
   });
 

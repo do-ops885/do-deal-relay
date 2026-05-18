@@ -26,6 +26,7 @@ export interface ApiKeyConfig {
   createdAt: string;
   expiresAt?: string;
   lastUsed?: string;
+  keyHash?: string;
   rateLimit: {
     requestsPerMinute: number;
     requestsPerHour: number;
@@ -82,6 +83,40 @@ export async function storeApiKey(
   });
 
   return key;
+}
+
+/**
+ * List all API keys stored in KV
+ */
+export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  const list = await kv.list({ prefix: "apikey:" });
+  const keys: ApiKeyConfig[] = [];
+
+  for (const key of list.keys) {
+    const raw = await kv.get(key.name, "json");
+    if (raw) {
+      keys.push(raw as ApiKeyConfig);
+    }
+  }
+
+  return keys;
+}
+
+/**
+ * Revoke an API key by its hash
+ */
+export async function revokeApiKey(
+  env: Env,
+  keyHash: string,
+): Promise<boolean> {
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  const key = keyHash.startsWith("apikey:") ? keyHash : `apikey:${keyHash}`;
+  const existing = await kv.get(key);
+  if (!existing) return false;
+
+  await kv.delete(key);
+  return true;
 }
 
 /**
@@ -210,8 +245,20 @@ export function requireAuth(
       return unauthorizedResponse(auth.error || "Unauthorized", request);
     }
 
-    if (requiredRole && auth.role !== requiredRole && auth.role !== "admin") {
-      return forbiddenResponse(`Required role: ${requiredRole}`, request);
+    if (requiredRole && auth.role !== "admin") {
+      if (requiredRole === "admin") {
+        return forbiddenResponse(`Required role: admin`, request);
+      }
+      if (requiredRole === "user" && auth.role !== "user") {
+        return forbiddenResponse(`Required role: user`, request);
+      }
+      if (
+        requiredRole === "readonly" &&
+        auth.role !== "user" &&
+        auth.role !== "readonly"
+      ) {
+        return forbiddenResponse(`Required role: readonly`, request);
+      }
     }
 
     return auth;
