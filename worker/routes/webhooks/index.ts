@@ -25,17 +25,26 @@ export async function handleWebhookRoutes(
   path: string,
 ): Promise<Response | null> {
   // Normalize path by removing /api prefix if present
-  const normalizedPath = path.startsWith("/api/") ? path.replace("/api/", "/") : path;
+  const normalizedPath = path.startsWith("/api")
+    ? path.replace("/api", "")
+    : path;
 
   // Incoming webhooks (public, signature verified)
-  if (normalizedPath.startsWith("/webhooks/incoming/") && request.method === "POST") {
-    const partnerId = normalizedPath.replace("/webhooks/incoming/", "").split("/")[0];
+  if (
+    normalizedPath.startsWith("/webhooks/incoming/") &&
+    request.method === "POST"
+  ) {
+    const partnerId = normalizedPath
+      .replace("/webhooks/incoming/", "")
+      .split("/")[0];
     if (partnerId) return handleIncomingWebhookRequest(request, env, partnerId);
   }
 
   // Specific notification endpoints (POST /api/webhooks/deals/created, etc.)
   // These are handled as incoming webhooks with a system or partner context
-  const notificationMatch = normalizedPath.match(/^\/webhooks\/(deals|referrals|research|system)\/([^/]+)$/);
+  const notificationMatch = normalizedPath.match(
+    /^\/webhooks\/(deals|referrals|research|system)\/([^/]+)$/,
+  );
   if (notificationMatch && request.method === "POST") {
     const partnerId = request.headers.get("X-Partner-Id") || "system";
     return handleIncomingWebhookRequest(request, env, partnerId);
@@ -50,7 +59,10 @@ export async function handleWebhookRoutes(
     return handleUnsubscribe(request, env);
   }
 
-  if (normalizedPath === "/webhooks/subscriptions" && request.method === "GET") {
+  if (
+    normalizedPath === "/webhooks/subscriptions" &&
+    request.method === "GET"
+  ) {
     return handleListSubscriptions(request, env);
   }
 
@@ -59,8 +71,13 @@ export async function handleWebhookRoutes(
     return handleCreatePartner(request, env);
   }
 
-  if (normalizedPath.startsWith("/webhooks/partners/") && request.method === "GET") {
-    const partnerId = normalizedPath.replace("/webhooks/partners/", "").split("/")[0];
+  if (
+    normalizedPath.startsWith("/webhooks/partners/") &&
+    request.method === "GET"
+  ) {
+    const partnerId = normalizedPath
+      .replace("/webhooks/partners/", "")
+      .split("/")[0];
     if (partnerId) return handleGetPartner(request, env, partnerId);
   }
 
@@ -69,7 +86,10 @@ export async function handleWebhookRoutes(
     return handleGetDeadLetterQueue(request, env);
   }
 
-  if (normalizedPath.startsWith("/webhooks/dlq/") && request.method === "POST") {
+  if (
+    normalizedPath.startsWith("/webhooks/dlq/") &&
+    request.method === "POST"
+  ) {
     const parts = normalizedPath.replace("/webhooks/dlq/", "").split("/");
     const eventId = parts[0];
     const subscriptionId = parts[1];
@@ -82,8 +102,13 @@ export async function handleWebhookRoutes(
     return handleCreateSyncConfig(request, env);
   }
 
-  if (normalizedPath.startsWith("/webhooks/sync/") && request.method === "GET") {
-    const partnerId = normalizedPath.replace("/webhooks/sync/", "").split("/")[0];
+  if (
+    normalizedPath.startsWith("/webhooks/sync/") &&
+    request.method === "GET"
+  ) {
+    const partnerId = normalizedPath
+      .replace("/webhooks/sync/", "")
+      .split("/")[0];
     if (partnerId) return handleGetSyncState(request, env, partnerId);
   }
 
