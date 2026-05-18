@@ -35,6 +35,7 @@ export async function handleIncomingWebhook(
     webhookId: string;
     idempotencyKey?: string;
   },
+  verified?: boolean,
 ): Promise<IncomingWebhookResult> {
   const requestId = generateId();
   logger.info(`Incoming webhook received: ${headers.webhookId}`, {
@@ -96,25 +97,27 @@ export async function handleIncomingWebhook(
       }
     }
 
-    // 4. Verify HMAC signature
-    const timestamp = parseInt(headers.timestamp, 10);
-    const signatureResult = await verifyHmacSignature(
-      payload,
-      headers.signature.replace("sha256=", ""),
-      partner.secret,
-      timestamp,
-    );
-    if (!signatureResult.valid) {
-      logger.warn(
-        `Invalid webhook signature from ${partnerId}: ${signatureResult.error}`,
-        { component: "webhook", partner_id: partnerId },
+    // 4. Verify HMAC signature (skip if already verified at request boundary)
+    if (!verified) {
+      const timestamp = parseInt(headers.timestamp, 10);
+      const signatureResult = await verifyHmacSignature(
+        payload,
+        headers.signature.replace("sha256=", ""),
+        partner.secret,
+        timestamp,
       );
-      return {
-        success: false,
-        statusCode: 401,
-        message: "Invalid signature",
-        error: signatureResult.error,
-      };
+      if (!signatureResult.valid) {
+        logger.warn(
+          `Invalid webhook signature from ${partnerId}: ${signatureResult.error}`,
+          { component: "webhook", partner_id: partnerId },
+        );
+        return {
+          success: false,
+          statusCode: 401,
+          message: "Invalid signature",
+          error: signatureResult.error,
+        };
+      }
     }
 
     // 5. Parse and validate payload
