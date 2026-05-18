@@ -11,9 +11,6 @@ const NORMALIZE_CONSTANTS = {
   MAX_CODE_LENGTH: 50,
 } as const;
 
-// Module-level literal regex for code format validation (avoids creating RegExp in loop)
-const VALID_CODE_PATTERN = /^[A-Z0-9_-]{4,50}$/;
-
 // ============================================================================
 // Normalization Pipeline
 // ============================================================================
@@ -175,7 +172,11 @@ export function verifyNormalization(deals: Deal[]): {
     }
 
     // Check code format (alphanumeric, reasonable length)
-    if (!VALID_CODE_PATTERN.test(deal.code)) {
+    if (
+      !new RegExp(
+        `^[A-Z0-9_-]{${NORMALIZE_CONSTANTS.MIN_CODE_LENGTH},${NORMALIZE_CONSTANTS.MAX_CODE_LENGTH}}$`,
+      ).test(deal.code)
+    ) {
       issues.push(`Deal ${deal.id}: suspicious code format ${deal.code}`);
     }
 

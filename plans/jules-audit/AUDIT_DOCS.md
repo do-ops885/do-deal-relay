@@ -3,7 +3,7 @@
 worker/config.ts:149:export const DEFAULT_SOURCES = [
 worker/config.ts:266:export const ERROR_MESSAGES = {
 worker/config.ts:280:export const VALIDATION_GATES = [
-worker/config.ts:305:export type ValidationGate = typeof VALIDATION_GATES[number];
+worker/config.ts:292:export type ValidationGate = (typeof VALIDATION_GATES)[number];
 worker/validation/types.ts:3:export interface ValidationResult {
 worker/validation/types.ts:16:export interface GateResult {
 worker/email/templates/commands.ts:3:export function createSuccessConfirmation(
