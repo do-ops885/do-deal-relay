@@ -253,8 +253,13 @@ export default {
       }
 
       // Webhook routes
-      const webhookResponse = await handleWebhookRoutes(request, env, path);
-      if (webhookResponse) return webhookResponse;
+      if (path.includes("/webhooks/")) {
+        const rateLimiter = createRateLimitMiddleware(env, "webhooks");
+        const webhookResponse = await rateLimiter(request, () =>
+          handleWebhookRoutes(request, env, path),
+        );
+        if (webhookResponse) return webhookResponse;
+      }
 
       // Experience Feedback API
       if (path === "/api/experience" && request.method === "POST") {

@@ -24,42 +24,53 @@ export async function handleWebhookRoutes(
   env: Env,
   path: string,
 ): Promise<Response | null> {
+  // Normalize path by removing /api prefix if present
+  const normalizedPath = path.startsWith("/api") ? path.replace("/api", "") : path;
+
   // Incoming webhooks (public, signature verified)
-  if (path.startsWith("/webhooks/incoming/") && request.method === "POST") {
-    const partnerId = path.replace("/webhooks/incoming/", "").split("/")[0];
+  if (normalizedPath.startsWith("/webhooks/incoming/") && request.method === "POST") {
+    const partnerId = normalizedPath.replace("/webhooks/incoming/", "").split("/")[0];
     if (partnerId) return handleIncomingWebhookRequest(request, env, partnerId);
   }
 
+  // Specific notification endpoints (POST /api/webhooks/deals/created, etc.)
+  // These are handled as incoming webhooks with a system or partner context
+  const notificationMatch = normalizedPath.match(/^\/webhooks\/(deals|referrals|research|system)\/([^/]+)$/);
+  if (notificationMatch && request.method === "POST") {
+    const partnerId = request.headers.get("X-Partner-Id") || "system";
+    return handleIncomingWebhookRequest(request, env, partnerId);
+  }
+
   // Subscription management (requires API key auth)
-  if (path === "/webhooks/subscribe" && request.method === "POST") {
+  if (normalizedPath === "/webhooks/subscribe" && request.method === "POST") {
     return handleSubscribe(request, env);
   }
 
-  if (path === "/webhooks/unsubscribe" && request.method === "POST") {
+  if (normalizedPath === "/webhooks/unsubscribe" && request.method === "POST") {
     return handleUnsubscribe(request, env);
   }
 
-  if (path === "/webhooks/subscriptions" && request.method === "GET") {
+  if (normalizedPath === "/webhooks/subscriptions" && request.method === "GET") {
     return handleListSubscriptions(request, env);
   }
 
   // Partner management (admin only)
-  if (path === "/webhooks/partners" && request.method === "POST") {
+  if (normalizedPath === "/webhooks/partners" && request.method === "POST") {
     return handleCreatePartner(request, env);
   }
 
-  if (path.startsWith("/webhooks/partners/") && request.method === "GET") {
-    const partnerId = path.replace("/webhooks/partners/", "").split("/")[0];
+  if (normalizedPath.startsWith("/webhooks/partners/") && request.method === "GET") {
+    const partnerId = normalizedPath.replace("/webhooks/partners/", "").split("/")[0];
     if (partnerId) return handleGetPartner(request, env, partnerId);
   }
 
   // Dead letter queue management
-  if (path === "/webhooks/dlq" && request.method === "GET") {
+  if (normalizedPath === "/webhooks/dlq" && request.method === "GET") {
     return handleGetDeadLetterQueue(request, env);
   }
 
-  if (path.startsWith("/webhooks/dlq/") && request.method === "POST") {
-    const parts = path.replace("/webhooks/dlq/", "").split("/");
+  if (normalizedPath.startsWith("/webhooks/dlq/") && request.method === "POST") {
+    const parts = normalizedPath.replace("/webhooks/dlq/", "").split("/");
     const eventId = parts[0];
     const subscriptionId = parts[1];
     if (eventId && subscriptionId)
@@ -67,12 +78,12 @@ export async function handleWebhookRoutes(
   }
 
   // Bidirectional sync
-  if (path === "/webhooks/sync" && request.method === "POST") {
+  if (normalizedPath === "/webhooks/sync" && request.method === "POST") {
     return handleCreateSyncConfig(request, env);
   }
 
-  if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
-    const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
+  if (normalizedPath.startsWith("/webhooks/sync/") && request.method === "GET") {
+    const partnerId = normalizedPath.replace("/webhooks/sync/", "").split("/")[0];
     if (partnerId) return handleGetSyncState(request, env, partnerId);
   }
 
