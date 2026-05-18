@@ -73,7 +73,14 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
-    if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
+    const normalizedHref = href.trim().toLowerCase();
+    if (
+      href &&
+      !normalizedHref.startsWith("javascript:") &&
+      !normalizedHref.startsWith("data:") &&
+      !normalizedHref.startsWith("vbscript:") &&
+      !normalizedHref.startsWith("#")
+    ) {
       // Convert relative URLs to absolute
       const absoluteUrl = href.startsWith("http")
         ? href
