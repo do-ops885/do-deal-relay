@@ -1,11 +1,13 @@
 # Deployment Guide - Manual Steps Required
 
-## Status: Configuration Complete ✅
+## Status: Configuration Required ⚠️
+
+Environment isolation is now enforced. You must create separate KV namespaces for Staging and Production.
 
 All automated deployment preparation steps have been completed:
 
-- ✅ 5 KV namespaces created
-- ✅ wrangler.jsonc updated with namespace IDs
+- ⚠️ 5 KV namespaces required per environment (10 total)
+- ✅ wrangler.jsonc updated with unique namespace placeholders
 - ✅ TypeScript compilation passing
 - ✅ All 207 tests passing
 - ✅ Security audit complete (Grade A-)
@@ -99,15 +101,27 @@ curl -X POST https://do-deal-relay.<your-subdomain>.workers.dev/api/discover
 curl https://do-deal-relay.<your-subdomain>.workers.dev/deals
 ```
 
-## KV Namespaces Created
+## KV Namespaces Required
 
-| Name          | ID                               | Status     |
-| ------------- | -------------------------------- | ---------- |
-| DEALS_PROD    | 23ee9b8c9e2748e5880f476b8b57a524 | ✅ Created |
-| DEALS_STAGING | b0db85b92fae45c1895152737ab72649 | ✅ Created |
-| DEALS_LOG     | 1f1a901fd6fb4dffbdcc86aa4a914ba8 | ✅ Created |
-| DEALS_LOCK    | e3ab520eafd5430ab72978e78bdd257e | ✅ Created |
-| DEALS_SOURCES | be3c0fc148b749b49a59aa7cfa23e3ac | ✅ Created |
+### Production (Required)
+
+| Binding       | ID (example)                     |
+| ------------- | -------------------------------- |
+| DEALS_PROD    | 23ee9b8c9e2748e5880f476b8b57a524 |
+| DEALS_STAGING | b0db85b92fae45c1895152737ab72649 |
+| DEALS_LOG     | 1f1a901fd6fb4dffbdcc86aa4a914ba8 |
+| DEALS_LOCK    | e3ab520eafd5430ab72978e78bdd257e |
+| DEALS_SOURCES | be3c0fc148b749b49a59aa7cfa23e3ac |
+
+### Staging (Required)
+
+| Binding       | ID (example)                     |
+| ------------- | -------------------------------- |
+| DEALS_PROD    | a1b2c3d4e5f6789012345678abcdef01 |
+| DEALS_STAGING | b2c3d4e5f6789012345678abcdef0123 |
+| DEALS_LOG     | c3d4e5f6789012345678abcdef012345 |
+| DEALS_LOCK    | d4e5f6789012345678abcdef01234567 |
+| DEALS_SOURCES | e5f6789012345678abcdef0123456789 |
 
 ## Post-Deployment Monitoring
 
