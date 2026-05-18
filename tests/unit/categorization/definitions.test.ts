@@ -258,9 +258,9 @@ describe("Category Definitions", () => {
         "entertainment",
       ];
       majorCategories.forEach((cat) => {
-        expect(CATEGORY_DEFINITIONS[cat]!.domains.length).toBeGreaterThanOrEqual(
-          5,
-        );
+        expect(
+          CATEGORY_DEFINITIONS[cat]!.domains.length,
+        ).toBeGreaterThanOrEqual(5);
       });
     });
   });

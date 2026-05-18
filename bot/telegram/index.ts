@@ -286,7 +286,7 @@ async function startConversationFlow(
 
   // Send the first question
   const firstStep = conversation.steps[0];
-      if (!firstStep) return;
+  if (!firstStep) return;
   await ctx.reply(firstStep.question, { parse_mode: "Markdown" });
 }
 
