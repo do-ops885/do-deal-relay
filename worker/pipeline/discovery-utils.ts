@@ -1,10 +1,20 @@
 import { Deal, SourceConfig } from "../types";
-import { CONFIG } from "../config";
 import { generateDealId } from "../lib/crypto";
 
 // ============================================================================
 // Constants
 // ============================================================================
+
+// Module-level literal regex for code pattern extraction (replaces dynamic RegExp)
+const CODE_PATTERN =
+  /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
+
+/**
+ * Simple hash for content-based cache key disambiguation.
+ */
+function simpleContentHash(content: string): string {
+  return `${content.length}:${content.charCodeAt(0) ?? 0}:${content.charCodeAt(content.length - 1) ?? 0}`;
+}
 
 export const DISCOVERY_CONSTANTS = {
   HIGH_TRUST_THRESHOLD: 0.7,
@@ -154,7 +164,7 @@ export function extractContent(
   code: string,
   window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
 ): string {
-  const cacheKey = `${code}:${window}`;
+  const cacheKey = `${simpleContentHash(content)}:${code}:${window}`;
   const cached = contentCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
@@ -204,32 +214,25 @@ export function parseHTMLContent(
   source: SourceConfig,
 ): ExtractedDeal[] {
   const deals: ExtractedDeal[] = [];
-  const codePattern = new RegExp(
-    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
-    "gi",
-  );
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
 
-  let match;
-  while ((match = codePattern.exec(content)) !== null) {
+  for (const match of content.matchAll(CODE_PATTERN)) {
     const code = match[1];
     if (code === undefined) continue;
 
-    const urlMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(urlPattern);
+    const contextStart = Math.max(
+      0,
+      match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
+    );
+    const contextEnd = match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW;
+    const context = content.slice(contextStart, contextEnd);
 
-    const rewardMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(rewardPattern);
+    const urlMatch = context.match(urlPattern);
+
+    const rewardMatches = [...context.matchAll(rewardPattern)];
+    const rewardMatch = rewardMatches[0];
 
     deals.push({
       code,
@@ -240,8 +243,8 @@ export function parseHTMLContent(
       title: extractTitle(content, code),
       description: extractDescription(content, code),
       reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
+        rewardMatch && rewardMatch[2]
+          ? rewardMatch[2] === "%"
             ? "percent"
             : "cash"
           : "credit",
@@ -250,7 +253,7 @@ export function parseHTMLContent(
           ? parseFloat(rewardMatch[1].replace(",", ""))
           : 0,
       reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+        rewardMatch?.[2] && rewardMatch[2] !== "%" ? rewardMatch[2] : undefined,
     });
   }
 
