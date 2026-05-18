@@ -77,7 +77,7 @@ jobs:
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
         with:
           go-version: "1.21"
         if: hashFiles('go.mod') != ''
@@ -121,7 +121,7 @@ jobs:
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
 
       - name: Setup Go (if go.mod exists)
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
         with:
           go-version: "1.21"
         if: hashFiles('go.mod') != ''
