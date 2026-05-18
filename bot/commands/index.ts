@@ -92,7 +92,7 @@ export function parseCommandArgs(input: string): {
   args: string[];
 } {
   const parts = input.trim().split(/\s+/);
-  const command = parts[0]?.toLowerCase().replace(/^\//, "");
+  const rawCommand = parts[0] || "";
   const command = rawCommand.toLowerCase().replace(/^\//, "");
   const args = parts.slice(1);
 

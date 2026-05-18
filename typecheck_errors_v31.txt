@@ -1,0 +1,598 @@
+
+> do-deal-relay@0.1.6 typecheck
+> tsc --noEmit
+
+bot/discord/index.ts(166,9): error TS18046: 'body' is of type 'unknown'.
+bot/telegram/index.ts(289,19): error TS18048: 'firstStep' is possibly 'undefined'.
+bot/telegram/index.ts(461,28): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Update'.
+scripts/benchmark_pipeline.ts(31,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/benchmark_pipeline.ts(134,19): error TS18048: 'latestResult' is possibly 'undefined'.
+scripts/benchmark_pipeline.ts(139,34): error TS18048: 'latestResult' is possibly 'undefined'.
+scripts/benchmark_pipeline.ts(145,34): error TS18048: 'latestResult' is possibly 'undefined'.
+scripts/cli/utils.ts(25,9): error TS18048: 'arg' is possibly 'undefined'.
+scripts/cli/utils.ts(26,20): error TS18048: 'arg' is possibly 'undefined'.
+scripts/cli/utils.ts(35,16): error TS18048: 'arg' is possibly 'undefined'.
+scripts/cli/utils.ts(36,20): error TS18048: 'arg' is possibly 'undefined'.
+scripts/cli/utils.ts(47,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/cli/utils.ts(49,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/cli/utils.ts(51,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/cli/utils.ts(155,43): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+scripts/cli/utils.ts(156,48): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+scripts/cli/utils.ts(162,66): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+scripts/validate-url-preservation.ts(31,34): error TS18046: 'proxy.env.DEALS_SOURCES' is of type 'unknown'.
+scripts/validate-url-preservation.ts(76,31): error TS18046: 'proxy.env.DEALS_SOURCES' is of type 'unknown'.
+scripts/validate-url-preservation.ts(102,32): error TS18046: 'proxy.env.DEALS_SOURCES' is of type 'unknown'.
+scripts/validate-url-preservation.ts(134,38): error TS18046: 'proxy.env.DEALS_SOURCES' is of type 'unknown'.
+scripts/validate-url-preservation.ts(173,38): error TS18046: 'proxy.env.DEALS_SOURCES' is of type 'unknown'.
+tests/integration/api.test.ts(140,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(141,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(142,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(143,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(152,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(251,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(285,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(321,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(378,28): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(413,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(551,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(597,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(600,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/api.test.ts(649,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(59,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/integration/mcp-tools.test.ts(60,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/integration/mcp-tools.test.ts(153,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(154,28): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(155,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(168,25): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(182,25): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(196,25): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(223,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(247,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(264,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(281,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(282,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(296,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(310,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(311,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/mcp-tools.test.ts(352,14): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(100,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(101,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(150,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(151,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(177,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/referrals.test.ts(178,12): error TS18046: 'body' is of type 'unknown'.
+tests/integration/scheduled.test.ts(89,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/integration/scheduled.test.ts(90,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/load/load-test.ts(132,3): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+tests/unit/analytics/calculators-categories-sources.test.ts(315,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-categories-sources.test.ts(332,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-deals-over-time.test.ts(87,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-deals-over-time.test.ts(102,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-deals-over-time.test.ts(127,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-deals-over-time.test.ts(188,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/analytics/calculators-value-expiry-quality.test.ts(3,15): error TS2305: Module '"../../../worker/lib/metrics"' has no exported member 'PipelineMetrics'.
+tests/unit/auth.test.ts(74,24): error TS2532: Object is possibly 'undefined'.
+tests/unit/auth.test.ts(204,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/auth.test.ts(207,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/unit/auth.test.ts(246,13): error TS2488: Type 'any[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+tests/unit/budget-allocation.test.ts(59,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/bulk/export.test.ts(99,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(100,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(101,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(102,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(158,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(159,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(160,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(183,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/export.test.ts(184,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(92,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(93,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(94,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(95,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(96,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(97,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(98,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(114,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(136,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(160,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(161,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(162,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(163,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(164,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(198,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(199,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(200,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(201,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(226,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(227,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(228,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(229,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(280,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(281,14): error TS18046: 'data' is of type 'unknown'.
+tests/unit/bulk/import.test.ts(284,30): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(697,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(728,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(758,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(787,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(816,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(852,14): error TS18048: 'allMetrics.ns1' is possibly 'undefined'.
+tests/unit/cache.test.ts(853,14): error TS18048: 'allMetrics.ns1' is possibly 'undefined'.
+tests/unit/cache.test.ts(854,14): error TS18048: 'allMetrics.ns2' is possibly 'undefined'.
+tests/unit/cache.test.ts(855,14): error TS18048: 'allMetrics.ns2' is possibly 'undefined'.
+tests/unit/cache.test.ts(868,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(869,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(870,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(871,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(884,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(885,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(890,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(891,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/cache.test.ts(926,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/cache.test.ts(969,9): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/categorization/batch-stats.test.ts(75,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/categorization/batch-stats.test.ts(76,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(54,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(55,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(56,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(60,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(64,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(65,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(66,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(70,14): error TS18048: 'finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(78,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(79,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(80,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(84,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(85,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(86,14): error TS18048: 'foodDelivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(94,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(95,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(96,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(100,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(101,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(102,14): error TS18048: 'travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(110,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(111,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(112,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(116,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(117,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(118,14): error TS18048: 'shopping' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(126,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(127,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(128,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(132,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(133,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(134,14): error TS18048: 'entertainment' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(142,14): error TS18048: 'referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(143,14): error TS18048: 'referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(144,14): error TS18048: 'referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(148,14): error TS18048: 'referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(152,14): error TS18048: 'referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(160,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(161,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(162,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(166,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(167,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(168,14): error TS18048: 'cloudStorage' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(175,23): error TS18048: 'CATEGORY_DEFINITIONS.finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(183,23): error TS18048: 'CATEGORY_DEFINITIONS.finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(191,23): error TS18048: 'CATEGORY_DEFINITIONS.food_delivery' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(199,23): error TS18048: 'CATEGORY_DEFINITIONS.travel' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(207,30): error TS18048: 'CATEGORY_DEFINITIONS.finance' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(217,14): error TS18048: 'CATEGORY_DEFINITIONS.referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(223,23): error TS18048: 'CATEGORY_DEFINITIONS.referral' is possibly 'undefined'.
+tests/unit/categorization/definitions.test.ts(261,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/circuit-breaker.test.ts(1217,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/circuit-breaker.test.ts(1218,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(177,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(204,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(224,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(370,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(431,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(491,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(492,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(557,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(558,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(654,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(857,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(858,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(1062,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(1189,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(1190,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/d1-queries.test.ts(1191,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/dependabot-patterns.test.ts(6,18): error TS7016: Could not find a declaration file for module 'js-yaml'. '/app/node_modules/js-yaml/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/js-yaml` if it exists or add a new declaration (.d.ts) file containing `declare module 'js-yaml';`
+tests/unit/discover.test.ts(104,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/discover.test.ts(105,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/discover.test.ts(174,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(446,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(469,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(495,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(496,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(557,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(558,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/discover.test.ts(654,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(655,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(656,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(657,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(658,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(659,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(660,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(661,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/discover.test.ts(662,14): error TS18048: 'deal' is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(62,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(70,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(78,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(86,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(92,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(100,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(108,7): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(123,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(131,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(139,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(147,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(155,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(171,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(179,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(187,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(195,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(204,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(207,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/email/patterns-generic-services.test.ts(214,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(222,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/email/patterns-generic-services.test.ts(230,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(matcher: { [Symbol.match](string: string): RegExpMatchArray | null; }): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+      Type 'undefined' is not assignable to type '{ [Symbol.match](string: string): RegExpMatchArray | null; }'.
+  Overload 2 of 2, '(regexp: string | RegExp): RegExpMatchArray | null', gave the following error.
+    Argument of type 'RegExp | undefined' is not assignable to parameter of type 'string | RegExp'.
+      Type 'undefined' is not assignable to type 'string | RegExp'.
+tests/unit/experience-api.test.ts(75,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/experience-api.test.ts(76,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/experience-api.test.ts(115,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/experience-api.test.ts(244,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/experience-api.test.ts(262,9): error TS2353: Object literal may only specify known properties, and 'userId' does not exist in type 'Map<string, unknown>'.
+tests/unit/expiration.test.ts(158,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(159,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(160,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(199,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(200,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(308,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(309,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/expiration.test.ts(310,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/feature-flags/crud.test.ts(36,15): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/feature-flags/crud.test.ts(185,17): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/feature-flags/middleware.test.ts(24,15): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/feature-flags/rollouts.test.ts(31,15): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/funnel-metrics.test.ts(51,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(52,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(53,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(54,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(55,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(56,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(82,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(83,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(84,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(85,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(86,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(87,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/funnel-metrics.test.ts(131,12): error TS18046: 'data' is of type 'unknown'.
+tests/unit/github.test.ts(334,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/github.test.ts(335,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/lock.test.ts(44,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/lock.test.ts(45,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/lock.test.ts(100,7): error TS2322: Type 'Mock<() => Promise<{ run_id: string; trace_id: string; acquired_at: string; expires_at: string; } | null>>' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+  Type 'Promise<{ run_id: string; trace_id: string; acquired_at: string; expires_at: string; } | null>' is not assignable to type 'Promise<string | null>'.
+    Type '{ run_id: string; trace_id: string; acquired_at: string; expires_at: string; } | null' is not assignable to type 'string | null'.
+      Type '{ run_id: string; trace_id: string; acquired_at: string; expires_at: string; }' is not assignable to type 'string'.
+tests/unit/lock.test.ts(120,7): error TS2322: Type 'Mock<() => Promise<null>>' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+  Type 'Promise<null>' is not assignable to type 'Promise<Map<string, string | null>>'.
+    Type 'null' is not assignable to type 'Map<string, string | null>'.
+tests/unit/logger.test.ts(62,14): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/logger.test.ts(153,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/logger.test.ts(154,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/logger.test.ts(185,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/logger.test.ts(186,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/logger.test.ts(375,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/unit/logger.test.ts(376,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/unit/mcp-resources.test.ts(463,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-resources.test.ts(466,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-resources.test.ts(469,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-resources.test.ts(474,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-resources.test.ts(477,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-tools.test.ts(293,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-tools.test.ts(627,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(55,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(56,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(66,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(67,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(78,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(79,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/mcp-utils.test.ts(118,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/metrics_latency.test.ts(10,9): error TS2322: Type '{ run_id: string; start_time: number; end_time: number; total_duration_ms: number; success: boolean; final_phase: "finalize"; phase_timings: { init: number; discover: number; normalize: number; ... 6 more ...; finalize: number; }; phase_results: { ...; }; deals_processed: { ...; }; errors: number; retries: number; }[]' is not assignable to type 'PipelineMetrics[]'.
+  Type '{ run_id: string; start_time: number; end_time: number; total_duration_ms: number; success: boolean; final_phase: "finalize"; phase_timings: { init: number; discover: number; normalize: number; ... 6 more ...; finalize: number; }; phase_results: { ...; }; deals_processed: { ...; }; errors: number; retries: number; }' is not assignable to type 'PipelineMetrics'.
+    Types of property 'deals_processed' are incompatible.
+      Property 'passed_trust_filter' is missing in type '{ discovered: number; normalized: number; deduped: number; validated: number; scored: number; published: number; }' but required in type '{ discovered: number; passed_trust_filter: number; normalized: number; deduped: number; validated: number; scored: number; published: number; }'.
+tests/unit/nlq/handlers-get-explain.test.ts(150,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(160,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(171,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(183,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(184,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(185,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(195,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-get-explain.test.ts(205,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-get-explain.test.ts(217,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-get-explain.test.ts(231,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(241,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(283,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(284,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(285,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(286,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(287,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(288,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(289,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(301,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(302,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(316,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(326,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(340,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(354,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(355,28): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-get-explain.test.ts(373,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(148,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(169,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(170,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(184,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(185,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(199,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(213,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(227,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(241,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(242,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(243,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(244,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(245,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(246,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(272,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-post.test.ts(285,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-post.test.ts(298,14): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/handlers-post.test.ts(316,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(317,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(318,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(334,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(350,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(351,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/handlers-post.test.ts(352,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(101,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(102,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(115,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(126,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(127,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/index.test.ts(138,14): error TS18046: 'body' is of type 'unknown'.
+tests/unit/nlq/service.test.ts(108,23): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/unit/nlq/service.test.ts(175,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(176,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(191,31): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(200,31): error TS18048: 'callArgs' is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(284,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(364,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/nlq/service.test.ts(403,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/nlq/utils.test.ts(73,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/unit/normalize.test.ts(56,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/normalize.test.ts(62,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/normalize.test.ts(68,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/normalize.test.ts(69,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/normalize.test.ts(75,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/publish.test.ts(130,30): error TS2345: Argument of type 'Env' is not assignable to parameter of type 'GitHubCacheEnv'.
+  The types of 'DEALS_PROD.get' are incompatible between these types.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+tests/unit/ranking.test.ts(67,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/ranking.test.ts(68,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/ranking.test.ts(68,53): error TS2532: Object is possibly 'undefined'.
+tests/unit/ranking.test.ts(85,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/ranking.test.ts(103,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/ranking.test.ts(120,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/rate-limit-kv/core.test.ts(30,15): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/rate-limit-kv/core.test.ts(139,17): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/rate-limit-kv/core.test.ts(267,17): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/rate-limit-kv/middleware.test.ts(29,15): error TS2352: Conversion of type '{ DEALS_LOCK: MockKVNamespace; }' to type 'Env' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ DEALS_LOCK: MockKVNamespace; }' is missing the following properties from type 'Env': DEALS_PROD, DEALS_STAGING, DEALS_LOG, DEALS_SOURCES, and 5 more.
+tests/unit/rate-limit.test.ts(109,7): error TS2322: Type 'KVNamespace<string>' is not assignable to type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...' is not assignable to type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+tests/unit/research-agent.test.ts(35,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/research-agent.test.ts(36,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/research-agent.test.ts(57,44): error TS2345: Argument of type 'ResearchSource | undefined' is not assignable to parameter of type 'ResearchSource'.
+  Type 'undefined' is not assignable to type 'ResearchSource'.
+tests/unit/research-agent.test.ts(124,9): error TS2345: Argument of type 'ResearchSource | undefined' is not assignable to parameter of type 'ResearchSource'.
+  Type 'undefined' is not assignable to type 'ResearchSource'.
+tests/unit/research-agent.test.ts(125,9): error TS18048: 'source' is possibly 'undefined'.
+tests/unit/research-agent.test.ts(312,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/research-agent.test.ts(313,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/research-agent.test.ts(314,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/research-agent.test.ts(314,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/research-agent.test.ts(352,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/routes-utils-security.test.ts(24,7): error TS2322: Type '{ Origin: string | undefined; }' is not assignable to type 'HeadersInit | undefined'.
+  Type '{ Origin: string | undefined; }' is not assignable to type 'undefined'.
+tests/unit/routes-utils-security.test.ts(75,7): error TS2322: Type '{ Origin: string | undefined; }' is not assignable to type 'HeadersInit | undefined'.
+  Type '{ Origin: string | undefined; }' is not assignable to type 'undefined'.
+tests/unit/score.test.ts(73,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/score.test.ts(74,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/score.test.ts(86,12): error TS2532: Object is possibly 'undefined'.
+tests/unit/security-gatekeeper.test.ts(73,7): error TS2353: Object literal may only specify known properties, and 'userId' does not exist in type 'Map<string, unknown>'.
+tests/unit/stage.test.ts(78,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/stage.test.ts(79,7): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/unit/stage.test.ts(197,7): error TS2322: Type 'Mock<() => Promise<null>>' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+  Type 'Promise<null>' is not assignable to type 'Promise<Map<string, string | null>>'.
+    Type 'null' is not assignable to type 'Map<string, string | null>'.
+tests/unit/stage.test.ts(274,7): error TS2322: Type 'Mock<() => Promise<{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null>>' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+  Type 'Promise<{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null>' is not assignable to type 'Promise<string | null>'.
+    Type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null' is not assignable to type 'string | null'.
+      Type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; }' is not assignable to type 'string'.
+tests/unit/stage.test.ts(277,16): error TS2352: Conversion of type '{ run_id: string; trace_id: string; snapshot_hash: string; deals: never[]; }' to type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ run_id: string; trace_id: string; snapshot_hash: string; deals: never[]; }' is missing the following properties from type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; }': version, generated_at, previous_hash, schema_version, stats
+tests/unit/stage.test.ts(294,7): error TS2322: Type 'Mock<() => Promise<{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null>>' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+  Type 'Promise<{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null>' is not assignable to type 'Promise<string | null>'.
+    Type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; } | null' is not assignable to type 'string | null'.
+      Type '{ version: string; generated_at: string; run_id: string; trace_id: string; snapshot_hash: string; previous_hash: string; schema_version: string; stats: { active: number; quarantined: number; rejected: number; total: number; duplicates: number; }; deals: { ...; }[]; }' is not assignable to type 'string'.
+tests/unit/state-machine.test.ts(227,30): error TS2345: Argument of type 'Env' is not assignable to parameter of type 'GitHubCacheEnv'.
+  The types of 'DEALS_PROD.get' are incompatible between these types.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+tests/unit/storage.test.ts(331,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/storage.test.ts(385,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(402,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(417,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(432,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(449,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(464,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(479,42): error TS18048: 'putCall' is possibly 'undefined'.
+tests/unit/storage.test.ts(615,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/storage.test.ts(646,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/validation.test.ts(999,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/validation.test.ts(1000,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-mutations.test.ts(168,14): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-partner.test.ts(82,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-partner.test.ts(136,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-partner.test.ts(159,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-partner.test.ts(160,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/subscriptions-partner.test.ts(209,16): error TS2532: Object is possibly 'undefined'.
+tests/unit/webhook/types.test.ts(26,29): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+worker/index.ts(88,32): error TS2345: Argument of type 'Env' is not assignable to parameter of type 'GitHubCacheEnv'.
+  The types of 'DEALS_PROD.get' are incompatible between these types.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/cache.ts(260,22): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/cache.ts(268,22): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/cache.ts(276,22): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/cache.ts(284,22): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/cache.ts(293,5): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/nlq/ai/index.ts(71,21): error TS2345: Argument of type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to parameter of type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.
+worker/lib/webhook/types.ts(183,3): error TS2322: Type 'import("/app/node_modules/@cloudflare/workers-types/index").KVNamespace<string>' is not assignable to type 'KVNamespace<string>'.
+  Types of property 'get' are incompatible.
+    Type '{ (key: string, options?: Partial<import("/app/node_modules/@cloudflare/workers-types/index").KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Prom...' is not assignable to type '{ (key: string, options?: Partial<KVNamespaceGetOptions<undefined>> | undefined): Promise<string | null>; (key: string, type: "text"): Promise<...>; <ExpectedValue = unknown>(key: string, type: "json"): Promise<...>; (key: string, type: "arrayBuffer"): Promise<...>; (key: string, type: "stream"): Promise<...>; (key:...'.
+      Types of parameters 'options' and 'type' are incompatible.
+        Type '"stream"' has no properties in common with type 'Partial<KVNamespaceGetOptions<undefined>>'.

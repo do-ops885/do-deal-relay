@@ -286,6 +286,7 @@ async function startConversationFlow(
 
   // Send the first question
   const firstStep = conversation.steps[0];
+      if (!firstStep) return;
   await ctx.reply(firstStep.question, { parse_mode: "Markdown" });
 }
 
@@ -457,7 +458,7 @@ export async function handleTelegramWebhook(
   const bot = createTelegramBot(config);
 
   try {
-    const update = await request.json();
+    const update = (await request.json()) as any;
     await bot.handleUpdate(update);
     return new Response("OK", { status: 200 });
   } catch (error) {
