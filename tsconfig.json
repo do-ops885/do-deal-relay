@@ -19,15 +19,13 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["@cloudflare/workers-types", "@playwright/test", "vitest", "node"]
+    "types": ["@cloudflare/workers-types", "@playwright/test", "vitest"]
   },
-  "include": ["worker/**/*.ts", "bot/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "bot/discord",
-    "bot/telegram",
-    "scripts",
-    "tests/browser"
-  ]
+  "include": [
+    "worker/**/*.ts",
+    "bot/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
