@@ -17,7 +17,10 @@ import {
  * Removes special characters used in GraphQL injection and SSRF.
  */
 function sanitizeQuery(query: string): string {
-  return query.replace(/[{}"$\\]/g, "").trim().slice(0, 200);
+  return query
+    .replace(/[{}"$\\]/g, "")
+    .trim()
+    .slice(0, 200);
 }
 
 /**
@@ -77,7 +80,10 @@ export async function fetchProductHuntDeals(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ query, variables: { limit, searchQuery: sanitizeQuery(searchQuery) } }),
+      body: JSON.stringify({
+        query,
+        variables: { limit, searchQuery: sanitizeQuery(searchQuery) },
+      }),
       signal: AbortSignal.timeout(10000),
     });
 

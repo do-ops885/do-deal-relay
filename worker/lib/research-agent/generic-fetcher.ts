@@ -31,9 +31,7 @@ function validateFetchUrl(urlString: string): string | null {
 
     // Block requests using IP addresses in private/internal ranges
     const hostname = url.hostname;
-    if (
-      BLOCKED_IP_RANGES.some((pattern) => pattern.test(hostname))
-    ) {
+    if (BLOCKED_IP_RANGES.some((pattern) => pattern.test(hostname))) {
       return "URL points to a private or internal network address";
     }
 
