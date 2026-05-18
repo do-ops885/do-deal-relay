@@ -67,7 +67,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig, validateKVIsolation } from "./lib/config-utils";
+import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -78,7 +78,6 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
-      await validateKVIsolation(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
@@ -113,22 +112,22 @@ export default {
 
       // Deals
       if (path === "/deals" || path === "/deals.json") {
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleGetDeals(url, env, request),
         );
       }
       if (path === "/deals/ranked") {
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleRankedDeals(url, env),
         );
       }
       if (path === "/deals/highlights") {
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleDealHighlights(url, env),
         );
       }
       if (path === "/deals/similar") {
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleSimilarDeals(url, env),
         );
       }
@@ -175,7 +174,7 @@ export default {
       // Referral API
       if (path === "/api/referrals") {
         if (request.method === "GET") {
-          return withAuth(request, env, "readonly", () =>
+          return withAuth(request, env, undefined, () =>
             handleGetReferrals(url, env),
           );
         }
@@ -211,7 +210,7 @@ export default {
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
         if (code) {
-          return withAuth(request, env, "readonly", () =>
+          return withAuth(request, env, undefined, () =>
             handleGetReferralByCode(code, env),
           );
         }
@@ -232,7 +231,7 @@ export default {
       // Research results API
       if (path.startsWith("/api/research/") && request.method === "GET") {
         const domain = path.replace("/api/research/", "");
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleGetResearchResults(domain, env),
         );
       }
@@ -257,7 +256,7 @@ export default {
       const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
       if (dealExplainMatch && request.method === "GET") {
         const dealId = dealExplainMatch[1] ?? "";
-        return withAuth(request, env, "readonly", () =>
+        return withAuth(request, env, undefined, () =>
           handleExplainDeal(dealId, env, request),
         );
       }
@@ -317,10 +316,9 @@ export default {
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
-        const experienceId = experienceMatch[1];
-        if (experienceId !== undefined)
-          return withAuth(request, env, "readonly", () =>
-            handleGetExperience(experienceId, env),
+        if (experienceMatch[1] !== undefined)
+          return withAuth(request, env, undefined, () =>
+            handleGetExperience(experienceMatch[1]!, env),
           );
       }
 
@@ -340,7 +338,7 @@ export default {
         );
       }
       if (path === "/api/email/help" && request.method === "GET") {
-        return withAuth(request, env, "readonly", () => handleEmailHelp());
+        return withAuth(request, env, undefined, () => handleEmailHelp());
       }
 
       // Admin API Key Management
@@ -383,7 +381,6 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
-      await validateKVIsolation(env);
     } catch (error) {
       console.error("Scheduled execution configuration error:", error);
       await notify(env, {

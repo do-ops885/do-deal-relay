@@ -127,14 +127,10 @@ function createMockReferral(
 // ============================================================================
 
 describe("MCP Protocol E2E", () => {
-  let mockEnv: Env;
   const authHeader = { "X-API-Key": "ddr_user_test_key_123" };
+  let mockEnv: Env;
 
-  beforeEach(async () => {
-    vi.stubGlobal("fetch", vi.fn());
-    mockEnv = createMockEnv();
-
-    // Seed API key for auth
+  async function setupTestApiKey(env: Env) {
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest(
       "SHA-256",
@@ -143,14 +139,20 @@ describe("MCP Protocol E2E", () => {
     const hash = Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    await mockEnv.DEALS_SOURCES.put(
-      `apikey:${hash}`,
+    await env.DEALS_SOURCES.put(
+      "apikey:" + hash,
       JSON.stringify({
-        role: "user",
         userId: "test-user",
-        rateLimit: { requestsPerMinute: 60, requestsPerHour: 1000 },
+        role: "user",
+        createdAt: new Date().toISOString(),
       }),
     );
+  }
+
+  beforeEach(async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    mockEnv = createMockEnv();
+    await setupTestApiKey(mockEnv);
   });
 
   afterEach(() => {

@@ -78,23 +78,9 @@ export async function storeApiKey(
   };
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
-  const kvOptions: KVNamespacePutOptions = {
-    metadata: {
-      userId: config.userId,
-      role: config.role,
-      createdAt: config.createdAt,
-      expiresAt: config.expiresAt,
-    },
-  };
-  if (config.expiresAt) {
-    // Use absolute expiration timestamp when expiresAt is provided
-    const expiresAtDate = new Date(config.expiresAt);
-    kvOptions.expiration = Math.floor(expiresAtDate.getTime() / 1000);
-  } else {
-    // Default to 1 year TTL when no expiration is set
-    kvOptions.expirationTtl = 365 * 86400;
-  }
-  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), kvOptions);
+  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+    expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
+  });
 
   return key;
 }
@@ -104,16 +90,13 @@ export async function storeApiKey(
  */
 export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
-  const list = await kv.list({
-    prefix: "apikey:",
-    include: ["metadata"],
-  } as any);
+  const list = await kv.list({ prefix: "apikey:" });
   const keys: ApiKeyConfig[] = [];
 
   for (const key of list.keys) {
-    const metadata = key.metadata as ApiKeyConfig | undefined;
-    if (metadata) {
-      keys.push(metadata);
+    const raw = await kv.get(key.name, "json");
+    if (raw) {
+      keys.push(raw as ApiKeyConfig);
     }
   }
 
@@ -262,20 +245,8 @@ export function requireAuth(
       return unauthorizedResponse(auth.error || "Unauthorized", request);
     }
 
-    if (requiredRole && auth.role !== "admin") {
-      if (requiredRole === "admin") {
-        return forbiddenResponse(`Required role: admin`, request);
-      }
-      if (requiredRole === "user" && auth.role !== "user") {
-        return forbiddenResponse(`Required role: user`, request);
-      }
-      if (
-        requiredRole === "readonly" &&
-        auth.role !== "user" &&
-        auth.role !== "readonly"
-      ) {
-        return forbiddenResponse(`Required role: readonly`, request);
-      }
+    if (requiredRole && auth.role !== requiredRole && auth.role !== "admin") {
+      return forbiddenResponse(`Required role: ${requiredRole}`, request);
     }
 
     return auth;
