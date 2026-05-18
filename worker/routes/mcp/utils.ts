@@ -92,24 +92,50 @@ All operations are logged for compliance with EU AI Act Regulation (EU) 2024/168
 // CORS Headers
 // ============================================================================
 
-export const MCP_CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": [
-    "Content-Type",
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "Authorization",
-    "X-API-Key",
-  ].join(", "),
-  "Access-Control-Expose-Headers": [
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "X-RateLimit-Limit",
-    "X-RateLimit-Remaining",
-    "X-RateLimit-Reset",
-  ].join(", "),
-};
+/**
+ * Allowed origins for CORS
+ */
+export const ALLOWED_ORIGINS = [
+  "https://do-deal-relay.pages.dev",
+  "https://do-deal-relay.com",
+  "https://www.do-deal-relay.com",
+  "http://localhost:8787",
+  "http://localhost:3000",
+];
+
+/**
+ * Get allowed origin based on request
+ */
+export function getAllowedOrigin(origin?: string | null): string {
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    return origin;
+  }
+  return ALLOWED_ORIGINS[0]!;
+}
+
+/**
+ * Build CORS headers for a given origin (or default)
+ */
+export function getMCPCORSHeaders(origin?: string | null): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": [
+      "Content-Type",
+      "MCP-Session-Id",
+      "MCP-Protocol-Version",
+      "Authorization",
+      "X-API-Key",
+    ].join(", "),
+    "Access-Control-Expose-Headers": [
+      "MCP-Session-Id",
+      "MCP-Protocol-Version",
+      "X-RateLimit-Limit",
+      "X-RateLimit-Remaining",
+      "X-RateLimit-Reset",
+    ].join(", "),
+  };
+}
 
 // ============================================================================
 // JSON-RPC Helpers
@@ -147,12 +173,13 @@ export function createJSONResponse(
   data: JSONRPCResponse,
   status: number = 200,
   extraHeaders: HeadersInit = {},
+  origin?: string | null,
 ): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json",
-      ...MCP_CORS_HEADERS,
+      ...getMCPCORSHeaders(origin),
       ...extraHeaders,
     },
   });

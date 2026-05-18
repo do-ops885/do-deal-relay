@@ -86,7 +86,7 @@ export default {
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
-      initGitHubCircuitBreaker(env);
+      initGitHubCircuitBreaker(env as unknown as { DEALS_PROD: KVNamespace });
     }
 
     const url = new URL(request.url);

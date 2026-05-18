@@ -21,6 +21,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
+    if (arg === undefined) {
+      i++;
+      continue;
+    }
 
     if (arg.startsWith("--")) {
       const flag = arg.slice(2);
@@ -32,8 +36,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
         result.flags[flag] = true;
         i++;
       }
-    } else if (arg.startsWith("-")) {
-      const flag = arg.slice(1);
+    } else if (arg!.startsWith("-")) {
+      const flag = arg!.slice(1);
       const nextArg = args[i + 1];
       if (nextArg && !nextArg.startsWith("-")) {
         result.flags[flag] = nextArg;
@@ -143,23 +147,21 @@ function formatTable(data: unknown[]): string {
   // Calculate column widths
   const widths: Record<string, number> = {};
   for (const key of keys) {
-    widths[key] = Math.max(
-      key.length,
-      ...data.map(
-        (row) => String((row as Record<string, unknown>)[key] || "").length,
-      ),
+    const lengths = data.map(
+      (row) => String((row as Record<string, unknown>)[key] || "").length,
     );
+    widths[key] = Math.max(key.length, ...lengths);
   }
 
   // Build header
-  const header = keys.map((k) => k.padEnd(widths[k])).join(" | ");
-  const separator = keys.map((k) => "-".repeat(widths[k])).join("-+-");
+  const header = keys.map((k) => k.padEnd(widths[k] ?? 0)).join(" | ");
+  const separator = keys.map((k) => "-".repeat(widths[k] ?? 0)).join("-+-");
 
   // Build rows
   const rows = data.map((row) =>
     keys
       .map((k) =>
-        String((row as Record<string, unknown>)[k] || "").padEnd(widths[k]),
+        String((row as Record<string, unknown>)[k] || "").padEnd(widths[k] ?? 0),
       )
       .join(" | "),
   );

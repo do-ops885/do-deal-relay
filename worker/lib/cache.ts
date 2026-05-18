@@ -1,3 +1,4 @@
+import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../types";
 import { executeInBatches } from "./utils";
 

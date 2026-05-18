@@ -458,7 +458,7 @@ export async function handleTelegramWebhook(
   const bot = createTelegramBot(config);
 
   try {
-    const update = (await request.json()) as unknown;
+    const update = (await request.json()) as never;
     await bot.handleUpdate(update);
     return new Response("OK", { status: 200 });
   } catch (error) {
