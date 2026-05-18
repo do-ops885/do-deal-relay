@@ -62,7 +62,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig } from "./lib/config-utils";
+import { validateConfig, validateKVIsolation } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -73,6 +73,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
@@ -298,6 +299,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Scheduled execution configuration error:", error);
       await notify(env, {

@@ -65,8 +65,11 @@ seed_prod_snapshot() {
   local seed_data
   seed_data='{"version":"0.1.1","deals":[],"stats":{"total":0,"active":0,"quarantined":0,"rejected":0,"duplicates":0},"generated_at":"'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'","run_id":"seed","trace_id":"seed-'"$(date +%s)"'","snapshot_hash":"seed-'"$(date +%s)"'","previous_hash":"","schema_version":"0.1.1"}'
 
+  # Add environment tag
+  wrangler kv key put --namespace-id="${namespace_id}" "__KV_ENVIRONMENT__" "${TARGET_ENV}" 2>/dev/null || true
+
   if wrangler kv key put --namespace-id="${namespace_id}" "snapshot:prod" "${seed_data}" 2>/dev/null; then
-    echo "✓ Production snapshot seeded"
+    echo "✓ Production snapshot seeded (Environment: ${TARGET_ENV})"
   else
     echo "❌ Failed to seed production snapshot"
     return 1
@@ -83,6 +86,9 @@ seed_source_registry() {
 
   local empty_registry
   empty_registry='[]'
+
+  # Add environment tag
+  wrangler kv key put --namespace-id="${namespace_id}" "__KV_ENVIRONMENT__" "${TARGET_ENV}" 2>/dev/null || true
 
   if wrangler kv key put --namespace-id="${namespace_id}" "registry" "${empty_registry}" 2>/dev/null; then
     echo "✓ Source registry seeded"
@@ -181,6 +187,10 @@ main() {
   check_wrangler
   check_auth
 
+  # Determine target environment for tagging
+  TARGET_ENV="${TARGET_ENV:-production}"
+  echo "Target environment for tagging: ${TARGET_ENV}"
+
   echo ""
   echo "Starting KV seed process..."
   echo ""
@@ -210,6 +220,11 @@ main() {
 
 # Handle command line arguments
 case "${1:-}" in
+  --env=*)
+    TARGET_ENV="${1#*=}"
+    shift
+    main "$@"
+    ;;
   --help|-h)
     echo "Production KV Seed Script"
     echo ""
@@ -218,6 +233,7 @@ case "${1:-}" in
     echo "Options:"
     echo "  --help, -h     Show this help message"
     echo "  --verify-only  Only verify existing seed data"
+    echo "  --env=NAME     Set target environment for tagging (default: production)"
     echo ""
     echo "This script initializes Cloudflare KV namespaces with required seed data"
     echo "for fresh deployments. It reads namespace IDs from wrangler.jsonc."

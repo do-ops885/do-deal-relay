@@ -103,11 +103,11 @@
       "kv_namespaces": [
         {
           "binding": "DEALS_PROD",
-          "id": "b0db85b92fae45c1895152737ab72649",
+          "id": "b0db85b92fae45c1895152737ab72649-staging-prod",
         },
         {
           "binding": "DEALS_STAGING",
-          "id": "b0db85b92fae45c1895152737ab72649",
+          "id": "b0db85b92fae45c1895152737ab72649-staging",
         },
         {
           "binding": "DEALS_LOG",
@@ -115,11 +115,11 @@
         },
         {
           "binding": "DEALS_LOCK",
-          "id": "e3ab520eafd5430ab72978e78bdd257e",
+          "id": "e3ab520eafd5430ab72978e78bdd257e-staging",
         },
         {
           "binding": "DEALS_SOURCES",
-          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+          "id": "be3c0fc148b749b49a59aa7cfa23e3ac-staging",
         },
       ],
       "d1_databases": [

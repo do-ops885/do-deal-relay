@@ -25,6 +25,7 @@ for arg in "$@"; do
   case "$arg" in
     --local) MODE="local" ;;
     --remote) MODE="remote" ;;
+    --env=*) TARGET_ENV="${arg#*=}" ;;
     --e2e-only) MODE="e2e-only" ;;
     --verify-only) MODE="verify-only" ;;
     --help|-h)
@@ -99,9 +100,13 @@ seed_source_registry() {
   echo ""
   echo "--- Seeding Source Registry ---"
 
+  local env_name="${TARGET_ENV:-development}"
   if [ "$MODE" = "remote" ]; then
+    env_name="${TARGET_ENV:-production}"
+    npx wrangler kv key put --namespace-id "$DEALS_SOURCES_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null || true
     npx wrangler kv key put --namespace-id "$DEALS_SOURCES_ID" --remote "registry" "[]" 2>/dev/null && echo "  ✓ Source registry seeded" || echo "  ✗ Source registry failed"
   else
+    npx wrangler kv key put --binding DEALS_SOURCES --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null || true
     npx wrangler kv key put --binding DEALS_SOURCES --local "registry" "[]" 2>/dev/null && echo "  ✓ Source registry seeded" || echo "  ✗ Source registry failed"
   fi
 }
@@ -117,9 +122,13 @@ seed_prod_snapshot() {
   local seed_data
   seed_data='{"version":"0.1.5","deals":[],"stats":{"total":0,"active":0,"quarantined":0,"rejected":0,"duplicates":0},"generated_at":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'","run_id":"seed","trace_id":"seed-'$(date +%s)'","snapshot_hash":"seed-'$(date +%s)'","previous_hash":"","schema_version":"0.1.5"}'
 
+  local env_name="${TARGET_ENV:-development}"
   if [ "$MODE" = "remote" ]; then
+    env_name="${TARGET_ENV:-production}"
+    npx wrangler kv key put --namespace-id "$DEALS_PROD_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null || true
     npx wrangler kv key put --namespace-id "$DEALS_PROD_ID" --remote "snapshot:prod" "${seed_data}" 2>/dev/null && echo "  ✓ Production snapshot seeded" || echo "  ✗ Production snapshot failed"
   else
+    npx wrangler kv key put --binding DEALS_PROD --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null || true
     npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" "${seed_data}" 2>/dev/null && echo "  ✓ Production snapshot seeded (local)" || echo "  ✗ Production snapshot failed (local)"
   fi
 }
@@ -167,6 +176,7 @@ main() {
   echo "====================================="
   echo "  Consolidated KV Seed Script"
   echo "  Mode: $MODE"
+  echo "  Target Env: ${TARGET_ENV:-auto}"
   echo "====================================="
 
   if [ "$MODE" = "e2e-only" ]; then
