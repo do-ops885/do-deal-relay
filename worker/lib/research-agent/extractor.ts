@@ -25,7 +25,9 @@ function stripScriptAndStyleTags(input: string): string {
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
   } while (current !== previous);
-  return current;
+  return current
+    .replace(/<\s*\/?\s*script\b/gi, "")
+    .replace(/<\s*\/?\s*style\b/gi, "");
 }
 
 /**
