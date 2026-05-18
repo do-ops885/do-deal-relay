@@ -1,8 +1,10 @@
 # AGENTS.md - Deal Discovery System (do-deal-relay)
 
-> Single source of truth for all AI coding agents in this repository.
-> Supported by: Claude Code, Gemini CLI, Qwen Code, Windsurf, Jules.
-> See: https://agents.md
+> Single source of truth for all AI coding agents in this
+> repository.
+> Supported by: Claude Code, Gemini CLI, Qwen Code, Windsurf,
+> Jules.
+> See: <https://agents.md>
 
 ## Named Constants
 
@@ -23,38 +25,55 @@ readonly MAX_COMMIT_SUBJECT_LENGTH=72
 
 ## Development Phases (Agent Workflow)
 
-We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Architecture Decision Records) for structured development.
+We use a GOAP (Goal-Oriented Action Planning) approach combined
+with ADRs (Architecture Decision Records) for structured
+development.
 
 1. **ANALYZE & STRATEGIZE (Phase 1)**
-   - **Action**: Evaluate the problem, identify architecture requirements. Write an **ADR** (Architecture Decision Record) detailing the context, decision, and consequences.
+   - **Action**: Evaluate the problem, identify architecture
+     requirements. Write an **ADR** (Architecture Decision
+     Record) detailing the context, decision, and consequences.
    - **Storage**: Save the ADR in the `plans/` directory.
-   - **Instruction**: Analyze the repository before asking questions. Infer from existing patterns first.
+   - **Instruction**: Analyze the repository before asking
+     questions. Infer from existing patterns first.
 
 2. **DECOMPOSE & PLAN (Phase 2)**
-   - **Action**: Break down the problem into atomic, testable tasks. Record these in a plan file under `plans/`.
-   - **Instruction**: produce a written plan, wait for confirmation for non-trivial tasks.
+   - **Action**: Break down the problem into atomic, testable
+     tasks. Record these in a plan file under `plans/`.
+   - **Instruction**: produce a written plan, wait for
+     confirmation for non-trivial tasks.
 
 3. **EXECUTE & COORDINATE (Phase 3)**
-   - **Action**: Execute tasks systematically using the atomic commit workflow.
-   - **Mandatory**: Run `./scripts/quality_gate.sh` before every commit.
-   - **Instruction**: Respect existing 9 validation gates. Avoid speculative rewrites.
+   - **Action**: Execute tasks systematically using the atomic
+     commit workflow.
+   - **Mandatory**: Run `./scripts/quality_gate.sh` before every
+     commit.
+   - **Instruction**: Respect existing 9 validation gates. Avoid
+     speculative rewrites.
 
 4. **SYNTHESIZE (Phase 4)**
-   - **Action**: Extract discoveries and update project-specific documentation or `AGENTS.md` contexts.
+   - **Action**: Extract discoveries and update project-specific
+     documentation or `AGENTS.md` contexts.
 
 ## Atomic Commit Workflow (Mandatory)
 
 All agent-driven changes MUST use the helper script:
+
 ```bash
-./scripts/ai-commit.sh --type <type> [--scope <scope>] --subject <subject> [--body <body>]
+./scripts/ai-commit.sh --type <type> [--scope <scope>] \
+  --subject <subject> [--body <body>]
 ```
 
 ### Commit Types
-`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
+`build`, `ci`, `chore`, `revert`.
 
 ## Quality Gates (System Infrastructure)
 
-The system enforces 13 quality gates via `./scripts/quality_gate.sh`:
+The system enforces 13 quality gates via
+`./scripts/quality_gate.sh`:
+
 1. TypeScript compilation
 2. Unit tests
 3. Validation gate orchestration check
@@ -71,7 +90,9 @@ The system enforces 13 quality gates via `./scripts/quality_gate.sh`:
 
 ## Validation Gates (Per-Deal Logic)
 
-The system enforces 9 mandatory validation gates in the worker pipeline (`worker/validation/pipeline.ts`):
+The system enforces 9 mandatory validation gates in the worker
+pipeline (`worker/validation/pipeline.ts`):
+
 1. `schema_validation`
 2. `normalization_verification`
 3. `deduplication_check`
@@ -84,15 +105,21 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 
 ## Repository Structure Rules
 
-- **Allowed in root**: Only standard config files (package.json, wrangler.jsonc, etc.).
+- **Allowed in root**: Only standard config files
+  (package.json, wrangler.jsonc, etc.).
 - **Documentation**: MUST be in `docs/` or `agents-docs/`.
 - **Plans/Reports**: MUST be in `plans/` or `reports/`.
 - **Skills**: Canonical source is `.agents/skills/`.
-- **Temporary Files**: MUST be in `temp/`. Diagnostic or transient files (e.g., `typecheck_*.txt`) in the root are forbidden.
+- **Temporary Files**: MUST be in `temp/`. Diagnostic or
+  transient files (e.g., `typecheck_*.txt`) in the root are
+  forbidden.
 
 ## Agent Guidance
 
-- **Minimal Clarification**: Do not ask questions that can be answered by analyzing the repo.
-- **Architectural Consistency**: Preserve existing state-machine and modular gate architecture.
+- **Minimal Clarification**: Do not ask questions that can be
+  answered by analyzing the repo.
+- **Architectural Consistency**: Preserve existing state-machine
+  and modular gate architecture.
 - **Incremental Changes**: Make small, verified changes.
-- **Verification**: Always use read-only tools to confirm the effect of your changes.
+- **Verification**: Always use read-only tools to confirm the
+  effect of your changes.
