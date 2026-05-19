@@ -75,8 +75,6 @@ describe("Staging Pipeline", () => {
       DEALS_LOG: {} as KVNamespace,
       DEALS_LOCK: {} as KVNamespace,
       DEALS_SOURCES: {} as KVNamespace,
-      DEALS_PROD: {} as KVNamespace,
-      DEALS_LOG: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",

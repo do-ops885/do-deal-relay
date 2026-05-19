@@ -56,8 +56,6 @@ function createMockEnv(): Env {
     DEALS_PRODUCTION: createKV(),
     DEALS_QUARANTINE: createKV(),
     API_KEYS: createKV(),
-    DEALS_PROD: createKV(),
-    DEALS_LOG: createKV(),
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
