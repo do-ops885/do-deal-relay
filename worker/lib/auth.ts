@@ -94,7 +94,7 @@ export async function storeApiKey(
     // Default to 1 year TTL when no expiration is set
     kvOptions.expirationTtl = 365 * 86400;
   }
-  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), kvOptions as any);
+  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), kvOptions as Record<string, unknown>);
 
   return key;
 }
