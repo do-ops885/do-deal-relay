@@ -185,7 +185,7 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
-        if (code) return handleGetReferralByCode(code, env);
+        if (code) return handleGetReferralByCode(code, env, request);
       }
 
       // Research API
