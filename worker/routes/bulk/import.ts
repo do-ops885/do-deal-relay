@@ -116,7 +116,7 @@ export async function handleBulkImport(
     // Validate content type
     const contentType = request.headers.get("content-type");
     if (!contentType?.includes("application/json")) {
-      return errorResponse("Content-Type must be application/json", 415);
+      return errorResponse("Content-Type must be application/json", 415, undefined, undefined, env);
     }
 
     // Parse request body
@@ -124,17 +124,17 @@ export async function handleBulkImport(
     try {
       body = (await request.json()) as BulkImportRequest;
     } catch {
-      return errorResponse("Invalid JSON body", 400);
+      return errorResponse("Invalid JSON body", 400, undefined, undefined, env);
     }
 
     // Validate deals array exists
     if (!body.deals || !Array.isArray(body.deals)) {
-      return errorResponse("deals array is required", 400);
+      return errorResponse("deals array is required", 400, undefined, undefined, env);
     }
 
     // Validate batch size
     if (body.deals.length === 0) {
-      return errorResponse("deals array cannot be empty", 400);
+      return errorResponse("deals array cannot be empty", 400, undefined, undefined, env);
     }
 
     if (body.deals.length > CONFIG.MAX_BULK_IMPORT_SIZE) {
@@ -180,7 +180,7 @@ export async function handleBulkImport(
       results,
     };
 
-    return jsonResponse(response, failed > 0 ? 207 : 200);
+    return jsonResponse(response, failed > 0 ? 207 : 200, undefined, env);
   } catch (error) {
     const err = handleError(error, {
       component: "bulk-api",

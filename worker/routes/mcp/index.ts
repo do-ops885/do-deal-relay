@@ -26,7 +26,7 @@ import {
   handleResourceRead,
 } from "./resources";
 import {
-  MCP_CORS_HEADERS,
+  getMCPCorsHeaders,
   MCP_PROTOCOL_VERSION,
   createSuccessResponse,
   createErrorResponse,
@@ -54,7 +54,7 @@ export async function handleMCPRequest(
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: MCP_CORS_HEADERS,
+      headers: getMCPCorsHeaders(request, env),
     });
   }
 
@@ -66,6 +66,8 @@ export async function handleMCPRequest(
         MCPErrorCodes.INVALID_REQUEST,
         "Only POST method is supported for MCP endpoints",
       ),
+      env,
+      request,
       405,
     );
   }
@@ -84,6 +86,8 @@ export async function handleMCPRequest(
             rateLimitResult.resetTime - Math.floor(Date.now() / 1000),
         },
       ),
+      env,
+      request,
       429,
       Object.fromEntries(createRateLimitHeaders(rateLimitResult)),
     );
@@ -100,6 +104,8 @@ export async function handleMCPRequest(
         MCPErrorCodes.PARSE_ERROR,
         "Parse error: Invalid JSON",
       ),
+      env,
+      request,
       400,
     );
   }
@@ -113,6 +119,8 @@ export async function handleMCPRequest(
         MCPErrorCodes.INVALID_REQUEST,
         "Invalid JSON-RPC 2.0 request",
       ),
+      env,
+      request,
       400,
     );
   }
@@ -134,6 +142,8 @@ export async function handleMCPRequest(
               MCPErrorCodes.INVALID_PARAMS,
               "Invalid initialize params",
             ),
+            env,
+            request,
             400,
           );
         }
@@ -161,6 +171,8 @@ export async function handleMCPRequest(
               MCPErrorCodes.INVALID_PARAMS,
               "Invalid tools/call params",
             ),
+            env,
+            request,
             400,
           );
         }
@@ -188,6 +200,8 @@ export async function handleMCPRequest(
               MCPErrorCodes.INVALID_PARAMS,
               "Invalid resources/read params",
             ),
+            env,
+            request,
             400,
           );
         }
@@ -197,7 +211,10 @@ export async function handleMCPRequest(
 
       case "notifications/initialized":
         // Notification, no response needed
-        return new Response(null, { status: 202, headers: MCP_CORS_HEADERS });
+        return new Response(null, {
+          status: 202,
+          headers: getMCPCorsHeaders(request, env),
+        });
 
       default:
         return createJSONResponse(
@@ -206,6 +223,8 @@ export async function handleMCPRequest(
             MCPErrorCodes.METHOD_NOT_FOUND,
             `Method not found: ${method}`,
           ),
+          env,
+          request,
           404,
         );
     }
@@ -215,10 +234,16 @@ export async function handleMCPRequest(
       createRateLimitHeaders(rateLimitResult),
     );
 
-    return createJSONResponse(createSuccessResponse(id, result), 200, {
-      ...rateLimitHeaders,
-      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
-    });
+    return createJSONResponse(
+      createSuccessResponse(id, result),
+      env,
+      request,
+      200,
+      {
+        ...rateLimitHeaders,
+        "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+      },
+    );
   } catch (error) {
     console.error("MCP handler error:", error);
 
@@ -228,6 +253,8 @@ export async function handleMCPRequest(
         MCPErrorCodes.INTERNAL_ERROR,
         `Internal error: ${(error as Error).message}`,
       ),
+      env,
+      request,
       500,
     );
   }
@@ -240,7 +267,10 @@ export async function handleMCPRequest(
 /**
  * Handle legacy MCP v1 tool listing
  */
-export async function handleMCPListTools(env: Env): Promise<Response> {
+export async function handleMCPListTools(
+  env: Env,
+  request: Request,
+): Promise<Response> {
   const tools = getTools();
 
   return new Response(
@@ -261,7 +291,7 @@ export async function handleMCPListTools(env: Env): Promise<Response> {
     {
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCorsHeaders(request, env),
       },
     },
   );
@@ -288,7 +318,7 @@ export async function handleMCPCall(
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          ...MCP_CORS_HEADERS,
+          ...getMCPCorsHeaders(request, env),
         },
       });
     }
@@ -299,7 +329,7 @@ export async function handleMCPCall(
       status: result.isError ? 400 : 200,
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCorsHeaders(request, env),
       },
     });
   } catch (error) {
@@ -312,7 +342,7 @@ export async function handleMCPCall(
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          ...MCP_CORS_HEADERS,
+          ...getMCPCorsHeaders(request, env),
         },
       },
     );
@@ -322,7 +352,10 @@ export async function handleMCPCall(
 /**
  * Handle MCP server information
  */
-export async function handleMCPInfo(env: Env): Promise<Response> {
+export async function handleMCPInfo(
+  env: Env,
+  request: Request,
+): Promise<Response> {
   const tools = getTools();
 
   return new Response(
@@ -352,7 +385,7 @@ export async function handleMCPInfo(env: Env): Promise<Response> {
     {
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCorsHeaders(request, env),
       },
     },
   );

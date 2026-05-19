@@ -28,7 +28,7 @@ export async function handleEmailIncoming(
           component: "email-api",
           error: verification.error,
         });
-        return unauthorizedResponse("Invalid webhook signature");
+        return unauthorizedResponse("Invalid webhook signature", request, env);
       }
     }
 
@@ -44,13 +44,25 @@ export async function handleEmailIncoming(
 
     // Validate required fields
     if (!body.from || !body.to || !body.subject) {
-      return errorResponse("Missing required fields: from, to, subject", 400);
+      return errorResponse(
+        "Missing required fields: from, to, subject",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.from)) {
-      return errorResponse("Invalid from email format", 400);
+      return errorResponse(
+        "Invalid from email format",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     // Process the email
@@ -75,14 +87,22 @@ export async function handleEmailIncoming(
         confirmationSent: result.confirmationSent,
       },
       result.success ? 200 : 400,
+      request,
+      env,
     );
   } catch (error) {
     logger.error(`Email incoming error: ${(error as Error).message}`, {
       component: "email-api",
     });
-    return errorResponse("Failed to process email", 500, {
-      message: (error as Error).message,
-    });
+    return errorResponse(
+      "Failed to process email",
+      500,
+      {
+        message: (error as Error).message,
+      },
+      request,
+      env,
+    );
   }
 }
 
@@ -103,7 +123,13 @@ export async function handleEmailParse(
     };
 
     if (!body.from || !body.subject) {
-      return errorResponse("Missing required fields: from, subject", 400);
+      return errorResponse(
+        "Missing required fields: from, subject",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     // Import extraction and command parsing functions
@@ -123,37 +149,56 @@ export async function handleEmailParse(
     const extraction = extractReferralFromEmail(email);
     const command = parseCommand(email);
 
-    return jsonResponse({
-      extraction,
-      command,
-      email: {
-        from: email.from,
-        to: email.to,
-        subject: email.subject,
-        hasText: !!email.text,
-        hasHtml: !!email.html,
+    return jsonResponse(
+      {
+        extraction,
+        command,
+        email: {
+          from: email.from,
+          to: email.to,
+          subject: email.subject,
+          hasText: !!email.text,
+          hasHtml: !!email.html,
+        },
       },
-    });
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     logger.error(`Email parse error: ${(error as Error).message}`, {
       component: "email-api",
     });
-    return errorResponse("Failed to parse email", 500, {
-      message: (error as Error).message,
-    });
+    return errorResponse(
+      "Failed to parse email",
+      500,
+      {
+        message: (error as Error).message,
+      },
+      request,
+      env,
+    );
   }
 }
 
 /**
  * Get help email content
  */
-export async function handleEmailHelp(): Promise<Response> {
+export async function handleEmailHelp(
+  request?: Request,
+  env?: Env,
+): Promise<Response> {
   const template = createHelpEmail();
-  return jsonResponse({
-    subject: template.subject,
-    text: template.text,
-    html: template.html,
-  });
+  return jsonResponse(
+    {
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    },
+    200,
+    request,
+    env,
+  );
 }
 
 /**

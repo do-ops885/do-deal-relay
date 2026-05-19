@@ -86,23 +86,29 @@ export async function handleValidateUrl(
   );
 
   if (!rateLimitResult.allowed) {
-    return errorResponse("Rate limit exceeded", 429, {
-      retry_after: rateLimitResult.resetTime,
-    });
+    return errorResponse(
+      "Rate limit exceeded",
+      429,
+      {
+        retry_after: rateLimitResult.resetTime,
+      },
+      request,
+      env,
+    );
   }
 
   try {
     const body = (await request.json()) as ValidateUrlBody;
 
     if (!body.url || typeof body.url !== "string") {
-      return errorResponse("URL is required", 400);
+      return errorResponse("URL is required", 400, undefined, request, env, undefined, undefined, env);
     }
 
     // Validate URL format
     try {
       new URL(body.url);
     } catch {
-      return errorResponse("Invalid URL format", 400);
+      return errorResponse("Invalid URL format", 400, undefined, request, env, undefined, undefined, env);
     }
 
     logger.info(`URL validation request`, {
@@ -116,7 +122,12 @@ export async function handleValidateUrl(
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
-    const response = jsonResponse(result, result.valid ? 200 : 400);
+    const response = jsonResponse(
+      result,
+      result.valid ? 200 : 400,
+      request,
+      env,
+    );
     headers.forEach((value, key) => {
       response.headers.set(key, value);
     });
@@ -129,7 +140,13 @@ export async function handleValidateUrl(
       component: "validation-api",
       error: errorMessage,
     });
-    return errorResponse("Validation failed", 500, { detail: errorMessage });
+    return errorResponse(
+      "Validation failed",
+      500,
+      { detail: errorMessage },
+      request,
+      env,
+    );
   }
 }
 
@@ -149,35 +166,65 @@ export async function handleValidateBatch(
   );
 
   if (!rateLimitResult.allowed) {
-    return errorResponse("Rate limit exceeded", 429, {
-      retry_after: rateLimitResult.resetTime,
-    });
+    return errorResponse(
+      "Rate limit exceeded",
+      429,
+      {
+        retry_after: rateLimitResult.resetTime,
+      },
+      request,
+      env,
+    );
   }
 
   try {
     const body = (await request.json()) as ValidateBatchBody;
 
     if (!body.urls || !Array.isArray(body.urls)) {
-      return errorResponse("urls array is required", 400);
+      return errorResponse(
+        "urls array is required",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     if (body.urls.length === 0) {
-      return errorResponse("urls array cannot be empty", 400);
+      return errorResponse(
+        "urls array cannot be empty",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     if (body.urls.length > 50) {
-      return errorResponse("Maximum 50 URLs per batch", 400);
+      return errorResponse(
+        "Maximum 50 URLs per batch",
+        400,
+        undefined,
+        request,
+        env,
+      );
     }
 
     // Validate all URLs are strings
     for (const url of body.urls) {
       if (typeof url !== "string") {
-        return errorResponse("All URLs must be strings", 400);
+        return errorResponse(
+          "All URLs must be strings",
+          400,
+          undefined,
+          request,
+          env,
+        );
       }
       try {
         new URL(url);
       } catch {
-        return errorResponse(`Invalid URL: ${url}`, 400);
+        return errorResponse(`Invalid URL: ${url}`, 400, undefined, request, env, undefined, undefined, env);
       }
     }
 
@@ -223,6 +270,8 @@ export async function handleValidateBatch(
     const response = jsonResponse(
       result,
       urlResults.errors.length > 0 ? 207 : 200,
+      request,
+      env,
     );
     headers.forEach((value, key) => {
       response.headers.set(key, value);
@@ -236,9 +285,15 @@ export async function handleValidateBatch(
       component: "validation-api",
       error: errorMessage,
     });
-    return errorResponse("Batch validation failed", 500, {
-      detail: errorMessage,
-    });
+    return errorResponse(
+      "Batch validation failed",
+      500,
+      {
+        detail: errorMessage,
+      },
+      request,
+      env,
+    );
   }
 }
 
@@ -250,7 +305,10 @@ export async function handleValidateBatch(
  * GET /api/validation/stats
  * Get validation statistics
  */
-export async function handleGetValidationStats(env: Env): Promise<Response> {
+export async function handleGetValidationStats(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   try {
     // Get URL validation stats
     const [validationStats, lastRun, activeDeals, snapshot] = await Promise.all(
@@ -300,7 +358,7 @@ export async function handleGetValidationStats(env: Env): Promise<Response> {
       generated_at: new Date().toISOString(),
     };
 
-    return jsonResponse(stats);
+    return jsonResponse(stats, 200, request, env, undefined, env);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to get stats";
@@ -308,9 +366,15 @@ export async function handleGetValidationStats(env: Env): Promise<Response> {
       component: "validation-api",
       error: errorMessage,
     });
-    return errorResponse("Failed to get validation stats", 500, {
-      detail: errorMessage,
-    });
+    return errorResponse(
+      "Failed to get validation stats",
+      500,
+      {
+        detail: errorMessage,
+      },
+      request,
+      env,
+    );
   }
 }
 
@@ -335,9 +399,15 @@ export async function handleValidateDeal(
   );
 
   if (!rateLimitResult.allowed) {
-    return errorResponse("Rate limit exceeded", 429, {
-      retry_after: rateLimitResult.resetTime,
-    });
+    return errorResponse(
+      "Rate limit exceeded",
+      429,
+      {
+        retry_after: rateLimitResult.resetTime,
+      },
+      request,
+      env,
+    );
   }
 
   try {
@@ -364,12 +434,13 @@ export async function handleValidateDeal(
     const deals = await getDealsByCode(env, code);
 
     if (deals.length === 0) {
-      return errorResponse("Deal not found", 404);
+      return errorResponse("Deal not found", 404, undefined, request, env, undefined, undefined, env);
     }
 
     // Use first matching deal
     const deal = deals[0];
-    if (!deal) return errorResponse("Deal not found", 404);
+    if (!deal)
+      return errorResponse("Deal not found", 404, undefined, request, env, undefined, undefined, env);
 
     // Perform validations
     const results: {
@@ -432,7 +503,12 @@ export async function handleValidateDeal(
 
     // Add rate limit headers
     const headers = createRateLimitHeaders(rateLimitResult);
-    const response = jsonResponse(results, results.valid ? 200 : 400);
+    const response = jsonResponse(
+      results,
+      results.valid ? 200 : 400,
+      request,
+      env,
+    );
     headers.forEach((value, key) => {
       response.headers.set(key, value);
     });
@@ -446,8 +522,14 @@ export async function handleValidateDeal(
       code,
       error: errorMessage,
     });
-    return errorResponse("Deal validation failed", 500, {
-      detail: errorMessage,
-    });
+    return errorResponse(
+      "Deal validation failed",
+      500,
+      {
+        detail: errorMessage,
+      },
+      request,
+      env,
+    );
   }
 }

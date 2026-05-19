@@ -23,7 +23,7 @@ function getD1Logger(env: Env) {
 
 export async function handleD1Search(url: URL, env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse({ error: "D1 database not configured" }, 503, undefined, env);
   }
 
   const query = url.searchParams.get("q");
@@ -32,7 +32,7 @@ export async function handleD1Search(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get("status") || undefined;
 
   if (!query) {
-    return jsonResponse({ error: "Query parameter 'q' is required" }, 400);
+    return jsonResponse({ error: "Query parameter 'q' is required" }, 400, undefined, env);
   }
 
   try {
@@ -55,7 +55,7 @@ export async function handleD1Search(url: URL, env: Env): Promise<Response> {
       error instanceof Error ? error : new Error(String(error)),
       { query },
     );
-    return jsonResponse({ error: "Search failed" }, 500);
+    return jsonResponse({ error: "Search failed" }, 500, undefined, env);
   }
 }
 
@@ -68,7 +68,7 @@ export async function handleD1Suggestions(
   env: Env,
 ): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse({ error: "D1 database not configured" }, 503, undefined, env);
   }
 
   const partial = url.searchParams.get("q");

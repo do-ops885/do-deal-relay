@@ -29,7 +29,7 @@ export async function handleGetDeals(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, request);
+    return jsonResponse({ error: "No deals available" }, 404, request, env, undefined, env);
   }
 
   const query: GetDealsQuery = {
@@ -44,7 +44,7 @@ export async function handleGetDeals(
 
   const validation = GetDealsQuerySchema.safeParse(query);
   if (!validation.success) {
-    return jsonResponse({ error: "Invalid query parameters" }, 400, request);
+    return jsonResponse({ error: "Invalid query parameters" }, 400, request, env, undefined, env);
   }
 
   let deals = snapshot.deals;
@@ -70,10 +70,10 @@ export async function handleGetDeals(
   deals = deals.slice(0, query.limit);
 
   if (url.pathname === "/deals.json") {
-    return jsonResponse({ ...snapshot, deals }, 200, request);
+    return jsonResponse({ ...snapshot, deals }, 200, request, env, undefined, env);
   }
 
-  return jsonResponse(deals, 200, request);
+  return jsonResponse(deals, 200, request, env, undefined, env);
 }
 
 /**
@@ -94,12 +94,14 @@ export async function handleSimilarDeals(
     return jsonResponse(
       { error: "Either 'code' or 'domain' query parameter required" },
       400,
+      undefined,
+      env,
     );
   }
 
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
   }
 
   const targetDeal = snapshot.deals.find(
@@ -111,18 +113,28 @@ export async function handleSimilarDeals(
       (d) => d.source.domain.toLowerCase() === domain.toLowerCase(),
     );
     if (byDomain.length === 0) {
-      return jsonResponse({ error: "No deals found for domain" }, 404);
+      return jsonResponse(
+        { error: "No deals found for domain" },
+        404,
+        undefined,
+        env,
+      );
     }
-    return jsonResponse({
-      similar: [],
-      total: 0,
-      reason: "No reference deal found, showing domain deals",
-      domain_deals: byDomain.slice(0, limit),
-    });
+    return jsonResponse(
+      {
+        similar: [],
+        total: 0,
+        reason: "No reference deal found, showing domain deals",
+        domain_deals: byDomain.slice(0, limit),
+      },
+      200,
+      undefined,
+      env,
+    );
   }
 
   if (!targetDeal) {
-    return jsonResponse({ error: "Deal not found" }, 404);
+    return jsonResponse({ error: "Deal not found" }, 404, undefined, env, undefined, env);
   }
 
   const targetCategories = new Set(
@@ -168,16 +180,21 @@ export async function handleSimilarDeals(
     .slice(0, limit)
     .map((s) => s.deal);
 
-  return jsonResponse({
-    reference: {
-      id: targetDeal.id,
-      title: targetDeal.title,
-      code: targetDeal.code,
-      domain: targetDeal.source.domain,
+  return jsonResponse(
+    {
+      reference: {
+        id: targetDeal.id,
+        title: targetDeal.title,
+        code: targetDeal.code,
+        domain: targetDeal.source.domain,
+      },
+      similar,
+      total: similar.length,
     },
-    similar,
-    total: similar.length,
-  });
+    200,
+    undefined,
+    env,
+  );
 }
 
 /**
@@ -187,7 +204,7 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
   }
 
   // Parse query parameters
@@ -230,7 +247,7 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
     response.scores = result.scores;
   }
 
-  return jsonResponse(response);
+  return jsonResponse(response, 200, undefined, env, undefined, env);
 }
 
 /**
@@ -243,7 +260,7 @@ export async function handleDealHighlights(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
   }
 
   const limit = url.searchParams.has("limit")
@@ -254,16 +271,21 @@ export async function handleDealHighlights(
   const expiringSoon = getExpiringDeals(snapshot.deals, 7);
   const recentlyAdded = getRecentDeals(snapshot.deals, 7);
 
-  return jsonResponse({
-    top_deals: topDeals,
-    expiring_soon: expiringSoon,
-    recently_added: recentlyAdded,
-    meta: {
-      top_deals_count: topDeals.length,
-      expiring_soon_count: expiringSoon.length,
-      recently_added_count: recentlyAdded.length,
+  return jsonResponse(
+    {
+      top_deals: topDeals,
+      expiring_soon: expiringSoon,
+      recently_added: recentlyAdded,
+      meta: {
+        top_deals_count: topDeals.length,
+        expiring_soon_count: expiringSoon.length,
+        recently_added_count: recentlyAdded.length,
+      },
     },
-  });
+    200,
+    undefined,
+    env,
+  );
 }
 
 /**
@@ -277,16 +299,16 @@ export async function handleExplainDeal(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, request);
+    return jsonResponse({ error: "No deals available" }, 404, request, env, undefined, env);
   }
 
   const deal = snapshot.deals.find((d) => d.id === dealId);
 
   if (!deal) {
-    return jsonResponse({ error: "Deal not found" }, 404, request);
+    return jsonResponse({ error: "Deal not found" }, 404, request, env, undefined, env);
   }
 
   const explanation = explainDeal(deal);
 
-  return jsonResponse(explanation, 200, request);
+  return jsonResponse(explanation, 200, request, env, undefined, env);
 }

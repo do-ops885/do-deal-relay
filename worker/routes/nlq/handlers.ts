@@ -201,7 +201,7 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
       results,
     };
 
-    const response = jsonResponse(responseData, 200);
+    const response = jsonResponse(responseData, 200, undefined, env);
 
     // Add rate limit headers to successful response
     const headers = createRateLimitHeaders(rateLimitResult);

@@ -92,7 +92,7 @@ export async function handleBulkExport(
 
     // Validate format
     if (format !== "csv" && format !== "json") {
-      return errorResponse("format must be 'csv' or 'json'", 400);
+      return errorResponse("format must be 'csv' or 'json'", 400, undefined, undefined, env);
     }
 
     logger.info(`Bulk export request`, {

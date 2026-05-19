@@ -22,6 +22,7 @@ export async function handleDiscover(
       },
       200,
       request,
+      env,
     );
   } else {
     return jsonResponse(
@@ -32,6 +33,7 @@ export async function handleDiscover(
       },
       500,
       request,
+      env,
     );
   }
 }
@@ -41,7 +43,7 @@ export async function handleStatus(
   request?: Request,
 ): Promise<Response> {
   const status = await getPipelineStatus(env);
-  return jsonResponse(status, 200, request);
+  return jsonResponse(status, 200, request, env, undefined, env);
 }
 
 export async function handleGetLogs(
@@ -59,6 +61,7 @@ export async function handleGetLogs(
         "Content-Disposition": 'attachment; filename="deals-research.jsonl"',
         "Access-Control-Allow-Origin": getAllowedOrigin(
           request?.headers.get("Origin"),
+          env,
         ),
         Vary: "Origin",
         ...SECURITY_HEADERS,
@@ -78,5 +81,5 @@ export async function handleGetLogs(
     logs = await getRecentLogs(env, count);
   }
 
-  return jsonResponse({ logs, count: logs.length }, 200, request);
+  return jsonResponse({ logs, count: logs.length }, 200, request, env, undefined, env);
 }

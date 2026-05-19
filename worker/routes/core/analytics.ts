@@ -27,11 +27,11 @@ export async function handleAnalytics(
   try {
     if (format === "summary") {
       const summary = await generateAnalyticsSummary(env, days);
-      return jsonResponse(summary, 200, request);
+      return jsonResponse(summary, 200, request, env, undefined, env);
     }
 
     const analytics = await generateDealAnalytics(env, days);
-    return jsonResponse(analytics, 200, request);
+    return jsonResponse(analytics, 200, request, env, undefined, env);
   } catch (error) {
     console.error("Analytics generation error:", error);
     return jsonResponse(
@@ -41,6 +41,7 @@ export async function handleAnalytics(
       },
       500,
       request,
+      env,
     );
   }
 }

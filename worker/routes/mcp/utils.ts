@@ -6,6 +6,7 @@
 
 import type { Env } from "../../types";
 import { CONFIG } from "../../config";
+import { getAllowedOrigin } from "../utils";
 import {
   checkRateLimit,
   getClientIdentifier,
@@ -92,24 +93,35 @@ All operations are logged for compliance with EU AI Act Regulation (EU) 2024/168
 // CORS Headers
 // ============================================================================
 
-export const MCP_CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": [
-    "Content-Type",
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "Authorization",
-    "X-API-Key",
-  ].join(", "),
-  "Access-Control-Expose-Headers": [
-    "MCP-Session-Id",
-    "MCP-Protocol-Version",
-    "X-RateLimit-Limit",
-    "X-RateLimit-Remaining",
-    "X-RateLimit-Reset",
-  ].join(", "),
-};
+/**
+ * Get CORS headers for MCP requests with proper origin validation
+ */
+export function getMCPCorsHeaders(
+  request: Request,
+  env: Env,
+): Record<string, string> {
+  const origin = request.headers.get("Origin");
+  return {
+    "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": [
+      "Content-Type",
+      "MCP-Session-Id",
+      "MCP-Protocol-Version",
+      "Authorization",
+      "X-API-Key",
+    ].join(", "),
+    "Access-Control-Expose-Headers": [
+      "MCP-Session-Id",
+      "MCP-Protocol-Version",
+      "X-RateLimit-Limit",
+      "X-RateLimit-Remaining",
+      "X-RateLimit-Reset",
+    ].join(", "),
+    "Access-Control-Allow-Credentials": "true",
+    Vary: "Origin",
+  };
+}
 
 // ============================================================================
 // JSON-RPC Helpers
@@ -145,6 +157,8 @@ export function createErrorResponse(
 
 export function createJSONResponse(
   data: JSONRPCResponse,
+  env: Env,
+  request: Request,
   status: number = 200,
   extraHeaders: HeadersInit = {},
 ): Response {
@@ -152,7 +166,7 @@ export function createJSONResponse(
     status,
     headers: {
       "Content-Type": "application/json",
-      ...MCP_CORS_HEADERS,
+      ...getMCPCorsHeaders(request, env),
       ...extraHeaders,
     },
   });

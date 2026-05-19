@@ -58,6 +58,8 @@ export async function handleNLQRequest(
         code: "METHOD_NOT_ALLOWED",
       } as NLQError,
       405,
+      request,
+      env,
     );
   }
 
@@ -68,5 +70,7 @@ export async function handleNLQRequest(
       code: "NOT_FOUND",
     } as NLQError,
     404,
+    request,
+    env,
   );
 }

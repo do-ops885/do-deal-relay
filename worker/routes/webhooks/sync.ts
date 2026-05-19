@@ -27,6 +27,8 @@ export async function handleCreateSyncConfig(
       return jsonResponse(
         { error: "Missing required fields: partner_id, direction, mode" },
         400,
+        request,
+        env,
       );
     }
 
@@ -53,6 +55,8 @@ export async function handleCreateSyncConfig(
         },
       },
       201,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -62,6 +66,8 @@ export async function handleCreateSyncConfig(
     return jsonResponse(
       { error: "Failed to create sync config", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -79,10 +85,10 @@ export async function handleGetSyncState(
     const state = await getSyncState(env, partnerId);
 
     if (!state) {
-      return jsonResponse({ error: "Sync state not found" }, 404);
+      return jsonResponse({ error: "Sync state not found" }, 404, request, env, undefined, env);
     }
 
-    return jsonResponse({ state });
+    return jsonResponse({ state }, 200, request, env, undefined, env);
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -91,6 +97,8 @@ export async function handleGetSyncState(
     return jsonResponse(
       { error: "Failed to get sync state", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }

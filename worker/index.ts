@@ -153,7 +153,8 @@ export default {
 
       // Referral API
       if (path === "/api/referrals") {
-        if (request.method === "GET") return handleGetReferrals(url, env);
+        if (request.method === "GET")
+          return handleGetReferrals(url, env, request);
         if (request.method === "POST") {
           return withAuth(request, env, undefined, () =>
             handleCreateReferral(request, env),
@@ -185,7 +186,7 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
-        if (code) return handleGetReferralByCode(code, env);
+        if (code) return handleGetReferralByCode(code, env, request);
       }
 
       // Research API
@@ -199,7 +200,7 @@ export default {
       // Research results API
       if (path.startsWith("/api/research/") && request.method === "GET") {
         const domain = path.replace("/api/research/", "");
-        return handleGetResearchResults(domain, env);
+        return handleGetResearchResults(domain, env, request);
       }
 
       // Validation API
@@ -211,7 +212,7 @@ export default {
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
         return withAuth(request, env, "admin", () =>
-          handleGetValidationStats(env),
+          handleGetValidationStats(env, request),
         );
       }
 
@@ -234,13 +235,13 @@ export default {
 
       // Legacy MCP v1 Endpoints (for backwards compatibility)
       if (path === "/mcp/v1/tools/list" && request.method === "POST") {
-        return handleMCPListTools(env);
+        return handleMCPListTools(env, request);
       }
       if (path === "/mcp/v1/tools/call" && request.method === "POST") {
         return handleMCPCall(request, env);
       }
       if (path === "/mcp/v1/info") {
-        return handleMCPInfo(env);
+        return handleMCPInfo(env, request);
       }
 
       // D1 Database API endpoints
@@ -265,11 +266,13 @@ export default {
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
         if (experienceMatch[1] !== undefined)
-          return handleGetExperience(experienceMatch[1], env);
+          return handleGetExperience(experienceMatch[1], env, request);
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
-        return withAuth(request, env, "admin", () => handleRunAggregation(env));
+        return withAuth(request, env, "admin", () =>
+          handleRunAggregation(env, request),
+        );
       }
 
       // Email API
@@ -280,17 +283,18 @@ export default {
         return handleEmailParse(request, env);
       }
       if (path === "/api/email/help" && request.method === "GET") {
-        return handleEmailHelp();
+        return handleEmailHelp(request, env);
       }
 
       // 404
-      return jsonResponse({ error: "Not found" }, 404, request);
+      return jsonResponse({ error: "Not found" }, 404, request, env);
     } catch (error) {
       console.error("Request handler error:", error);
       return jsonResponse(
         { error: "Internal server error", message: (error as Error).message },
         500,
         request,
+        env,
       );
     }
   },

@@ -26,16 +26,18 @@ export async function handleIncomingWebhookRequest(
       return jsonResponse(
         { error: "Content-Type must be application/json" },
         415,
+        request,
+        env,
       );
     }
 
     // Look up partner for secret (needed for HMAC verification)
     const partner = await getWebhookPartner(env, partnerId);
     if (!partner) {
-      return jsonResponse({ error: "Unknown partner" }, 401);
+      return jsonResponse({ error: "Unknown partner" }, 401, request, env, undefined, env);
     }
     if (!partner.active) {
-      return jsonResponse({ error: "Partner deactivated" }, 403);
+      return jsonResponse({ error: "Partner deactivated" }, 403, request, env, undefined, env);
     }
 
     // Verify webhook signature at request boundary (defense-in-depth)
@@ -49,6 +51,8 @@ export async function handleIncomingWebhookRequest(
       return jsonResponse(
         { error: `Invalid webhook signature: ${verification.error}` },
         401,
+        request,
+        env,
       );
     }
 
@@ -58,6 +62,8 @@ export async function handleIncomingWebhookRequest(
       return jsonResponse(
         { error: "Missing required headers", required: ["X-Webhook-Id"] },
         401,
+        request,
+        env,
       );
     }
 
@@ -91,6 +97,8 @@ export async function handleIncomingWebhookRequest(
         error: result.error,
       },
       result.statusCode,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -101,6 +109,8 @@ export async function handleIncomingWebhookRequest(
     return jsonResponse(
       { error: "Failed to process webhook", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }

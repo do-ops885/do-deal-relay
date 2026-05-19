@@ -36,6 +36,7 @@ import { jsonResponse } from "./utils";
 export async function handleGetReferrals(
   url: URL,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
     const query: ReferralSearchQuery = {
@@ -60,17 +61,24 @@ export async function handleGetReferrals(
       return jsonResponse(
         { error: "Invalid query parameters", details: validation.error.errors },
         400,
+        request,
+        env,
       );
     }
 
     const { referrals, total } = await searchReferrals(env, query);
 
-    return jsonResponse({
-      referrals,
-      total,
-      limit: query.limit,
-      offset: query.offset,
-    });
+    return jsonResponse(
+      {
+        referrals,
+        total,
+        limit: query.limit,
+        offset: query.offset,
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -79,6 +87,8 @@ export async function handleGetReferrals(
     return jsonResponse(
       { error: "Failed to retrieve referrals", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -93,12 +103,19 @@ export async function handleCreateReferral(
       return jsonResponse(
         { error: "Content-Type must be application/json" },
         415,
+        request,
+        env,
       );
     }
 
     const contentLength = request.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-      return jsonResponse({ error: "Request body too large" }, 413);
+      return jsonResponse(
+        { error: "Request body too large" },
+        413,
+        request,
+        env,
+      );
     }
 
     const body = (await request.json()) as Record<string, unknown>;
@@ -111,6 +128,8 @@ export async function handleCreateReferral(
       return jsonResponse(
         { error: "Missing required fields: code, url, domain" },
         400,
+        request,
+        env,
       );
     }
 
@@ -122,6 +141,8 @@ export async function handleCreateReferral(
           existing_id: existing.id,
         },
         409,
+        request,
+        env,
       );
     }
 
@@ -166,6 +187,8 @@ export async function handleCreateReferral(
           details: validation.error.errors,
         },
         400,
+        request,
+        env,
       );
     }
 
@@ -189,6 +212,8 @@ export async function handleCreateReferral(
         },
       },
       201,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -198,6 +223,8 @@ export async function handleCreateReferral(
     return jsonResponse(
       { error: "Failed to create referral", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -205,15 +232,16 @@ export async function handleCreateReferral(
 export async function handleGetReferralByCode(
   code: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
     const referral = await getReferralByCode(env, code);
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
     }
 
-    return jsonResponse({ referral });
+    return jsonResponse({ referral }, 200, request, env, undefined, env);
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -222,6 +250,8 @@ export async function handleGetReferralByCode(
     return jsonResponse(
       { error: "Failed to retrieve referral", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -242,6 +272,8 @@ export async function handleDeactivateReferral(
           details: validation.error.errors,
         },
         400,
+        request,
+        env,
       );
     }
 
@@ -254,7 +286,7 @@ export async function handleDeactivateReferral(
     );
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
     }
 
     logger.info(`Referral deactivated: ${code}`, {
@@ -269,19 +301,24 @@ export async function handleDeactivateReferral(
       message: `Referral code ${code} deactivated: ${body.reason}`,
     });
 
-    return jsonResponse({
-      success: true,
-      message: "Referral deactivated successfully",
-      referral: {
-        id: referral.id,
-        code: referral.code,
-        url: referral.url,
-        domain: referral.domain,
-        status: referral.status,
-        deactivated_at: referral.deactivated_at,
-        reason: referral.deactivated_reason,
+    return jsonResponse(
+      {
+        success: true,
+        message: "Referral deactivated successfully",
+        referral: {
+          id: referral.id,
+          code: referral.code,
+          url: referral.url,
+          domain: referral.domain,
+          status: referral.status,
+          deactivated_at: referral.deactivated_at,
+          reason: referral.deactivated_reason,
+        },
       },
-    });
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -290,6 +327,8 @@ export async function handleDeactivateReferral(
     return jsonResponse(
       { error: "Failed to deactivate referral", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -303,7 +342,7 @@ export async function handleReactivateReferral(
     // Check if referral exists and its current status
     const existing = await getReferralByCode(env, code);
     if (!existing) {
-      return jsonResponse({ error: "Referral not found" }, 404, request);
+      return jsonResponse({ error: "Referral not found" }, 404, request, undefined, env);
     }
 
     if (existing.status === "active") {
@@ -319,6 +358,7 @@ export async function handleReactivateReferral(
         },
         409,
         request,
+        env,
       );
     }
 
@@ -328,7 +368,7 @@ export async function handleReactivateReferral(
     // Defensive fallback — should not occur since existence is verified above,
     // but guards against concurrent deletion between the check and reactivation.
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404, request);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
     }
 
     logger.info(`Referral reactivated: ${code}`, {
@@ -349,6 +389,7 @@ export async function handleReactivateReferral(
       },
       200,
       request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -359,6 +400,7 @@ export async function handleReactivateReferral(
       { error: "Failed to reactivate referral", message: err.message },
       500,
       request,
+      env,
     );
   }
 }
@@ -373,6 +415,8 @@ export async function handleResearch(
       return jsonResponse(
         { error: "Content-Type must be application/json" },
         415,
+        request,
+        env,
       );
     }
 
@@ -386,6 +430,8 @@ export async function handleResearch(
           details: validation.error.errors,
         },
         400,
+        request,
+        env,
       );
     }
 
@@ -403,15 +449,20 @@ export async function handleResearch(
       stored_count: referrals.length,
     });
 
-    return jsonResponse({
-      success: true,
-      message: "Research completed",
-      query: body.query,
-      domain: body.domain,
-      discovered_codes: researchResult.discovered_codes.length,
-      stored_referrals: referrals.length,
-      research_metadata: researchResult.research_metadata,
-    });
+    return jsonResponse(
+      {
+        success: true,
+        message: "Research completed",
+        query: body.query,
+        domain: body.domain,
+        discovered_codes: researchResult.discovered_codes.length,
+        stored_referrals: referrals.length,
+        research_metadata: researchResult.research_metadata,
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -420,6 +471,8 @@ export async function handleResearch(
     return jsonResponse(
       { error: "Research failed", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -427,6 +480,7 @@ export async function handleResearch(
 export async function handleGetResearchResults(
   domain: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
     const researchResult = await researchAllReferralPossibilities(
@@ -435,11 +489,16 @@ export async function handleGetResearchResults(
       "thorough",
     );
 
-    return jsonResponse({
-      domain,
-      discovered_codes: researchResult.discovered_codes,
-      research_metadata: researchResult.research_metadata,
-    });
+    return jsonResponse(
+      {
+        domain,
+        discovered_codes: researchResult.discovered_codes,
+        research_metadata: researchResult.research_metadata,
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -448,6 +507,8 @@ export async function handleGetResearchResults(
     return jsonResponse(
       { error: "Failed to get research results", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
