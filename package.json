@@ -34,7 +34,8 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "protobufjs": "8.3.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "sanitize-html": "^2.17.4"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.6",
