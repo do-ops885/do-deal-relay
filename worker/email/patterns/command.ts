@@ -129,8 +129,17 @@ function parseDeactivateCommand(subject: string, body: string): ParsedCommand {
   };
 }
 
+/**
+ * Escape special regex characters in a string to prevent RegExp injection
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function extractField(lines: string[], fieldName: string): string | undefined {
-  const pattern = new RegExp(`^${fieldName}[:\s]+(.+)$`, "i");
+  // Escape fieldName to prevent RegExp injection attacks
+  const escaped = escapeRegex(fieldName);
+  const pattern = new RegExp(`^${escaped}[:\s]+(.+)$`, "i");
 
   for (const line of lines) {
     const match = line.match(pattern);

@@ -99,8 +99,10 @@ function ipToLong(ip: string): number {
 
 async function resolveHostname(hostname: string): Promise<string[]> {
   try {
+    // URL-encode the hostname to prevent SSRF via injected query parameters
+    const encodedHostname = encodeURIComponent(hostname);
     const response = await fetch(
-      `https://cloudflare-dns.com/query?name=${hostname}&type=A`,
+      `https://cloudflare-dns.com/query?name=${encodedHostname}&type=A`,
       {
         headers: { accept: "application/dns-json" },
         signal: AbortSignal.timeout(2000),

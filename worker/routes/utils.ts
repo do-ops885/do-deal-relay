@@ -150,6 +150,16 @@ export function validateUrl(
       return null;
     }
 
+    // Block dangerous URI schemes
+    if (
+      parsed.protocol === "javascript:" ||
+      parsed.protocol === "data:" ||
+      parsed.protocol === "vbscript:" ||
+      parsed.protocol === "file:"
+    ) {
+      return null;
+    }
+
     // Check for URL-encoded characters that might be used for bypasses
     if (
       url.includes("\\") ||
