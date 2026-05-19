@@ -376,5 +376,7 @@ playwright-report/
 
 # TypeScript check output (temp files)
 typecheck_*.txt
+quality_gate_output.txt
+test_output.txt
 typescript_*.txt
 final_typecheck.txt
