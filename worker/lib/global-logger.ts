@@ -29,21 +29,26 @@ let minLevel: LogLevel = "info";
 let globalContext: LogContext = {};
 
 /**
- * Set minimum log level
+ * Set minimum log level for the global logger.
+ *
+ * @param level - The minimum level to log (debug, info, warn, error).
  */
 export function setLogLevel(level: LogLevel): void {
   minLevel = level;
 }
 
 /**
- * Set global context attached to all log entries
+ * Set global context attached to all subsequent log entries.
+ * Merges with existing global context.
+ *
+ * @param context - The context object to merge into the global context.
  */
 export function setLogContext(context: LogContext): void {
   globalContext = { ...globalContext, ...context };
 }
 
 /**
- * Clear global context
+ * Clear all global context associated with the logger.
  */
 export function clearLogContext(): void {
   globalContext = {};
@@ -85,16 +90,39 @@ function log(level: LogLevel, message: string, context?: LogContext): void {
   }
 }
 
+/**
+ * Global structured logger providing standard log levels and context support.
+ */
 export const logger = {
+  /**
+   * Log a debug message.
+   * @param message - The log message.
+   * @param context - Optional local context for this log entry.
+   */
   debug(message: string, context?: LogContext): void {
     log("debug", message, context);
   },
+  /**
+   * Log an info message.
+   * @param message - The log message.
+   * @param context - Optional local context for this log entry.
+   */
   info(message: string, context?: LogContext): void {
     log("info", message, context);
   },
+  /**
+   * Log a warning message.
+   * @param message - The log message.
+   * @param context - Optional local context for this log entry.
+   */
   warn(message: string, context?: LogContext): void {
     log("warn", message, context);
   },
+  /**
+   * Log an error message.
+   * @param message - The log message.
+   * @param context - Optional local context for this log entry.
+   */
   error(message: string, context?: LogContext): void {
     log("error", message, context);
   },
