@@ -698,13 +698,13 @@ describe("KVCache", () => {
         DEALS_LOG: mockKvSources,
         DEALS_LOCK: mockKvSources,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const sourceCache = createSourceCache(env);
@@ -735,13 +735,13 @@ describe("KVCache", () => {
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const githubCache = createGitHubCache(env);
@@ -770,13 +770,13 @@ describe("KVCache", () => {
         DEALS_PROD: mockKvSources,
         DEALS_LOG: mockKvSources,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const robotsCache = createRobotsTxtCache(env);
@@ -805,13 +805,13 @@ describe("KVCache", () => {
         DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const snapshotCache = createSnapshotCache(env);
@@ -841,13 +841,13 @@ describe("KVCache", () => {
         DEALS_LOG: mockKvStaging,
         DEALS_LOCK: mockKvStaging,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const stagingCache = createStagingSnapshotCache(env);
@@ -957,13 +957,13 @@ describe("KVCache", () => {
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       await clearAllCaches(env);
@@ -1006,13 +1006,13 @@ describe("KVCache", () => {
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
       } as unknown as Env;
 
       // Create caches and add some metrics

@@ -50,9 +50,9 @@ describe("Research API Integration", () => {
       GITHUB_REPO: "test/repo",
       TRUST_THRESHOLD: "0.5",
       AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;
 

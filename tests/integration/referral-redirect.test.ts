@@ -55,9 +55,9 @@ describe("Referral Redirect Security", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://example.com",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.5",
       NOTIFICATION_THRESHOLD: "10",
     } as unknown as Env;

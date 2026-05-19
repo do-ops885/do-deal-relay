@@ -37,17 +37,38 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 const createMockEnv = (overrides: Partial<Env> = {}): Env => {
   const mockKvStorage = new Map<string, unknown>();
 
-    const baseEnv: Env = {
-    DEALS_PROD: { get: vi.fn(async () => null), put: vi.fn(async () => {}), delete: vi.fn(async () => {}) } as any,
-    DEALS_STAGING: { get: vi.fn(async () => null), put: vi.fn(async () => {}), delete: vi.fn(async () => {}) } as any,
-    DEALS_LOG: { get: vi.fn(async () => null), put: vi.fn(async () => {}), delete: vi.fn(async () => {}) } as any,
-    DEALS_LOCK: { get: vi.fn(async () => null), put: vi.fn(async () => {}), delete: vi.fn(async () => {}) } as any,
-    DEALS_SOURCES: { get: vi.fn(async () => null), put: vi.fn(async () => {}), delete: vi.fn(async () => {}) } as any,
+  const baseEnv: Env = {
+    DEALS_PROD: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as any,
+    DEALS_STAGING: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as any,
+    DEALS_LOG: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as any,
+    DEALS_LOCK: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as any,
+    DEALS_SOURCES: {
+      get: vi.fn(async () => null),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => {}),
+    } as any,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: overrides.DEALS_DB,
+    DEALS_DB:
+      overrides.DEALS_DB || ({ prepare: vi.fn(), withSession: vi.fn() } as any),
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
@@ -84,7 +105,11 @@ describe("Experience API Endpoints", () => {
 
       expect([500, 503]).toContain(response.status);
       const body = await response.json();
-      if (body.error) expect(["D1 database not configured", "Internal server error"]).toContain(body.error);
+      if (body.error)
+        expect([
+          "D1 database not configured",
+          "Internal server error",
+        ]).toContain(body.error);
     });
 
     it("should return 415 for non-JSON content type", async () => {

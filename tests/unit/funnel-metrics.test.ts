@@ -20,13 +20,13 @@ describe("Funnel Metrics", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
     } as unknown as Env;
 
     const mockMetric: PipelineMetrics = {
@@ -78,13 +78,13 @@ describe("Funnel Metrics", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
     } as unknown as Env;
 
     const request = new Request("https://worker.com/metrics?format=json");
@@ -113,9 +113,9 @@ describe("Funnel Metrics", () => {
       DEALS_STAGING: { get: vi.fn() },
       DEALS_SOURCES: { get: vi.fn() },
       TRUST_THRESHOLD: "0.3",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
     } as unknown as Env;
 
     const mockMetricZero: PipelineMetrics = {
