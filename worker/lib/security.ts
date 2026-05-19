@@ -133,7 +133,7 @@ function isIpInCidr(ip: string, cidr: string): boolean {
     if (!range.includes(":") && !ip.includes(":")) {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask = bits === 0 ? 0 : (~(Math.pow(2, 32 - bits) - 1)) >>> 0;
+      const mask = bits === 0 ? 0 : ~(Math.pow(2, 32 - bits) - 1) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
 
