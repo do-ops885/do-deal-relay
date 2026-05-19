@@ -27,7 +27,8 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse } from "./utils";
+import { jsonResponse, errorResponse } from "./utils";
+import { validateFetchUrl } from "../lib/security";
 
 // ============================================================================
 // Referral Management Handlers
@@ -387,6 +388,16 @@ export async function handleResearch(
         },
         400,
       );
+    }
+
+    // SSRF protection for domain/query based fetching
+    // If the research request contains a specific URL (not currently in the type but good practice)
+    // or if we want to ensure the domain is safe.
+    if (body.domain) {
+      const isSafe = await validateFetchUrl(`https://${body.domain}`);
+      if (!isSafe) {
+        return errorResponse("Domain is blocked for security reasons", 403);
+      }
     }
 
     const researchResult = await executeReferralResearch(env, body);

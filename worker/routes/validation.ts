@@ -21,6 +21,7 @@ import {
   getClientIdentifier,
   createRateLimitHeaders,
 } from "../lib/rate-limit";
+import { validateFetchUrl } from "../lib/security";
 import {
   validateUrl,
   checkUrlStatusBatch,
@@ -112,6 +113,12 @@ export async function handleValidateUrl(
       url: body.url,
       clientId: clientId.slice(0, 8),
     });
+
+    // SSRF Check
+    const isSafe = await validateFetchUrl(body.url);
+    if (!isSafe) {
+      return errorResponse("URL is blocked for security reasons", 403);
+    }
 
     // Perform validation
     const result = await validateUrl(body.url, env);

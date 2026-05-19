@@ -28,15 +28,6 @@ export async function handleCreateApiKey(
       );
     }
 
-    const validRoles: readonly string[] = ["admin", "user", "readonly"];
-    if (!validRoles.includes(body.role ?? "")) {
-      return jsonResponse(
-        { error: `Invalid role. Must be one of: ${validRoles.join(", ")}` },
-        400,
-        request,
-      );
-    }
-
     const config: ApiKeyConfig = {
       key: "", // Will be generated
       userId: body.userId,
@@ -77,8 +68,9 @@ export async function handleListApiKeys(
   try {
     const keys = await listApiKeys(env);
 
-    // Sanitize output (don't return keyHash)
+    // Sanitize output (include hash for revocation, but not the key itself)
     const sanitizedKeys = keys.map((k) => ({
+      hash: k.keyHash,
       userId: k.userId,
       role: k.role,
       createdAt: k.createdAt,

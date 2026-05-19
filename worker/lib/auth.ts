@@ -78,23 +78,9 @@ export async function storeApiKey(
   };
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
-  const kvOptions: Record<string, unknown> = {
-    metadata: {
-      userId: config.userId,
-      role: config.role,
-      createdAt: config.createdAt,
-      expiresAt: config.expiresAt,
-    },
-  };
-  if (config.expiresAt) {
-    // Use absolute expiration timestamp when expiresAt is provided
-    const expiresAtDate = new Date(config.expiresAt);
-    kvOptions.expiration = Math.floor(expiresAtDate.getTime() / 1000);
-  } else {
-    // Default to 1 year TTL when no expiration is set
-    kvOptions.expirationTtl = 365 * 86400;
-  }
-  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), kvOptions as Record<string, unknown>);
+  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+    expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
+  });
 
   return key;
 }
@@ -108,21 +94,9 @@ export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const keys: ApiKeyConfig[] = [];
 
   for (const key of list.keys) {
-    // Use metadata from kv.list (single call) instead of individual gets (N+1 pattern)
-    const metadata = key.metadata as ApiKeyConfig | undefined;
-    if (metadata) {
-      keys.push(metadata);
-    } else {
-      // Fallback: fetch metadata individually only when not included in list response
-      const value = await kv.get(key.name);
-      if (value) {
-        try {
-          const parsed = JSON.parse(value) as ApiKeyConfig;
-          keys.push(parsed);
-        } catch {
-          // Skip malformed entries
-        }
-      }
+    const raw = await kv.get(key.name, "json");
+    if (raw) {
+      keys.push(raw as ApiKeyConfig);
     }
   }
 
