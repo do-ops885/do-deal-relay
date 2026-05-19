@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Ensure script is executable
         run: chmod +x scripts/gh-labels-creator.sh
@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup skills
         run: ./scripts/setup-skills.sh
@@ -56,10 +56,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup Node.js (if package.json exists)
-        uses: actions/setup-node@39225d3d073c5dea0f66c7de1f3db24b11a4a244
+        uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
         if: hashFiles('package.json') != ''
@@ -102,10 +102,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup Node.js (if package.json exists)
-        uses: actions/setup-node@39225d3d073c5dea0f66c7de1f3db24b11a4a244
+        uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
         if: hashFiles('package.json') != ''
