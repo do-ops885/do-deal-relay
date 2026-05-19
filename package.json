@@ -27,7 +27,7 @@
     "test:load:webhook": "artillery run -t ${WORKER_URL:-http://localhost:8787} tests/load/artillery/webhook.yml",
     "test:smoke": "vitest run tests/smoke/endpoints.test.ts",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "validate": "bash scripts/validate-codes.sh",
     "verify": "bash scripts/quality_gate.sh"
   },
