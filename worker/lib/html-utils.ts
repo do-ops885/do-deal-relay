@@ -10,9 +10,7 @@ export function extractBySelectors(
 ): ExtractedData {
   const result: ExtractedData = {};
   if (!html) return result;
-
   const $ = cheerio.load(html);
-
   for (const [key, selector] of Object.entries(selectors)) {
     const elements = $(selector);
     result[key] = elements
@@ -20,7 +18,6 @@ export function extractBySelectors(
       .get()
       .filter((text) => text.length > 0);
   }
-
   return result;
 }
 
@@ -33,40 +30,29 @@ export function extractFromHtml(
 ): ExtractedData {
   const result: ExtractedData = {};
   if (!html) return result;
-
   if (config.selectors) {
     const selectorResult = extractBySelectors(html, config.selectors);
     Object.assign(result, selectorResult);
   }
-
   if (config.regex_patterns) {
     for (const [key, patterns] of Object.entries(config.regex_patterns)) {
       if (!result[key] || result[key].length === 0) {
         const matches: string[] = [];
         for (const pattern of patterns) {
-          // IMPORTANT: If not global, exec will infinite loop.
-          // We use matchAll or ensure global flag.
           const globalPattern = pattern.global
             ? pattern
             : new RegExp(pattern.source, pattern.flags + "g");
-
           globalPattern.lastIndex = 0;
           let match;
           while ((match = globalPattern.exec(html)) !== null) {
             const matchedText = match[1] ?? match[0];
-            if (matchedText) {
-              matches.push(matchedText.trim());
-            }
-            // Safeguard against extreme number of matches
+            if (matchedText) matches.push(matchedText.trim());
             if (matches.length > 1000) break;
           }
         }
-        if (matches.length > 0) {
-          result[key] = [...new Set(matches)];
-        }
+        if (matches.length > 0) result[key] = [...new Set(matches)];
       }
     }
   }
-
   return result;
 }

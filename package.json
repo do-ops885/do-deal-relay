@@ -32,7 +32,6 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
     "protobufjs": "8.4.0",
     "zod": "^3.22.4"
   },
