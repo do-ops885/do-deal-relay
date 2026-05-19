@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   scrapeCurrentRewards,
   extractRewardFromHTML,
@@ -25,6 +25,10 @@ global.fetch = mockFetch;
 describe("reward-scraper", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    global.fetch = globalFetch;
   });
 
   describe("extractRewardFromHTML", () => {
