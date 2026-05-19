@@ -32,12 +32,12 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "protobufjs": "8.3.0",
+    "protobufjs": "8.4.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.6",
-    "@cloudflare/workers-types": "^4.20260518.1",
+    "@cloudflare/workers-types": "^4.20260519.1",
     "@playwright/test": "^1.60.0",
     "@vitest/coverage-v8": "^4.1.6",
     "artillery": "^2.0.31",
@@ -50,7 +50,7 @@
   "overrides": {
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
-    "protobufjs": "8.3.0",
+    "protobufjs": "8.4.0",
     "uuid": "14.0.0",
     "@playwright/test": "^1.60.0"
   },
