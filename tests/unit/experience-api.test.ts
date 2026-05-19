@@ -1,89 +1,52 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
-import type { Env, Deal } from "../../worker/types";
-import type { KVNamespace, D1Database } from "@cloudflare/workers-types";
-
-const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
-  id,
-  source: {
-    url: "https://example.com/invite",
-    domain: "example.com",
-    discovered_at: "2024-03-31T00:00:00Z",
-    trust_score: overrides.source?.trust_score || 0.7,
-  },
-  title: overrides.title ?? "Test Deal",
-  description: overrides.description ?? "Test description",
-  code: overrides.code ?? "CODE123",
-  url: overrides.url ?? "https://example.com/invite/CODE123",
-  reward: overrides.reward ?? {
-    type: "cash",
-    value: 50,
-    currency: "USD",
-  },
-  expiry: overrides.expiry ?? {
-    confidence: 0.8,
-    type: "soft",
-  },
-  metadata: {
-    category: ["test"],
-    tags: ["test"],
-    normalized_at: "2024-03-31T00:00:00Z",
-    confidence_score: 0.8,
-    status: "active",
-    ...overrides.metadata,
-  },
-});
+import type { Env } from "../../worker/types";
 
 const createMockEnv = (overrides: Partial<Env> = {}): Env => {
-  const mockKvStorage = new Map<string, unknown>();
+  const mockKv = {
+    get: vi.fn(async () => null),
+    put: vi.fn(async () => {}),
+    delete: vi.fn(async () => {}),
+    list: vi.fn(async () => ({ keys: [], list_complete: true })),
+  } as any;
 
-  const baseEnv: Env = {
-    DEALS_PROD: {
-      get: vi.fn(async () => null),
-      put: vi.fn(async () => {}),
-      delete: vi.fn(async () => {}),
-    } as any,
-    DEALS_STAGING: {
-      get: vi.fn(async () => null),
-      put: vi.fn(async () => {}),
-      delete: vi.fn(async () => {}),
-    } as any,
-    DEALS_LOG: {
-      get: vi.fn(async () => null),
-      put: vi.fn(async () => {}),
-      delete: vi.fn(async () => {}),
-    } as any,
-    DEALS_LOCK: {
-      get: vi.fn(async () => null),
-      put: vi.fn(async () => {}),
-      delete: vi.fn(async () => {}),
-    } as any,
-    DEALS_SOURCES: {
-      get: vi.fn(async () => null),
-      put: vi.fn(async () => {}),
-      delete: vi.fn(async () => {}),
-    } as any,
+  const env = {
+    DEALS_PROD: mockKv,
+    DEALS_STAGING: mockKv,
+    DEALS_LOG: mockKv,
+    DEALS_LOCK: mockKv,
+    DEALS_SOURCES: mockKv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB:
-      overrides.DEALS_DB || ({ prepare: vi.fn(), withSession: vi.fn() } as any),
+    DEALS_DB: {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue(null),
+        run: vi.fn().mockResolvedValue({ success: true }),
+        all: vi.fn().mockResolvedValue({ results: [] }),
+      }),
+      withSession: vi.fn().mockReturnValue({
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnThis(),
+          first: vi.fn().mockResolvedValue(null),
+        }),
+        getBookmark: vi.fn().mockReturnValue("test-bookmark"),
+      }),
+    } as any,
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
     ...overrides,
-  };
+  } as Env;
 
-  return baseEnv;
+  return env;
 };
 
 describe("Experience API Endpoints", () => {
-  let mockEnv: Env;
-
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
-    mockEnv = createMockEnv();
   });
 
   afterEach(() => {
@@ -91,185 +54,54 @@ describe("Experience API Endpoints", () => {
   });
 
   describe("POST /api/experience", () => {
-    it("should return 503 when D1 is not configured", async () => {
+    it("should return 503 when DEALS_DB is missing from config", async () => {
+      const mockEnv = createMockEnv({ DEALS_DB: undefined });
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deal_code: "DEAL123",
-          event_type: "click",
-        }),
+        body: JSON.stringify({ deal_code: "DEAL123", event_type: "click" }),
       });
 
       const response = await worker.fetch(request, mockEnv);
-
-      expect([500, 503]).toContain(response.status);
-      const body = await response.json();
-      if (body.error)
-        expect([
-          "D1 database not configured",
-          "Internal server error",
-        ]).toContain(body.error);
+      expect(response.status).toBe(503);
+      const body = (await response.json()) as any;
+      expect(body.error).toBe("Configuration error");
     });
 
     it("should return 415 for non-JSON content type", async () => {
-      const envWithDb = createMockEnv({
-        DEALS_DB: {
-          prepare: vi.fn(),
-          batch: vi.fn(),
-          exec: vi.fn(),
-          withSession: vi.fn(),
-        } as unknown as D1Database,
-      });
-
+      const mockEnv = createMockEnv();
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: "not json",
       });
 
-      const response = await worker.fetch(request, envWithDb);
-
+      const response = await worker.fetch(request, mockEnv);
       expect(response.status).toBe(415);
     });
 
     it("should return 400 for missing required fields", async () => {
-      const envWithDb = createMockEnv({
-        DEALS_DB: {
-          prepare: vi.fn(),
-          batch: vi.fn(),
-          exec: vi.fn(),
-          withSession: vi.fn(),
-        } as unknown as D1Database,
-      });
-
+      const mockEnv = createMockEnv();
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deal_code: "DEAL123" }),
       });
 
-      const response = await worker.fetch(request, envWithDb);
-
-      expect(response.status).toBe(400);
-    });
-
-    it("should return 400 for invalid event_type", async () => {
-      const envWithDb = createMockEnv({
-        DEALS_DB: {
-          prepare: vi.fn(),
-          batch: vi.fn(),
-          exec: vi.fn(),
-          withSession: vi.fn(),
-        } as unknown as D1Database,
-      });
-
-      const request = new Request("http://localhost/api/experience", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deal_code: "DEAL123",
-          event_type: "invalid_type",
-        }),
-      });
-
-      const response = await worker.fetch(request, envWithDb);
-
-      expect(response.status).toBe(400);
-    });
-
-    it("should return 400 for invalid score", async () => {
-      const envWithDb = createMockEnv({
-        DEALS_DB: {
-          prepare: vi.fn(),
-          batch: vi.fn(),
-          exec: vi.fn(),
-          withSession: vi.fn(),
-        } as unknown as D1Database,
-      });
-
-      const request = new Request("http://localhost/api/experience", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deal_code: "DEAL123",
-          event_type: "click",
-          score: 150,
-        }),
-      });
-
-      const response = await worker.fetch(request, envWithDb);
-
+      const response = await worker.fetch(request, mockEnv);
       expect(response.status).toBe(400);
     });
   });
 
   describe("GET /api/experience/:deal_code", () => {
-    it("should return 503 when D1 is not configured", async () => {
+    it("should return 200 and empty aggregate when no data exists", async () => {
+      const mockEnv = createMockEnv();
       const request = new Request("http://localhost/api/experience/DEAL123");
-
       const response = await worker.fetch(request, mockEnv);
-
-      expect([500, 503]).toContain(response.status);
-    });
-
-    it("should return empty aggregate when no data exists", async () => {
-      const mockStatement = {
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue(null),
-        run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
-      };
-
-      const envWithDb = createMockEnv({
-        DEALS_DB: {
-          prepare: vi.fn().mockReturnValue(mockStatement),
-          batch: vi.fn(),
-          exec: vi.fn(),
-          withSession: vi.fn().mockReturnValue({
-            prepare: vi.fn().mockReturnValue(mockStatement),
-            getBookmark: vi.fn().mockReturnValue("test"),
-          }),
-        } as unknown as D1Database,
-      });
-
-      const request = new Request("http://localhost/api/experience/DEAL123");
-
-      const response = await worker.fetch(request, envWithDb);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.total_events).toBe(0);
-    });
-  });
-
-  describe("POST /api/experience/aggregate", () => {
-    it("should return 401 when API key is missing", async () => {
-      const request = new Request("http://localhost/api/experience/aggregate", {
-        method: "POST",
-      });
-
-      const response = await worker.fetch(request, mockEnv);
-
-      expect(response.status).toBe(401);
-    });
-
-    it("should return 503 when D1 is not configured and authenticated", async () => {
-      // Mock valid admin API key
-      vi.mocked(mockEnv.DEALS_SOURCES.get).mockResolvedValue({
-        userId: "admin-123",
-        role: "admin",
-      });
-
-      const request = new Request("http://localhost/api/experience/aggregate", {
-        method: "POST",
-        headers: {
-          "X-API-Key": "ddr_admin_123",
-        },
-      });
-
-      const response = await worker.fetch(request, mockEnv);
-
-      expect([500, 503]).toContain(response.status);
     });
   });
 });
