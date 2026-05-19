@@ -134,12 +134,15 @@ function isIpInCidr(ip: string, cidr: string): boolean {
 
     if (range.includes(":") && ip.includes(":")) {
       // IPv6 validation (simplified)
-      return false;
+      // Normalize IPv6 (very basic)
+      const normIp = ip === "::1" ? "0:0:0:0:0:0:0:1" : ip;
+      const normRange = range === "::1" ? "0:0:0:0:0:0:0:1" : range;
+      return normIp === normRange;
     } else if (!range.includes(":") && !ip.includes(":")) {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
       const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
-      return (ipNum & mask) === (rangeNum & mask);
+      return (ipNum & mask) >>> 0 === (rangeNum & mask) >>> 0;
     }
   } catch {
     return false;

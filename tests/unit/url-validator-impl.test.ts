@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   validateUrl,
   checkUrlStatusBatch,
@@ -26,10 +26,6 @@ global.fetch = mockFetch;
 describe("url-validator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    global.fetch = globalFetch;
   });
 
   describe("validateUrl", () => {
