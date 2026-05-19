@@ -1,9 +1,14 @@
 export class ResearchRateLimiter {
   private requests: Map<string, number[]> = new Map();
-  constructor(private maxRequests: number = 10, private windowMs: number = 60000) {}
+  constructor(
+    private maxRequests: number = 10,
+    private windowMs: number = 60000,
+  ) {}
   canMakeRequest(source: string): boolean {
     const now = Date.now();
-    const requests = (this.requests.get(source) || []).filter(t => now - t < this.windowMs);
+    const requests = (this.requests.get(source) || []).filter(
+      (t) => now - t < this.windowMs,
+    );
     this.requests.set(source, requests);
     return requests.length < this.maxRequests;
   }

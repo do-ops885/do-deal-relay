@@ -22,6 +22,16 @@ export async function fetchGenericPageContent(
     signal: AbortSignal.timeout(10000),
   });
   const html = await response.text();
+  if (html.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
+    return {
+      success: false,
+      content: "",
+      contentType: "",
+      statusCode: 413,
+      error: "Content exceeds size limit after reading",
+      fetchDurationMs: Date.now() - startTime,
+    };
+  }
   return {
     success: true,
     content: html,
