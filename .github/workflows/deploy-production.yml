@@ -358,7 +358,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           echo "Attempting automated rollback..."
-          if wrangler rollback --env production --message "Automated rollback due to deployment failure" --yes; then
+          if wrangler rollback --env production \
+            --message "Automated rollback due to deployment failure" --yes; then
             echo "✅ Automated rollback successful"
             echo "rollback_status=success" >> "$GITHUB_OUTPUT"
           else
@@ -398,8 +399,12 @@ jobs:
             }
 
             const body = rollbackStatus === 'success'
-              ? `Production deployment failed for commit ${sha}. **Automated rollback to the previous version was successful.**\n\n[View failed workflow run](${url}/actions/runs/${runId})`
-              : `Production deployment failed for commit ${sha}. **Automated rollback also failed.** Manual intervention is required immediately.\n\n[View failed workflow run](${url}/actions/runs/${runId})`;
+              ? `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback to the previous version was successful.**\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`
+              : `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback also failed.** Manual intervention is required immediately.\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`;
 
             await github.rest.issues.create({
               owner: context.repo.owner,
