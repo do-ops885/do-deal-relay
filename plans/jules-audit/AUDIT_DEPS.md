@@ -7,9 +7,9 @@
 | zod | 3.25.76 | 4.4.3 | High | Human review required (major) |
 
 ## Vulnerabilities
-- `ws`: Moderate severity (Uninitialized memory disclosure). Fixed in `miniflare@3.20250204.0`. Current version is `miniflare@4.20260515.0`. Wait, `miniflare` 4.x is being used.
-- Audit report suggests `npm audit fix --force` which might be breaking.
+- `ws`: Moderate severity (Uninitialized memory disclosure). **Fixed by pinning to 8.20.1 in overrides.**
 
 ## Actions
 - Upgrade `@cloudflare/workers-types` to `4.20260519.1`.
 - Upgrade `protobufjs` to `8.4.0`.
+- Pin `ws` to `8.20.1` to resolve GHSA-58qx-3vcg-4xpx.
