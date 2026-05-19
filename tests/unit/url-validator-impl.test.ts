@@ -4,7 +4,7 @@ import {
   checkUrlStatusBatch,
   detectRedirects,
   isUrlDead,
-  getValidationSummary
+  getValidationSummary,
 } from "../../worker/lib/validation/url-validator";
 import { logger } from "../../worker/lib/global-logger";
 
@@ -148,11 +148,15 @@ describe("url-validator", () => {
     });
 
     it("should return true for too many redirects", () => {
-      expect(isUrlDead({ valid: true, statusCode: 200, redirectCount: 4 } as any)).toBe(true);
+      expect(
+        isUrlDead({ valid: true, statusCode: 200, redirectCount: 4 } as any),
+      ).toBe(true);
     });
 
     it("should return false for healthy 200", () => {
-      expect(isUrlDead({ valid: true, statusCode: 200, redirectCount: 0 } as any)).toBe(false);
+      expect(
+        isUrlDead({ valid: true, statusCode: 200, redirectCount: 0 } as any),
+      ).toBe(false);
     });
   });
 
@@ -161,7 +165,12 @@ describe("url-validator", () => {
       const results = [
         { valid: true, responseTimeMs: 100, redirectCount: 0 },
         { valid: true, responseTimeMs: 200, redirectCount: 1 },
-        { valid: false, responseTimeMs: 300, redirectCount: 0, statusCode: 404 },
+        {
+          valid: false,
+          responseTimeMs: 300,
+          redirectCount: 0,
+          statusCode: 404,
+        },
       ] as any[];
 
       const summary = getValidationSummary(results);

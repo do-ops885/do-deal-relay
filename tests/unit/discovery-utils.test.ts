@@ -5,7 +5,7 @@ import {
   extractTitle,
   extractDescription,
   parseHTMLContent,
-  parseJSONContent
+  parseJSONContent,
 } from "../../worker/pipeline/discovery-utils";
 
 describe("discovery-utils", () => {
@@ -54,7 +54,8 @@ describe("discovery-utils", () => {
 
   describe("extractTitle", () => {
     it("should extract title from HTML", () => {
-      const content = "<html><title>Special Offer</title><body>TITLECODE</body></html>";
+      const content =
+        "<html><title>Special Offer</title><body>TITLECODE</body></html>";
       expect(extractTitle(content, "TITLECODE")).toBe("Special Offer");
     });
 
@@ -66,7 +67,8 @@ describe("discovery-utils", () => {
 
   describe("extractDescription", () => {
     it("should extract description from meta", () => {
-      const content = '<html><meta name="description" content="Save money now"><body>DESCCODE</body></html>';
+      const content =
+        '<html><meta name="description" content="Save money now"><body>DESCCODE</body></html>';
       expect(extractDescription(content, "DESCCODE")).toBe("Save money now");
     });
   });
@@ -82,9 +84,7 @@ describe("discovery-utils", () => {
 
   describe("parseJSONContent", () => {
     it("should parse JSON array", () => {
-      const content = JSON.stringify([
-        { code: "JSON123", title: "Deal 1" }
-      ]);
+      const content = JSON.stringify([{ code: "JSON123", title: "Deal 1" }]);
       const deals = parseJSONContent(content, mockSource);
       expect(deals).toHaveLength(1);
       expect(deals[0].code).toBe("JSON123");
@@ -92,7 +92,7 @@ describe("discovery-utils", () => {
 
     it("should parse wrapped JSON object", () => {
       const content = JSON.stringify({
-        items: [{ code: "WRAPPED", title: "Deal 2" }]
+        items: [{ code: "WRAPPED", title: "Deal 2" }],
       });
       const deals = parseJSONContent(content, mockSource);
       expect(deals).toHaveLength(1);

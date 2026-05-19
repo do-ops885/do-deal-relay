@@ -8,7 +8,7 @@ import {
   updateSourceApiConfig,
   getApiEnabledSources,
   getSourceRateLimit,
-  getSourceAuthEnvVars
+  getSourceAuthEnvVars,
 } from "../../worker/lib/research-agent/sources";
 
 describe("research-agent/sources", () => {
@@ -30,7 +30,7 @@ describe("research-agent/sources", () => {
       priority: 10,
       description: "New source",
       enabled: true,
-      apiConfig: { type: "direct", url: "https://example.com" }
+      apiConfig: { type: "direct", url: "https://example.com" },
     });
     const sources = getResearchSources();
     expect(sources.length).toBe(initialCount + 1);
@@ -41,7 +41,7 @@ describe("research-agent/sources", () => {
     registerKnownProgram("test.com", {
       patterns: ["test"],
       urlFormats: ["test.com/ref"],
-      typicalRewards: ["$10"]
+      typicalRewards: ["$10"],
     });
     // Internal state check via other methods or just verifying no crash
   });
@@ -64,7 +64,9 @@ describe("research-agent/sources", () => {
   it("should get API enabled sources", () => {
     const sources = getApiEnabledSources();
     expect(sources.length).toBeGreaterThan(0);
-    expect(sources.every(s => s.apiConfig && s.apiConfig.type !== "direct")).toBe(true);
+    expect(
+      sources.every((s) => s.apiConfig && s.apiConfig.type !== "direct"),
+    ).toBe(true);
   });
 
   it("should get source rate limits", () => {

@@ -4,7 +4,7 @@ import {
   extractRewardFromHTML,
   detectRewardChanges,
   batchScrapeRewards,
-  getScrapingStats
+  getScrapingStats,
 } from "../../worker/lib/validation/reward-scraper";
 import { logger } from "../../worker/lib/global-logger";
 
@@ -104,7 +104,7 @@ describe("reward-scraper", () => {
       const deal = {
         id: "1",
         url: "https://example.com/deal",
-        reward: { type: "cash", value: 50, currency: "USD" }
+        reward: { type: "cash", value: 50, currency: "USD" },
       } as any;
 
       mockFetch.mockResolvedValueOnce({
@@ -121,7 +121,7 @@ describe("reward-scraper", () => {
       const deal = {
         id: "1",
         url: "https://example.com/deal",
-        reward: { type: "cash", value: 50, currency: "USD" }
+        reward: { type: "cash", value: 50, currency: "USD" },
       } as any;
 
       mockFetch.mockResolvedValueOnce({
@@ -137,9 +137,15 @@ describe("reward-scraper", () => {
   describe("getScrapingStats", () => {
     it("should return correct stats", () => {
       const results = [
-        { success: true, rewardChanged: true, currentReward: { value: 100 }, previousReward: { value: 50 }, changeDetails: { valueChanged: true } },
+        {
+          success: true,
+          rewardChanged: true,
+          currentReward: { value: 100 },
+          previousReward: { value: 50 },
+          changeDetails: { valueChanged: true },
+        },
         { success: true, rewardChanged: false },
-        { success: false }
+        { success: false },
       ] as any[];
 
       const stats = getScrapingStats(results);

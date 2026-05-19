@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { handleGetDeals, handleSimilarDeals, handleRankedDeals, handleDealHighlights, handleExplainDeal } from "../../worker/routes/core/deals";
+import {
+  handleGetDeals,
+  handleSimilarDeals,
+  handleRankedDeals,
+  handleDealHighlights,
+  handleExplainDeal,
+} from "../../worker/routes/core/deals";
 import * as storage from "../../worker/lib/storage";
 import { jsonResponse } from "../../worker/routes/utils";
 
@@ -12,7 +18,7 @@ vi.mock("../../worker/routes/utils", () => ({
   jsonResponse: vi.fn((data, status) => ({
     status: status || 200,
     data,
-    json: async () => data
+    json: async () => data,
   })),
 }));
 
@@ -25,27 +31,45 @@ describe("deals-route", () => {
         id: "1",
         code: "DEAL1",
         title: "Deal 1",
-        source: { domain: "example.com", discovered_at: new Date().toISOString() },
+        source: {
+          domain: "example.com",
+          discovered_at: new Date().toISOString(),
+        },
         reward: { value: 50, type: "cash" },
-        expiry: { date: new Date(Date.now() + 86400000).toISOString(), confidence: 0.9 },
+        expiry: {
+          date: new Date(Date.now() + 86400000).toISOString(),
+          confidence: 0.9,
+        },
         metadata: { status: "active", category: ["finance"], tags: ["tag1"] },
       },
       {
         id: "2",
         code: "DEAL2",
         title: "Deal 2",
-        source: { domain: "other.com", discovered_at: new Date().toISOString() },
+        source: {
+          domain: "other.com",
+          discovered_at: new Date().toISOString(),
+        },
         reward: { value: 100, type: "cash" },
-        expiry: { date: new Date(Date.now() + 86400000).toISOString(), confidence: 0.9 },
+        expiry: {
+          date: new Date(Date.now() + 86400000).toISOString(),
+          confidence: 0.9,
+        },
         metadata: { status: "active", category: ["shopping"], tags: ["tag2"] },
       },
       {
         id: "3",
         code: "DEAL3",
         title: "Deal 3",
-        source: { domain: "example.com", discovered_at: new Date().toISOString() },
+        source: {
+          domain: "example.com",
+          discovered_at: new Date().toISOString(),
+        },
         reward: { value: 10, type: "cash" },
-        expiry: { date: new Date(Date.now() + 86400000).toISOString(), confidence: 0.9 },
+        expiry: {
+          date: new Date(Date.now() + 86400000).toISOString(),
+          confidence: 0.9,
+        },
         metadata: { status: "rejected", category: ["finance"], tags: ["tag3"] },
       },
     ],

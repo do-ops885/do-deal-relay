@@ -19,7 +19,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./worker",
-    "types": ["@cloudflare/workers-types/2022-01-31"]
+    "types": ["@cloudflare/workers-types"]
   },
   "include": ["worker/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]
