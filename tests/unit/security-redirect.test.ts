@@ -51,9 +51,9 @@ describe("validateRedirect", () => {
 
   it("should block HTTP protocol for production domains", () => {
     expect(validateRedirect("http://do-deal-relay.com/welcome")).toBe(false);
-    expect(
-      validateRedirect("http://do-deal-relay.pages.dev/dashboard"),
-    ).toBe(false);
+    expect(validateRedirect("http://do-deal-relay.pages.dev/dashboard")).toBe(
+      false,
+    );
     expect(validateRedirect("http://app.do-deal-relay.com/login")).toBe(false);
   });
 
