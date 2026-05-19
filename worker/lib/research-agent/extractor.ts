@@ -41,9 +41,16 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
   }
 
   // Remove script and style tags for text extraction
-  let textContent = html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, "")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, "")
+  let sanitizedHtml = html;
+  let previousHtml: string;
+  do {
+    previousHtml = sanitizedHtml;
+    sanitizedHtml = sanitizedHtml
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, "")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, "");
+  } while (sanitizedHtml !== previousHtml);
+
+  let textContent = sanitizedHtml
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
