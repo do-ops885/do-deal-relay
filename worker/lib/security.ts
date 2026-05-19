@@ -62,7 +62,9 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       }
     } else {
       // Perform DNS resolution check to prevent DNS rebinding
-      const resolvedIps = await resolveHostname(hostname);
+const resolvedIps = await resolveHostname(hostname);
+if (resolvedIps.length === 0) return false;
+for (const ip of resolvedIps) {
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
           logger.warn(
