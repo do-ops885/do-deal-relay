@@ -18,7 +18,9 @@ import {
   simulateDiscovery,
   deduplicateCodes,
   extractRewardValue,
-  RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS, ResearchSource,
+  RESEARCH_SOURCES,
+  KNOWN_REFERRAL_PROGRAMS,
+  ResearchSource,
 } from "./types";
 import { getSourceRateLimit } from "./sources";
 import {
