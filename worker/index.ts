@@ -71,16 +71,19 @@ import { validateConfig, validateKVIsolation } from "./lib/config-utils";
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Validate configuration at startup to fail fast on misconfiguration
-    try {
-      validateConfig(env);
-      await validateKVIsolation(env);
-    } catch (error) {
-      console.error("Configuration error:", error);
-      return jsonResponse(
-        { error: "Configuration error", message: (error as Error).message },
-        500,
-        request,
-      );
+    if (!env._validated) {
+      try {
+        validateConfig(env);
+        await validateKVIsolation(env);
+        env._validated = true;
+      } catch (error) {
+        console.error("Configuration error:", error);
+        return jsonResponse(
+          { error: "Configuration error", message: (error as Error).message },
+          503,
+          request,
+        );
+      }
     }
 
     // Initialize GitHub token and circuit breaker if available

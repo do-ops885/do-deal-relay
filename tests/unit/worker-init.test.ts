@@ -22,6 +22,9 @@ describe("Worker Initialization", () => {
     DEALS_LOG: {},
     AI_GATEWAY_URL: "http://test",
     TRUST_THRESHOLD: "0.3",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
   } as unknown as Env;
 
   beforeEach(() => {
@@ -29,25 +32,25 @@ describe("Worker Initialization", () => {
   });
 
   describe("fetch handler", () => {
-    it("should return 500 when TRUST_THRESHOLD is invalid", async () => {
+    it("should return 503 when TRUST_THRESHOLD is invalid", async () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "invalid" };
       const request = new Request("https://example.com/health");
 
       const response = await worker.fetch(request, env);
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
       expect(body.message).toContain("must be a number between 0 and 1");
     });
 
-    it("should return 500 when TRUST_THRESHOLD is out of range", async () => {
+    it("should return 503 when TRUST_THRESHOLD is out of range", async () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "1.5" };
       const request = new Request("https://example.com/health");
 
       const response = await worker.fetch(request, env);
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
       expect(body.message).toContain("must be a number between 0 and 1");

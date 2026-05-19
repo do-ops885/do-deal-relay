@@ -329,7 +329,9 @@ export interface Env {
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
   WEBHOOK_SECRET?: string;
+  API_ENCRYPTION_KEY?: string;
   RESEARCH_USE_REAL_FETCHING?: string;
+  _validated?: boolean;
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;

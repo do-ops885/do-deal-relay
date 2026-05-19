@@ -91,9 +91,16 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 |----------|----------|-------------|
 | `DEALS_PROD` | Yes | KV namespace for deal storage |
 | `DEALS_LOG` | Yes | KV namespace for metrics |
-| `AI_GATEWAY_URL` | Yes | AI Gateway URL |
+| `DEALS_LOCK` | Yes | KV namespace for distributed locking |
+| `DEALS_DB` | Yes | D1 Database binding for advanced queries |
+| `AI_GATEWAY_URL` | Yes | AI Gateway URL for model access |
 | `TRUST_THRESHOLD` | Yes | Minimum trust score (0.0–1.0) |
-| `ENVIRONMENT` | No | deployment environment |
+| `WEBHOOK_SECRET` | Yes | Secret for signing/verifying webhooks |
+| `API_ENCRYPTION_KEY` | Yes | Key for encrypting sensitive API data |
+| `ENVIRONMENT` | Yes | Deployment environment (production, staging, development) |
+| `GITHUB_REPO` | Yes | GitHub repository path (e.g., `org/repo`) |
+| `GITHUB_TOKEN` | No | GitHub personal access token |
+| `NOTIFICATION_THRESHOLD` | No | Score threshold for sending notifications |
 | `CANDIDATE_BUDGET_GLOBAL` | No | Max candidates per run |
 
 ### Current Settings
