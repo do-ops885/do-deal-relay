@@ -49,7 +49,7 @@ test.describe("Extension Popup UI Tests", () => {
   test.beforeEach(async ({ page }) => {
     // Inject mock chrome API before loading the popup
     await page.addInitScript((mock) => {
-      (window as any).chrome = mock;
+      (window as unknown as Record<string, unknown>).chrome = mock;
     }, mockChromeAPI);
 
     // Load the extension popup
@@ -167,15 +167,15 @@ test.describe("Extension Content Script Tests", () => {
         },
       ];
 
-      (window as any).__testDetections = detections;
+      (window as unknown as Record<string, unknown>).__testDetections = detections;
     });
 
     // Verify detection worked
     const detections = (await page.evaluate(
-      () => (window as any).__testDetections,
-    )) as any[];
+      () => (window as unknown as Record<string, unknown>).__testDetections,
+    )) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
     expect(detections).toHaveLength(1);
-    expect(detections[0].value).toBe("CODE123");
+    expect(detections[0]!.value).toBe("CODE123");
   });
 
   test("content script detects referral codes in page content", async ({
@@ -215,12 +215,12 @@ test.describe("Extension Content Script Tests", () => {
         });
       }
 
-      (window as any).__testDetections = matches;
+      (window as unknown as Record<string, unknown>).__testDetections = matches;
     });
 
     const detections = await page.evaluate(
-      () => (window as any).__testDetections,
-    );
+      () => (window as unknown as Record<string, unknown>).__testDetections,
+    ) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
     expect(detections.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -237,12 +237,12 @@ test.describe("Extension Content Script Tests", () => {
     `);
 
     await page.addInitScript(() => {
-      (window as any).__testDetections = [];
+      (window as unknown as Record<string, unknown>).__testDetections = [];
     });
 
     const detections = await page.evaluate(
-      () => (window as any).__testDetections,
-    );
+      () => (window as unknown as Record<string, unknown>).__testDetections,
+    ) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
     expect(detections).toHaveLength(0);
   });
 });

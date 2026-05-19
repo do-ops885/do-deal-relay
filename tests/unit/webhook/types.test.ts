@@ -23,7 +23,7 @@ describe("Webhook Types", () => {
       const parts = id.split("_");
       expect(parts.length).toBeGreaterThanOrEqual(2);
       // First part should be base36 timestamp
-      expect(() => parseInt(parts[0], 36)).not.toThrow();
+      expect(() => parseInt(parts[0]!, 36)).not.toThrow();
     });
 
     it("should include UUID component", () => {
@@ -55,39 +55,39 @@ describe("Webhook Types", () => {
 
   describe("getWebhookKV()", () => {
     it("should prefer DEALS_WEBHOOKS over DEALS_STAGING", () => {
-      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as any;
-      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as any;
+      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
+      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
       const env = {
         DEALS_WEBHOOKS: mockKvWebhooks,
         DEALS_STAGING: mockKvStaging,
-      } as any;
+      } as unknown as Env;
 
       const result = getWebhookKV(env);
       expect(result).toBe(mockKvWebhooks);
     });
 
     it("should fallback to DEALS_STAGING when DEALS_WEBHOOKS is absent", () => {
-      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as any;
+      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
       const env = {
         DEALS_STAGING: mockKvStaging,
-      } as any;
+      } as unknown as Env;
 
       const result = getWebhookKV(env);
       expect(result).toBe(mockKvStaging);
     });
 
     it("should return DEALS_WEBHOOKS when it is the only binding", () => {
-      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as any;
+      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
       const env = {
         DEALS_WEBHOOKS: mockKvWebhooks,
-      } as any;
+      } as unknown as Env;
 
       const result = getWebhookKV(env);
       expect(result).toBe(mockKvWebhooks);
     });
 
     it("should return null when no KV bindings are available", () => {
-      const env = {} as any;
+      const env = {} as unknown as Env;
 
       const result = getWebhookKV(env);
       expect(result).toBeNull();
@@ -97,7 +97,7 @@ describe("Webhook Types", () => {
       const env = {
         DEALS_WEBHOOKS: undefined,
         DEALS_STAGING: undefined,
-      } as any;
+      } as unknown as Env;
 
       const result = getWebhookKV(env);
       expect(result).toBeNull();

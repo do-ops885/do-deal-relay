@@ -21,6 +21,9 @@ async function validateUrlPreservation(): Promise<void> {
   console.log("========================================\n");
 
   const proxy = await getPlatformProxy({});
+  const dealsSources = proxy.env.DEALS_SOURCES as {
+    fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  };
   const baseUrl = "http://localhost";
 
   try {
@@ -28,7 +31,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log("Step 1: Creating referral with complete URL...");
     console.log(`  Input URL: ${TEST_URL}`);
 
-    const createResponse = await proxy.env.DEALS_SOURCES.fetch(
+    const createResponse = await dealsSources.fetch(
       `${baseUrl}/api/referrals`,
       {
         method: "POST",
@@ -73,7 +76,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log("Step 2: Agent querying by code...");
     console.log(`  Query: GET /api/referrals/${TEST_CODE}`);
 
-    const getResponse = await proxy.env.DEALS_SOURCES.fetch(
+    const getResponse = await dealsSources.fetch(
       `${baseUrl}/api/referrals/${TEST_CODE}`,
     );
 
@@ -99,7 +102,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log("Step 3: Agent listing referrals for domain...");
     console.log(`  Query: GET /api/referrals?domain=${TEST_DOMAIN}`);
 
-    const listResponse = await proxy.env.DEALS_SOURCES.fetch(
+    const listResponse = await dealsSources.fetch(
       `${baseUrl}/api/referrals?domain=${TEST_DOMAIN}&status=all`,
     );
 
@@ -131,7 +134,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log("Step 4: Agent deactivating referral...");
     console.log(`  Action: POST /api/referrals/${TEST_CODE}/deactivate`);
 
-    const deactivateResponse = await proxy.env.DEALS_SOURCES.fetch(
+    const deactivateResponse = await dealsSources.fetch(
       `${baseUrl}/api/referrals/${TEST_CODE}/deactivate`,
       {
         method: "POST",
@@ -170,7 +173,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log("Step 5: Agent reactivating referral...");
     console.log(`  Action: POST /api/referrals/${TEST_CODE}/reactivate`);
 
-    const reactivateResponse = await proxy.env.DEALS_SOURCES.fetch(
+    const reactivateResponse = await dealsSources.fetch(
       `${baseUrl}/api/referrals/${TEST_CODE}/reactivate`,
       {
         method: "POST",
