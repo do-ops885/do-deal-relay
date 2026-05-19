@@ -1,2 +1,0 @@
-// Test commit to validate TruffleHog security fix (single-commit PR)
-// Validation timestamp v2: Sat May 16 15:10:40 UTC 2026
