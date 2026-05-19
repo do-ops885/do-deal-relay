@@ -33,9 +33,11 @@ export async function fetchProductHuntDeals(
     };
   }
 
+  // Use JSON.stringify to safely escape the search query for GraphQL
+  const safeQuery = JSON.stringify(searchQuery);
   const query = `
     query {
-      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) {
+      posts(first: ${limit}, order: RANKING, search: {query: ${safeQuery}}) {
         edges {
           node {
             id

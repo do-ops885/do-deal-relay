@@ -152,7 +152,11 @@ export function parseHTMLContent(
     }
   }
 
-  // 2. Always run regex extraction as it might find more codes
+  // 2. Only run regex extraction if selectors found nothing (avoid duplicates)
+  if (deals.length > 0) {
+    return deals;
+  }
+
   const codePattern = new RegExp(
     `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
     "gi",
