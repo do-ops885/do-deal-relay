@@ -57,12 +57,12 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
 
   const htmlWithoutScripts = replaceUntilStable(
     html,
-    /<script[^>]*>[\s\S]*?<\/script>/gi,
+    /<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi,
     "",
   );
   const htmlWithoutScriptsAndStyles = replaceUntilStable(
     htmlWithoutScripts,
-    /<style[^>]*>[\s\S]*?<\/style>/gi,
+    /<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi,
     "",
   );
 
