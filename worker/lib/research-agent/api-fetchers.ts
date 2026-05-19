@@ -34,8 +34,8 @@ export async function fetchProductHuntDeals(
   }
 
   const query = `
-    query {
-      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) {
+    query ($limit: Int!, $searchQuery: String!) {
+      posts(first: $limit, order: RANKING, search: {query: $searchQuery}) {
         edges {
           node {
             id
@@ -69,7 +69,13 @@ export async function fetchProductHuntDeals(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        variables: {
+          limit,
+          searchQuery,
+        },
+      }),
       signal: AbortSignal.timeout(10000),
     });
 
