@@ -48,4 +48,22 @@ describe("validateRedirect", () => {
     // URL parser handles these, but good to check
     expect(validateRedirect("https://do-deal-relay.com@evil.com")).toBe(false);
   });
+
+  it("should block HTTP protocol for production domains", () => {
+    expect(validateRedirect("http://do-deal-relay.com/welcome")).toBe(false);
+    expect(
+      validateRedirect("http://do-deal-relay.pages.dev/dashboard"),
+    ).toBe(false);
+    expect(validateRedirect("http://app.do-deal-relay.com/login")).toBe(false);
+  });
+
+  it("should block URLs with bypass characters", () => {
+    expect(validateRedirect("https://do-deal-relay.com/\x00/path")).toBe(false);
+    expect(validateRedirect("https://do-deal-relay.com/\\@evil.com")).toBe(
+      false,
+    );
+    expect(validateRedirect("https://do-deal-relay.com/\r\nX-Evil: true")).toBe(
+      false,
+    );
+  });
 });
