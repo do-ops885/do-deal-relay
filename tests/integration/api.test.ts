@@ -122,6 +122,8 @@ describe("API Endpoints", () => {
       TRUST_THRESHOLD: "0.3",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       NOTIFICATION_THRESHOLD: "100",

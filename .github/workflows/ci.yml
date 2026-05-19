@@ -134,7 +134,11 @@ jobs:
 
           # Seed KV with API Key and mock snapshot
           npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$HASH" \
-            '{"userId":"ci-user","role":"admin","createdAt":"2026-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
+            '{
+              "userId":"ci-user","role":"admin",
+              "createdAt":"2026-01-01T00:00:00Z",
+              "rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}
+            }'
 
           npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" \
             '{"stats":{"active":1,"expired":0,"validated":1},"generated_at":"2026-01-01T00:00:00Z","deals":[]}'
@@ -149,7 +153,9 @@ jobs:
           export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
-          npx wrangler dev --port 8787 --var WEBHOOK_SECRET:whsec_ci_test_secret --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long > wrangler.log 2>&1 &
+          npx wrangler dev --port 8787 \
+            --var WEBHOOK_SECRET:whsec_ci_test_secret \
+            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long > wrangler.log 2>&1 &
           WRANGLER_PID=$!
           echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
 
@@ -209,7 +215,9 @@ jobs:
           export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
-          npx wrangler dev --port 8787 --var WEBHOOK_SECRET:whsec_ci_test_secret --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long &
+          npx wrangler dev --port 8787 \
+            --var WEBHOOK_SECRET:whsec_ci_test_secret \
+            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long &
           WRANGLER_PID=$!
           for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null; then
