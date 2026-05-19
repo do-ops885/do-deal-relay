@@ -1,11 +1,14 @@
-# Track C - Test Coverage
+# AUDIT_TESTS.md
 
-## Identified Gaps
-- worker/lib/nlq/lexer.ts (0% coverage)
-- worker/lib/nlq/parser.ts (0% coverage)
-- worker/lib/nlq/intent.ts (0% coverage)
+- **Low Coverage Areas**:
+  - `worker/lib/nlq/ai/`: Many files have 0% or low coverage (e.g., `ai-enhancer.ts`, `entities.ts`, `intent.ts`).
+  - `worker/lib/validation/url-validator.ts`: Low coverage (4.4%).
+  - `worker/routes/core/analytics.ts`: 0% coverage.
 
 ## Proposed New Tests
-1. Add unit tests for `worker/lib/nlq/lexer.ts` to verify tokenization logic.
-2. Add unit tests for `worker/lib/nlq/parser.ts` to verify query parsing.
-3. Add unit tests for `worker/lib/nlq/intent.ts` to verify intent classification.
+1. **Unit Test for `validateIntent` in `worker/lib/nlq/ai/intent.ts`**:
+   - Verify that it correctly identifies valid intents and defaults to "search" for invalid ones.
+2. **Unit Test for `logger` in `worker/lib/global-logger.ts`**:
+   - Verify log level filtering and entry formatting.
+3. **Unit Test for `shouldLog` in `worker/lib/global-logger.ts`**:
+   - Ensure it respects the minimum log level.
