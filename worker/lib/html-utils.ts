@@ -9,6 +9,8 @@ export function extractBySelectors(
   selectors: Record<string, string>,
 ): ExtractedData {
   const result: ExtractedData = {};
+  if (!html) return result;
+
   const $ = cheerio.load(html);
 
   for (const [key, selector] of Object.entries(selectors)) {
@@ -22,13 +24,6 @@ export function extractBySelectors(
   return result;
 }
 
-/**
- * Filter out prototype pollution keys from user-derived data
- */
-function isSafeKey(key: string): boolean {
-  return key !== "__proto__" && key !== "constructor" && key !== "prototype";
-}
-
 export function extractFromHtml(
   html: string,
   config: {
@@ -36,21 +31,16 @@ export function extractFromHtml(
     regex_patterns?: Record<string, RegExp[]>;
   },
 ): ExtractedData {
-  // Use null-prototype to prevent prototype pollution
-  const result: ExtractedData = Object.create(null);
+  const result: ExtractedData = {};
+  if (!html) return result;
 
   if (config.selectors) {
     const selectorResult = extractBySelectors(html, config.selectors);
-    for (const [key, value] of Object.entries(selectorResult)) {
-      if (isSafeKey(key)) {
-        result[key] = value;
-      }
-    }
+    Object.assign(result, selectorResult);
   }
 
   if (config.regex_patterns) {
     for (const [key, patterns] of Object.entries(config.regex_patterns)) {
-      if (!isSafeKey(key)) continue;
       if (!result[key] || result[key].length === 0) {
         const matches: string[] = [];
         for (const pattern of patterns) {

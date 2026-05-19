@@ -1,0 +1,1796 @@
+Checking formatting...
+All matched files use Prettier code style!
+⚠ YAML validation skipped: python3-yaml not installed; install yamllint
+
+Quality Gate Failed
+===================
+
+✗ Unit tests failed (exit 1)
+
+Running tests with vitest...
+❌ Tests failed
+
+> do-deal-relay@0.1.6 test:ci
+> vitest run --coverage
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.6 [39m[90m/app[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstderr[2m | tests/unit/lock.test.ts[2m > [22m[2mLock Mechanism[2m > [22m[2macquireLock[2m > [22m[2mshould acquire lock when existing lock is expired
+[22m[39mLock expired for run expired-run, taking over with run-1
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2msearchDeals[2m > [22m[2mshould return empty array on database error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'\n'[39m +
+    [32m'    SELECT \n'[39m +
+    [32m'      d.id,\n'[39m +
+    [32m'      d.deal_id,\n'[39m +
+    [32m'      d.title,\n'[39m +
+    [32m'      d.description,\n'[39m +
+    [32m'      d.domain,\n'[39m +
+    [32m'      '[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetSearchSuggestions[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT DISTINCT title \n'[39m +
+    [32m'     FROM fts_deals \n'[39m +
+    [32m"     WHERE fts_deals MATCH ? || '*'\n"[39m +
+    [32m'     AND title IS NO'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetDealsByDomain[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'\n'[39m +
+    [32m'    SELECT \n'[39m +
+    [32m'      id, deal_id, title, description, domain, code, url,\n'[39m +
+    [32m'      reward_type, reward_val'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetDealsByCategory[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      id, deal_id, title, description, domain, code, url,\n'[39m +
+    [32m'      reward_type, reward_value, r'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetDomainsWithCounts[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT domain, COUNT(*) as count\n'[39m +
+    [32m'     FROM deals\n'[39m +
+    [32m'     WHERE is_active = 1\n'[39m +
+    [32m'     GROUP BY domain\n'[39m +
+    [32m'     '[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/lock.test.ts[2m > [22m[2mLock Mechanism[2m > [22m[2mreleaseLock[2m > [22m[2mshould not throw on release error
+[22m[39mFailed to release lock: Error: KV error
+    at Object.<anonymous> [90m(/app/[39mtests/unit/lock.test.ts:202:15[90m)[39m
+    at Object.Mock [as delete] [90m(file:///app/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:332:34[90m)[39m
+    at releaseLock [90m(/app/[39mworker/lib/lock.ts:133:26[90m)[39m
+
+ [32m✓[39m tests/unit/lock.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 1551[2mms[22m[39m
+       [33m[2m✓[22m[39m should throw when verification fails [33m 603[2mms[22m[39m
+       [33m[2m✓[22m[39m should throw ConcurrencyError on KV failure [33m 604[2mms[22m[39m
+       [33m[2m✓[22m[39m should mark lock acquisition errors as retryable [33m 302[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetCategoriesWithCounts[2m > [22m[2mshould return empty array on database error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT DISTINCT category as categories\n'[39m +
+    [32m'     FROM deals\n'[39m +
+    [32m'     WHERE category IS NOT NULL AND is_active'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/experience-d1.test.ts[2m > [22m[2mExperience D1 Queries[2m > [22m[2msubmitExperienceEvent[2m > [22m[2mshould return error on insert failure
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'INSERT INTO experience_events (id, deal_code, event_type, agent_id, score, metadata, created_at)\n'[39m +
+    [32m'   '[39m,
+  error: [32m'Constraint violation'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetActiveDeals[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      id, deal_id, title, description, domain, code, url,\n'[39m +
+    [32m'      reward_type, reward_value, r'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/experience-d1.test.ts[2m > [22m[2mExperience D1 Queries[2m > [22m[2mgetExperienceAggregate[2m > [22m[2mshould return error on query failure
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT deal_code, total_events, positive_events, negative_events, avg_score, last_updated\n'[39m +
+    [32m'     FROM '[39m,
+  error: [32m'DB error'[39m
+}
+
+ [32m✓[39m tests/unit/experience-d1.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 618[2mms[22m[39m
+       [33m[2m✓[22m[39m should return error on insert failure [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return error on query failure [33m 302[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetExpiringDeals[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      d.id,\n'[39m +
+    [32m'      d.deal_id,\n'[39m +
+    [32m'      d.title,\n'[39m +
+    [32m'      d.domain,\n'[39m +
+    [32m'      d.expiry_date,\n'[39m +
+    [32m'      d.cod'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetRecentDeals[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      id, deal_id, title, description, domain, code, url,\n'[39m +
+    [32m'      reward_type, reward_value, r'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetDealTimeSeries[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'WITH RECURSIVE dates(date) AS (\n'[39m +
+    [32m"      SELECT date('now', '-' || ? || ' days')\n"[39m +
+    [32m'      UNION ALL\n'[39m +
+    [32m'      '[39m,
+  error: [32m'Database error'[39m
+}
+
+ [32m✓[39m tests/unit/dependabot-patterns.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2minsertDeal[2m > [22m[2mshould return error on insert failure
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'INSERT INTO deals (\n'[39m +
+    [32m'      deal_id, title, description, code, url, domain, \n'[39m +
+    [32m'      source_url, source_'[39m,
+  error: [32m'Duplicate deal_id'[39m
+}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2minsertDeal[2m > [22m[2mshould handle database errors
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'INSERT INTO deals (\n'[39m +
+    [32m'      deal_id, title, description, code, url, domain, \n'[39m +
+    [32m'      source_url, source_'[39m,
+  error: [32m'Connection lost'[39m
+}
+
+ [32m✓[39m tests/unit/utils.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 358[2mms[22m[39m
+     [33m[2m✓[22m[39m should retry on failure and eventually succeed [33m 301[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2minsertReferralCode[2m > [22m[2mshould return error on insert failure
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'INSERT INTO referral_codes (\n'[39m +
+    [32m'      code, deal_id, user_id, submitted_by,\n'[39m +
+    [32m'      max_uses, current_use'[39m,
+  error: [32m'Code already exists'[39m
+}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould do nothing when no subscriptions exist
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.601Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould do nothing when KV is unavailable
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.605Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould send webhook to matching subscription
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 1 subscriptions","timestamp":"2026-05-19T10:19:05.607Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould send webhook to matching subscription
+[22m[39m{"level":"info","message":"Webhook delivered: evt_test123 to https://example.com/webhook","timestamp":"2026-05-19T10:19:05.615Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_test123","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould not send to subscription with mismatched event type
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.620Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould not send to inactive subscription
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.621Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould filter by domain filter
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.622Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould allow event when domain matches filter
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 1 subscriptions","timestamp":"2026-05-19T10:19:05.622Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould allow event when domain matches filter
+[22m[39m{"level":"info","message":"Webhook delivered: evt_test123 to https://example.com/webhook","timestamp":"2026-05-19T10:19:05.623Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_test123","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould filter by status filter
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 0 subscriptions","timestamp":"2026-05-19T10:19:05.624Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould send to multiple matching subscriptions
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 2 subscriptions","timestamp":"2026-05-19T10:19:05.625Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould send to multiple matching subscriptions
+[22m[39m{"level":"info","message":"Webhook delivered: evt_test123 to https://example.com/hook1","timestamp":"2026-05-19T10:19:05.626Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_1","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould send to multiple matching subscriptions
+[22m[39m{"level":"info","message":"Webhook delivered: evt_test123 to https://example.com/hook2","timestamp":"2026-05-19T10:19:05.626Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_2","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould handle fetch errors with retries
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 1 subscriptions","timestamp":"2026-05-19T10:19:05.627Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstderr[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould handle fetch errors with retries
+[22m[39m{"level":"warn","message":"Webhook added to DLQ: evt_test123","timestamp":"2026-05-19T10:19:05.673Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_test123","attempts":2}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould save delivery record to KV on success
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 1 subscriptions","timestamp":"2026-05-19T10:19:05.674Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould save delivery record to KV on success
+[22m[39m{"level":"info","message":"Webhook delivered: evt_test123 to https://example.com/webhook","timestamp":"2026-05-19T10:19:05.675Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_test123","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould add to DLQ after all retries fail
+[22m[39m{"level":"info","message":"Sending outgoing webhooks: 1 subscriptions","timestamp":"2026-05-19T10:19:05.676Z","context":{"component":"webhook","event_type":"referral.created","event_id":"evt_test123"}}
+
+[90mstderr[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2msendOutgoingWebhooks()[2m > [22m[2mshould add to DLQ after all retries fail
+[22m[39m{"level":"warn","message":"Webhook added to DLQ: evt_test123","timestamp":"2026-05-19T10:19:05.777Z","context":{"component":"webhook","event_id":"evt_test123","subscription_id":"sub_test123","attempts":2}}
+
+[90mstderr[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2mgetDeadLetterQueue()[2m > [22m[2mshould return empty array on KV error
+[22m[39m{"level":"error","message":"Failed to get dead letter queue","timestamp":"2026-05-19T10:19:05.782Z","context":{"component":"webhook","error":"KV error"}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2mretryDeadLetterEvent()[2m > [22m[2mshould retry DLQ event and send webhook
+[22m[39m{"level":"info","message":"Webhook delivered: evt_r to https://example.com/webhook","timestamp":"2026-05-19T10:19:05.785Z","context":{"component":"webhook","event_id":"evt_r","subscription_id":"sub_retry","attempts":1}}
+
+[90mstdout[2m | tests/unit/webhook/delivery.test.ts[2m > [22m[2mWebhook Delivery[2m > [22m[2mretryDeadLetterEvent()[2m > [22m[2mshould delete DLQ entry before retrying
+[22m[39m{"level":"info","message":"Webhook delivered: evt_d to https://example.com/webhook","timestamp":"2026-05-19T10:19:05.786Z","context":{"component":"webhook","event_id":"evt_d","subscription_id":"sub_del","attempts":1}}
+
+ [32m✓[39m tests/unit/webhook/delivery.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 193[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2minsertReferralCode[2m > [22m[2mshould handle database errors
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'INSERT INTO referral_codes (\n'[39m +
+    [32m'      code, deal_id, user_id, submitted_by,\n'[39m +
+    [32m'      max_uses, current_use'[39m,
+  error: [32m'Database timeout'[39m
+}
+
+ [32m✓[39m tests/integration/scheduled.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 3091[2mms[22m[39m
+       [33m[2m✓[22m[39m should execute pipeline on scheduled event [33m 355[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle successful pipeline execution [33m 306[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle pipeline failure gracefully [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should catch and log pipeline errors [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should send notification on critical failure [33m 304[2mms[22m[39m
+       [33m[2m✓[22m[39m should log scheduled event trigger time [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should log pipeline phase on failure [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should run full discovery pipeline [33m 304[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle empty discovery results [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle no configured sources [33m 302[2mms[22m[39m
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mfindExpiringDeals[2m > [22m[2mshould find deals expiring within 7 days
+[22m[39m{"level":"info","message":"Found 1 deals expiring within 7 days","timestamp":"2026-05-19T10:19:06.095Z","context":{"component":"expiration","count":1,"windowDays":7}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mfindExpiringDeals[2m > [22m[2mshould find deals expiring within 30 days
+[22m[39m{"level":"info","message":"Found 1 deals expiring within 30 days","timestamp":"2026-05-19T10:19:06.101Z","context":{"component":"expiration","count":1,"windowDays":30}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mfindExpiringDeals[2m > [22m[2mshould not include already expired deals
+[22m[39m{"level":"info","message":"Found 0 deals expiring within 30 days","timestamp":"2026-05-19T10:19:06.102Z","context":{"component":"expiration","count":0,"windowDays":30}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mfindExpiringDeals[2m > [22m[2mshould not include deals without expiry dates
+[22m[39m{"level":"info","message":"Found 0 deals expiring within 30 days","timestamp":"2026-05-19T10:19:06.103Z","context":{"component":"expiration","count":0,"windowDays":30}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mfindExpiringDeals[2m > [22m[2mshould sort by urgency (most urgent first)
+[22m[39m{"level":"info","message":"Found 3 deals expiring within 30 days","timestamp":"2026-05-19T10:19:06.104Z","context":{"component":"expiration","count":3,"windowDays":30}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mscheduleExpiryCheck[2m > [22m[2mshould schedule next check for tomorrow at 9am
+[22m[39m{"level":"info","message":"Next expiry check scheduled for 2026-05-20T09:00:00.000Z","timestamp":"2026-05-19T10:19:06.111Z","context":{"component":"expiration","scheduled_at":"2026-05-20T09:00:00.000Z"}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Starting deal expiration check...","timestamp":"2026-05-19T10:19:06.112Z","context":{"component":"expiration"}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Found 1 deals expiring within 7 days","timestamp":"2026-05-19T10:19:06.112Z","context":{"component":"expiration","count":1,"windowDays":7}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Found 1 deals expiring within 30 days","timestamp":"2026-05-19T10:19:06.113Z","context":{"component":"expiration","count":1,"windowDays":30}}
+
+[90mstderr[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39mFailed to get recent logs: TypeError: env.DEALS_LOG.get is not a function
+    at getRecentLogs [90m(/app/[39mworker/lib/logger/query.ts:104:39[90m)[39m
+    at sendGitHubNotification [90m(/app/[39mworker/notify.ts:233:28[90m)[39m
+    at notify [90m(/app/[39mworker/notify.ts:73:31[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at sendExpiryNotifications [90m(/app/[39mworker/lib/expiration/notifications.ts:57:5[90m)[39m
+    at checkDealExpirations [90m(/app/[39mworker/lib/expiration/index.ts:58:3[90m)[39m
+    at [90m/app/[39mtests/unit/expiration.test.ts:442:22
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetReferralCodesByDeal[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'\n'[39m +
+    [32m'    SELECT \n'[39m +
+    [32m'      rc.id,\n'[39m +
+    [32m'      rc.code,\n'[39m +
+    [32m'      rc.deal_id,\n'[39m +
+    [32m'      d.title as deal_title,\n'[39m +
+    [32m'      d.doma'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.get is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:59:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m[ERROR] [github] [gh-1779185946286] Failed to create notification issue {
+  repo: [32m'test/repo'[39m,
+  type: [32m'deal_expiring'[39m,
+  run_id: [32m'expiry-check-1779185946113'[39m
+} Error: Failed to create issue: 401
+    at execute [90m(/app/[39mworker/lib/github/core.ts:212:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+    at notify [90m(/app/[39mworker/notify.ts:73:25[90m)[39m
+    at sendExpiryNotifications [90m(/app/[39mworker/lib/expiration/notifications.ts:57:5[90m)[39m
+    at checkDealExpirations [90m(/app/[39mworker/lib/expiration/index.ts:58:3[90m)[39m
+    at [90m/app/[39mtests/unit/expiration.test.ts:442:22
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Sent expiry notifications for 1 deals","timestamp":"2026-05-19T10:19:06.291Z","context":{"component":"expiration","count":1}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Next expiry check scheduled for 2026-05-20T09:00:00.000Z","timestamp":"2026-05-19T10:19:06.291Z","context":{"component":"expiration","scheduled_at":"2026-05-20T09:00:00.000Z"}}
+
+[90mstdout[2m | tests/unit/expiration.test.ts[2m > [22m[2mExpiration Module[2m > [22m[2mcheckDealExpirations[2m > [22m[2mshould return summary of expiration check
+[22m[39m{"level":"info","message":"Deal expiration check completed","timestamp":"2026-05-19T10:19:06.292Z","context":{"component":"expiration","expiringFound":1,"expiredMarked":0,"notificationsSent":1}}
+
+ [32m✓[39m tests/unit/expiration.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 205[2mms[22m[39m
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould execute full pipeline successfully
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.411Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.412Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould execute full pipeline successfully
+[22m[39m[INFO] [notify] [ntf-1779185946449] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould handle no deals found
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.454Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for empty.com","timestamp":"2026-05-19T10:19:06.454Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould acquire and release lock
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.458Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.458Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould extend lock during long operations
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.462Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.462Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould extend lock during long operations
+[22m[39m[INFO] [notify] [ntf-1779185946471] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould revert on validation failure
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.473Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for bad.com","timestamp":"2026-05-19T10:19:06.473Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould revert on validation failure
+[22m[39m[INFO] [notify] [ntf-1779185946479] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould handle retryable errors
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.481Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.481Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould revert when no valid deals after validation
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.483Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for lowtrust.com","timestamp":"2026-05-19T10:19:06.483Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould revert when no valid deals after validation
+[22m[39m[INFO] [notify] [ntf-1779185946488] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould log phase completion
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.490Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.490Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mexecutePipeline[2m > [22m[2mshould handle non-retryable errors
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.492Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.492Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mState transitions[2m > [22m[2mshould transition through all phases
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.494Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.494Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mState transitions[2m > [22m[2mshould transition through all phases
+[22m[39m[INFO] [notify] [ntf-1779185946503] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mState transitions[2m > [22m[2mshould skip to finalize when no deals discovered
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.505Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.505Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mState transitions[2m > [22m[2mshould skip to finalize when all deals are duplicates
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.507Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.507Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mState transitions[2m > [22m[2mshould skip to finalize when all deals are duplicates
+[22m[39m[INFO] [notify] [ntf-1779185946512] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mFailure paths[2m > [22m[2mshould handle revert path
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.514Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for bad.com","timestamp":"2026-05-19T10:19:06.514Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetReferralCodeByString[2m > [22m[2mshould return null on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      rc.id,\n'[39m +
+    [32m'      rc.code,\n'[39m +
+    [32m'      rc.deal_id,\n'[39m +
+    [32m'      d.title as deal_title,\n'[39m +
+    [32m'      d.domain,\n'[39m +
+    [32m' '[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mFailure paths[2m > [22m[2mshould handle revert path
+[22m[39m[INFO] [notify] [ntf-1779185946516] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mFailure paths[2m > [22m[2mshould handle quarantine path for trust anomalies
+[22m[39m{"level":"info","message":"Skipping source anomaly.com - trust below threshold","timestamp":"2026-05-19T10:19:06.518Z","context":{"component":"discovery","trust":0.2,"threshold":0.3}}
+{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.518Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":0}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mFailure paths[2m > [22m[2mshould release lock even on error
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.520Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.520Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mGuard rails[2m > [22m[2mshould enforce guard rails on discovery input
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.522Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for massive.com","timestamp":"2026-05-19T10:19:06.522Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mGuard rails[2m > [22m[2mshould check output guard rails before publish
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.524Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.524Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mGuard rails[2m > [22m[2mshould check output guard rails before publish
+[22m[39m[INFO] [notify] [ntf-1779185946528] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mPipeline notifications[2m > [22m[2mshould send notification on successful completion
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.534Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.534Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mPipeline notifications[2m > [22m[2mshould send notification on successful completion
+[22m[39m[INFO] [notify] [ntf-1779185946538] Created GitHub issue #0 for publish_incomplete { event_type: [32m'publish_incomplete'[39m, issue_number: [33m0[39m }
+
+[90mstdout[2m | tests/unit/state-machine.test.ts[2m > [22m[2mState Machine[2m > [22m[2mPipeline notifications[2m > [22m[2mshould send notification on failure
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.540Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.540Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+ [32m✓[39m tests/unit/state-machine.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 173[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetTopDomains[2m > [22m[2mshould return empty array on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT \n'[39m +
+    [32m'      d.domain,\n'[39m +
+    [32m'      COUNT(DISTINCT d.id) as deals,\n'[39m +
+    [32m'      COUNT(DISTINCT rc.id) as referral'[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstdout[2m | tests/integration/api.test.ts[2m > [22m[2mAPI Endpoints[2m > [22m[2mPOST /api/discover[2m > [22m[2mshould trigger discovery pipeline
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.954Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:06.955Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/integration/api.test.ts[2m > [22m[2mAPI Endpoints[2m > [22m[2mPOST /api/discover[2m > [22m[2mshould handle pipeline errors gracefully
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:06.962Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for bad.com","timestamp":"2026-05-19T10:19:06.962Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/integration/api.test.ts[2m > [22m[2mAPI Endpoints[2m > [22m[2mError handling[2m > [22m[2mshould handle KV errors gracefully
+[22m[39mFailed to get production snapshot: Error: KV error
+    at [90m/app/[39mtests/integration/api.test.ts:682:42
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+Failed to get recent logs: Error: KV error
+    at [90m/app/[39mtests/integration/api.test.ts:685:42
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+ [32m✓[39m tests/integration/api.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 143[2mms[22m[39m
+ [32m✓[39m tests/unit/mcp-tools.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 115[2mms[22m[39m
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetReferralUsageStats[2m > [22m[2mshould return zeros on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT COUNT(*) as count\n'[39m +
+    [32m'     FROM referral_usage\n'[39m +
+    [32m"     WHERE used_at >= strftime('%s', 'now', '-' ||"[39m,
+  error: [32m'Database error'[39m
+}
+
+[90mstderr[2m | tests/unit/circuit-breaker.test.ts[2m > [22m[2mCircuit Breaker[2m > [22m[2mCircuitBreaker class[2m > [22m[2mconstructor and initialization[2m > [22m[2mshould create circuit breaker with default options
+[22m[39mPromise returned by `expect(actual).resolves.toBe(expected)` was not awaited. Vitest currently auto-awaits hanging assertions at the end of the test, but this will cause the test to fail in the next Vitest major. Please remember to await the assertion.
+    at /app/tests/unit/circuit-breaker.test.ts:72:29
+
+[90mstderr[2m | tests/unit/d1-queries.test.ts[2m > [22m[2mD1 Queries[2m > [22m[2mgetReferralUsageStats[2m > [22m[2mshould return zeros on error
+[22m[39mD1 query failed after 3 attempts: {
+  query: [32m'SELECT COUNT(DISTINCT used_by) as count\n'[39m +
+    [32m'     FROM referral_usage\n'[39m +
+    [32m"     WHERE used_at >= strftime('%s'"[39m,
+  error: [32m'Database error'[39m
+}
+
+ [32m✓[39m tests/unit/d1-queries.test.ts [2m([22m[2m67 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 5809[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on database error [33m 305[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on database error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 301[2mms[22m[39m
+       [33m[2m✓[22m[39m should return error on insert failure [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle database errors [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return error on insert failure [33m 301[2mms[22m[39m
+       [33m[2m✓[22m[39m should handle database errors [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return null on error [33m 302[2mms[22m[39m
+       [33m[2m✓[22m[39m should return empty array on error [33m 303[2mms[22m[39m
+       [33m[2m✓[22m[39m should return zeros on error [33m 606[2mms[22m[39m
+ [32m✓[39m tests/unit/auth.test.ts [2m([22m[2m77 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+[90mstderr[2m | tests/unit/circuit-breaker.test.ts[2m > [22m[2mCircuit Breaker[2m > [22m[2mCircuitBreaker class[2m > [22m[2mKV persistence[2m > [22m[2mshould handle KV get errors gracefully
+[22m[39m[CircuitBreaker:test-cb] Failed to load state: Error: KV error
+    at [90m/app/[39mtests/unit/circuit-breaker.test.ts:848:30
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+[90mstderr[2m | tests/unit/circuit-breaker.test.ts[2m > [22m[2mCircuit Breaker[2m > [22m[2mCircuitBreaker class[2m > [22m[2mKV persistence[2m > [22m[2mshould handle KV get errors gracefully
+[22m[39m[CircuitBreaker:test-cb] Failed to load state: Error: KV error
+    at [90m/app/[39mtests/unit/circuit-breaker.test.ts:848:30
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+ [32m✓[39m tests/unit/circuit-breaker.test.ts [2m([22m[2m62 tests[22m[2m)[22m[32m 120[2mms[22m[39m
+[90mstderr[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould return empty result when no active sources
+[22m[39m{"level":"warn","message":"No active sources configured","timestamp":"2026-05-19T10:19:07.823Z","context":{"component":"discovery"}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 503 when D1 database is not configured
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.error [90m(/app/[39mworker/lib/logger/structured.ts:107:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:55:12[90m)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:144:30
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 429 when rate limit is exceeded
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.warn [90m(/app/[39mworker/lib/logger/structured.ts:97:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:74:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:165:24
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 400 for invalid JSON body
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.error [90m(/app/[39mworker/lib/logger/structured.ts:107:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:137:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:180:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould skip blocked sources
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.863Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for active.com","timestamp":"2026-05-19T10:19:07.863Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 400 for empty body
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.warn [90m(/app/[39mworker/lib/logger/structured.ts:97:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:117:14[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:195:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 400 for missing query field
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.warn [90m(/app/[39mworker/lib/logger/structured.ts:97:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:117:14[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:209:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 400 for empty query string
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.warn [90m(/app/[39mworker/lib/logger/structured.ts:97:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:117:14[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:223:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould handle HTTP errors from sources
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.872Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for error.com","timestamp":"2026-05-19T10:19:07.872Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould handle fetch timeout
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.873Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for timeout.com","timestamp":"2026-05-19T10:19:07.873Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould update source discovery metadata on success
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.874Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:07.874Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+ [32m✓[39m tests/unit/bulk/export.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 122[2mms[22m[39m
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 200 with results for valid query
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:237:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:237:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould record validation failure on fetch error
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.879Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for fail.com","timestamp":"2026-05-19T10:19:07.879Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould collect deals from multiple sources
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.880Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":2}}
+{"level":"info","message":"Allocating budget for source1.com","timestamp":"2026-05-19T10:19:07.880Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return 200 with results for valid query
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:237:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mdiscover[2m > [22m[2mshould collect deals from multiple sources
+[22m[39m{"level":"info","message":"Allocating budget for source2.com","timestamp":"2026-05-19T10:19:07.888Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":999}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould include rate limit headers in successful response
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:256:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:256:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould include rate limit headers in successful response
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:256:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould extract referral codes from HTML
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.898Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for htmlsource.com","timestamp":"2026-05-19T10:19:07.898Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould handle HTML without referral codes
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.900Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for nocodes.com","timestamp":"2026-05-19T10:19:07.900Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould deduplicate codes found in same page
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.901Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for dupes.com","timestamp":"2026-05-19T10:19:07.901Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould extract reward information from HTML
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.902Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for rewards.com","timestamp":"2026-05-19T10:19:07.902Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould handle percent rewards in HTML
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.903Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for percent.com","timestamp":"2026-05-19T10:19:07.903Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect custom limit parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:269:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:269:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect custom limit parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:269:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mHTML content parsing[2m > [22m[2mshould respect payload size limits
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.904Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for large.com","timestamp":"2026-05-19T10:19:07.904Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould parse array of deals
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.905Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for array.com","timestamp":"2026-05-19T10:19:07.905Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould parse nested deals object
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.910Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for nested.com","timestamp":"2026-05-19T10:19:07.910Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect include_expired parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:282:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:282:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould handle single deal object
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.912Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for single.com","timestamp":"2026-05-19T10:19:07.912Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect include_expired parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:282:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould handle alternate field names
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.915Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for alt.com","timestamp":"2026-05-19T10:19:07.915Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect offset parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:295:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:295:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould respect offset parameter
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:295:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould handle items array field
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.918Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for items.com","timestamp":"2026-05-19T10:19:07.918Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould return empty array for invalid JSON
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.919Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for badjson.com","timestamp":"2026-05-19T10:19:07.919Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould handle query execution errors gracefully
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:312:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:312:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mJSON content parsing[2m > [22m[2mshould extract expiry dates when present
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.920Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for expiry.com","timestamp":"2026-05-19T10:19:07.920Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould handle query execution errors gracefully
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.error [90m(/app/[39mworker/lib/logger/structured.ts:107:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:216:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:312:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mURL building[2m > [22m[2mshould construct URLs from source patterns
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.922Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for test.com","timestamp":"2026-05-19T10:19:07.922Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould handle non-Error throwables
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:330:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:330:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mURL building[2m > [22m[2mshould include proper headers in fetch
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.924Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for headers.com","timestamp":"2026-05-19T10:19:07.924Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould handle non-Error throwables
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.error [90m(/app/[39mworker/lib/logger/structured.ts:107:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:216:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:330:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return empty results array when no deals match
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:346:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:346:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mDeal building[2m > [22m[2mshould build complete deal objects
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.926Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for build.com","timestamp":"2026-05-19T10:19:07.926Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould return empty results array when no deals match
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:346:24
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould use client identifier from request headers
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:152:10[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:365:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+Failed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.debug [90m(/app/[39mworker/lib/logger/structured.ts:85:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:166:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:365:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/nlq/handlers-post.test.ts[2m > [22m[2mNLQ Handlers - POST[2m > [22m[2mhandleNLQ[2m > [22m[2mshould use client identifier from request headers
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.info [90m(/app/[39mworker/lib/logger/structured.ts:91:10[90m)[39m
+    at Module.handleNLQ [90m(/app/[39mworker/routes/nlq/handlers.ts:189:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-post.test.ts:365:7
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/unit/discover.test.ts[2m > [22m[2mDiscovery Engine[2m > [22m[2mDeal building[2m > [22m[2mshould track build errors
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:07.931Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for badbuild.com","timestamp":"2026-05-19T10:19:07.931Z","context":{"component":"discovery","trust":0.7,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+ [32m✓[39m tests/unit/discover.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 116[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/handlers-post.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 145[2mms[22m[39m
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould sort sources by trust score descending
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:08.195Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":3}}
+{"level":"info","message":"Allocating budget for high.com","timestamp":"2026-05-19T10:19:08.196Z","context":{"component":"discovery","trust":0.9,"budget":300,"adaptiveBudget":300,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould sort sources by trust score descending
+[22m[39m{"level":"info","message":"Allocating budget for mid.com","timestamp":"2026-05-19T10:19:08.198Z","context":{"component":"discovery","trust":0.6,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould sort sources by trust score descending
+[22m[39m{"level":"info","message":"Allocating budget for low.com","timestamp":"2026-05-19T10:19:08.198Z","context":{"component":"discovery","trust":0.4,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould skip sources with trust below 0.3
+[22m[39m{"level":"info","message":"Skipping source untrusted.com - trust below threshold","timestamp":"2026-05-19T10:19:08.202Z","context":{"component":"discovery","trust":0.2,"threshold":0.3}}
+{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:08.202Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for trusted.com","timestamp":"2026-05-19T10:19:08.202Z","context":{"component":"discovery","trust":0.5,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould respect per-source budget and high-trust bonus
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:08.207Z","context":{"component":"discovery","globalBudget":100,"sourceCount":2}}
+{"level":"info","message":"Allocating budget for high-trust.com","timestamp":"2026-05-19T10:19:08.207Z","context":{"component":"discovery","trust":0.8,"budget":15,"adaptiveBudget":15,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":100}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould respect per-source budget and high-trust bonus
+[22m[39m{"level":"info","message":"Allocating budget for mid-trust.com","timestamp":"2026-05-19T10:19:08.234Z","context":{"component":"discovery","trust":0.5,"budget":10,"adaptiveBudget":10,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":85}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould respect global budget
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:08.240Z","context":{"component":"discovery","globalBudget":15,"sourceCount":3}}
+{"level":"info","message":"Allocating budget for s1.com","timestamp":"2026-05-19T10:19:08.240Z","context":{"component":"discovery","trust":0.9,"budget":15,"adaptiveBudget":250,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":15}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould respect global budget
+[22m[39m{"level":"info","message":"Global discovery budget exhausted","timestamp":"2026-05-19T10:19:08.242Z","context":{"component":"discovery","dealsFound":15}}
+
+[90mstdout[2m | tests/unit/budget-allocation.test.ts[2m > [22m[2mBudget Allocation[2m > [22m[2mshould use default budget values when env vars are missing
+[22m[39m{"level":"info","message":"Starting discovery with budget constraints","timestamp":"2026-05-19T10:19:08.243Z","context":{"component":"discovery","globalBudget":1000,"sourceCount":1}}
+{"level":"info","message":"Allocating budget for default.com","timestamp":"2026-05-19T10:19:08.243Z","context":{"component":"discovery","trust":0.5,"budget":100,"adaptiveBudget":100,"validationSuccessRate":"N/A","discoveryCount":0,"remainingGlobal":1000}}
+
+ [32m✓[39m tests/unit/budget-allocation.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 108[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/routes-handlers.test.ts[2m > [22m[2mWebhook Route Handlers[2m > [22m[2mhandleSubscribe()[2m > [22m[2mshould create subscription with valid input
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdju8_b6ed1d8f","timestamp":"2026-05-19T10:19:08.337Z","context":{"component":"webhook","partner_id":"default","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/routes-handlers.test.ts[2m > [22m[2mWebhook Route Handlers[2m > [22m[2mhandleSubscribe()[2m > [22m[2mshould create subscription with valid input
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdju8_b6ed1d8f","timestamp":"2026-05-19T10:19:08.339Z","context":{"component":"webhook","partner_id":"default","url":"https://example.com/hook"}}
+
+ [32m✓[39m tests/unit/bulk/import.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/routes-handlers.test.ts[2m > [22m[2mWebhook Route Handlers[2m > [22m[2mhandleCreatePartner()[2m > [22m[2mshould create partner with valid input
+[22m[39m{"level":"info","message":"Webhook partner created: partner_mpchdjun_058d8123","timestamp":"2026-05-19T10:19:08.352Z","context":{"component":"webhook","partner_name":"New Partner"}}
+
+ [32m✓[39m tests/unit/webhook/routes-handlers.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 110[2mms[22m[39m
+[90mstdout[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould deactivate a referral via POST /api/referrals/:code/deactivate
+[22m[39m{"level":"info","message":"Referral deactivated: MYCODE","timestamp":"2026-05-19T10:19:08.902Z","context":{"component":"api","reason":"test"}}
+
+[90mstderr[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould deactivate a referral via POST /api/referrals/:code/deactivate
+[22m[39m[ERROR] [notify] [ntf-1779185948903] GitHub notification failed { event_type: [32m'trust_anomaly'[39m } Error: GITHUB_TOKEN not configured. Call setGitHubToken() first.
+    at getGitHubConfig [90m(/app/[39mworker/lib/github/core.ts:60:11[90m)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:197:32[90m)[39m
+    at sendGitHubNotification [90m(/app/[39mworker/notify.ts:244:10[90m)[39m
+    at notify [90m(/app/[39mworker/notify.ts:73:25[90m)[39m
+    at handleDeactivateReferral [90m(/app/[39mworker/routes/referrals.ts:265:5[90m)[39m
+    at [90m/app/[39mtests/integration/referrals.test.ts:126:22
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould reactivate a referral via POST /api/referrals/:code/reactivate
+[22m[39m{"level":"info","message":"Referral reactivated: INACTIVE","timestamp":"2026-05-19T10:19:08.926Z","context":{"component":"api"}}
+
+[90mstdout[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould handle Deactivate -> Reactivate round-trip
+[22m[39m{"level":"info","message":"Referral deactivated: ROUND_TRIP","timestamp":"2026-05-19T10:19:08.933Z","context":{"component":"api","reason":"Testing round-trip"}}
+
+[90mstderr[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould handle Deactivate -> Reactivate round-trip
+[22m[39m[ERROR] [notify] [ntf-1779185948933] GitHub notification failed { event_type: [32m'trust_anomaly'[39m } Error: GITHUB_TOKEN not configured. Call setGitHubToken() first.
+    at getGitHubConfig [90m(/app/[39mworker/lib/github/core.ts:60:11[90m)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:197:32[90m)[39m
+    at sendGitHubNotification [90m(/app/[39mworker/notify.ts:244:10[90m)[39m
+    at notify [90m(/app/[39mworker/notify.ts:73:25[90m)[39m
+    at handleDeactivateReferral [90m(/app/[39mworker/routes/referrals.ts:265:5[90m)[39m
+    at [90m/app/[39mtests/integration/referrals.test.ts:206:32
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstdout[2m | tests/integration/referrals.test.ts[2m > [22m[2mReferral Deactivation[2m > [22m[2mshould handle Deactivate -> Reactivate round-trip
+[22m[39m{"level":"info","message":"Referral reactivated: ROUND_TRIP","timestamp":"2026-05-19T10:19:08.939Z","context":{"component":"api"}}
+
+[90mstderr[2m | tests/unit/experience-api.test.ts[2m > [22m[2mExperience API Endpoints[2m > [22m[2mPOST /api/experience[2m > [22m[2mshould return 503 when D1 is not configured
+[22m[39mWarning: Could not verify isolation for DEALS_PROD: TypeError: kv.get is not a function
+    at [90m/app/[39mworker/lib/config-utils.ts:99:32
+    at Array.map (<anonymous>)
+    at [90m/app/[39mworker/lib/config-utils.ts:95:31
+    at validateKVIsolation [90m(/app/[39mworker/lib/config-utils.ts:118:3[90m)[39m
+    at Object.fetch [90m(/app/[39mworker/index.ts:76:13[90m)[39m
+    at [90m/app/[39mtests/unit/experience-api.test.ts:111:37
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+Warning: Could not verify isolation for DEALS_LOG: TypeError: kv.get is not a function
+    at [90m/app/[39mworker/lib/config-utils.ts:99:32
+    at Array.map (<anonymous>)
+    at [90m/app/[39mworker/lib/config-utils.ts:95:31
+    at validateKVIsolation [90m(/app/[39mworker/lib/config-utils.ts:118:3[90m)[39m
+    at Object.fetch [90m(/app/[39mworker/index.ts:76:13[90m)[39m
+    at [90m/app/[39mtests/unit/experience-api.test.ts:111:37
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+
+ [32m✓[39m tests/integration/referrals.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 107[2mms[22m[39m
+ [32m✓[39m tests/unit/experience-api.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 91[2mms[22m[39m
+ [32m✓[39m tests/integration/mcp-tools.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+ [32m✓[39m tests/smoke/endpoints.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+[90mstderr[2m | tests/unit/research-agent.test.ts[2m > [22m[2mResearch Agent - Real Fetching[2m > [22m[2mfetchFromSource[2m > [22m[2mshould respect payload size limits
+[22m[39m{"level":"error","message":"DNS resolution failed for example.com: response.json is not a function","timestamp":"2026-05-19T10:19:09.416Z","context":{"component":"security","hostname":"example.com"}}
+
+[90mstderr[2m | tests/unit/nlq/handlers-get-explain.test.ts[2m > [22m[2mNLQ Handlers - GET & Explain[2m > [22m[2mhandleNLQGet[2m > [22m[2mshould handle GET query execution errors
+[22m[39mFailed to write structured log: TypeError: this.env.DEALS_LOG.put is not a function
+    at StructuredLogger.log [90m(/app/[39mworker/lib/logger/structured.ts:55:32[90m)[39m
+    at StructuredLogger.error [90m(/app/[39mworker/lib/logger/structured.ts:107:10[90m)[39m
+    at Module.handleNLQGet [90m(/app/[39mworker/routes/nlq/handlers.ts:321:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at [90m/app/[39mtests/unit/nlq/handlers-get-explain.test.ts:227:24
+
+ [32m✓[39m tests/unit/nlq/handlers-get-explain.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m tests/unit/research-agent.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 77[2mms[22m[39m
+ [32m✓[39m tests/unit/storage.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+[90mstderr[2m | tests/unit/webhook/routes-dispatcher.test.ts[2m > [22m[2mWebhook Route Dispatcher[2m > [22m[2mhandleIncomingWebhookRequest()[2m > [22m[2mshould return 500 on internal error
+[22m[39m{"level":"error","message":"Internal Error","timestamp":"2026-05-19T10:19:09.882Z","context":{"component":"webhook","error_class":"SystemError","phase":"init","retryable":false,"handler":"handleIncomingWebhookRequest","partner_id":"p1"}}
+
+ [32m✓[39m tests/unit/webhook/routes-dispatcher.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 93[2mms[22m[39m
+[90mstdout[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould use simulated mode by default in test environment
+[22m[39m{"level":"info","message":"Research completed for test query","timestamp":"2026-05-19T10:19:09.967Z","context":{"component":"api","discovered_count":40,"stored_count":15}}
+
+[90mstderr[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould use real fetching when ENVIRONMENT is production
+[22m[39m{"level":"error","message":"DNS resolution failed for hn.algolia.com: Network error","timestamp":"2026-05-19T10:19:09.982Z","context":{"component":"security","hostname":"hn.algolia.com"}}
+{"level":"error","message":"DNS resolution failed for api.github.com: Network error","timestamp":"2026-05-19T10:19:09.983Z","context":{"component":"security","hostname":"api.github.com"}}
+{"level":"error","message":"DNS resolution failed for www.reddit.com: Network error","timestamp":"2026-05-19T10:19:09.983Z","context":{"component":"security","hostname":"www.reddit.com"}}
+
+[90mstdout[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould use real fetching when ENVIRONMENT is production
+[22m[39m{"level":"info","message":"Research completed for test query","timestamp":"2026-05-19T10:19:09.983Z","context":{"component":"api","discovered_count":0,"stored_count":0}}
+
+[90mstderr[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould use real fetching when RESEARCH_USE_REAL_FETCHING is true
+[22m[39m{"level":"error","message":"DNS resolution failed for hn.algolia.com: Network error","timestamp":"2026-05-19T10:19:09.986Z","context":{"component":"security","hostname":"hn.algolia.com"}}
+{"level":"error","message":"DNS resolution failed for api.github.com: Network error","timestamp":"2026-05-19T10:19:09.986Z","context":{"component":"security","hostname":"api.github.com"}}
+{"level":"error","message":"DNS resolution failed for www.reddit.com: Network error","timestamp":"2026-05-19T10:19:09.986Z","context":{"component":"security","hostname":"www.reddit.com"}}
+
+[90mstdout[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould use real fetching when RESEARCH_USE_REAL_FETCHING is true
+[22m[39m{"level":"info","message":"Research completed for test query","timestamp":"2026-05-19T10:19:09.987Z","context":{"component":"api","discovered_count":0,"stored_count":0}}
+
+[90mstderr[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould respect explicit use_real_fetching option in request body
+[22m[39m{"level":"error","message":"DNS resolution failed for hn.algolia.com: Network error","timestamp":"2026-05-19T10:19:09.990Z","context":{"component":"security","hostname":"hn.algolia.com"}}
+{"level":"error","message":"DNS resolution failed for api.github.com: Network error","timestamp":"2026-05-19T10:19:09.990Z","context":{"component":"security","hostname":"api.github.com"}}
+{"level":"error","message":"DNS resolution failed for www.reddit.com: Network error","timestamp":"2026-05-19T10:19:09.990Z","context":{"component":"security","hostname":"www.reddit.com"}}
+
+[90mstdout[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould respect explicit use_real_fetching option in request body
+[22m[39m{"level":"info","message":"Research completed for test query","timestamp":"2026-05-19T10:19:09.990Z","context":{"component":"api","discovered_count":0,"stored_count":0}}
+
+[90mstdout[2m | tests/integration/research-api.test.ts[2m > [22m[2mResearch API Integration[2m > [22m[2mshould handle rate limiting for real requests
+[22m[39m{"level":"info","message":"Research completed for test query","timestamp":"2026-05-19T10:19:09.993Z","context":{"component":"api","discovered_count":0,"stored_count":0}}
+
+ [32m✓[39m tests/integration/research-api.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+ [32m✓[39m tests/unit/stage.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m tests/unit/webhook-security-fix.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/unit/cache.test.ts [2m([22m[2m52 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 63[2mms[22m[39m
+ [32m✓[39m tests/unit/feature-flags/crud.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+[90mstderr[2m | tests/unit/worker-init.test.ts[2m > [22m[2mWorker Initialization[2m > [22m[2mfetch handler[2m > [22m[2mshould return 500 when TRUST_THRESHOLD is invalid
+[22m[39mConfiguration error: Error: TRUST_THRESHOLD must be a number between 0 and 1
+    at validateConfig [90m(/app/[39mworker/lib/config-utils.ts:44:11[90m)[39m
+    at Object.fetch [90m(/app/[39mworker/index.ts:75:7[90m)[39m
+    at [90m/app/[39mtests/unit/worker-init.test.ts:36:37
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+[90mstderr[2m | tests/unit/worker-init.test.ts[2m > [22m[2mWorker Initialization[2m > [22m[2mfetch handler[2m > [22m[2mshould return 500 when TRUST_THRESHOLD is out of range
+[22m[39mConfiguration error: Error: TRUST_THRESHOLD must be a number between 0 and 1
+    at validateConfig [90m(/app/[39mworker/lib/config-utils.ts:44:11[90m)[39m
+    at Object.fetch [90m(/app/[39mworker/index.ts:75:7[90m)[39m
+    at [90m/app/[39mtests/unit/worker-init.test.ts:48:37
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+[90mstderr[2m | tests/unit/worker-init.test.ts[2m > [22m[2mWorker Initialization[2m > [22m[2mscheduled handler[2m > [22m[2mshould send critical notification when TRUST_THRESHOLD is invalid
+[22m[39mScheduled execution configuration error: Error: TRUST_THRESHOLD must be a number between 0 and 1
+    at validateConfig [90m(/app/[39mworker/lib/config-utils.ts:44:11[90m)[39m
+    at Object.scheduled [90m(/app/[39mworker/index.ts:301:7[90m)[39m
+    at [90m/app/[39mtests/unit/worker-init.test.ts:65:20
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+
+ [32m✓[39m tests/unit/worker-init.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+ [32m✓[39m tests/unit/security-gatekeeper.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m tests/unit/rate-limit-kv/middleware.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/index.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+ [32m✓[39m tests/unit/feature-flags/middleware.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+[90mstderr[2m | tests/unit/rate-limit.test.ts[2m > [22m[2mRate Limiting[2m > [22m[2mcheckRateLimit[2m > [22m[2mshould fail open if KV throws error
+[22m[39mRate limit check failed: Error: KV error
+    at [90m/app/[39mtests/unit/rate-limit.test.ts:110:40
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+ [32m✓[39m tests/unit/rate-limit.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould deduplicate notifications within cooldown
+[22m[39m[ERROR] [github] [gh-1779185951510] Failed to create notification issue { repo: [32m'test/repo'[39m, type: [32m'system_error'[39m, run_id: [32m'test-run'[39m } TypeError: Cannot read properties of undefined (reading 'ok')
+    at execute [90m(/app/[39mworker/lib/github/core.ts:211:19[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould deduplicate notifications within cooldown
+[22m[39m[ERROR] [notify] [ntf-1779185951508] GitHub notification failed { event_type: [32m'system_error'[39m } TypeError: Cannot read properties of undefined (reading 'ok')
+    at execute [90m(/app/[39mworker/lib/github/core.ts:211:19[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould handle Telegram API failure
+[22m[39m[ERROR] [notify] [ntf-1779185951525] Telegram notification failed { event_type: [32m'system_error'[39m } Error: Telegram API error: 400
+    at execute [90m(/app/[39mworker/notify.ts:206:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at CircuitBreaker.execute [90m(/app/[39mworker/lib/circuit-breaker.ts:220:22[90m)[39m
+    at sendTelegramNotification [90m(/app/[39mworker/notify.ts:214:12[90m)[39m
+    at notify [90m(/app/[39mworker/notify.ts:55:23[90m)[39m
+    at [90m/app/[39mtests/unit/notify.test.ts:112:22
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould handle Telegram API failure
+[22m[39m[ERROR] [github] [gh-1779185951531] Failed to create notification issue { repo: [32m'test/repo'[39m, type: [32m'system_error'[39m, run_id: [32m'test-run'[39m } Error: Failed to create issue: 400
+    at execute [90m(/app/[39mworker/lib/github/core.ts:212:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould handle Telegram API failure
+[22m[39m[ERROR] [notify] [ntf-1779185951525] GitHub notification failed { event_type: [32m'system_error'[39m } Error: Failed to create issue: 400
+    at execute [90m(/app/[39mworker/lib/github/core.ts:212:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+
+[90mstdout[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould fallback to GitHub when Telegram not configured
+[22m[39m[INFO] [notify] [ntf-1779185951532] Created GitHub issue #123 for checks_failed { event_type: [32m'checks_failed'[39m, issue_number: [33m123[39m }
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould handle notification failure
+[22m[39m[ERROR] [github] [gh-1779185951534] Failed to create notification issue { repo: [32m'test/repo'[39m, type: [32m'system_error'[39m, run_id: [32m'test-run'[39m } Error: Network error
+    at [90m/app/[39mtests/unit/notify.test.ts:141:35
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotify[2m > [22m[2mshould handle notification failure
+[22m[39m[ERROR] [notify] [ntf-1779185951534] GitHub notification failed { event_type: [32m'system_error'[39m } Error: Network error
+    at [90m/app/[39mtests/unit/notify.test.ts:141:35
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+[90mstdout[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotifyHighValueDeals[2m > [22m[2mshould send notification for high-value deals
+[22m[39m[INFO] [notify] [ntf-1779185951539] Notification deduped: high_value_deal { event_type: [32m'high_value_deal'[39m }
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotifyHighValueDeals[2m > [22m[2mshould handle notification failures gracefully
+[22m[39m[ERROR] [github] [gh-1779185951541] Failed to create notification issue { repo: [32m'test/repo'[39m, type: [32m'high_value_deal'[39m, run_id: [32m'test-run'[39m } Error: Network error
+    at [90m/app/[39mtests/unit/notify.test.ts:311:35
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+[90mstderr[2m | tests/unit/notify.test.ts[2m > [22m[2mNotification System[2m > [22m[2mnotifyHighValueDeals[2m > [22m[2mshould handle notification failures gracefully
+[22m[39m[ERROR] [notify] [ntf-1779185951540] GitHub notification failed { event_type: [32m'high_value_deal'[39m } Error: Network error
+    at [90m/app/[39mtests/unit/notify.test.ts:311:35
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+ [32m✓[39m tests/unit/notify.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mPartner Validation[2m > [22m[2mshould return 401 when partner not found
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.570Z","context":{"component":"webhook","partner_id":"nonexistent","request_id":"mpchdmbz_78d3140f"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mPartner Validation[2m > [22m[2mshould return 403 when partner is inactive
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.574Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmc6_870288bf"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mRate Limiting[2m > [22m[2mshould allow request within rate limit
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.575Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmc7_f8e322fb"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mRate Limiting[2m > [22m[2mshould allow request within rate limit
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: test","timestamp":"2026-05-19T10:19:11.576Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mRate Limiting[2m > [22m[2mshould return 429 when rate limit exceeded
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.578Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmca_350c15fa"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mRate Limiting[2m > [22m[2mshould reset rate limit in new window
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.579Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmcb_13d661dd"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mRate Limiting[2m > [22m[2mshould reset rate limit in new window
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: test","timestamp":"2026-05-19T10:19:11.579Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould return cached result for duplicate event
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.591Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmcn_5451ac4b"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould process new event when idempotency key not found
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.598Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmcu_a0ba434e"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould process new event when idempotency key not found
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: test","timestamp":"2026-05-19T10:19:11.600Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould throw on idempotency key conflict
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.602Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmcy_8d751cf1"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould throw on idempotency key conflict
+[22m[39m{"level":"error","message":"Idempotency key conflict: different payload","timestamp":"2026-05-19T10:19:11.603Z","context":{"component":"webhook","error_class":"SystemError","phase":"init","retryable":false,"handler":"handleIncomingWebhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould ignore expired idempotency record
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.605Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmd1_520f96ad"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mIdempotency[2m > [22m[2mshould ignore expired idempotency record
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: test","timestamp":"2026-05-19T10:19:11.606Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mSignature Verification[2m > [22m[2mshould return 401 for invalid signature
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.607Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmd3_e15761ff"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mSignature Verification[2m > [22m[2mshould return 401 for invalid signature
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: Invalid signature","timestamp":"2026-05-19T10:19:11.607Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mSignature Verification[2m > [22m[2mshould return 401 for expired timestamp
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.608Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmd4_5e3c7f2b"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mSignature Verification[2m > [22m[2mshould return 401 for expired timestamp
+[22m[39m{"level":"warn","message":"Invalid webhook signature from partner_test: Webhook timestamp too old","timestamp":"2026-05-19T10:19:11.608Z","context":{"component":"webhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mPayload Validation[2m > [22m[2mshould return 400 for invalid JSON
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.609Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmd5_d95fc36a"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-auth.test.ts[2m > [22m[2mWebhook Incoming - Auth & Validation[2m > [22m[2mPayload Validation[2m > [22m[2mshould return 400 for disallowed event type
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:11.610Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdmd6_35634c7b"}}
+
+ [32m✓[39m tests/unit/webhook/incoming-auth.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32m✓[39m tests/unit/routes-utils-security.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+ [32m✓[39m tests/unit/publish.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+[90mstderr[2m | tests/unit/rate-limit-kv/core.test.ts[2m > [22m[2mRate Limit KV Core[2m > [22m[2mcheckRateLimitKV[2m > [22m[2mshould fail open on KV error
+[22m[39mRate limit KV check failed: Error: KV Error
+    at [90m/app/[39mtests/unit/rate-limit-kv/core.test.ts:141:42
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+[90mstderr[2m | tests/unit/rate-limit-kv/core.test.ts[2m > [22m[2mRate Limit KV Core[2m > [22m[2mgetAllRateLimitStates[2m > [22m[2mshould handle KV errors gracefully
+[22m[39mFailed to list rate limit states: Error: KV Error
+    at [90m/app/[39mtests/unit/rate-limit-kv/core.test.ts:272:43
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2955:64
+
+ [32m✓[39m tests/unit/funnel-metrics.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32m✓[39m tests/unit/rate-limit-kv/core.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m tests/unit/security-auth.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mcreateSubscription()[2m > [22m[2mshould create subscription with defaults
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmxp_f8eb0c61","timestamp":"2026-05-19T10:19:12.349Z","context":{"component":"webhook","partner_id":"partner_mpchdmxp_b62e5a10","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mcreateSubscription()[2m > [22m[2mshould merge custom retry policy with defaults
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmxs_86f2c908","timestamp":"2026-05-19T10:19:12.352Z","context":{"component":"webhook","partner_id":"partner_mpchdmxs_8308242d","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mcreateSubscription()[2m > [22m[2mshould store filters
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmxt_945ee85b","timestamp":"2026-05-19T10:19:12.353Z","context":{"component":"webhook","partner_id":"partner_mpchdmxt_3a4be1ee","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mcreateSubscription()[2m > [22m[2mshould store metadata
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmxu_0e915f9c","timestamp":"2026-05-19T10:19:12.354Z","context":{"component":"webhook","partner_id":"partner_mpchdmxu_b25e2973","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mgetSubscription()[2m > [22m[2mshould retrieve subscription by ID
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmxw_562fce2a","timestamp":"2026-05-19T10:19:12.356Z","context":{"component":"webhook","partner_id":"partner_mpchdmxw_9dfa7a1e","events":["referral.created"]}}
+
+[90mstderr[2m | tests/unit/logger.test.ts[2m > [22m[2mLogger[2m > [22m[2mappendLog[2m > [22m[2mshould validate log entry before storing
+[22m[39mInvalid log entry: ZodError: [
+  {
+    "received": "invalid_phase",
+    "code": "invalid_enum_value",
+    "options": [
+      "init",
+      "discover",
+      "normalize",
+      "dedupe",
+      "validate",
+      "score",
+      "stage",
+      "publish",
+      "verify",
+      "finalize",
+      "revert",
+      "quarantine"
+    ],
+    "path": [
+      "phase"
+    ],
+    "message": "Invalid enum value. Expected 'init' | 'discover' | 'normalize' | 'dedupe' | 'validate' | 'score' | 'stage' | 'publish' | 'verify' | 'finalize' | 'revert' | 'quarantine', received 'invalid_phase'"
+  }
+]
+    at Object.get error [as error] [90m(file:///app/[39mnode_modules/[4mzod[24m/v3/types.js:39:31[90m)[39m
+    at appendLog [90m(/app/[39mworker/lib/logger/legacy.ts:16:48[90m)[39m
+    at [90m/app/[39mtests/unit/logger.test.ts:73:20
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>) {
+  issues: [
+    {
+      received: [32m'invalid_phase'[39m,
+      code: [32m'invalid_enum_value'[39m,
+      options: [36m[Array][39m,
+      path: [36m[Array][39m,
+      message: [32m"Invalid enum value. Expected 'init' | 'discover' | 'normalize' | 'dedupe' | 'validate' | 'score' | 'stage' | 'publish' | 'verify' | 'finalize' | 'revert' | 'quarantine', received 'invalid_phase'"[39m
+    }
+  ],
+  addIssue: [36m[Function (anonymous)][39m,
+  addIssues: [36m[Function (anonymous)][39m
+}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mgetPartnerSubscriptions()[2m > [22m[2mshould return all subscriptions for a partner
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmy1_677198b5","timestamp":"2026-05-19T10:19:12.361Z","context":{"component":"webhook","partner_id":"partner_mpchdmxy_e36719b6","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-partner.test.ts[2m > [22m[2mWebhook Subscriptions - Partner & Subscription[2m > [22m[2mSubscription Management[2m > [22m[2mgetPartnerSubscriptions()[2m > [22m[2mshould return all subscriptions for a partner
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdmy1_d435e896","timestamp":"2026-05-19T10:19:12.361Z","context":{"component":"webhook","partner_id":"partner_mpchdmxy_e36719b6","events":["referral.updated"]}}
+
+[90mstderr[2m | tests/unit/logger.test.ts[2m > [22m[2mLogger[2m > [22m[2mappendLog[2m > [22m[2mshould handle errors gracefully
+[22m[39mFailed to append log: Error: KV error
+    at Object.<anonymous> [90m(/app/[39mtests/unit/logger.test.ts:112:15[90m)[39m
+    at Object.Mock [as put] [90m(file:///app/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:332:34[90m)[39m
+    at appendLog [90m(/app/[39mworker/lib/logger/legacy.ts:33:25[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+ [32m✓[39m tests/unit/webhook/subscriptions-partner.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m tests/unit/logger.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+[90mstderr[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub Integration[2m > [22m[2mgetFileContent[2m > [22m[2mshould throw on API errors
+[22m[39m[ERROR] [github] [gh-1779185952567] Failed to get file content { repo: [32m'owner/repo'[39m, path: [32m'file.txt'[39m, branch: [32m'main'[39m } Error: GitHub API error: 500 Internal Server Error
+    at execute [90m(/app/[39mworker/lib/github/core.ts:93:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at getFileContent [90m(/app/[39mworker/lib/github/core.ts:103:51[90m)[39m
+
+[90mstderr[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub Integration[2m > [22m[2mcreateGitHubIssue[2m > [22m[2mshould throw on API error
+[22m[39m[ERROR] [github] [gh-1779185952586] Failed to create notification issue { repo: [32m'owner/repo'[39m, type: [32m'error'[39m, run_id: [32m'run-000'[39m } Error: Failed to create issue: 403
+    at execute [90m(/app/[39mworker/lib/github/core.ts:212:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at createGitHubIssue [90m(/app/[39mworker/lib/github/core.ts:217:45[90m)[39m
+
+[90mstderr[2m | tests/unit/github.test.ts[2m > [22m[2mGitHub Integration[2m > [22m[2mgetRecentCommits[2m > [22m[2mshould handle errors gracefully
+[22m[39m[ERROR] [github] [gh-1779185952590] Failed to get recent commits { repo: [32m'owner/repo'[39m, path: [32m'file.txt'[39m, count: [33m10[39m } Error: Failed to get commits: 500
+    at execute [90m(/app/[39mworker/lib/github/core.ts:246:13[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at getRecentCommits [90m(/app/[39mworker/lib/github/core.ts:263:51[90m)[39m
+    at [90m/app/[39mtests/unit/github.test.ts:358:23
+
+ [32m✓[39m tests/unit/github.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/subscriptions-mutations.test.ts[2m > [22m[2mWebhook Subscriptions - Mutations & Sync[2m > [22m[2mupdateSubscription()[2m > [22m[2mshould update subscription fields
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdn5p_ebfa17af","timestamp":"2026-05-19T10:19:12.637Z","context":{"component":"webhook","partner_id":"partner_mpchdn5k_120455f8","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-mutations.test.ts[2m > [22m[2mWebhook Subscriptions - Mutations & Sync[2m > [22m[2mupdateSubscription()[2m > [22m[2mshould update events list
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdn5y_6fe74c91","timestamp":"2026-05-19T10:19:12.646Z","context":{"component":"webhook","partner_id":"partner_mpchdn5y_2478fa39","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-mutations.test.ts[2m > [22m[2mWebhook Subscriptions - Mutations & Sync[2m > [22m[2mdeleteSubscription()[2m > [22m[2mshould delete subscription and remove from partner list
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdn61_25fa60a1","timestamp":"2026-05-19T10:19:12.649Z","context":{"component":"webhook","partner_id":"partner_mpchdn60_f15fdf13","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-mutations.test.ts[2m > [22m[2mWebhook Subscriptions - Mutations & Sync[2m > [22m[2mdeleteSubscription()[2m > [22m[2mshould not affect other subscriptions of same partner
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdn63_a19d8c62","timestamp":"2026-05-19T10:19:12.652Z","context":{"component":"webhook","partner_id":"partner_mpchdn63_b721e87a","events":["referral.created"]}}
+
+[90mstdout[2m | tests/unit/webhook/subscriptions-mutations.test.ts[2m > [22m[2mWebhook Subscriptions - Mutations & Sync[2m > [22m[2mdeleteSubscription()[2m > [22m[2mshould not affect other subscriptions of same partner
+[22m[39m{"level":"info","message":"Webhook subscription created: sub_mpchdn64_2a3552d9","timestamp":"2026-05-19T10:19:12.652Z","context":{"component":"webhook","partner_id":"partner_mpchdn63_b721e87a","events":["referral.updated"]}}
+
+ [32m✓[39m tests/unit/webhook/subscriptions-mutations.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m tests/unit/analytics/dashboard.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m tests/unit/validation.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32m✓[39m tests/unit/validate.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/unit/mcp-resources.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/unit/mcp-utils.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/unit/email/patterns-generic-services.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/unit/feature-flags/rollouts.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/service.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/unit/email/extraction-fields-types.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/utils.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m tests/unit/kv-isolation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/unit/email/security-spam-utils.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould handle ping event
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.946Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo5z_af8cc40c"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould return 400 for missing required fields in referral.created
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.950Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo66_766b7606"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould return 400 for invalid URL
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.952Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo68_e18606bd"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould return 400 for missing code in deactivation
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.953Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo69_1399409f"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould return 400 for missing code in expiration
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.954Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo6a_2171c3c7"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mEvent Processing[2m > [22m[2mshould return 400 for unknown event type
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.955Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo6b_65b6c315"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mError Handling[2m > [22m[2mshould return 500 on unexpected errors
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.956Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo6c_8dda46c2"}}
+
+[90mstderr[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mError Handling[2m > [22m[2mshould return 500 on unexpected errors
+[22m[39m{"level":"error","message":"Crypto unavailable","timestamp":"2026-05-19T10:19:13.957Z","context":{"component":"webhook","error_class":"SystemError","phase":"init","retryable":false,"handler":"handleIncomingWebhook","partner_id":"partner_test"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mNo KV Available[2m > [22m[2mshould allow rate limit check to pass when KV unavailable
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.958Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo6e_169c8773"}}
+
+[90mstdout[2m | tests/unit/webhook/incoming-events.test.ts[2m > [22m[2mWebhook Incoming - Event Processing[2m > [22m[2mNo KV Available[2m > [22m[2mshould allow idempotency check to pass when KV unavailable
+[22m[39m{"level":"info","message":"Incoming webhook received: wh_test123","timestamp":"2026-05-19T10:19:13.960Z","context":{"component":"webhook","partner_id":"partner_test","request_id":"mpchdo6g_a5ae4e73"}}
+
+ [32m✓[39m tests/unit/webhook/incoming-events.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m tests/unit/categorization/definitions.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m tests/unit/guard-rails.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/integration/validation-fast-path.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/unit/email/security-validation.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/unit/security.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/unit/validation_gates_metrics.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/unit/funnel-instrumentation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/unit/crypto.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/unit/email/extraction-urls-service.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/unit/webhook/types.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/unit/email/patterns-commands.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/unit/analytics/calculators-value-expiry-quality.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/unit/email/templates-commands.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/unit/categorization/batch-stats.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/unit/categorization/auto-categorize.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/unit/webhook-delivery-parallel.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/unit/analytics/calculators-categories-sources.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/unit/normalize.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/unit/email/templates-responses.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/lexer.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/parser.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/intent.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/categorization/tag-scores.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/config-validation-enhanced.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/analytics/calculators-deals-over-time.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/schema-validation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/global-logger.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/categorization/category-scores.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/config-threshold.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/second-pass-validation.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/ranking.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/metrics_latency.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/validation-cache.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/dedupe.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/orchestration.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq-utils.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/unit/score.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/unit/referral-routing.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/threshold-config.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/snapshot-hash-verification.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/normalization-verification.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/explainability.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/freshness.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/duplicate-check.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/price-sanity.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/unit/nlq/ai/intent.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/trust-score.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/unit/gates/idempotency-check.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m110 passed[39m[22m[90m (110)[39m
+[2m      Tests [22m [1m[32m1718 passed[39m[22m[2m | [22m[33m6 skipped[39m[90m (1724)[39m
+[2m   Start at [22m 10:19:01
+[2m   Duration [22m 18.63s[2m (transform 3.20s, setup 0ms, import 9.99s, tests 16.48s, environment 17ms)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   57.77 |    50.59 |   59.58 |   58.24 |
+ worker            |   78.67 |    63.15 |   90.47 |   79.49 |
+  config.ts        |     100 |      100 |     100 |     100 |
+  notify.ts        |   84.61 |       72 |     100 |   84.61 | ...68-270,278-286
+  publish.ts       |   96.77 |    92.85 |     100 |   96.77 | 127
+  state-machine.ts |   65.95 |    52.87 |   66.66 |   66.91 | ...33,441,451-469
+  types.ts         |     100 |      100 |     100 |     100 |
+  version.ts       |     100 |      100 |     100 |     100 |
+ worker/email      |   95.89 |    90.23 |     100 |   97.08 |
+  extraction.ts    |   96.36 |    86.36 |     100 |   98.64 | 34,341
+  handler.ts       |       0 |        0 |       0 |       0 |
+  index.ts         |       0 |        0 |       0 |       0 |
+  patterns.ts      |       0 |        0 |       0 |       0 |
+  security.ts      |   99.18 |    96.07 |     100 |   99.17 | 338
+  templates.ts     |       0 |        0 |       0 |       0 |
+  types.ts         |       0 |      100 |     100 |       0 | 7-54
+ ...email/handlers |       0 |        0 |       0 |       0 |
+  commands.ts      |       0 |        0 |       0 |       0 | 29-311
+  forwarded.ts     |       0 |        0 |       0 |       0 | 24-173
+  help.ts          |       0 |        0 |       0 |       0 |
+  incoming.ts      |       0 |        0 |       0 |       0 | 18-109
+  index.ts         |       0 |        0 |       0 |       0 |
+  parse.ts         |       0 |        0 |       0 |       0 |
+  utils.ts         |       0 |      100 |       0 |       0 | 15-22
+ ...email/patterns |     100 |    92.75 |     100 |     100 |
+  command.ts       |     100 |    92.75 |     100 |     100 | 10,54,84,116,138
+  index.ts         |     100 |      100 |     100 |     100 |
+  referral.ts      |     100 |      100 |     100 |     100 |
+ ...mail/templates |     100 |    95.34 |     100 |     100 |
+  commands.ts      |     100 |      100 |     100 |     100 |
+  index.ts         |     100 |    84.61 |     100 |     100 | 23-27
+  responses.ts     |     100 |      100 |     100 |     100 |
+  types.ts         |       0 |        0 |       0 |       0 |
+ worker/lib        |   71.98 |    60.65 |   71.97 |   72.57 |
+  auth.ts          |     100 |    97.67 |     100 |     100 | 210
+  cache.ts         |   98.86 |     87.5 |   95.65 |     100 | 197-220
+  ...it-breaker.ts |   97.22 |       90 |     100 |   97.22 | 162,209-210
+  config-utils.ts  |   97.67 |    93.54 |     100 |    97.5 | 11
+  crypto.ts        |   96.29 |    65.51 |     100 |   97.95 | 130
+  error-handler.ts |   46.15 |       50 |      50 |   46.15 | 32,83-101
+  ...act-logger.ts |       0 |        0 |       0 |       0 | 82-461
+  ...on-manager.ts |    1.08 |        0 |       0 |    1.13 | 24-280
+  ...ainability.ts |   80.76 |    59.09 |     100 |   80.76 | 48-52,70-73
+  feature-flags.ts |   97.64 |     97.5 |     100 |   97.59 | 242,287
+  global-logger.ts |     100 |      100 |     100 |     100 |
+  guard-rails.ts   |   62.99 |    53.84 |   71.42 |   63.93 | ...56,372,374,396
+  hmac.ts          |   80.35 |    90.47 |   69.23 |      80 | 70,147,193-215
+  lock.ts          |     100 |      100 |     100 |     100 |
+  logger.ts        |       0 |        0 |       0 |       0 |
+  ranking.ts       |   43.39 |    24.59 |   37.93 |      45 | ...33-235,271-331
+  rate-limit-kv.ts |   98.66 |    92.85 |     100 |   98.66 | 252
+  rate-limit.ts    |   97.67 |     87.5 |     100 |   97.67 | 234
+  security.ts      |   92.98 |       80 |     100 |   98.07 | 147
+  storage.ts       |      90 |    79.41 |     100 |   94.11 | 40-41,61,131
+  utils.ts         |     100 |      100 |     100 |     100 |
+  webhook-sdk.ts   |       0 |        0 |       0 |       0 | 106-476
+ .../lib/analytics |   88.88 |    84.53 |   79.16 |   90.97 |
+  calculators.ts   |     100 |    95.38 |     100 |     100 | 21,109,179
+  dashboard.ts     |     100 |      100 |     100 |     100 |
+  index.ts         |   55.55 |       50 |   16.66 |    62.5 | ...-79,89,104-106
+  types.ts         |       0 |        0 |       0 |       0 |
+ ...categorization |   98.57 |    97.05 |     100 |   98.55 |
+  definitions.ts   |     100 |      100 |     100 |     100 |
+  index.ts         |   97.43 |    94.44 |     100 |   97.36 | 29
+  scoring.ts       |     100 |      100 |     100 |     100 |
+ worker/lib/d1     |   50.43 |     60.1 |   48.19 |   51.81 |
+  client.ts        |    40.8 |       50 |   45.71 |   42.98 | ...96-411,450,507
+  experience.ts    |   96.29 |    82.92 |     100 |     100 | ...33-150,152-158
+  index.ts         |       0 |      100 |     100 |       0 | 62
+  migrations.ts    |    1.72 |        0 |       0 |    1.78 | 419-641
+  queries.ts       |   71.32 |    66.66 |   77.77 |   71.42 | 410-453,833-973
+ ...lib/expiration |   36.07 |    31.29 |      40 |   35.66 |
+  finding.ts       |   58.06 |    56.25 |   66.66 |   56.66 | 45,83-111
+  index.ts         |   72.34 |    79.16 |      75 |   72.34 | 85-126,154
+  mark-expired.ts  |   42.85 |       60 |      40 |   42.85 | ...31,36-38,54-81
+  notifications.ts |   28.16 |    15.78 |   42.85 |   26.86 | 19,31-34,93-233
+  scheduling.ts    |   65.38 |       25 |      50 |      64 | 47-57,76-85,113
+  validation.ts    |       0 |        0 |       0 |       0 | 26-248
+ worker/lib/github |   63.22 |    49.07 |      50 |   64.33 |
+  core.ts          |   93.33 |     79.1 |     100 |   94.84 | ...40-141,154-159
+  index.ts         |       0 |        0 |       0 |       0 |
+  types.ts         |       0 |        0 |       0 |       0 |
+  workflows.ts     |       0 |        0 |       0 |       0 | 31-144
+ worker/lib/logger |   71.67 |    61.29 |   61.22 |   71.25 |
+  export.ts        |      50 |      100 |      50 |      50 | 10-11
+  index.ts         |       0 |        0 |       0 |       0 |
+  legacy.ts        |   98.38 |       75 |     100 |    98.3 | 90
+  query.ts         |    37.7 |       50 |   29.41 |   36.66 | 34-95,133-154
+  structured.ts    |    82.5 |    58.33 |   58.33 |    82.5 | ...,92,98,108-113
+  types.ts         |     100 |      100 |     100 |     100 |
+ worker/lib/mcp    |   99.01 |     90.9 |   94.73 |   98.98 |
+  resources.ts     |   98.59 |    87.17 |     100 |   98.52 | 337
+  types.ts         |     100 |      100 |     100 |     100 |
+  utils.ts         |     100 |      100 |   85.71 |     100 |
+ ...b/mcp/handlers |   37.79 |    35.37 |   41.17 |   37.34 |
+  categories.ts    |     100 |      100 |     100 |     100 |
+  discovery.ts     |    1.88 |        0 |       0 |       2 | 28-186
+  experience.ts    |    5.55 |        0 |       0 |    5.55 | 33-79
+  logging.ts       |   16.66 |        0 |       0 |   16.66 | 25-34
+  nlq.ts           |   22.72 |     7.14 |   33.33 |   22.72 | 63-129
+  pipeline.ts      |       0 |        0 |       0 |       0 | 14-59
+  referrals.ts     |     100 |    57.14 |     100 |     100 | 64-73
+  report.ts        |   11.11 |        0 |       0 |   11.11 | 25-63
+  research.ts      |     100 |       50 |     100 |     100 | 37-42
+  search.ts        |     100 |    65.62 |     100 |     100 | 84,92-109
+  stats.ts         |      80 |       50 |     100 |      80 | 35
+  validation.ts    |   93.75 |    71.42 |     100 |   93.33 | 76
+ .../lib/mcp/tools |   77.77 |       75 |   61.11 |   77.77 |
+  deals.ts         |     100 |      100 |     100 |     100 |
+  index.ts         |    92.3 |       75 |     100 |    92.3 | 84
+  research.ts      |     100 |      100 |     100 |     100 |
+  system.ts        |    37.5 |      100 |   16.66 |    37.5 | 172-177
+  user.ts          |      60 |      100 |   33.33 |      60 | 168-170
+ ...er/lib/metrics |   89.63 |    70.75 |   89.28 |   89.83 |
+  core.ts          |   79.59 |    54.28 |   76.92 |   80.85 | ...19-128,163,183
+  index.ts         |       0 |        0 |       0 |       0 |
+  stats.ts         |   93.05 |    78.87 |   93.02 |   92.85 | 460-478
+ worker/lib/nlq    |   66.81 |    46.97 |   65.62 |   68.59 |
+  ai-enhancer.ts   |       0 |        0 |       0 |       0 |
+  entities.ts      |   55.26 |    28.73 |   57.14 |   57.14 | ...35,346,370-372
+  ...classifier.ts |       0 |        0 |       0 |       0 |
+  index.ts         |       0 |        0 |       0 |       0 |
+  intent.ts        |   66.66 |    57.89 |   54.54 |   68.85 | 135-188,262
+  lexer.ts         |   96.15 |    94.44 |     100 |      96 | 70
+  parser.ts        |     100 |      100 |     100 |     100 |
+  types.ts         |     100 |      100 |     100 |     100 |
+ worker/lib/nlq/ai |   21.14 |    13.88 |   15.38 |   22.02 |
+  entities.ts      |    9.61 |        0 |       0 |      10 | 63-227
+  expansion.ts     |    8.33 |        0 |       0 |    8.33 | 31-97
+  index.ts         |   29.06 |    18.18 |      20 |   30.86 | ...31,243,253-315
+  intent.ts        |   38.46 |       50 |      50 |   38.46 | 27-60
+  types.ts         |       0 |        0 |       0 |       0 |
+ ...lib/nlq/hybrid |    8.75 |     5.74 |       5 |    9.33 |
+  ai-decision.ts   |       0 |        0 |       0 |       0 | 18-67
+  index.ts         |       0 |        0 |       0 |       0 | 44-231
+  ...classifier.ts |   16.47 |     12.5 |   11.11 |   16.86 | ...98-299,320-334
+ .../query-builder |       0 |        0 |       0 |       0 |
+  executor.ts      |       0 |        0 |       0 |       0 | 33-166
+  explanation.ts   |       0 |        0 |       0 |       0 | 30-60
+  index.ts         |       0 |        0 |       0 |       0 | 53-219
+  sql.ts           |       0 |        0 |       0 |       0 | 19-114
+ ...ferral-storage |   38.77 |    31.91 |    37.2 |   37.55 |
+  crud.ts          |   66.07 |    35.41 |   83.33 |   66.66 | 75-111,134,168
+  dual-write.ts    |       0 |        0 |       0 |       0 | 40-651
+  index.ts         |       0 |        0 |       0 |       0 |
+  search.ts        |   49.23 |    63.41 |   41.17 |   48.21 | ...18-138,200-234
+  types.ts         |     100 |    80.76 |     100 |     100 | 36,46-47,80
+ ...research-agent |   61.29 |    47.63 |   60.86 |   61.65 |
+  fetcher.ts       |      50 |    35.05 |      60 |   50.41 | ...59,809,823,994
+  index.ts         |       0 |        0 |       0 |       0 |
+  orchestrator.ts  |   70.37 |    66.66 |   78.57 |   69.69 | ...09,416-417,518
+  sources.ts       |      15 |       20 |    8.33 |   16.66 | 15-79,153
+  types.ts         |    93.5 |    74.41 |    92.3 |    97.1 | 596,604
+ ...lib/validation |     2.4 |        0 |       0 |    2.54 |
+  ...-validator.ts |    0.64 |        0 |       0 |    0.69 | 143-718
+  ...rd-scraper.ts |    2.27 |        0 |       0 |    2.36 | 120-761
+  url-validator.ts |    4.19 |        0 |       0 |    4.43 | 76-790
+ ...lidation-cache |   81.81 |    33.33 |   84.61 |   84.37 |
+  ...repository.ts |   66.66 |        0 |   66.66 |   66.66 | 32
+  key.ts           |   85.71 |      100 |   83.33 |      90 | 25,32
+  repository.ts    |   77.77 |    71.42 |     100 |   77.77 | 38,42
+ ...er/lib/webhook |   87.66 |    79.55 |   97.67 |   88.56 |
+  delivery.ts      |      96 |    91.07 |     100 |   96.55 | 72-76,156
+  incoming.ts      |   70.37 |     64.1 |    87.5 |   72.27 | ...70-381,458-474
+  index.ts         |       0 |        0 |       0 |       0 |
+  subscriptions.ts |   97.91 |     90.9 |     100 |     100 | 153-164,273-275
+  types.ts         |     100 |      100 |     100 |     100 |
+ worker/pipeline   |   66.73 |    50.63 |   78.84 |   69.64 |
+  comparison.ts    |       0 |        0 |       0 |       0 |
+  dedupe.ts        |   60.65 |    32.69 |    87.5 |    60.5 | ...06-220,238-287
+  discover.ts      |      95 |    80.95 |     100 |    94.8 | 123,181,204,233
+  ...very-utils.ts |   40.25 |    45.19 |      50 |   44.28 | ...17-234,259-261
+  normalize.ts     |   68.18 |    44.44 |   72.72 |    72.5 | ...34-149,180,185
+  score.ts         |   61.44 |       40 |      75 |   66.66 | 174-193,203-238
+  stage.ts         |   95.83 |     87.5 |     100 |   95.65 | 62
+  ...-fast-path.ts |   72.72 |    71.87 |      50 |   85.18 | 49,117-128
+ worker/routes     |   22.78 |     18.3 |   31.57 |   23.07 |
+  email.ts         |       0 |        0 |       0 |       0 | 19-175
+  experience.ts    |      60 |    56.75 |      75 |      60 | ...25,142,153-169
+  referrals.ts     |    38.2 |    16.41 |   57.14 |    38.2 | ...73,383,416-448
+  utils.ts         |   35.48 |    29.03 |   55.55 |   35.48 | 75,145-197
+  validation.ts    |       0 |        0 |       0 |       0 | 81-449
+  webhooks.ts      |       0 |        0 |       0 |       0 |
+ ...er/routes/bulk |   73.22 |    79.25 |      70 |   74.19 |
+  export.ts        |    61.4 |    69.01 |   71.42 |    62.5 | 113-121,153-242
+  import.ts        |   82.85 |    90.62 |   66.66 |   83.82 | ...56,302-309,331
+  index.ts         |       0 |        0 |       0 |       0 |
+ ...er/routes/core |   47.93 |    56.14 |   38.09 |      50 |
+  analytics.ts     |       0 |        0 |       0 |       0 | 22-37
+  deals.ts         |      22 |    25.75 |    23.8 |    22.1 | 66,87-291
+  health.ts        |      70 |    69.38 |   30.76 |      80 | 40,84-98,133
+  index.ts         |       0 |        0 |       0 |       0 |
+  pipeline.ts      |   93.75 |       90 |     100 |   93.75 | 27
+  submit.ts        |     100 |    80.35 |     100 |     100 | ...,89-95,108,116
+ worker/routes/d1  |    2.35 |     0.68 |    5.55 |    2.36 |
+  admin.ts         |   14.28 |     6.25 |      25 |   14.81 | 35-132
+  deals.ts         |       0 |        0 |       0 |       0 | 27-200
+  index.ts         |       0 |        0 |       0 |       0 | 30-90
+  search.ts        |       0 |        0 |       0 |       0 | 17-105
+  stats.ts         |       0 |        0 |       0 |       0 | 21-112
+ worker/routes/mcp |   62.37 |    51.92 |   66.66 |      62 |
+  index.ts         |   58.33 |    48.27 |     100 |   58.33 | ...03,223-225,306
+  initialize.ts    |       0 |        0 |       0 |       0 | 21-39
+  resources.ts     |      50 |      100 |   33.33 |      50 | 39-51
+  tools.ts         |     100 |    81.81 |     100 |     100 | 29-33
+  utils.ts         |   70.58 |       40 |    62.5 |   70.58 | ...73-174,185-186
+ worker/routes/nlq |   99.06 |    90.38 |     100 |   99.06 |
+  handlers.ts      |   98.76 |    86.84 |     100 |   98.76 | 100
+  index.ts         |     100 |      100 |     100 |     100 |
+  service.ts       |     100 |      100 |     100 |     100 |
+  utils.ts         |     100 |      100 |     100 |     100 |
+ ...outes/webhooks |   82.24 |    89.07 |    87.5 |   80.89 |
+  incoming.ts      |   79.16 |    68.75 |     100 |   79.16 | 38,44-49,58,86
+  index.ts         |     100 |       92 |     100 |     100 | 30,53,65,76
+  subscriptions.ts |   78.02 |    91.89 |   81.81 |   76.19 | ...19-333,360-371
+  sync.ts          |   76.19 |    93.33 |     100 |   73.68 | 58-62,85-91
+  types.ts         |     100 |      100 |     100 |     100 |
+ worker/types      |       0 |        0 |       0 |       0 |
+  ...tion-cache.ts |       0 |        0 |       0 |       0 |
+ worker/validation |      82 |    61.53 |    92.3 |   82.82 |
+  pipeline.ts      |   81.63 |    61.53 |    90.9 |   82.47 | ...36-139,277,305
+  types.ts         |     100 |      100 |     100 |     100 |
+ ...lidation/gates |   98.55 |    89.83 |     100 |   98.55 |
+  ...cate-check.ts |     100 |      100 |     100 |     100 |
+  freshness.ts     |     100 |      100 |     100 |     100 |
+  ...ency-check.ts |     100 |      100 |     100 |     100 |
+  ...rification.ts |     100 |      100 |     100 |     100 |
+  price-sanity.ts  |     100 |    93.75 |     100 |     100 | 28
+  ...validation.ts |     100 |      100 |     100 |     100 |
+  ...validation.ts |    87.5 |     62.5 |     100 |    87.5 | 12
+  ...rification.ts |     100 |       80 |     100 |     100 | 43,66
+  trust-score.ts   |     100 |      100 |     100 |     100 |
+-------------------|---------|----------|---------|---------|-------------------
+Summary: 2 issue(s) found
+Fix the errors above before pushing to GitHub.

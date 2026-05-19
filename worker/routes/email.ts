@@ -2,7 +2,7 @@ import type { Env } from "../types";
 import { processEmail, emailWorkerHandler } from "../email/handler";
 import { createHelpEmail } from "../email/templates";
 import { logger } from "../lib/global-logger";
-import { verifyHmacSignature, parseSignatureHeader } from "../lib/hmac";
+import { verifyWebhookSignature } from "../lib/hmac";
 import { unauthorizedResponse, errorResponse, jsonResponse } from "./utils";
 
 // ============================================================================
@@ -12,41 +12,6 @@ import { unauthorizedResponse, errorResponse, jsonResponse } from "./utils";
 // GET /api/email/help - Get help email content
 // ============================================================================
 
-/**
- * Verify webhook signature for email endpoints
- */
-async function verifyEmailWebhook(
-  request: Request,
-  secret: string,
-): Promise<{ valid: boolean; error?: string }> {
-  const signatureHeader = request.headers.get("x-webhook-signature");
-  const timestampHeader = request.headers.get("x-webhook-timestamp");
-
-  if (!signatureHeader || !timestampHeader) {
-    return { valid: false, error: "Missing signature or timestamp headers" };
-  }
-
-  const parsed = parseSignatureHeader(signatureHeader);
-  if (!parsed) {
-    return { valid: false, error: "Invalid signature header format" };
-  }
-
-  const body = await request.clone().text();
-  const timestamp = parseInt(timestampHeader, 10);
-
-  if (isNaN(timestamp)) {
-    return { valid: false, error: "Invalid timestamp" };
-  }
-
-  const result = await verifyHmacSignature(
-    body,
-    parsed.signature,
-    secret,
-    timestamp,
-  );
-  return result;
-}
-
 export async function handleEmailIncoming(
   request: Request,
   env: Env,
@@ -54,7 +19,7 @@ export async function handleEmailIncoming(
   try {
     // Verify webhook signature if configured (CRITICAL SECURITY FIX)
     if (env.EMAIL_WEBHOOK_SECRET) {
-      const verification = await verifyEmailWebhook(
+      const verification = await verifyWebhookSignature(
         request,
         env.EMAIL_WEBHOOK_SECRET,
       );

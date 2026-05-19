@@ -27,7 +27,7 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse } from "./utils";
+import { jsonResponse, validateRedirect } from "./utils";
 
 // ============================================================================
 // Referral Management Handlers
@@ -205,15 +205,30 @@ export async function handleCreateReferral(
 export async function handleGetReferralByCode(
   code: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
     const referral = await getReferralByCode(env, code);
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request);
     }
 
-    return jsonResponse({ referral });
+    // Check for optional redirect
+    if (request) {
+      const url = new URL(request.url);
+      const redirectUrl = url.searchParams.get("redirect");
+
+      if (redirectUrl) {
+        if (validateRedirect(redirectUrl)) {
+          return Response.redirect(redirectUrl, 302);
+        } else {
+          return jsonResponse({ error: "Invalid redirect URL" }, 400, request);
+        }
+      }
+    }
+
+    return jsonResponse({ referral }, 200, request);
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -295,31 +310,61 @@ export async function handleDeactivateReferral(
 }
 
 export async function handleReactivateReferral(
+  request: Request,
   code: string,
   env: Env,
 ): Promise<Response> {
   try {
-    const referral = await reactivateReferral(env, code);
+    // Check if referral exists and its current status
+    const existing = await getReferralByCode(env, code);
+    if (!existing) {
+      return jsonResponse({ error: "Referral not found" }, 404, request);
+    }
 
+    if (existing.status === "active") {
+      return jsonResponse(
+        {
+          error: "Conflict",
+          message: "Referral is already active",
+          referral: {
+            id: existing.id,
+            code: existing.code,
+            status: existing.status,
+          },
+        },
+        409,
+        request,
+      );
+    }
+
+    // Pass the already-fetched referral to avoid redundant storage read
+    const referral = await reactivateReferral(env, code, undefined, existing);
+
+    // Defensive fallback — should not occur since existence is verified above,
+    // but guards against concurrent deletion between the check and reactivation.
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request);
     }
 
     logger.info(`Referral reactivated: ${code}`, {
       component: "api",
     });
 
-    return jsonResponse({
-      success: true,
-      message: "Referral reactivated successfully",
-      referral: {
-        id: referral.id,
-        code: referral.code,
-        url: referral.url,
-        domain: referral.domain,
-        status: referral.status,
+    return jsonResponse(
+      {
+        success: true,
+        message: "Referral reactivated successfully",
+        referral: {
+          id: referral.id,
+          code: referral.code,
+          url: referral.url,
+          domain: referral.domain,
+          status: referral.status,
+        },
       },
-    });
+      200,
+      request,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -328,6 +373,7 @@ export async function handleReactivateReferral(
     return jsonResponse(
       { error: "Failed to reactivate referral", message: err.message },
       500,
+      request,
     );
   }
 }

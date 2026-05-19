@@ -10,7 +10,7 @@ import {
   extractReferralsFromContent,
   researchRateLimiter,
   ExtractedReferral,
-} from "./fetcher";
+} from "./index";
 import {
   ResearchSource,
   RESEARCH_SOURCES,

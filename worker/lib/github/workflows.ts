@@ -6,6 +6,23 @@ import {
 } from "./core";
 import type { WorkflowRun, WorkflowStatus } from "./types";
 
+interface GitHubWorkflowRunResponse {
+  id: number;
+  name: string;
+  head_sha: string;
+  status: "queued" | "in_progress" | "completed";
+  conclusion:
+    | "success"
+    | "failure"
+    | "cancelled"
+    | "skipped"
+    | "timed_out"
+    | null;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function getWorkflowRuns(
   repo: string,
   branch: string = "main",
@@ -20,17 +37,21 @@ export async function getWorkflowRuns(
     );
     if (!response.ok)
       throw new Error(`Failed to get workflow runs: ${response.status}`);
-    const data = await safeResponseJson<{ workflow_runs: any[] }>(response);
-    return (data?.workflow_runs || []).map((run) => ({
-      id: run.id,
-      name: run.name,
-      head_sha: run.head_sha,
-      status: run.status,
-      conclusion: run.conclusion,
-      html_url: run.html_url,
-      created_at: run.created_at,
-      updated_at: run.updated_at,
-    }));
+    const data = await safeResponseJson<{
+      workflow_runs: GitHubWorkflowRunResponse[];
+    }>(response);
+    return (data?.workflow_runs || []).map(
+      (run: GitHubWorkflowRunResponse) => ({
+        id: run.id,
+        name: run.name,
+        head_sha: run.head_sha,
+        status: run.status,
+        conclusion: run.conclusion,
+        html_url: run.html_url,
+        created_at: run.created_at,
+        updated_at: run.updated_at,
+      }),
+    );
   };
   try {
     return cb ? await cb.execute(execute) : await execute();

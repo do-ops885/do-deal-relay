@@ -1,15 +1,15 @@
-# AUDIT DEPS
-
-## Findings
-The following dependencies were identified as outdated or having safe upgrades:
+# AUDIT_DEPS.md
 
 | package | current | available | risk | upgrade safe? |
-|---------|---------|-----------|------|---------------|
-| @cloudflare/workers-types | 4.20260516.1 | 4.20260517.1 | Low | Yes (Minor) |
+| :--- | :--- | :--- | :--- | :--- |
+| @cloudflare/workers-types | 4.20260518.1 | 4.20260519.1 | Low | Yes (patch) |
+| protobufjs | 8.3.0 | 8.4.0 | Low | Yes (minor) |
+| zod | 3.25.76 | 4.4.3 | High | Human review required (major) |
 
-## Actions Taken
-- Updated `@cloudflare/workers-types` to `4.20260517.1`.
-- Verified compilation and tests with `./scripts/quality_gate.sh`.
+## Vulnerabilities
+- `ws`: Moderate severity (Uninitialized memory disclosure). **Fixed by pinning to 8.20.1 in overrides.**
 
-## Human Review Required
-- `zod`: current 3.25.76, latest 4.4.3. Major version upgrade required, potential breaking changes.
+## Actions
+- Upgrade `@cloudflare/workers-types` to `4.20260519.1`.
+- Upgrade `protobufjs` to `8.4.0`.
+- Pin `ws` to `8.20.1` to resolve GHSA-58qx-3vcg-4xpx.

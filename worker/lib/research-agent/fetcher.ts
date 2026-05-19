@@ -6,11 +6,20 @@ import {
   fetchRedditDeals,
 } from "./api-fetchers";
 import { fetchGenericPageContent } from "./generic-fetcher";
-import { ExtractedReferral, extractReferralsFromContent } from "./extractor";
+import {
+  ExtractedReferral,
+  extractReferralsFromContent,
+} from "./extractor-logic";
 import { researchRateLimiter } from "./rate-limiter";
-import { FetchResult } from "./fetcher-types";
 
-export { FetchResult };
+export interface FetchResult {
+  success: boolean;
+  content: string;
+  contentType: string;
+  statusCode: number;
+  error?: string;
+  fetchDurationMs: number;
+}
 
 export async function fetchFromSource(
   source: ResearchSource,

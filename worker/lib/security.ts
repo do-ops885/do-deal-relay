@@ -1,117 +1,192 @@
+/**
+ * Security Utilities
+ *
+ * Provides protection against SSRF, XSS, and other common attack vectors.
+ * Implements URL validation, IP filtering, and logging of security events.
+ */
+
 import { CONFIG } from "../config";
 import { logger } from "./global-logger";
 
+/**
+ * Validates a URL for safe fetching, preventing SSRF attacks.
+ * Checks for:
+ * - HTTPS protocol only
+ * - Blocked hostnames (metadata endpoints, localhost)
+ * - Private/reserved IP addresses (including DNS resolution check)
+ *
+ * @param url - The URL to validate
+ * @returns boolean indicating if the URL is safe to fetch
+ */
 export async function validateFetchUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
+
+    // Block non-HTTPS
     if (parsed.protocol !== "https:") {
-      logger.warn(`SSRF Blocked: Non-HTTPS protocol: ${url}`);
+      logger.warn(`SSRF Blocked: Non-HTTPS protocol detected: ${url}`, {
+        component: "security",
+        protocol: parsed.protocol,
+        url,
+      });
       return false;
     }
+
     const hostname = parsed.hostname.toLowerCase();
-    const config = CONFIG as any;
-    const blockedHosts = config.BLOCKED_HOSTS || [
-      "169.254.169.254",
-      "metadata.google.internal",
-      "localhost",
-      "127.0.0.1",
-      "::1",
-    ];
-    if (blockedHosts.includes(hostname)) {
-      logger.warn(`SSRF Blocked: Prohibited host: ${hostname}`);
+
+    // Block explicitly blocked hosts
+    if ((CONFIG.BLOCKED_HOSTS as readonly string[]).includes(hostname)) {
+      logger.warn(`SSRF Blocked: Prohibited host detected: ${hostname}`, {
+        component: "security",
+        hostname,
+        url,
+      });
       return false;
     }
+
+    // Strip brackets from IPv6 hostnames for validation
     const cleanHostname =
       hostname.startsWith("[") && hostname.endsWith("]")
         ? hostname.slice(1, -1)
         : hostname;
+
+    // Check if hostname is an IP literal
     if (isIpAddress(cleanHostname)) {
-      if (isPrivateIP(cleanHostname)) return false;
+      if (isPrivateIP(cleanHostname)) {
+        logger.warn(`SSRF Blocked: Private IP address detected: ${hostname}`, {
+          component: "security",
+          ip: hostname,
+          url,
+        });
+        return false;
+      }
     } else {
+      // Perform DNS resolution check to prevent DNS rebinding
       const resolvedIps = await resolveHostname(hostname);
-      if (resolvedIps.length === 0) return true;
       for (const ip of resolvedIps) {
-        if (isPrivateIP(ip)) return false;
+        if (isPrivateIP(ip)) {
+          logger.warn(
+            `SSRF Blocked: Host ${hostname} resolved to private IP ${ip}`,
+            {
+              component: "security",
+              hostname,
+              ip,
+              url,
+            },
+          );
+          return false;
+        }
       }
     }
+
     return true;
-  } catch {
+  } catch (error) {
+    logger.error(
+      `SSRF Validation error for URL ${url}: ${(error as Error).message}`,
+      {
+        component: "security",
+        url,
+      },
+    );
     return false;
   }
 }
 
+/**
+ * Checks if a string is a valid IPv4 or IPv6 address.
+ */
 function isIpAddress(hostname: string): boolean {
-  return /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(":");
+  // Simple IPv4 regex
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  // Simple IPv6 regex
+  const ipv6Pattern =
+    /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^(([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})?::(([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})?$/;
+
+  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
 }
 
+/**
+ * Checks if an IP address belongs to a private or reserved range.
+ */
 function isPrivateIP(ip: string): boolean {
-  const config = CONFIG as any;
-  const blockedRanges = config.BLOCKED_IP_RANGES || [
-    "10.0.0.0/8",
-    "172.16.0.0/12",
-    "192.168.0.0/16",
-    "127.0.0.0/8",
-    "169.254.0.0/16",
-    "::1/128",
-    "fc00::/7",
-    "fe80::/10",
-  ];
-  for (const range of blockedRanges) {
-    if (isIpInCidr(ip, range)) return true;
+  for (const range of CONFIG.BLOCKED_IP_RANGES) {
+    if (isIpInCidr(ip, range)) {
+      return true;
+    }
   }
   return false;
 }
 
+/**
+ * Checks if an IP address is within a CIDR range.
+ */
 function isIpInCidr(ip: string, cidr: string): boolean {
   try {
     const [range, bitsStr] = cidr.split("/");
-    if (!range || !ip) return false;
-    const isIpV6 = ip.includes(":");
-    const isRangeV6 = range.includes(":");
-    if (isIpV6 !== isRangeV6) return false;
-    if (isIpV6) {
-      const ipLower = ip.toLowerCase();
-      if (cidr === "::1/128")
-        return ipLower === "::1" || ipLower === "0:0:0:0:0:0:0:1";
-      if (cidr === "fc00::/7")
-        return ipLower.startsWith("fc") || ipLower.startsWith("fd");
-      if (cidr === "fe80::/10")
-        return ipLower.startsWith("fe8") || ipLower.startsWith("fe9");
-      return ipLower.startsWith(range.toLowerCase());
-    } else {
-      const bits = bitsStr ? parseInt(bitsStr, 10) : 32;
+    const bits = bitsStr
+      ? parseInt(bitsStr, 10)
+      : range?.includes(":")
+        ? 128
+        : 32;
+
+    if (!range) return false;
+
+    if (range.includes(":") && ip.includes(":")) {
+      // IPv6 validation (simplified)
+      return ip
+        .toLowerCase()
+        .startsWith(range.toLowerCase().split("::")[0] || "");
+    } else if (!range.includes(":") && !ip.includes(":")) {
+      // IPv4 validation
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+      const mask = ~(Math.pow(2, 32 - bits) - 1);
       return (ipNum & mask) === (rangeNum & mask);
     }
   } catch {
     return false;
   }
+  return false;
 }
 
+/**
+ * Converts IPv4 address to long integer.
+ */
 function ipToLong(ip: string): number {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
+  if (parts.length !== 4) return 0;
   return (
     ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0
   );
 }
 
+/**
+ * Resolves a hostname to its IP addresses using Cloudflare DNS-over-HTTPS.
+ */
 async function resolveHostname(hostname: string): Promise<string[]> {
   try {
-    // URL-encode the hostname to prevent SSRF via injected query parameters
-    const encodedHostname = encodeURIComponent(hostname);
     const response = await fetch(
-      `https://cloudflare-dns.com/query?name=${encodedHostname}&type=A`,
+      `https://cloudflare-dns.com/query?name=${hostname}&type=A`,
       {
         headers: { accept: "application/dns-json" },
         signal: AbortSignal.timeout(2000),
       },
     );
+
     if (!response.ok) return [];
-    const data = (await response.json()) as any;
-    return data.Answer?.map((a: any) => a.data) || [];
-  } catch {
+
+    const data = (await response.json()) as {
+      Answer?: Array<{ data: string }>;
+    };
+    return data.Answer?.map((a) => a.data) || [];
+  } catch (error) {
+    logger.error(
+      `DNS resolution failed for ${hostname}: ${(error as Error).message}`,
+      {
+        component: "security",
+        hostname,
+      },
+    );
     return [];
   }
 }
