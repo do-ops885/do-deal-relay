@@ -27,7 +27,7 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse } from "./utils";
+import { jsonResponse, validateRedirect } from "./utils";
 
 // ============================================================================
 // Referral Management Handlers

@@ -1,0 +1,40 @@
+import { ResearchSource } from "./types";
+import { extractFromHtml } from "../html-utils";
+import { ExtractedReferral } from "./extractor-utils";
+
+function generateReferralUrl(source: string, code: string): string {
+  const urlPatterns: Record<string, string> = {
+    producthunt: `https://www.producthunt.com/products/?ref=${code.toLowerCase()}`,
+    reddit: `https://www.reddit.com/r/referrals/?code=${code.toLowerCase()}`,
+    hackernews: `https://news.ycombinator.com/item?id=${code.toLowerCase()}`,
+    github: `https://github.com/?ref=${code.toLowerCase()}`,
+  };
+  return (
+    urlPatterns[source] || `https://example.com/referral/${code.toLowerCase()}`
+  );
+}
+
+export function extractReferralsFromContent(
+  content: string,
+  source: ResearchSource,
+  sourceName: string,
+): ExtractedReferral[] {
+  const now = new Date().toISOString();
+  const extracted = extractFromHtml(content, {
+    selectors: source.selectors as Record<string, string>,
+    regex_patterns: source.extractionPatterns,
+  });
+
+  const codes = extracted["code"] || [];
+  const rewards = extracted["reward"] || [];
+  const urls = extracted["url"] || [];
+
+  return codes.map((code, i) => ({
+    code: code.toUpperCase(),
+    url: urls[i] || urls[0] || generateReferralUrl(sourceName, code),
+    source: sourceName,
+    discoveredAt: now,
+    rewardSummary: rewards[i] || rewards[0],
+    confidence: source.selectors?.code ? 0.9 : 0.6,
+  }));
+}
