@@ -20,21 +20,21 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   code: overrides.code || "CODE123",
   url: overrides.url || "https://example.com/invite/CODE123",
   reward: {
-    type: (overrides.reward?.type as any) || "cash",
+    type: (overrides.reward?.type as string) || "cash",
     value: overrides.reward?.value ?? 50,
     currency: "USD",
   },
   expiry: {
     date: overrides.expiry?.date,
     confidence: overrides.expiry?.confidence ?? 0.8,
-    type: (overrides.expiry?.type as any) || "soft",
+    type: (overrides.expiry?.type as string) || "soft",
   },
   metadata: {
     category: overrides.metadata?.category || ["test"],
     tags: ["test"],
     normalized_at: new Date().toISOString(),
     confidence_score: overrides.metadata?.confidence_score ?? 0.5,
-    status: (overrides.metadata?.status as any) || "active",
+    status: (overrides.metadata?.status as string) || "active",
   },
 });
 

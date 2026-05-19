@@ -20,7 +20,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
   let i = 0;
   while (i < args.length) {
-    const arg = args[i];
+    const arg = args[i]!;
 
     if (arg.startsWith("--")) {
       const flag = arg.slice(2);
@@ -103,8 +103,9 @@ export async function apiRequest(
     "Content-Type": "application/json",
   };
 
-  if (config.apiKey) {
-    headers["Authorization"] = `Bearer ${config.apiKey}`;
+  const apiKey = config.apiKey;
+  if (apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
   }
 
   try {
@@ -152,14 +153,14 @@ function formatTable(data: unknown[]): string {
   }
 
   // Build header
-  const header = keys.map((k) => k.padEnd(widths[k])).join(" | ");
-  const separator = keys.map((k) => "-".repeat(widths[k])).join("-+-");
+  const header = keys.map((k) => k.padEnd(widths[k] ?? 0)).join(" | ");
+  const separator = keys.map((k) => "-".repeat(widths[k] ?? 0)).join("-+-");
 
   // Build rows
   const rows = data.map((row) =>
     keys
       .map((k) =>
-        String((row as Record<string, unknown>)[k] || "").padEnd(widths[k]),
+        String((row as Record<string, unknown>)[k] || "").padEnd(widths[k] ?? 0),
       )
       .join(" | "),
   );

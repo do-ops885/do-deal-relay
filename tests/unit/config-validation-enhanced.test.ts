@@ -22,7 +22,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when DEALS_PROD is missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.DEALS_PROD;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: DEALS_PROD",
@@ -30,7 +30,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when DEALS_LOG is missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.DEALS_LOG;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: DEALS_LOG",
@@ -38,7 +38,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when DEALS_LOCK is missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.DEALS_LOCK;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: DEALS_LOCK",
@@ -46,7 +46,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when AI_GATEWAY_URL is missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.AI_GATEWAY_URL;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: AI_GATEWAY_URL",
@@ -54,7 +54,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when TRUST_THRESHOLD is missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.TRUST_THRESHOLD;
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: TRUST_THRESHOLD",
@@ -62,7 +62,7 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when multiple variables are missing", () => {
-    const env = { ...validEnv } as any;
+    const env = { ...validEnv } as Record<string, unknown>;
     delete env.DEALS_PROD;
     delete env.DEALS_LOG;
     expect(() => validateConfig(env)).toThrow(
@@ -72,21 +72,21 @@ describe("Enhanced Config Validation", () => {
 
   describe("TRUST_THRESHOLD validation", () => {
     it("should throw when TRUST_THRESHOLD is not a number", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as Record<string, unknown>;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is < 0", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as Record<string, unknown>;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is > 1", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as Record<string, unknown>;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
@@ -95,14 +95,14 @@ describe("Enhanced Config Validation", () => {
 
   describe("Budget variable validation (retained logic)", () => {
     it("should throw when budget variable is not a number", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "abc" } as any;
+      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "abc" } as Record<string, unknown>;
       expect(() => validateConfig(env)).toThrow(
         'Invalid CANDIDATE_BUDGET_GLOBAL: "abc" is not a number',
       );
     });
 
     it("should throw when budget variable is negative", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "-10" } as any;
+      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "-10" } as Record<string, unknown>;
       expect(() => validateConfig(env)).toThrow(
         "Invalid CANDIDATE_BUDGET_GLOBAL: -10 must be non-negative",
       );
