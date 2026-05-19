@@ -62,9 +62,8 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       }
     } else {
       // Perform DNS resolution check to prevent DNS rebinding
-const resolvedIps = await resolveHostname(hostname);
-if (resolvedIps.length === 0) return false;
-for (const ip of resolvedIps) {
+      const resolvedIps = await resolveHostname(hostname);
+      if (resolvedIps.length === 0) return false;
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
           logger.warn(
@@ -135,7 +134,6 @@ function isIpInCidr(ip: string, cidr: string): boolean {
 
     if (range.includes(":") && ip.includes(":")) {
       // IPv6 validation (simplified)
-// Use a library or BigInt comparison for robust IPv6 CIDR validation
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
       const mask = ~(Math.pow(2, 32 - bits) - 1);

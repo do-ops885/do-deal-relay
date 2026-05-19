@@ -37,19 +37,19 @@ export async function getWorkflowRuns(
     );
     if (!response.ok)
       throw new Error(`Failed to get workflow runs: ${response.status}`);
-<<<<<<< HEAD
-    const data = await safeResponseJson<{ workflow_runs: any[] }>(response);
-    return (data?.workflow_runs || []).map((run) => ({
-      id: run.id,
-      name: run.name,
-      head_sha: run.head_sha,
-      status: run.status,
-      conclusion: run.conclusion,
-      html_url: run.html_url,
-      created_at: run.created_at,
-      updated_at: run.updated_at,
-    }));
-=======
+
+
+
+
+
+
+
+
+
+
+
+
+
     const data = await safeResponseJson<{
       workflow_runs: GitHubWorkflowRunResponse[];
     }>(response);
@@ -65,7 +65,7 @@ export async function getWorkflowRuns(
         updated_at: run.updated_at,
       }),
     );
->>>>>>> origin/main
+
   };
   try {
     return cb ? await cb.execute(execute) : await execute();

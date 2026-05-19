@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { ResearchSource, PageContentResult } from "./types";
 import { parseHtmlContent } from "./extractor";
 import {
@@ -8,19 +8,19 @@ import {
   fetchRedditDeals,
 } from "./api-fetchers";
 import { fetchGenericPageContent } from "./generic-fetcher";
-=======
-import { ResearchSource } from "./types";
-import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
-import type {
-  ProductHuntResponse,
-  GitHubSearchResponse,
-  HackerNewsSearchResponse,
-  RedditListingResponse,
-  PageContentResult,
-  MetaTags,
-} from "./types";
->>>>>>> origin/main
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ============================================================================
 // Real Web Fetching for Research
@@ -35,8 +35,8 @@ export interface FetchResult {
   fetchDurationMs: number;
 }
 
-<<<<<<< HEAD
-=======
+
+
 export interface ExtractedReferral {
   code: string;
   url: string;
@@ -780,7 +780,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
   };
 }
 
->>>>>>> origin/main
+
 // ============================================================================
 // Source-specific Fetch Functions
 // ============================================================================
