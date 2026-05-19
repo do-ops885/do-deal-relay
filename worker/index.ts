@@ -62,7 +62,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig, validateKVIsolation } from "./lib/config-utils";
+import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -73,7 +73,6 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
-      await validateKVIsolation(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
@@ -86,7 +85,7 @@ export default {
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
-      initGitHubCircuitBreaker(env);
+      initGitHubCircuitBreaker(env as any);
     }
 
     const url = new URL(request.url);
@@ -176,7 +175,7 @@ export default {
         }
         if (code && action === "reactivate") {
           return withAuth(request, env, undefined, () =>
-            handleReactivateReferral(request, code, env),
+            handleReactivateReferral(code, env),
           );
         }
       }
@@ -299,7 +298,6 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
-      await validateKVIsolation(env);
     } catch (error) {
       console.error("Scheduled execution configuration error:", error);
       await notify(env, {

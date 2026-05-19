@@ -56,10 +56,6 @@ function createMockEnv(): Env {
     DEALS_PRODUCTION: createKV(),
     DEALS_QUARANTINE: createKV(),
     API_KEYS: createKV(),
-    AI_GATEWAY_URL: "https://gateway.test",
-    TRUST_THRESHOLD: "0.3",
-    ENVIRONMENT: "test",
-    GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
   } as unknown as Env;
 }
@@ -147,7 +143,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.tools).toBeDefined();
       expect(Array.isArray(body.tools)).toBe(true);
       expect(body.tools.length).toBeGreaterThan(0);
@@ -161,7 +157,7 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv);
-      const body = await response.json();
+      const body = (await response.json()) as any;
 
       const toolNames = body.tools.map((t: { name: string }) => t.name);
       expect(toolNames).toContain("search_deals");
@@ -175,7 +171,7 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv);
-      const body = await response.json();
+      const body = (await response.json()) as any;
 
       const toolNames = body.tools.map((t: { name: string }) => t.name);
       expect(toolNames).toContain("add_referral");
@@ -189,7 +185,7 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv);
-      const body = await response.json();
+      const body = (await response.json()) as any;
 
       const toolNames = body.tools.map((t: { name: string }) => t.name);
       expect(toolNames).toContain("research_domain");
@@ -217,7 +213,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.content).toBeDefined();
     });
 
@@ -241,7 +237,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.content).toBeDefined();
     });
 
@@ -258,7 +254,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.content).toBeDefined();
     });
 
@@ -275,7 +271,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.content).toBeDefined();
       expect(body.isError).toBe(true);
     });
@@ -290,7 +286,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.error).toBeDefined();
     });
   });
@@ -304,7 +300,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.name).toBeDefined();
       expect(body.version).toBeDefined();
     });
@@ -346,7 +342,7 @@ describe("MCP Protocol E2E", () => {
       const searchResponse = await worker.fetch(searchRequest, mockEnv);
       expect(searchResponse.status).toBe(200);
 
-      const body = await searchResponse.json();
+      const body = (await searchResponse.json()) as any;
       expect(body.content).toBeDefined();
     });
 

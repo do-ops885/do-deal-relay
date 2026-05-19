@@ -10,38 +10,6 @@ import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
 
 // ============================================================================
-// Type Helpers
-// ============================================================================
-
-interface MCPStructuredContent {
-  deals?: unknown[];
-  total?: number;
-  code?: string;
-  domain?: string;
-  status?: string;
-  success?: boolean;
-  message?: string;
-  discovered_codes?: unknown[];
-  categories?: unknown[];
-  valid?: boolean;
-  security_check?: Record<string, unknown>;
-  status_check?: Record<string, unknown>;
-  query?: string;
-  parsed?: Record<string, unknown>;
-  count?: number;
-  result?: Record<string, unknown>;
-  nextCursor?: string;
-  _meta?: Record<string, unknown>;
-  error?: string;
-  dealId?: string;
-}
-
-interface MCPContentItem {
-  type: string;
-  text: string;
-}
-
-// ============================================================================
 // Mock Factory
 // ============================================================================
 
@@ -252,9 +220,7 @@ describe("MCP Tools - Execution", () => {
       expect(result.isError).toBeFalsy();
       expect(result.structuredContent).toHaveProperty("deals");
       expect(result.structuredContent).toHaveProperty("total");
-      expect(
-        (result.structuredContent as MCPStructuredContent).deals,
-      ).toHaveLength(0);
+      expect((result.structuredContent as any).deals).toHaveLength(0);
     });
 
     it("should find deals by status", async () => {
@@ -275,7 +241,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.total).toBeGreaterThanOrEqual(1);
     });
 
@@ -302,7 +268,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const deals = (result.structuredContent as MCPStructuredContent).deals;
+      const deals = (result.structuredContent as any).deals;
       if (deals.length > 0) {
         const deal = deals[0];
         expect(deal).toHaveProperty("code");
@@ -325,7 +291,7 @@ describe("MCP Tools - Execution", () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe("text");
-      expect((result.content[0] as MCPContentItem).text).toContain("not found");
+      expect((result.content[0] as any).text).toContain("not found");
     });
 
     it("should return deal details for existing code", async () => {
@@ -350,7 +316,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.code).toBe("FINDME");
       expect(content.domain).toBe("findme.com");
       expect(content.status).toBe("active");
@@ -388,7 +354,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.success).toBe(true);
       expect(content.code).toBe("NEWCODE");
       expect(content.status).toBe("quarantined");
@@ -406,7 +372,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.status).toBe("quarantined");
       expect(content.message).toContain("review");
     });
@@ -424,7 +390,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.success).toBe(true);
     });
   });
@@ -448,7 +414,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.domain).toBe("research-target.com");
       expect(content.discovered_codes).toHaveLength(2);
     });
@@ -462,7 +428,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.discovered_codes).toHaveLength(0);
     });
 
@@ -481,7 +447,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.discovered_codes.length).toBeLessThanOrEqual(2);
     });
   });
@@ -496,7 +462,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.categories).toBeDefined();
       expect(Array.isArray(content.categories)).toBe(true);
       expect(content.categories.length).toBeGreaterThan(0);
@@ -510,7 +476,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       const firstCategory = content.categories[0];
       expect(firstCategory).toHaveProperty("keywords");
     });
@@ -523,7 +489,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       for (const cat of content.categories) {
         expect(cat).toHaveProperty("name");
         expect(cat).toHaveProperty("description");
@@ -541,7 +507,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.valid).toBe(false);
       expect(content.security_check.no_traversal).toBe(false);
     });
@@ -565,7 +531,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.security_check).toBeDefined();
       expect(content.security_check.https).toBe(true);
       expect(content.security_check.valid_domain).toBe(true);
@@ -581,7 +547,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.status_check).toBeDefined();
       expect(content.status_check.in_database).toBe(true);
       expect(content.status_check.status).toBe("active");
@@ -598,7 +564,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content).toHaveProperty("totalActiveDeals");
       expect(content).toHaveProperty("totalDealsDiscovered");
       expect(content).toHaveProperty("topCategory");
@@ -627,7 +593,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.structuredContent).toBeDefined();
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content).toHaveProperty("success");
       expect(content).toHaveProperty("query");
       expect(content).toHaveProperty("count");
@@ -641,7 +607,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as MCPStructuredContent;
+      const content = result.structuredContent as any;
       expect(content.query).toBe("test");
       expect(content.parsed).toBeDefined();
       expect(content.parsed.type).toBeDefined();
@@ -659,9 +625,7 @@ describe("MCP Tools - Execution", () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe("text");
-      expect((result.content[0] as MCPContentItem).text).toContain(
-        "Unknown tool",
-      );
+      expect((result.content[0] as any).text).toContain("Unknown tool");
     });
 
     it("should return error for invalid arguments", async () => {
@@ -673,9 +637,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as MCPContentItem).text).toContain(
-        "Invalid arguments",
-      );
+      expect((result.content[0] as any).text).toContain("Invalid arguments");
     });
   });
 });
@@ -701,7 +663,7 @@ describe("MCP Route Handler - Pagination", () => {
     });
 
     const firstResponse = await handleMCPRequest(firstRequest, env);
-    const firstBody = (await firstResponse.json()) as Record<string, unknown>;
+    const firstBody = (await firstResponse.json()) as any;
 
     expect(firstBody.result.tools).toBeDefined();
     expect(firstBody.result.nextCursor).toBeDefined();
@@ -719,7 +681,7 @@ describe("MCP Route Handler - Pagination", () => {
     });
 
     const secondResponse = await handleMCPRequest(secondRequest, env);
-    const secondBody = (await secondResponse.json()) as Record<string, unknown>;
+    const secondBody = (await secondResponse.json()) as any;
 
     expect(secondBody.result.tools).toBeDefined();
   });
@@ -740,7 +702,7 @@ describe("MCP Route Handler - Pagination", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = (await response.json()) as any;
 
     expect(body.result.resources).toBeDefined();
     expect(Array.isArray(body.result.resources)).toBe(true);
@@ -769,7 +731,7 @@ describe("MCP Route Handler - Progress Notifications", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = (await response.json()) as any;
 
     expect(body.result._meta).toBeDefined();
     expect(body.result._meta.progress).toBeDefined();
@@ -797,7 +759,7 @@ describe("MCP Route Handler - Progress Notifications", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = (await response.json()) as any;
 
     expect(body.result._meta).toBeUndefined();
   });

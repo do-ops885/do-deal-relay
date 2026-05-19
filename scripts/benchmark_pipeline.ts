@@ -29,10 +29,10 @@ async function benchmark() {
   const thresholdIndex = args.indexOf("--threshold");
   const threshold =
     thresholdIndex !== -1
-      ? parseInt(args[thresholdIndex + 1] ?? "5000", 10)
+      ? parseInt(args[thresholdIndex + 1] || "5000", 10)
       : 5000;
   const jsonIndex = args.indexOf("--json");
-  const jsonPath = jsonIndex !== -1 ? (args[jsonIndex + 1] ?? null) : null;
+  const jsonPath = jsonIndex !== -1 ? args[jsonIndex + 1] : null;
 
   console.log("=".repeat(60));
   console.log(`  Pipeline Benchmark v${VERSION}`);
@@ -132,42 +132,39 @@ async function benchmark() {
   }
 
   // Regression check
-  let success = false;
   const latestResult = results[results.length - 1];
-  if (!latestResult) {
-    console.log("\n! No results to analyze. Skipping regression check.");
+  if (!latestResult) throw new Error("No results");
+  if (!latestResult) throw new Error("No results");
+  const success = latestResult.deals_per_second >= threshold;
+
+  if (!success) {
+    console.log("\n" + "!".repeat(60));
+    console.log(`  PERFORMANCE REGRESSION DETECTED`);
+    console.log(`  Throughput: ${latestResult.deals_per_second} deals/sec`);
+    console.log(`  Threshold:  ${threshold} deals/sec`);
+    console.log("!".repeat(60));
   } else {
-    success = latestResult.deals_per_second >= threshold;
+    console.log("\n" + "√".repeat(60));
+    console.log(`  PERFORMANCE WITHIN BOUNDS`);
+    console.log(`  Throughput: ${latestResult.deals_per_second} deals/sec`);
+    console.log(`  Threshold:  ${threshold} deals/sec`);
+    console.log("√".repeat(60));
+  }
 
-    if (!success) {
-      console.log("\n" + "!".repeat(60));
-      console.log(`  PERFORMANCE REGRESSION DETECTED`);
-      console.log(`  Throughput: ${latestResult.deals_per_second} deals/sec`);
-      console.log(`  Threshold:  ${threshold} deals/sec`);
-      console.log("!".repeat(60));
-    } else {
-      console.log("\n" + "√".repeat(60));
-      console.log(`  PERFORMANCE WITHIN BOUNDS`);
-      console.log(`  Throughput: ${latestResult.deals_per_second} deals/sec`);
-      console.log(`  Threshold:  ${threshold} deals/sec`);
-      console.log("√".repeat(60));
-    }
-
-    if (jsonPath) {
-      const report: BenchmarkReport = {
-        run_id,
-        timestamp: new Date().toISOString(),
-        version: VERSION,
-        results,
-        phase_timings: phaseTimings as Record<string, number>,
-        total_duration_ms: total,
-        threshold_deals_per_sec: threshold,
-        success,
-        bottlenecks,
-      };
-      fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
-      console.log(`\n  JSON report saved to: ${jsonPath}`);
-    }
+  if (jsonPath) {
+    const report: BenchmarkReport = {
+      run_id,
+      timestamp: new Date().toISOString(),
+      version: VERSION,
+      results,
+      phase_timings: phaseTimings as Record<string, number>,
+      total_duration_ms: total,
+      threshold_deals_per_sec: threshold,
+      success,
+      bottlenecks,
+    };
+    fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
+    console.log(`\n  JSON report saved to: ${jsonPath}`);
   }
 
   console.log("\n" + "=".repeat(60));

@@ -9,7 +9,7 @@
  */
 
 import { Telegraf, Context as TelegrafContext, Markup } from "telegraf";
-import type { Update } from "telegraf/types";
+import { Update } from "telegraf/types";
 import { DealRelayAPI, initAPIClient, getAPIClient } from "../api-client";
 import {
   CommandContext,
@@ -459,7 +459,7 @@ export async function handleTelegramWebhook(
   const bot = createTelegramBot(config);
 
   try {
-    const update = (await request.json()) as Update;
+    const update = (await request.json()) as any;
     await bot.handleUpdate(update);
     return new Response("OK", { status: 200 });
   } catch (error) {

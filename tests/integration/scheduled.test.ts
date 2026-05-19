@@ -86,8 +86,6 @@ describe("Scheduled Event Handler", () => {
         get: vi.fn(async () => null),
         put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
-      AI_GATEWAY_URL: "https://gateway.test",
-      TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       NOTIFICATION_THRESHOLD: "100",

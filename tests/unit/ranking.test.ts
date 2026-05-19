@@ -5,7 +5,7 @@ import {
   rankDeals,
   sortDeals,
 } from "../../worker/lib/ranking";
-import type { Deal, DealMetadata, Source } from "../../worker/types";
+import type { Deal } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -20,21 +20,21 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   code: overrides.code || "CODE123",
   url: overrides.url || "https://example.com/invite/CODE123",
   reward: {
-    type: overrides.reward?.type ?? "cash",
+    type: (overrides.reward?.type as any) || "cash",
     value: overrides.reward?.value ?? 50,
     currency: "USD",
   },
   expiry: {
     date: overrides.expiry?.date,
     confidence: overrides.expiry?.confidence ?? 0.8,
-    type: overrides.expiry?.type ?? "soft",
+    type: (overrides.expiry?.type as any) || "soft",
   },
   metadata: {
     category: overrides.metadata?.category || ["test"],
     tags: ["test"],
     normalized_at: new Date().toISOString(),
     confidence_score: overrides.metadata?.confidence_score ?? 0.5,
-    status: overrides.metadata?.status ?? "active",
+    status: (overrides.metadata?.status as any) || "active",
   },
 });
 
@@ -51,12 +51,12 @@ describe("Ranking Logic", () => {
 
   it("should rank deals by composite score", () => {
     const deal1 = createMockDeal("1", {
-      metadata: { confidence_score: 0.9 } as unknown as DealMetadata,
-      source: { trust_score: 0.9 } as unknown as Source,
+      metadata: { confidence_score: 0.9 } as any,
+      source: { trust_score: 0.9 } as any,
     });
     const deal2 = createMockDeal("2", {
-      metadata: { confidence_score: 0.1 } as unknown as DealMetadata,
-      source: { trust_score: 0.1 } as unknown as Source,
+      metadata: { confidence_score: 0.1 } as any,
+      source: { trust_score: 0.1 } as any,
     });
 
     const result = rankDeals([deal1, deal2], {
@@ -64,16 +64,16 @@ describe("Ranking Logic", () => {
       order: "desc",
     });
 
-    expect(result.deals[0]!.id).toBe("1");
-    expect(result.scores![0]!.score).toBeGreaterThan(result.scores![1]!.score);
+    expect(result.deals[0].id).toBe("1");
+    expect(result.scores![0].score).toBeGreaterThan(result.scores![1].score);
   });
 
   it("should filter deals by status", () => {
     const activeDeal = createMockDeal("active", {
-      metadata: { status: "active" } as unknown as DealMetadata,
+      metadata: { status: "active" } as any,
     });
     const rejectedDeal = createMockDeal("rejected", {
-      metadata: { status: "rejected" } as unknown as DealMetadata,
+      metadata: { status: "rejected" } as any,
     });
 
     const result = rankDeals([activeDeal, rejectedDeal], {
@@ -82,15 +82,15 @@ describe("Ranking Logic", () => {
     });
 
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0]!.id).toBe("active");
+    expect(result.deals[0].id).toBe("active");
   });
 
   it("should filter by minConfidence", () => {
     const highConf = createMockDeal("high", {
-      metadata: { confidence_score: 0.8 } as unknown as DealMetadata,
+      metadata: { confidence_score: 0.8 } as any,
     });
     const lowConf = createMockDeal("low", {
-      metadata: { confidence_score: 0.2 } as unknown as DealMetadata,
+      metadata: { confidence_score: 0.2 } as any,
     });
 
     const result = rankDeals([highConf, lowConf], {
@@ -100,7 +100,7 @@ describe("Ranking Logic", () => {
     });
 
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0]!.id).toBe("high");
+    expect(result.deals[0].id).toBe("high");
   });
 
   it("should sort by recency", () => {
@@ -110,13 +110,13 @@ describe("Ranking Logic", () => {
     const newDate = new Date().toISOString();
 
     const oldDeal = createMockDeal("old", {
-      source: { discovered_at: oldDate } as unknown as Source,
+      source: { discovered_at: oldDate } as any,
     });
     const newDeal = createMockDeal("new", {
-      source: { discovered_at: newDate } as unknown as Source,
+      source: { discovered_at: newDate } as any,
     });
 
     const sorted = sortDeals([oldDeal, newDeal], "recency", "desc");
-    expect(sorted[0]!.id).toBe("new");
+    expect(sorted[0].id).toBe("new");
   });
 });
