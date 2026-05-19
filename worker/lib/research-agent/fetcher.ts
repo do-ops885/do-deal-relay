@@ -731,8 +731,8 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
 
   // Remove script and style tags for text extraction
   let textContent = html
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi, "")
-    .replace(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi, "")
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi, "")
+    .replace(/<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -747,7 +747,11 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
   while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
-    if (href && !href.match(/^(javascript|data|vbscript):/i) && !href.startsWith("#")) {
+    if (
+      href &&
+      !href.match(/^(javascript|data|vbscript):/i) &&
+      !href.startsWith("#")
+    ) {
       // Convert relative URLs to absolute
       const absoluteUrl = href.startsWith("http")
         ? href
