@@ -1,6 +1,5 @@
 import { ResearchSource, PageContentResult, MetaTags } from "./types";
 import { extractBySelectors } from "../html-utils";
-import sanitizeHtml from "sanitize-html";
 
 export interface ExtractedReferral {
   code: string;
@@ -41,13 +40,11 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
     }
   }
 
-  // Sanitize HTML using a robust parser-based library before text extraction
-  const sanitizedHtml = sanitizeHtml(html, {
-    allowedTags: [],
-    allowedAttributes: {},
-  });
-
-  let textContent = sanitizedHtml
+  // Remove script and style tags for text extraction
+  let textContent = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
