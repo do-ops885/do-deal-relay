@@ -6,10 +6,11 @@ import { validateFetchUrl } from "../security";
 export async function fetchProductHuntDeals(apiToken: string | undefined, searchQuery: string, limit: number = 20): Promise<any> {
   const startTime = Date.now();
   if (!apiToken) return { success: false, content: "", contentType: "", statusCode: 401, error: "Missing token", fetchDurationMs: 0 };
-  const query = `query { posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) { edges { node { id name tagline url votesCount commentsCount topics { edges { node { name } } } createdAt thumbnail { url } } } } }`;
+  const query = `query ($limit: Int!, $query: String!) { posts(first: $limit, order: RANKING, search: {query: $query}) { edges { node { id name tagline url votesCount commentsCount topics { edges { node { name } } } createdAt thumbnail { url } } } } }`;
+  const variables = { limit, query: searchQuery };
   const url = "https://api.producthunt.com/v2/api/graphql";
   if (!(await validateFetchUrl(url))) return { success: false, content: "", contentType: "", statusCode: 403, error: "SSRF Blocked", fetchDurationMs: 0 };
-  const response = await fetch(url, { method: "POST", headers: { Authorization: "Bearer " + apiToken, "Content-Type": "application/json" }, body: JSON.stringify({ query }), signal: AbortSignal.timeout(10000) });
+  const response = await fetch(url, { method: "POST", headers: { Authorization: "Bearer " + apiToken, "Content-Type": "application/json" }, body: JSON.stringify({ query, variables }), signal: AbortSignal.timeout(10000) });
   const data = await response.json() as ProductHuntResponse;
   return { success: true, content: transformProductHuntResponse(data), contentType: "application/json", statusCode: 200, fetchDurationMs: Date.now() - startTime };
 }
