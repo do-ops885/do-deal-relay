@@ -79,6 +79,7 @@ export async function storeApiKey(
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
   await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+    expiration: config.expiresAt ? Math.floor(new Date(config.expiresAt).getTime() / 1000) : undefined,
     expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
   });
 
