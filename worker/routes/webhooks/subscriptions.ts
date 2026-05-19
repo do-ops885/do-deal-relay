@@ -69,7 +69,7 @@ export async function handleSubscribe(
     try {
       new URL(body.url);
     } catch {
-      return jsonResponse({ error: "Invalid URL format" }, 400, request, env, undefined, env);
+      return jsonResponse({ error: "Invalid URL format" }, 400, request, env);
     }
 
     const partnerId = body.partner_id || "default";
@@ -157,7 +157,12 @@ export async function handleUnsubscribe(
     const deleted = await deleteSubscription(env, body.subscription_id);
 
     if (!deleted) {
-      return jsonResponse({ error: "Subscription not found" }, 404, request, env, undefined, env);
+      return jsonResponse(
+        { error: "Subscription not found" },
+        404,
+        request,
+        env,
+      );
     }
 
     logger.info(`Webhook subscription deleted: ${body.subscription_id}`, {
@@ -310,7 +315,7 @@ export async function handleGetPartner(
     const partner = await getWebhookPartner(env, partnerId);
 
     if (!partner) {
-      return jsonResponse({ error: "Partner not found" }, 404, request, env, undefined, env);
+      return jsonResponse({ error: "Partner not found" }, 404, request, env);
     }
 
     return jsonResponse(

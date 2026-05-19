@@ -34,10 +34,10 @@ export async function handleIncomingWebhookRequest(
     // Look up partner for secret (needed for HMAC verification)
     const partner = await getWebhookPartner(env, partnerId);
     if (!partner) {
-      return jsonResponse({ error: "Unknown partner" }, 401, request, env, undefined, env);
+      return jsonResponse({ error: "Unknown partner" }, 401, request, env);
     }
     if (!partner.active) {
-      return jsonResponse({ error: "Partner deactivated" }, 403, request, env, undefined, env);
+      return jsonResponse({ error: "Partner deactivated" }, 403, request, env);
     }
 
     // Verify webhook signature at request boundary (defense-in-depth)

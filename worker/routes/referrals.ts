@@ -27,7 +27,7 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse, validateRedirect } from "./utils";
+import { jsonResponse } from "./utils";
 
 // ============================================================================
 // Referral Management Handlers
@@ -238,10 +238,21 @@ export async function handleGetReferralByCode(
     const referral = await getReferralByCode(env, code);
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
-    return jsonResponse({ referral }, 200, request, env, undefined, env);
+    const url = new URL(request?.url || "");
+    const redirect = url.searchParams.get("redirect") === "true";
+
+    if (redirect) {
+      const { validateRedirect } = await import("./utils");
+      if (validateRedirect(referral.url)) {
+        return Response.redirect(referral.url, 302);
+      }
+      return jsonResponse({ error: "Invalid redirect URL" }, 400, request, env);
+    }
+
+    return jsonResponse({ referral }, 200, request, env);
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -255,7 +266,6 @@ export async function handleGetReferralByCode(
     );
   }
 }
-
 export async function handleDeactivateReferral(
   request: Request,
   code: string,
@@ -286,7 +296,7 @@ export async function handleDeactivateReferral(
     );
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
     logger.info(`Referral deactivated: ${code}`, {
@@ -342,7 +352,7 @@ export async function handleReactivateReferral(
     // Check if referral exists and its current status
     const existing = await getReferralByCode(env, code);
     if (!existing) {
-      return jsonResponse({ error: "Referral not found" }, 404, request, undefined, env);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
     if (existing.status === "active") {
@@ -368,7 +378,7 @@ export async function handleReactivateReferral(
     // Defensive fallback — should not occur since existence is verified above,
     // but guards against concurrent deletion between the check and reactivation.
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404, request, env, undefined, env);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
     logger.info(`Referral reactivated: ${code}`, {

@@ -85,10 +85,10 @@ export async function handleGetSyncState(
     const state = await getSyncState(env, partnerId);
 
     if (!state) {
-      return jsonResponse({ error: "Sync state not found" }, 404, request, env, undefined, env);
+      return jsonResponse({ error: "Sync state not found" }, 404, request, env);
     }
 
-    return jsonResponse({ state }, 200, request, env, undefined, env);
+    return jsonResponse({ state }, 200, request, env);
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",

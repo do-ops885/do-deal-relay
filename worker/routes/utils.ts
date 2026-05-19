@@ -154,49 +154,6 @@ export function forbiddenResponse(
 }
 
 /**
- * Validate a URL for safe redirection
- * Requires HTTPS for production domains, allows HTTP for localhost only
- */
-export function validateRedirect(url: string): boolean {
-  try {
-    // Check for bypass characters before URL parsing
-    if (
-      url.includes("\\") ||
-      url.includes("\x00") ||
-      url.includes("\x0d") ||
-      url.includes("\x0a")
-    ) {
-      return false;
-    }
-
-    const parsed = new URL(url);
-    // Only allow http/https
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return false;
-    }
-
-    // Require HTTPS for production domains
-    const isLocalhost = parsed.hostname === "localhost";
-    if (!isLocalhost && parsed.protocol !== "https:") {
-      return false;
-    }
-
-    // Check for userinfo-based bypass (@ in URL)
-    if (parsed.username || parsed.password) {
-      return false;
-    }
-
-    const hostname = parsed.hostname.replace(/^www\./, "");
-    const allDomains = [...ALLOWED_REDIRECT_DOMAINS, "localhost"];
-    return allDomains.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Validate URL to prevent open redirects
  * Returns null if URL is invalid or potentially dangerous
  */
@@ -258,4 +215,37 @@ function allowedOriginsCheck(
   return allowedDomains.some(
     (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
   );
+}
+
+/**
+ * Allowed domains for redirects
+ */
+export const ALLOWED_REDIRECT_DOMAINS = [
+  "do-deal-relay.com",
+  "do-deal-relay.pages.dev",
+  "localhost",
+];
+
+/**
+ * Validate redirect URL to prevent open redirects
+ */
+export function validateRedirect(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.replace(/^www\./, "");
+
+    // Allow localhost only if protocol is http or https
+    if (hostname === "localhost") {
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    }
+
+    // Must be HTTPS for production domains
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    return ALLOWED_REDIRECT_DOMAINS.includes(hostname);
+  } catch {
+    return false;
+  }
 }

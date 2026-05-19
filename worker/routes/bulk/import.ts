@@ -116,7 +116,13 @@ export async function handleBulkImport(
     // Validate content type
     const contentType = request.headers.get("content-type");
     if (!contentType?.includes("application/json")) {
-      return errorResponse("Content-Type must be application/json", 415, undefined, undefined, env);
+      return errorResponse(
+        "Content-Type must be application/json",
+        415,
+        undefined,
+        undefined,
+        env,
+      );
     }
 
     // Parse request body
@@ -129,12 +135,24 @@ export async function handleBulkImport(
 
     // Validate deals array exists
     if (!body.deals || !Array.isArray(body.deals)) {
-      return errorResponse("deals array is required", 400, undefined, undefined, env);
+      return errorResponse(
+        "deals array is required",
+        400,
+        undefined,
+        undefined,
+        env,
+      );
     }
 
     // Validate batch size
     if (body.deals.length === 0) {
-      return errorResponse("deals array cannot be empty", 400, undefined, undefined, env);
+      return errorResponse(
+        "deals array cannot be empty",
+        400,
+        undefined,
+        undefined,
+        env,
+      );
     }
 
     if (body.deals.length > CONFIG.MAX_BULK_IMPORT_SIZE) {
