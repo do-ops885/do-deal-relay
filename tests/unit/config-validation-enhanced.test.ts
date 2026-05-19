@@ -72,21 +72,30 @@ describe("Enhanced Config Validation", () => {
 
   describe("TRUST_THRESHOLD validation", () => {
     it("should throw when TRUST_THRESHOLD is not a number", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as Record<string, unknown>;
+      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as Record<
+        string,
+        unknown
+      >;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is < 0", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as Record<string, unknown>;
+      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as Record<
+        string,
+        unknown
+      >;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is > 1", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as Record<string, unknown>;
+      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as Record<
+        string,
+        unknown
+      >;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
@@ -95,14 +104,20 @@ describe("Enhanced Config Validation", () => {
 
   describe("Budget variable validation (retained logic)", () => {
     it("should throw when budget variable is not a number", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "abc" } as Record<string, unknown>;
+      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "abc" } as Record<
+        string,
+        unknown
+      >;
       expect(() => validateConfig(env)).toThrow(
         'Invalid CANDIDATE_BUDGET_GLOBAL: "abc" is not a number',
       );
     });
 
     it("should throw when budget variable is negative", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "-10" } as Record<string, unknown>;
+      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "-10" } as Record<
+        string,
+        unknown
+      >;
       expect(() => validateConfig(env)).toThrow(
         "Invalid CANDIDATE_BUDGET_GLOBAL: -10 must be non-negative",
       );

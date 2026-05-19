@@ -167,13 +167,20 @@ test.describe("Extension Content Script Tests", () => {
         },
       ];
 
-      (window as unknown as Record<string, unknown>).__testDetections = detections;
+      (window as unknown as Record<string, unknown>).__testDetections =
+        detections;
     });
 
     // Verify detection worked
     const detections = (await page.evaluate(
       () => (window as unknown as Record<string, unknown>).__testDetections,
-    )) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
+    )) as Array<{
+      type: string;
+      value: string;
+      confidence: number;
+      source: string;
+      context: string;
+    }>;
     expect(detections).toHaveLength(1);
     expect(detections[0]!.value).toBe("CODE123");
   });
@@ -218,9 +225,15 @@ test.describe("Extension Content Script Tests", () => {
       (window as unknown as Record<string, unknown>).__testDetections = matches;
     });
 
-    const detections = await page.evaluate(
+    const detections = (await page.evaluate(
       () => (window as unknown as Record<string, unknown>).__testDetections,
-    ) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
+    )) as Array<{
+      type: string;
+      value: string;
+      confidence: number;
+      source: string;
+      context: string;
+    }>;
     expect(detections.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -240,9 +253,15 @@ test.describe("Extension Content Script Tests", () => {
       (window as unknown as Record<string, unknown>).__testDetections = [];
     });
 
-    const detections = await page.evaluate(
+    const detections = (await page.evaluate(
       () => (window as unknown as Record<string, unknown>).__testDetections,
-    ) as Array<{ type: string; value: string; confidence: number; source: string; context: string }>;
+    )) as Array<{
+      type: string;
+      value: string;
+      confidence: number;
+      source: string;
+      context: string;
+    }>;
     expect(detections).toHaveLength(0);
   });
 });

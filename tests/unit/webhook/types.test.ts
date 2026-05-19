@@ -55,8 +55,14 @@ describe("Webhook Types", () => {
 
   describe("getWebhookKV()", () => {
     it("should prefer DEALS_WEBHOOKS over DEALS_STAGING", () => {
-      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
-      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
+      const mockKvWebhooks = {
+        get: vi.fn(),
+        put: vi.fn(),
+      } as unknown as KVNamespace;
+      const mockKvStaging = {
+        get: vi.fn(),
+        put: vi.fn(),
+      } as unknown as KVNamespace;
       const env = {
         DEALS_WEBHOOKS: mockKvWebhooks,
         DEALS_STAGING: mockKvStaging,
@@ -67,7 +73,10 @@ describe("Webhook Types", () => {
     });
 
     it("should fallback to DEALS_STAGING when DEALS_WEBHOOKS is absent", () => {
-      const mockKvStaging = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
+      const mockKvStaging = {
+        get: vi.fn(),
+        put: vi.fn(),
+      } as unknown as KVNamespace;
       const env = {
         DEALS_STAGING: mockKvStaging,
       } as unknown as Env;
@@ -77,7 +86,10 @@ describe("Webhook Types", () => {
     });
 
     it("should return DEALS_WEBHOOKS when it is the only binding", () => {
-      const mockKvWebhooks = { get: vi.fn(), put: vi.fn() } as unknown as KVNamespace;
+      const mockKvWebhooks = {
+        get: vi.fn(),
+        put: vi.fn(),
+      } as unknown as KVNamespace;
       const env = {
         DEALS_WEBHOOKS: mockKvWebhooks,
       } as unknown as Env;

@@ -252,7 +252,9 @@ describe("MCP Tools - Execution", () => {
       expect(result.isError).toBeFalsy();
       expect(result.structuredContent).toHaveProperty("deals");
       expect(result.structuredContent).toHaveProperty("total");
-      expect((result.structuredContent as MCPStructuredContent).deals).toHaveLength(0);
+      expect(
+        (result.structuredContent as MCPStructuredContent).deals,
+      ).toHaveLength(0);
     });
 
     it("should find deals by status", async () => {
@@ -657,7 +659,9 @@ describe("MCP Tools - Execution", () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].type).toBe("text");
-      expect((result.content[0] as MCPContentItem).text).toContain("Unknown tool");
+      expect((result.content[0] as MCPContentItem).text).toContain(
+        "Unknown tool",
+      );
     });
 
     it("should return error for invalid arguments", async () => {
@@ -669,7 +673,9 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as MCPContentItem).text).toContain("Invalid arguments");
+      expect((result.content[0] as MCPContentItem).text).toContain(
+        "Invalid arguments",
+      );
     });
   });
 });
