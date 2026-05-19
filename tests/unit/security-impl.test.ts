@@ -16,8 +16,8 @@ describe("Security Utils - validateFetchUrl", () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        Answer: [{ data: "93.184.216.34" }] // example.com
-      })
+        Answer: [{ data: "93.184.216.34" }], // example.com
+      }),
     });
 
     const result = await validateFetchUrl(url);
@@ -42,7 +42,7 @@ describe("Security Utils - validateFetchUrl", () => {
       "https://10.0.0.1/config",
       "https://172.16.0.1/setup",
       "https://192.168.1.1/router",
-      "https://169.254.169.254/metadata"
+      "https://169.254.169.254/metadata",
     ];
 
     for (const url of privateUrls) {
@@ -64,8 +64,8 @@ describe("Security Utils - validateFetchUrl", () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        Answer: [{ data: "10.0.0.5" }]
-      })
+        Answer: [{ data: "10.0.0.5" }],
+      }),
     });
 
     const result = await validateFetchUrl(url);
@@ -77,7 +77,7 @@ describe("Security Utils - validateFetchUrl", () => {
 
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ Answer: [] })
+      json: async () => ({ Answer: [] }),
     });
 
     const result = await validateFetchUrl(url);

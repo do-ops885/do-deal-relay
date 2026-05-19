@@ -21,7 +21,7 @@ describe("code-validator", () => {
     });
 
     it("should validate Trading 212 codes", () => {
-      const result = validateCodeFormat("IITSL ltd", "trading212");
+      const result = validateCodeFormat("HE123456", "trading212");
       expect(result.valid).toBe(true);
     });
 
@@ -38,7 +38,7 @@ describe("code-validator", () => {
     });
 
     it("should auto-detect providers", () => {
-      const result = validateCodeFormat("IITSL ltd", "auto");
+      const result = validateCodeFormat("HE123456", "auto");
       expect(result.metadata?.detectedProvider).toBe("trading212");
     });
   });
@@ -68,7 +68,8 @@ describe("code-validator", () => {
     it("should find code on page", async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        text: async () => "<html><body>Use code REF123 for a bonus!</body></html>",
+        text: async () =>
+          "<html><body>Use code REF123 for a bonus!</body></html>",
       });
 
       const result = await validateCodeOnPage("REF123", "https://example.com");
@@ -96,7 +97,11 @@ describe("code-validator", () => {
         text: async () => "<html><body>Code: PROMO50</body></html>",
       });
 
-      const result = await validateCodeComplete("PROMO50", "generic", "https://example.com");
+      const result = await validateCodeComplete(
+        "PROMO50",
+        "generic",
+        "https://example.com",
+      );
       expect(result.valid).toBe(true);
       expect(result.formatValid).toBe(true);
       expect(result.existsOnPage).toBe(true);
