@@ -52,7 +52,14 @@ describe("Webhook Delivery Optimization", () => {
       DEALS_STAGING: mockKv,
       DEALS_SOURCES: mockKv,
       AI_GATEWAY_URL: "https://gateway.test",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
+    DEALS_DB: {} as any,
     } as unknown as Env;
 
     // Default global fetch mock

@@ -17,7 +17,13 @@ describe("Config Utilities", () => {
     DEALS_STAGING: {},
     DEALS_SOURCES: {},
     AI_GATEWAY_URL: "http://test",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
   } as unknown as Env;
 
   describe("getTrustThreshold", () => {

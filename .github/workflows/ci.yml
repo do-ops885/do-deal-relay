@@ -144,6 +144,9 @@ jobs:
 
       - name: Start dev server
         run: |
+          # Pass required secrets for startup validation
+          export WEBHOOK_SECRET="whsec_ci_test_secret"
+          export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
           npx wrangler dev --port 8787 > wrangler.log 2>&1 &
           WRANGLER_PID=$!
           echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
@@ -199,6 +202,9 @@ jobs:
         run: npx wrangler deploy --dry-run
       - name: Run smoke tests
         run: |
+          # Pass required secrets for startup validation
+          export WEBHOOK_SECRET="whsec_ci_test_secret"
+          export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
           npx wrangler dev --port 8787 &
           WRANGLER_PID=$!
           for _i in {1..30}; do

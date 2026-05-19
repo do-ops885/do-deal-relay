@@ -40,6 +40,10 @@ function createEnv(kv: MockKv) {
     DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
+    DEALS_DB: {} as any,
   } as any;
 }
 
