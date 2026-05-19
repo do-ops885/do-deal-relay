@@ -135,11 +135,7 @@ function isIpInCidr(ip: string, cidr: string): boolean {
 
     if (range.includes(":") && ip.includes(":")) {
       // IPv6 validation (simplified)
-      return ip
-        .toLowerCase()
-        .startsWith(range.toLowerCase().split("::")[0] || "");
-    } else if (!range.includes(":") && !ip.includes(":")) {
-      // IPv4 validation
+// Use a library or BigInt comparison for robust IPv6 CIDR validation
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
       const mask = ~(Math.pow(2, 32 - bits) - 1);
