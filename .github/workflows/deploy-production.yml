@@ -349,28 +349,36 @@ jobs:
           node-version-file: ".nvmrc"
 
       - name: Install Wrangler
-        run: npm install -g wrangler@4.79.0
+        run: npm install -g wrangler@4.92.0
 
       - name: Rollback to previous version
         id: rollback
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          echo "Attempting to rollback..."
-          # Get deployment list and rollback to previous
-          wrangler deployments list --name do-deal-relay \
-            --env production || true
-          echo "Please manually rollback via Cloudflare dashboard if needed"
+          echo "Attempting automated rollback..."
+          if wrangler rollback --env production \
+            --message "Automated rollback due to deployment failure" --yes; then
+            echo "✅ Automated rollback successful"
+            echo "rollback_status=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ Automated rollback failed"
+            echo "rollback_status=failure" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
 
       - name: Create rollback notification
-        if: steps.rollback.outcome == 'failure' || failure()
+        if: always()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const sha = context.sha;
             const runId = context.runId;
+            const rollbackStatus = `${{ steps.rollback.outputs.rollback_status }}`;
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
-            const title = `ROLLBACK REQUIRED - Production deployment failed`;
+            const title = rollbackStatus === 'success'
+              ? `AUTOMATED ROLLBACK - Production deployment failed`
+              : `ROLLBACK FAILED - Production deployment failed`;
 
             // Check for existing open rollback issue
             const existingIssues = await github.rest.issues.listForRepo({
@@ -389,14 +397,46 @@ jobs:
               return;
             }
 
+            const body = rollbackStatus === 'success'
+              ? `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback to the previous version was successful.**\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`
+              : `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback also failed.** Manual intervention is required immediately.\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`;
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: title,
-              body: `Production deployment failed.\n\n` +
-                `- Commit: ${sha}\n` +
-                `- Failed run: [View workflow](${url}/actions/runs/${runId})\n\n` +
-                '**Action Required**: Check Cloudflare dashboard and rollback.',
+              body: body,
               labels: ['deployment', 'production', 'rollback', 'urgent']
             });
+        continue-on-error: true
+
+      - name: Notify via Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ROLLBACK_STATUS: ${{ steps.rollback.outputs.rollback_status }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram secrets not set, skipping notification"
+            exit 0
+          fi
+
+          MESSAGE="🚨 *Production Deployment Failed*%0A%0A"
+          MESSAGE="${MESSAGE}Commit: \`${GITHUB_SHA:0:7}\`%0A"
+
+          if [ "${ROLLBACK_STATUS}" = "success" ]; then
+            MESSAGE="${MESSAGE}✅ *Automated rollback successful*"
+          else
+            MESSAGE="${MESSAGE}❌ *Automated rollback FAILED*%0A⚠️ Manual intervention required!"
+          fi
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
         continue-on-error: true
