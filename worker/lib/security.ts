@@ -158,9 +158,7 @@ function isIpInCidr(ip: string, cidr: string): boolean {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
       const mask =
-        bits === 0
-          ? 0
-          : (~0 << (SECURITY_CONSTANTS.IPV4_BITS - bits)) >>> 0;
+        bits === 0 ? 0 : (~0 << (SECURITY_CONSTANTS.IPV4_BITS - bits)) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
   } catch {
@@ -199,9 +197,7 @@ function ipv6ToBigInt(ipv6: string): bigint {
 
     if (parts.length !== SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS) return 0n;
 
-    const hex = parts
-      .map((p) => (p || "0").padStart(4, "0"))
-      .join("");
+    const hex = parts.map((p) => (p || "0").padStart(4, "0")).join("");
     return BigInt("0x" + hex);
   } catch {
     return 0n;

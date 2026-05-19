@@ -17,6 +17,8 @@ export interface AuthResult {
   userId?: string;
   role?: "admin" | "user" | "readonly";
   error?: string;
+  requestsPerMinute?: number;
+  requestsPerHour?: number;
 }
 
 export interface ApiKeyConfig {
@@ -79,7 +81,9 @@ export async function storeApiKey(
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
   await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
-    expiration: config.expiresAt ? Math.floor(new Date(config.expiresAt).getTime() / 1000) : undefined,
+    expiration: config.expiresAt
+      ? Math.floor(new Date(config.expiresAt).getTime() / 1000)
+      : undefined,
     expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
   });
 
@@ -92,16 +96,15 @@ export async function storeApiKey(
 export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
   const list = await kv.list({ prefix: "apikey:" });
-  const keys: ApiKeyConfig[] = [];
 
-  for (const key of list.keys) {
-    const raw = await kv.get(key.name, "json");
-    if (raw) {
-      keys.push(raw as ApiKeyConfig);
-    }
-  }
+  const results = await Promise.all(
+    list.keys.map(async (key) => {
+      const raw = await kv.get(key.name, "json");
+      return raw as ApiKeyConfig | null;
+    }),
+  );
 
-  return keys;
+  return results.filter((r): r is ApiKeyConfig => r !== null);
 }
 
 /**
@@ -183,6 +186,8 @@ export async function verifyApiKey(
     authenticated: true,
     userId: metadata.userId,
     role: metadata.role,
+    requestsPerMinute: metadata.rateLimit?.requestsPerMinute,
+    requestsPerHour: metadata.rateLimit?.requestsPerHour,
   };
 }
 

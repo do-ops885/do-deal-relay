@@ -12,7 +12,7 @@
  */
 
 import type { Env } from "../types";
-import type { AuthResult } from "./auth";
+import type { AuthResult, ApiKeyConfig } from "./auth";
 import { hashApiKey } from "./auth";
 
 // ============================================================================
@@ -101,8 +101,9 @@ export async function checkRateLimit(
   env: Env,
   identifier: string,
   endpoint: string,
+  perKeyConfig?: RateLimitConfig,
 ): Promise<RateLimitResult> {
-  const config = ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
+  const config = perKeyConfig ?? ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
@@ -238,7 +239,10 @@ export function createRateLimitMiddleware(
     handler: () => Promise<Response>,
   ): Promise<Response> => {
     const clientId = await getClientIdentifier(request, auth);
-    const result = await checkRateLimit(env, clientId, endpoint);
+    const perKeyConfig = auth?.authenticated
+      ? getPerKeyRateLimitConfig(auth)
+      : undefined;
+    const result = await checkRateLimit(env, clientId, endpoint, perKeyConfig);
 
     if (!result.allowed) {
       return new Response(
@@ -266,6 +270,27 @@ export function createRateLimitMiddleware(
     });
 
     return response;
+  };
+}
+
+// ============================================================================
+// Per-Key Rate Limit Configuration
+// ============================================================================
+
+/**
+ * Get rate limit config from authenticated user's API key metadata.
+ * Falls back to endpoint defaults if no per-key config is stored.
+ */
+export function getPerKeyRateLimitConfig(
+  auth: AuthResult,
+): RateLimitConfig | undefined {
+  if (!auth.requestsPerMinute && !auth.requestsPerHour) {
+    return undefined;
+  }
+  return {
+    maxRequests: auth.requestsPerMinute ?? DEFAULT_CONFIG.maxRequests,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:user",
   };
 }
 
