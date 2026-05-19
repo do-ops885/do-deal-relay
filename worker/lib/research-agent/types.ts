@@ -323,11 +323,6 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
       ],
       url: [/\/invite\/([A-Z0-9_-]+)/gi, /\/refer\/([A-Z0-9_-]+)/gi],
     },
-    selectors: {
-      code: ".referral-code, [data-referral-code], .invite-code",
-      reward: ".reward-info, .bonus-text, .promo-reward",
-      url: "a.referral-link, a.invite-link",
-    },
     priority: 1,
     apiConfig: {
       type: "direct",

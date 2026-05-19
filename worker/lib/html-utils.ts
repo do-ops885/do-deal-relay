@@ -1,19 +1,9 @@
 import * as cheerio from "cheerio";
 
-/**
- * Interface for extracted data from HTML
- */
 export interface ExtractedData {
   [key: string]: string[];
 }
 
-/**
- * Extract data from HTML using CSS selectors
- *
- * @param html - The HTML content to parse
- * @param selectors - A record of selector names to CSS selector strings
- * @returns A record of selector names to arrays of extracted text content
- */
 export function extractBySelectors(
   html: string,
   selectors: Record<string, string>,
@@ -32,13 +22,6 @@ export function extractBySelectors(
   return result;
 }
 
-/**
- * Extract data from HTML using both CSS selectors and regex patterns
- *
- * @param html - The HTML content to parse
- * @param config - Configuration containing selectors and/or regex patterns
- * @returns Extracted data
- */
 export function extractFromHtml(
   html: string,
   config: {
@@ -48,13 +31,11 @@ export function extractFromHtml(
 ): ExtractedData {
   const result: ExtractedData = {};
 
-  // 1. Try CSS selectors if available
   if (config.selectors) {
     const selectorResult = extractBySelectors(html, config.selectors);
     Object.assign(result, selectorResult);
   }
 
-  // 2. Fall back to regex for missing fields or if no selectors provided
   if (config.regex_patterns) {
     for (const [key, patterns] of Object.entries(config.regex_patterns)) {
       if (!result[key] || result[key].length === 0) {
@@ -64,9 +45,7 @@ export function extractFromHtml(
           let match;
           while ((match = pattern.exec(html)) !== null) {
             const matchedText = match[1] ?? match[0];
-            if (matchedText) {
-              matches.push(matchedText.trim());
-            }
+            if (matchedText) matches.push(matchedText.trim());
           }
         }
         if (matches.length > 0) {

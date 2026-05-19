@@ -1,0 +1,24 @@
+<<<<<<< SEARCH
+export interface ResearchSource {
+  name: string;
+  baseUrl: string;
+  searchPattern: string;
+  extractionPatterns: {
+    code: RegExp[];
+    reward: RegExp[];
+    url: RegExp[];
+  };
+  priority: number;
+=======
+export interface ResearchSource {
+  name: string;
+  baseUrl: string;
+  searchPattern: string;
+  extractionPatterns: {
+    code: RegExp[];
+    reward: RegExp[];
+    url: RegExp[];
+  };
+  selectors?: Record<string, string>;
+  priority: number;
+>>>>>>> REPLACE
