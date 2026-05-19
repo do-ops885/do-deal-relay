@@ -44,11 +44,21 @@ export function extractFromHtml(
       if (!result[key] || result[key].length === 0) {
         const matches: string[] = [];
         for (const pattern of patterns) {
-          pattern.lastIndex = 0;
+          // IMPORTANT: If not global, exec will infinite loop.
+          // We use matchAll or ensure global flag.
+          const globalPattern = pattern.global
+            ? pattern
+            : new RegExp(pattern.source, pattern.flags + "g");
+
+          globalPattern.lastIndex = 0;
           let match;
-          while ((match = pattern.exec(html)) !== null) {
+          while ((match = globalPattern.exec(html)) !== null) {
             const matchedText = match[1] ?? match[0];
-            if (matchedText) matches.push(matchedText.trim());
+            if (matchedText) {
+              matches.push(matchedText.trim());
+            }
+            // Safeguard against extreme number of matches
+            if (matches.length > 1000) break;
           }
         }
         if (matches.length > 0) {

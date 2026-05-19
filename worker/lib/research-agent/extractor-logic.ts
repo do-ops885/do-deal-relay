@@ -28,16 +28,9 @@ export function parseHtmlContent(url: string, html: string): PageContentResult {
     if (nameMatch?.[1] && contentMatch?.[1])
       metaTags[nameMatch[1]] = contentMatch[1];
   }
-  let sanitizedHtml = html;
-  let previousHtml: string;
-  do {
-    previousHtml = sanitizedHtml;
-    sanitizedHtml = sanitizedHtml
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
-  } while (sanitizedHtml !== previousHtml);
-
-  let textContent = sanitizedHtml
+  let textContent = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
