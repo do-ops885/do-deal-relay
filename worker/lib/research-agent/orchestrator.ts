@@ -6,10 +6,8 @@ import {
 } from "../../types";
 import { CONFIG } from "../../config";
 import { fetchFromSource } from "./fetcher";
-import {
-  extractReferralsFromContent,
-  ExtractedReferral,
-} from "./extractor-logic";
+import { extractReferralsFromContent } from "./extractor-logic";
+import { ExtractedReferral } from "./extractor-utils";
 import { researchRateLimiter } from "./rate-limiter";
 import {
   ResearchSource,

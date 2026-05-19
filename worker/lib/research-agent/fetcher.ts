@@ -1,7 +1,7 @@
 import { ResearchSource } from "./types";
 import { validateFetchUrl } from "../security";
 import { CONFIG } from "../../config";
-import { parseHtmlContent } from "./extractor-logic";
+import { parseHtmlContent } from "./extractor-utils";
 
 export interface FetchResult {
   success: boolean;

@@ -12,9 +12,15 @@ export function getApiKeys(env: Env) {
   };
 }
 
-const researchCache = new Map<string, { results: ReferralResearchResult["discovered_codes"]; expiry: number }>();
+const researchCache = new Map<
+  string,
+  { results: ReferralResearchResult["discovered_codes"]; expiry: number }
+>();
 
-export function getCachedResults(query: string, source: string): ReferralResearchResult["discovered_codes"] | null {
+export function getCachedResults(
+  query: string,
+  source: string,
+): ReferralResearchResult["discovered_codes"] | null {
   const key = `${source}:${query}`;
   const cached = researchCache.get(key);
   if (cached && cached.expiry > Date.now()) {
@@ -23,7 +29,11 @@ export function getCachedResults(query: string, source: string): ReferralResearc
   return null;
 }
 
-export function cacheResults(query: string, source: string, results: ReferralResearchResult["discovered_codes"]): void {
+export function cacheResults(
+  query: string,
+  source: string,
+  results: ReferralResearchResult["discovered_codes"],
+): void {
   const key = `${source}:${query}`;
   researchCache.set(key, {
     results,
@@ -31,7 +41,10 @@ export function cacheResults(query: string, source: string, results: ReferralRes
   });
 }
 
-const circuitState = new Map<string, { failures: number; lastFailure: number; open: boolean }>();
+const circuitState = new Map<
+  string,
+  { failures: number; lastFailure: number; open: boolean }
+>();
 
 export function isCircuitOpen(source: string): boolean {
   const state = circuitState.get(source);
@@ -49,7 +62,11 @@ export function recordSuccess(source: string): void {
 }
 
 export function recordFailure(source: string): void {
-  const state = circuitState.get(source) || { failures: 0, lastFailure: 0, open: false };
+  const state = circuitState.get(source) || {
+    failures: 0,
+    lastFailure: 0,
+    open: false,
+  };
   state.failures++;
   state.lastFailure = Date.now();
   if (state.failures >= 5) {
