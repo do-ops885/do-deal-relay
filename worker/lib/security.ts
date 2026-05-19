@@ -45,10 +45,7 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     }
 
     // Strip brackets from IPv6 hostnames for validation
-    const cleanHostname =
-      hostname.startsWith("[") && hostname.endsWith("]")
-        ? hostname.slice(1, -1)
-        : hostname;
+    const cleanHostname = hostname.replace(/^\[|\]$/g, "");
 
     // Check if hostname is an IP literal
     if (isIpAddress(cleanHostname)) {
@@ -63,8 +60,7 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     } else {
       // Perform DNS resolution check to prevent DNS rebinding
       const resolvedIps = await resolveHostname(hostname);
-      if (resolvedIps.length === 0) return true; // Could not resolve, but might be accessible via some paths? Actually safer to block?
-      // But standard SSRF protection usually allows if it can't resolve to a private IP.
+      if (resolvedIps.length === 0) return true;
 
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
@@ -137,13 +133,15 @@ function isIpInCidr(ip: string, cidr: string): boolean {
     if (!range.includes(":") && !ip.includes(":")) {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask = bits === 0 ? 0 : ~(Math.pow(2, 32 - bits) - 1) >>> 0;
+      const mask = bits === 0 ? 0 : (~(Math.pow(2, 32 - bits) - 1)) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
 
-    // IPv6 validation (simplified)
-    // Use a library or BigInt comparison for robust IPv6 CIDR validation
-    // For now, just return false if it's an IPv6 we don't recognize as a private range
+    if (range.includes(":") && ip.includes(":")) {
+      // IPv6 local/private checks
+      if (ip === "::1" || ip === "0:0:0:0:0:0:0:1" || ip === "::") return true;
+      if (/^(fc|fd|fe[89ab]|fec0)/i.test(ip)) return true;
+    }
   } catch {
     return false;
   }
@@ -170,7 +168,7 @@ async function resolveHostname(hostname: string): Promise<string[]> {
       `https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`,
       {
         headers: { accept: "application/dns-json" },
-        // @ts-ignore - signal might not be in some fetch types
+        // @ts-ignore
         signal: AbortSignal.timeout(2000),
       },
     );

@@ -60,7 +60,7 @@ export async function fetchProductHuntDeals(
 
   const query = `
     query {
-      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) {
+      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/["\\]/g, "\\$&")}"}) {
         edges {
           node {
             id
@@ -747,7 +747,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
   while ((linkMatch = linkRegex.exec(html)) !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
-    if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
+    if (href && !href.match(/^(javascript|data|vbscript):/i) && !href.startsWith("#")) {
       // Convert relative URLs to absolute
       const absoluteUrl = href.startsWith("http")
         ? href
