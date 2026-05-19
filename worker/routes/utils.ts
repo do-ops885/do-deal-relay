@@ -14,6 +14,15 @@ export const ALLOWED_ORIGINS = [
 ];
 
 /**
+ * Allowed domains for HTTP redirects
+ */
+export const ALLOWED_REDIRECT_DOMAINS = [
+  "do-deal-relay.com",
+  "do-deal-relay.pages.dev",
+  "localhost",
+];
+
+/**
  * Centralized security headers for all responses
  */
 export const SECURITY_HEADERS: Record<string, string> = {
@@ -132,6 +141,26 @@ export function forbiddenResponse(
   request?: Request,
 ): Response {
   return errorResponse(message, 403, undefined, request);
+}
+
+/**
+ * Validate a URL for safe redirection
+ */
+export function validateRedirect(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Only allow http/https
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return false;
+    }
+
+    const hostname = parsed.hostname.replace(/^www\./, "");
+    return ALLOWED_REDIRECT_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
