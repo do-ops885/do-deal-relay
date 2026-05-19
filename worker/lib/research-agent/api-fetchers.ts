@@ -29,7 +29,8 @@ export async function fetchProductHuntDeals(
       error: "Missing token",
       fetchDurationMs: 0,
     };
-  const query = `query { posts(first: ${limit}, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) { edges { node { id name tagline url votesCount commentsCount topics { edges { node { name } } } } } } }`;
+  const query = `query ($limit: Int!, $searchQuery: String!) { posts(first: $limit, search: {query: $searchQuery}) { edges { node { id name tagline url votesCount commentsCount topics { edges { node { name } } } } } } }`;
+  const variables = { limit, searchQuery };
   const url = "https://api.producthunt.com/v2/api/graphql";
   if (!(await validateFetchUrl(url)))
     return {
@@ -46,7 +47,7 @@ export async function fetchProductHuntDeals(
       Authorization: `Bearer ${apiToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(10000),
   });
   const data = (await response.json()) as ProductHuntResponse;
