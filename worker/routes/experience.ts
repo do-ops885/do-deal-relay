@@ -1,14 +1,14 @@
 import type { Env } from "../types";
 import { jsonResponse } from "./utils";
 import { createStructuredLogger } from "../lib/logger";
-import { StructuredLogger } from "../lib/logger/types";
+import { Logger } from "../lib/logger/types";
 import {
   submitExperienceEvent,
   getExperienceAggregate,
   runAggregation,
 } from "../lib/d1/experience";
 
-function getExperienceLogger(env: Env): StructuredLogger {
+function getExperienceLogger(env: Env): Logger {
   return createStructuredLogger(env, "experience-routes", `exp-${Date.now()}`);
 }
 
