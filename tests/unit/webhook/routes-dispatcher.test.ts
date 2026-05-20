@@ -317,6 +317,19 @@ describe("Webhook Route Dispatcher", () => {
   // ============================================================================
 
   describe("handleIncomingWebhookRequest()", () => {
+    beforeEach(() => {
+      // Seed a mock partner in KV for tests that pass through partner validation
+      const partner = {
+        id: "p1",
+        name: "Test Partner",
+        secret: "test-secret",
+        active: true,
+        allowed_events: ["referral.created"],
+        rate_limit_per_minute: 60,
+      };
+      kv.storage.set("webhook_partners", JSON.stringify([partner]));
+    });
+
     it("should reject non-JSON content type", async () => {
       const env = createEnv(kv);
       const request = new Request("http://localhost/test", {
@@ -345,7 +358,7 @@ describe("Webhook Route Dispatcher", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Webhook-Signature": "sig",
+          "X-Webhook-Signature": "sha256=test_sig",
           "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
           "X-Webhook-Id": "wh_1",
         },
@@ -374,15 +387,31 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should return 500 on internal error", async () => {
       const env = createEnv(kv);
+      const body = "FAIL";
+      const timestamp = Math.floor(Date.now() / 1000);
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode("test-secret");
+      const msgData = encoder.encode(`${timestamp}.${body}`);
+      const key = await crypto.subtle.importKey(
+        "raw",
+        keyData,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
+      const sig = await crypto.subtle.sign("HMAC", key, msgData);
+      const sigHex = Array.from(new Uint8Array(sig))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
       const request = new Request("http://localhost/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Webhook-Signature": "sha256=abc",
-          "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
+          "X-Webhook-Signature": `sha256=${sigHex}`,
+          "X-Webhook-Timestamp": String(timestamp),
           "X-Webhook-Id": "wh_1",
         },
-        body: "FAIL",
+        body,
       });
       const response = await handleIncomingWebhookRequest(request, env, "p1");
       expect(response.status).toBe(500);

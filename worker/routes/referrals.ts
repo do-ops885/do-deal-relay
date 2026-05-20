@@ -355,6 +355,13 @@ export async function handleReactivateReferral(
       return jsonResponse({ error: "Referral not found" }, 404);
     }
 
+    if (existing.status === "active") {
+      return jsonResponse(
+        { error: "Conflict", message: "Referral is already active" },
+        409,
+      );
+    }
+
     const referral = await reactivateReferral(env, code);
 
     if (!referral) {

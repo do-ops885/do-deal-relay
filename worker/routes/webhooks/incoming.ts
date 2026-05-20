@@ -5,7 +5,10 @@
 import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
-import { handleIncomingWebhook, getWebhookPartner } from "../../lib/webhook/index";
+import {
+  handleIncomingWebhook,
+  getWebhookPartner,
+} from "../../lib/webhook/index";
 import { verifyHmacSignature } from "../../lib/hmac";
 import { jsonResponse } from "./types";
 

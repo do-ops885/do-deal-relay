@@ -87,8 +87,7 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     } else {
       // Perform DNS resolution check to prevent DNS rebinding
       const resolvedIps = await resolveHostname(hostname);
-      if (resolvedIps.length === 0) return true;
-
+      if (resolvedIps.length === 0) return false;
 
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
@@ -155,7 +154,8 @@ function isIpInCidr(ip: string, cidr: string): boolean {
     if (!range.includes(":") && !ip.includes(":")) {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask = bits === 0 ? 0 : ~(Math.pow(2, 32 - bits) - 1) >>> 0;
+      const bitsNum = bitsStr ? Number(bitsStr) : 0;
+      const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
 
