@@ -18,6 +18,12 @@ describe("Security Gatekeeper", () => {
     DEALS_STAGING: {} as KVNamespace,
 
     AI_GATEWAY_URL: "https://gateway.test",
+    ENVIRONMENT: "test",
+    GITHUB_REPO: "test/repo",
+    NOTIFICATION_THRESHOLD: "100",
+    WEBHOOK_SECRET: "test-secret",
+    API_ENCRYPTION_KEY: "test-key",
+    DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 

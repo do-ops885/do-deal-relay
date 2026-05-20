@@ -145,7 +145,10 @@ describe("NLQ Service", () => {
 
   describe("executeNLQ", () => {
     it("should return error when D1 database is not configured", async () => {
-      const envWithoutDb = { ...mockEnv, DEALS_DB: undefined } as Env;
+      const envWithoutDb = {
+        ...mockEnv,
+        DEALS_DB: undefined as unknown as D1Database,
+      } as Env;
 
       const result = await executeNLQ(envWithoutDb, "find trading deals");
 

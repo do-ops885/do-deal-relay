@@ -29,6 +29,8 @@ describe("validateDealFastPath", () => {
       DEALS_LOG: mockKv,
       DEALS_LOCK: mockKv,
       AI_GATEWAY_URL: "https://gateway.test",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
     vi.spyOn(metricsModule, "recordValidationCacheMetric").mockReturnValue();

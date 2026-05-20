@@ -70,6 +70,28 @@ import {
 import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
+// Module-level config validation promise (prevents race condition on cold start)
+// ============================================================================
+
+let configValidationPromise: Promise<void> | null = null;
+
+async function ensureConfigValidated(env: Env): Promise<void> {
+  if (env._validated) return;
+  if (!configValidationPromise) {
+    configValidationPromise = (async () => {
+      validateConfig(env);
+      env._validated = true;
+    })();
+  }
+  try {
+    await configValidationPromise;
+  } catch (e) {
+    configValidationPromise = null;
+    throw e;
+  }
+}
+
+// ============================================================================
 // Main Worker Entry Point
 // ============================================================================
 
@@ -77,12 +99,15 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
-      validateConfig(env);
+      await ensureConfigValidated(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
-        { error: "Configuration error", message: (error as Error).message },
-        500,
+        {
+          error: "Configuration error",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        503,
         request,
       );
     }

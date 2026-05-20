@@ -57,6 +57,9 @@ describe("Budget Allocation", () => {
         put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
       ...vars,
     } as unknown as Env;
