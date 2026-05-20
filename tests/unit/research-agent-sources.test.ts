@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
 import {
   addResearchSource,
   getResearchSources,
@@ -10,6 +18,28 @@ import {
   getSourceRateLimit,
   getSourceAuthEnvVars,
 } from "../../worker/lib/research-agent/sources";
+import {
+  RESEARCH_SOURCES,
+  KNOWN_REFERRAL_PROGRAMS,
+} from "../../worker/lib/research-agent/types";
+
+let originalSources: typeof RESEARCH_SOURCES;
+let originalPrograms: typeof KNOWN_REFERRAL_PROGRAMS;
+
+beforeAll(() => {
+  originalSources = [...RESEARCH_SOURCES];
+  originalPrograms = { ...KNOWN_REFERRAL_PROGRAMS };
+});
+
+afterAll(() => {
+  RESEARCH_SOURCES.length = 0;
+  RESEARCH_SOURCES.push(...originalSources);
+  RESEARCH_SOURCES.sort((a, b) => a.priority - b.priority);
+  Object.keys(KNOWN_REFERRAL_PROGRAMS).forEach(
+    (key) => delete KNOWN_REFERRAL_PROGRAMS[key],
+  );
+  Object.assign(KNOWN_REFERRAL_PROGRAMS, originalPrograms);
+});
 
 describe("research-agent/sources", () => {
   it("should get available sources", () => {
