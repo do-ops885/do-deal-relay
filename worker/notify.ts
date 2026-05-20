@@ -12,7 +12,9 @@ import type { Env, NotificationEvent } from "./types";
 // Logger Helper
 // ============================================================================
 
-function getNotifyLogger(env: Env) {
+import { StructuredLogger } from "./lib/logger/types";
+
+function getNotifyLogger(env: Env): StructuredLogger {
   return createStructuredLogger(env, "notify", `ntf-${Date.now()}`);
 }
 
