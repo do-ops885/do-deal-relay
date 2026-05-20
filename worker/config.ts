@@ -26,7 +26,7 @@ export const CONFIG = {
   // Limits
   MAX_PAYLOAD_SIZE_BYTES: 1_000_000, // 1MB
   FETCH_TIMEOUT_MS: 30_000, // 30 seconds
-  RESEARCH_FETCH_TIMEOUT_MS: 10_000, // 10 seconds for research
+  RESEARCH_FETCH_TIMEOUT_MS: 15_000, // 15 seconds for research
   MAX_RETRIES: 3,
   MAX_DEALS_PER_RUN: 1000,
 
@@ -140,35 +140,12 @@ export const CONFIG = {
     LAST_RUN: "meta:last_run",
     METRICS: "meta:metrics",
   },
-
-  // Security settings
-  BLOCKED_HOSTS: [
-    "169.254.169.254", // Cloud metadata
-    "metadata.google.internal",
-    "localhost",
-    "127.0.0.1",
-    "::1",
-  ],
-  BLOCKED_IP_RANGES: [
-    "10.0.0.0/8",
-    "172.16.0.0/12",
-    "192.168.0.0/16",
-    "127.0.0.0/8",
-    "169.254.0.0/16",
-    "::1/128",
-    "fc00::/7",
-    "fe80::/10",
-  ],
 } as const;
 
 // ============================================================================
 // Default Source Registry
 // ============================================================================
 
-/**
- * Default source registry for the Deal Discovery System.
- * Contains seed sources with their URL patterns and extraction selectors.
- */
 export const DEFAULT_SOURCES = [
   {
     domain: "trading212.com",
@@ -286,9 +263,6 @@ export const DEFAULT_SOURCES = [
 // Error Messages
 // ============================================================================
 
-/**
- * Standard error messages used throughout the system.
- */
 export const ERROR_MESSAGES = {
   LOCK_CONFLICT: "Another run is in progress (lock conflict)",
   HASH_MISMATCH: "Snapshot hash mismatch - possible concurrent modification",
@@ -303,9 +277,6 @@ export const ERROR_MESSAGES = {
 // Validation Gate Names
 // ============================================================================
 
-/**
- * Ordered list of mandatory validation gates in the worker pipeline.
- */
 export const VALIDATION_GATES = [
   "schema_validation",
   "normalization_verification",
@@ -318,7 +289,4 @@ export const VALIDATION_GATES = [
   "snapshot_hash_verification",
 ] as const;
 
-/**
- * Type representing a valid validation gate name.
- */
 export type ValidationGate = (typeof VALIDATION_GATES)[number];

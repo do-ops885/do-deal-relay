@@ -30,12 +30,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: ".nvmrc"
 
@@ -63,8 +63,17 @@ jobs:
           sleep 15
 
           # Health check
+          # Prefer an explicit worker host secret (CLOUDFLARE_WORKER_HOST)
+          # e.g. do-deal-relay.do-it-119.workers.dev
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-          HEALTH_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+
+          if [ -n "${WORKER_HOST}" ]; then
+            HEALTH_URL="https://${WORKER_HOST}/health"
+          else
+            HEALTH_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          fi
+
           echo "Checking health at: ${HEALTH_URL}"
 
           for i in {1..5}; do
@@ -81,10 +90,17 @@ jobs:
 
       - name: Run smoke tests on staging
         run: |
+          # Prefer explicit host secret; fall back to account-derived subdomain
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
 
-          echo "Running smoke tests on staging..."
+          if [ -n "${WORKER_HOST}" ]; then
+            STAGING_URL="https://${WORKER_HOST}"
+          else
+            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          fi
+
+          echo "Running smoke tests on staging (target: ${STAGING_URL})..."
 
           # Test health endpoint
           curl -sf "${STAGING_URL}/health" || exit 1
@@ -107,9 +123,17 @@ jobs:
       - name: Notify on success
         if: success()
         run: |
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -n "${WORKER_HOST}" ]; then
+            URL="https://${WORKER_HOST}"
+          else
+            URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          fi
+
           echo "Staging deployment completed successfully"
-          echo "URL: https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          echo "URL: ${URL}"
 
       - name: Notify on failure
         if: failure()

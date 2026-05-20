@@ -11,12 +11,6 @@ const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const AI_MAX_TOKENS_SHORT = CONFIG.NLQ_AI_MAX_TOKENS_SHORT;
 type AiRunFn = (model: string, inputs: unknown) => Promise<unknown>;
 
-const INTENT_CONSTANTS = {
-  MIN_CONFIDENCE: 0.0,
-  MAX_CONFIDENCE: 1.0,
-  DEFAULT_CONFIDENCE: 0.5,
-} as const;
-
 /**
  * Classify query intent using AI
  */
@@ -45,31 +39,18 @@ Respond with only valid JSON.`;
 
     return {
       primary: validateIntent(parsed.intent),
-      confidence: Math.max(
-        INTENT_CONSTANTS.MIN_CONFIDENCE,
-        Math.min(
-          INTENT_CONSTANTS.MAX_CONFIDENCE,
-          parsed.confidence ?? INTENT_CONSTANTS.DEFAULT_CONFIDENCE,
-        ),
-      ),
+      confidence: Math.max(0, Math.min(1, parsed.confidence || 0.5)),
     };
   } catch (error) {
     logger.warn("AI intent classification failed", {
       error: (error as Error).message,
     });
-    return {
-      primary: "search",
-      confidence: INTENT_CONSTANTS.DEFAULT_CONFIDENCE,
-    };
+    return { primary: "search", confidence: 0.5 };
   }
 }
 
 /**
- * Validate an intent string against the allowed list of primary intents.
- * Defaults to "search" if the provided intent is invalid or unrecognized.
- *
- * @param intent - The intent string to validate.
- * @returns A valid ExtractedIntent["primary"] value.
+ * Validate intent string against valid options
  */
 export function validateIntent(intent: string): ExtractedIntent["primary"] {
   const valid = ["search", "compare", "filter", "rank", "discover"] as const;

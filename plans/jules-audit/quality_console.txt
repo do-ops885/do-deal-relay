@@ -1,0 +1,22 @@
+worker/pipeline/score.ts:    console.log(
+worker/publish.ts:    console.log(
+worker/email/README.md:console.log(result);
+worker/routes/webhooks-README.md:  console.log(result);
+worker/routes/webhooks-README.md:    console.log(event.data.url); // https://example.com/invite/ABC123
+worker/lib/circuit-breaker.ts:  console.log(`[CircuitBreaker:${name}] State changed: ${from} → ${to}`);
+worker/lib/circuit-breaker.ts:    console.log(`[CircuitBreaker:${this.name}] Manually reset to closed`);
+worker/lib/validation/url-validator.ts: *   console.log(`Deal URL invalid: ${result.error}`);
+worker/lib/validation/url-validator.ts: * console.log(`${results.validCount} valid, ${results.invalidCount} invalid`);
+worker/lib/validation/url-validator.ts: * console.log(`Redirects through: ${redirects.redirectChain.join(" -> ")}`);
+worker/lib/validation/code-validator.ts: *   console.log(`Invalid code format: ${result.errors.join(", ")}`);
+worker/lib/validation/code-validator.ts: *   console.log("Code not found on page - may be expired");
+worker/lib/validation/code-validator.ts: *   console.log("Manual verification needed");
+worker/lib/validation/reward-scraper.ts: *   console.log(`Current reward: ${result.currentReward.value}`);
+worker/lib/validation/reward-scraper.ts: *   console.log(`Reward decreased from ${change.previousReward.value} to ${change.currentReward.value}`);
+worker/lib/rate-limit-kv.ts: * console.log(`Remaining: ${result.remaining}`);
+worker/lib/logger/structured.ts:        console.log(consoleMessage, context || "");
+worker/lib/utils.ts: * console.log(`Deleted ${result.success} keys, ${result.failed} failures`);
+worker/lib/webhook-sdk.ts://   console.log(event.data.url); // Always a complete URL
+worker/lib/feature-flags.ts: * console.log(flag?.rolloutPercentage);
+worker/lib/feature-flags.ts: *   console.log(`${name}: ${flag.enabled}`);
+worker/lib/global-logger.ts:      console.log(output);
