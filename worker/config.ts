@@ -140,6 +140,23 @@ export const CONFIG = {
     LAST_RUN: "meta:last_run",
     METRICS: "meta:metrics",
   },
+  // Security
+  BLOCKED_HOSTS: [
+    "localhost",
+    "127.0.0.1",
+    "metadata.google.internal",
+    "169.254.169.254",
+  ],
+  BLOCKED_IP_RANGES: [
+    "127.0.0.0/8",
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "169.254.0.0/16",
+    "::1/128",
+    "fc00::/7",
+    "fe80::/10",
+  ],
 } as const;
 
 // ============================================================================

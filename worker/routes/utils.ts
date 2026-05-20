@@ -14,22 +14,6 @@ export const ALLOWED_ORIGINS = [
 ];
 
 /**
- * Allowed domains for HTTP redirects (production only)
- */
-export const ALLOWED_REDIRECT_DOMAINS = [
-  "do-deal-relay.com",
-  "do-deal-relay.pages.dev",
-];
-
-/**
- * Allowed domains for HTTP redirects in development
- */
-export const ALLOWED_REDIRECT_DOMAINS_DEV = [
-  ...ALLOWED_REDIRECT_DOMAINS,
-  "localhost",
-];
-
-/**
  * Centralized security headers for all responses
  */
 export const SECURITY_HEADERS: Record<string, string> = {
@@ -148,49 +132,6 @@ export function forbiddenResponse(
   request?: Request,
 ): Response {
   return errorResponse(message, 403, undefined, request);
-}
-
-/**
- * Validate a URL for safe redirection
- * Requires HTTPS for production domains, allows HTTP for localhost only
- */
-export function validateRedirect(url: string): boolean {
-  try {
-    // Check for bypass characters before URL parsing
-    if (
-      url.includes("\\") ||
-      url.includes("\x00") ||
-      url.includes("\x0d") ||
-      url.includes("\x0a")
-    ) {
-      return false;
-    }
-
-    const parsed = new URL(url);
-    // Only allow http/https
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return false;
-    }
-
-    // Require HTTPS for production domains
-    const isLocalhost = parsed.hostname === "localhost";
-    if (!isLocalhost && parsed.protocol !== "https:") {
-      return false;
-    }
-
-    // Check for userinfo-based bypass (@ in URL)
-    if (parsed.username || parsed.password) {
-      return false;
-    }
-
-    const hostname = parsed.hostname.replace(/^www\./, "");
-    const allDomains = [...ALLOWED_REDIRECT_DOMAINS, "localhost"];
-    return allDomains.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-  } catch {
-    return false;
-  }
 }
 
 /**

@@ -90,6 +90,27 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 - **Skills**: Canonical source is `.agents/skills/`.
 - **Temporary Files**: MUST be in `temp/`. Diagnostic or transient files (e.g., `typecheck_*.txt`) in the root are forbidden.
 
+## Branch & PR Coordination
+
+- **Shared Files Protocol**: The following files are frequently modified across branches and require explicit coordination: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `worker/lib/research-agent/fetcher.ts`, `.github/workflows/*.yml`. Before modifying any of these, check active PRs to avoid merge conflicts.
+- **File Ownership Check**: When running parallel agents, enumerate all files each agent will modify. If ANY file overlaps between agents, switch to sequential/hybrid execution.
+- **Merge Base Strategy**: Always fetch `origin/main` before starting work and rebase onto the latest `main` before creating a PR.
+- **Conflict Prevention Checklist** before creating a PR:
+  - [ ] `git merge origin/main --no-commit --no-ff` to detect conflicts early
+  - [ ] All 13 quality gates pass
+  - [ ] TypeScript strict mode compiles with zero errors
+  - [ ] No test files import deleted/removed modules
+  - [ ] Function signatures match across all call sites
+
+## Lessons Learned
+
+| Date | Issue | Root Cause | Prevention |
+|------|-------|-----------|------------|
+| 2026-05-20 | PR #324 merge conflicts (6 files) | PR branch and `main` both modified same security/auth files in parallel (`worker/config.ts`, `worker/lib/security.ts`, `worker/lib/research-agent/fetcher.ts`, `worker/routes/referrals.ts`, `worker/index.ts`) | Use the Shared Files Protocol; check active branches before modifying security infrastructure files |
+| 2026-05-20 | Post-merge TS errors (test imports of deleted modules, wrong function arity) | Main branch deleted `worker/pipeline/discovery-utils.ts` that PR branch's tests still imported; main added `request` param to `handleGetReferralByCode` | Run `npm run typecheck` and full test suite immediately after merge resolution |
+
+As new lessons are discovered, add them to this table. Keep the table sorted by most recent date first.
+
 ## Agent Guidance
 
 - **Minimal Clarification**: Do not ask questions that can be answered by analyzing the repo.

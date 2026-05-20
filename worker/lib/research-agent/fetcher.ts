@@ -508,7 +508,6 @@ export async function fetchGenericPageContent(
       error: "SSRF blocked",
       fetchDurationMs: Date.now() - startTime,
     };
-
   try {
     const response = await fetch(url, {
       method: "GET",
