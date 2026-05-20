@@ -295,7 +295,7 @@ describe("Dual-Write Referral Storage", () => {
         referral,
       );
 
-      const dealArg = mockInsertDeal.mock.calls[0][1];
+      const dealArg = mockInsertDeal.mock.calls[0]![1];
       expect(dealArg.deal_id).toBe("ref_TESTCODE");
     });
 
@@ -309,7 +309,7 @@ describe("Dual-Write Referral Storage", () => {
         referral,
       );
 
-      const dealArg = mockInsertDeal.mock.calls[0][1];
+      const dealArg = mockInsertDeal.mock.calls[0]![1];
       expect(dealArg.domain).toBe("example.com");
     });
   });
@@ -676,7 +676,7 @@ describe("Dual-Write Referral Storage", () => {
         "No longer valid",
       );
       expect(mockD1Client.execute).toHaveBeenCalledTimes(1);
-      const executeCall = mockD1Client.execute.mock.calls[0];
+      const executeCall = mockD1Client.execute.mock.calls[0]!;
       expect(executeCall[0]).toContain("UPDATE referral_codes");
       expect(executeCall[1]).toContain("inactive");
       expect(executeCall[1]).toContain("TESTCODE");
@@ -746,7 +746,7 @@ describe("Dual-Write Referral Storage", () => {
         "timeout",
       );
 
-      const params = mockD1Client.execute.mock.calls[0][1];
+      const params = mockD1Client.execute.mock.calls[0]![1];
       expect(params[1]).toBe(0);
       expect(params[2]).not.toBeNull();
     });
@@ -765,7 +765,7 @@ describe("Dual-Write Referral Storage", () => {
         "active",
       );
 
-      const params = mockD1Client.execute.mock.calls[0][1];
+      const params = mockD1Client.execute.mock.calls[0]![1];
       expect(params[1]).toBe(1);
       expect(params[2]).toBeNull();
     });
@@ -813,7 +813,7 @@ describe("Dual-Write Referral Storage", () => {
         "Replaced by better offer",
       );
       expect(mockD1Client.execute).toHaveBeenCalledTimes(1);
-      const executeCall = mockD1Client.execute.mock.calls[0];
+      const executeCall = mockD1Client.execute.mock.calls[0]!;
       expect(executeCall[0]).toContain("UPDATE referral_codes");
       expect(executeCall[0]).toContain("SET status = 'inactive'");
       expect(executeCall[1]).toEqual(["no_longer_valid", "TESTCODE"]);
@@ -881,7 +881,7 @@ describe("Dual-Write Referral Storage", () => {
         undefined as unknown as string,
       );
 
-      const params = mockD1Client.execute.mock.calls[0][1];
+      const params = mockD1Client.execute.mock.calls[0]![1];
       expect(params[0]).toBe("manual");
     });
   });
@@ -905,10 +905,9 @@ describe("Dual-Write Referral Storage", () => {
         expect.any(Object),
         "TESTCODE",
         "Reactivated after review",
-        undefined,
       );
       expect(mockD1Client.execute).toHaveBeenCalledTimes(1);
-      const executeCall = mockD1Client.execute.mock.calls[0];
+      const executeCall = mockD1Client.execute.mock.calls[0]!;
       expect(executeCall[0]).toContain("UPDATE referral_codes");
       expect(executeCall[0]).toContain("SET status = 'active'");
       expect(executeCall[0]).toContain("is_active = 1");
@@ -974,14 +973,12 @@ describe("Dual-Write Referral Storage", () => {
         createMockEnv({ DEALS_DB: {} as unknown as Env["DEALS_DB"] }),
         "TESTCODE",
         undefined,
-        existing,
       );
 
       expect(mockReactivateInKV).toHaveBeenCalledWith(
         expect.any(Object),
         "TESTCODE",
         undefined,
-        existing,
       );
     });
   });
@@ -1018,8 +1015,8 @@ describe("Dual-Write Referral Storage", () => {
 
       expect(mockD1Client.queryWithJson).toHaveBeenCalledTimes(1);
       expect(results).toHaveLength(1);
-      expect(results[0].code).toBe("CODE1");
-      expect(results[0].metadata!.title).toBe("First Deal");
+      expect(results[0]!.code).toBe("CODE1");
+      expect(results[0]!.metadata!.title).toBe("First Deal");
     });
 
     it("should apply domain filter when provided", async () => {
@@ -1031,7 +1028,7 @@ describe("Dual-Write Referral Storage", () => {
         { domain: "example.com" },
       );
 
-      const sql = mockD1Client.queryWithJson.mock.calls[0][0];
+      const sql = mockD1Client.queryWithJson.mock.calls[0]![0];
       expect(sql).toContain("d.domain = ?");
     });
 
@@ -1044,7 +1041,7 @@ describe("Dual-Write Referral Storage", () => {
         { status: "inactive" },
       );
 
-      const sql = mockD1Client.queryWithJson.mock.calls[0][0];
+      const sql = mockD1Client.queryWithJson.mock.calls[0]![0];
       expect(sql).toContain("rc.status = ?");
     });
 
@@ -1056,7 +1053,7 @@ describe("Dual-Write Referral Storage", () => {
         "test",
       );
 
-      const sql = mockD1Client.queryWithJson.mock.calls[0][0];
+      const sql = mockD1Client.queryWithJson.mock.calls[0]![0];
       expect(sql).toContain("is_active = 1");
       expect(sql).not.toContain("rc.status = ?");
     });
@@ -1070,7 +1067,7 @@ describe("Dual-Write Referral Storage", () => {
         { limit: 5 },
       );
 
-      const params = mockD1Client.queryWithJson.mock.calls[0][1];
+      const params = mockD1Client.queryWithJson.mock.calls[0]![1];
       const lastParam = params[params.length - 1];
       expect(lastParam).toBe(5);
     });
@@ -1083,7 +1080,7 @@ describe("Dual-Write Referral Storage", () => {
         "test",
       );
 
-      const params = mockD1Client.queryWithJson.mock.calls[0][1];
+      const params = mockD1Client.queryWithJson.mock.calls[0]![1];
       const lastParam = params[params.length - 1];
       expect(lastParam).toBe(20);
     });
@@ -1132,7 +1129,7 @@ describe("Dual-Write Referral Storage", () => {
         "test",
       );
 
-      const jsonFields = mockD1Client.queryWithJson.mock.calls[0][2];
+      const jsonFields = mockD1Client.queryWithJson.mock.calls[0]![2];
       expect(jsonFields).toEqual(["category", "tags"]);
     });
 
@@ -1145,10 +1142,10 @@ describe("Dual-Write Referral Storage", () => {
         { domain: "example.com", status: "active", limit: 10 },
       );
 
-      const sql = mockD1Client.queryWithJson.mock.calls[0][0];
+      const sql = mockD1Client.queryWithJson.mock.calls[0]![0];
       expect(sql).toContain("d.domain = ?");
       expect(sql).toContain("rc.status = ?");
-      const params = mockD1Client.queryWithJson.mock.calls[0][1];
+      const params = mockD1Client.queryWithJson.mock.calls[0]![1];
       expect(params).toContain("example.com");
       expect(params).toContain("active");
       expect(params).toContain(10);
@@ -1182,10 +1179,10 @@ describe("Dual-Write Referral Storage", () => {
 
       expect(mockD1Client.query).toHaveBeenCalledTimes(1);
       expect(results).toHaveLength(2);
-      expect(results[0].code).toBe("EXPCODE1");
-      expect(results[0].url).toBe("https://example.com");
-      expect(results[0].metadata!.title).toBe("Expiring Deal");
-      expect(results[1].code).toBe("EXPCODE2");
+      expect(results[0]!.code).toBe("EXPCODE1");
+      expect(results[0]!.url).toBe("https://example.com");
+      expect(results[0]!.metadata!.title).toBe("Expiring Deal");
+      expect(results[1]!.code).toBe("EXPCODE2");
     });
 
     it("should use default days value of 30 when not provided", async () => {
@@ -1195,7 +1192,7 @@ describe("Dual-Write Referral Storage", () => {
         createMockEnv({ DEALS_DB: {} as unknown as Env["DEALS_DB"] }),
       );
 
-      const params = mockD1Client.query.mock.calls[0][1];
+      const params = mockD1Client.query.mock.calls[0]![1];
       expect(params[0]).toBe(30);
     });
 
@@ -1207,7 +1204,7 @@ describe("Dual-Write Referral Storage", () => {
         7,
       );
 
-      const params = mockD1Client.query.mock.calls[0][1];
+      const params = mockD1Client.query.mock.calls[0]![1];
       expect(params[0]).toBe(7);
     });
 
@@ -1252,7 +1249,7 @@ describe("Dual-Write Referral Storage", () => {
         30,
       );
 
-      const sql = mockD1Client.query.mock.calls[0][0];
+      const sql = mockD1Client.query.mock.calls[0]![0];
       expect(sql).toContain("ORDER BY days_remaining ASC");
     });
 
@@ -1264,7 +1261,7 @@ describe("Dual-Write Referral Storage", () => {
         30,
       );
 
-      const sql = mockD1Client.query.mock.calls[0][0];
+      const sql = mockD1Client.query.mock.calls[0]![0];
       expect(sql).toContain("rc.is_active = 1");
     });
   });

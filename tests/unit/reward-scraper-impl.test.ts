@@ -58,7 +58,9 @@ describe("reward-scraper", () => {
       const html = "<div>Get a month of Premium as a bonus</div>";
       const result = extractRewardFromHTML(html);
       expect(result?.type).toBe("item");
-      expect(result?.value?.toLowerCase()).toContain("month of premium");
+      expect(
+        typeof result?.value === "string" ? result.value.toLowerCase() : "",
+      ).toContain("month of premium");
     });
 
     it("should handle structured data (JSON-LD)", () => {

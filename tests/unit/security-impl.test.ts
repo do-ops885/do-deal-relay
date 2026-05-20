@@ -47,7 +47,7 @@ describe("Security Utils - validateFetchUrl", () => {
 
     for (const url of privateUrls) {
       const result = await validateFetchUrl(url);
-      expect(result).toBe(false, `Should have blocked ${url}`);
+      expect(result).toBe(false);
     }
   });
 

@@ -57,10 +57,22 @@ describe("research-agent/sources", () => {
     const initialCount = getResearchSources().length;
     addResearchSource({
       name: "new_source",
+      baseUrl: "https://example.com",
+      searchPattern: "/search?q={query}",
+      extractionPatterns: {
+        code: [/code:\s+([A-Z0-9]+)/gi],
+        reward: [],
+        url: [],
+      },
       priority: 10,
-      description: "New source",
-      enabled: true,
-      apiConfig: { type: "direct", url: "https://example.com" },
+      apiConfig: {
+        type: "direct",
+        endpoint: "https://example.com",
+        authType: "none",
+        rateLimitPerMinute: 60,
+        timeoutMs: 15000,
+        responseTransformer: "transformPageContent",
+      },
     });
     const sources = getResearchSources();
     expect(sources.length).toBe(initialCount + 1);
