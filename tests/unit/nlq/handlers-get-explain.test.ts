@@ -146,7 +146,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, envWithoutDb);
 
       expect(response.status).toBe(503);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("DATABASE_UNAVAILABLE");
     });
 
@@ -156,7 +156,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("MISSING_PARAMETER");
     });
 
@@ -167,7 +167,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("QUERY_TOO_LONG");
     });
 
@@ -179,7 +179,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body.query).toBe("trading platforms with bonus");
       expect(body.count).toBe(1);
@@ -227,7 +227,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, mockEnv);
 
       expect(response.status).toBe(500);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("EXECUTION_ERROR");
     });
 
@@ -237,7 +237,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQGet(url, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("MISSING_PARAMETER");
     });
 
@@ -279,7 +279,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body.query).toBe("find trading deals with $100 bonus");
       expect(body.parsed).toBeDefined();
@@ -297,7 +297,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body.query).toBe("trading deals");
     });
@@ -312,7 +312,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("MISSING_PARAMETER");
     });
 
@@ -322,7 +322,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("MISSING_PARAMETER");
     });
 
@@ -336,7 +336,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("PARSE_ERROR");
     });
 
@@ -350,7 +350,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.parsed.tokens).toBeDefined();
       expect(Array.isArray(body.parsed.tokens)).toBe(true);
     });
@@ -369,7 +369,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       const response = await handleNLQExplain(request, mockEnv);
 
       expect(response.status).toBe(500);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.code).toBe("EXPLAIN_ERROR");
     });
   });

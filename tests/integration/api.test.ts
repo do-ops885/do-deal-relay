@@ -136,7 +136,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.status).toBe("healthy");
       expect(body.version).toBeDefined();
       expect(body.timestamp).toBeDefined();
@@ -148,7 +148,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(503);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.status).toBe("degraded");
     });
 
@@ -233,21 +233,25 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals");
+      const request = new Request("http://localhost/deals", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body).toHaveLength(2);
     });
 
     it("should return 404 when no snapshot exists", async () => {
-      const request = new Request("http://localhost/deals");
+      const request = new Request("http://localhost/deals", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(404);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.error).toBe("No deals available");
     });
 
@@ -276,11 +280,13 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?category=referral");
+      const request = new Request("http://localhost/deals?category=referral", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveLength(1);
       expect(body[0].metadata.category).toContain("referral");
     });
@@ -312,11 +318,13 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?min_reward=50");
+      const request = new Request("http://localhost/deals?min_reward=50", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveLength(1);
       expect(body[0].reward.value).toBe(75);
     });
@@ -339,11 +347,13 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?limit=5");
+      const request = new Request("http://localhost/deals?limit=5", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveLength(5);
     });
 
@@ -351,11 +361,13 @@ describe("API Endpoints", () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals?limit=invalid");
+      const request = new Request("http://localhost/deals?limit=invalid", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toHaveProperty("error");
+      expect((await response.json()) as any).toHaveProperty("error");
     });
   });
 
@@ -366,11 +378,13 @@ describe("API Endpoints", () => {
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
-      const request = new Request("http://localhost/deals.json");
+      const request = new Request("http://localhost/deals.json", {
+        headers: authHeader,
+      });
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("version");
       expect(body).toHaveProperty("generated_at");
       expect(body).toHaveProperty("snapshot_hash");
@@ -405,11 +419,12 @@ describe("API Endpoints", () => {
 
       const request = new Request(
         "http://localhost/deals.json?category=referral",
+        { headers: authHeader },
       );
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.deals).toHaveLength(1);
     });
   });
@@ -472,7 +487,7 @@ describe("API Endpoints", () => {
 
       // Should return error response
       expect(response.status).toBeGreaterThanOrEqual(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("success");
     });
   });
@@ -485,7 +500,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("locked");
     });
 
@@ -504,7 +519,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       // Lock status depends on implementation
       expect(body).toHaveProperty("locked");
     });
@@ -526,7 +541,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("logs");
       expect(body).toHaveProperty("count");
     });
@@ -547,7 +562,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.logs).toBeDefined();
     });
 
@@ -593,7 +608,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(201);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body).toHaveProperty("deal_id");
       expect(body).toHaveProperty("code");
@@ -610,7 +625,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(415);
-      expect(await response.json()).toHaveProperty("error");
+      expect((await response.json()) as any).toHaveProperty("error");
     });
 
     it("should return 400 for invalid body", async () => {
@@ -623,7 +638,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toHaveProperty("error");
+      expect((await response.json()) as any).toHaveProperty("error");
     });
 
     it("should return 409 for duplicate deal code", async () => {
@@ -645,7 +660,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(409);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.error).toContain("already exists");
     });
 
@@ -672,7 +687,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(404);
-      expect(await response.json()).toHaveProperty("error");
+      expect((await response.json()) as any).toHaveProperty("error");
     });
 
     it("should handle KV errors gracefully", async () => {
@@ -680,15 +695,15 @@ describe("API Endpoints", () => {
         ...mockEnv,
         DEALS_PROD: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_PROD,
+        } as any,
         DEALS_LOG: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
           put: vi.fn().mockRejectedValue(new Error("KV error")),
           list: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_LOG,
+        } as any,
         DEALS_LOCK: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as unknown as typeof mockEnv.DEALS_LOCK,
+        } as any,
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");

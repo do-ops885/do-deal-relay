@@ -1,7 +1,24 @@
 import { ResearchSource } from "./types";
-import { validateFetchUrl } from "../security";
 import { CONFIG } from "../../config";
+import type {
+  ProductHuntResponse,
+  GitHubSearchResponse,
+  HackerNewsSearchResponse,
+  RedditListingResponse,
+  PageContentResult,
+  MetaTags,
+} from "./types";
+import { validateFetchUrl } from "../security";
 import { parseHtmlContent } from "./extractor-utils";
+import {
+  transformProductHuntResponse,
+  transformGitHubResponse,
+  transformHackerNewsResponse,
+} from "./transformers";
+
+// ============================================================================
+// Real Web Fetching for Research
+// ============================================================================
 
 export interface FetchResult {
   success: boolean;
@@ -36,63 +53,104 @@ async function fetchProductHuntDeals(
       error: "ProductHunt API token not configured",
       fetchDurationMs: Date.now() - startTime,
     };
-  const safeQuery = JSON.stringify(searchQuery);
-  const response = await fetchWithValidation(
-    "https://api.producthunt.com/v2/api/graphql",
-    CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
+
+  const query = `
+    query {
+      posts(first: ${limit}, order: RANKING, search: {query: "${searchQuery.replace(/"/g, '\\"')}"}) {
+        edges {
+          node {
+            id
+            name
+            tagline
+            url
+            votesCount
+            commentsCount
+            createdAt
+            thumbnail {
+              url
+            }
+            topics {
+              edges {
+                node {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetchWithValidation(
+      "https://api.producthunt.com/v2/api/graphql",
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
       },
-      body: JSON.stringify({
-        query: `query { posts(first: ${limit}, order: RANKING, search: {query: ${safeQuery}}) { edges { node { id name tagline url votesCount commentsCount createdAt thumbnail { url } topics { edges { node { name } } } } } } }`,
-      }),
-    },
-  );
-  if (!response)
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        content: "",
+        contentType: response.headers.get("content-type") || "",
+        statusCode: response.status,
+        error: `ProductHunt API error: ${response.status} ${response.statusText}`,
+        fetchDurationMs,
+      };
+    }
+
+    const data = (await response.json()) as ProductHuntResponse;
+
+    if (data.errors) {
+      return {
+        success: false,
+        content: "",
+        contentType: "application/json",
+        statusCode: 200,
+        error: `GraphQL error: ${data.errors.map((e) => e.message).join(", ")}`,
+        fetchDurationMs,
+      };
+    }
+
+    const content = transformProductHuntResponse(data);
+
     return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "SSRF blocked",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  if (!response.ok)
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: response.status,
-      error: `ProductHunt API error: ${response.status}`,
-      fetchDurationMs: Date.now() - startTime,
-    };
-  const data = (await response.json()) as any;
-  if (data.errors)
-    return {
-      success: false,
-      content: "",
+      success: true,
+      content,
       contentType: "application/json",
       statusCode: 200,
-      error: `GraphQL error: ${data.errors.map((e: any) => e.message).join(", ")}`,
+      fetchDurationMs,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      content: "",
+      contentType: "",
+      statusCode: 0,
+      error: `ProductHunt fetch error: ${(error as Error).message}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const posts = data.data?.posts?.edges?.map((e: any) => e.node) || [];
-  const content = posts
-    .map(
-      (p: any) =>
-        `Product: ${p.name}\nTagline: ${p.tagline}\nURL: ${p.url}\nVotes: ${p.votesCount}\n---`,
-    )
-    .join("\n");
-  return {
-    success: true,
-    content,
-    contentType: "application/json",
-    statusCode: 200,
-    fetchDurationMs: Date.now() - startTime,
-  };
+  }
 }
 
 async function fetchGitHubTrending(
@@ -108,44 +166,61 @@ async function fetchGitHubTrending(
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
-  if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
-  const response = await fetchWithValidation(
-    `https://api.github.com/search/repositories?q=${query}&sort=stars&order=desc&per_page=${limit}`,
-    CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
-    { headers },
-  );
-  if (!response)
+
+  if (apiToken) {
+    headers.Authorization = `Bearer ${apiToken}`;
+  }
+
+  try {
+    const response = await fetchWithValidation(
+      `https://api.github.com/search/repositories?q=${query}&sort=stars&order=desc&per_page=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      { headers },
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        content: "",
+        contentType: response.headers.get("content-type") || "",
+        statusCode: response.status,
+        error: `GitHub API error: ${response.status} ${response.statusText}`,
+        fetchDurationMs,
+      };
+    }
+
+    const data = (await response.json()) as GitHubSearchResponse;
+    const content = transformGitHubResponse(data);
+
+    return {
+      success: true,
+      content,
+      contentType: "application/json",
+      statusCode: 200,
+      fetchDurationMs,
+    };
+  } catch (error) {
     return {
       success: false,
       content: "",
       contentType: "",
-      statusCode: 403,
-      error: "SSRF blocked",
+      statusCode: 0,
+      error: `GitHub fetch error: ${(error as Error).message}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  if (!response.ok)
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: response.status,
-      error: `GitHub API error: ${response.status}`,
-      fetchDurationMs: Date.now() - startTime,
-    };
-  const data = (await response.json()) as any;
-  const content = (data.items || [])
-    .map(
-      (r: any) =>
-        `Repository: ${r.full_name}\nDescription: ${r.description || ""}\nStars: ${r.stargazers_count}\nLanguage: ${r.language || "Unknown"}\n---`,
-    )
-    .join("\n");
-  return {
-    success: true,
-    content,
-    contentType: "application/json",
-    statusCode: 200,
-    fetchDurationMs: Date.now() - startTime,
-  };
+  }
 }
 
 async function fetchHackerNewsDeals(
@@ -153,42 +228,58 @@ async function fetchHackerNewsDeals(
   limit = 50,
 ): Promise<FetchResult> {
   const startTime = Date.now();
-  const response = await fetchWithValidation(
-    `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(searchQuery)}&tags=story&hitsPerPage=${limit}`,
-    CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
-  );
-  if (!response)
+
+  const encodedQuery = encodeURIComponent(searchQuery);
+
+  try {
+    const response = await fetchWithValidation(
+      `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        content: "",
+        contentType: response.headers.get("content-type") || "",
+        statusCode: response.status,
+        error: `HN API error: ${response.status} ${response.statusText}`,
+        fetchDurationMs,
+      };
+    }
+
+    const data = (await response.json()) as HackerNewsSearchResponse;
+    const content = transformHackerNewsResponse(data);
+
+    return {
+      success: true,
+      content,
+      contentType: "application/json",
+      statusCode: 200,
+      fetchDurationMs,
+    };
+  } catch (error) {
     return {
       success: false,
       content: "",
       contentType: "",
-      statusCode: 403,
-      error: "SSRF blocked",
+      statusCode: 0,
+      error: `HN fetch error: ${(error as Error).message}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  if (!response.ok)
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: response.status,
-      error: `HN API error: ${response.status}`,
-      fetchDurationMs: Date.now() - startTime,
-    };
-  const data = (await response.json()) as any;
-  const content = (data.hits || [])
-    .map(
-      (h: any) =>
-        `Story: ${h.title || ""}\nURL: ${h.url || `https://news.ycombinator.com/item?id=${h.objectID}`}\nAuthor: ${h.author}\nPoints: ${h.points}\n---`,
-    )
-    .join("\n");
-  return {
-    success: true,
-    content,
-    contentType: "application/json",
-    statusCode: 200,
-    fetchDurationMs: Date.now() - startTime,
-  };
+  }
 }
 
 let redditOAuthToken: { token: string; expiresAt: number } | null = null;
@@ -200,26 +291,39 @@ async function getRedditOAuthToken(
   if (!clientId || !clientSecret) return null;
   if (redditOAuthToken && redditOAuthToken.expiresAt > Date.now())
     return redditOAuthToken.token;
-  const response = await fetchWithValidation(
-    "https://www.reddit.com/api/v1/access_token",
-    CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "DealDiscoveryBot/1.0",
+
+  try {
+    const response = await fetchWithValidation(
+      "https://www.reddit.com/api/v1/access_token",
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "DealDiscoveryBot/1.0",
+        },
+        body: "grant_type=client_credentials",
       },
-      body: "grant_type=client_credentials",
-    },
-  );
-  if (!response || !response.ok) return null;
-  const data = (await response.json()) as any;
-  redditOAuthToken = {
-    token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in - 300) * 1000,
-  };
-  return data.access_token;
+    );
+
+    if (!response || !response.ok) return null;
+
+    const data = (await response.json()) as {
+      access_token: string;
+      expires_in: number;
+    };
+
+    redditOAuthToken = {
+      token: data.access_token,
+      expiresAt: Date.now() + (data.expires_in - 300) * 1000,
+    };
+
+    return data.access_token;
+  } catch (error) {
+    console.error(`Reddit OAuth error: ${(error as Error).message}`);
+    return null;
+  }
 }
 
 async function fetchRedditDeals(
@@ -232,10 +336,25 @@ async function fetchRedditDeals(
   const startTime = Date.now();
   const token = await getRedditOAuthToken(clientId, clientSecret);
   if (!token) {
+    // Fallback to public RSS-like endpoint (limited functionality)
+    return fetchRedditPublic(searchQuery, limit);
+  }
+
+  try {
+    // Search across multiple subreddits
+    const subredditQuery = subreddits.join("+");
+
     const response = await fetchWithValidation(
-      `https://www.reddit.com/r/deals/search.json?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}`,
+      `https://oauth.reddit.com/r/${subredditQuery}/search?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}&raw_json=1`,
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+        },
+      },
     );
+
     if (!response)
       return {
         success: false,
@@ -245,41 +364,142 @@ async function fetchRedditDeals(
         error: "SSRF blocked",
         fetchDurationMs: Date.now() - startTime,
       };
-    if (!response.ok)
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
       return {
         success: false,
         content: "",
-        contentType: "",
+        contentType: response.headers.get("content-type") || "",
         statusCode: response.status,
-        error: `Reddit API error: ${response.status}`,
-        fetchDurationMs: Date.now() - startTime,
+        error: `Reddit API error: ${response.status} ${response.statusText}`,
+        fetchDurationMs,
       };
-    const data = (await response.json()) as any;
-    const content = (data.data?.children || [])
-      .map(
-        (c: any) =>
-          `Post: ${c.data.title}\nSubreddit: r/${c.data.subreddit}\nURL: ${c.data.url}\nScore: ${c.data.score}\n---`,
-      )
-      .join("\n");
+    }
+
+    const data = (await response.json()) as RedditListingResponse;
+    const content = transformRedditResponse(data);
+
     return {
       success: true,
       content,
       contentType: "application/json",
       statusCode: 200,
+      fetchDurationMs,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      content: "",
+      contentType: "",
+      statusCode: 0,
+      error: `Reddit fetch error: ${(error as Error).message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }
-  const response = await fetchWithValidation(
-    `https://oauth.reddit.com/r/${subreddits.join("+")}/search?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}&raw_json=1`,
-    CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "DealDiscoveryBot/1.0",
+}
+
+/**
+ * Fallback public Reddit fetch (no OAuth required, limited)
+ */
+async function fetchRedditPublic(
+  searchQuery: string,
+  limit: number,
+): Promise<FetchResult> {
+  const startTime = Date.now();
+
+  try {
+    const response = await fetchWithValidation(
+      `https://www.reddit.com/r/deals/search.json?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "DealDiscoveryBot/1.0",
+        },
       },
-    },
-  );
-  if (!response)
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        content: "",
+        contentType: response.headers.get("content-type") || "",
+        statusCode: response.status,
+        error: `Reddit public API error: ${response.status}`,
+        fetchDurationMs,
+      };
+    }
+
+    const data = (await response.json()) as RedditListingResponse;
+    const content = transformRedditResponse(data);
+
+    return {
+      success: true,
+      content,
+      contentType: "application/json",
+      statusCode: 200,
+      fetchDurationMs,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      content: "",
+      contentType: "",
+      statusCode: 0,
+      error: `Reddit public fetch error: ${(error as Error).message}`,
+      fetchDurationMs: Date.now() - startTime,
+    };
+  }
+}
+
+/**
+ * Transform Reddit response to searchable text
+ */
+function transformRedditResponse(data: RedditListingResponse): string {
+  if (!data.data?.children || data.data.children.length === 0) {
+    return "";
+  }
+
+  return data.data.children
+    .map((child) => {
+      const post = child.data;
+      return `
+Post: ${post.title}
+Subreddit: r/${post.subreddit}
+Author: u/${post.author}
+URL: ${post.is_self ? `https://reddit.com${post.permalink}` : post.url}
+Score: ${post.score}
+Comments: ${post.num_comments}
+Text: ${post.selftext?.substring(0, 500) || ""}
+---
+`;
+    })
+    .join("\n");
+}
+
+/**
+ * Fetch content from a generic URL with HTML parsing
+ */
+export async function fetchGenericPageContent(
+  url: string,
+): Promise<FetchResult & { parsedContent?: PageContentResult }> {
+  const startTime = Date.now();
+
+  if (!(await validateFetchUrl(url)))
     return {
       success: false,
       content: "",
@@ -288,77 +508,72 @@ async function fetchRedditDeals(
       error: "SSRF blocked",
       fetchDurationMs: Date.now() - startTime,
     };
-  if (!response.ok)
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: response.status,
-      error: `Reddit API error: ${response.status}`,
-      fetchDurationMs: Date.now() - startTime,
-    };
-  const data = (await response.json()) as any;
-  const content = (data.data?.children || [])
-    .map(
-      (c: any) =>
-        `Post: ${c.data.title}\nSubreddit: r/${c.data.subreddit}\nURL: ${c.data.url}\nScore: ${c.data.score}\n---`,
-    )
-    .join("\n");
-  return {
-    success: true,
-    content,
-    contentType: "application/json",
-    statusCode: 200,
-    fetchDurationMs: Date.now() - startTime,
-  };
-}
 
-export async function fetchGenericPageContent(
-  url: string,
-): Promise<
-  FetchResult & { parsedContent?: ReturnType<typeof parseHtmlContent> }
-> {
-  const startTime = Date.now();
-  if (!(await validateFetchUrl(url)))
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "User-Agent": CONFIG.USER_AGENT,
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        Connection: "keep-alive",
+      },
+      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+    });
+
+    const fetchDurationMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      return {
+        success: false,
+        content: "",
+        contentType: response.headers.get("content-type") || "",
+        statusCode: response.status,
+        error: `HTTP ${response.status}: ${response.statusText}`,
+        fetchDurationMs,
+      };
+    }
+
+    const contentType = response.headers.get("content-type") || "text/html";
+    // HTML scraping: Content size is bounded by CONFIG.MAX_PAYLOAD_SIZE_BYTES check below.
+    // Using response.text() is acceptable here as we need the full HTML for parsing.
+    const html = await response.text();
+
+    // Validate content size after reading
+    if (html.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES) {
+      return {
+        success: false,
+        content: "",
+        contentType,
+        statusCode: 200,
+        error: "Content exceeds size limit after reading",
+        fetchDurationMs,
+      };
+    }
+
+    // Parse HTML to extract relevant content
+    const parsed = parseHtmlContent(url, html);
+
+    return {
+      success: true,
+      content: html,
+      contentType,
+      statusCode: 200,
+      fetchDurationMs,
+      parsedContent: parsed,
+    };
+  } catch (error) {
     return {
       success: false,
       content: "",
       contentType: "",
-      statusCode: 403,
-      error: "SSRF Blocked",
+      statusCode: 0,
+      error: `Fetch error: ${(error as Error).message}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const response = await fetch(url, {
-    headers: { "User-Agent": CONFIG.USER_AGENT },
-    signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-  });
-  if (!response.ok)
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: response.status,
-      error: `HTTP ${response.status}`,
-      fetchDurationMs: Date.now() - startTime,
-    };
-  const html = await response.text();
-  if (html.length > CONFIG.MAX_PAYLOAD_SIZE_BYTES)
-    return {
-      success: false,
-      content: "",
-      contentType: response.headers.get("content-type") || "text/html",
-      statusCode: 413,
-      error: "Content exceeds size limit after reading",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  return {
-    success: true,
-    content: html,
-    contentType: "text/html",
-    statusCode: 200,
-    fetchDurationMs: Date.now() - startTime,
-    parsedContent: parseHtmlContent(url, html),
-  };
+  }
 }
 
 export async function fetchFromSource(

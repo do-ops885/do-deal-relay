@@ -5,8 +5,33 @@
  * Implements URL validation, IP filtering, and logging of security events.
  */
 
-import { CONFIG } from "../config";
 import { logger } from "./global-logger";
+
+const SECURITY_CONSTANTS = {
+  DNS_TIMEOUT_MS: 2000,
+  IPV6_BITS: 128,
+  IPV4_BITS: 32,
+  IPV4_PARTS: 4,
+  IPV4_PART_SHIFT: 8,
+  IPV6_EXPANDED_PARTS: 8,
+  BLOCKED_HOSTS: [
+    "169.254.169.254",
+    "metadata.google.internal",
+    "localhost",
+    "127.0.0.1",
+    "::1",
+  ] as const,
+  BLOCKED_IP_RANGES: [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "127.0.0.0/8",
+    "169.254.0.0/16",
+    "::1/128",
+    "fc00::/7",
+    "fe80::/10",
+  ] as const,
+} as const;
 
 /**
  * Validates a URL for safe fetching, preventing SSRF attacks.
@@ -35,7 +60,9 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     const hostname = parsed.hostname.toLowerCase();
 
     // Block explicitly blocked hosts
-    if ((CONFIG.BLOCKED_HOSTS as readonly string[]).includes(hostname)) {
+    if (
+      (SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)
+    ) {
       logger.warn(`SSRF Blocked: Prohibited host detected: ${hostname}`, {
         component: "security",
         hostname,
@@ -98,18 +125,15 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
 function isIpAddress(hostname: string): boolean {
   // Simple IPv4 regex
   const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-  // Simple IPv6 regex
-  const ipv6Pattern =
-    /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^(([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})?::(([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})?$/;
-
-  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
+  // For IPv6, we check if it contains a colon as it's a hostname from a URL object
+  return ipv4Pattern.test(hostname) || hostname.includes(":");
 }
 
 /**
  * Checks if an IP address belongs to a private or reserved range.
  */
 function isPrivateIP(ip: string): boolean {
-  for (const range of CONFIG.BLOCKED_IP_RANGES) {
+  for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
     if (isIpInCidr(ip, range)) {
       return true;
     }
@@ -122,25 +146,35 @@ function isPrivateIP(ip: string): boolean {
  */
 function isIpInCidr(ip: string, cidr: string): boolean {
   try {
-    const [range, bitsStr] = cidr.split("/");
-    const bits = bitsStr
-      ? parseInt(bitsStr, 10)
-      : range?.includes(":")
-        ? 128
-        : 32;
+    const parts = cidr.split("/");
+    const range = parts[0];
+    const bitsStr = parts[1];
 
     if (!range) return false;
 
+    const bits = bitsStr
+      ? parseInt(bitsStr, 10)
+      : range.includes(":")
+        ? SECURITY_CONSTANTS.IPV6_BITS
+        : SECURITY_CONSTANTS.IPV4_BITS;
+
     if (range.includes(":") && ip.includes(":")) {
-      // IPv6 validation (simplified)
-      return ip
-        .toLowerCase()
-        .startsWith(range.toLowerCase().split("::")[0] || "");
+      // IPv6 validation using BigInt
+      const ipBigInt = ipv6ToBigInt(ip);
+      const rangeBigInt = ipv6ToBigInt(range);
+
+      const mask =
+        bits === 0
+          ? 0n
+          : ((1n << BigInt(bits)) - 1n) <<
+            BigInt(SECURITY_CONSTANTS.IPV6_BITS - bits);
+      return (ipBigInt & mask) === (rangeBigInt & mask);
     } else if (!range.includes(":") && !ip.includes(":")) {
       // IPv4 validation
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask = ~(Math.pow(2, 32 - bits) - 1);
+      const mask =
+        bits === 0 ? 0 : (~0 << (SECURITY_CONSTANTS.IPV4_BITS - bits)) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
   } catch {
@@ -154,10 +188,36 @@ function isIpInCidr(ip: string, cidr: string): boolean {
  */
 function ipToLong(ip: string): number {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
-  if (parts.length !== 4) return 0;
+  if (parts.length !== SECURITY_CONSTANTS.IPV4_PARTS) return 0;
   return (
     ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0
   );
+}
+
+/**
+ * Converts IPv6 address to BigInt.
+ */
+function ipv6ToBigInt(ipv6: string): bigint {
+  try {
+    let parts: string[];
+    if (ipv6.includes("::")) {
+      const [leftStr, rightStr] = ipv6.split("::");
+      const left = leftStr ? leftStr.split(":") : [];
+      const right = rightStr ? rightStr.split(":") : [];
+      const missing =
+        SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS - (left.length + right.length);
+      parts = [...left, ...new Array(missing).fill("0"), ...right];
+    } else {
+      parts = ipv6.split(":");
+    }
+
+    if (parts.length !== SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS) return 0n;
+
+    const hex = parts.map((p) => (p || "0").padStart(4, "0")).join("");
+    return BigInt("0x" + hex);
+  } catch {
+    return 0n;
+  }
 }
 
 /**
@@ -169,7 +229,7 @@ async function resolveHostname(hostname: string): Promise<string[]> {
       `https://cloudflare-dns.com/query?name=${hostname}&type=A`,
       {
         headers: { accept: "application/dns-json" },
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),
       },
     );
 

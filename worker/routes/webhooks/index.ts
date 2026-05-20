@@ -3,6 +3,7 @@
 // ============================================================================
 
 import type { Env } from "../../types";
+import { withAuth } from "../../lib/auth";
 import { handleIncomingWebhookRequest } from "./incoming";
 import {
   handleSubscribe,
@@ -32,30 +33,41 @@ export async function handleWebhookRoutes(
 
   // Subscription management (requires API key auth)
   if (path === "/webhooks/subscribe" && request.method === "POST") {
-    return handleSubscribe(request, env);
+    return withAuth(request, env, "user", () => handleSubscribe(request, env));
   }
 
   if (path === "/webhooks/unsubscribe" && request.method === "POST") {
-    return handleUnsubscribe(request, env);
+    return withAuth(request, env, "user", () =>
+      handleUnsubscribe(request, env),
+    );
   }
 
   if (path === "/webhooks/subscriptions" && request.method === "GET") {
-    return handleListSubscriptions(request, env);
+    return withAuth(request, env, "user", () =>
+      handleListSubscriptions(request, env),
+    );
   }
 
   // Partner management (admin only)
   if (path === "/webhooks/partners" && request.method === "POST") {
-    return handleCreatePartner(request, env);
+    return withAuth(request, env, "admin", () =>
+      handleCreatePartner(request, env),
+    );
   }
 
   if (path.startsWith("/webhooks/partners/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/partners/", "").split("/")[0];
-    if (partnerId) return handleGetPartner(request, env, partnerId);
+    if (partnerId)
+      return withAuth(request, env, "admin", () =>
+        handleGetPartner(request, env, partnerId),
+      );
   }
 
   // Dead letter queue management
   if (path === "/webhooks/dlq" && request.method === "GET") {
-    return handleGetDeadLetterQueue(request, env);
+    return withAuth(request, env, "admin", () =>
+      handleGetDeadLetterQueue(request, env),
+    );
   }
 
   if (path.startsWith("/webhooks/dlq/") && request.method === "POST") {
@@ -63,17 +75,24 @@ export async function handleWebhookRoutes(
     const eventId = parts[0];
     const subscriptionId = parts[1];
     if (eventId && subscriptionId)
-      return handleRetryDeadLetter(request, env, eventId, subscriptionId);
+      return withAuth(request, env, "admin", () =>
+        handleRetryDeadLetter(request, env, eventId, subscriptionId),
+      );
   }
 
   // Bidirectional sync
   if (path === "/webhooks/sync" && request.method === "POST") {
-    return handleCreateSyncConfig(request, env);
+    return withAuth(request, env, "user", () =>
+      handleCreateSyncConfig(request, env),
+    );
   }
 
   if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
-    if (partnerId) return handleGetSyncState(request, env, partnerId);
+    if (partnerId)
+      return withAuth(request, env, "user", () =>
+        handleGetSyncState(request, env, partnerId),
+      );
   }
 
   // Not a webhook route

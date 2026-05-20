@@ -16,7 +16,6 @@ import { CircuitBreaker, getSourceCircuitBreaker } from "../circuit-breaker";
 import type { Env } from "../../types";
 import { logger } from "../global-logger";
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
 
 // ============================================================================
 // Types
@@ -54,7 +53,7 @@ interface RedirectInfo {
 // Constants
 // ============================================================================
 
-const VALIDATION_TIMEOUT_MS = 10000; // 10 seconds
+const VALIDATION_TIMEOUT_MS = 15000; // 15 seconds
 const MAX_REDIRECTS = 5;
 const RATE_LIMIT_DELAY_MS = 500; // 500ms between requests to same domain
 const MAX_BATCH_SIZE = 50;
@@ -128,20 +127,6 @@ export async function validateUrl(
     component: "url-validator",
     domain,
   });
-
-  // SSRF protection
-  if (!(await validateFetchUrl(url))) {
-    return {
-      url,
-      valid: false,
-      redirectCount: 0,
-      redirectChain: [],
-      finalUrl: url,
-      responseTimeMs: 0,
-      error: "Blocked by SSRF protection",
-      timestamp: new Date().toISOString(),
-    };
-  }
 
   // Respect rate limit for this domain
   await respectRateLimit(domain);
@@ -223,23 +208,6 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
           headResult.location
         ) {
           const nextUrl = resolveUrl(currentUrl, headResult.location);
-
-          // Validate redirect target for SSRF
-          if (!(await validateFetchUrl(nextUrl))) {
-            return {
-              url,
-              valid: false,
-              statusCode: headResult.statusCode,
-              statusText: "Redirect to blocked URL",
-              redirectCount,
-              redirectChain,
-              finalUrl: currentUrl,
-              responseTimeMs: 0,
-              error: "Redirect blocked by SSRF protection",
-              timestamp: new Date().toISOString(),
-            };
-          }
-
           if (redirectChain.includes(nextUrl)) {
             // Redirect loop detected
             return {
@@ -612,19 +580,6 @@ export async function detectRedirects(
     component: "url-validator",
   });
 
-  if (!(await validateFetchUrl(url))) {
-    return {
-      url,
-      valid: false,
-      redirectCount: 0,
-      redirectChain: [],
-      finalUrl: url,
-      responseTimeMs: 0,
-      error: "Blocked by SSRF protection",
-      timestamp: new Date().toISOString(),
-    };
-  }
-
   while (redirectCount <= MAX_REDIRECTS) {
     try {
       const controller = new AbortController();
@@ -653,22 +608,6 @@ export async function detectRedirects(
       const location = response.headers.get("location");
       if (location && REDIRECT_STATUS_CODES.includes(response.status)) {
         const nextUrl = resolveUrl(currentUrl, location);
-
-        // Validate redirect target for SSRF
-        if (!(await validateFetchUrl(nextUrl))) {
-          return {
-            url,
-            valid: false,
-            statusCode: response.status,
-            statusText: "Redirect to blocked URL",
-            redirectCount,
-            redirectChain,
-            finalUrl: currentUrl,
-            responseTimeMs: Date.now() - startTime,
-            error: "Redirect blocked by SSRF protection",
-            timestamp: new Date().toISOString(),
-          };
-        }
 
         // Check for loop
         if (redirectChain.includes(nextUrl)) {
