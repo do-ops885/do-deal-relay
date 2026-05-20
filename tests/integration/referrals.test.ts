@@ -25,6 +25,59 @@ describe("Referral Deactivation", () => {
     };
   }
 
+  /**
+   * Shared helper: create an authenticated POST request to a referral endpoint.
+   * Reduces boilerplate and improves maintainability across referral tests.
+   */
+  function createAuthenticatedPostRequest(
+    path: string,
+    body?: Record<string, unknown>,
+  ): Request {
+    return new Request(`http://localhost${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  /**
+   * Shared helper: seed a referral into mock KV storage so route handlers
+   * can look it up by code and by ID.
+   */
+  function seedReferral(referral: {
+    id: string;
+    code: string;
+    status: string;
+    url?: string;
+    domain?: string;
+  }): void {
+    mockKvStorage.set(
+      `sources:referral:input:${referral.id}`,
+      JSON.stringify({
+        url: "https://example.com/ref",
+        domain: "example.com",
+        ...referral,
+      }),
+    );
+    mockKvStorage.set(
+      "sources:referral:index:code",
+      JSON.stringify({
+        ...Object.fromEntries(
+          Array.from(mockKvStorage.entries())
+            .filter(([k]) => k.startsWith("sources:referral:input:"))
+            .map(([, v]) => {
+              const parsed = JSON.parse(v as string);
+              return [parsed.code.toLowerCase(), parsed.id];
+            }),
+        ),
+        [referral.code.toLowerCase()]: referral.id,
+      }),
+    );
+  }
+
   beforeEach(async () => {
     mockKvStorage = new Map();
     // Set up auth
@@ -63,34 +116,15 @@ describe("Referral Deactivation", () => {
   });
 
   it("should deactivate a referral via POST /api/referrals/:code/deactivate", async () => {
-    // Seed a referral
-    const referral = {
-      id: "123",
-      code: "MYCODE",
-      status: "active",
-      url: "https://example.com/ref",
-      domain: "example.com",
-    };
-    mockKvStorage.set("sources:referral:input:123", JSON.stringify(referral));
-    mockKvStorage.set(
-      "sources:referral:index:code",
-      JSON.stringify({ mycode: "123" }),
-    );
+    seedReferral({ id: "123", code: "MYCODE", status: "active" });
 
-    const request = new Request(
-      "http://localhost/api/referrals/MYCODE/deactivate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify({ id: "123", reason: "test" }),
-      },
+    const request = createAuthenticatedPostRequest(
+      "/api/referrals/MYCODE/deactivate",
+      { id: "123", reason: "test" },
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = (await response.json()) as any;
+    const body = await response.json();
 
     if (response.status !== 200) {
       console.log("Error response:", JSON.stringify(body, null, 2));
@@ -102,16 +136,9 @@ describe("Referral Deactivation", () => {
   });
 
   it("should return 404 for non-existent referral deactivation", async () => {
-    const request = new Request(
-      "http://localhost/api/referrals/NONEXISTENT/deactivate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify({ id: "999", reason: "test" }),
-      },
+    const request = createAuthenticatedPostRequest(
+      "/api/referrals/NONEXISTENT/deactivate",
+      { id: "999", reason: "test" },
     );
 
     const response = await worker.fetch(request, mockEnv);
@@ -119,70 +146,19 @@ describe("Referral Deactivation", () => {
   });
 
   it("should reactivate a referral via POST /api/referrals/:code/reactivate", async () => {
-    // Seed an inactive referral
-    const referral = {
-      id: "456",
-      code: "INACTIVE",
-      status: "inactive",
-      url: "https://example.com/ref",
-      domain: "example.com",
-    };
-    mockKvStorage.set("sources:referral:input:456", JSON.stringify(referral));
-    mockKvStorage.set(
-      "sources:referral:index:code",
-      JSON.stringify({ inactive: "456" }),
-    );
+    seedReferral({ id: "456", code: "INACTIVE", status: "inactive" });
 
-    const request = new Request(
-      "http://localhost/api/referrals/INACTIVE/reactivate",
-      {
-        method: "POST",
-        headers: {
-          ...authHeader,
-        },
-      },
+    const request = createAuthenticatedPostRequest(
+      "/api/referrals/INACTIVE/reactivate",
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = (await response.json()) as any;
+    const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.referral.status).toBe("active");
   });
-
-  // --- Helper: seed referral data into mock KV ---
-  function seedReferral(data: {
-    id: string;
-    code: string;
-    status: string;
-    url?: string;
-    domain?: string;
-    reason?: string;
-  }) {
-    const ref = {
-      url: "https://example.com/ref",
-      domain: "example.com",
-      ...data,
-    };
-    mockKvStorage.set(`sources:referral:input:${data.id}`, JSON.stringify(ref));
-    mockKvStorage.set(
-      "sources:referral:index:code",
-      JSON.stringify({ [data.code.toLowerCase()]: data.id }),
-    );
-  }
-
-  // --- Helper: create an authenticated POST request ---
-  function createAuthenticatedPostRequest(path: string, body?: object) {
-    return new Request(`http://localhost${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeader,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
 
   it("should return 409 when reactivating an already active referral", async () => {
     seedReferral({
@@ -196,7 +172,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = await response.json();
 
     expect(response.status).toBe(409);
     expect(body.error).toBe("Conflict");
@@ -208,7 +184,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv);
-    const body = (await response.json()) as Record<string, unknown>;
+    const body = await response.json();
 
     expect(response.status).toBe(404);
     expect(body.error).toBe("Referral not found");
@@ -221,6 +197,7 @@ describe("Referral Deactivation", () => {
       status: "active",
     });
 
+    // 1. Deactivate
     const deactivateRequest = createAuthenticatedPostRequest(
       "/api/referrals/ROUND_TRIP/deactivate",
       { id: "round-trip-123", reason: "Testing round-trip" },
@@ -229,17 +206,18 @@ describe("Referral Deactivation", () => {
     const deactivateResponse = await worker.fetch(deactivateRequest, mockEnv);
     expect(deactivateResponse.status).toBe(200);
 
+    // Verify it's inactive
     const getRequest1 = new Request(
       "http://localhost/api/referrals/ROUND_TRIP",
       {
         method: "GET",
-        headers: authHeader,
       },
     );
     const getResponse1 = await worker.fetch(getRequest1, mockEnv);
-    const body1 = (await getResponse1.json()) as Record<string, unknown>;
-    expect((body1.referral as Record<string, unknown>).status).toBe("inactive");
+    const body1 = await getResponse1.json();
+    expect(body1.referral.status).toBe("inactive");
 
+    // 2. Reactivate
     const reactivateRequest = createAuthenticatedPostRequest(
       "/api/referrals/ROUND_TRIP/reactivate",
     );
@@ -247,39 +225,27 @@ describe("Referral Deactivation", () => {
     const reactivateResponse = await worker.fetch(reactivateRequest, mockEnv);
     expect(reactivateResponse.status).toBe(200);
 
+    // Verify it's active again
     const getRequest2 = new Request(
       "http://localhost/api/referrals/ROUND_TRIP",
       {
         method: "GET",
-        headers: authHeader,
       },
     );
     const getResponse2 = await worker.fetch(getRequest2, mockEnv);
-    const body2 = (await getResponse2.json()) as Record<string, unknown>;
-    expect((body2.referral as Record<string, unknown>).status).toBe("active");
+    const body2 = await getResponse2.json();
+    expect(body2.referral.status).toBe("active");
   });
+
   it("should return referral details via GET /api/referrals/:code", async () => {
-    // Seed a referral
-    const referral = {
-      id: "789",
-      code: "GETME",
-      status: "active",
-      url: "https://example.com/ref",
-      domain: "example.com",
-    };
-    mockKvStorage.set("sources:referral:input:789", JSON.stringify(referral));
-    mockKvStorage.set(
-      "sources:referral:index:code",
-      JSON.stringify({ getme: "789" }),
-    );
+    seedReferral({ id: "789", code: "GETME", status: "active" });
 
     const request = new Request("http://localhost/api/referrals/GETME", {
       method: "GET",
-      headers: authHeader,
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = (await response.json()) as any;
+    const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.referral.code).toBe("GETME");

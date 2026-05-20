@@ -99,7 +99,7 @@ export async function handleBulkImport(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const clientId = await getClientIdentifier(request);
+  const clientId = getClientIdentifier(request);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,

@@ -191,7 +191,7 @@ export function validateResourceReadParams(
 // ============================================================================
 
 export async function checkMCPRateLimit(request: Request, env: Env) {
-  const clientId = await getClientIdentifier(request);
+  const clientId = getClientIdentifier(request);
   return checkRateLimit(env, clientId, "/mcp");
 }
 

@@ -398,7 +398,7 @@ export async function handleConversationMessage(
 
   // Advance to next step
   advanceConversationStep(userId);
-  const nextStep = conversation.steps[nextStepIndex] as ConversationStep;
+  const nextStep = conversation.steps[nextStepIndex];
 
   return {
     success: true,

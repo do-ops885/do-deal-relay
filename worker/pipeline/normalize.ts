@@ -3,6 +3,15 @@ import { generateDealId } from "../lib/crypto";
 import { batchAutoCategorize } from "../lib/categorization";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const NORMALIZE_CONSTANTS = {
+  MIN_CODE_LENGTH: 4,
+  MAX_CODE_LENGTH: 50,
+} as const;
+
+// ============================================================================
 // Normalization Pipeline
 // ============================================================================
 
@@ -163,7 +172,11 @@ export function verifyNormalization(deals: Deal[]): {
     }
 
     // Check code format (alphanumeric, reasonable length)
-    if (!/^[A-Z0-9_-]{4,50}$/.test(deal.code)) {
+    if (
+      !new RegExp(
+        `^[A-Z0-9_-]{${NORMALIZE_CONSTANTS.MIN_CODE_LENGTH},${NORMALIZE_CONSTANTS.MAX_CODE_LENGTH}}$`,
+      ).test(deal.code)
+    ) {
       issues.push(`Deal ${deal.id}: suspicious code format ${deal.code}`);
     }
 

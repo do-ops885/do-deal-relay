@@ -1,215 +1,233 @@
-.
-./extension
-./extension/content.js
-./extension/background.js
-./extension/popup.html
-./extension/manifest.json
-./extension/icons
-./extension/README.md
-./extension/popup.js
-./public
-./public/deals-research.md
-./public/deals.json
-./GEMINI.md
-./wrangler.jsonc
-./package-lock.json
-./CHANGELOG.md
-./agents-docs
-./agents-docs/agents
-./agents-docs/SYSTEM_REFERENCE.md
-./agents-docs/AGENTS_REGISTRY.md
-./agents-docs/guard-rails.md
-./agents-docs/SKILLS.md
-./agents-docs/CONTEXT.md
-./agents-docs/url-handling.md
-./agents-docs/coordination
-./agents-docs/quality-standards.md
-./agents-docs/handoffs
-./agents-docs/HOOKS.md
-./agents-docs/NEVER-BYPASS-SYSTEM.md
-./agents-docs/KNOWN_ISSUES.md
-./agents-docs/HARNESS.md
-./agents-docs/lessons.jsonl
-./agents-docs/features
-./agents-docs/PROJECT_STRUCTURE.md
-./agents-docs/SUB-AGENTS.md
-./agents-docs/README.md
-./agents-docs/LESSONS.md
-./agents-docs/GUARD_RAILS.md
-./NOTICE
-./reports
-./reports/IMPLEMENTATION_SUMMARY_2026-04-03.md
-./reports/as-any-audit.md
-./reports/benchmark-v0.1.5.json
-./reports/SWARM_ANALYSIS_2026-04-03.md
-./reports/IMPLEMENTATION_SUMMARY.md
-./reports/load-tests
-./reports/LOAD_TEST_RESULTS.md
-./reports/benchmark-v0.1.6.json
-./reports/analysis
-./reports/implementation_summary.md
-./reports/archived_plans
-./reports/README.md
-./playwright.config.ts
-./docs
-./docs/QUICK_START_DEPLOYMENT.md
-./docs/MIGRATION.md
-./docs/SECURITY_ADVISORY.md
-./docs/ROLLBACK_PROCEDURES.md
-./docs/BEST_PRACTICES.md
-./docs/openapi.yaml
-./docs/FEATURE_FLAGS.md
-./docs/MCP.md
-./docs/LEGAL_COMPLIANCE.md
-./docs/API.md
-./docs/INDEX.md
-./docs/DEPLOYMENT_STEPS.md
-./docs/AGENTS.md
-./docs/QUICKSTART.md
-./docs/DEPLOYMENT.md
-./docs/SECRETS_CONFIGURATION.md
-./docs/PERFORMANCE.md
-./codecov.yml
-./plans
-./plans/swarm-suggestions-round-6.md
-./plans/swarm-status-report.md
-./plans/github-automation-plan.md
-./plans/multi-agent-workflow.md
-./plans/jules-usage-evals-final-swarm.md
-./plans/jules-audit
-./plans/swarm-suggestions-round-4.md
-./plans/ADR-005-scheduled-benchmarks.md
-./plans/dependabot-npm-integration.md
-./plans/patch-release-v0.1.4-execution.md
-./plans/swarm-pr-register.md
-./plans/ADR-003-patch-release-v0.1.4.md
-./plans/jules-usage-evals-auto-generation.md
-./plans/ADR-004-observability-enablement.md
-./plans/ADR-005-jules-api-docs-correction.md
-./plans/jules-api-docs-correction.md
-./plans/ts-strictness-merge-swarm.md
-./plans/ADR-006-root-folder-hygiene.md
-./plans/swarm-suggestions-round-3.md
-./plans/swarm-suggestions-round-2.md
-./plans/swarm-freshness-quality-commit.md
-./plans/INDEX.md
-./plans/pr-225-stabilization.md
-./plans/PROGRESS.md
-./plans/swarm-stats-fix-and-quality-gate.md
-./plans/ADR-002-e2e-testing-strategy.md
-./plans/manual-entry-ux-implementation.md
-./plans/swarm-three-suggestions.md
-./plans/comparison-caching.md
-./plans/GOAP_IMPROVEMENTS_2026-05-11.md
-./plans/swarm-suggestions-round-5.md
-./plans/swarm-execution-plan.md
-./plans/sprint-v0.1.5.md
-./plans/swarm-execute-all-suggestions.md
-./plans/sprint-v0.1.6.md
-./plans/swarm-fix-as-any-casts.md
-./plans/ADR-002-manual-entry-ux-enhancements.md
-./plans/README.md
-./plans/jules-api-live-test-and-enrichment.md
-./temp
-./temp/progress-2026-04-01.md
-./temp/handoff-swarm-coordination.md
-./temp/research-eu-ai-act.md
-./temp/handoff-setup.md
-./temp/handoff-webhook.md
-./temp/state.json
-./temp/handoff-extension.md
-./temp/handoff-security-agent-results.md
-./temp/handoff-swarm-016-quality-gate.md
-./temp/handoff-npm-agent-results.md
-./temp/handoff-validate-001.md
-./temp/handoff-email.md
-./temp/ai-agent-self-test.ts
-./temp/handoff-audit-agent-results.md
-./temp/handoff-bot.md
-./temp/research-ai-agent-ecosystem.md
-./temp/test-referral-url.ts
-./temp/codeql-setup-status.md
-./temp/handoff-node-agent-results.md
-./temp/handoff-agents-optimization.md
-./temp/cleanup-summary-001.md
-./commitlint.config.cjs
-./state.json
-./scripts
-./scripts/generate-release-body.sh
-./scripts/release.sh
-./scripts/pre-commit-hook.sh
-./scripts/validate-url-preservation.ts
-./scripts/seed-kv.sh
-./scripts/generate-wrangler-ci.sh
-./scripts/init-kv-data.sh
-./scripts/setup-skills.sh
-./scripts/validate-commit-message.sh
-./scripts/test-trufflehog-validate.txt
-./scripts/test_exit.sh
-./scripts/production_sim.ts
-./scripts/validate-dependabot.js
-./scripts/refcli.ts
-./scripts/update-agents-registry.sh
-./scripts/cli
-./scripts/release-pr.sh
-./scripts/check-directory-organization.sh
-./scripts/validate-dependabot.sh
-./scripts/pre-push-hook.sh
-./scripts/run_act_local.sh
-./scripts/update-docs.sh
-./scripts/generate-changelog.sh
-./scripts/validate-codes.sh
-./scripts/check-evals-freshness.sh
-./scripts/verify-deployment.sh
-./scripts/run-tests-ci.sh
-./scripts/setup-skill-scaffolding.py
-./scripts/seed-local-kv.sh
-./scripts/verify.sh
-./scripts/ai-commit.sh
-./scripts/generate-version.sh
-./scripts/quality_gate.sh
-./scripts/benchmark_pipeline.ts
-./scripts/validate-skills.sh
-./scripts/gh-labels-creator.sh
-./CONTRIBUTING.md
-./opencode.json
-./CLAUDE.md
-./AGENTS.md
-./SECURITY.md
-./bot
-./bot/commands
-./bot/telegram
-./bot/api-client.ts
-./bot/conversations.ts
-./bot/discord
-./bot/README.md
-./QWEN.md
-./tsconfig.json
-./package.json
-./VERSION
-./README.md
-./tests
-./tests/fixtures
-./tests/smoke
-./tests/browser
-./tests/integration
-./tests/unit
-./tests/e2e
-./tests/load
-./worker
-./worker/state-machine.ts
-./worker/pipeline
-./worker/publish.ts
-./worker/db
-./worker/config.ts
-./worker/index.ts
-./worker/validation
-./worker/email
-./worker/notify.ts
-./worker/routes
-./worker/types.ts
-./worker/version.ts
-./worker/lib
-./worker/types
-./markdownlint.toml
-./vitest.config.ts
+# Audit Snapshot - 2026-05-20
+## Repository Layout
+- **Manifests**: package.json
+- **Languages**: TypeScript
+- **Test Runner**: vitest
+- **Quality Gate**: bash scripts/quality_gate.sh
+- **Audit Directory**: plans/jules-audit/
+
+## Source File Statistics
+    505 worker/state-machine.ts
+    244 worker/pipeline/score.ts
+    247 worker/pipeline/discover.ts
+    135 worker/pipeline/validate-fast-path.ts
+    193 worker/pipeline/normalize.ts
+    130 worker/pipeline/stage.ts
+    302 worker/pipeline/discovery-utils.ts
+    300 worker/pipeline/dedupe.ts
+     35 worker/pipeline/comparison.ts
+    144 worker/publish.ts
+    324 worker/config.ts
+    425 worker/index.ts
+    318 worker/validation/pipeline.ts
+     52 worker/validation/types.ts
+     21 worker/validation/gates/freshness.ts
+     16 worker/validation/gates/schema-validation.ts
+     18 worker/validation/gates/trust-score.ts
+     38 worker/validation/gates/normalization-verification.ts
+     72 worker/validation/gates/snapshot-hash-verification.ts
+     26 worker/validation/gates/duplicate-check.ts
+     28 worker/validation/gates/second-pass-validation.ts
+     19 worker/validation/gates/idempotency-check.ts
+     37 worker/validation/gates/price-sanity.ts
+    186 worker/email/templates/commands.ts
+    358 worker/email/templates/responses.ts
+     37 worker/email/templates/index.ts
+      9 worker/email/templates/types.ts
+     14 worker/email/templates.ts
+    462 worker/email/extraction.ts
+      4 worker/email/handler.ts
+      2 worker/email/handlers/parse.ts
+    316 worker/email/handlers/commands.ts
+     11 worker/email/handlers/index.ts
+    114 worker/email/handlers/incoming.ts
+     31 worker/email/handlers/utils.ts
+      2 worker/email/handlers/help.ts
+    178 worker/email/handlers/forwarded.ts
+     19 worker/email/index.ts
+    128 worker/email/types.ts
+      9 worker/email/patterns.ts
+     35 worker/email/patterns/index.ts
+    173 worker/email/patterns/command.ts
+    457 worker/email/patterns/referral.ts
+    452 worker/email/security.ts
+    307 worker/notify.ts
+    176 worker/routes/email.ts
+     46 worker/routes/core/analytics.ts
+    215 worker/routes/core/health.ts
+     17 worker/routes/core/index.ts
+    292 worker/routes/core/deals.ts
+     82 worker/routes/core/pipeline.ts
+    151 worker/routes/core/submit.ts
+    468 worker/routes/referrals.ts
+     52 worker/routes/mcp/resources.ts
+    359 worker/routes/mcp/index.ts
+     82 worker/routes/mcp/tools.ts
+    198 worker/routes/mcp/utils.ts
+     40 worker/routes/mcp/initialize.ts
+    453 worker/routes/validation.ts
+    174 worker/routes/experience.ts
+    258 worker/routes/utils.ts
+    340 worker/routes/bulk/import.ts
+    380 worker/routes/bulk/export.ts
+     12 worker/routes/bulk/index.ts
+     28 worker/routes/webhooks.ts
+     91 worker/routes/d1/index.ts
+    141 worker/routes/d1/admin.ts
+    202 worker/routes/d1/deals.ts
+    120 worker/routes/d1/stats.ts
+    113 worker/routes/d1/search.ts
+    105 worker/routes/webhooks/index.ts
+    106 worker/routes/webhooks/incoming.ts
+     96 worker/routes/webhooks/sync.ts
+     77 worker/routes/webhooks/types.ts
+    376 worker/routes/webhooks/subscriptions.ts
+     72 worker/routes/nlq/index.ts
+    423 worker/routes/nlq/handlers.ts
+    121 worker/routes/nlq/service.ts
+     37 worker/routes/nlq/utils.ts
+    602 worker/types.ts
+      3 worker/version.ts
+    653 worker/lib/referral-storage/dual-write.ts
+     28 worker/lib/referral-storage/index.ts
+    102 worker/lib/referral-storage/types.ts
+    196 worker/lib/referral-storage/crud.ts
+    235 worker/lib/referral-storage/search.ts
+    464 worker/lib/circuit-breaker.ts
+    102 worker/lib/error-handler.ts
+    122 worker/lib/config-utils.ts
+    297 worker/lib/rate-limit.ts
+     54 worker/lib/webhook/index.ts
+    477 worker/lib/webhook/incoming.ts
+    193 worker/lib/webhook/types.ts
+    276 worker/lib/webhook/subscriptions.ts
+    302 worker/lib/webhook/delivery.ts
+    799 worker/lib/validation/url-validator.ts
+    719 worker/lib/validation/code-validator.ts
+    763 worker/lib/validation/reward-scraper.ts
+     97 worker/lib/mcp/handlers/report.ts
+    203 worker/lib/mcp/handlers/discovery.ts
+     51 worker/lib/mcp/handlers/logging.ts
+    161 worker/lib/mcp/handlers/referrals.ts
+     86 worker/lib/mcp/handlers/validation.ts
+     74 worker/lib/mcp/handlers/pipeline.ts
+     45 worker/lib/mcp/handlers/categories.ts
+    112 worker/lib/mcp/handlers/experience.ts
+     64 worker/lib/mcp/handlers/stats.ts
+    141 worker/lib/mcp/handlers/nlq.ts
+    141 worker/lib/mcp/handlers/search.ts
+     76 worker/lib/mcp/handlers/research.ts
+    408 worker/lib/mcp/resources.ts
+    513 worker/lib/mcp/types.ts
+    140 worker/lib/mcp/utils.ts
+    172 worker/lib/mcp/tools/user.ts
+    101 worker/lib/mcp/tools/index.ts
+    178 worker/lib/mcp/tools/system.ts
+    192 worker/lib/mcp/tools/deals.ts
+    130 worker/lib/mcp/tools/research.ts
+    355 worker/lib/cache.ts
+    414 worker/lib/categorization/definitions.ts
+    103 worker/lib/categorization/index.ts
+    136 worker/lib/categorization/scoring.ts
+    403 worker/lib/guard-rails.ts
+    453 worker/lib/rate-limit-kv.ts
+    333 worker/lib/ranking.ts
+    109 worker/lib/explainability.ts
+    145 worker/lib/github/workflows.ts
+      3 worker/lib/github/index.ts
+     40 worker/lib/github/types.ts
+    291 worker/lib/github/core.ts
+      2 worker/lib/metrics/index.ts
+    479 worker/lib/metrics/stats.ts
+    216 worker/lib/metrics/core.ts
+    217 worker/lib/hmac.ts
+     12 worker/lib/logger/export.ts
+      5 worker/lib/logger/index.ts
+    151 worker/lib/logger/legacy.ts
+    123 worker/lib/logger/structured.ts
+     40 worker/lib/logger/types.ts
+    156 worker/lib/logger/query.ts
+    295 worker/lib/auth.ts
+     10 worker/lib/logger.ts
+    289 worker/lib/storage.ts
+    169 worker/lib/utils.ts
+    477 worker/lib/webhook-sdk.ts
+    284 worker/lib/analytics/calculators.ts
+    122 worker/lib/analytics/index.ts
+     64 worker/lib/analytics/types.ts
+    386 worker/lib/analytics/dashboard.ts
+    289 worker/lib/expiration-manager.ts
+    192 worker/lib/security.ts
+    512 worker/lib/d1/client.ts
+     62 worker/lib/d1/index.ts
+    162 worker/lib/d1/experience.ts
+    974 worker/lib/d1/queries.ts
+    642 worker/lib/d1/migrations.ts
+    121 worker/lib/expiration/scheduling.ts
+    180 worker/lib/expiration/index.ts
+    253 worker/lib/expiration/validation.ts
+     88 worker/lib/expiration/mark-expired.ts
+    237 worker/lib/expiration/notifications.ts
+    116 worker/lib/expiration/finding.ts
+    433 worker/lib/feature-flags.ts
+     52 worker/lib/validation-cache/key.ts
+     62 worker/lib/validation-cache/index-repository.ts
+     44 worker/lib/validation-cache/repository.ts
+     48 worker/lib/research-agent/generic-fetcher.ts
+    557 worker/lib/research-agent/orchestrator.ts
+    404 worker/lib/research-agent/fetcher.ts
+    201 worker/lib/research-agent/api-fetchers.ts
+     76 worker/lib/research-agent/orchestrator-utils.ts
+     52 worker/lib/research-agent/transformers.ts
+     15 worker/lib/research-agent/index.ts
+     40 worker/lib/research-agent/extractor-logic.ts
+    628 worker/lib/research-agent/types.ts
+     44 worker/lib/research-agent/extractor-utils.ts
+     28 worker/lib/research-agent/rate-limiter.ts
+    154 worker/lib/research-agent/sources.ts
+     58 worker/lib/html-utils.ts
+    462 worker/lib/eu-ai-act-logger.ts
+    129 worker/lib/global-logger.ts
+    135 worker/lib/crypto.ts
+    216 worker/lib/lock.ts
+     16 worker/lib/nlq/hybrid-classifier.ts
+    263 worker/lib/nlq/intent.ts
+     24 worker/lib/nlq/ai-enhancer.ts
+     49 worker/lib/nlq/index.ts
+     88 worker/lib/nlq/parser.ts
+    338 worker/lib/nlq/types.ts
+    116 worker/lib/nlq/query-builder/sql.ts
+    167 worker/lib/nlq/query-builder/executor.ts
+    220 worker/lib/nlq/query-builder/index.ts
+     71 worker/lib/nlq/query-builder/explanation.ts
+     79 worker/lib/nlq/ai/intent.ts
+    102 worker/lib/nlq/ai/expansion.ts
+    316 worker/lib/nlq/ai/index.ts
+     56 worker/lib/nlq/ai/types.ts
+    228 worker/lib/nlq/ai/entities.ts
+    102 worker/lib/nlq/lexer.ts
+     68 worker/lib/nlq/hybrid/ai-decision.ts
+    234 worker/lib/nlq/hybrid/index.ts
+    335 worker/lib/nlq/hybrid/rule-classifier.ts
+    373 worker/lib/nlq/entities.ts
+     17 worker/types/validation-cache.ts
+     99 bot/commands/index.ts
+    181 bot/commands/admin.ts
+     48 bot/commands/types.ts
+     27 bot/commands/utils.ts
+    347 bot/commands/referral.ts
+     78 bot/commands/research.ts
+    467 bot/telegram/index.ts
+    414 bot/api-client.ts
+    423 bot/conversations.ts
+    141 bot/discord/commands.ts
+     54 bot/discord/permissions.ts
+    180 bot/discord/index.ts
+    276 bot/discord/handlers.ts
+     40 bot/discord/types.ts
+     35 bot/discord/ratelimit.ts
+     86 bot/discord/embeds.ts
+    445 extension/content.js
+    420 extension/background.js
+    495 extension/popup.js
+  43774 total

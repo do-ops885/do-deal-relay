@@ -119,43 +119,43 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
 describe("GENERIC_PATTERNS - codePatterns", () => {
   it("should match 'code: ABC123'", () => {
-    const match: RegExpMatchArray | null = "Your code: ABCDEF123".match(
+    const match = "Your code: ABCDEF123".match(
       GENERIC_PATTERNS.codePatterns[0],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("ABCDEF123");
+    expect(match![1]).toBe("ABCDEF123");
   });
 
   it("should match 'code-XYZ' dash separator", () => {
-    const match: RegExpMatchArray | null = "Enter code-PROMO99 now".match(
+    const match = "Enter code-PROMO99 now".match(
       GENERIC_PATTERNS.codePatterns[0],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("PROMO99");
+    expect(match![1]).toBe("PROMO99");
   });
 
   it("should match 'use code ABC'", () => {
-    const match: RegExpMatchArray | null = "Please use code USEME123".match(
+    const match = "Please use code USEME123".match(
       GENERIC_PATTERNS.codePatterns[1],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("USEME123");
+    expect(match![1]).toBe("USEME123");
   });
 
   it("should match 'your referral code'", () => {
-    const match: RegExpMatchArray | null = "Your referral code: REF456".match(
+    const match = "Your referral code: REF456".match(
       GENERIC_PATTERNS.codePatterns[2],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("REF456");
+    expect(match![1]).toBe("REF456");
   });
 
   it("should match 'code' with quotes", () => {
-    const match: RegExpMatchArray | null = 'Your code: "QUOTED123"'.match(
+    const match = 'Your code: "QUOTED123"'.match(
       GENERIC_PATTERNS.codePatterns[0],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("QUOTED123");
+    expect(match![1]).toBe("QUOTED123");
   });
 
   it("should not match codes shorter than 4 characters", () => {
@@ -167,42 +167,33 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 
 describe("GENERIC_PATTERNS - rewardPatterns", () => {
   it("should match dollar reward", () => {
-    const match: RegExpMatchArray | null = "Get $20 credit".match(
-      GENERIC_PATTERNS.rewardPatterns[0],
-    );
+    const match = "Get $20 credit".match(GENERIC_PATTERNS.rewardPatterns[0]);
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("$20 credit");
+    expect(match![1]).toBe("$20 credit");
   });
 
   it("should match percentage reward", () => {
-    const match: RegExpMatchArray | null = "Earn 15% off".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
-    );
+    const match = "Earn 15% off".match(GENERIC_PATTERNS.rewardPatterns[1]);
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("15%");
+    expect(match![1]).toBe("15%");
   });
 
   it("should match GB storage reward", () => {
-    const match: RegExpMatchArray | null = "Get 500 GB bonus".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
-    );
+    const match = "Get 500 GB bonus".match(GENERIC_PATTERNS.rewardPatterns[1]);
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("500 GB");
+    expect(match![1]).toBe("500 GB");
   });
 
   it("should match MB storage reward", () => {
-    const match: RegExpMatchArray | null = "Earn 256 MB extra".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
-    );
+    const match = "Earn 256 MB extra".match(GENERIC_PATTERNS.rewardPatterns[1]);
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("256 MB");
+    expect(match![1]).toBe("256 MB");
   });
 
   it("should match 'earn' pattern", () => {
-    const match: RegExpMatchArray | null =
-      "Earn a free month when you invite".match(
-        GENERIC_PATTERNS.rewardPatterns[2],
-      );
+    const match = "Earn a free month when you invite".match(
+      GENERIC_PATTERNS.rewardPatterns[2],
+    );
     expect(match).not.toBeNull();
     expect(match![1].trim()).toBe("a free month");
   });
@@ -210,27 +201,27 @@ describe("GENERIC_PATTERNS - rewardPatterns", () => {
 
 describe("GENERIC_PATTERNS - expiryPatterns", () => {
   it("should match 'expires: date'", () => {
-    const match: RegExpMatchArray | null = "Expires: 2026-12-31".match(
+    const match = "Expires: 2026-12-31".match(
       GENERIC_PATTERNS.expiryPatterns[0],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("2026-12-31");
+    expect(match![1]).toBe("2026-12-31");
   });
 
   it("should match 'valid until: date'", () => {
-    const match: RegExpMatchArray | null = "Valid until: 01/15/2027".match(
+    const match = "Valid until: 01/15/2027".match(
       GENERIC_PATTERNS.expiryPatterns[0],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("01/15/2027");
+    expect(match![1]).toBe("01/15/2027");
   });
 
   it("should match 'ends on date'", () => {
-    const match: RegExpMatchArray | null = "Valid until March 15, 2026".match(
+    const match = "Valid until March 15, 2026".match(
       GENERIC_PATTERNS.expiryPatterns[1],
     );
     expect(match).not.toBeNull();
-    if (match && match[1]) expect(match[1]).toBe("March 15, 2026");
+    expect(match![1]).toBe("March 15, 2026");
   });
 });
 
@@ -240,35 +231,33 @@ describe("GENERIC_PATTERNS - expiryPatterns", () => {
 
 describe("SERVICE_PATTERNS", () => {
   it("should have Uber pattern", () => {
-    expect(SERVICE_PATTERNS.uber!).toBeDefined();
-    expect(SERVICE_PATTERNS.uber!?.serviceName).toBe("Uber");
-    expect(SERVICE_PATTERNS.uber!?.category).toBe("transportation");
+    expect(SERVICE_PATTERNS.uber).toBeDefined();
+    expect(SERVICE_PATTERNS.uber.serviceName).toBe("Uber");
+    expect(SERVICE_PATTERNS.uber.category).toBe("transportation");
   });
 
   it("should have Airbnb pattern", () => {
-    expect(SERVICE_PATTERNS.airbnb!).toBeDefined();
-    expect(SERVICE_PATTERNS.airbnb!?.serviceName).toBe("Airbnb");
-    expect(SERVICE_PATTERNS.airbnb!?.category).toBe("travel");
+    expect(SERVICE_PATTERNS.airbnb).toBeDefined();
+    expect(SERVICE_PATTERNS.airbnb.serviceName).toBe("Airbnb");
+    expect(SERVICE_PATTERNS.airbnb.category).toBe("travel");
   });
 
   it("should have Picnic pattern with German keywords", () => {
-    expect(SERVICE_PATTERNS.picnic!).toBeDefined();
-    expect(SERVICE_PATTERNS.picnic!?.serviceName).toBe("Picnic");
-    expect(SERVICE_PATTERNS.picnic!?.subject.test("Deine Einladung")).toBe(
-      true,
-    );
+    expect(SERVICE_PATTERNS.picnic).toBeDefined();
+    expect(SERVICE_PATTERNS.picnic.serviceName).toBe("Picnic");
+    expect(SERVICE_PATTERNS.picnic.subject.test("Deine Einladung")).toBe(true);
   });
 
   it("should have Dropbox pattern", () => {
-    expect(SERVICE_PATTERNS.dropbox!).toBeDefined();
-    expect(SERVICE_PATTERNS.dropbox!?.serviceName).toBe("Dropbox");
-    expect(SERVICE_PATTERNS.dropbox!?.category).toBe("cloud_storage");
+    expect(SERVICE_PATTERNS.dropbox).toBeDefined();
+    expect(SERVICE_PATTERNS.dropbox.serviceName).toBe("Dropbox");
+    expect(SERVICE_PATTERNS.dropbox.category).toBe("cloud_storage");
   });
 
   it("should have Robinhood pattern", () => {
-    expect(SERVICE_PATTERNS.robinhood!).toBeDefined();
-    expect(SERVICE_PATTERNS.robinhood!?.serviceName).toBe("Robinhood");
-    expect(SERVICE_PATTERNS.robinhood!?.category).toBe("finance");
+    expect(SERVICE_PATTERNS.robinhood).toBeDefined();
+    expect(SERVICE_PATTERNS.robinhood.serviceName).toBe("Robinhood");
+    expect(SERVICE_PATTERNS.robinhood.category).toBe("finance");
   });
 
   it("should have all required fields for each pattern", () => {
@@ -284,13 +273,13 @@ describe("SERVICE_PATTERNS", () => {
   });
 
   it("should have Uber sender pattern matching @uber.com", () => {
-    expect(SERVICE_PATTERNS.uber!?.sender.test("noreply@uber.com")).toBe(true);
-    expect(SERVICE_PATTERNS.uber!?.sender.test("noreply@lyft.com")).toBe(false);
+    expect(SERVICE_PATTERNS.uber.sender.test("noreply@uber.com")).toBe(true);
+    expect(SERVICE_PATTERNS.uber.sender.test("noreply@lyft.com")).toBe(false);
   });
 
   it("should have Uber URL patterns matching invite links", () => {
     expect(
-      SERVICE_PATTERNS.uber!?.urlPatterns.some((p) =>
+      SERVICE_PATTERNS.uber.urlPatterns.some((p) =>
         p.test("https://uber.com/invite/abc123"),
       ),
     ).toBe(true);
@@ -298,7 +287,7 @@ describe("SERVICE_PATTERNS", () => {
 
   it("should have Airbnb URL patterns matching /c/ links", () => {
     expect(
-      SERVICE_PATTERNS.airbnb!?.urlPatterns.some((p) =>
+      SERVICE_PATTERNS.airbnb.urlPatterns.some((p) =>
         p.test("https://airbnb.com/c/johnsmith"),
       ),
     ).toBe(true);

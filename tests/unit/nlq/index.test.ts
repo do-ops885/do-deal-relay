@@ -97,7 +97,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(405);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("METHOD_NOT_ALLOWED");
       expect(body.error).toBe("Method not allowed");
     });
@@ -111,7 +111,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(405);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("METHOD_NOT_ALLOWED");
     });
 
@@ -122,7 +122,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(404);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("NOT_FOUND");
       expect(body.error).toBe("Not found");
     });
@@ -134,7 +134,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(404);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.error).toBe("Not found");
     });
 

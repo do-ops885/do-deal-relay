@@ -243,7 +243,7 @@ export async function handleButtonInteraction(
     case "get": {
       const command = findCommand("get", "discord");
       if (command) {
-        const result = await command.execute(ctx, [data || ""], api);
+        const result = await command.execute(ctx, [data], api);
         const embed = createCommandEmbed(result);
         await interaction.update({ embeds: [embed], components: [] });
       }
@@ -252,11 +252,7 @@ export async function handleButtonInteraction(
     case "deactivate": {
       const command = findCommand("deactivate", "discord");
       if (command) {
-        const result = await command.execute(
-          ctx,
-          [data || "", "user_request"],
-          api,
-        );
+        const result = await command.execute(ctx, [data, "user_request"], api);
         const embed = createCommandEmbed(result);
         await interaction.update({ embeds: [embed], components: [] });
       }
@@ -265,7 +261,7 @@ export async function handleButtonInteraction(
     case "reactivate": {
       const command = findCommand("reactivate", "discord");
       if (command) {
-        const result = await command.execute(ctx, [data || ""], api);
+        const result = await command.execute(ctx, [data], api);
         const embed = createCommandEmbed(result);
         await interaction.update({ embeds: [embed], components: [] });
       }

@@ -72,6 +72,8 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
       get: vi.fn(async () => null),
       put: vi.fn(async () => {}),
     } as unknown as KVNamespace,
+    DEALS_PROD: {} as KVNamespace,
+    DEALS_LOG: {} as KVNamespace,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
@@ -84,69 +86,11 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
 };
 
 describe("Experience API Endpoints", () => {
-  const authHeader = { "X-API-Key": "ddr_user_test_key_123" };
-  const adminAuthHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockEnv: Env;
 
-  async function setupTestApiKeys(env: Env) {
-    const encoder = new TextEncoder();
-
-    // User Key
-    const userHashBuffer = await crypto.subtle.digest(
-      "SHA-256",
-      encoder.encode("ddr_user_test_key_123"),
-    );
-    const userHash = Array.from(new Uint8Array(userHashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    // Admin Key
-    const adminHashBuffer = await crypto.subtle.digest(
-      "SHA-256",
-      encoder.encode("ddr_admin_test_key_123"),
-    );
-    const adminHash = Array.from(new Uint8Array(adminHashBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    const mockGet = vi.fn().mockImplementation(async (key: string) => {
-      if (key === `apikey:${userHash}`) {
-        return {
-          userId: "test-user",
-          role: "user",
-          createdAt: new Date().toISOString(),
-        };
-      }
-      if (key === `apikey:${adminHash}`) {
-        return {
-          userId: "test-admin",
-          role: "admin",
-          createdAt: new Date().toISOString(),
-        };
-      }
-      return null;
-    });
-
-    const mockPut = vi.fn().mockResolvedValue(undefined);
-
-    (env.DEALS_SOURCES.get as any) = mockGet;
-    (env.DEALS_SOURCES.put as any) = mockPut;
-
-    if (env.WEBHOOK_API_KEYS) {
-      (env.WEBHOOK_API_KEYS.get as any) = mockGet;
-      (env.WEBHOOK_API_KEYS.put as any) = mockPut;
-    } else {
-      env.WEBHOOK_API_KEYS = {
-        get: mockGet,
-        put: mockPut,
-      } as any;
-    }
-  }
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
     mockEnv = createMockEnv();
-    await setupTestApiKeys(mockEnv);
   });
 
   afterEach(() => {
@@ -157,10 +101,7 @@ describe("Experience API Endpoints", () => {
     it("should return 503 when D1 is not configured", async () => {
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "click",
@@ -170,7 +111,7 @@ describe("Experience API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(503);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.error).toBe("D1 database not configured");
     });
 
@@ -183,14 +124,10 @@ describe("Experience API Endpoints", () => {
           withSession: vi.fn(),
         } as unknown as D1Database,
       });
-      await setupTestApiKeys(envWithDb);
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-          ...authHeader,
-        },
+        headers: { "Content-Type": "text/plain" },
         body: "not json",
       });
 
@@ -208,14 +145,10 @@ describe("Experience API Endpoints", () => {
           withSession: vi.fn(),
         } as unknown as D1Database,
       });
-      await setupTestApiKeys(envWithDb);
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deal_code: "DEAL123" }),
       });
 
@@ -233,14 +166,10 @@ describe("Experience API Endpoints", () => {
           withSession: vi.fn(),
         } as unknown as D1Database,
       });
-      await setupTestApiKeys(envWithDb);
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "invalid_type",
@@ -261,14 +190,10 @@ describe("Experience API Endpoints", () => {
           withSession: vi.fn(),
         } as unknown as D1Database,
       });
-      await setupTestApiKeys(envWithDb);
 
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deal_code: "DEAL123",
           event_type: "click",
@@ -284,9 +209,7 @@ describe("Experience API Endpoints", () => {
 
   describe("GET /api/experience/:deal_code", () => {
     it("should return 503 when D1 is not configured", async () => {
-      const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: authHeader,
-      });
+      const request = new Request("http://localhost/api/experience/DEAL123");
 
       const response = await worker.fetch(request, mockEnv);
 
@@ -311,16 +234,13 @@ describe("Experience API Endpoints", () => {
           }),
         } as unknown as D1Database,
       });
-      await setupTestApiKeys(envWithDb);
 
-      const request = new Request("http://localhost/api/experience/DEAL123", {
-        headers: authHeader,
-      });
+      const request = new Request("http://localhost/api/experience/DEAL123");
 
       const response = await worker.fetch(request, envWithDb);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.total_events).toBe(0);
     });
   });
@@ -337,9 +257,17 @@ describe("Experience API Endpoints", () => {
     });
 
     it("should return 503 when D1 is not configured and authenticated", async () => {
+      // Mock valid admin API key
+      vi.mocked(mockEnv.DEALS_SOURCES.get).mockResolvedValue({
+        userId: "admin-123",
+        role: "admin",
+      });
+
       const request = new Request("http://localhost/api/experience/aggregate", {
         method: "POST",
-        headers: adminAuthHeader,
+        headers: {
+          "X-API-Key": "ddr_admin_123",
+        },
       });
 
       const response = await worker.fetch(request, mockEnv);

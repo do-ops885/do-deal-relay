@@ -28,9 +28,7 @@ async function benchmark() {
   const args = process.argv.slice(2);
   const thresholdIndex = args.indexOf("--threshold");
   const threshold =
-    thresholdIndex !== -1
-      ? parseInt(args[thresholdIndex + 1] || "5000", 10)
-      : 5000;
+    thresholdIndex !== -1 ? parseInt(args[thresholdIndex + 1], 10) : 5000;
   const jsonIndex = args.indexOf("--json");
   const jsonPath = jsonIndex !== -1 ? args[jsonIndex + 1] : null;
 
@@ -133,8 +131,6 @@ async function benchmark() {
 
   // Regression check
   const latestResult = results[results.length - 1];
-  if (!latestResult) throw new Error("No results");
-  if (!latestResult) throw new Error("No results");
   const success = latestResult.deals_per_second >= threshold;
 
   if (!success) {

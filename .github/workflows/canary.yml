@@ -77,12 +77,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
           node-version-file: ".nvmrc"
 
@@ -121,14 +121,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Status**: Deployed"
           echo "- **Traffic**: ${PERCENTAGE}%"
-          # Prefer explicit worker host secret; fall back to account-derived subdomain
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -n "${WORKER_HOST}" ]; then
-            STAGING_URL="https://${WORKER_HOST}"
-          else
-            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
-          fi
-          echo "- **URL**: ${STAGING_URL}"
+          echo "- **URL**: https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
 
       - name: Wait for canary duration
         run: |
@@ -154,13 +147,7 @@ jobs:
             exit 0
           fi
 
-          # Prefer explicit worker host secret; fall back to account-derived subdomain
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -n "${WORKER_HOST}" ]; then
-            CANARY_URL="https://${WORKER_HOST}"
-          else
-            CANARY_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
-          fi
+          CANARY_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
           HEALTHY=0
           FAILED=0
 

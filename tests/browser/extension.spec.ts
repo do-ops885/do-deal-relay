@@ -208,7 +208,7 @@ test.describe("Extension Content Script Tests", () => {
       while ((match = codeRegex.exec(text)) !== null) {
         matches.push({
           type: "referral_code",
-          value: match[1] || "",
+          value: match[1],
           confidence: 0.7,
           source: "page_content",
           context: match[0],

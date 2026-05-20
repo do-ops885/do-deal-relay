@@ -14,7 +14,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("status", "healthy");
     expect(body).toHaveProperty("version");
     expect(body).toHaveProperty("timestamp");
@@ -25,7 +25,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("ready");
     expect(body.ready).toBe(true);
   });
@@ -35,72 +35,62 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("alive");
     expect(body.alive).toBe(true);
   });
 });
 
 test.describe("Deals API", () => {
-  const authHeaders = { "X-API-Key": API_KEY };
-
   test("GET /deals returns deals list", async ({ request }) => {
-    const response = await request.get("/deals", { headers: authHeaders });
+    const response = await request.get("/deals");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(Array.isArray(body)).toBe(true);
   });
 
   test("GET /deals.json returns raw deals", async ({ request }) => {
-    const response = await request.get("/deals.json", { headers: authHeaders });
+    const response = await request.get("/deals.json");
 
     expect(response.status()).toBe(200);
 
     const contentType = response.headers()["content-type"];
     expect(contentType).toContain("application/json");
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("deals");
     expect(Array.isArray(body.deals)).toBe(true);
   });
 
   test("GET /deals supports filtering by category", async ({ request }) => {
-    const response = await request.get("/deals?category=finance", {
-      headers: authHeaders,
-    });
+    const response = await request.get("/deals?category=finance");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(Array.isArray(body)).toBe(true);
   });
 
   test("GET /deals supports pagination with limit", async ({ request }) => {
-    const response = await request.get("/deals?limit=5", {
-      headers: authHeaders,
-    });
+    const response = await request.get("/deals?limit=5");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeLessThanOrEqual(5);
   });
 });
 
 test.describe("Ranked Deals API", () => {
-  const authHeaders = { "X-API-Key": API_KEY };
-
   test("GET /deals/ranked returns ranked deals", async ({ request }) => {
-    const response = await request.get("/deals/ranked", {
-      headers: authHeaders,
-    });
+    const response = await request.get("/deals/ranked");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("deals");
     expect(body).toHaveProperty("meta");
     expect(Array.isArray(body.deals)).toBe(true);
@@ -109,24 +99,20 @@ test.describe("Ranked Deals API", () => {
   test("GET /deals/ranked supports sorting by confidence", async ({
     request,
   }) => {
-    const response = await request.get("/deals/ranked?sort_by=confidence", {
-      headers: authHeaders,
-    });
+    const response = await request.get("/deals/ranked?sort_by=confidence");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body.meta.sort_by).toBe("confidence");
   });
 
   test("GET /deals/highlights returns featured deals", async ({ request }) => {
-    const response = await request.get("/deals/highlights", {
-      headers: authHeaders,
-    });
+    const response = await request.get("/deals/highlights");
 
     expect(response.status()).toBe(200);
 
-    const body = (await response.json()) as any;
+    const body = await response.json();
     expect(body).toHaveProperty("top_deals");
     expect(body).toHaveProperty("expiring_soon");
     expect(body).toHaveProperty("recently_added");
@@ -151,7 +137,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body).toHaveProperty("qualityMetrics");
     } else {
       expect(response.status()).toBe(401);
@@ -167,7 +153,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body).toHaveProperty("locked");
     } else {
       expect(response.status()).toBe(401);
@@ -183,7 +169,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body).toHaveProperty("logs");
       expect(Array.isArray(body.logs)).toBe(true);
     } else {

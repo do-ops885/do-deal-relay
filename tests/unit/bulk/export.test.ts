@@ -93,7 +93,7 @@ describe("Bulk Export", () => {
       );
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = await response.json();
 
       expect(response.headers.get("Content-Type")).toBe("application/json");
       expect(data.success).toBe(true);
@@ -153,7 +153,7 @@ describe("Bulk Export", () => {
       );
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = await response.json();
 
       expect(data.pagination.limit).toBe(50);
       expect(data.pagination.offset).toBe(25);
@@ -177,7 +177,7 @@ describe("Bulk Export", () => {
       const request = new Request("http://localhost/api/bulk/export?limit=100");
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = await response.json();
 
       // Verify the code path works and returns pagination
       expect(data.pagination).toBeDefined();

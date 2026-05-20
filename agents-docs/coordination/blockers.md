@@ -6,9 +6,7 @@ Blocker ID | Type | Description | Blocking Agent | Since | Escalation
 
 ## Current Blockers
 
-| Blocker ID | Type | Description | Blocking Agent | Since | Escalation |
-|---|---|---|---|---|---|
-
+None.
 
 ## Blocker Types
 
@@ -16,7 +14,6 @@ Blocker ID | Type | Description | Blocking Agent | Since | Escalation
 - error: Critical error blocking progress
 - question: Needs clarification/decision
 - resource: Missing resource or access
-- merge: Merge conflict blocking integration
 
 ## Escalation Path
 
@@ -30,6 +27,4 @@ When resolved, move to Resolved Blockers section with resolution timestamp.
 
 ## Resolved Blockers
 
-| Blocker ID | Type | Description | Resolution | Resolved At |
-|---|---|---|---|---|
-| PR313-CONFLICTS | merge | 13 merge conflicts in PR #313 feat/api-auth-implementation | All conflicts resolved via swarm coordination, committed 1aedc96 | 2026-05-20 |
+None yet.

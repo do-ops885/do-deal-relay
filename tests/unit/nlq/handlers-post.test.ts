@@ -144,7 +144,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, envWithoutDb);
 
       expect(response.status).toBe(503);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("DATABASE_UNAVAILABLE");
     });
 
@@ -165,7 +165,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(429);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("RATE_LIMITED");
       expect(body.retry_after).toBeDefined();
     });
@@ -180,7 +180,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("PARSE_ERROR");
       expect(body.error).toBe("Invalid JSON");
     });
@@ -195,7 +195,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("VALIDATION_ERROR");
     });
 
@@ -209,7 +209,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("VALIDATION_ERROR");
     });
 
@@ -223,7 +223,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("VALIDATION_ERROR");
     });
 
@@ -237,7 +237,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.success).toBe(true);
       expect(body.query).toBe("find trading deals");
       expect(body.count).toBe(1);
@@ -312,7 +312,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(500);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.code).toBe("EXECUTION_ERROR");
       expect(body.error).toBe("Query execution failed");
       expect(body.details.query).toBe("find deals");
@@ -330,7 +330,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(500);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.message).toBe("string error");
     });
 
@@ -346,7 +346,7 @@ describe("NLQ Handlers - POST", () => {
       const response = await handleNLQ(request, mockEnv);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = await response.json();
       expect(body.success).toBe(true);
       expect(body.count).toBe(0);
       expect(body.results).toEqual([]);

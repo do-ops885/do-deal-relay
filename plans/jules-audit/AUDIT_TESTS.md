@@ -1,11 +1,5 @@
-# Track C - Test Coverage
-
-## Identified Gaps
-- worker/lib/nlq/lexer.ts (0% coverage)
-- worker/lib/nlq/parser.ts (0% coverage)
-- worker/lib/nlq/intent.ts (0% coverage)
-
-## Proposed New Tests
-1. Add unit tests for `worker/lib/nlq/lexer.ts` to verify tokenization logic.
-2. Add unit tests for `worker/lib/nlq/parser.ts` to verify query parsing.
-3. Add unit tests for `worker/lib/nlq/intent.ts` to verify intent classification.
+# Audit Tests - 2026-05-20
+## Actionable Findings
+- **Missing Coverage**: `worker/lib/nlq/ai/expansion.ts` has very low coverage (8.33%).
+- **Missing Coverage**: `worker/lib/nlq/ai/entities.ts` has very low coverage (9.61%).
+- **Missing Coverage**: `worker/lib/nlq/ai/intent.ts` has partial coverage (38.46%).

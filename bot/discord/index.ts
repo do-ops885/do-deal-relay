@@ -160,7 +160,7 @@ export async function handleDiscordWebhook(
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const body = (await request.json()) as { type?: number };
+    const body = await request.json();
 
     // Handle ping
     if (body.type === 1) {

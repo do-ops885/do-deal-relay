@@ -34,12 +34,12 @@ const metricsStore: Map<
 // ============================================================================
 
 export class KVCache {
-  private readonly kv: any;
+  private readonly kv: KVNamespace;
   private readonly defaultTtlSeconds: number;
   private readonly namespace: string;
 
   constructor(
-    kv: any,
+    kv: KVNamespace,
     defaultTtlSeconds: number = 300,
     namespace: string = "cache",
   ) {

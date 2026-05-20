@@ -40,11 +40,6 @@ import {
   handleGetValidationStats,
   handleValidateDeal,
 } from "./routes/validation";
-import {
-  handleCreateApiKey,
-  handleListApiKeys,
-  handleRevokeApiKey,
-} from "./routes/admin/keys";
 import { withAuth } from "./lib/auth";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import {
@@ -67,7 +62,7 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
-import { validateConfig } from "./lib/config-utils";
+import { validateConfig, validateKVIsolation } from "./lib/config-utils";
 
 // ============================================================================
 // Main Worker Entry Point
@@ -78,6 +73,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
@@ -90,7 +86,7 @@ export default {
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
-      initGitHubCircuitBreaker(env as any);
+      initGitHubCircuitBreaker(env);
     }
 
     const url = new URL(request.url);
@@ -112,34 +108,22 @@ export default {
 
       // Deals
       if (path === "/deals" || path === "/deals.json") {
-        return withAuth(request, env, undefined, () =>
-          handleGetDeals(url, env, request),
-        );
+        return handleGetDeals(url, env, request);
       }
       if (path === "/deals/ranked") {
-        return withAuth(request, env, undefined, () =>
-          handleRankedDeals(url, env),
-        );
+        return handleRankedDeals(url, env);
       }
       if (path === "/deals/highlights") {
-        return withAuth(request, env, undefined, () =>
-          handleDealHighlights(url, env),
-        );
+        return handleDealHighlights(url, env);
       }
       if (path === "/deals/similar") {
-        return withAuth(request, env, undefined, () =>
-          handleSimilarDeals(url, env),
-        );
+        return handleSimilarDeals(url, env);
       }
 
       // Pipeline API
       if (path === "/api/discover" && request.method === "POST") {
-        return withAuth(request, env, "admin", (auth) => {
-          const rateLimiter = createRateLimitMiddleware(
-            env,
-            "/api/discover",
-            auth,
-          );
+        return withAuth(request, env, "admin", () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/discover");
           return rateLimiter(request, () => handleDiscover(env, request));
         });
       }
@@ -161,25 +145,17 @@ export default {
 
       // Deal Submission
       if (path === "/api/submit" && request.method === "POST") {
-        return withAuth(request, env, "user", (auth) => {
-          const rateLimiter = createRateLimitMiddleware(
-            env,
-            "/api/submit",
-            auth,
-          );
+        return withAuth(request, env, undefined, () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
           return rateLimiter(request, () => handleSubmit(request, env));
         });
       }
 
       // Referral API
       if (path === "/api/referrals") {
-        if (request.method === "GET") {
-          return withAuth(request, env, undefined, () =>
-            handleGetReferrals(url, env),
-          );
-        }
+        if (request.method === "GET") return handleGetReferrals(url, env);
         if (request.method === "POST") {
-          return withAuth(request, env, "user", () =>
+          return withAuth(request, env, undefined, () =>
             handleCreateReferral(request, env),
           );
         }
@@ -194,13 +170,13 @@ export default {
         const action = referralActionMatch[2];
 
         if (code && action === "deactivate") {
-          return withAuth(request, env, "user", () =>
+          return withAuth(request, env, undefined, () =>
             handleDeactivateReferral(request, code, env),
           );
         }
         if (code && action === "reactivate") {
-          return withAuth(request, env, "user", () =>
-            handleReactivateReferral(code, env),
+          return withAuth(request, env, undefined, () =>
+            handleReactivateReferral(request, code, env),
           );
         }
       }
@@ -209,20 +185,13 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
-<<<<<<< HEAD
-        if (code) {
-          return withAuth(request, env, undefined, () =>
-            handleGetReferralByCode(code, env, request),
+        if (code) return handleGetReferralByCode(code, env, request);
       }
 
       // Research API
       if (path === "/api/research" && request.method === "POST") {
-        return withAuth(request, env, "user", (auth) => {
-          const rateLimiter = createRateLimitMiddleware(
-            env,
-            "/api/research",
-            auth,
-          );
+        return withAuth(request, env, undefined, () => {
+          const rateLimiter = createRateLimitMiddleware(env, "/api/research");
           return rateLimiter(request, () => handleResearch(request, env));
         });
       }
@@ -230,21 +199,15 @@ export default {
       // Research results API
       if (path.startsWith("/api/research/") && request.method === "GET") {
         const domain = path.replace("/api/research/", "");
-        return withAuth(request, env, undefined, () =>
-          handleGetResearchResults(domain, env),
-        );
+        return handleGetResearchResults(domain, env);
       }
 
       // Validation API
       if (path === "/api/validate/url" && request.method === "POST") {
-        return withAuth(request, env, "user", (auth) =>
-          handleValidateUrl(request, env, auth),
-        );
+        return handleValidateUrl(request, env);
       }
       if (path === "/api/validate/batch" && request.method === "POST") {
-        return withAuth(request, env, "user", (auth) =>
-          handleValidateBatch(request, env, auth),
-        );
+        return handleValidateBatch(request, env);
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
         return withAuth(request, env, "admin", () =>
@@ -255,51 +218,39 @@ export default {
       const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
       if (dealExplainMatch && request.method === "GET") {
         const dealId = dealExplainMatch[1] ?? "";
-        return withAuth(request, env, undefined, () =>
-          handleExplainDeal(dealId, env, request),
-        );
+        return handleExplainDeal(dealId, env, request);
       }
 
       const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);
       if (dealValidateMatch && request.method === "POST") {
         const code = dealValidateMatch[1] ?? "";
-        return withAuth(request, env, "user", (auth) =>
-          handleValidateDeal(request, code, env, auth),
-        );
+        return handleValidateDeal(request, code, env);
       }
 
       // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
       if (path === "/mcp") {
-        return withAuth(request, env, "user", () =>
-          handleMCPRequest(request, env),
-        );
+        return handleMCPRequest(request, env);
       }
 
       // Legacy MCP v1 Endpoints (for backwards compatibility)
       if (path === "/mcp/v1/tools/list" && request.method === "POST") {
-        return withAuth(request, env, "user", () => handleMCPListTools(env));
+        return handleMCPListTools(env);
       }
       if (path === "/mcp/v1/tools/call" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleMCPCall(request, env),
-        );
+        return handleMCPCall(request, env);
       }
       if (path === "/mcp/v1/info") {
-        return withAuth(request, env, "user", () => handleMCPInfo(env));
+        return handleMCPInfo(env);
       }
 
       // D1 Database API endpoints
       if (path.startsWith("/api/d1/")) {
-        return withAuth(request, env, "admin", () =>
-          handleD1Request(request, url, env),
-        );
+        return handleD1Request(request, url, env);
       }
 
       // NLQ (Natural Language Query) API endpoints
       if (path.startsWith("/api/nlq")) {
-        return withAuth(request, env, "user", () =>
-          handleNLQRequest(request, url, env),
-        );
+        return handleNLQRequest(request, url, env);
       }
 
       // Webhook routes
@@ -308,17 +259,13 @@ export default {
 
       // Experience Feedback API
       if (path === "/api/experience" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleSubmitExperience(request, env),
-        );
+        return handleSubmitExperience(request, env);
       }
 
       const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
       if (experienceMatch && request.method === "GET") {
         if (experienceMatch[1] !== undefined)
-          return withAuth(request, env, undefined, () =>
-            handleGetExperience(experienceMatch[1]!, env),
-          );
+          return handleGetExperience(experienceMatch[1], env);
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
@@ -327,41 +274,13 @@ export default {
 
       // Email API
       if (path === "/api/email/incoming" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleEmailIncoming(request, env),
-        );
+        return handleEmailIncoming(request, env);
       }
       if (path === "/api/email/parse" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleEmailParse(request, env),
-        );
+        return handleEmailParse(request, env);
       }
       if (path === "/api/email/help" && request.method === "GET") {
-        return withAuth(request, env, undefined, () => handleEmailHelp());
-      }
-
-      // Admin API Key Management
-      if (path === "/api/admin/keys") {
-        if (request.method === "POST") {
-          return withAuth(request, env, "admin", () =>
-            handleCreateApiKey(request, env),
-          );
-        }
-        if (request.method === "GET") {
-          return withAuth(request, env, "admin", () =>
-            handleListApiKeys(request, env),
-          );
-        }
-      }
-
-      const apiKeyRevokeMatch = path.match(/^\/api\/admin\/keys\/([^/]+)$/);
-      if (apiKeyRevokeMatch && request.method === "DELETE") {
-        const hash = apiKeyRevokeMatch[1];
-        if (hash) {
-          return withAuth(request, env, "admin", () =>
-            handleRevokeApiKey(request, hash, env),
-          );
-        }
+        return handleEmailHelp();
       }
 
       // 404
@@ -380,6 +299,7 @@ export default {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
+      await validateKVIsolation(env);
     } catch (error) {
       console.error("Scheduled execution configuration error:", error);
       await notify(env, {

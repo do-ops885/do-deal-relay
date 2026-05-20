@@ -30,6 +30,9 @@ import { getSourceRateLimit } from "./sources";
 
 const circuitBreakerStates = new Map<string, CircuitBreakerState>();
 
+/**
+ * Check if a source circuit breaker is open (failing)
+ */
 function isCircuitOpen(sourceName: string): boolean {
   const state = circuitBreakerStates.get(sourceName);
   if (!state) return false;
@@ -48,6 +51,9 @@ function isCircuitOpen(sourceName: string): boolean {
   return false;
 }
 
+/**
+ * Record success for circuit breaker
+ */
 function recordSuccess(sourceName: string): void {
   const state = circuitBreakerStates.get(sourceName);
   if (state && state.state === "half-open") {
@@ -60,6 +66,9 @@ function recordSuccess(sourceName: string): void {
   }
 }
 
+/**
+ * Record failure for circuit breaker
+ */
 function recordFailure(sourceName: string): void {
   let state = circuitBreakerStates.get(sourceName);
   if (!state) {
@@ -88,6 +97,9 @@ function recordFailure(sourceName: string): void {
 const researchCache = new Map<string, ResearchCacheEntry>();
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
+/**
+ * Get cached research results
+ */
 function getCachedResults(
   query: string,
   source: string,
@@ -102,6 +114,9 @@ function getCachedResults(
   return undefined;
 }
 
+/**
+ * Cache research results
+ */
 function cacheResults(
   query: string,
   source: string,
@@ -173,8 +188,12 @@ export async function executeReferralResearch(
   const hasApiKeys = Boolean(
     apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
   );
-  // Auto-enable real fetching when API keys are available, unless explicitly disabled
-  const useRealFetching = request.options?.use_real_fetching ?? hasApiKeys;
+  // Auto-enable real fetching when API keys are available, in production, or via env var, unless explicitly disabled
+  const useRealFetching =
+    request.options?.use_real_fetching ??
+    (env.ENVIRONMENT === "production" ||
+      env.RESEARCH_USE_REAL_FETCHING === "true" ||
+      hasApiKeys);
 
   // Gather research from multiple sources
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
@@ -297,6 +316,9 @@ export async function executeReferralResearch(
   return result;
 }
 
+/**
+ * Research from a single source with circuit breaker and caching
+ */
 async function researchFromSourceParallel(
   source: ResearchSource,
   query: string,
@@ -406,6 +428,9 @@ async function researchFromSourceParallel(
   }
 }
 
+/**
+ * Apply source-based confidence weighting
+ */
 function applySourceConfidence(
   baseConfidence: number,
   sourceName: string,
@@ -511,7 +536,7 @@ export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
   depth: WebResearchRequest["depth"] = "thorough",
-  useRealFetching = false,
+  useRealFetching?: boolean,
 ): Promise<ReferralResearchResult> {
   const request: WebResearchRequest = {
     query: `${domain} referral code invite program`,
