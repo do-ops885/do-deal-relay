@@ -269,7 +269,7 @@ describe("NLQ Handlers - POST", () => {
       await handleNLQ(request, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.limit).toBe(5);
+      expect(callArgs![2]?.limit).toBe(5);
     });
 
     it("should respect include_expired parameter", async () => {
@@ -282,7 +282,7 @@ describe("NLQ Handlers - POST", () => {
       await handleNLQ(request, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.includeExpired).toBe(true);
+      expect(callArgs![2]?.includeExpired).toBe(true);
     });
 
     it("should respect offset parameter", async () => {
@@ -295,7 +295,7 @@ describe("NLQ Handlers - POST", () => {
       await handleNLQ(request, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.offset).toBe(10);
+      expect(callArgs![2]?.offset).toBe(10);
     });
 
     it("should handle query execution errors gracefully", async () => {

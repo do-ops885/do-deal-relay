@@ -32,7 +32,7 @@ async function benchmark() {
       ? parseInt(args[thresholdIndex + 1] || "5000", 10)
       : 5000;
   const jsonIndex = args.indexOf("--json");
-  const jsonPath = jsonIndex !== -1 ? args[jsonIndex + 1] : null;
+  const jsonPath = jsonIndex !== -1 ? (args[jsonIndex + 1] ?? null) : null;
 
   console.log("=".repeat(60));
   console.log(`  Pipeline Benchmark v${VERSION}`);
@@ -133,8 +133,10 @@ async function benchmark() {
 
   // Regression check
   const latestResult = results[results.length - 1];
-  if (!latestResult) throw new Error("No results");
-  if (!latestResult) throw new Error("No results");
+  if (!latestResult) {
+    console.log("\nNo benchmark results to evaluate.");
+    process.exit(1);
+  }
   const success = latestResult.deals_per_second >= threshold;
 
   if (!success) {

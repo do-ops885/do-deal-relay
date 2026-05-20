@@ -3,6 +3,7 @@ import worker from "../../worker/index";
 import type { Env } from "../../worker/types";
 
 describe("Referral Redirect Security", () => {
+  const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
 
@@ -45,8 +46,22 @@ describe("Referral Redirect Security", () => {
     );
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockKvStorage = new Map();
+    // Set up auth
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode("ddr_admin_test_key_123"),
+    );
+    const hash = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    mockKvStorage.set(
+      "sources:apikey:" + hash,
+      JSON.stringify({ role: "admin", userId: "test-user" }),
+    );
+
     mockEnv = {
       DEALS_SOURCES: mockKvFactory("sources"),
       DEALS_PROD: mockKvFactory("prod"),
@@ -63,11 +78,16 @@ describe("Referral Redirect Security", () => {
   it("should return JSON response when no redirect parameter is provided", async () => {
     seedReferral({ id: "123", code: "MYCODE", status: "active" });
 
-    const request = new Request("http://localhost/api/referrals/MYCODE");
+    const request = new Request("http://localhost/api/referrals/MYCODE", {
+      headers: { ...authHeader },
+    });
     const response = await worker.fetch(request, mockEnv);
 
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      referral: { code: string };
+      error?: string;
+    };
     expect(body.referral.code).toBe("MYCODE");
   });
 
@@ -76,6 +96,7 @@ describe("Referral Redirect Security", () => {
 
     const request = new Request(
       "http://localhost/api/referrals/MYCODE?redirect=https://do-deal-relay.com/welcome",
+      { headers: { ...authHeader } },
     );
     const response = await worker.fetch(request, mockEnv);
 
@@ -90,11 +111,15 @@ describe("Referral Redirect Security", () => {
 
     const request = new Request(
       "http://localhost/api/referrals/MYCODE?redirect=https://evil-phishing-site.com",
+      { headers: { ...authHeader } },
     );
     const response = await worker.fetch(request, mockEnv);
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      referral: { code: string };
+      error?: string;
+    };
     expect(body.error).toBe("Invalid redirect URL");
   });
 
@@ -103,11 +128,15 @@ describe("Referral Redirect Security", () => {
 
     const request = new Request(
       "http://localhost/api/referrals/MYCODE?redirect=javascript:alert('XSS')",
+      { headers: { ...authHeader } },
     );
     const response = await worker.fetch(request, mockEnv);
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      referral: { code: string };
+      error?: string;
+    };
     expect(body.error).toBe("Invalid redirect URL");
   });
 
@@ -116,11 +145,15 @@ describe("Referral Redirect Security", () => {
 
     const request = new Request(
       "http://localhost/api/referrals/MYCODE?redirect=not-a-valid-url",
+      { headers: { ...authHeader } },
     );
     const response = await worker.fetch(request, mockEnv);
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      referral: { code: string };
+      error?: string;
+    };
     expect(body.error).toBe("Invalid redirect URL");
   });
 
@@ -129,6 +162,7 @@ describe("Referral Redirect Security", () => {
 
     const request = new Request(
       "http://localhost/api/referrals/MYCODE?redirect=http://localhost:3000/callback",
+      { headers: { ...authHeader } },
     );
     const response = await worker.fetch(request, mockEnv);
 

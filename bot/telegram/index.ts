@@ -459,7 +459,7 @@ export async function handleTelegramWebhook(
   const bot = createTelegramBot(config);
 
   try {
-    const update = (await request.json()) as any;
+    const update = (await request.json()) as Update;
     await bot.handleUpdate(update);
     return new Response("OK", { status: 200 });
   } catch (error) {

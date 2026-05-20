@@ -174,7 +174,7 @@ describe("D1 Queries", () => {
   const getLastSessionQuery = () => {
     const calls = getSessionPrepareCalls();
     if (calls.length === 0) return null;
-    return calls[calls.length - 1][0] as string;
+    return calls[calls.length - 1]![0] as string;
   };
 
   // ============================================================================
@@ -201,7 +201,7 @@ describe("D1 Queries", () => {
       expect(mockDb.withSession).toHaveBeenCalled();
       expect(getMockStatement().bind).toHaveBeenCalled();
       expect(results).toHaveLength(2);
-      expect(results[0].deal_id).toBe("deal-001");
+      expect(results[0]!.deal_id).toBe("deal-001");
     });
 
     it("should filter by status when provided", async () => {
@@ -221,7 +221,7 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(1);
-      expect(results[0].status).toBe("quarantined");
+      expect(results[0]!.status).toBe("quarantined");
     });
 
     it("should include expired deals when includeExpired is true", async () => {
@@ -367,7 +367,7 @@ describe("D1 Queries", () => {
         expect.any(Number),
       );
       expect(results).toHaveLength(2);
-      expect(results[0].domain).toBe("test.com");
+      expect(results[0]!.domain).toBe("test.com");
     });
 
     it("should include inactive deals when activeOnly is false", async () => {
@@ -428,7 +428,7 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(1);
-      expect(results[0].category).toContain("finance");
+      expect(results[0]!.category).toContain("finance");
     });
 
     it("should filter by active status by default", async () => {
@@ -488,8 +488,8 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(2);
-      expect(results[0].domain).toBe("example.com");
-      expect(results[0].count).toBe(5);
+      expect(results[0]!.domain).toBe("example.com");
+      expect(results[0]!.count).toBe(5);
     });
 
     it("should return empty array on error", async () => {
@@ -554,8 +554,8 @@ describe("D1 Queries", () => {
         mockDb as unknown as D1Database,
       );
 
-      expect(results[0].name).toBe("popular");
-      expect(results[0].count).toBe(3);
+      expect(results[0]!.name).toBe("popular");
+      expect(results[0]!.count).toBe(3);
     });
 
     it("should return empty array on database error", async () => {
@@ -651,7 +651,7 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(1);
-      expect(results[0].days_remaining).toBe(1);
+      expect(results[0]!.days_remaining).toBe(1);
     });
 
     it("should default to 7 days", async () => {
@@ -854,8 +854,8 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(2);
-      expect(results[0].date).toBe("2024-01-01");
-      expect(results[0].count).toBe(10);
+      expect(results[0]!.date).toBe("2024-01-01");
+      expect(results[0]!.count).toBe(10);
     });
 
     it("should default to 30 days", async () => {
@@ -1059,7 +1059,7 @@ describe("D1 Queries", () => {
       );
 
       expect(results).toHaveLength(1);
-      expect(results[0].code).toBe("REF001");
+      expect(results[0]!.code).toBe("REF001");
       expect(getMockStatement().bind).toHaveBeenCalledWith(1);
     });
 
@@ -1186,9 +1186,9 @@ describe("D1 Queries", () => {
       const results = await getTopDomains(mockDb as unknown as D1Database, 10);
 
       expect(results).toHaveLength(2);
-      expect(results[0].domain).toBe("example.com");
-      expect(results[0].deals).toBe(10);
-      expect(results[0].referrals).toBe(25);
+      expect(results[0]!.domain).toBe("example.com");
+      expect(results[0]!.deals).toBe(10);
+      expect(results[0]!.referrals).toBe(25);
     });
 
     it("should respect limit parameter", async () => {

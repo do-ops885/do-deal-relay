@@ -90,7 +90,7 @@ export default {
     // Initialize GitHub token and circuit breaker if available
     if (env.GITHUB_TOKEN) {
       setGitHubToken(env.GITHUB_TOKEN);
-      initGitHubCircuitBreaker(env as any);
+      initGitHubCircuitBreaker(env as unknown as { DEALS_PROD: KVNamespace });
     }
 
     const url = new URL(request.url);
@@ -209,10 +209,11 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
-<<<<<<< HEAD
         if (code) {
           return withAuth(request, env, undefined, () =>
             handleGetReferralByCode(code, env, request),
+          );
+        }
       }
 
       // Research API

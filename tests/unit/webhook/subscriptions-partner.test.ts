@@ -79,7 +79,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
 
         const partners = await getWebhookPartners(env);
         expect(partners).toHaveLength(1);
-        expect(partners[0].name).toBe("Test Partner");
+        expect(partners[0]!.name).toBe("Test Partner");
       });
 
       it("should return empty array on JSON parse error", async () => {
@@ -133,7 +133,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
 
         const partners = await getWebhookPartners(env);
         expect(partners).toHaveLength(1);
-        expect(partners[0].id).toBe("partner_new");
+        expect(partners[0]!.id).toBe("partner_new");
       });
 
       it("should update existing partner", async () => {
@@ -156,8 +156,8 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
         });
 
         const partners = await getWebhookPartners(env);
-        expect(partners[0].name).toBe("Updated Name");
-        expect(partners[0].active).toBe(false);
+        expect(partners[0]!.name).toBe("Updated Name");
+        expect(partners[0]!.active).toBe(false);
       });
 
       it("should throw when KV is unavailable", async () => {
@@ -206,7 +206,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
         await createWebhookPartner(env, "Persisted");
         const partners = await getWebhookPartners(env);
         expect(partners).toHaveLength(1);
-        expect(partners[0].name).toBe("Persisted");
+        expect(partners[0]!.name).toBe("Persisted");
       });
 
       it("should generate unique IDs for multiple partners", async () => {

@@ -6,7 +6,6 @@
 
 import { CommandHandler } from "./types";
 import { getErrorMessage, formatDate } from "./utils";
-import { commands as allCommands } from "./index";
 
 export const startCommand: CommandHandler = {
   name: "start",
@@ -79,10 +78,13 @@ export const helpCommand: CommandHandler = {
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
   execute: async (ctx, args) => {
+    const { commands: allCommands } = await import("./index");
+
     if (args.length === 0) {
-      // Show general help
+      // Show general help - filter by user permissions
       const commandList = allCommands
         .filter((c) => c.platforms.includes(ctx.platform))
+        .filter((c) => c.permissions.some((p) => ctx.permissions.includes(p)))
         .map((c) => `• \`/${c.name}\` - ${c.description}`)
         .join("\n");
 

@@ -110,7 +110,7 @@ describe("Rate Limiting", () => {
         get: vi.fn().mockRejectedValue(new Error("KV error")),
         put: vi.fn(),
         delete: vi.fn(),
-      } as unknown as KVNamespace;
+      } as any;
 
       const result = await checkRateLimit(mockEnv, "client-1", "/api/submit");
 

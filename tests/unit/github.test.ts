@@ -331,8 +331,8 @@ describe("GitHub Integration", () => {
       const commits = await getRecentCommits("owner/repo", "deals.json", 1);
 
       expect(commits).toHaveLength(1);
-      expect(commits[0].sha).toBe("commit-1");
-      expect(commits[0].message).toBe("Update deals");
+      expect(commits[0]!.sha).toBe("commit-1");
+      expect(commits[0]!.message).toBe("Update deals");
     });
 
     it("should use default count of 10", async () => {

@@ -315,6 +315,12 @@ export async function handleReactivateReferral(
   env: Env,
 ): Promise<Response> {
   try {
+    // Check if referral exists and is already active
+    const existing = await getReferralByCode(env, code);
+    if (existing && existing.status === "active") {
+      return jsonResponse({ error: "Conflict" }, 409);
+    }
+
     const referral = await reactivateReferral(env, code);
 
     if (!referral) {

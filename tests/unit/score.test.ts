@@ -81,7 +81,7 @@ describe("Scoring Pipeline", () => {
     const deals = [createMockDeal("1")];
     const result = await score(deals, ctx, mockEnv);
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0].metadata.confidence_score).toBeGreaterThan(0);
+    expect(result.deals[0]!.metadata.confidence_score).toBeGreaterThan(0);
   });
 
   it("should calculate statistics", async () => {

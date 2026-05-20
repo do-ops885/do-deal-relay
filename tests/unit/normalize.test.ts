@@ -53,26 +53,26 @@ describe("Normalization Pipeline", () => {
   it("should normalize domain to lowercase", () => {
     const deals = [createMockDeal()];
     const normalized = normalize(deals, ctx);
-    expect(normalized[0].source.domain).toBe("example.com");
+    expect(normalized[0]!.source.domain).toBe("example.com");
   });
 
   it("should normalize code to uppercase", () => {
     const deals = [createMockDeal()];
     const normalized = normalize(deals, ctx);
-    expect(normalized[0].code).toBe("CODE123");
+    expect(normalized[0]!.code).toBe("CODE123");
   });
 
   it("should remove tracking parameters from URLs", () => {
     const deals = [createMockDeal()];
     const normalized = normalize(deals, ctx);
-    expect(normalized[0].url).not.toContain("utm_source");
-    expect(normalized[0].url).not.toContain("ref=abc");
+    expect(normalized[0]!.url).not.toContain("utm_source");
+    expect(normalized[0]!.url).not.toContain("ref=abc");
   });
 
   it("should set normalized_at timestamp", () => {
     const deals = [createMockDeal()];
     const normalized = normalize(deals, ctx);
-    expect(normalized[0].metadata.normalized_at).toBeTruthy();
+    expect(normalized[0]!.metadata.normalized_at).toBeTruthy();
   });
 
   describe("verifyNormalization", () => {

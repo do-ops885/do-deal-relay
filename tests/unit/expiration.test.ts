@@ -155,9 +155,9 @@ describe("Expiration Module", () => {
       const result = await findExpiringDeals(mockEnv, 7);
 
       expect(result).toHaveLength(1);
-      expect(result[0].deal.id).toBe("1");
-      expect(result[0].daysUntilExpiry).toBe(3);
-      expect(result[0].notificationWindow).toBe("7d");
+      expect(result[0]!.deal.id).toBe("1");
+      expect(result[0]!.daysUntilExpiry).toBe(3);
+      expect(result[0]!.notificationWindow).toBe("7d");
     });
 
     it("should find deals expiring within 30 days", async () => {
@@ -196,8 +196,8 @@ describe("Expiration Module", () => {
       const result = await findExpiringDeals(mockEnv, 30);
 
       expect(result).toHaveLength(1);
-      expect(result[0].deal.id).toBe("1");
-      expect(result[0].notificationWindow).toBe("30d");
+      expect(result[0]!.deal.id).toBe("1");
+      expect(result[0]!.notificationWindow).toBe("30d");
     });
 
     it("should not include already expired deals", async () => {
@@ -305,9 +305,9 @@ describe("Expiration Module", () => {
       const result = await findExpiringDeals(mockEnv, 30);
 
       expect(result).toHaveLength(3);
-      expect(result[0].deal.id).toBe("3"); // 1 day (most urgent)
-      expect(result[1].deal.id).toBe("1"); // 3 days
-      expect(result[2].deal.id).toBe("2"); // 7 days
+      expect(result[0]!.deal.id).toBe("3"); // 1 day (most urgent)
+      expect(result[1]!.deal.id).toBe("1"); // 3 days
+      expect(result[2]!.deal.id).toBe("2"); // 7 days
     });
   });
 
