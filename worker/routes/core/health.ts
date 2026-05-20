@@ -16,16 +16,74 @@ import { CONFIG } from "../../config";
 import type { Env, HealthStatus, LogEntry } from "../../types";
 import { jsonResponse, SECURITY_HEADERS } from "../utils";
 
+const START_TIME = Date.now();
+
+async function checkD1Database(env: Env): Promise<{
+  connected: boolean;
+  latency_ms: number;
+  error?: string;
+}> {
+  const startTime = Date.now();
+  try {
+    if (!env.DEALS_DB) {
+      return {
+        connected: false,
+        latency_ms: Date.now() - startTime,
+        error: "Not configured",
+      };
+    }
+    const result = await env.DEALS_DB.prepare("SELECT 1 as test").first<{
+      test: number;
+    }>();
+    return {
+      connected: result?.test === 1,
+      latency_ms: Date.now() - startTime,
+    };
+  } catch (error) {
+    return {
+      connected: false,
+      latency_ms: Date.now() - startTime,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function checkKVNamespace(
+  env: Env,
+  nsKey: keyof Env,
+): Promise<{ connected: boolean; error?: string }> {
+  try {
+    const ns = env[nsKey] as unknown;
+    if (
+      !ns ||
+      typeof ns !== "object" ||
+      !("get" in (ns as Record<string, unknown>))
+    ) {
+      return { connected: false, error: "Namespace not available" };
+    }
+    return { connected: true };
+  } catch (error) {
+    return {
+      connected: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function handleHealth(
   env: Env,
   request?: Request,
 ): Promise<Response> {
-  // Optimization: Parallelize snapshot, status and log retrieval
-  // This reduces latency by performing independent I/O operations concurrently
   const results = await Promise.allSettled([
     getProductionSnapshot(env),
     getPipelineStatus(env),
     getRecentLogs(env, 100),
+    checkD1Database(env),
+    checkKVNamespace(env, "DEALS_PROD" as keyof Env),
+    checkKVNamespace(env, "DEALS_STAGING" as keyof Env),
+    checkKVNamespace(env, "DEALS_LOG" as keyof Env),
+    checkKVNamespace(env, "DEALS_LOCK" as keyof Env),
+    checkKVNamespace(env, "DEALS_SOURCES" as keyof Env),
   ]);
 
   const snapshot = results[0].status === "fulfilled" ? results[0].value : null;
@@ -35,27 +93,63 @@ export async function handleHealth(
       : { locked: false, last_run: null };
   const logs =
     results[2].status === "fulfilled" ? (results[2].value as LogEntry[]) : [];
+  const d1Check =
+    results[3].status === "fulfilled"
+      ? results[3].value
+      : { connected: false, latency_ms: 0 };
+  const kvProd =
+    results[4].status === "fulfilled" ? results[4].value : { connected: false };
+  const kvStaging =
+    results[5].status === "fulfilled" ? results[5].value : { connected: false };
+  const kvLog =
+    results[6].status === "fulfilled" ? results[6].value : { connected: false };
+  const kvLock =
+    results[7].status === "fulfilled" ? results[7].value : { connected: false };
+  const kvSources =
+    results[8].status === "fulfilled" ? results[8].value : { connected: false };
+
+  const allKvConnected =
+    kvProd.connected &&
+    kvStaging.connected &&
+    kvLog.connected &&
+    kvLock.connected &&
+    kvSources.connected;
+  const allDepsHealthy =
+    snapshot || !allKvConnected ? false : allKvConnected && d1Check.connected;
+
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
     (l) => l.phase === "finalize" && l.status === "complete",
   ).length;
 
+  let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+  if (!d1Check.connected) overallStatus = "degraded";
+  if (!allKvConnected) overallStatus = "degraded";
+  if (!snapshot && allKvConnected) overallStatus = "degraded";
+
   const health: HealthStatus = {
-    status: snapshot ? "healthy" : "degraded",
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     version: CONFIG.VERSION,
+    uptime_seconds: Math.floor((Date.now() - START_TIME) / 1000),
     checks: {
       kv_connection: !!snapshot,
       last_run_success: !!status.last_run,
       snapshot_valid: !!snapshot,
+      d1_connected: d1Check.connected,
     },
     components: {
       kv_stores: {
-        deals_prod: !!snapshot,
-        deals_staging: true,
-        deals_log: true,
-        deals_lock: !status.locked,
-        deals_sources: true,
+        deals_prod: kvProd.connected,
+        deals_staging: kvStaging.connected,
+        deals_log: kvLog.connected,
+        deals_lock: kvLock.connected,
+        deals_sources: kvSources.connected,
+      },
+      d1_database: {
+        connected: d1Check.connected,
+        latency_ms: d1Check.latency_ms,
+        error: d1Check.error,
       },
       pipeline: {
         last_run: status.last_run?.timestamp || new Date().toISOString(),
@@ -73,7 +167,7 @@ export async function handleHealth(
     },
   };
 
-  const statusCode = health.status === "healthy" ? 200 : 503;
+  const statusCode = overallStatus === "healthy" ? 200 : 503;
   return jsonResponse(health, statusCode, request, env);
 }
 
