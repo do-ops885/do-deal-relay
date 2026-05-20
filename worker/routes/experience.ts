@@ -44,7 +44,7 @@ export async function handleSubmitExperience(
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400, request, env, undefined, env);
+    return jsonResponse({ error: "Invalid JSON body" }, 400, request, env);
   }
 
   const { deal_code, event_type, agent_id, score, metadata } = body;
@@ -142,7 +142,7 @@ export async function handleGetExperience(
   }
 
   if (!dealCode) {
-    return jsonResponse({ error: "deal_code is required" }, 400, request, env, undefined, env);
+    return jsonResponse({ error: "deal_code is required" }, 400, request, env);
   }
 
   const result = await getExperienceAggregate(env.DEALS_DB, dealCode);
@@ -209,7 +209,7 @@ export async function handleRunAggregation(
         component: "experience",
       },
     );
-    return jsonResponse({ error: "Aggregation failed" }, 500, request, env, undefined, env);
+    return jsonResponse({ error: "Aggregation failed" }, 500, request, env);
   }
 
   return jsonResponse(

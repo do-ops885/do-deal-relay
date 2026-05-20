@@ -29,7 +29,7 @@ export async function handleGetDeals(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, request, env, undefined, env);
+    return jsonResponse({ error: "No deals available" }, 404, request, env);
   }
 
   const query: GetDealsQuery = {
@@ -44,7 +44,12 @@ export async function handleGetDeals(
 
   const validation = GetDealsQuerySchema.safeParse(query);
   if (!validation.success) {
-    return jsonResponse({ error: "Invalid query parameters" }, 400, request, env, undefined, env);
+    return jsonResponse(
+      { error: "Invalid query parameters" },
+      400,
+      request,
+      env,
+    );
   }
 
   let deals = snapshot.deals;
@@ -70,10 +75,10 @@ export async function handleGetDeals(
   deals = deals.slice(0, query.limit);
 
   if (url.pathname === "/deals.json") {
-    return jsonResponse({ ...snapshot, deals }, 200, request, env, undefined, env);
+    return jsonResponse({ ...snapshot, deals }, 200, request, env);
   }
 
-  return jsonResponse(deals, 200, request, env, undefined, env);
+  return jsonResponse(deals, 200, request, env);
 }
 
 /**
@@ -101,7 +106,7 @@ export async function handleSimilarDeals(
 
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env);
   }
 
   const targetDeal = snapshot.deals.find(
@@ -134,7 +139,7 @@ export async function handleSimilarDeals(
   }
 
   if (!targetDeal) {
-    return jsonResponse({ error: "Deal not found" }, 404, undefined, env, undefined, env);
+    return jsonResponse({ error: "Deal not found" }, 404, undefined, env);
   }
 
   const targetCategories = new Set(
@@ -204,7 +209,7 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env);
   }
 
   // Parse query parameters
@@ -247,7 +252,7 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
     response.scores = result.scores;
   }
 
-  return jsonResponse(response, 200, undefined, env, undefined, env);
+  return jsonResponse(response, 200, undefined, env);
 }
 
 /**
@@ -260,7 +265,7 @@ export async function handleDealHighlights(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, undefined, env, undefined, env);
+    return jsonResponse({ error: "No deals available" }, 404, undefined, env);
   }
 
   const limit = url.searchParams.has("limit")
@@ -299,16 +304,16 @@ export async function handleExplainDeal(
   const snapshot = await getProductionSnapshot(env);
 
   if (!snapshot) {
-    return jsonResponse({ error: "No deals available" }, 404, request, env, undefined, env);
+    return jsonResponse({ error: "No deals available" }, 404, request, env);
   }
 
   const deal = snapshot.deals.find((d) => d.id === dealId);
 
   if (!deal) {
-    return jsonResponse({ error: "Deal not found" }, 404, request, env, undefined, env);
+    return jsonResponse({ error: "Deal not found" }, 404, request, env);
   }
 
   const explanation = explainDeal(deal);
 
-  return jsonResponse(explanation, 200, request, env, undefined, env);
+  return jsonResponse(explanation, 200, request, env);
 }

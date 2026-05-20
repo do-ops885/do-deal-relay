@@ -7,10 +7,12 @@
 
 import type { Env } from "../types";
 import {
+  getAllowedOrigin,
   unauthorizedResponse,
   forbiddenResponse,
-  getAllowedOrigin,
 } from "../routes/utils";
+
+export { getAllowedOrigin };
 
 // ============================================================================
 // Types

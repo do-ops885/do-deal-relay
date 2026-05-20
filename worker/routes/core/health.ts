@@ -74,7 +74,7 @@ export async function handleHealth(
   };
 
   const statusCode = health.status === "healthy" ? 200 : 503;
-  return jsonResponse(health, statusCode, request, env, undefined, env);
+  return jsonResponse(health, statusCode, request, env);
 }
 
 export async function handleReady(

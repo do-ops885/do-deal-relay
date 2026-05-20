@@ -43,7 +43,7 @@ export async function handleStatus(
   request?: Request,
 ): Promise<Response> {
   const status = await getPipelineStatus(env);
-  return jsonResponse(status, 200, request, env, undefined, env);
+  return jsonResponse(status, 200, request, env);
 }
 
 export async function handleGetLogs(
@@ -81,5 +81,5 @@ export async function handleGetLogs(
     logs = await getRecentLogs(env, count);
   }
 
-  return jsonResponse({ logs, count: logs.length }, 200, request, env, undefined, env);
+  return jsonResponse({ logs, count: logs.length }, 200, request, env);
 }

@@ -242,40 +242,15 @@ export async function handleGetReferralByCode(
       return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
-    if (request) {
-      const url = new URL(request.url);
-      const redirectParam = url.searchParams.get("redirect");
+    const url = new URL(request?.url || "");
+    const redirect = url.searchParams.get("redirect") === "true";
 
-      if (redirectParam) {
-        try {
-          const redirectUrl = new URL(redirectParam);
-          const allowedDomains =
-            env.ENVIRONMENT === "test"
-              ? ["do-deal-relay.com", "localhost"]
-              : ["do-deal-relay.com"];
-          if (
-            redirectUrl.protocol !== "https:" &&
-            redirectUrl.protocol !== "http:"
-          ) {
-            return errorResponse("Invalid redirect URL", 400);
-          }
-          if (
-            !allowedDomains.some(
-              (d) =>
-                redirectUrl.hostname === d ||
-                redirectUrl.hostname.endsWith(`.${d}`),
-            )
-          ) {
-            return errorResponse("Invalid redirect URL", 400);
-          }
-          return new Response(null, {
-            status: 302,
-            headers: { Location: redirectParam },
-          });
-        } catch {
-          return errorResponse("Invalid redirect URL", 400);
-        }
+    if (redirect) {
+      const { validateRedirect } = await import("./utils");
+      if (validateRedirect(referral.url)) {
+        return Response.redirect(referral.url, 302);
       }
+      return jsonResponse({ error: "Invalid redirect URL" }, 400, request, env);
     }
 
     return jsonResponse({ referral }, 200, request, env);
@@ -292,7 +267,6 @@ export async function handleGetReferralByCode(
     );
   }
 }
-
 export async function handleDeactivateReferral(
   request: Request,
   code: string,
@@ -377,8 +351,8 @@ export async function handleReactivateReferral(
   try {
     // Check if referral exists and is already active
     const existing = await getReferralByCode(env, code);
-    if (existing && existing.status === "active") {
-      return jsonResponse({ error: "Conflict" }, 409);
+    if (!existing) {
+      return jsonResponse({ error: "Referral not found" }, 404);
     }
 
     const referral = await reactivateReferral(env, code);

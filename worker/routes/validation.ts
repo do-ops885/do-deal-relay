@@ -104,14 +104,14 @@ export async function handleValidateUrl(
     const body = (await request.json()) as ValidateUrlBody;
 
     if (!body.url || typeof body.url !== "string") {
-      return errorResponse("URL is required", 400, undefined, request, env, undefined, undefined, env);
+      return errorResponse("URL is required", 400, undefined, request, env);
     }
 
     // Validate URL format
     try {
       new URL(body.url);
     } catch {
-      return errorResponse("Invalid URL format", 400, undefined, request, env, undefined, undefined, env);
+      return errorResponse("Invalid URL format", 400, undefined, request, env);
     }
 
     logger.info(`URL validation request`, {
@@ -234,7 +234,13 @@ export async function handleValidateBatch(
       try {
         new URL(url);
       } catch {
-        return errorResponse(`Invalid URL: ${url}`, 400, undefined, request, env, undefined, undefined, env);
+        return errorResponse(
+          `Invalid URL: ${url}`,
+          400,
+          undefined,
+          request,
+          env,
+        );
       }
     }
 
@@ -368,7 +374,7 @@ export async function handleGetValidationStats(
       generated_at: new Date().toISOString(),
     };
 
-    return jsonResponse(stats, 200, request, env, undefined, env);
+    return jsonResponse(stats, 200, request, env);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to get stats";
@@ -445,13 +451,13 @@ export async function handleValidateDeal(
     const deals = await getDealsByCode(env, code);
 
     if (deals.length === 0) {
-      return errorResponse("Deal not found", 404, undefined, request, env, undefined, undefined, env);
+      return errorResponse("Deal not found", 404, undefined, request, env);
     }
 
     // Use first matching deal
     const deal = deals[0];
     if (!deal)
-      return errorResponse("Deal not found", 404, undefined, request, env, undefined, undefined, env);
+      return errorResponse("Deal not found", 404, undefined, request, env);
 
     // Perform validations
     const results: {

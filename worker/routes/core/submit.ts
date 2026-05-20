@@ -31,12 +31,7 @@ export async function handleSubmit(
 
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-    return jsonResponse(
-      { error: "Request body too large" },
-      413,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Request body too large" }, 413, request, env);
   }
 
   const body = (await request.json()) as SubmitDealBody;
