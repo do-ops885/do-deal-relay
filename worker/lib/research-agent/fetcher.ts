@@ -1008,7 +1008,7 @@ function calculateConfidence(
 }
 
 /**
- * Rate limiter for research requests
+ * Simple in-memory rate limiter (legacy - replaced by RequestManager from request-manager.ts)
  */
 export class ResearchRateLimiter {
   private requests: Map<string, number[]> = new Map();
@@ -1023,10 +1023,7 @@ export class ResearchRateLimiter {
   canMakeRequest(source: string): boolean {
     const now = Date.now();
     const requests = this.requests.get(source) || [];
-
-    // Remove old requests outside window
     const validRequests = requests.filter((time) => now - time < this.windowMs);
-
     return validRequests.length < this.maxRequests;
   }
 
@@ -1040,13 +1037,10 @@ export class ResearchRateLimiter {
   getTimeUntilNextWindow(source: string): number {
     const now = Date.now();
     const requests = this.requests.get(source) || [];
-
     if (requests.length === 0) return 0;
-
     const oldestRequest = Math.min(...requests);
     return Math.max(0, this.windowMs - (now - oldestRequest));
   }
 }
 
-// Global rate limiter instance
 export const researchRateLimiter = new ResearchRateLimiter(10, 60000);
