@@ -192,7 +192,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       await handleNLQGet(url, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.limit).toBe(5);
+      expect(callArgs![2]?.limit).toBe(5);
     });
 
     it("should use default limit when not specified", async () => {
@@ -202,7 +202,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       await handleNLQGet(url, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.limit).toBe(20);
+      expect(callArgs![2]?.limit).toBe(20);
     });
 
     it("should respect include_expired parameter in GET request", async () => {
@@ -214,7 +214,7 @@ describe("NLQ Handlers - GET & Explain", () => {
       await handleNLQGet(url, mockEnv);
 
       const callArgs = vi.mocked(buildStructuredQuery).mock.calls[0];
-      expect(callArgs[2]?.includeExpired).toBe(true);
+      expect(callArgs![2]?.includeExpired).toBe(true);
     });
 
     it("should handle GET query execution errors", async () => {

@@ -23,7 +23,7 @@ describe("Webhook Types", () => {
       const parts = id.split("_");
       expect(parts.length).toBeGreaterThanOrEqual(2);
       // First part should be base36 timestamp
-      expect(() => parseInt(parts[0], 36)).not.toThrow();
+      expect(() => parseInt(parts[0]!, 36)).not.toThrow();
     });
 
     it("should include UUID component", () => {

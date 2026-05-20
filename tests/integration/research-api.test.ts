@@ -69,12 +69,16 @@ describe("Research API Integration", () => {
       },
       body: JSON.stringify({
         query: "test query",
-        domain: "example.com",
       }),
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      research_metadata: {
+        used_real_fetching: boolean;
+        errors: string[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.research_metadata.used_real_fetching).toBe(false);
@@ -96,12 +100,16 @@ describe("Research API Integration", () => {
       },
       body: JSON.stringify({
         query: "test query",
-        domain: "example.com",
       }),
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      research_metadata: {
+        used_real_fetching: boolean;
+        errors: string[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.research_metadata.used_real_fetching).toBe(true);
@@ -121,12 +129,16 @@ describe("Research API Integration", () => {
       },
       body: JSON.stringify({
         query: "test query",
-        domain: "example.com",
       }),
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      research_metadata: {
+        used_real_fetching: boolean;
+        errors: string[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.research_metadata.used_real_fetching).toBe(true);
@@ -141,7 +153,6 @@ describe("Research API Integration", () => {
       },
       body: JSON.stringify({
         query: "test query",
-        domain: "example.com",
         options: {
           use_real_fetching: true,
         },
@@ -152,7 +163,12 @@ describe("Research API Integration", () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      research_metadata: {
+        used_real_fetching: boolean;
+        errors: string[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.research_metadata.used_real_fetching).toBe(true);
@@ -180,13 +196,17 @@ describe("Research API Integration", () => {
       },
       body: JSON.stringify({
         query: "test query",
-        domain: "example.com",
         sources: ["producthunt"],
       }),
     });
 
     const response = await worker.fetch(request, mockEnv);
-    const body = await response.json();
+    const body = (await response.json()) as {
+      research_metadata: {
+        used_real_fetching: boolean;
+        errors: string[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(body.research_metadata.errors).toBeDefined();

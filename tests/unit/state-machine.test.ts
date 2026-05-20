@@ -224,7 +224,7 @@ describe("State Machine", () => {
 
     // Initialize GitHub token for tests
     setGitHubToken("test-token");
-    initGitHubCircuitBreaker(mockEnv);
+    initGitHubCircuitBreaker(mockEnv as unknown as { DEALS_PROD: KVNamespace });
   });
 
   afterEach(() => {

@@ -69,7 +69,7 @@ describe("Feature Flags CRUD", () => {
           },
         ),
       } as unknown as MockKVNamespace,
-    } as Env;
+    } as unknown as Env;
   });
 
   afterEach(() => {
@@ -189,7 +189,7 @@ describe("Feature Flags CRUD", () => {
           delete: vi.fn(),
           list: vi.fn().mockResolvedValue({ keys: [] }),
         } as unknown as MockKVNamespace,
-      } as Env;
+      } as unknown as Env;
 
       const result = await isFeatureEnabled("any-flag", mockEnv as Env);
       expect(result).toBe(false);

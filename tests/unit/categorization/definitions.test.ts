@@ -214,13 +214,13 @@ describe("Category Definitions", () => {
   describe("Default category assignment", () => {
     it("should have referral as catch-all category", () => {
       expect(CATEGORY_DEFINITIONS.referral).toBeDefined();
-      expect(CATEGORY_DEFINITIONS.referral.domains).toHaveLength(0);
+      expect(CATEGORY_DEFINITIONS.referral!.domains).toHaveLength(0);
     });
 
     it("should have general fallback via keywords", () => {
       // Referral category should match common referral patterns
       const referralText = "sign up and get a bonus for inviting a friend";
-      const matches = CATEGORY_DEFINITIONS.referral.keywords.some((kw) =>
+      const matches = CATEGORY_DEFINITIONS.referral!.keywords.some((kw) =>
         referralText.includes(kw.toLowerCase()),
       );
       expect(matches).toBe(true);

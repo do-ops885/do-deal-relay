@@ -84,9 +84,7 @@ export const helpCommand: CommandHandler = {
       // Show general help - filter by user permissions
       const commandList = allCommands
         .filter((c) => c.platforms.includes(ctx.platform))
-        .filter((c) =>
-          c.permissions.some((p) => ctx.permissions.includes(p)),
-        )
+        .filter((c) => c.permissions.some((p) => ctx.permissions.includes(p)))
         .map((c) => `• \`/${c.name}\` - ${c.description}`)
         .join("\n");
 

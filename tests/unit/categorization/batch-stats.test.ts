@@ -72,8 +72,8 @@ describe("Categorization: batchAutoCategorize", () => {
 
     const results = batchAutoCategorize(deals);
     expect(results).toHaveLength(2);
-    expect(results[0].metadata.category).toContain("finance");
-    expect(results[1].metadata.category).toContain("food_delivery");
+    expect(results[0]!.metadata.category).toContain("finance");
+    expect(results[1]!.metadata.category).toContain("food_delivery");
   });
 
   it("should return same number of deals as input", () => {

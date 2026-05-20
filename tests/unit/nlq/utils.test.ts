@@ -70,7 +70,7 @@ describe("NLQ Utilities", () => {
       const parts = traceId.split("-");
 
       // Second part should be a large number (timestamp)
-      const timestamp = parseInt(parts[1], 10);
+      const timestamp = parseInt(parts[1]!, 10);
       expect(timestamp).toBeGreaterThan(1000000000000);
       expect(timestamp).toBeLessThan(Date.now() + 1000);
     });
@@ -80,7 +80,7 @@ describe("NLQ Utilities", () => {
       const parts = traceId.split("-");
 
       // Third part should be a random alphanumeric string
-      expect(parts[2]).toMatch(/^[a-z0-9]+$/);
+      expect(parts[2]!).toMatch(/^[a-z0-9]+$/);
     });
 
     it("should generate unique IDs on consecutive calls", () => {

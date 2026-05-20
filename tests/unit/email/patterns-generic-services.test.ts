@@ -59,7 +59,7 @@ describe("GENERIC_PATTERNS - subjectKeywords", () => {
 describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
   it("should match /refer/ path", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[0].test(
+      GENERIC_PATTERNS.referralUrlPatterns[0]!.test(
         "https://example.com/refer/abc123",
       ),
     ).toBe(true);
@@ -67,7 +67,7 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
   it("should match /invite/ path", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[0].test(
+      GENERIC_PATTERNS.referralUrlPatterns[0]!.test(
         "https://example.com/invite/xyz",
       ),
     ).toBe(true);
@@ -75,7 +75,7 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
   it("should match /share/ path", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[0].test(
+      GENERIC_PATTERNS.referralUrlPatterns[0]!.test(
         "https://example.com/share/code",
       ),
     ).toBe(true);
@@ -83,13 +83,15 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
   it("should match /r/ path", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[0].test("https://example.com/r/abc"),
+      GENERIC_PATTERNS.referralUrlPatterns[0]!.test(
+        "https://example.com/r/abc",
+      ),
     ).toBe(true);
   });
 
   it("should match query parameter ref=", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[3].test(
+      GENERIC_PATTERNS.referralUrlPatterns[3]!.test(
         "https://example.com?ref=CODE123",
       ),
     ).toBe(true);
@@ -97,7 +99,7 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
   it("should match query parameter referral=", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[3].test(
+      GENERIC_PATTERNS.referralUrlPatterns[3]!.test(
         "https://example.com?referral=ABC",
       ),
     ).toBe(true);
@@ -105,7 +107,7 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 
   it("should match short URLs like db.tt", () => {
     expect(
-      GENERIC_PATTERNS.referralUrlPatterns[2].test("https://db.tt/abc123"),
+      GENERIC_PATTERNS.referralUrlPatterns[2]!.test("https://db.tt/abc123"),
     ).toBe(true);
   });
 
@@ -120,7 +122,7 @@ describe("GENERIC_PATTERNS - referralUrlPatterns", () => {
 describe("GENERIC_PATTERNS - codePatterns", () => {
   it("should match 'code: ABC123'", () => {
     const match: RegExpMatchArray | null = "Your code: ABCDEF123".match(
-      GENERIC_PATTERNS.codePatterns[0],
+      GENERIC_PATTERNS.codePatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("ABCDEF123");
@@ -128,7 +130,7 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 
   it("should match 'code-XYZ' dash separator", () => {
     const match: RegExpMatchArray | null = "Enter code-PROMO99 now".match(
-      GENERIC_PATTERNS.codePatterns[0],
+      GENERIC_PATTERNS.codePatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("PROMO99");
@@ -136,7 +138,7 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 
   it("should match 'use code ABC'", () => {
     const match: RegExpMatchArray | null = "Please use code USEME123".match(
-      GENERIC_PATTERNS.codePatterns[1],
+      GENERIC_PATTERNS.codePatterns[1]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("USEME123");
@@ -144,7 +146,7 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 
   it("should match 'your referral code'", () => {
     const match: RegExpMatchArray | null = "Your referral code: REF456".match(
-      GENERIC_PATTERNS.codePatterns[2],
+      GENERIC_PATTERNS.codePatterns[2]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("REF456");
@@ -152,7 +154,7 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 
   it("should match 'code' with quotes", () => {
     const match: RegExpMatchArray | null = 'Your code: "QUOTED123"'.match(
-      GENERIC_PATTERNS.codePatterns[0],
+      GENERIC_PATTERNS.codePatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("QUOTED123");
@@ -168,7 +170,7 @@ describe("GENERIC_PATTERNS - codePatterns", () => {
 describe("GENERIC_PATTERNS - rewardPatterns", () => {
   it("should match dollar reward", () => {
     const match: RegExpMatchArray | null = "Get $20 credit".match(
-      GENERIC_PATTERNS.rewardPatterns[0],
+      GENERIC_PATTERNS.rewardPatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("$20 credit");
@@ -176,7 +178,7 @@ describe("GENERIC_PATTERNS - rewardPatterns", () => {
 
   it("should match percentage reward", () => {
     const match: RegExpMatchArray | null = "Earn 15% off".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
+      GENERIC_PATTERNS.rewardPatterns[1]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("15%");
@@ -184,7 +186,7 @@ describe("GENERIC_PATTERNS - rewardPatterns", () => {
 
   it("should match GB storage reward", () => {
     const match: RegExpMatchArray | null = "Get 500 GB bonus".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
+      GENERIC_PATTERNS.rewardPatterns[1]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("500 GB");
@@ -192,7 +194,7 @@ describe("GENERIC_PATTERNS - rewardPatterns", () => {
 
   it("should match MB storage reward", () => {
     const match: RegExpMatchArray | null = "Earn 256 MB extra".match(
-      GENERIC_PATTERNS.rewardPatterns[1],
+      GENERIC_PATTERNS.rewardPatterns[1]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("256 MB");
@@ -201,17 +203,17 @@ describe("GENERIC_PATTERNS - rewardPatterns", () => {
   it("should match 'earn' pattern", () => {
     const match: RegExpMatchArray | null =
       "Earn a free month when you invite".match(
-        GENERIC_PATTERNS.rewardPatterns[2],
+        GENERIC_PATTERNS.rewardPatterns[2]!,
       );
     expect(match).not.toBeNull();
-    expect(match![1].trim()).toBe("a free month");
+    expect(match![1]!.trim()).toBe("a free month");
   });
 });
 
 describe("GENERIC_PATTERNS - expiryPatterns", () => {
   it("should match 'expires: date'", () => {
     const match: RegExpMatchArray | null = "Expires: 2026-12-31".match(
-      GENERIC_PATTERNS.expiryPatterns[0],
+      GENERIC_PATTERNS.expiryPatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("2026-12-31");
@@ -219,7 +221,7 @@ describe("GENERIC_PATTERNS - expiryPatterns", () => {
 
   it("should match 'valid until: date'", () => {
     const match: RegExpMatchArray | null = "Valid until: 01/15/2027".match(
-      GENERIC_PATTERNS.expiryPatterns[0],
+      GENERIC_PATTERNS.expiryPatterns[0]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("01/15/2027");
@@ -227,7 +229,7 @@ describe("GENERIC_PATTERNS - expiryPatterns", () => {
 
   it("should match 'ends on date'", () => {
     const match: RegExpMatchArray | null = "Valid until March 15, 2026".match(
-      GENERIC_PATTERNS.expiryPatterns[1],
+      GENERIC_PATTERNS.expiryPatterns[1]!,
     );
     expect(match).not.toBeNull();
     if (match && match[1]) expect(match[1]).toBe("March 15, 2026");
