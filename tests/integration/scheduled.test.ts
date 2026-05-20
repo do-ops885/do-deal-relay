@@ -86,8 +86,6 @@ describe("Scheduled Event Handler", () => {
         get: vi.fn(async () => null),
         put: vi.fn(async () => {}),
       } as unknown as KVNamespace,
-      DEALS_PROD: {} as KVNamespace,
-      DEALS_LOG: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -95,8 +93,6 @@ describe("Scheduled Event Handler", () => {
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
-      AI_GATEWAY_URL: "https://gateway.test",
-      TRUST_THRESHOLD: "0.5",
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;
   });

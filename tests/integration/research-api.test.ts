@@ -185,7 +185,7 @@ describe("Research API Integration", () => {
     // In orchestrator.ts it uses researchRateLimiter from fetcher.ts.
 
     const { researchRateLimiter } =
-      await import("../../worker/lib/research-agent/rate-limiter");
+      await import("../../worker/lib/research-agent/fetcher");
     // Fill the rate limiter for a source
     for (let i = 0; i < 11; i++) {
       researchRateLimiter.recordRequest("producthunt");

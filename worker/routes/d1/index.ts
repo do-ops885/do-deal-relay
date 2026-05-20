@@ -87,5 +87,5 @@ export async function handleD1Request(
     return handleD1Trending(url, env);
   }
 
-  return jsonResponse({ error: "D1 endpoint not found" }, 404);
+  return jsonResponse({ error: "D1 endpoint not found" }, 404, undefined, env);
 }

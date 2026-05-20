@@ -43,10 +43,6 @@ describe("Security: Authentication Bypasses Fixed", () => {
         API_ENCRYPTION_KEY: "test-key",
         DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
-        WEBHOOK_SECRET: "test-secret",
-        API_ENCRYPTION_KEY: "test-key",
-        DEALS_DB: {} as any,
-        DEALS_DB: {} as any,
       } as unknown as Env;
 
       const request = new Request("https://example.com/api/submit");

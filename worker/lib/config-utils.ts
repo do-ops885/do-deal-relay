@@ -36,6 +36,8 @@ export function validateConfig(env: Env): void {
     "WEBHOOK_SECRET",
     "API_ENCRYPTION_KEY",
     "DEALS_DB",
+    "ENVIRONMENT",
+    "GITHUB_REPO",
   ];
   const missing = required.filter((k) => !env[k as keyof Env]);
   if (missing.length > 0) {

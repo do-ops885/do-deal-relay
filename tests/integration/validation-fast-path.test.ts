@@ -31,39 +31,7 @@ describe("validateDealFastPath", () => {
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
-      DEALS_DB: {
-        prepare: () => ({
-          bind: () => ({
-            first: () =>
-              Promise.resolve({
-                status: "accepted",
-                fingerprint: "fp1",
-                normalized_url: "https://example.com/deal",
-                trust_score: 0.9,
-              }),
-            run: () => Promise.resolve({}),
-            all: () => Promise.resolve({ results: [] }),
-          }),
-        }),
-        withSession: () => ({
-          prepare: () => ({
-            bind: () => ({ first: () => Promise.resolve(null) }),
-          }),
-          getBookmark: () => "test",
-        }),
-      } as any,
       TRUST_THRESHOLD: "0.3",
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
-      DEALS_DB: mockDb,
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
     } as unknown as Env;
     vi.spyOn(metricsModule, "recordValidationCacheMetric").mockReturnValue();
   });

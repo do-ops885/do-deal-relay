@@ -34,6 +34,10 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     DEALS_SOURCES: mockKv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
+    WEBHOOK_API_KEYS: {
+      get: vi.fn(async () => JSON.stringify({ role: "user" })),
+      put: vi.fn(),
+    } as any,
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     DEALS_DB: "DEALS_DB" in overrides ? overrides.DEALS_DB : defaultDb,
@@ -43,6 +47,8 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     ...overrides,
   } as any;
 };
+
+const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
 
 describe("Experience API Endpoints", () => {
   beforeEach(() => {
@@ -83,7 +89,9 @@ describe("Experience API Endpoints", () => {
   describe("GET /api/experience/:deal_code", () => {
     it("should return 200 and empty aggregate when no data exists", async () => {
       const mockEnv = createMockEnv();
-      const request = new Request("http://localhost/api/experience/DEAL123");
+      const request = new Request("http://localhost/api/experience/DEAL123", {
+        headers: { ...authHeader },
+      });
       const response = await worker.fetch(request, mockEnv);
       expect(response.status).toBe(200);
     });
