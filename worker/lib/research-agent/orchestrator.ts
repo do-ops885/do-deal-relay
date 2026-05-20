@@ -5,10 +5,12 @@ import {
   ReferralInput,
 } from "../../types";
 import { CONFIG } from "../../config";
-import { fetchFromSource } from "./fetcher";
-import { extractReferralsFromContent } from "./extractor-logic";
-import { ExtractedReferral } from "./extractor-utils";
-import { researchRateLimiter } from "./rate-limiter";
+import {
+  fetchFromSource,
+  extractReferralsFromContent,
+  researchRateLimiter,
+  ExtractedReferral,
+} from "./fetcher";
 import {
   ResearchSource,
   RESEARCH_SOURCES,

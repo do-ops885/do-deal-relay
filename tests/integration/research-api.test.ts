@@ -50,6 +50,9 @@ describe("Research API Integration", () => {
       GITHUB_REPO: "test/repo",
       TRUST_THRESHOLD: "0.5",
       AI_GATEWAY_URL: "https://gateway.test",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;
 
@@ -182,7 +185,7 @@ describe("Research API Integration", () => {
     // In orchestrator.ts it uses researchRateLimiter from fetcher.ts.
 
     const { researchRateLimiter } =
-      await import("../../worker/lib/research-agent/rate-limiter");
+      await import("../../worker/lib/research-agent/fetcher");
     // Fill the rate limiter for a source
     for (let i = 0; i < 11; i++) {
       researchRateLimiter.recordRequest("producthunt");

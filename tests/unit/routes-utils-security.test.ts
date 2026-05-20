@@ -3,7 +3,7 @@ import {
   jsonResponse,
   errorResponse,
   unauthorizedResponse,
-  ALLOWED_ORIGINS,
+  getAllowedOrigins,
   SECURITY_HEADERS,
 } from "../../worker/routes/utils";
 
@@ -19,9 +19,10 @@ describe("Routes Utils Security", () => {
   });
 
   it("should implement dynamic CORS with allowed origin", () => {
-    const allowedOrigin = ALLOWED_ORIGINS[1];
+    const allowedOrigins = getAllowedOrigins();
+    const allowedOrigin = allowedOrigins[1];
     const request = new Request("https://example.com", {
-      headers: { Origin: allowedOrigin as string } as any,
+      headers: { Origin: allowedOrigin! },
     });
 
     const response = jsonResponse(mockData, 200, request);
@@ -32,22 +33,24 @@ describe("Routes Utils Security", () => {
   });
 
   it("should fallback to default origin for disallowed origin", () => {
+    const allowedOrigins = getAllowedOrigins();
     const request = new Request("https://example.com", {
       headers: { Origin: "https://evil.com" } as any,
     });
 
     const response = jsonResponse(mockData, 200, request);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      ALLOWED_ORIGINS[0],
+      allowedOrigins[0],
     );
   });
 
   it("should fallback to default origin when no Origin header is present", () => {
+    const allowedOrigins = getAllowedOrigins();
     const request = new Request("https://example.com");
 
     const response = jsonResponse(mockData, 200, request);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      ALLOWED_ORIGINS[0],
+      allowedOrigins[0],
     );
   });
 
@@ -71,8 +74,9 @@ describe("Routes Utils Security", () => {
   });
 
   it("should set Vary: Origin for caching purposes when using dynamic CORS", () => {
+    const allowedOrigins = getAllowedOrigins();
     const request = new Request("https://example.com", {
-      headers: { Origin: ALLOWED_ORIGINS[1] } as any,
+      headers: { Origin: allowedOrigins[1]! },
     });
     const response = jsonResponse(mockData, 200, request);
     expect(response.headers.get("Vary")).toBe("Origin");

@@ -33,6 +33,11 @@ export function validateConfig(env: Env): void {
     "DEALS_LOCK",
     "AI_GATEWAY_URL",
     "TRUST_THRESHOLD",
+    "WEBHOOK_SECRET",
+    "API_ENCRYPTION_KEY",
+    "DEALS_DB",
+    "ENVIRONMENT",
+    "GITHUB_REPO",
   ];
   const missing = required.filter((k) => !env[k as keyof Env]);
   if (missing.length > 0) {

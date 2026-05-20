@@ -39,6 +39,9 @@ describe("Security: Authentication Bypasses Fixed", () => {
         DEALS_LOG: {} as KVNamespace,
         DEALS_LOCK: {} as KVNamespace,
         AI_GATEWAY_URL: "https://gateway.test",
+        WEBHOOK_SECRET: "test-secret",
+        API_ENCRYPTION_KEY: "test-key",
+        DEALS_DB: {} as any,
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 

@@ -20,6 +20,9 @@ describe("Funnel Metrics", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 
@@ -80,6 +83,9 @@ describe("Funnel Metrics", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.gateway",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
+      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 

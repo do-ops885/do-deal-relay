@@ -312,7 +312,7 @@ export interface Env {
   DEALS_LOG: KVNamespace;
   DEALS_LOCK: KVNamespace;
   DEALS_SOURCES: KVNamespace;
-  DEALS_DB?: D1Database;
+  DEALS_DB: D1Database;
   DEALS_WEBHOOKS?: KVNamespace;
   WEBHOOK_API_KEYS?: KVNamespace;
   AI?: Ai;
@@ -328,8 +328,11 @@ export interface Env {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
-  WEBHOOK_SECRET?: string;
+  WEBHOOK_SECRET: string;
+  API_ENCRYPTION_KEY: string;
   RESEARCH_USE_REAL_FETCHING?: string;
+  _validated?: boolean;
+  ALLOWED_ORIGINS?: string;
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;

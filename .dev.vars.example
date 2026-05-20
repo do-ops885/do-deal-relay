@@ -1,0 +1,36 @@
+# .dev.vars.example - Template for local development environment variables
+# Copy this file to .dev.vars and fill in the values
+
+# Required Infrastructure
+ENVIRONMENT=development
+GITHUB_REPO=your-org/your-repo
+GITHUB_TOKEN=your_github_personal_access_token
+AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/your-account/your-gateway/openai
+
+# Required Secrets
+WEBHOOK_SECRET=whsec_your_webhook_secret_here
+API_ENCRYPTION_KEY=your_32_character_encryption_key_here
+
+# Required D1 Database (Local)
+# For local development, wrangler uses a local D1 instance
+DEALS_DB=local-db-binding
+
+# Validation Thresholds
+TRUST_THRESHOLD=0.3
+NOTIFICATION_THRESHOLD=100
+
+# Optional Notifications
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
+EMAIL_WEBHOOK_SECRET=your_email_webhook_secret
+
+# Feature Flags & Research
+RESEARCH_USE_REAL_FETCHING=false
+USE_D1_READS=true
+DISABLE_DUAL_WRITE=false
+ENABLE_VALIDATION_CACHE=true
+
+# Budgeting (Optional)
+CANDIDATE_BUDGET_GLOBAL=500
+CANDIDATE_BUDGET_PER_SOURCE=100
+CANDIDATE_BUDGET_HIGH_TRUST_BONUS=200

@@ -116,6 +116,8 @@ describe("API Endpoints", () => {
         }),
       } as any,
       AI_GATEWAY_URL: "https://gateway.test",
+      WEBHOOK_SECRET: "test-secret",
+      API_ENCRYPTION_KEY: "test-key",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

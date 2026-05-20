@@ -152,6 +152,8 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => ({
   NOTIFICATION_THRESHOLD: "100",
   USE_D1_READS: "false",
   DISABLE_DUAL_WRITE: "false",
+  WEBHOOK_SECRET: "test-secret",
+  API_ENCRYPTION_KEY: "test-encryption-key",
   ...overrides,
 });
 

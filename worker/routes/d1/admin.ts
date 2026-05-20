@@ -44,7 +44,12 @@ export async function handleD1Migrations(
   env: Env,
 ): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   const action = url.searchParams.get("action");
@@ -99,7 +104,12 @@ export async function handleD1Migrations(
 
 export async function handleD1Health(env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {

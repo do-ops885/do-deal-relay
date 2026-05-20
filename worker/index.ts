@@ -70,6 +70,28 @@ import {
 import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
+// Module-level config validation promise (prevents race condition on cold start)
+// ============================================================================
+
+let configValidationPromise: Promise<void> | null = null;
+
+async function ensureConfigValidated(env: Env): Promise<void> {
+  if (env._validated) return;
+  if (!configValidationPromise) {
+    configValidationPromise = (async () => {
+      validateConfig(env);
+      env._validated = true;
+    })();
+  }
+  try {
+    await configValidationPromise;
+  } catch (e) {
+    configValidationPromise = null;
+    throw e;
+  }
+}
+
+// ============================================================================
 // Main Worker Entry Point
 // ============================================================================
 
@@ -77,12 +99,15 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
-      validateConfig(env);
+      await ensureConfigValidated(env);
     } catch (error) {
       console.error("Configuration error:", error);
       return jsonResponse(
-        { error: "Configuration error", message: (error as Error).message },
-        500,
+        {
+          error: "Configuration error",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        503,
         request,
       );
     }
@@ -249,7 +274,7 @@ export default {
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
         return withAuth(request, env, "admin", () =>
-          handleGetValidationStats(env),
+          handleGetValidationStats(env, request),
         );
       }
 
@@ -278,7 +303,9 @@ export default {
 
       // Legacy MCP v1 Endpoints (for backwards compatibility)
       if (path === "/mcp/v1/tools/list" && request.method === "POST") {
-        return withAuth(request, env, "user", () => handleMCPListTools(env));
+        return withAuth(request, env, "user", () =>
+          handleMCPListTools(env, request),
+        );
       }
       if (path === "/mcp/v1/tools/call" && request.method === "POST") {
         return withAuth(request, env, "user", () =>
@@ -286,7 +313,9 @@ export default {
         );
       }
       if (path === "/mcp/v1/info") {
-        return withAuth(request, env, "user", () => handleMCPInfo(env));
+        return withAuth(request, env, "user", () =>
+          handleMCPInfo(env, request),
+        );
       }
 
       // D1 Database API endpoints
@@ -323,7 +352,9 @@ export default {
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
-        return withAuth(request, env, "admin", () => handleRunAggregation(env));
+        return withAuth(request, env, "admin", () =>
+          handleRunAggregation(env, request),
+        );
       }
 
       // Email API
@@ -366,13 +397,14 @@ export default {
       }
 
       // 404
-      return jsonResponse({ error: "Not found" }, 404, request);
+      return jsonResponse({ error: "Not found" }, 404, request, env);
     } catch (error) {
       console.error("Request handler error:", error);
       return jsonResponse(
         { error: "Internal server error", message: (error as Error).message },
         500,
         request,
+        env,
       );
     }
   },

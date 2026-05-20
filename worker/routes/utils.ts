@@ -2,16 +2,28 @@
 // Response Utility Helpers
 // ============================================================================
 
+import type { Env } from "../types";
+
 /**
- * Allowed origins for CORS validation
+ * Default allowed origins for CORS validation
  */
-export const ALLOWED_ORIGINS = [
+const DEFAULT_ALLOWED_ORIGINS = [
   "https://do-deal-relay.pages.dev",
   "https://do-deal-relay.com",
   "https://www.do-deal-relay.com",
   "http://localhost:8787",
   "http://localhost:3000",
 ];
+
+/**
+ * Get all allowed origins, including those from environment variables
+ */
+export function getAllowedOrigins(env?: Env): string[] {
+  if (env?.ALLOWED_ORIGINS) {
+    return env.ALLOWED_ORIGINS.split(",").map((o) => o.trim());
+  }
+  return DEFAULT_ALLOWED_ORIGINS;
+}
 
 /**
  * Centralized security headers for all responses
@@ -29,13 +41,14 @@ export const SECURITY_HEADERS: Record<string, string> = {
 };
 
 /**
- * Get allowed origin based on request Origin header
+ * Get allowed origin based on request Origin header and environment
  */
-export function getAllowedOrigin(origin?: string | null): string {
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+export function getAllowedOrigin(origin?: string | null, env?: Env): string {
+  const allowed = getAllowedOrigins(env);
+  if (origin && allowed.includes(origin)) {
     return origin;
   }
-  return ALLOWED_ORIGINS[0]!; // Default to primary production domain
+  return allowed[0]!; // Default to primary production domain
 }
 
 /**
@@ -45,6 +58,7 @@ export function jsonResponse(
   data: unknown,
   status: number = 200,
   request?: Request,
+  env?: Env,
 ): Response {
   const origin = request?.headers.get("Origin");
 
@@ -52,10 +66,10 @@ export function jsonResponse(
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, X-API-Key, X-Correlation-ID",
+        "Content-Type, Authorization, X-API-Key, X-Correlation-ID, X-Webhook-Signature, MCP-Session-Id",
       "Access-Control-Allow-Credentials": "true",
       Vary: "Origin",
       ...SECURITY_HEADERS,
@@ -65,21 +79,22 @@ export function jsonResponse(
 
 /**
  * Create JSON response with specific origin (legacy helper, now uses jsonResponse)
- * @deprecated Use jsonResponse(data, status, request) instead
+ * @deprecated Use jsonResponse(data, status, request, env) instead
  */
 export function jsonResponseWithOrigin(
   data: unknown,
   status: number = 200,
   origin?: string,
+  env?: Env,
 ): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, X-API-Key, X-Correlation-ID",
+        "Content-Type, Authorization, X-API-Key, X-Correlation-ID, X-Webhook-Signature, MCP-Session-Id",
       "Access-Control-Allow-Credentials": "true",
       Vary: "Origin",
       ...SECURITY_HEADERS,
@@ -95,11 +110,13 @@ export function errorResponse(
   status: number = 400,
   details?: Record<string, unknown>,
   request?: Request,
+  env?: Env,
 ): Response {
   return jsonResponse(
     { error: message, ...(details ? { details } : {}) },
     status,
     request,
+    env,
   );
 }
 
@@ -109,6 +126,7 @@ export function errorResponse(
 export function unauthorizedResponse(
   message: string = "Unauthorized",
   request?: Request,
+  env?: Env,
 ): Response {
   const origin = request?.headers.get("Origin");
 
@@ -117,7 +135,7 @@ export function unauthorizedResponse(
     headers: {
       "Content-Type": "application/json",
       "WWW-Authenticate": 'Bearer realm="api"',
-      "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
       Vary: "Origin",
       ...SECURITY_HEADERS,
     },
@@ -130,8 +148,9 @@ export function unauthorizedResponse(
 export function forbiddenResponse(
   message: string = "Forbidden",
   request?: Request,
+  env?: Env,
 ): Response {
-  return errorResponse(message, 403, undefined, request);
+  return errorResponse(message, 403, undefined, request, env);
 }
 
 /**
@@ -196,4 +215,37 @@ function allowedOriginsCheck(
   return allowedDomains.some(
     (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
   );
+}
+
+/**
+ * Allowed domains for redirects
+ */
+export const ALLOWED_REDIRECT_DOMAINS = [
+  "do-deal-relay.com",
+  "do-deal-relay.pages.dev",
+  "localhost",
+];
+
+/**
+ * Validate redirect URL to prevent open redirects
+ */
+export function validateRedirect(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.replace(/^www\./, "");
+
+    // Allow localhost only if protocol is http or https
+    if (hostname === "localhost") {
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    }
+
+    // Must be HTTPS for production domains
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    return ALLOWED_REDIRECT_DOMAINS.includes(hostname);
+  } catch {
+    return false;
+  }
 }

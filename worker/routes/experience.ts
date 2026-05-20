@@ -17,13 +17,20 @@ export async function handleSubmitExperience(
   env: Env,
 ): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      request,
+      env,
+    );
   }
 
   if (request.headers.get("Content-Type") !== "application/json") {
     return jsonResponse(
       { error: "Content-Type must be application/json" },
       415,
+      request,
+      env,
     );
   }
 
@@ -38,7 +45,7 @@ export async function handleSubmitExperience(
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return jsonResponse({ error: "Invalid JSON body" }, 400, request, env);
   }
 
   const { deal_code, event_type, agent_id, score, metadata } = body;
@@ -47,6 +54,8 @@ export async function handleSubmitExperience(
     return jsonResponse(
       { error: "deal_code and event_type are required" },
       400,
+      request,
+      env,
     );
   }
 
@@ -55,6 +64,8 @@ export async function handleSubmitExperience(
     return jsonResponse(
       { error: `Invalid event_type. Must be one of: ${validTypes.join(", ")}` },
       400,
+      request,
+      env,
     );
   }
 
@@ -63,6 +74,8 @@ export async function handleSubmitExperience(
       return jsonResponse(
         { error: "score must be an integer between -100 and 100" },
         400,
+        request,
+        env,
       );
     }
   }
@@ -94,7 +107,12 @@ export async function handleSubmitExperience(
         component: "experience",
       },
     );
-    return jsonResponse({ error: "Failed to submit experience event" }, 500);
+    return jsonResponse(
+      { error: "Failed to submit experience event" },
+      500,
+      request,
+      env,
+    );
   }
 
   return jsonResponse(
@@ -105,25 +123,38 @@ export async function handleSubmitExperience(
       event_type,
     },
     201,
+    request,
+    env,
   );
 }
 
 export async function handleGetExperience(
   dealCode: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      request,
+      env,
+    );
   }
 
   if (!dealCode) {
-    return jsonResponse({ error: "deal_code is required" }, 400);
+    return jsonResponse({ error: "deal_code is required" }, 400, request, env);
   }
 
   const result = await getExperienceAggregate(env.DEALS_DB, dealCode);
 
   if (!result.success) {
-    return jsonResponse({ error: "Failed to retrieve experience data" }, 500);
+    return jsonResponse(
+      { error: "Failed to retrieve experience data" },
+      500,
+      request,
+      env,
+    );
   }
 
   if (!result.aggregate) {
@@ -137,18 +168,33 @@ export async function handleGetExperience(
         last_updated: null,
       },
       200,
+      request,
+      env,
     );
   }
 
-  return jsonResponse({
-    success: true,
-    aggregate: result.aggregate,
-  });
+  return jsonResponse(
+    {
+      success: true,
+      aggregate: result.aggregate,
+    },
+    200,
+    request,
+    env,
+  );
 }
 
-export async function handleRunAggregation(env: Env): Promise<Response> {
+export async function handleRunAggregation(
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      request,
+      env,
+    );
   }
 
   const logger = getExperienceLogger(env);
@@ -164,12 +210,17 @@ export async function handleRunAggregation(env: Env): Promise<Response> {
         component: "experience",
       },
     );
-    return jsonResponse({ error: "Aggregation failed" }, 500);
+    return jsonResponse({ error: "Aggregation failed" }, 500, request, env);
   }
 
-  return jsonResponse({
-    success: true,
-    deals_processed: result.dealsProcessed,
-    events_processed: result.eventsProcessed,
-  });
+  return jsonResponse(
+    {
+      success: true,
+      deals_processed: result.dealsProcessed,
+      events_processed: result.eventsProcessed,
+    },
+    200,
+    request,
+    env,
+  );
 }

@@ -140,7 +140,10 @@ describe("NLQ Handlers - GET & Explain", () => {
 
   describe("handleNLQGet", () => {
     it("should return 503 when D1 database is not configured", async () => {
-      const envWithoutDb = { ...mockEnv, DEALS_DB: undefined } as Env;
+      const envWithoutDb = {
+        ...mockEnv,
+        DEALS_DB: undefined as unknown as D1Database,
+      } as Env;
       const url = new URL("http://localhost/api/nlq?q=deals");
 
       const response = await handleNLQGet(url, envWithoutDb);
@@ -257,7 +260,10 @@ describe("NLQ Handlers - GET & Explain", () => {
 
   describe("handleNLQExplain", () => {
     it("should return 503 when D1 database is not configured", async () => {
-      const envWithoutDb = { ...mockEnv, DEALS_DB: undefined } as Env;
+      const envWithoutDb = {
+        ...mockEnv,
+        DEALS_DB: undefined as unknown as D1Database,
+      } as Env;
       const request = new Request("http://localhost/api/nlq/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
