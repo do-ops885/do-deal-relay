@@ -8,7 +8,7 @@ Blocker ID | Type | Description | Blocking Agent | Since | Escalation
 
 | Blocker ID | Type | Description | Blocking Agent | Since | Escalation |
 |---|---|---|---|---|---|
-| PR313-CONFLICTS | merge | 13 merge conflicts in PR #313 feat/api-auth-implementation | swarm-pr313-resolve | 2026-05-20 | project-lead |
+
 
 ## Blocker Types
 
@@ -30,4 +30,6 @@ When resolved, move to Resolved Blockers section with resolution timestamp.
 
 ## Resolved Blockers
 
-None yet.
+| Blocker ID | Type | Description | Resolution | Resolved At |
+|---|---|---|---|---|
+| PR313-CONFLICTS | merge | 13 merge conflicts in PR #313 feat/api-auth-implementation | All conflicts resolved via swarm coordination, committed 1aedc96 | 2026-05-20 |
