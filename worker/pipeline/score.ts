@@ -124,10 +124,7 @@ export async function score(
 }
 
 /**
- * Calculate a source diversity score based on the unique domains present in the deal set.
- *
- * @param deals - Array of deals to analyze.
- * @returns A diversity score between 0.0 and 1.0.
+ * Calculate source diversity score
  */
 export function calculateSourceDiversity(deals: Deal[]): number {
   if (deals.length === 0) return 0;
@@ -147,11 +144,7 @@ export function calculateSourceDiversity(deals: Deal[]): number {
 }
 
 /**
- * Calculate a uniqueness score based on the ratio of unique candidates to total candidates.
- *
- * @param duplicates - The number of duplicate deals identified.
- * @param totalCandidates - The total number of candidates processed.
- * @returns A uniqueness score between 0.0 and 1.0.
+ * Calculate uniqueness score
  */
 export function calculateUniquenessScore(
   duplicates: number,
@@ -209,11 +202,7 @@ function isHighValue(deal: Deal): boolean {
 }
 
 /**
- * Update source trust scores in storage based on the outcome of the validation pipeline.
- *
- * @param env - The worker environment bindings.
- * @param deals - The set of deals whose source trust should be updated.
- * @param allValid - Whether the validation was successful for all deals in the batch.
+ * Update source trust scores based on validation results
  */
 export async function evolveSourceTrust(
   env: Env,

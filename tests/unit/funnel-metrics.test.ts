@@ -52,7 +52,15 @@ describe("Funnel Metrics", () => {
 
     const request = new Request("https://worker.com/metrics?format=json");
     const response = await handleMetrics(env, "json", request);
-    const data = await response.json();
+    const data = (await response.json()) as {
+      funnel: {
+        discovered: number;
+        passed_trust_filter: number;
+        passed_all_validation: number;
+        published: number;
+        conversion_rate: string;
+      };
+    };
 
     expect(data.funnel).toBeDefined();
     expect(data.funnel.discovered).toBe(100);
@@ -89,7 +97,15 @@ describe("Funnel Metrics", () => {
 
     const request = new Request("https://worker.com/metrics?format=json");
     const response = await handleMetrics(env, "json", request);
-    const data = await response.json();
+    const data = (await response.json()) as {
+      funnel: {
+        discovered: number;
+        passed_trust_filter: number;
+        passed_all_validation: number;
+        published: number;
+        conversion_rate: string;
+      };
+    };
 
     expect(data.funnel).toBeDefined();
     expect(data.funnel.discovered).toBe(0);
@@ -141,7 +157,15 @@ describe("Funnel Metrics", () => {
 
     const request = new Request("https://worker.com/metrics?format=json");
     const response = await handleMetrics(env, "json", request);
-    const data = await response.json();
+    const data = (await response.json()) as {
+      funnel: {
+        discovered: number;
+        passed_trust_filter: number;
+        passed_all_validation: number;
+        published: number;
+        conversion_rate: string;
+      };
+    };
 
     expect(data.funnel.conversion_rate).toBe("0%");
   });

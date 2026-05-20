@@ -17,6 +17,8 @@ export interface AuthResult {
   userId?: string;
   role?: "admin" | "user" | "readonly";
   error?: string;
+  requestsPerMinute?: number;
+  requestsPerHour?: number;
 }
 
 export interface ApiKeyConfig {
@@ -26,6 +28,7 @@ export interface ApiKeyConfig {
   createdAt: string;
   expiresAt?: string;
   lastUsed?: string;
+  keyHash?: string;
   rateLimit: {
     requestsPerMinute: number;
     requestsPerHour: number;
@@ -78,10 +81,46 @@ export async function storeApiKey(
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
   await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+    expiration: config.expiresAt
+      ? Math.floor(new Date(config.expiresAt).getTime() / 1000)
+      : undefined,
     expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
   });
 
   return key;
+}
+
+/**
+ * List all API keys stored in KV
+ */
+export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  const list = await kv.list({ prefix: "apikey:" });
+
+  const results = await Promise.all(
+    list.keys.map(async (key) => {
+      const raw = await kv.get(key.name, "json");
+      return raw as ApiKeyConfig | null;
+    }),
+  );
+
+  return results.filter((r): r is ApiKeyConfig => r !== null);
+}
+
+/**
+ * Revoke an API key by its hash
+ */
+export async function revokeApiKey(
+  env: Env,
+  keyHash: string,
+): Promise<boolean> {
+  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+  const key = keyHash.startsWith("apikey:") ? keyHash : `apikey:${keyHash}`;
+  const existing = await kv.get(key);
+  if (!existing) return false;
+
+  await kv.delete(key);
+  return true;
 }
 
 /**
@@ -147,6 +186,8 @@ export async function verifyApiKey(
     authenticated: true,
     userId: metadata.userId,
     role: metadata.role,
+    requestsPerMinute: metadata.rateLimit?.requestsPerMinute,
+    requestsPerHour: metadata.rateLimit?.requestsPerHour,
   };
 }
 

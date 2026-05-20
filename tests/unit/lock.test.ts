@@ -41,8 +41,6 @@ describe("Lock Mechanism", () => {
         }),
       } as unknown as KVNamespace,
       DEALS_SOURCES: {} as KVNamespace,
-      DEALS_PROD: {} as KVNamespace,
-      DEALS_LOG: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -115,7 +113,7 @@ describe("Lock Mechanism", () => {
           acquired_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 300000).toISOString(),
         };
-      });
+      }) as any;
 
       const result = await acquireLock(mockEnv, "run-1", "trace-1");
 
@@ -124,7 +122,9 @@ describe("Lock Mechanism", () => {
 
     it("should throw when verification fails", async () => {
       // Mock get to always return null (lock wasn't actually stored)
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => null);
+      (mockEnv.DEALS_LOCK as unknown as { get: any }).get = vi.fn(
+        async () => null,
+      );
 
       await expect(acquireLock(mockEnv, "run-1", "trace-1")).rejects.toThrow(
         PipelineError,
@@ -135,7 +135,7 @@ describe("Lock Mechanism", () => {
     });
 
     it("should throw ConcurrencyError on KV failure", async () => {
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => {
+      (mockEnv.DEALS_LOCK as unknown as { get: any }).get = vi.fn(async () => {
         throw new Error("KV connection failed");
       });
 

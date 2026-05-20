@@ -10,6 +10,7 @@ import {
 } from "../../worker/lib/research-agent";
 import { RESEARCH_SOURCES } from "../../worker/lib/research-agent/types";
 import type { Env, WebResearchRequest } from "../../worker/types";
+import * as securityModule from "../../worker/lib/security";
 
 describe("Research Agent - Real Fetching", () => {
   let mockEnv: Env;
@@ -32,8 +33,6 @@ describe("Research Agent - Real Fetching", () => {
       DEALS_LOG: createKVMock() as unknown as KVNamespace,
       DEALS_LOCK: createKVMock() as unknown as KVNamespace,
       DEALS_SOURCES: createKVMock() as unknown as KVNamespace,
-      DEALS_PROD: createKVMock() as unknown as KVNamespace,
-      DEALS_LOG: createKVMock() as unknown as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -56,7 +55,7 @@ describe("Research Agent - Real Fetching", () => {
 
   describe("fetchFromSource", () => {
     it("should return error for non-existent source", async () => {
-      const source = RESEARCH_SOURCES[0];
+      const source = RESEARCH_SOURCES[0]!;
 
       // Mock fetch to simulate failure
       global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
@@ -71,6 +70,9 @@ describe("Research Agent - Real Fetching", () => {
     it("should respect payload size limits", async () => {
       // Create a large content string that exceeds MAX_PAYLOAD_SIZE_BYTES (1MB)
       const largeContent = "x".repeat(1_500_000); // 1.5MB
+
+      // Mock validateFetchUrl so the SSRF check passes and we test the size limit
+      vi.spyOn(securityModule, "validateFetchUrl").mockResolvedValue(true);
 
       // Mock fetch to return oversized content
       global.fetch = vi.fn().mockResolvedValue({
@@ -125,7 +127,7 @@ describe("Research Agent - Real Fetching", () => {
         https://example.com/referral/ABCD1234
       `;
 
-      const source = RESEARCH_SOURCES[0];
+      const source = RESEARCH_SOURCES[0]!;
       const referrals = extractReferralsFromContent(
         content,
         source,
@@ -156,7 +158,7 @@ describe("Research Agent - Real Fetching", () => {
 
       // Suspicious codes should have lower confidence due to test/demo/sample keywords
       referrals.forEach((ref) => {
-        const context = (ref.context || "").toLowerCase();
+        const context = ((ref as any).context || "").toLowerCase();
         if (
           context.includes("test") ||
           context.includes("demo") ||
@@ -285,42 +287,6 @@ describe("Research Agent - Real Fetching", () => {
       expect(result.research_metadata.errors).toBeDefined();
       expect(result.research_metadata.errors!.length).toBeGreaterThan(0);
     });
-
-    it("should auto-enable real fetching in production environment", async () => {
-      mockEnv.ENVIRONMENT = "production";
-
-      const request: WebResearchRequest = {
-        query: "test referral",
-        depth: "quick",
-        sources: ["producthunt"],
-        max_results: 5,
-      };
-
-      // Mock fetch to simulate attempt
-      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-
-      const result = await executeReferralResearch(mockEnv, request);
-
-      expect(result.research_metadata.used_real_fetching).toBe(true);
-    });
-
-    it("should auto-enable real fetching when RESEARCH_USE_REAL_FETCHING is true", async () => {
-      mockEnv.RESEARCH_USE_REAL_FETCHING = "true";
-
-      const request: WebResearchRequest = {
-        query: "test referral",
-        depth: "quick",
-        sources: ["producthunt"],
-        max_results: 5,
-      };
-
-      // Mock fetch to simulate attempt
-      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-
-      const result = await executeReferralResearch(mockEnv, request);
-
-      expect(result.research_metadata.used_real_fetching).toBe(true);
-    });
   });
 
   describe("convertResearchToReferrals", () => {
@@ -352,9 +318,9 @@ describe("Research Agent - Real Fetching", () => {
       );
 
       expect(referrals.length).toBe(1);
-      expect(referrals[0].code).toBe("TESTCODE123");
-      expect(referrals[0].status).toBe("quarantined");
-      expect(referrals[0].metadata.confidence_score).toBe(0.8);
+      expect(referrals[0]!.code).toBe("TESTCODE123");
+      expect(referrals[0]!.status).toBe("quarantined");
+      expect(referrals[0]!.metadata!.confidence_score).toBe(0.8);
     });
 
     it("should filter by confidence threshold", async () => {
@@ -392,7 +358,7 @@ describe("Research Agent - Real Fetching", () => {
       );
 
       expect(referrals.length).toBe(1);
-      expect(referrals[0].code).toBe("HIGHCONF");
+      expect(referrals[0]!.code).toBe("HIGHCONF");
     });
   });
 

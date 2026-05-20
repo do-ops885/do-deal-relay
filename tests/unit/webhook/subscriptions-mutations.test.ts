@@ -169,7 +169,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
 
       const remaining = await getPartnerSubscriptions(env, partnerId);
       expect(remaining).toHaveLength(1);
-      expect(remaining[0].id).toBe(sub2.id);
+      expect(remaining[0]!.id).toBe(sub2.id);
     });
   });
 

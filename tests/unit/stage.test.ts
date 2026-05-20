@@ -75,8 +75,6 @@ describe("Staging Pipeline", () => {
       DEALS_LOG: {} as KVNamespace,
       DEALS_LOCK: {} as KVNamespace,
       DEALS_SOURCES: {} as KVNamespace,
-      DEALS_PROD: {} as KVNamespace,
-      DEALS_LOG: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -201,7 +199,9 @@ describe("Staging Pipeline", () => {
 
     it("should fail verification when read-after-write fails", async () => {
       // Mock staging get to return different data (simulating write failure)
-      mockEnv.DEALS_STAGING.get = vi.fn(async () => null);
+      (mockEnv.DEALS_STAGING as unknown as { get: any }).get = vi.fn(
+        async () => null,
+      );
 
       const deals = [createMockDeal("1")];
 
@@ -278,16 +278,18 @@ describe("Staging Pipeline", () => {
     it("should detect hash mismatch", async () => {
       // Setup staging to return different data
       let callCount = 0;
-      mockEnv.DEALS_STAGING.get = vi.fn(async () => {
-        callCount++;
-        if (callCount === 1) return null;
-        return {
-          run_id: "different-run",
-          trace_id: "different-trace",
-          snapshot_hash: "different-hash",
-          deals: [],
-        } as Snapshot;
-      });
+      (mockEnv.DEALS_STAGING as unknown as { get: any }).get = vi.fn(
+        async () => {
+          callCount++;
+          if (callCount === 1) return null;
+          return {
+            run_id: "different-run",
+            trace_id: "different-trace",
+            snapshot_hash: "different-hash",
+            deals: [],
+          } as unknown as Snapshot;
+        },
+      );
 
       const deals = [createMockDeal("1")];
 
@@ -298,16 +300,18 @@ describe("Staging Pipeline", () => {
 
     it("should detect count mismatch", async () => {
       let callCount = 0;
-      mockEnv.DEALS_STAGING.get = vi.fn(async () => {
-        callCount++;
-        if (callCount === 1) return null;
-        return {
-          run_id: "test-run",
-          trace_id: "test-trace",
-          snapshot_hash: "any-hash",
-          deals: [createMockDeal("1"), createMockDeal("2")], // Different count
-        } as Snapshot;
-      });
+      (mockEnv.DEALS_STAGING as unknown as { get: any }).get = vi.fn(
+        async () => {
+          callCount++;
+          if (callCount === 1) return null;
+          return {
+            run_id: "test-run",
+            trace_id: "test-trace",
+            snapshot_hash: "any-hash",
+            deals: [createMockDeal("1"), createMockDeal("2")], // Different count
+          } as unknown as Snapshot;
+        },
+      );
 
       const deals = [createMockDeal("1")];
 

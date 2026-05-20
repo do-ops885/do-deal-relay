@@ -69,7 +69,10 @@ describe("Experience API Endpoints", () => {
       const mockEnv = createMockEnv();
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: {
+          "Content-Type": "text/plain",
+          ...authHeader,
+        },
         body: "not json",
       });
       const response = await worker.fetch(request, mockEnv);

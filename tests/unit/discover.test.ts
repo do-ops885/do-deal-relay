@@ -101,8 +101,6 @@ describe("Discovery Engine", () => {
           mockKvStorage.delete(key);
         }),
       } as unknown as KVNamespace,
-      DEALS_PROD: {} as KVNamespace,
-      DEALS_LOG: {} as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -178,7 +176,7 @@ describe("Discovery Engine", () => {
 
       const result = await discover(env, ctx);
       expect(result.errors.length).toBeGreaterThanOrEqual(1);
-      expect(result.errors[0].error).toContain("HTTP 500");
+      expect(result.errors[0]!.error).toContain("HTTP 500");
     });
 
     it("should handle fetch timeout", async () => {
@@ -450,7 +448,7 @@ describe("Discovery Engine", () => {
 
       const result = await discover(env, ctx);
       expect(result.deals).toHaveLength(1);
-      expect(result.deals[0].code).toBe("NESTED1");
+      expect(result.deals[0]!.code).toBe("NESTED1");
     });
 
     it("should handle single deal object", async () => {
@@ -473,7 +471,7 @@ describe("Discovery Engine", () => {
 
       const result = await discover(env, ctx);
       expect(result.deals).toHaveLength(1);
-      expect(result.deals[0].code).toBe("SINGLE");
+      expect(result.deals[0]!.code).toBe("SINGLE");
     });
 
     it("should handle alternate field names", async () => {
@@ -499,8 +497,8 @@ describe("Discovery Engine", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
-      expect(result.deals[0].code).toBe("ALT1");
-      expect(result.deals[0].reward.type).toBe("percent");
+      expect(result.deals[0]!.code).toBe("ALT1");
+      expect(result.deals[0]!.reward.type).toBe("percent");
     });
 
     it("should handle items array field", async () => {
@@ -561,8 +559,8 @@ describe("Discovery Engine", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
-      expect(result.deals[0].expiry.date).toBe("2024-12-31T23:59:59Z");
-      expect(result.deals[0].expiry.confidence).toBe(0.8);
+      expect(result.deals[0]!.expiry.date).toBe("2024-12-31T23:59:59Z");
+      expect(result.deals[0]!.expiry.confidence).toBe(0.8);
     });
   });
 
@@ -656,7 +654,7 @@ describe("Discovery Engine", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
-      const deal = result.deals[0];
+      const deal = result.deals[0]!;
 
       expect(deal.id).toBeDefined();
       expect(deal.source.domain).toBe("build.com");

@@ -297,7 +297,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].type).toBe("text");
+      expect(result.content[0]!.type).toBe("text");
       expect((result.content[0] as any).text).toContain("not found");
     });
 
@@ -631,7 +631,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].type).toBe("text");
+      expect(result.content[0]!.type).toBe("text");
       expect((result.content[0] as any).text).toContain("Unknown tool");
     });
 

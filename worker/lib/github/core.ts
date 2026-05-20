@@ -244,15 +244,10 @@ export async function getRecentCommits(
     );
     if (!response.ok)
       throw new Error(`Failed to get commits: ${response.status}`);
-    const data = await safeResponseJson<
-      Array<{
-        sha: string;
-        commit: {
-          message: string;
-          author: { name: string; email: string; date: string };
-        };
-      }>
-    >(response);
+    const data =
+      await safeResponseJson<
+        Array<{ sha: string; commit: { message: string; author: any } }>
+      >(response);
     return data.map((c) => ({
       sha: c.sha,
       message: c.commit.message,

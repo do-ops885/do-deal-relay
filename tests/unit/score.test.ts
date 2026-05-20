@@ -70,8 +70,6 @@ describe("Scoring Pipeline", () => {
       get: vi.fn(async () => null),
       put: vi.fn(async () => {}),
     } as unknown as KVNamespace,
-    DEALS_PROD: {} as KVNamespace,
-    DEALS_LOG: {} as KVNamespace,
     AI_GATEWAY_URL: "https://gateway.test",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
@@ -90,7 +88,7 @@ describe("Scoring Pipeline", () => {
     const deals = [createMockDeal("1")];
     const result = await score(deals, ctx, mockEnv);
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0].metadata.confidence_score).toBeGreaterThan(0);
+    expect(result.deals[0]!.metadata.confidence_score).toBeGreaterThan(0);
   });
 
   it("should calculate statistics", async () => {

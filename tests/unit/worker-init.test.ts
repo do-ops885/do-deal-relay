@@ -18,8 +18,6 @@ describe("Worker Initialization", () => {
     DEALS_LOG: { get: vi.fn(), put: vi.fn() },
     DEALS_LOCK: { get: vi.fn() },
     DEALS_SOURCES: { get: vi.fn() },
-    DEALS_PROD: {},
-    DEALS_LOG: {},
     AI_GATEWAY_URL: "http://test",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",

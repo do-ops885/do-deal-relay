@@ -78,7 +78,7 @@ describe("Auth", () => {
           const view = new Uint8Array(data);
           const hash = new Uint8Array(32);
           for (let i = 0; i < 32; i++) {
-            hash[i] = (view[i % view.length] + i) % 256;
+            hash[i] = (view[i % view.length]! + i) % 256;
           }
           return Promise.resolve(hash.buffer);
         }),
@@ -208,10 +208,10 @@ describe("Auth", () => {
 
       expect(parts.length).toBe(3);
       expect(parts[0]).toBe("ddr");
-      expect(parts[1].length).toBe(32);
+      expect(parts[1]!.length).toBe(32);
       expect(parts[2]).toMatch(/^\d+$/);
 
-      const timestamp = parseInt(parts[2], 10);
+      const timestamp = parseInt(parts[2]!, 10);
       const expectedTimestamp = Math.floor(Date.now() / 1000);
       expect(timestamp).toBe(expectedTimestamp);
     });
@@ -250,7 +250,7 @@ describe("Auth", () => {
       expect(key).toMatch(/^ddr_[a-f0-9]{32}_\d+$/);
       expect(mockPut).toHaveBeenCalledOnce();
 
-      const [storedKey, storedValue, options] = mockPut.mock.calls[0];
+      const [storedKey, storedValue, options] = mockPut.mock.calls[0]!;
       expect(storedKey).toMatch(/^apikey:[a-f0-9]{64}$/);
 
       const metadata = JSON.parse(storedValue as string);
@@ -268,7 +268,7 @@ describe("Auth", () => {
         key: "",
       });
 
-      const [, storedValue] = mockPut.mock.calls[0];
+      const [, storedValue] = mockPut.mock.calls[0]!;
       const metadata = JSON.parse(storedValue as string);
 
       // The plaintext key should not be anywhere in the stored data
@@ -287,21 +287,26 @@ describe("Auth", () => {
         key: "",
       });
 
-      const [, , options] = mockPut.mock.calls[0];
+      const [, , options] = mockPut.mock.calls[0]!;
       expect(options).toEqual({ expirationTtl: 365 * 86400 });
     });
 
-    it("should not set TTL when expiresAt is provided", async () => {
+    it("should set expiration timestamp when expiresAt is provided", async () => {
       mockPut.mockResolvedValue(undefined);
+      const futureDate = new Date(Date.now() + 86400000);
 
       await storeApiKey(mockEnv, {
         ...baseConfig,
         key: "",
-        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        expiresAt: futureDate.toISOString(),
       });
 
-      const [, , options] = mockPut.mock.calls[0];
-      expect(options).toEqual({ expirationTtl: undefined });
+      const [, , options] = mockPut.mock.calls[0]!;
+      const expectedExpiration = Math.floor(futureDate.getTime() / 1000);
+      expect(options).toEqual({
+        expiration: expectedExpiration,
+        expirationTtl: undefined,
+      });
     });
 
     it("should preserve all metadata fields", async () => {
@@ -314,7 +319,7 @@ describe("Auth", () => {
         expiresAt,
       });
 
-      const [, storedValue] = mockPut.mock.calls[0];
+      const [, storedValue] = mockPut.mock.calls[0]!;
       const metadata = JSON.parse(storedValue as string);
 
       expect(metadata.userId).toBe("user-123");
@@ -344,7 +349,7 @@ describe("Auth", () => {
           role,
         });
 
-        const [, storedValue] = mockPut.mock.calls[0];
+        const [, storedValue] = mockPut.mock.calls[0]!;
         const metadata = JSON.parse(storedValue as string);
         expect(metadata.role).toBe(role);
       }
@@ -455,7 +460,7 @@ describe("Auth", () => {
       await verifyApiKey(mockEnv, validApiKey);
 
       expect(mockPut).toHaveBeenCalledOnce();
-      const [key, value] = mockPut.mock.calls[0];
+      const [key, value] = mockPut.mock.calls[0]!;
       expect(key).toMatch(/^apikey:/);
 
       const updatedMetadata = JSON.parse(value as string);
@@ -496,7 +501,7 @@ describe("Auth", () => {
       await verifyApiKey(mockEnv, validApiKey);
 
       expect(mockGet).toHaveBeenCalledOnce();
-      const [key] = mockGet.mock.calls[0];
+      const [key] = mockGet.mock.calls[0]!;
       expect(key).toMatch(/^apikey:[a-f0-9]{64}$/);
     });
   });

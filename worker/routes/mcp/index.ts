@@ -26,7 +26,7 @@ import {
   handleResourceRead,
 } from "./resources";
 import {
-  MCP_CORS_HEADERS,
+  getMCPCORSHeaders,
   MCP_PROTOCOL_VERSION,
   createSuccessResponse,
   createErrorResponse,
@@ -54,7 +54,7 @@ export async function handleMCPRequest(
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: MCP_CORS_HEADERS,
+      headers: getMCPCORSHeaders(request.headers.get("Origin")),
     });
   }
 
@@ -197,7 +197,10 @@ export async function handleMCPRequest(
 
       case "notifications/initialized":
         // Notification, no response needed
-        return new Response(null, { status: 202, headers: MCP_CORS_HEADERS });
+        return new Response(null, {
+          status: 202,
+          headers: getMCPCORSHeaders(request.headers.get("Origin")),
+        });
 
       default:
         return createJSONResponse(
@@ -261,7 +264,7 @@ export async function handleMCPListTools(env: Env): Promise<Response> {
     {
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCORSHeaders(),
       },
     },
   );
@@ -288,7 +291,7 @@ export async function handleMCPCall(
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          ...MCP_CORS_HEADERS,
+          ...getMCPCORSHeaders(request.headers.get("Origin")),
         },
       });
     }
@@ -299,7 +302,7 @@ export async function handleMCPCall(
       status: result.isError ? 400 : 200,
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCORSHeaders(request.headers.get("Origin")),
       },
     });
   } catch (error) {
@@ -312,7 +315,7 @@ export async function handleMCPCall(
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          ...MCP_CORS_HEADERS,
+          ...getMCPCORSHeaders(),
         },
       },
     );
@@ -352,7 +355,7 @@ export async function handleMCPInfo(env: Env): Promise<Response> {
     {
       headers: {
         "Content-Type": "application/json",
-        ...MCP_CORS_HEADERS,
+        ...getMCPCORSHeaders(),
       },
     },
   );

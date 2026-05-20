@@ -312,7 +312,7 @@ describe("Analytics: Source Performance", () => {
     ];
 
     const result = calculateSourcePerformance(deals, registry);
-    expect(result[0].trustScore).toBe(0.85);
+    expect(result[0]!.trustScore).toBe(0.85);
   });
 
   it("should use default trust score when source not in registry", () => {
@@ -329,7 +329,7 @@ describe("Analytics: Source Performance", () => {
     ];
 
     const result = calculateSourcePerformance(deals, []);
-    expect(result[0].trustScore).toBe(0.5);
+    expect(result[0]!.trustScore).toBe(0.5);
   });
 
   it("should calculate average confidence per source", () => {

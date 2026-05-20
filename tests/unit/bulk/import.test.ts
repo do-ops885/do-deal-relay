@@ -86,7 +86,21 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -94,8 +108,8 @@ describe("Bulk Import", () => {
       expect(data.imported).toBe(1);
       expect(data.failed).toBe(0);
       expect(data.results).toHaveLength(1);
-      expect(data.results[0].success).toBe(true);
-      expect(data.results[0].code).toBe("TEST123");
+      expect(data.results[0]!.success).toBe(true);
+      expect(data.results[0]!.code).toBe("TEST123");
     });
 
     it("should handle empty deals array", async () => {
@@ -108,7 +122,21 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("cannot be empty");
@@ -130,7 +158,21 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Maximum 100 deals");
@@ -154,14 +196,28 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(response.status).toBe(207); // 207 Multi-Status when some items fail
       expect(data.imported).toBe(0);
       expect(data.failed).toBe(1);
-      expect(data.results[0].success).toBe(false);
-      expect(data.results[0].errors).toBeDefined();
-      expect(data.results[0].errors.length).toBeGreaterThan(0);
+      expect(data.results[0]!.success).toBe(false);
+      expect(data.results[0]!.errors).toBeDefined();
+      expect(data.results[0]!.errors.length).toBeGreaterThan(0);
     });
 
     it("should detect duplicate codes", async () => {
@@ -193,12 +249,26 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(data.imported).toBe(0);
       expect(data.skipped).toBe(1);
-      expect(data.results[0].message).toBe("already exists");
-      expect(data.results[0].referral_id).toBe("existing-id");
+      expect(data.results[0]!.message).toBe("already exists");
+      expect(data.results[0]!.referral_id).toBe("existing-id");
     });
 
     it("should import multiple deals in batch", async () => {
@@ -221,7 +291,21 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(data.total).toBe(3);
       expect(data.imported).toBe(3);
@@ -275,13 +359,27 @@ describe("Bulk Import", () => {
       });
 
       const response = await handleBulkImport(request, mockEnv);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        total?: number;
+        imported?: number;
+        failed?: number;
+        skipped?: number;
+        error?: string;
+        results: Array<{
+          success?: boolean;
+          code?: string;
+          message?: string;
+          referral_id?: string;
+          errors: string[];
+        }>;
+      };
 
       expect(data.imported).toBe(1);
-      expect(data.results[0].success).toBe(true);
+      expect(data.results[0]!.success).toBe(true);
 
       // Verify metadata was passed to storage
-      const storedReferral = vi.mocked(storeReferralInput).mock.calls[0][1];
+      const storedReferral = vi.mocked(storeReferralInput).mock.calls[0]![1];
       expect(storedReferral.metadata?.title).toBe("Meta Referral");
       expect(storedReferral.metadata?.reward_value).toBe(50);
       expect(storedReferral.metadata?.confidence_score).toBe(0.9);

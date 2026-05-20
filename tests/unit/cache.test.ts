@@ -694,7 +694,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvSources,
         DEALS_STAGING: mockKvSources,
-        DEALS_PROD: mockKvSources,
         DEALS_LOG: mockKvSources,
         DEALS_LOCK: mockKvSources,
         AI_GATEWAY_URL: "https://gateway.test",
@@ -731,7 +730,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvProd,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvProd,
-        DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
@@ -767,7 +765,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvSources,
         DEALS_STAGING: mockKvSources,
-        DEALS_PROD: mockKvSources,
         DEALS_LOG: mockKvSources,
         AI_GATEWAY_URL: "https://gateway.test",
         WEBHOOK_SECRET: "test-secret",
@@ -802,7 +799,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvProd,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvProd,
-        DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
         WEBHOOK_SECRET: "test-secret",
@@ -837,7 +833,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvStaging,
         DEALS_PROD: mockKvStaging,
         DEALS_STAGING: mockKvStaging,
-        DEALS_PROD: mockKvStaging,
         DEALS_LOG: mockKvStaging,
         DEALS_LOCK: mockKvStaging,
         AI_GATEWAY_URL: "https://gateway.test",
@@ -879,10 +874,10 @@ describe("KVCache", () => {
 
       expect(allMetrics).toHaveProperty("ns1");
       expect(allMetrics).toHaveProperty("ns2");
-      expect(allMetrics.ns1.hits).toBe(1);
-      expect(allMetrics.ns1.misses).toBe(0);
-      expect(allMetrics.ns2.hits).toBe(0);
-      expect(allMetrics.ns2.misses).toBe(1);
+      expect(allMetrics.ns1!.hits).toBe(1);
+      expect(allMetrics.ns1!.misses).toBe(0);
+      expect(allMetrics.ns2!.hits).toBe(0);
+      expect(allMetrics.ns2!.misses).toBe(1);
     });
 
     it("should calculate rates correctly for each namespace", async () => {
@@ -895,10 +890,10 @@ describe("KVCache", () => {
 
       const allMetrics = getAllCacheMetrics();
 
-      expect(allMetrics["rates-ns1"].hitRate).toBe(0.5);
-      expect(allMetrics["rates-ns1"].missRate).toBe(0.5);
-      expect(allMetrics["rates-ns2"].hitRate).toBe(0);
-      expect(allMetrics["rates-ns2"].missRate).toBe(0);
+      expect(allMetrics["rates-ns1"]!.hitRate).toBe(0.5);
+      expect(allMetrics["rates-ns1"]!.missRate).toBe(0.5);
+      expect(allMetrics["rates-ns2"]!.hitRate).toBe(0);
+      expect(allMetrics["rates-ns2"]!.missRate).toBe(0);
     });
   });
 
@@ -911,14 +906,14 @@ describe("KVCache", () => {
       await cache2.get("nonexistent"); // miss
 
       let allMetrics = getAllCacheMetrics();
-      expect(allMetrics["reset-ns1"].misses).toBe(1);
-      expect(allMetrics["reset-ns2"].misses).toBe(1);
+      expect(allMetrics["reset-ns1"]!.misses).toBe(1);
+      expect(allMetrics["reset-ns2"]!.misses).toBe(1);
 
       resetAllCacheMetrics();
 
       allMetrics = getAllCacheMetrics();
-      expect(allMetrics["reset-ns1"].misses).toBe(0);
-      expect(allMetrics["reset-ns2"].misses).toBe(0);
+      expect(allMetrics["reset-ns1"]!.misses).toBe(0);
+      expect(allMetrics["reset-ns2"]!.misses).toBe(0);
     });
   });
 
@@ -953,7 +948,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvStaging,
-        DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",
@@ -1002,7 +996,6 @@ describe("KVCache", () => {
         DEALS_SOURCES: mockKvSources,
         DEALS_PROD: mockKvProd,
         DEALS_STAGING: mockKvStaging,
-        DEALS_PROD: mockKvProd,
         DEALS_LOG: mockKvProd,
         DEALS_LOCK: mockKvProd,
         AI_GATEWAY_URL: "https://gateway.test",

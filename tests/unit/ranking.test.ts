@@ -64,8 +64,8 @@ describe("Ranking Logic", () => {
       order: "desc",
     });
 
-    expect(result.deals[0].id).toBe("1");
-    expect(result.scores![0].score).toBeGreaterThan(result.scores![1].score);
+    expect(result.deals[0]!.id).toBe("1");
+    expect(result.scores![0]!.score).toBeGreaterThan(result.scores![1]!.score);
   });
 
   it("should filter deals by status", () => {
@@ -82,7 +82,7 @@ describe("Ranking Logic", () => {
     });
 
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0].id).toBe("active");
+    expect(result.deals[0]!.id).toBe("active");
   });
 
   it("should filter by minConfidence", () => {
@@ -100,7 +100,7 @@ describe("Ranking Logic", () => {
     });
 
     expect(result.deals).toHaveLength(1);
-    expect(result.deals[0].id).toBe("high");
+    expect(result.deals[0]!.id).toBe("high");
   });
 
   it("should sort by recency", () => {
@@ -117,6 +117,6 @@ describe("Ranking Logic", () => {
     });
 
     const sorted = sortDeals([oldDeal, newDeal], "recency", "desc");
-    expect(sorted[0].id).toBe("new");
+    expect(sorted[0]!.id).toBe("new");
   });
 });

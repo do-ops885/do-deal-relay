@@ -1,74 +1,65 @@
 /**
- * Admin/Utility Commands
+ * Admin and Utility Commands
  *
- * System commands: stats, help, start.
+ * Commands for system administration, help, and stats.
  */
 
-import { CommandHandler, CommandContext, Permission } from "./types";
+import { CommandHandler } from "./types";
 import { getErrorMessage, formatDate } from "./utils";
-import {
-  addCommand,
-  searchCommand,
-  getCommand,
-  deactivateCommand,
-  reactivateCommand,
-} from "./referral";
-import { researchCommand } from "./research";
 
-// ============================================================================
-// Permission Helper (local copy to avoid circular dependency)
-// ============================================================================
-
-function hasPermission(ctx: CommandContext, required: Permission[]): boolean {
-  if (ctx.isAdmin) return true;
-  return required.some((perm) => ctx.permissions.includes(perm));
-}
-
-// Build the command list for help display
-const allCommands = [
-  addCommand,
-  searchCommand,
-  getCommand,
-  deactivateCommand,
-  reactivateCommand,
-  researchCommand,
-];
+export const startCommand: CommandHandler = {
+  name: "start",
+  description: "Start the bot and get a welcome message",
+  usage: "/start",
+  permissions: ["public", "verified", "moderator", "admin"],
+  platforms: ["telegram", "discord"],
+  execute: async (ctx) => {
+    return {
+      success: true,
+      message:
+        "👋 **Welcome to the DealRelay Bot!**\n\n" +
+        "I help you find and share referral codes for various services.\n\n" +
+        "🔍 **Quick Start**:\n" +
+        "• Use `/search <domain>` to find codes (e.g., `/search uber.com`)\n" +
+        "• Use `/add <url>` to share your own code\n" +
+        "• Use `/research <domain>` to let AI find codes for you\n\n" +
+        "Type `/help` to see all available commands.",
+    };
+  },
+};
 
 export const statsCommand: CommandHandler = {
   name: "stats",
   description: "View system statistics",
   usage: "/stats",
-  aliases: ["status", "info", "overview"],
-  permissions: ["public", "verified", "moderator", "admin"],
+  aliases: ["status"],
+  permissions: ["verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (_ctx, _args, api) => {
+  execute: async (ctx, args, api) => {
     try {
-      const response = await api.health();
+      const health = await api.health();
+      const lastRun = health.last_run;
 
-      const statusEmoji =
-        response.status === "healthy"
-          ? "✅"
-          : response.status === "degraded"
-            ? "⚠️"
-            : "🔴";
+      let lastRunText = "None";
+      if (lastRun) {
+        lastRunText =
+          `ID: \`${lastRun.run_id}\`\n` +
+          `Time: ${formatDate(lastRun.timestamp)}\n` +
+          `Deals: ${lastRun.deals_count}`;
+      }
 
       return {
         success: true,
         message:
-          `📊 **DealRelay System Statistics**\n\n` +
-          `${statusEmoji} **Status**: ${response.status.toUpperCase()}\n` +
-          `📦 **Version**: ${response.version}\n` +
-          `⏱️ **Timestamp**: ${formatDate(response.timestamp)}\n\n` +
-          `**Health Checks**:\n` +
-          `${response.checks.kv_connection ? "✅" : "❌"} KV Connection\n` +
-          `${response.checks.last_run_success ? "✅" : "❌"} Last Run Success\n` +
-          `${response.checks.snapshot_valid ? "✅" : "❌"} Snapshot Valid\n\n` +
-          (response.last_run
-            ? `**Last Run**:\n` +
-              `🆔 ${response.last_run.run_id}\n` +
-              `📅 ${formatDate(response.last_run.timestamp)}\n` +
-              `📊 ${response.last_run.deals_count} deals`
-            : ""),
+          "📊 **System Statistics**\n\n" +
+          `✅ **Status**: ${health.status.toUpperCase()}\n` +
+          `🏷️ **Version**: ${health.version}\n` +
+          `⏰ **Time**: ${formatDate(health.timestamp)}\n\n` +
+          "🏗️ **Last Pipeline Run**:\n" +
+          lastRunText +
+          "\n\n" +
+          "💾 **KV Connections**:\n" +
+          (health.checks.kv_connection ? "✅ Connected" : "❌ Disconnected"),
       };
     } catch (error) {
       return {
@@ -79,103 +70,64 @@ export const statsCommand: CommandHandler = {
   },
 };
 
-// Add statsCommand to the list after declaration
-allCommands.push(statsCommand);
-
 export const helpCommand: CommandHandler = {
   name: "help",
-  description: "Show help information for commands",
+  description: "Show available commands and usage info",
   usage: "/help [command]",
-  aliases: ["commands", "?"],
+  aliases: ["?"],
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx: CommandContext, args, _api) => {
+  execute: async (ctx, args) => {
+    const { commands: allCommands } = await import("./index");
+
     if (args.length === 0) {
-      // Show general help
+      // Show general help - filter by user permissions
       const commandList = allCommands
-        .filter((cmd) => cmd.platforms.includes(ctx.platform))
-        .filter((cmd) => hasPermission(ctx, cmd.permissions))
-        .map((cmd) => `• \`/${cmd.name}\` - ${cmd.description}`)
+        .filter((c) => c.platforms.includes(ctx.platform))
+        .filter((c) => c.permissions.some((p) => ctx.permissions.includes(p)))
+        .map((c) => `• \`/${c.name}\` - ${c.description}`)
         .join("\n");
 
       return {
         success: true,
         message:
-          `👋 **Welcome to DealRelay Bot!**\n\n` +
-          `I help you manage referral codes. Here's what I can do:\n\n` +
+          "📖 **DealRelay Bot Help**\n\n" +
+          "I help you manage referral codes. Here's what I can do:\n\n" +
           commandList +
-          `\n\nUse \`/help <command>\` for detailed usage.\n\n` +
-          `🔗 **API URL**: \`${process.env.DEAL_API_URL || "Not configured"}\``,
+          "\n\nUse `/help <command>` for detailed usage.\n\n" +
+          `🔗 **API URL**: \`${process.env["DEAL_API_URL"] || "Not configured"}\``,
       };
     }
 
     // Show specific command help
-    const commandName = args[0].toLowerCase();
+    const rawCommandName = args[0] || "";
+    const commandName = rawCommandName.toLowerCase();
     const command = allCommands.find(
-      (c) => c.name === commandName || c.aliases?.includes(commandName),
+      (c) =>
+        c.name === commandName ||
+        (c.aliases && c.aliases.includes(commandName)),
     );
 
     if (!command) {
       return {
         success: false,
-        message: `❌ Command \`${commandName}\` not found. Use \`/help\` to see all commands.`,
+        message: `❌ Unknown command: \`${commandName}\`. Type \`/help\` to see all commands.`,
       };
     }
 
-    if (!hasPermission(ctx, command.permissions)) {
-      return {
-        success: false,
-        message: `🔒 You don't have permission to use \`/${command.name}\`.`,
-      };
-    }
+    const aliases =
+      command.aliases && command.aliases.length > 0
+        ? `\n**Aliases**: ${command.aliases.map((a) => `/${a}`).join(", ")}`
+        : "";
 
     return {
       success: true,
       message:
-        `📖 **Help: /${command.name}**\n\n` +
-        `${command.description}\n\n` +
-        `**Usage**: \`${command.usage}\`\n` +
-        (command.aliases?.length
-          ? `**Aliases**: ${command.aliases.map((a) => `\`/${a}\``).join(", ")}\n`
-          : "") +
+        `📘 **Command: /${command.name}**\n\n` +
+        command.description +
+        "\n\n" +
+        `**Usage**: \`${command.usage || `/${command.name}`}\`${aliases}\n` +
         `**Permissions**: ${command.permissions.join(", ")}`,
     };
   },
 };
-
-// Add helpCommand to the list after declaration
-allCommands.push(helpCommand);
-
-export const startCommand: CommandHandler = {
-  name: "start",
-  description: "Initialize the bot and show welcome message",
-  usage: "/start",
-  aliases: [],
-  permissions: ["public", "verified", "moderator", "admin"],
-  platforms: ["telegram", "discord"],
-  execute: async (ctx: CommandContext, _args, _api) => {
-    const commandList = allCommands
-      .filter((cmd) => cmd.platforms.includes(ctx.platform))
-      .filter((cmd) => hasPermission(ctx, cmd.permissions))
-      .slice(0, 6)
-      .map((cmd) => `• \`/${cmd.name}\``)
-      .join("\n");
-
-    return {
-      success: true,
-      message:
-        `👋 **Welcome to DealRelay Bot!**\n\n` +
-        `I help you manage referral codes for various services.\n\n` +
-        `**Quick Start**:\n` +
-        `• \`/add <url>\` - Add a referral code\n` +
-        `• \`/search <domain>\` - Find codes for a domain\n` +
-        `• \`/research <domain>\` - Research codes automatically\n\n` +
-        `**Available Commands**:\n${commandList}\n\n` +
-        `Your User ID: \`${ctx.userId}\`\n\n` +
-        `Use \`/help\` for all commands or \`/help <command>\` for details.`,
-    };
-  },
-};
-
-// Add startCommand to the list after declaration
-allCommands.push(startCommand);

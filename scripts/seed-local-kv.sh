@@ -25,7 +25,6 @@ for arg in "$@"; do
   case "$arg" in
     --local) MODE="local" ;;
     --remote) MODE="remote" ;;
-    --env=*) TARGET_ENV="${arg#*=}" ;;
     --e2e-only) MODE="e2e-only" ;;
     --verify-only) MODE="verify-only" ;;
     --help|-h)
@@ -100,13 +99,9 @@ seed_source_registry() {
   echo ""
   echo "--- Seeding Source Registry ---"
 
-  local env_name="${TARGET_ENV:-development}"
   if [ "$MODE" = "remote" ]; then
-    env_name="${TARGET_ENV:-production}"
-    npx wrangler kv key put --namespace-id "$DEALS_SOURCES_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null
     npx wrangler kv key put --namespace-id "$DEALS_SOURCES_ID" --remote "registry" "[]" 2>/dev/null && echo "  ✓ Source registry seeded" || echo "  ✗ Source registry failed"
   else
-    npx wrangler kv key put --binding DEALS_SOURCES --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null
     npx wrangler kv key put --binding DEALS_SOURCES --local "registry" "[]" 2>/dev/null && echo "  ✓ Source registry seeded" || echo "  ✗ Source registry failed"
   fi
 }
@@ -122,46 +117,10 @@ seed_prod_snapshot() {
   local seed_data
   seed_data='{"version":"0.1.5","deals":[],"stats":{"total":0,"active":0,"quarantined":0,"rejected":0,"duplicates":0},"generated_at":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'","run_id":"seed","trace_id":"seed-'$(date +%s)'","snapshot_hash":"seed-'$(date +%s)'","previous_hash":"","schema_version":"0.1.5"}'
 
-  local env_name="${TARGET_ENV:-development}"
   if [ "$MODE" = "remote" ]; then
-    env_name="${TARGET_ENV:-production}"
-    npx wrangler kv key put --namespace-id "$DEALS_PROD_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null
     npx wrangler kv key put --namespace-id "$DEALS_PROD_ID" --remote "snapshot:prod" "${seed_data}" 2>/dev/null && echo "  ✓ Production snapshot seeded" || echo "  ✗ Production snapshot failed"
   else
-    npx wrangler kv key put --binding DEALS_PROD --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null
     npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" "${seed_data}" 2>/dev/null && echo "  ✓ Production snapshot seeded (local)" || echo "  ✗ Production snapshot failed (local)"
-  fi
-}
-
-# ============================================================================
-# Tag remaining namespaces (LOG, LOCK, STAGING)
-# ============================================================================
-
-seed_remaining_namespaces() {
-  echo ""
-  echo "--- Tagging Remaining Namespaces ---"
-
-  local env_name="${TARGET_ENV:-development}"
-
-  # Tag DEALS_LOG
-  if [ "$MODE" = "remote" ]; then
-    npx wrangler kv key put --namespace-id "$DEALS_LOG_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ LOG namespace tagged" || echo "  ✗ LOG namespace tag failed"
-  else
-    npx wrangler kv key put --binding DEALS_LOG --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ LOG namespace tagged" || echo "  ✗ LOG namespace tag failed"
-  fi
-
-  # Tag DEALS_LOCK
-  if [ "$MODE" = "remote" ]; then
-    npx wrangler kv key put --namespace-id "$DEALS_LOCK_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ LOCK namespace tagged" || echo "  ✗ LOCK namespace tag failed"
-  else
-    npx wrangler kv key put --binding DEALS_LOCK --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ LOCK namespace tagged" || echo "  ✗ LOCK namespace tag failed"
-  fi
-
-  # Tag DEALS_STAGING
-  if [ "$MODE" = "remote" ]; then
-    npx wrangler kv key put --namespace-id "$DEALS_STAGING_ID" --remote "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ STAGING namespace tagged" || echo "  ✗ STAGING namespace tag failed"
-  else
-    npx wrangler kv key put --binding DEALS_STAGING --local "__KV_ENVIRONMENT__" "${env_name}" 2>/dev/null && echo "  ✓ STAGING namespace tagged" || echo "  ✗ STAGING namespace tag failed"
   fi
 }
 
@@ -208,7 +167,6 @@ main() {
   echo "====================================="
   echo "  Consolidated KV Seed Script"
   echo "  Mode: $MODE"
-  echo "  Target Env: ${TARGET_ENV:-auto}"
   echo "====================================="
 
   if [ "$MODE" = "e2e-only" ]; then
@@ -223,10 +181,9 @@ main() {
     exit 0
   fi
 
-  # Full seeding: source registry + prod snapshot + remaining namespaces + e2e keys
+  # Full seeding: source registry + prod snapshot + e2e keys
   seed_source_registry
   seed_prod_snapshot
-  seed_remaining_namespaces
   seed_e2e_keys
 
   verify_seed

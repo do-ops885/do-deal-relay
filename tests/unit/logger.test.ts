@@ -66,7 +66,7 @@ describe("Logger", () => {
       expect(mockEnv.DEALS_LOG.put).toHaveBeenCalled();
       const putCall = (mockEnv.DEALS_LOG.put as ReturnType<typeof vi.fn>).mock
         .calls[0];
-      expect(putCall[0]).toMatch(/^log:/);
+      expect(putCall![0]).toMatch(/^log:/);
     });
 
     it("should validate log entry before storing", async () => {
@@ -157,8 +157,8 @@ describe("Logger", () => {
       const logs = await getRunLogs(mockEnv, "test-run");
 
       expect(logs).toHaveLength(2);
-      expect(logs[0].phase).toBe("discover");
-      expect(logs[1].phase).toBe("publish");
+      expect(logs[0]!.phase).toBe("discover");
+      expect(logs[1]!.phase).toBe("publish");
     });
 
     it("should return empty array for unknown run", async () => {
@@ -189,8 +189,8 @@ describe("Logger", () => {
 
       const logs = await getRunLogs(mockEnv, "test-run");
 
-      expect(logs[0].phase).toBe("discover");
-      expect(logs[1].phase).toBe("publish");
+      expect(logs[0]!.phase).toBe("discover");
+      expect(logs[1]!.phase).toBe("publish");
     });
   });
 
@@ -379,8 +379,8 @@ describe("Logger", () => {
 
       const lines = jsonl.split("\n");
       expect(lines).toHaveLength(2);
-      expect(JSON.parse(lines[0]).phase).toBe("discover");
-      expect(JSON.parse(lines[1]).phase).toBe("publish");
+      expect(JSON.parse(lines[0]!).phase).toBe("discover");
+      expect(JSON.parse(lines[1]!).phase).toBe("publish");
     });
 
     it("should handle empty logs", async () => {

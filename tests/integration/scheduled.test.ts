@@ -95,6 +95,8 @@ describe("Scheduled Event Handler", () => {
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
+      AI_GATEWAY_URL: "https://gateway.test",
+      TRUST_THRESHOLD: "0.5",
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;
   });

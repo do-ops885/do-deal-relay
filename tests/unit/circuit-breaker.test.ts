@@ -1221,8 +1221,8 @@ describe("Circuit Breaker", () => {
 
         expect(allMetrics["cb1"]).toBeDefined();
         expect(allMetrics["cb2"]).toBeDefined();
-        expect(allMetrics["cb1"].successfulCalls).toBe(1);
-        expect(allMetrics["cb2"].failedCalls).toBe(1);
+        expect(allMetrics["cb1"]!.successfulCalls).toBe(1);
+        expect(allMetrics["cb2"]!.failedCalls).toBe(1);
       });
 
       it("should return empty object when no metrics", () => {

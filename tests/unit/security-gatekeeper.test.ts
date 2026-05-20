@@ -75,7 +75,7 @@ describe("Security Gatekeeper", () => {
 
   it("should return 403 Forbidden for user role on admin endpoint", async () => {
     // Mock valid user API key
-    vi.mocked(mockEnv.DEALS_SOURCES.get).mockResolvedValue({
+    (mockEnv.DEALS_SOURCES.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       userId: "user-123",
       role: "user",
     });

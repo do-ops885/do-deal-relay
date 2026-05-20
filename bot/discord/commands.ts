@@ -15,7 +15,7 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("help")
       .setDescription("Show help information")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("command")
           .setDescription("Specific command to get help for")
@@ -25,19 +25,19 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("add")
       .setDescription("Add a new referral code")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("code")
           .setDescription("The referral code")
           .setRequired(false),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("url")
           .setDescription("The complete referral URL")
           .setRequired(false),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("reward")
           .setDescription("The reward/bonus for using this code")
@@ -47,13 +47,13 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("search")
       .setDescription("Search for referral codes by domain")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("domain")
           .setDescription("The domain to search for (e.g., trading212.com)")
           .setRequired(true),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("status")
           .setDescription("Filter by status")
@@ -67,7 +67,7 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("get")
       .setDescription("Get detailed information about a referral code")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("code")
           .setDescription("The referral code to look up")
@@ -77,13 +77,13 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("deactivate")
       .setDescription("Deactivate a referral code (Moderator+)")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("code")
           .setDescription("The referral code to deactivate")
           .setRequired(true),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("reason")
           .setDescription("Reason for deactivation")
@@ -96,7 +96,7 @@ export function buildSlashCommands(): unknown[] {
             { name: "User Request", value: "user_request" },
           ),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("notes")
           .setDescription("Additional notes")
@@ -106,7 +106,7 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("reactivate")
       .setDescription("Reactivate a referral code (Moderator+)")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("code")
           .setDescription("The referral code to reactivate")
@@ -116,13 +116,13 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("research")
       .setDescription("Research referral codes for a domain")
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("domain")
           .setDescription("The domain to research (e.g., wise.com)")
           .setRequired(true),
       )
-      .addStringOption((option) =>
+      .addStringOption((option: any) =>
         option
           .setName("depth")
           .setDescription("Research depth")
