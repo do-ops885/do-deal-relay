@@ -1,0 +1,5 @@
+vitest.config.ts(10,5): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'poolOptions' does not exist in type 'InlineConfig'.
+worker/notify.ts(15,10): error TS2724: '"./lib/logger/types"' has no exported member named 'StructuredLogger'. Did you mean 'StructuredLogEntry'?
+worker/routes/experience.ts(4,10): error TS2724: '"../lib/logger/types"' has no exported member named 'StructuredLogger'. Did you mean 'StructuredLogEntry'?

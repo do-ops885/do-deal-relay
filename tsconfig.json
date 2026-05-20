@@ -25,7 +25,8 @@
     "worker/**/*.ts",
     "bot/**/*.ts",
     "scripts/**/*.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "*.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }
