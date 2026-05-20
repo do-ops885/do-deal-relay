@@ -292,7 +292,7 @@ if echo "$STAGED_FILES" | grep -qE "\.(ts|tsx|js|jsx)$"; then
     info "TypeScript/JavaScript files changed - running checks..."
 
     # TypeScript compilation check
-    if npx tsc --noEmit 2>&1 | head -20; then
+    if npx tsc --noEmit 2>&1; then
         success "TypeScript compilation passed"
     else
         error "TypeScript compilation failed"
@@ -505,6 +505,8 @@ else
     success "No workflow changes (skipping)"
 fi
 echo ""
+
+
 
 # ============================================
 # SUMMARY

@@ -209,11 +209,10 @@ export default {
       const referralDetailMatch = path.match(/^\/api\/referrals\/([^/]+)$/);
       if (referralDetailMatch && request.method === "GET") {
         const code = referralDetailMatch[1];
+<<<<<<< HEAD
         if (code) {
           return withAuth(request, env, undefined, () =>
-            handleGetReferralByCode(code, env),
-          );
-        }
+            handleGetReferralByCode(code, env, request),
       }
 
       // Research API

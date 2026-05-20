@@ -169,9 +169,7 @@ function isIpInCidr(ip: string, cidr: string): boolean {
           : ((1n << BigInt(bits)) - 1n) <<
             BigInt(SECURITY_CONSTANTS.IPV6_BITS - bits);
       return (ipBigInt & mask) === (rangeBigInt & mask);
-    }
-
-    if (!range.includes(":") && !ip.includes(":")) {
+    } else if (!range.includes(":") && !ip.includes(":")) {
       // IPv4 validation
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);

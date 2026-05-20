@@ -27,7 +27,7 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse, errorResponse } from "./utils";
+import { jsonResponse, errorResponse, validateRedirect } from "./utils";
 import { validateFetchUrl } from "../lib/security";
 
 // ============================================================================
@@ -206,15 +206,30 @@ export async function handleCreateReferral(
 export async function handleGetReferralByCode(
   code: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
     const referral = await getReferralByCode(env, code);
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request);
     }
 
-    return jsonResponse({ referral });
+    // Check for optional redirect
+    if (request) {
+      const url = new URL(request.url);
+      const redirectUrl = url.searchParams.get("redirect");
+
+      if (redirectUrl) {
+        if (validateRedirect(redirectUrl)) {
+          return Response.redirect(redirectUrl, 302);
+        } else {
+          return jsonResponse({ error: "Invalid redirect URL" }, 400, request);
+        }
+      }
+    }
+
+    return jsonResponse({ referral }, 200, request);
   } catch (error) {
     const err = handleError(error, {
       component: "api",
