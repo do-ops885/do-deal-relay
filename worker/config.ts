@@ -140,7 +140,6 @@ export const CONFIG = {
     LAST_RUN: "meta:last_run",
     METRICS: "meta:metrics",
   },
-
   // Security
   BLOCKED_HOSTS: [
     "localhost",
@@ -164,10 +163,6 @@ export const CONFIG = {
 // Default Source Registry
 // ============================================================================
 
-/**
- * Default source registry for the Deal Discovery System.
- * Contains seed sources with their URL patterns and extraction selectors.
- */
 export const DEFAULT_SOURCES = [
   {
     domain: "trading212.com",
@@ -285,9 +280,6 @@ export const DEFAULT_SOURCES = [
 // Error Messages
 // ============================================================================
 
-/**
- * Standard error messages used throughout the system.
- */
 export const ERROR_MESSAGES = {
   LOCK_CONFLICT: "Another run is in progress (lock conflict)",
   HASH_MISMATCH: "Snapshot hash mismatch - possible concurrent modification",
@@ -302,9 +294,6 @@ export const ERROR_MESSAGES = {
 // Validation Gate Names
 // ============================================================================
 
-/**
- * Ordered list of mandatory validation gates in the worker pipeline.
- */
 export const VALIDATION_GATES = [
   "schema_validation",
   "normalization_verification",
@@ -317,7 +306,4 @@ export const VALIDATION_GATES = [
   "snapshot_hash_verification",
 ] as const;
 
-/**
- * Type representing a valid validation gate name.
- */
 export type ValidationGate = (typeof VALIDATION_GATES)[number];

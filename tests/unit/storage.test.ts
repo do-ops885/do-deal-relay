@@ -328,7 +328,7 @@ describe("Storage Layer", () => {
       const result = await getSourceRegistry(mockEnv);
 
       expect(result).toHaveLength(2);
-      expect(result[0].domain).toBe("example.com");
+      expect(result[0]!.domain).toBe("example.com");
     });
 
     it("should return empty array when registry not found", async () => {
@@ -382,8 +382,8 @@ describe("Storage Layer", () => {
       // Get the updated registry from the mock put call
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].trust_initial).toBe(0.7);
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.trust_initial).toBe(0.7);
     });
 
     it("should clamp trust score to valid range", async () => {
@@ -399,8 +399,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.trust_initial).toBe(1.0); // Clamped to max
     });
 
     it("should record successful validation", async () => {
@@ -414,8 +414,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].validation_success_count).toBe(1);
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.validation_success_count).toBe(1);
     });
 
     it("should record failed validation", async () => {
@@ -429,8 +429,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].validation_failure_count).toBe(1);
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.validation_failure_count).toBe(1);
     });
 
     it("should clamp trust score to valid range", async () => {
@@ -446,8 +446,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].trust_initial).toBe(1.0); // Clamped to max
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.trust_initial).toBe(1.0); // Clamped to max
     });
 
     it("should record successful validation", async () => {
@@ -461,8 +461,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].validation_success_count).toBe(1);
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.validation_success_count).toBe(1);
     });
 
     it("should record failed validation", async () => {
@@ -476,8 +476,8 @@ describe("Storage Layer", () => {
 
       const putCall = (mockEnv.DEALS_SOURCES.put as ReturnType<typeof vi.fn>)
         .mock.calls[0];
-      const updatedRegistry = JSON.parse(putCall[1]);
-      expect(updatedRegistry[0].validation_failure_count).toBe(1);
+      const updatedRegistry = JSON.parse(putCall![1]);
+      expect(updatedRegistry[0]!.validation_failure_count).toBe(1);
     });
   });
 
@@ -612,7 +612,7 @@ describe("Storage Layer", () => {
       const result = await getActiveDeals(mockEnv);
 
       expect(result).toHaveLength(1);
-      expect(result[0].metadata.status).toBe("active");
+      expect(result[0]!.metadata.status).toBe("active");
     });
 
     it("should get quarantined deals", async () => {
@@ -643,7 +643,7 @@ describe("Storage Layer", () => {
       const result = await getQuarantinedDeals(mockEnv);
 
       expect(result).toHaveLength(1);
-      expect(result[0].metadata.status).toBe("quarantined");
+      expect(result[0]!.metadata.status).toBe("quarantined");
     });
   });
 

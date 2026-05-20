@@ -42,6 +42,7 @@ describe("Latency Metrics", () => {
       },
       deals_processed: {
         discovered: 10,
+        passed_trust_filter: 0,
         normalized: 10,
         deduped: 8,
         validated: 5,

@@ -27,7 +27,8 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse } from "./utils";
+import { jsonResponse, errorResponse, validateRedirect } from "./utils";
+import { validateFetchUrl } from "../lib/security";
 
 // ============================================================================
 // Referral Management Handlers
@@ -295,61 +296,37 @@ export async function handleDeactivateReferral(
 }
 
 export async function handleReactivateReferral(
-  request: Request,
   code: string,
   env: Env,
 ): Promise<Response> {
   try {
-    // Check if referral exists and its current status
+    // Check if referral exists and is already active
     const existing = await getReferralByCode(env, code);
-    if (!existing) {
-      return jsonResponse({ error: "Referral not found" }, 404, request);
+    if (existing && existing.status === "active") {
+      return jsonResponse({ error: "Conflict" }, 409);
     }
 
-    if (existing.status === "active") {
-      return jsonResponse(
-        {
-          error: "Conflict",
-          message: "Referral is already active",
-          referral: {
-            id: existing.id,
-            code: existing.code,
-            status: existing.status,
-          },
-        },
-        409,
-        request,
-      );
-    }
+    const referral = await reactivateReferral(env, code);
 
-    // Pass the already-fetched referral to avoid redundant storage read
-    const referral = await reactivateReferral(env, code, undefined, existing);
-
-    // Defensive fallback — should not occur since existence is verified above,
-    // but guards against concurrent deletion between the check and reactivation.
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404, request);
+      return jsonResponse({ error: "Referral not found" }, 404);
     }
 
     logger.info(`Referral reactivated: ${code}`, {
       component: "api",
     });
 
-    return jsonResponse(
-      {
-        success: true,
-        message: "Referral reactivated successfully",
-        referral: {
-          id: referral.id,
-          code: referral.code,
-          url: referral.url,
-          domain: referral.domain,
-          status: referral.status,
-        },
+    return jsonResponse({
+      success: true,
+      message: "Referral reactivated successfully",
+      referral: {
+        id: referral.id,
+        code: referral.code,
+        url: referral.url,
+        domain: referral.domain,
+        status: referral.status,
       },
-      200,
-      request,
-    );
+    });
   } catch (error) {
     const err = handleError(error, {
       component: "api",
@@ -358,7 +335,6 @@ export async function handleReactivateReferral(
     return jsonResponse(
       { error: "Failed to reactivate referral", message: err.message },
       500,
-      request,
     );
   }
 }
@@ -387,6 +363,16 @@ export async function handleResearch(
         },
         400,
       );
+    }
+
+    // SSRF protection for domain/query based fetching
+    // If the research request contains a specific URL (not currently in the type but good practice)
+    // or if we want to ensure the domain is safe.
+    if (body.domain) {
+      const isSafe = await validateFetchUrl(`https://${body.domain}`);
+      if (!isSafe) {
+        return errorResponse("Domain is blocked for security reasons", 403);
+      }
     }
 
     const researchResult = await executeReferralResearch(env, body);

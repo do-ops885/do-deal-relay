@@ -2,6 +2,8 @@
 // Webhook Routes - Type Definitions
 // ============================================================================
 
+import { getAllowedOrigin } from "../utils";
+
 import type {
   WebhookEventType,
   RetryPolicy,
@@ -68,7 +70,7 @@ export function jsonResponse(data: unknown, status: number = 200): Response {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": getAllowedOrigin(null),
       "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
       "Access-Control-Allow-Headers":
         "Content-Type, Authorization, Idempotency-Key",

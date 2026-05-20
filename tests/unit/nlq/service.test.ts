@@ -105,7 +105,7 @@ function extractTestEntities(query: string) {
   if (dollarMatch) {
     entities.push({
       type: "reward_value",
-      value: parseInt(dollarMatch[1], 10),
+      value: parseInt(dollarMatch[1]!, 10),
       confidence: 0.9,
     });
   }
@@ -172,8 +172,8 @@ describe("NLQ Service", () => {
 
       expect(result.success).toBe(true);
       expect(result.parsed.entities).toHaveLength(1);
-      expect(result.parsed.entities[0].type).toBe("reward_value");
-      expect(result.parsed.entities[0].value).toBe("100");
+      expect(result.parsed.entities[0]!.type).toBe("reward_value");
+      expect(result.parsed.entities[0]!.value).toBe("100");
     });
 
     it("should parse category entities from query", async () => {
@@ -188,7 +188,7 @@ describe("NLQ Service", () => {
       await executeNLQ(mockEnv, "find deals");
 
       const callArgs = vi.mocked(executeStructuredQuery).mock.calls[0];
-      const structuredQuery = callArgs[1];
+      const structuredQuery = callArgs![1];
       expect(structuredQuery.limit).toBe(20);
     });
 
@@ -197,7 +197,7 @@ describe("NLQ Service", () => {
       await executeNLQ(mockEnv, "find deals", 5);
 
       const callArgs = vi.mocked(executeStructuredQuery).mock.calls[0];
-      const structuredQuery = callArgs[1];
+      const structuredQuery = callArgs![1];
       expect(structuredQuery.limit).toBe(5);
     });
 
@@ -281,7 +281,7 @@ describe("NLQ Service", () => {
 
       expect(result.success).toBe(true);
       if (result.parsed.entities.length > 0) {
-        expect(result.parsed.entities[0].confidence).toBe(0.9);
+        expect(result.parsed.entities[0]!.confidence).toBe(0.9);
       }
     });
 
@@ -361,7 +361,7 @@ describe("NLQ Service", () => {
         (e) => e.type === "reward_value",
       );
       expect(rewardEntities.length).toBeGreaterThan(0);
-      expect(rewardEntities[0].value).toBe(50);
+      expect(rewardEntities[0]!.value).toBe(50);
     });
 
     it("should extract category entities", () => {
@@ -400,7 +400,7 @@ describe("NLQ Service", () => {
 
       const numberTokens = result.tokens.filter((t) => t.type === "number");
       expect(numberTokens.length).toBeGreaterThan(0);
-      expect(numberTokens[0].value).toBe("100");
+      expect(numberTokens[0]!.value).toBe("100");
     });
 
     it("should handle mixed case queries", () => {
