@@ -284,17 +284,22 @@ describe("Auth", () => {
       expect(options).toEqual({ expirationTtl: 365 * 86400 });
     });
 
-    it("should not set TTL when expiresAt is provided", async () => {
+    it("should set expiration timestamp when expiresAt is provided", async () => {
       mockPut.mockResolvedValue(undefined);
+      const futureDate = new Date(Date.now() + 86400000);
 
       await storeApiKey(mockEnv, {
         ...baseConfig,
         key: "",
-        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        expiresAt: futureDate.toISOString(),
       });
 
       const [, , options] = mockPut.mock.calls[0];
-      expect(options).toEqual({ expirationTtl: undefined });
+      const expectedExpiration = Math.floor(futureDate.getTime() / 1000);
+      expect(options).toEqual({
+        expiration: expectedExpiration,
+        expirationTtl: undefined,
+      });
     });
 
     it("should preserve all metadata fields", async () => {

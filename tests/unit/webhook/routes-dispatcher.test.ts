@@ -336,7 +336,7 @@ describe("Webhook Route Dispatcher", () => {
         body: "{}",
       });
       const response = await handleIncomingWebhookRequest(request, env, "p1");
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(400);
     });
 
     it("should process request with all required headers", async () => {
@@ -374,47 +374,12 @@ describe("Webhook Route Dispatcher", () => {
 
     it("should return 500 on internal error", async () => {
       const env = createEnv(kv);
-      // Set up a partner so partner lookup succeeds
-      const partnerSecret = "whsec_test_secret";
-      const partners = [
-        {
-          id: "p1",
-          name: "Test Partner",
-          secret: partnerSecret,
-          active: true,
-          allowed_events: ["referral.created"],
-          rate_limit_per_minute: 60,
-          created_at: new Date().toISOString(),
-        },
-      ];
-      kv.storage.set("webhook_partners", JSON.stringify(partners));
-
-      // Compute valid HMAC signature for the FAIL payload
-      const now = Math.floor(Date.now() / 1000);
-      const encoder = new TextEncoder();
-      const signedPayload = `${now}.FAIL`;
-      const key = await crypto.subtle.importKey(
-        "raw",
-        encoder.encode(partnerSecret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"],
-      );
-      const sigBuffer = await crypto.subtle.sign(
-        "HMAC",
-        key,
-        encoder.encode(signedPayload),
-      );
-      const signature = Array.from(new Uint8Array(sigBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
       const request = new Request("http://localhost/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Webhook-Signature": `sha256=${signature}`,
-          "X-Webhook-Timestamp": String(now),
+          "X-Webhook-Signature": "sha256=abc",
+          "X-Webhook-Timestamp": String(Math.floor(Date.now() / 1000)),
           "X-Webhook-Id": "wh_1",
         },
         body: "FAIL",

@@ -1,6 +1,5 @@
 import { ResearchSource } from "./types";
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
 import type {
   ProductHuntResponse,
   GitHubSearchResponse,
@@ -9,6 +8,13 @@ import type {
   PageContentResult,
   MetaTags,
 } from "./types";
+import { validateFetchUrl } from "../security";
+import { parseHtmlContent } from "./extractor-utils";
+import {
+  transformProductHuntResponse,
+  transformGitHubResponse,
+  transformHackerNewsResponse,
+} from "./transformers";
 
 // ============================================================================
 // Real Web Fetching for Research
@@ -23,31 +29,22 @@ export interface FetchResult {
   fetchDurationMs: number;
 }
 
-export interface ExtractedReferral {
-  code: string;
-  url: string;
-  source: string;
-  discoveredAt: string;
-  rewardSummary?: string;
-  confidence: number;
-  context?: string;
+async function fetchWithValidation(
+  url: string,
+  timeoutMs: number,
+  options?: RequestInit,
+): Promise<Response | null> {
+  if (!(await validateFetchUrl(url))) return null;
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs), ...options });
 }
 
-// ============================================================================
-// API Fetchers
-// ============================================================================
-
-/**
- * Fetch deals from ProductHunt GraphQL API
- */
-export async function fetchProductHuntDeals(
+async function fetchProductHuntDeals(
   apiToken: string | undefined,
   searchQuery: string,
-  limit: number = 20,
+  limit = 20,
 ): Promise<FetchResult> {
   const startTime = Date.now();
-
-  if (!apiToken) {
+  if (!apiToken)
     return {
       success: false,
       content: "",
@@ -56,7 +53,6 @@ export async function fetchProductHuntDeals(
       error: "ProductHunt API token not configured",
       fetchDurationMs: Date.now() - startTime,
     };
-  }
 
   const query = `
     query {
@@ -86,29 +82,29 @@ export async function fetchProductHuntDeals(
     }
   `;
 
-  const url = "https://api.producthunt.com/v2/api/graphql";
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
-
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const response = await fetchWithValidation(
+      "https://api.producthunt.com/v2/api/graphql",
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
       },
-      body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -136,7 +132,6 @@ export async function fetchProductHuntDeals(
       };
     }
 
-    // Transform to searchable text format
     const content = transformProductHuntResponse(data);
 
     return {
@@ -158,49 +153,16 @@ export async function fetchProductHuntDeals(
   }
 }
 
-/**
- * Transform ProductHunt response to searchable text
- */
-function transformProductHuntResponse(data: ProductHuntResponse): string {
-  if (!data.data?.posts?.edges) {
-    return "";
-  }
-
-  const posts = data.data.posts.edges.map((edge) => edge.node);
-
-  return posts
-    .map((post) => {
-      const topics =
-        post.topics?.edges.map((t) => t.node.name).join(", ") || "";
-
-      return `
-Product: ${post.name}
-Tagline: ${post.tagline}
-URL: ${post.url}
-Votes: ${post.votesCount}
-Comments: ${post.commentsCount}
-Topics: ${topics}
----
-`;
-    })
-    .join("\n");
-}
-
-/**
- * Fetch trending repositories from GitHub Search API
- */
-export async function fetchGitHubTrending(
+async function fetchGitHubTrending(
   apiToken: string | undefined,
   searchQuery: string,
-  limit: number = 30,
+  limit = 30,
 ): Promise<FetchResult> {
   const startTime = Date.now();
-
-  // Build search query with referral-related terms
-  const query = `${searchQuery} referral OR invite OR promo`;
-  const encodedQuery = encodeURIComponent(query);
-
-  const headers: { [key: string]: string } = {
+  const query = encodeURIComponent(
+    `${searchQuery} referral OR invite OR promo`,
+  );
+  const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
@@ -209,24 +171,22 @@ export async function fetchGitHubTrending(
     headers.Authorization = `Bearer ${apiToken}`;
   }
 
-  const url = `https://api.github.com/search/repositories?q=${encodedQuery}&sort=stars&order=desc&per_page=${limit}`;
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
-
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
+    const response = await fetchWithValidation(
+      `https://api.github.com/search/repositories?q=${query}&sort=stars&order=desc&per_page=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      { headers },
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -263,61 +223,29 @@ export async function fetchGitHubTrending(
   }
 }
 
-/**
- * Transform GitHub response to searchable text
- */
-function transformGitHubResponse(data: GitHubSearchResponse): string {
-  if (!data.items || data.items.length === 0) {
-    return "";
-  }
-
-  return data.items
-    .map((repo) => {
-      return `
-Repository: ${repo.full_name}
-Description: ${repo.description || "No description"}
-URL: ${repo.html_url}
-Homepage: ${repo.homepage || "N/A"}
-Stars: ${repo.stargazers_count}
-Language: ${repo.language || "Unknown"}
-Topics: ${repo.topics?.join(", ") || "None"}
----
-`;
-    })
-    .join("\n");
-}
-
-/**
- * Fetch stories from Hacker News Algolia API
- */
-export async function fetchHackerNewsDeals(
+async function fetchHackerNewsDeals(
   searchQuery: string,
-  limit: number = 50,
+  limit = 50,
 ): Promise<FetchResult> {
   const startTime = Date.now();
 
   const encodedQuery = encodeURIComponent(searchQuery);
-  const url = `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`;
-
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
 
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
+    const response = await fetchWithValidation(
+      `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
+
+    if (!response)
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "SSRF blocked",
+        fetchDurationMs: Date.now() - startTime,
+      };
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -354,80 +282,38 @@ export async function fetchHackerNewsDeals(
   }
 }
 
-/**
- * Transform Hacker News response to searchable text
- */
-function transformHackerNewsResponse(data: HackerNewsSearchResponse): string {
-  if (!data.hits || data.hits.length === 0) {
-    return "";
-  }
-
-  return data.hits
-    .map((hit) => {
-      return `
-Story: ${hit.title || "No title"}
-URL: ${hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`}
-Author: ${hit.author}
-Points: ${hit.points}
-Comments: ${hit.num_comments}
-Text: ${hit.story_text || hit.comment_text || ""}
----
-`;
-    })
-    .join("\n");
-}
-
-/**
- * OAuth token cache for Reddit
- */
 let redditOAuthToken: { token: string; expiresAt: number } | null = null;
 
-/**
- * Get Reddit OAuth token
- */
 async function getRedditOAuthToken(
   clientId: string | undefined,
   clientSecret: string | undefined,
 ): Promise<string | null> {
-  if (!clientId || !clientSecret) {
-    return null;
-  }
-
-  // Check if we have a valid cached token
-  if (redditOAuthToken && redditOAuthToken.expiresAt > Date.now()) {
+  if (!clientId || !clientSecret) return null;
+  if (redditOAuthToken && redditOAuthToken.expiresAt > Date.now())
     return redditOAuthToken.token;
-  }
 
   try {
-    const credentials = btoa(`${clientId}:${clientSecret}`);
-    const url = "https://www.reddit.com/api/v1/access_token";
-
-    if (!(await validateFetchUrl(url))) {
-      return null;
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+    const response = await fetchWithValidation(
+      "https://www.reddit.com/api/v1/access_token",
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "DealDiscoveryBot/1.0",
+        },
+        body: "grant_type=client_credentials",
       },
-      body: "grant_type=client_credentials",
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
+    );
 
-    if (!response.ok) {
-      console.error(`Reddit OAuth error: ${response.status}`);
-      return null;
-    }
+    if (!response || !response.ok) return null;
 
     const data = (await response.json()) as {
       access_token: string;
       expires_in: number;
     };
 
-    // Cache token with 5 minute buffer before expiry
     redditOAuthToken = {
       token: data.access_token,
       expiresAt: Date.now() + (data.expires_in - 300) * 1000,
@@ -440,20 +326,15 @@ async function getRedditOAuthToken(
   }
 }
 
-/**
- * Fetch posts from Reddit API
- */
-export async function fetchRedditDeals(
+async function fetchRedditDeals(
   clientId: string | undefined,
   clientSecret: string | undefined,
   searchQuery: string,
-  subreddits: string[] = ["deals", "referrals", "frugal"],
-  limit: number = 25,
+  subreddits = ["deals", "referrals", "frugal"],
+  limit = 25,
 ): Promise<FetchResult> {
   const startTime = Date.now();
-
   const token = await getRedditOAuthToken(clientId, clientSecret);
-
   if (!token) {
     // Fallback to public RSS-like endpoint (limited functionality)
     return fetchRedditPublic(searchQuery, limit);
@@ -462,28 +343,27 @@ export async function fetchRedditDeals(
   try {
     // Search across multiple subreddits
     const subredditQuery = subreddits.join("+");
-    const encodedQuery = encodeURIComponent(searchQuery);
-    const url = `https://oauth.reddit.com/r/${subredditQuery}/search?q=${encodedQuery}&sort=new&limit=${limit}&raw_json=1`;
 
-    if (!(await validateFetchUrl(url))) {
+    const response = await fetchWithValidation(
+      `https://oauth.reddit.com/r/${subredditQuery}/search?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}&raw_json=1`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+        },
+      },
+    );
+
+    if (!response)
       return {
         success: false,
         content: "",
         contentType: "",
         statusCode: 403,
-        error: "Blocked by SSRF protection",
+        error: "SSRF blocked",
         fetchDurationMs: Date.now() - startTime,
       };
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
-      },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -530,29 +410,26 @@ async function fetchRedditPublic(
   const startTime = Date.now();
 
   try {
-    // Use Reddit's JSON endpoint (has CORS restrictions in browsers but works in workers)
-    const encodedQuery = encodeURIComponent(searchQuery);
-    const url = `https://www.reddit.com/r/deals/search.json?q=${encodedQuery}&sort=new&limit=${limit}`;
+    const response = await fetchWithValidation(
+      `https://www.reddit.com/r/deals/search.json?q=${encodeURIComponent(searchQuery)}&sort=new&limit=${limit}`,
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "DealDiscoveryBot/1.0",
+        },
+      },
+    );
 
-    if (!(await validateFetchUrl(url))) {
+    if (!response)
       return {
         success: false,
         content: "",
         contentType: "",
         statusCode: 403,
-        error: "Blocked by SSRF protection",
+        error: "SSRF blocked",
         fetchDurationMs: Date.now() - startTime,
       };
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "DealDiscoveryBot/1.0",
-      },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
-    });
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -622,16 +499,15 @@ export async function fetchGenericPageContent(
 ): Promise<FetchResult & { parsedContent?: PageContentResult }> {
   const startTime = Date.now();
 
-  if (!(await validateFetchUrl(url))) {
+  if (!(await validateFetchUrl(url)))
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 403,
-      error: "Blocked by SSRF protection",
+      error: "SSRF blocked",
       fetchDurationMs: Date.now() - startTime,
     };
-  }
 
   try {
     const response = await fetch(url, {
@@ -700,343 +576,44 @@ export async function fetchGenericPageContent(
   }
 }
 
-/**
- * Simple HTML parser to extract content
- */
-function parseHtmlContent(url: string, html: string): PageContentResult {
-  // Extract title
-  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const title = titleMatch?.[1] ? titleMatch[1].trim() : "";
-
-  // Extract meta description
-  const metaDescMatch = html.match(
-    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i,
-  );
-  const description = metaDescMatch?.[1] ? metaDescMatch[1].trim() : "";
-
-  // Extract all meta tags
-  const metaTags: MetaTags = {};
-  const metaRegex = /<meta[^>]*>/gi;
-  let metaMatch;
-  while ((metaMatch = metaRegex.exec(html)) !== null) {
-    const tag = metaMatch[0];
-    if (tag) {
-      const nameMatch = tag.match(/name=["']([^"']*)["']/i);
-      const contentMatch = tag.match(/content=["']([^"']*)["']/i);
-      if (nameMatch?.[1] && contentMatch?.[1]) {
-        metaTags[nameMatch[1]] = contentMatch[1];
-      }
-    }
-  }
-
-  // Remove script and style tags for text extraction
-  let textContent = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  // Truncate text content
-  textContent = textContent.substring(0, 10000);
-
-  // Extract links
-  const links: Array<{ text: string; href: string }> = [];
-  const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([^<]*)<\/a>/gi;
-  let linkMatch;
-  while ((linkMatch = linkRegex.exec(html)) !== null) {
-    const href = linkMatch[1];
-    const text = linkMatch[2]?.trim() ?? "";
-    if (href && !href.startsWith("javascript:") && !href.startsWith("#")) {
-      // Convert relative URLs to absolute
-      const absoluteUrl = href.startsWith("http")
-        ? href
-        : new URL(href, url).toString();
-      links.push({ text, href: absoluteUrl });
-    }
-  }
-
-  return {
-    url,
-    title,
-    description,
-    textContent,
-    links: links.slice(0, 100), // Limit links
-    metaTags,
-  };
-}
-
-// ============================================================================
-// Source-specific Fetch Functions
-// ============================================================================
-
-/**
- * Fetch from a specific research source using the appropriate API
- */
 export async function fetchFromSource(
   source: ResearchSource,
   query: string,
-  apiKeys?: {
-    productHuntToken?: string;
-    githubToken?: string;
-    redditClientId?: string;
-    redditClientSecret?: string;
-  },
+  apiKeys?: any,
 ): Promise<FetchResult> {
   const startTime = Date.now();
-
-  // Route to appropriate API fetcher based on source
   switch (source.name) {
     case "producthunt":
       return fetchProductHuntDeals(apiKeys?.productHuntToken, query);
-
     case "github":
       return fetchGitHubTrending(apiKeys?.githubToken, query);
-
     case "hackernews":
       return fetchHackerNewsDeals(query);
-
     case "reddit":
       return fetchRedditDeals(
         apiKeys?.redditClientId,
         apiKeys?.redditClientSecret,
         query,
       );
-
     case "company_site":
-      // For company sites, we need a URL to fetch
-      if (source.baseUrl) {
-        return fetchGenericPageContent(
-          `${source.baseUrl}${source.searchPattern.replace("{query}", encodeURIComponent(query))}`,
-        );
-      }
+      if (source.baseUrl)
+        return fetchGenericPageContent(source.baseUrl + query);
       return {
         success: false,
         content: "",
         contentType: "",
         statusCode: 400,
-        error: "Company site requires a base URL",
+        error: "No base URL",
         fetchDurationMs: Date.now() - startTime,
       };
-
     default:
       return {
         success: false,
         content: "",
         contentType: "",
         statusCode: 400,
-        error: `Unknown source: ${source.name}`,
+        error: "Unknown source",
         fetchDurationMs: Date.now() - startTime,
       };
   }
 }
-
-/**
- * Extract referrals from content using source patterns
- */
-export function extractReferralsFromContent(
-  content: string,
-  source: ResearchSource,
-  sourceName: string,
-): ExtractedReferral[] {
-  const referrals: ExtractedReferral[] = [];
-  const now = new Date().toISOString();
-
-  // Extract codes with context
-  const codeMatches = extractWithContext(
-    content,
-    source.extractionPatterns.code,
-  );
-
-  for (const match of codeMatches) {
-    const code = match.match;
-    const context = match.context;
-
-    // Look for reward in the same context
-    const rewardMatch = findFirstMatch(
-      context,
-      source.extractionPatterns.reward,
-    );
-
-    // Look for URL
-    const urlMatch = findFirstMatch(context, source.extractionPatterns.url);
-    const url = urlMatch || generateReferralUrl(sourceName, code);
-
-    // Calculate confidence based on context quality
-    const confidence = calculateConfidence(code, context, rewardMatch);
-
-    if (confidence >= 0.3) {
-      // Minimum confidence threshold
-      referrals.push({
-        code: code.toUpperCase(),
-        url,
-        source: sourceName,
-        discoveredAt: now,
-        rewardSummary: rewardMatch || undefined,
-        confidence,
-        context: context.slice(0, 200), // Store truncated context
-      });
-    }
-  }
-
-  return referrals;
-}
-
-/**
- * Extract matches with surrounding context
- */
-function extractWithContext(
-  content: string,
-  patterns: RegExp[],
-): Array<{ match: string; context: string }> {
-  const matches: Array<{ match: string; context: string }> = [];
-  const seen = new Set<string>();
-
-  for (const pattern of patterns) {
-    // Reset regex state
-    pattern.lastIndex = 0;
-
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      const matchedText = match[1] ?? match[0]; // Use capture group 1 if exists
-      if (!matchedText) continue;
-      const key = matchedText.toLowerCase();
-
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      // Extract context around match (200 chars before and after)
-      const start = Math.max(0, match.index - 200);
-      const end = Math.min(
-        content.length,
-        match.index + matchedText.length + 200,
-      );
-      const context = content.slice(start, end);
-
-      matches.push({ match: matchedText, context });
-    }
-  }
-
-  return matches;
-}
-
-/**
- * Find first matching pattern in text
- */
-function findFirstMatch(text: string, patterns: RegExp[]): string | null {
-  for (const pattern of patterns) {
-    pattern.lastIndex = 0;
-    const match = pattern.exec(text);
-    if (match) {
-      return match[1] ?? match[0] ?? null;
-    }
-  }
-  return null;
-}
-
-/**
- * Generate a referral URL based on source and code
- */
-function generateReferralUrl(source: string, code: string): string {
-  const urlPatterns: { [key: string]: string } = {
-    producthunt: `https://www.producthunt.com/products/?ref=${code.toLowerCase()}`,
-    reddit: `https://www.reddit.com/r/referrals/?code=${code.toLowerCase()}`,
-    hackernews: `https://news.ycombinator.com/item?id=${code.toLowerCase()}`,
-    github: `https://github.com/?ref=${code.toLowerCase()}`,
-    company_site: `https://example.com/invite/${code.toLowerCase()}`,
-  };
-
-  return (
-    urlPatterns[source] || `https://example.com/referral/${code.toLowerCase()}`
-  );
-}
-
-/**
- * Calculate confidence score based on code quality and context
- */
-function calculateConfidence(
-  code: string,
-  context: string,
-  rewardMatch: string | null,
-): number {
-  let confidence = 0.5;
-
-  // Code quality factors
-  if (code.length >= 6 && code.length <= 20) {
-    confidence += 0.1; // Reasonable length
-  }
-
-  if (/^[A-Z0-9_-]+$/.test(code)) {
-    confidence += 0.1; // Valid format
-  }
-
-  if (/\d/.test(code) && /[A-Z]/.test(code)) {
-    confidence += 0.1; // Mixed alphanumeric
-  }
-
-  // Context quality factors
-  const contextLower = context.toLowerCase();
-
-  if (rewardMatch) {
-    confidence += 0.1; // Has reward info
-  }
-
-  if (/\b(?:refer|referral|invite|code|promo|bonus)\b/.test(contextLower)) {
-    confidence += 0.1; // Referral-related context
-  }
-
-  // Penalize suspicious patterns
-  if (/\b(?:test|example|demo|sample|fake)\b/.test(contextLower)) {
-    confidence -= 0.2;
-  }
-
-  if (code.length < 4) {
-    confidence -= 0.2; // Too short
-  }
-
-  return Math.max(0.1, Math.min(0.95, confidence));
-}
-
-/**
- * Rate limiter for research requests
- */
-export class ResearchRateLimiter {
-  private requests: Map<string, number[]> = new Map();
-  private readonly maxRequests: number;
-  private readonly windowMs: number;
-
-  constructor(maxRequests: number = 10, windowMs: number = 60000) {
-    this.maxRequests = maxRequests;
-    this.windowMs = windowMs;
-  }
-
-  canMakeRequest(source: string): boolean {
-    const now = Date.now();
-    const requests = this.requests.get(source) || [];
-
-    // Remove old requests outside window
-    const validRequests = requests.filter((time) => now - time < this.windowMs);
-
-    return validRequests.length < this.maxRequests;
-  }
-
-  recordRequest(source: string): void {
-    const now = Date.now();
-    const requests = this.requests.get(source) || [];
-    requests.push(now);
-    this.requests.set(source, requests);
-  }
-
-  getTimeUntilNextWindow(source: string): number {
-    const now = Date.now();
-    const requests = this.requests.get(source) || [];
-
-    if (requests.length === 0) return 0;
-
-    const oldestRequest = Math.min(...requests);
-    return Math.max(0, this.windowMs - (now - oldestRequest));
-  }
-}
-
-// Global rate limiter instance
-export const researchRateLimiter = new ResearchRateLimiter(10, 60000);

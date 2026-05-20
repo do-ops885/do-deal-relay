@@ -125,11 +125,32 @@ function createMockReferral(
 // ============================================================================
 
 describe("MCP Protocol E2E", () => {
+  const authHeader = { "X-API-Key": "ddr_user_test_key_123" };
   let mockEnv: Env;
 
-  beforeEach(() => {
+  async function setupTestApiKey(env: Env) {
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode("ddr_user_test_key_123"),
+    );
+    const hash = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    await env.DEALS_SOURCES.put(
+      "apikey:" + hash,
+      JSON.stringify({
+        userId: "test-user",
+        role: "user",
+        createdAt: new Date().toISOString(),
+      }),
+    );
+  }
+
+  beforeEach(async () => {
     vi.stubGlobal("fetch", vi.fn());
     mockEnv = createMockEnv();
+    await setupTestApiKey(mockEnv);
   });
 
   afterEach(() => {
@@ -140,7 +161,7 @@ describe("MCP Protocol E2E", () => {
     it("should return list of available MCP tools", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({}),
       });
 
@@ -156,7 +177,7 @@ describe("MCP Protocol E2E", () => {
     it("should include search_deals tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({}),
       });
 
@@ -170,7 +191,7 @@ describe("MCP Protocol E2E", () => {
     it("should include add_referral tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({}),
       });
 
@@ -184,7 +205,7 @@ describe("MCP Protocol E2E", () => {
     it("should include research_domain tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/list", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({}),
       });
 
@@ -207,7 +228,7 @@ describe("MCP Protocol E2E", () => {
 
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "search_deals",
           input: { domain: "test-deal.com" },
@@ -224,7 +245,7 @@ describe("MCP Protocol E2E", () => {
     it("should execute add_referral tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "add_referral",
           input: {
@@ -248,7 +269,7 @@ describe("MCP Protocol E2E", () => {
     it("should execute list_categories tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "list_categories",
           input: {},
@@ -265,7 +286,7 @@ describe("MCP Protocol E2E", () => {
     it("should return error for unknown tool", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "nonexistent_tool",
           input: {},
@@ -283,7 +304,7 @@ describe("MCP Protocol E2E", () => {
     it("should handle missing tool field", async () => {
       const request = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ input: {} }),
       });
 
@@ -299,6 +320,7 @@ describe("MCP Protocol E2E", () => {
     it("should return server info", async () => {
       const request = new Request("http://localhost/mcp/v1/info", {
         method: "GET",
+        headers: authHeader,
       });
 
       const response = await worker.fetch(request, mockEnv);
@@ -315,7 +337,7 @@ describe("MCP Protocol E2E", () => {
       // Step 1: Add a referral
       const addRequest = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "add_referral",
           input: {
@@ -336,7 +358,7 @@ describe("MCP Protocol E2E", () => {
       // Step 2: Search for the referral
       const searchRequest = new Request("http://localhost/mcp/v1/tools/call", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           tool: "search_deals",
           input: { domain: "chain-test.com" },
@@ -355,7 +377,7 @@ describe("MCP Protocol E2E", () => {
       await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({
             tool: "add_referral",
             input: {
@@ -372,7 +394,7 @@ describe("MCP Protocol E2E", () => {
       await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({
             tool: "add_referral",
             input: {
@@ -389,7 +411,7 @@ describe("MCP Protocol E2E", () => {
       const searchResponse = await worker.fetch(
         new Request("http://localhost/mcp/v1/tools/call", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({
             tool: "search_deals",
             input: { domain: "seq-test.com" },

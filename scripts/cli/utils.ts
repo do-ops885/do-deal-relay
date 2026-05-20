@@ -21,7 +21,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
-    if (arg === undefined) {
+    if (!arg) {
       i++;
       continue;
     }
