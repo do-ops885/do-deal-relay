@@ -729,13 +729,19 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
     }
   }
 
-  // Remove script and style tags for text extraction
-  let textContent = html
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi, "")
-    .replace(/<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Remove script/style blocks and HTML tags for text extraction.
+  // Apply repeatedly until stable to avoid incomplete multi-character sanitization.
+  let textContent = html;
+  let previousTextContent: string;
+  do {
+    previousTextContent = textContent;
+    textContent = textContent
+      .replace(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi, "")
+      .replace(/<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi, "")
+      .replace(/<[^>]+>/g, " ");
+  } while (textContent !== previousTextContent);
+
+  textContent = textContent.replace(/\s+/g, " ").trim();
 
   // Truncate text content
   textContent = textContent.substring(0, 10000);
