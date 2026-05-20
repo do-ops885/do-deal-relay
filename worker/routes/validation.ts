@@ -14,12 +14,14 @@
  */
 
 import type { Env } from "../types";
+import { AuthResult } from "../lib/auth";
 import { jsonResponse, errorResponse } from "./utils";
 import {
   checkRateLimit,
   getClientIdentifier,
   createRateLimitHeaders,
 } from "../lib/rate-limit";
+import { validateFetchUrl } from "../lib/security";
 import {
   validateUrl,
   checkUrlStatusBatch,
@@ -77,8 +79,9 @@ interface ValidateDealBody {
 export async function handleValidateUrl(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,
@@ -116,6 +119,12 @@ export async function handleValidateUrl(
       url: body.url,
       clientId: clientId.slice(0, 8),
     });
+
+    // SSRF Check
+    const isSafe = await validateFetchUrl(body.url);
+    if (!isSafe) {
+      return errorResponse("URL is blocked for security reasons", 403);
+    }
 
     // Perform validation
     const result = await validateUrl(body.url, env);
@@ -157,8 +166,9 @@ export async function handleValidateUrl(
 export async function handleValidateBatch(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,
@@ -390,8 +400,9 @@ export async function handleValidateDeal(
   request: Request,
   code: string,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request, auth);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,

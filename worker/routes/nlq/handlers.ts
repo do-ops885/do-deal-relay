@@ -63,7 +63,7 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
   }
 
   // Rate limiting
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request);
   const rateLimitResult = await checkRateLimit(
     env,
     clientId,

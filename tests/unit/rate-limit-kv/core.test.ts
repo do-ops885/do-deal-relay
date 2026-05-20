@@ -63,7 +63,7 @@ describe("Rate Limit KV Core", () => {
           },
         ),
       } as unknown as MockKVNamespace,
-    } as Env;
+    } as unknown as Env;
   });
 
   afterEach(() => {
@@ -143,7 +143,7 @@ describe("Rate Limit KV Core", () => {
           delete: vi.fn(),
           list: vi.fn(),
         } as unknown as MockKVNamespace,
-      } as Env;
+      } as unknown as Env;
 
       const result = await checkRateLimitKV(mockEnv, "client-1", 10, 60);
 
@@ -271,7 +271,7 @@ describe("Rate Limit KV Core", () => {
           delete: vi.fn(),
           list: vi.fn().mockRejectedValue(new Error("KV Error")),
         } as unknown as MockKVNamespace,
-      } as Env;
+      } as unknown as Env;
 
       const result = await getAllRateLimitStates(mockEnv);
       expect(result.size).toBe(0);

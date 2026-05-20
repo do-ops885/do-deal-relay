@@ -52,8 +52,8 @@ describe("MCP Utils - Pagination", () => {
       const result = paginate(items, undefined, 10);
 
       expect(result.items).toHaveLength(10);
-      expect(result.items[0].id).toBe(0);
-      expect(result.items[9].id).toBe(9);
+      expect(result.items[0]!.id).toBe(0);
+      expect(result.items[9]!.id).toBe(9);
       expect(result.total).toBe(25);
       expect(result.nextCursor).toBeDefined();
     });
@@ -63,8 +63,8 @@ describe("MCP Utils - Pagination", () => {
       const secondPage = paginate(items, firstPage.nextCursor, 10);
 
       expect(secondPage.items).toHaveLength(10);
-      expect(secondPage.items[0].id).toBe(10);
-      expect(secondPage.items[9].id).toBe(19);
+      expect(secondPage.items[0]!.id).toBe(10);
+      expect(secondPage.items[9]!.id).toBe(19);
       expect(secondPage.total).toBe(25);
       expect(secondPage.nextCursor).toBeDefined();
     });
@@ -75,8 +75,8 @@ describe("MCP Utils - Pagination", () => {
       const lastPage = paginate(items, secondPage.nextCursor, 10);
 
       expect(lastPage.items).toHaveLength(5);
-      expect(lastPage.items[0].id).toBe(20);
-      expect(lastPage.items[4].id).toBe(24);
+      expect(lastPage.items[0]!.id).toBe(20);
+      expect(lastPage.items[4]!.id).toBe(24);
       expect(lastPage.nextCursor).toBeUndefined();
     });
 
@@ -115,7 +115,7 @@ describe("MCP Utils - Pagination", () => {
       const result = paginate(items, "invalid-cursor", 10);
 
       expect(result.items).toHaveLength(10);
-      expect(result.items[0].id).toBe(0);
+      expect(result.items[0]!.id).toBe(0);
     });
   });
 });

@@ -64,7 +64,7 @@ describe("Feature Flags Rollouts", () => {
           },
         ),
       } as unknown as MockKVNamespace,
-    } as Env;
+    } as unknown as Env;
   });
 
   afterEach(() => {

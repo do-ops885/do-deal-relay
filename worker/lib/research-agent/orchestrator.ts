@@ -5,12 +5,10 @@ import {
   ReferralInput,
 } from "../../types";
 import { CONFIG } from "../../config";
-import {
-  fetchFromSource,
-  extractReferralsFromContent,
-  researchRateLimiter,
-  ExtractedReferral,
-} from "./fetcher";
+import { fetchFromSource } from "./fetcher";
+import { extractReferralsFromContent } from "./extractor-logic";
+import { ExtractedReferral } from "./extractor-utils";
+import { researchRateLimiter } from "./rate-limiter";
 import {
   ResearchSource,
   RESEARCH_SOURCES,
@@ -190,12 +188,12 @@ export async function executeReferralResearch(
   const hasApiKeys = Boolean(
     apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
   );
-  // Auto-enable real fetching when API keys are available, in production, or via env var, unless explicitly disabled
+  // Auto-enable real fetching when API keys are available, unless explicitly disabled
+  const envAllowsRealFetching =
+    env.ENVIRONMENT === "production" ||
+    env.RESEARCH_USE_REAL_FETCHING === "true";
   const useRealFetching =
-    request.options?.use_real_fetching ??
-    (env.ENVIRONMENT === "production" ||
-      env.RESEARCH_USE_REAL_FETCHING === "true" ||
-      hasApiKeys);
+    request.options?.use_real_fetching ?? envAllowsRealFetching ?? hasApiKeys;
 
   // Gather research from multiple sources
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
@@ -538,7 +536,7 @@ export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
   depth: WebResearchRequest["depth"] = "thorough",
-  useRealFetching?: boolean,
+  useRealFetching = false,
 ): Promise<ReferralResearchResult> {
   const request: WebResearchRequest = {
     query: `${domain} referral code invite program`,

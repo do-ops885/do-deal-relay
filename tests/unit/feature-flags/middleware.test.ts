@@ -57,7 +57,7 @@ describe("Feature Flags Middleware", () => {
           },
         ),
       } as unknown as MockKVNamespace,
-    } as Env;
+    } as unknown as Env;
   });
 
   afterEach(() => {

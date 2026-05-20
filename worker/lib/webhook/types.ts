@@ -2,6 +2,7 @@
 // Webhook Types - All type definitions for webhook system
 // ============================================================================
 
+import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../../types";
 
 export interface WebhookSubscription {

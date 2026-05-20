@@ -39,12 +39,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: ".nvmrc"
 
@@ -53,7 +53,6 @@ jobs:
 
       - name: Full test suite
         run: npm run test:ci
-        continue-on-error: true
 
       - name: Run quality gate
         run: ./scripts/quality_gate.sh
@@ -68,7 +67,13 @@ jobs:
             exit 0
           fi
 
-          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          # Prefer explicit worker host secret; fall back to account-derived subdomain
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
+          if [ -n "${WORKER_HOST}" ]; then
+            STAGING_URL="https://${WORKER_HOST}/health"
+          else
+            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          fi
           echo "Verifying staging environment is healthy..."
 
           if ! curl -sf "${STAGING_URL}"; then
@@ -90,12 +95,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: ".nvmrc"
 
@@ -187,19 +192,29 @@ jobs:
           echo "Seeding E2E test API keys to production KV..."
 
           # Admin key (ddr_admin_test_key_0000000000000000)
+          ADMIN_JSON='{"userId":"e2e-admin","role":"admin",'
+          ADMIN_JSON+='"createdAt":"2025-01-01T00:00:00Z",'
+          ADMIN_JSON+='"rateLimit":{"requestsPerMinute":100,"requestsPerHour":5000}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:36c3c6ac0ed11d5c316838ec88764dba53d2f790446970e30cc50d30afa79a3c' \
-            '{"userId":"e2e-admin","role":"admin","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":100,"requestsPerHour":5000}}'
+            "${ADMIN_JSON}"
 
           # User key (ddr_user_test_key_0000000000000000)
+          USER_JSON='{"userId":"e2e-user","role":"user",'
+          USER_JSON+='"createdAt":"2025-01-01T00:00:00Z",'
+          USER_JSON+='"rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:6d06b29066b183fe10b2978d8e3ad5c2bac0f57740c7f1978fba0edec32dc414' \
-            '{"userId":"e2e-user","role":"user","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
+            "${USER_JSON}"
 
           # Expired key (ddr_expired_test_key_0000000000000000)
+          EXPIRED_JSON='{"userId":"e2e-expired","role":"user",'
+          EXPIRED_JSON+='"createdAt":"2020-01-01T00:00:00Z",'
+          EXPIRED_JSON+='"expiresAt":"2021-01-01T00:00:00Z",'
+          EXPIRED_JSON+='"rateLimit":{"requestsPerMinute":1,"requestsPerHour":10}}'
           npx wrangler kv key put --namespace-id "${DEALS_SOURCES_ID}" --remote \
             'apikey:8440f560ecef5acc8a755f55176b2847008907591fab695d3d2e0fd0255502fe' \
-            '{"userId":"e2e-expired","role":"user","createdAt":"2020-01-01T00:00:00Z","expiresAt":"2021-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":1,"requestsPerHour":10}}'
+            "${EXPIRED_JSON}"
 
           echo "✅ E2E test API keys seeded successfully"
 
@@ -340,38 +355,91 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: ".nvmrc"
 
       - name: Install Wrangler
-        run: npm install -g wrangler@4.79.0
+        run: npm install -g wrangler@4.92.0
 
       - name: Rollback to previous version
         id: rollback
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          echo "Attempting to rollback..."
-          # Get deployment list and rollback to previous
-          wrangler deployments list --name do-deal-relay \
-            --env production || true
-          echo "Please manually rollback via Cloudflare dashboard if needed"
+          echo "Attempting automated rollback..."
+          if wrangler rollback --env production \
+            --message "Automated rollback due to deployment failure" --yes; then
+            echo "✅ Automated rollback initiated successfully"
+
+            # Wait for rollback to propagate
+            sleep 15
+
+            # Verify rollback health
+            ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+            HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
+            echo "Verifying rollback health at: ${HEALTH_URL}"
+
+            for i in {1..5}; do
+              if curl -sf "${HEALTH_URL}"; then
+                echo "✅ Rollback health check passed"
+                echo "rollback_status=success" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              echo "Attempt $i failed, retrying..."
+              sleep 10
+            done
+
+            echo "❌ Rollback deployed but health check failed"
+            echo "rollback_status=failure" >> "$GITHUB_OUTPUT"
+            exit 1
+          else
+            echo "❌ wrangler rollback failed"
+            echo "Attempting rollback via Cloudflare API as fallback..."
+
+            ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+            if [ -n "${ACCOUNT_ID}" ] && [ -n "${CLOUDFLARE_API_TOKEN}" ]; then
+              CF_API_BASE="https://api.cloudflare.com/client/v4"
+              ROLLBACK_RESPONSE=$(curl -sf -X POST \
+                "${CF_API_BASE}/accounts/${ACCOUNT_ID}/workers/scripts/do-deal-relay/deployments/rollback" \
+                -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                -H "Content-Type: application/json")
+
+              if echo "${ROLLBACK_RESPONSE}" | grep -q '"success":true'; then
+                echo "✅ API rollback initiated successfully"
+                echo "rollback_status=success" >> "$GITHUB_OUTPUT"
+                exit 0
+              else
+                echo "❌ API rollback also failed"
+                echo "rollback_status=failure" >> "$GITHUB_OUTPUT"
+                echo "Manual rollback required via Cloudflare dashboard"
+                exit 1
+              fi
+            fi
+
+            echo "Cannot perform rollback - missing Cloudflare credentials"
+            echo "rollback_status=failure" >> "$GITHUB_OUTPUT"
+            echo "Please manually rollback via Cloudflare dashboard"
+            exit 1
+          fi
 
       - name: Create rollback notification
-        if: steps.rollback.outcome == 'failure' || failure()
+        if: always()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const sha = context.sha;
             const runId = context.runId;
+            const rollbackStatus = `${{ steps.rollback.outputs.rollback_status }}`;
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
-            const title = `ROLLBACK REQUIRED - Production deployment failed`;
+            const title = rollbackStatus === 'success'
+              ? `AUTOMATED ROLLBACK - Production deployment failed`
+              : `ROLLBACK FAILED - Production deployment failed`;
 
             // Check for existing open rollback issue
             const existingIssues = await github.rest.issues.listForRepo({
@@ -390,14 +458,46 @@ jobs:
               return;
             }
 
+            const body = rollbackStatus === 'success'
+              ? `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback to the previous version was successful.**\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`
+              : `Production deployment failed for commit ${sha}. ` +
+                `**Automated rollback also failed.** Manual intervention is required immediately.\n\n` +
+                `[View failed workflow run](${url}/actions/runs/${runId})`;
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: title,
-              body: `Production deployment failed.\n\n` +
-                `- Commit: ${sha}\n` +
-                `- Failed run: [View workflow](${url}/actions/runs/${runId})\n\n` +
-                '**Action Required**: Check Cloudflare dashboard and rollback.',
+              body: body,
               labels: ['deployment', 'production', 'rollback', 'urgent']
             });
+        continue-on-error: true
+
+      - name: Notify via Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ROLLBACK_STATUS: ${{ steps.rollback.outputs.rollback_status }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram secrets not set, skipping notification"
+            exit 0
+          fi
+
+          MESSAGE="🚨 *Production Deployment Failed*%0A%0A"
+          MESSAGE="${MESSAGE}Commit: \`${GITHUB_SHA:0:7}\`%0A"
+
+          if [ "${ROLLBACK_STATUS}" = "success" ]; then
+            MESSAGE="${MESSAGE}✅ *Automated rollback successful*"
+          else
+            MESSAGE="${MESSAGE}❌ *Automated rollback FAILED*%0A⚠️ Manual intervention required!"
+          fi
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
         continue-on-error: true

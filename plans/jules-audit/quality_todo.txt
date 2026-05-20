@@ -1,0 +1,9 @@
+worker/config.ts:    HACKERNEWS: DEFAULT_HN_RATE_LIMIT,
+worker/routes/webhooks.ts:// DEPRECATED: This file is a thin wrapper. Use worker/routes/webhooks/index.ts
+scripts/validate-codes.sh:# Gate 6: Check for TODO comments
+scripts/validate-codes.sh:echo "Gate 6: TODO/FIXME Check"
+scripts/validate-codes.sh:TODOS=$(timeout "${GREP_TIMEOUT}" grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | wc -l || echo "0")
+scripts/validate-codes.sh:if [ "$TODOS" -eq 0 ]; then
+scripts/validate-codes.sh:    print_status 0 "No TODO/FIXME comments found"
+scripts/validate-codes.sh:    print_warning "Found $TODOS TODO/FIXME comments (review recommended)"
+tests/unit/d1-queries.test.ts:    // TODO: Fix getDealStats tests - complex multi-query function with session handling

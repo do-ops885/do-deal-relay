@@ -996,8 +996,8 @@ describe("Expiration Manager", () => {
 
       expect(result.validated).toBe(2);
       expect(result.invalid).toBe(1);
-      expect(result.results[0].valid).toBe(true);
-      expect(result.results[1].valid).toBe(false);
+      expect(result.results[0]!.valid).toBe(true);
+      expect(result.results[1]!.valid).toBe(false);
     });
 
     it("should respect batch size limit", async () => {

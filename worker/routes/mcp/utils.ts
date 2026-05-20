@@ -161,6 +161,7 @@ export function createJSONResponse(
   request: Request,
   status: number = 200,
   extraHeaders: HeadersInit = {},
+  origin?: string | null,
 ): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -205,7 +206,7 @@ export function validateResourceReadParams(
 // ============================================================================
 
 export async function checkMCPRateLimit(request: Request, env: Env) {
-  const clientId = getClientIdentifier(request);
+  const clientId = await getClientIdentifier(request);
   return checkRateLimit(env, clientId, "/mcp");
 }
 

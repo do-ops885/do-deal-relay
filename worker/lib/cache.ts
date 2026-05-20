@@ -1,3 +1,4 @@
+import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../types";
 import { executeInBatches } from "./utils";
 
@@ -65,7 +66,10 @@ export class KVCache {
    */
   async get<T>(key: string): Promise<T | null> {
     try {
-      const entry = await this.kv.get<CacheEntry<T>>(this.key(key), "json");
+      const entry = await this.kv.get<CacheEntry<T> | null>(
+        this.key(key),
+        "json",
+      );
 
       if (!entry) {
         this.recordMiss();
@@ -132,7 +136,7 @@ export class KVCache {
    */
   async has(key: string): Promise<boolean> {
     try {
-      const entry = await this.kv.get<CacheEntry<unknown>>(
+      const entry = await this.kv.get<CacheEntry<unknown> | null>(
         this.key(key),
         "json",
       );
@@ -181,7 +185,9 @@ export class KVCache {
 
       // Optimization: Parallel batch delete instead of sequential loop
       // This reduces latency from O(N) to O(N/batchSize)
-      await executeInBatches(list.keys, (key) => this.kv.delete(key.name));
+      await executeInBatches(list.keys, (key: { name: string }) =>
+        this.kv.delete(key.name),
+      );
     } catch (error) {
       console.error("Cache clear error:", error);
       throw error;

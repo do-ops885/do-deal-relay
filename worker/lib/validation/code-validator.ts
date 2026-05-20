@@ -85,7 +85,7 @@ const PROVIDER_FORMATS: Record<string, ProviderFormat> = {
     maxLength: 20,
     allowedChars: /^[A-Za-z0-9]+$/,
     caseSensitive: false,
-    examples: ["IITSL ltd", "WEALTH20", "INVEST50"],
+    examples: ["HE123456", "WEALTH20", "INVEST50"],
   },
   crypto: {
     name: "Cryptocurrency Exchange",

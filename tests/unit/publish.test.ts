@@ -127,7 +127,7 @@ describe("Publish Module", () => {
 
     // Initialize GitHub token for tests
     setGitHubToken("test-token");
-    initGitHubCircuitBreaker(mockEnv);
+    initGitHubCircuitBreaker(mockEnv as unknown as { DEALS_PROD: KVNamespace });
 
     mockContext = {
       run_id: "test-run",

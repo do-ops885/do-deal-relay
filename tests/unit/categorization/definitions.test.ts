@@ -48,7 +48,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Finance category", () => {
-    const finance = CATEGORY_DEFINITIONS.finance;
+    const finance = CATEGORY_DEFINITIONS.finance!;
 
     it("should include banking keywords", () => {
       expect(finance.keywords).toContain("bank");
@@ -72,7 +72,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Food delivery category", () => {
-    const foodDelivery = CATEGORY_DEFINITIONS.food_delivery;
+    const foodDelivery = CATEGORY_DEFINITIONS.food_delivery!;
 
     it("should include food-related keywords", () => {
       expect(foodDelivery.keywords).toContain("food");
@@ -88,7 +88,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Travel category", () => {
-    const travel = CATEGORY_DEFINITIONS.travel;
+    const travel = CATEGORY_DEFINITIONS.travel!;
 
     it("should include travel keywords", () => {
       expect(travel.keywords).toContain("hotel");
@@ -104,7 +104,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Shopping category", () => {
-    const shopping = CATEGORY_DEFINITIONS.shopping;
+    const shopping = CATEGORY_DEFINITIONS.shopping!;
 
     it("should include shopping keywords", () => {
       expect(shopping.keywords).toContain("shop");
@@ -120,7 +120,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Entertainment category", () => {
-    const entertainment = CATEGORY_DEFINITIONS.entertainment;
+    const entertainment = CATEGORY_DEFINITIONS.entertainment!;
 
     it("should include streaming keywords", () => {
       expect(entertainment.keywords).toContain("streaming");
@@ -136,7 +136,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Referral category", () => {
-    const referral = CATEGORY_DEFINITIONS.referral;
+    const referral = CATEGORY_DEFINITIONS.referral!;
 
     it("should include referral keywords", () => {
       expect(referral.keywords).toContain("refer");
@@ -154,7 +154,7 @@ describe("Category Definitions", () => {
   });
 
   describe("Cloud storage category", () => {
-    const cloudStorage = CATEGORY_DEFINITIONS.cloud_storage;
+    const cloudStorage = CATEGORY_DEFINITIONS.cloud_storage!;
 
     it("should include cloud keywords", () => {
       expect(cloudStorage.keywords).toContain("cloud");
@@ -172,7 +172,7 @@ describe("Category Definitions", () => {
   describe("Category matching rules", () => {
     it("should match finance deals by domain", () => {
       const dealDomain = "robinhood.com";
-      const matches = CATEGORY_DEFINITIONS.finance.domains.some(
+      const matches = CATEGORY_DEFINITIONS.finance!.domains.some(
         (d) => dealDomain.includes(d) || d.includes(dealDomain),
       );
       expect(matches).toBe(true);
@@ -180,7 +180,7 @@ describe("Category Definitions", () => {
 
     it("should match finance deals by keywords", () => {
       const dealText = "open a brokerage account and start trading stocks";
-      const matches = CATEGORY_DEFINITIONS.finance.keywords.some((kw) =>
+      const matches = CATEGORY_DEFINITIONS.finance!.keywords.some((kw) =>
         dealText.includes(kw.toLowerCase()),
       );
       expect(matches).toBe(true);
@@ -188,7 +188,7 @@ describe("Category Definitions", () => {
 
     it("should match food delivery deals by domain", () => {
       const dealDomain = "doordash.com";
-      const matches = CATEGORY_DEFINITIONS.food_delivery.domains.some(
+      const matches = CATEGORY_DEFINITIONS.food_delivery!.domains.some(
         (d) => dealDomain.includes(d) || d.includes(dealDomain),
       );
       expect(matches).toBe(true);
@@ -196,7 +196,7 @@ describe("Category Definitions", () => {
 
     it("should match travel deals by keywords", () => {
       const dealText = "book a hotel room for your vacation trip";
-      const matches = CATEGORY_DEFINITIONS.travel.keywords.some((kw) =>
+      const matches = CATEGORY_DEFINITIONS.travel!.keywords.some((kw) =>
         dealText.includes(kw.toLowerCase()),
       );
       expect(matches).toBe(true);
@@ -204,7 +204,7 @@ describe("Category Definitions", () => {
 
     it("should not match unrelated categories", () => {
       const dealText = "get free cloud storage backup";
-      const financeMatches = CATEGORY_DEFINITIONS.finance.keywords.some((kw) =>
+      const financeMatches = CATEGORY_DEFINITIONS.finance!.keywords.some((kw) =>
         dealText.includes(kw.toLowerCase()),
       );
       expect(financeMatches).toBe(false);
@@ -214,13 +214,13 @@ describe("Category Definitions", () => {
   describe("Default category assignment", () => {
     it("should have referral as catch-all category", () => {
       expect(CATEGORY_DEFINITIONS.referral).toBeDefined();
-      expect(CATEGORY_DEFINITIONS.referral.domains).toHaveLength(0);
+      expect(CATEGORY_DEFINITIONS.referral!.domains).toHaveLength(0);
     });
 
     it("should have general fallback via keywords", () => {
       // Referral category should match common referral patterns
       const referralText = "sign up and get a bonus for inviting a friend";
-      const matches = CATEGORY_DEFINITIONS.referral.keywords.some((kw) =>
+      const matches = CATEGORY_DEFINITIONS.referral!.keywords.some((kw) =>
         referralText.includes(kw.toLowerCase()),
       );
       expect(matches).toBe(true);
@@ -258,9 +258,9 @@ describe("Category Definitions", () => {
         "entertainment",
       ];
       majorCategories.forEach((cat) => {
-        expect(CATEGORY_DEFINITIONS[cat].domains.length).toBeGreaterThanOrEqual(
-          5,
-        );
+        expect(
+          CATEGORY_DEFINITIONS[cat]!.domains.length,
+        ).toBeGreaterThanOrEqual(5);
       });
     });
   });

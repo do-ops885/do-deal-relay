@@ -84,7 +84,7 @@ describe("Analytics: Deals Over Time", () => {
     ];
 
     const result = calculateDealsOverTime([], logs, 1);
-    expect(result[0].discovered).toBe(2);
+    expect(result[0]!.discovered).toBe(2);
   });
 
   it("should not count discover logs without candidate_count", () => {
@@ -99,7 +99,7 @@ describe("Analytics: Deals Over Time", () => {
     ];
 
     const result = calculateDealsOverTime([], logs, 1);
-    expect(result[0].discovered).toBe(0);
+    expect(result[0]!.discovered).toBe(0);
   });
 
   it("should count publish logs with complete status", () => {
@@ -124,7 +124,7 @@ describe("Analytics: Deals Over Time", () => {
     ];
 
     const result = calculateDealsOverTime([], logs, 1);
-    expect(result[0].published).toBe(2);
+    expect(result[0]!.published).toBe(2);
   });
 
   it("should count expired deals correctly", () => {
@@ -185,7 +185,7 @@ describe("Analytics: Deals Over Time", () => {
     ];
 
     const result = calculateDealsOverTime(deals, [], 1);
-    expect(result[0].expired).toBe(0);
+    expect(result[0]!.expired).toBe(0);
   });
 
   it("should produce date strings in ISO format", () => {

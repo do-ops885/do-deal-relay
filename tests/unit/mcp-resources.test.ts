@@ -460,21 +460,21 @@ describe("MCP Resources - readResource", () => {
   describe("Resource metadata", () => {
     it("should use correct mimeType for all resources", async () => {
       const dealResult = await readResource("deals://test", env);
-      expect(dealResult.contents[0].mimeType).toBe("application/json");
+      expect(dealResult.contents[0]!.mimeType).toBe("application/json");
 
       const catResult = await readResource("categories://list", env);
-      expect(catResult.contents[0].mimeType).toBe("application/json");
+      expect(catResult.contents[0]!.mimeType).toBe("application/json");
 
       const analyticsResult = await readResource("analytics://summary", env);
-      expect(analyticsResult.contents[0].mimeType).toBe("application/json");
+      expect(analyticsResult.contents[0]!.mimeType).toBe("application/json");
     });
 
     it("should use correct URI in content", async () => {
       const dealResult = await readResource("deals://test", env);
-      expect(dealResult.contents[0].uri).toBe("deals://test");
+      expect(dealResult.contents[0]!.uri).toBe("deals://test");
 
       const catResult = await readResource("categories://list", env);
-      expect(catResult.contents[0].uri).toBe("categories://list");
+      expect(catResult.contents[0]!.uri).toBe("categories://list");
     });
   });
 });
