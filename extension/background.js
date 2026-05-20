@@ -30,8 +30,6 @@ class ExtensionService {
     this.setupCommandListener();
     this.setupMessageHandlers();
     this.setupTabListeners();
-
-    console.log("Referral Capture extension initialized");
   }
 
   // ============================================================================
@@ -308,8 +306,6 @@ class ExtensionService {
       },
     };
 
-    console.log("Submitting to API with complete URL:", payload.url);
-
     try {
       const response = await fetch(`${this.apiBaseUrl}/api/referrals`, {
         method: "POST",
@@ -339,7 +335,6 @@ class ExtensionService {
 
       // Verify the response includes complete URL
       if (result.referral && result.referral.url) {
-        console.log("API returned complete URL:", result.referral.url);
       }
 
       return { success: true, referral: result.referral };
@@ -394,7 +389,6 @@ class ExtensionService {
       });
     } else {
       // Fallback for browsers without notification API
-      console.log(`[Notification] ${title}: ${message}`);
     }
   }
 }
@@ -410,11 +404,9 @@ const service = new ExtensionService();
 // ============================================================================
 
 self.addEventListener("install", () => {
-  console.log("Referral Capture service worker installed");
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("Referral Capture service worker activated");
   event.waitUntil(self.clients.claim());
 });

@@ -1,4 +1,10 @@
-import { ResearchSource } from "./types";
+import {
+  ProductHuntResponse,
+  GitHubSearchResponse,
+  HackerNewsSearchResponse,
+  RedditListingResponse,
+  ResearchSource,
+} from "./types";
 import { validateFetchUrl } from "../security";
 import { CONFIG } from "../../config";
 import { parseHtmlContent } from "./extractor-utils";
@@ -69,20 +75,20 @@ async function fetchProductHuntDeals(
       error: `ProductHunt API error: ${response.status}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as ProductHuntResponse;
   if (data.errors)
     return {
       success: false,
       content: "",
       contentType: "application/json",
       statusCode: 200,
-      error: `GraphQL error: ${data.errors.map((e: any) => e.message).join(", ")}`,
+      error: `GraphQL error: ${data.errors.map((e) => e.message).join(", ")}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const posts = data.data?.posts?.edges?.map((e: any) => e.node) || [];
+  const posts = data.data?.posts?.edges?.map((e) => e.node) || [];
   const content = posts
     .map(
-      (p: any) =>
+      (p) =>
         `Product: ${p.name}\nTagline: ${p.tagline}\nURL: ${p.url}\nVotes: ${p.votesCount}\n---`,
     )
     .join("\n");
@@ -132,10 +138,10 @@ async function fetchGitHubTrending(
       error: `GitHub API error: ${response.status}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as GitHubSearchResponse;
   const content = (data.items || [])
     .map(
-      (r: any) =>
+      (r) =>
         `Repository: ${r.full_name}\nDescription: ${r.description || ""}\nStars: ${r.stargazers_count}\nLanguage: ${r.language || "Unknown"}\n---`,
     )
     .join("\n");
@@ -175,10 +181,10 @@ async function fetchHackerNewsDeals(
       error: `HN API error: ${response.status}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as HackerNewsSearchResponse;
   const content = (data.hits || [])
     .map(
-      (h: any) =>
+      (h) =>
         `Story: ${h.title || ""}\nURL: ${h.url || `https://news.ycombinator.com/item?id=${h.objectID}`}\nAuthor: ${h.author}\nPoints: ${h.points}\n---`,
     )
     .join("\n");
@@ -214,7 +220,10 @@ async function getRedditOAuthToken(
     },
   );
   if (!response || !response.ok) return null;
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as {
+    access_token: string;
+    expires_in: number;
+  };
   redditOAuthToken = {
     token: data.access_token,
     expiresAt: Date.now() + (data.expires_in - 300) * 1000,
@@ -254,10 +263,10 @@ async function fetchRedditDeals(
         error: `Reddit API error: ${response.status}`,
         fetchDurationMs: Date.now() - startTime,
       };
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as RedditListingResponse;
     const content = (data.data?.children || [])
       .map(
-        (c: any) =>
+        (c) =>
           `Post: ${c.data.title}\nSubreddit: r/${c.data.subreddit}\nURL: ${c.data.url}\nScore: ${c.data.score}\n---`,
       )
       .join("\n");
@@ -297,10 +306,10 @@ async function fetchRedditDeals(
       error: `Reddit API error: ${response.status}`,
       fetchDurationMs: Date.now() - startTime,
     };
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as RedditListingResponse;
   const content = (data.data?.children || [])
     .map(
-      (c: any) =>
+      (c) =>
         `Post: ${c.data.title}\nSubreddit: r/${c.data.subreddit}\nURL: ${c.data.url}\nScore: ${c.data.score}\n---`,
     )
     .join("\n");
@@ -364,7 +373,7 @@ export async function fetchGenericPageContent(
 export async function fetchFromSource(
   source: ResearchSource,
   query: string,
-  apiKeys?: any,
+  apiKeys?: Record<string, string | undefined>,
 ): Promise<FetchResult> {
   const startTime = Date.now();
   switch (source.name) {

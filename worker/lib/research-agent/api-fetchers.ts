@@ -10,14 +10,14 @@ import {
   transformHackerNewsResponse,
   transformRedditResponse,
 } from "./transformers";
-import { CONFIG } from "../../config";
 import { validateFetchUrl } from "../security";
+import { FetchResult } from "./fetcher";
 
 export async function fetchProductHuntDeals(
   apiToken: string | undefined,
   searchQuery: string,
   limit: number = 20,
-): Promise<any> {
+): Promise<FetchResult> {
   const startTime = Date.now();
   if (!apiToken)
     return {
@@ -63,7 +63,7 @@ export async function fetchGitHubTrending(
   apiToken: string | undefined,
   searchQuery: string,
   limit: number = 30,
-): Promise<any> {
+): Promise<FetchResult> {
   const startTime = Date.now();
   const enhancedQuery = searchQuery + " referral OR invite OR promo";
   const url =
@@ -80,7 +80,7 @@ export async function fetchGitHubTrending(
       error: "SSRF Blocked",
       fetchDurationMs: 0,
     };
-  const headers: any = {
+  const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "User-Agent": "DealDiscoveryBot/1.0",
   };
@@ -102,7 +102,7 @@ export async function fetchGitHubTrending(
 export async function fetchHackerNewsDeals(
   searchQuery: string,
   limit: number = 50,
-): Promise<any> {
+): Promise<FetchResult> {
   const startTime = Date.now();
   const url =
     "https://hn.algolia.com/api/v1/search?query=" +
@@ -144,7 +144,7 @@ async function getRedditAccessToken(
       },
       body: "grant_type=client_credentials",
     });
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { access_token?: string };
     return data.access_token || null;
   } catch (e) {
     return null;
@@ -156,14 +156,16 @@ export async function fetchRedditDeals(
   clientSecret: string | undefined,
   searchQuery: string,
   limit: number = 25,
-): Promise<any> {
+): Promise<FetchResult> {
   const startTime = Date.now();
   let url =
     "https://www.reddit.com/r/deals/search.json?q=" +
     encodeURIComponent(searchQuery) +
     "&limit=" +
     limit;
-  let headers: any = { "User-Agent": "DealDiscoveryBot/1.0" };
+  const headers: Record<string, string> = {
+    "User-Agent": "DealDiscoveryBot/1.0",
+  };
 
   if (clientId && clientSecret) {
     const token = await getRedditAccessToken(clientId, clientSecret);

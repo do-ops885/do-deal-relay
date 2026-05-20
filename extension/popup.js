@@ -392,8 +392,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
     };
 
-    console.log("Submitting referral with complete URL:", payload.url);
-
     // Send to background script for API submission
     const response = await chrome.runtime.sendMessage({
       action: "submitToAPI",
