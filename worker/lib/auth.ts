@@ -6,7 +6,13 @@
  */
 
 import type { Env } from "../types";
-import { unauthorizedResponse, forbiddenResponse } from "../routes/utils";
+import {
+  getAllowedOrigin,
+  unauthorizedResponse,
+  forbiddenResponse,
+} from "../routes/utils";
+
+export { getAllowedOrigin };
 
 // ============================================================================
 // Types
@@ -283,36 +289,19 @@ export async function withAuth(
 // ============================================================================
 
 /**
- * Allowed origins for CORS
- */
-const ALLOWED_ORIGINS = [
-  "https://do-deal-relay.pages.dev",
-  "https://do-deal-relay.com",
-  "https://www.do-deal-relay.com",
-  "http://localhost:8787",
-  "http://localhost:3000",
-];
-
-/**
- * Get allowed origin from request
- */
-export function getAllowedOrigin(requestOrigin: string | null): string {
-  if (!requestOrigin) return ALLOWED_ORIGINS[0]!;
-  if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
-  return ALLOWED_ORIGINS[0]!; // Default to first allowed
-}
-
-/**
  * Create CORS headers with proper origin validation
  */
-export function createCorsHeaders(request: Request): Record<string, string> {
+export function createCorsHeaders(
+  request: Request,
+  env?: Env,
+): Record<string, string> {
   const origin = request.headers.get("Origin");
 
   return {
-    "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+    "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, Authorization, X-API-Key, X-Correlation-ID",
+      "Content-Type, Authorization, X-API-Key, X-Correlation-ID, X-Webhook-Signature, MCP-Session-Id",
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Max-Age": "86400",
   };

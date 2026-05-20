@@ -13,11 +13,6 @@ export interface ResearchSource {
     reward: RegExp[];
     url: RegExp[];
   };
-  selectors?: {
-    code?: string;
-    reward?: string;
-    url?: string;
-  };
   priority: number;
   // API-specific configuration
   apiConfig?: SourceApiConfig;

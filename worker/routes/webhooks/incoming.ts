@@ -5,7 +5,11 @@
 import type { Env } from "../../types";
 import { logger } from "../../lib/global-logger";
 import { handleError } from "../../lib/error-handler";
-import { handleIncomingWebhook } from "../../lib/webhook/index";
+import {
+  handleIncomingWebhook,
+  getWebhookPartner,
+} from "../../lib/webhook/index";
+import { verifyHmacSignature } from "../../lib/hmac";
 import { jsonResponse } from "./types";
 
 // ============================================================================
@@ -24,10 +28,24 @@ export async function handleIncomingWebhookRequest(
       return jsonResponse(
         { error: "Content-Type must be application/json" },
         415,
+        request,
+        env,
       );
     }
 
-    // Get headers
+    // Look up partner for secret (needed for HMAC verification)
+    const partner = await getWebhookPartner(env, partnerId);
+    if (!partner) {
+      return jsonResponse({ error: "Unknown partner" }, 401, request, env);
+    }
+    if (!partner.active) {
+      return jsonResponse({ error: "Partner deactivated" }, 403, request, env);
+    }
+
+    // Read payload for signature verification
+    const payload = await request.text();
+
+    // Extract and validate required headers
     const signature = request.headers.get("x-webhook-signature") || "";
     const timestamp = request.headers.get("x-webhook-timestamp") || "";
     const webhookId = request.headers.get("x-webhook-id") || "";
@@ -44,13 +62,33 @@ export async function handleIncomingWebhookRequest(
           ],
         },
         400,
+        request,
+        env,
       );
     }
 
-    // Read payload
-    const payload = await request.text();
+    // Verify HMAC signature at request boundary (defense-in-depth)
+    const verification = await verifyHmacSignature(
+      payload,
+      signature.replace("sha256=", ""),
+      partner.secret,
+      parseInt(timestamp, 10),
+    );
+    if (!verification.valid) {
+      logger.warn("Webhook signature verification failed", {
+        component: "webhook",
+        partner_id: partnerId,
+        error: verification.error,
+      });
+      return jsonResponse(
+        { error: `Invalid webhook signature: ${verification.error}` },
+        401,
+        request,
+        env,
+      );
+    }
 
-    // Process webhook
+    // Process webhook through the library handler
     const result = await handleIncomingWebhook(env, partnerId, payload, {
       signature,
       timestamp,
@@ -66,6 +104,8 @@ export async function handleIncomingWebhookRequest(
         error: result.error,
       },
       result.statusCode,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -76,6 +116,8 @@ export async function handleIncomingWebhookRequest(
     return jsonResponse(
       { error: "Failed to process webhook", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }

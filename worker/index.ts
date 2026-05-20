@@ -249,7 +249,7 @@ export default {
       }
       if (path === "/api/validation/stats" && request.method === "GET") {
         return withAuth(request, env, "admin", () =>
-          handleGetValidationStats(env),
+          handleGetValidationStats(env, request),
         );
       }
 
@@ -278,7 +278,9 @@ export default {
 
       // Legacy MCP v1 Endpoints (for backwards compatibility)
       if (path === "/mcp/v1/tools/list" && request.method === "POST") {
-        return withAuth(request, env, "user", () => handleMCPListTools(env));
+        return withAuth(request, env, "user", () =>
+          handleMCPListTools(env, request),
+        );
       }
       if (path === "/mcp/v1/tools/call" && request.method === "POST") {
         return withAuth(request, env, "user", () =>
@@ -286,7 +288,9 @@ export default {
         );
       }
       if (path === "/mcp/v1/info") {
-        return withAuth(request, env, "user", () => handleMCPInfo(env));
+        return withAuth(request, env, "user", () =>
+          handleMCPInfo(env, request),
+        );
       }
 
       // D1 Database API endpoints
@@ -323,7 +327,9 @@ export default {
       }
 
       if (path === "/api/experience/aggregate" && request.method === "POST") {
-        return withAuth(request, env, "admin", () => handleRunAggregation(env));
+        return withAuth(request, env, "admin", () =>
+          handleRunAggregation(env, request),
+        );
       }
 
       // Email API
@@ -366,13 +372,14 @@ export default {
       }
 
       // 404
-      return jsonResponse({ error: "Not found" }, 404, request);
+      return jsonResponse({ error: "Not found" }, 404, request, env);
     } catch (error) {
       console.error("Request handler error:", error);
       return jsonResponse(
         { error: "Internal server error", message: (error as Error).message },
         500,
         request,
+        env,
       );
     }
   },

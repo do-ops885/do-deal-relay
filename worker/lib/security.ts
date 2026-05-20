@@ -72,10 +72,7 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     }
 
     // Strip brackets from IPv6 hostnames for validation
-    const cleanHostname =
-      hostname.startsWith("[") && hostname.endsWith("]")
-        ? hostname.slice(1, -1)
-        : hostname;
+    const cleanHostname = hostname.replace(/^\[|\]$/g, "");
 
     // Check if hostname is an IP literal
     if (isIpAddress(cleanHostname)) {
@@ -91,6 +88,7 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       // Perform DNS resolution check to prevent DNS rebinding
       const resolvedIps = await resolveHostname(hostname);
       if (resolvedIps.length === 0) return false;
+
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
           logger.warn(
@@ -153,29 +151,18 @@ function isIpInCidr(ip: string, cidr: string): boolean {
 
     if (!range) return false;
 
-    const bits = bitsStr
-      ? parseInt(bitsStr, 10)
-      : range.includes(":")
-        ? SECURITY_CONSTANTS.IPV6_BITS
-        : SECURITY_CONSTANTS.IPV4_BITS;
-
-    if (range.includes(":") && ip.includes(":")) {
-      // IPv6 validation using BigInt
-      const ipBigInt = ipv6ToBigInt(ip);
-      const rangeBigInt = ipv6ToBigInt(range);
-
-      const mask =
-        bits === 0
-          ? 0n
-          : ((1n << BigInt(bits)) - 1n) <<
-            BigInt(SECURITY_CONSTANTS.IPV6_BITS - bits);
-      return (ipBigInt & mask) === (rangeBigInt & mask);
-    } else if (!range.includes(":") && !ip.includes(":")) {
+    if (!range.includes(":") && !ip.includes(":")) {
       const ipNum = ipToLong(ip);
       const rangeNum = ipToLong(range);
-      const mask =
-        bits === 0 ? 0 : (~0 << (SECURITY_CONSTANTS.IPV4_BITS - bits)) >>> 0;
+      const bitsNum = bitsStr ? Number(bitsStr) : 0;
+      const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
+    }
+
+    if (range.includes(":") && ip.includes(":")) {
+      // IPv6 local/private checks
+      if (ip === "::1" || ip === "0:0:0:0:0:0:0:1" || ip === "::") return true;
+      if (/^(fc|fd|fe[89ab]|fec0)/i.test(ip)) return true;
     }
   } catch {
     return false;
@@ -226,7 +213,7 @@ function ipv6ToBigInt(ipv6: string): bigint {
 async function resolveHostname(hostname: string): Promise<string[]> {
   try {
     const response = await fetch(
-      `https://cloudflare-dns.com/query?name=${hostname}&type=A`,
+      `https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`,
       {
         headers: { accept: "application/dns-json" },
         signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),

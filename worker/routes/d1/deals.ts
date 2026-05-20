@@ -33,7 +33,12 @@ function getD1Logger(env: Env) {
 
 export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   const domain = url.searchParams.get("domain");
@@ -126,11 +131,21 @@ export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
   const includeExpired = url.searchParams.get("include_expired") === "true";
 
   if (!dealId) {
-    return jsonResponse({ error: "deal_id query parameter required" }, 400);
+    return jsonResponse(
+      { error: "deal_id query parameter required" },
+      400,
+      undefined,
+      env,
+    );
   }
 
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "Database not configured" }, 503);
+    return jsonResponse(
+      { error: "Database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {
@@ -138,10 +153,20 @@ export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
       limit,
       includeExpired,
     });
-    return jsonResponse({ similar: deals, total: deals.length });
+    return jsonResponse(
+      { similar: deals, total: deals.length },
+      200,
+      undefined,
+      env,
+    );
   } catch (error) {
     console.error("similar-deals-failed", { dealId, error: String(error) });
-    return jsonResponse({ error: "Failed to get similar deals" }, 500);
+    return jsonResponse(
+      { error: "Failed to get similar deals" },
+      500,
+      undefined,
+      env,
+    );
   }
 }
 
@@ -160,15 +185,30 @@ export async function handleD1Recommended(
     : 10;
 
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "Database not configured" }, 503);
+    return jsonResponse(
+      { error: "Database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {
     const deals = await getRecommendedDealsD1(env.DEALS_DB, domains, { limit });
-    return jsonResponse({ recommended: deals, total: deals.length });
+    return jsonResponse(
+      { recommended: deals, total: deals.length },
+      200,
+      undefined,
+      env,
+    );
   } catch (error) {
     console.error("recommended-deals-failed", { error: String(error) });
-    return jsonResponse({ error: "Failed to get recommended deals" }, 500);
+    return jsonResponse(
+      { error: "Failed to get recommended deals" },
+      500,
+      undefined,
+      env,
+    );
   }
 }
 
@@ -185,7 +225,12 @@ export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
     : 10;
 
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "Database not configured" }, 503);
+    return jsonResponse(
+      { error: "Database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {
@@ -197,6 +242,11 @@ export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
     });
   } catch (error) {
     console.error("trending-deals-failed", { error: String(error) });
-    return jsonResponse({ error: "Failed to get trending deals" }, 500);
+    return jsonResponse(
+      { error: "Failed to get trending deals" },
+      500,
+      undefined,
+      env,
+    );
   }
 }

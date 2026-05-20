@@ -24,12 +24,14 @@ export async function handleSubmit(
     return jsonResponse(
       { error: "Content-Type must be application/json" },
       415,
+      request,
+      env,
     );
   }
 
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-    return jsonResponse({ error: "Request body too large" }, 413);
+    return jsonResponse({ error: "Request body too large" }, 413, request, env);
   }
 
   const body = (await request.json()) as SubmitDealBody;
@@ -39,6 +41,8 @@ export async function handleSubmit(
     return jsonResponse(
       { error: "Invalid request body", details: validation.error.errors },
       400,
+      request,
+      env,
     );
   }
 
@@ -50,6 +54,8 @@ export async function handleSubmit(
         existing: existing[0]?.id,
       },
       409,
+      request,
+      env,
     );
   }
 
@@ -147,5 +153,7 @@ export async function handleSubmit(
       snapshot_hash: updatedSnapshot.snapshot_hash,
     },
     201,
+    request,
+    env,
   );
 }

@@ -27,7 +27,12 @@ function getD1Logger(env: Env) {
 
 export async function handleD1Stats(env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {
@@ -59,7 +64,12 @@ export async function handleD1Stats(env: Env): Promise<Response> {
 
 export async function handleD1Domains(env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {
@@ -92,7 +102,12 @@ export async function handleD1Domains(env: Env): Promise<Response> {
 
 export async function handleD1Categories(env: Env): Promise<Response> {
   if (!env.DEALS_DB) {
-    return jsonResponse({ error: "D1 database not configured" }, 503);
+    return jsonResponse(
+      { error: "D1 database not configured" },
+      503,
+      undefined,
+      env,
+    );
   }
 
   try {

@@ -6,6 +6,7 @@
 
 import type { Env } from "../../types";
 import { CONFIG } from "../../config";
+import { getAllowedOrigin } from "../utils";
 import {
   checkRateLimit,
   getClientIdentifier,
@@ -93,34 +94,15 @@ All operations are logged for compliance with EU AI Act Regulation (EU) 2024/168
 // ============================================================================
 
 /**
- * Allowed origins for CORS
+ * Get CORS headers for MCP requests with proper origin validation
  */
-export const ALLOWED_ORIGINS = [
-  "https://do-deal-relay.pages.dev",
-  "https://do-deal-relay.com",
-  "https://www.do-deal-relay.com",
-  "http://localhost:8787",
-  "http://localhost:3000",
-];
-
-/**
- * Get allowed origin based on request
- */
-export function getAllowedOrigin(origin?: string | null): string {
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    return origin;
-  }
-  return ALLOWED_ORIGINS[0] ?? "https://do-deal-relay.com";
-}
-
-/**
- * Build CORS headers for a given origin (or default)
- */
-export function getMCPCORSHeaders(
-  origin?: string | null,
+export function getMCPCorsHeaders(
+  request: Request,
+  env: Env,
 ): Record<string, string> {
+  const origin = request.headers.get("Origin");
   return {
-    "Access-Control-Allow-Origin": getAllowedOrigin(origin),
+    "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": [
       "Content-Type",
@@ -136,6 +118,8 @@ export function getMCPCORSHeaders(
       "X-RateLimit-Remaining",
       "X-RateLimit-Reset",
     ].join(", "),
+    "Access-Control-Allow-Credentials": "true",
+    Vary: "Origin",
   };
 }
 
@@ -173,6 +157,8 @@ export function createErrorResponse(
 
 export function createJSONResponse(
   data: JSONRPCResponse,
+  env: Env,
+  request: Request,
   status: number = 200,
   extraHeaders: HeadersInit = {},
   origin?: string | null,
@@ -181,7 +167,7 @@ export function createJSONResponse(
     status,
     headers: {
       "Content-Type": "application/json",
-      ...getMCPCORSHeaders(origin),
+      ...getMCPCorsHeaders(request, env),
       ...extraHeaders,
     },
   });

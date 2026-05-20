@@ -2,8 +2,8 @@
 // Webhook Routes - Type Definitions
 // ============================================================================
 
+import type { Env } from "../../types";
 import { getAllowedOrigin } from "../utils";
-
 import type {
   WebhookEventType,
   RetryPolicy,
@@ -65,15 +65,23 @@ export const VALID_WEBHOOK_EVENTS: WebhookEventType[] = [
 // Utilities
 // ============================================================================
 
-export function jsonResponse(data: unknown, status: number = 200): Response {
+export function jsonResponse(
+  data: unknown,
+  status: number = 200,
+  request?: Request,
+  env?: Env,
+): Response {
+  const origin = request?.headers.get("Origin");
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": getAllowedOrigin(null),
+      "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
       "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
       "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, Idempotency-Key",
+        "Content-Type, Authorization, Idempotency-Key, X-API-Key, X-Webhook-Signature",
+      "Access-Control-Allow-Credentials": "true",
+      Vary: "Origin",
     },
   });
 }

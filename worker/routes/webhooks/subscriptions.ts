@@ -60,6 +60,8 @@ export async function handleSubscribe(
       return jsonResponse(
         { error: "Missing required fields: url, events" },
         400,
+        request,
+        env,
       );
     }
 
@@ -67,7 +69,7 @@ export async function handleSubscribe(
     try {
       new URL(body.url);
     } catch {
-      return jsonResponse({ error: "Invalid URL format" }, 400);
+      return jsonResponse({ error: "Invalid URL format" }, 400, request, env);
     }
 
     const partnerId = body.partner_id || "default";
@@ -80,6 +82,8 @@ export async function handleSubscribe(
       return jsonResponse(
         { error: "Invalid event types", invalid: invalidEvents },
         400,
+        request,
+        env,
       );
     }
 
@@ -113,6 +117,8 @@ export async function handleSubscribe(
         },
       },
       201,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -122,6 +128,8 @@ export async function handleSubscribe(
     return jsonResponse(
       { error: "Failed to create subscription", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -138,23 +146,38 @@ export async function handleUnsubscribe(
     const body = (await request.json()) as { subscription_id: string };
 
     if (!body.subscription_id) {
-      return jsonResponse({ error: "Missing subscription_id" }, 400);
+      return jsonResponse(
+        { error: "Missing subscription_id" },
+        400,
+        request,
+        env,
+      );
     }
 
     const deleted = await deleteSubscription(env, body.subscription_id);
 
     if (!deleted) {
-      return jsonResponse({ error: "Subscription not found" }, 404);
+      return jsonResponse(
+        { error: "Subscription not found" },
+        404,
+        request,
+        env,
+      );
     }
 
     logger.info(`Webhook subscription deleted: ${body.subscription_id}`, {
       component: "webhook",
     });
 
-    return jsonResponse({
-      success: true,
-      message: "Subscription deleted successfully",
-    });
+    return jsonResponse(
+      {
+        success: true,
+        message: "Subscription deleted successfully",
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -163,6 +186,8 @@ export async function handleUnsubscribe(
     return jsonResponse(
       { error: "Failed to delete subscription", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -181,16 +206,21 @@ export async function handleListSubscriptions(
 
     const subscriptions = await getPartnerSubscriptions(env, partnerId);
 
-    return jsonResponse({
-      subscriptions: subscriptions.map((s) => ({
-        id: s.id,
-        url: s.url,
-        events: s.events,
-        active: s.active,
-        created_at: s.created_at,
-        filters: s.filters,
-      })),
-    });
+    return jsonResponse(
+      {
+        subscriptions: subscriptions.map((s) => ({
+          id: s.id,
+          url: s.url,
+          events: s.events,
+          active: s.active,
+          created_at: s.created_at,
+          filters: s.filters,
+        })),
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -199,6 +229,8 @@ export async function handleListSubscriptions(
     return jsonResponse(
       { error: "Failed to list subscriptions", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -219,7 +251,12 @@ export async function handleCreatePartner(
     const body = (await request.json()) as CreatePartnerRequest;
 
     if (!body.name) {
-      return jsonResponse({ error: "Missing required field: name" }, 400);
+      return jsonResponse(
+        { error: "Missing required field: name" },
+        400,
+        request,
+        env,
+      );
     }
 
     const partner = await createWebhookPartner(
@@ -248,6 +285,8 @@ export async function handleCreatePartner(
         },
       },
       201,
+      request,
+      env,
     );
   } catch (error) {
     const err = handleError(error, {
@@ -257,6 +296,8 @@ export async function handleCreatePartner(
     return jsonResponse(
       { error: "Failed to create partner", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -274,19 +315,24 @@ export async function handleGetPartner(
     const partner = await getWebhookPartner(env, partnerId);
 
     if (!partner) {
-      return jsonResponse({ error: "Partner not found" }, 404);
+      return jsonResponse({ error: "Partner not found" }, 404, request, env);
     }
 
-    return jsonResponse({
-      partner: {
-        id: partner.id,
-        name: partner.name,
-        active: partner.active,
-        allowed_events: partner.allowed_events,
-        rate_limit_per_minute: partner.rate_limit_per_minute,
-        created_at: partner.created_at,
+    return jsonResponse(
+      {
+        partner: {
+          id: partner.id,
+          name: partner.name,
+          active: partner.active,
+          allowed_events: partner.allowed_events,
+          rate_limit_per_minute: partner.rate_limit_per_minute,
+          created_at: partner.created_at,
+        },
       },
-    });
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -295,6 +341,8 @@ export async function handleGetPartner(
     return jsonResponse(
       { error: "Failed to get partner", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -314,17 +362,22 @@ export async function handleGetDeadLetterQueue(
 
     const dlq = await getDeadLetterQueue(env);
 
-    return jsonResponse({
-      count: dlq.length,
-      events: dlq.map((e) => ({
-        event_id: e.event.id,
-        event_type: e.event.type,
-        subscription_id: e.delivery.subscription_id,
-        attempts: e.delivery.attempts.length,
-        enqueued_at: e.enqueued_at,
-        retryable: e.retryable,
-      })),
-    });
+    return jsonResponse(
+      {
+        count: dlq.length,
+        events: dlq.map((e) => ({
+          event_id: e.event.id,
+          event_type: e.event.type,
+          subscription_id: e.delivery.subscription_id,
+          attempts: e.delivery.attempts.length,
+          enqueued_at: e.enqueued_at,
+          retryable: e.retryable,
+        })),
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -333,6 +386,8 @@ export async function handleGetDeadLetterQueue(
     return jsonResponse(
       { error: "Failed to get DLQ", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }
@@ -354,15 +409,22 @@ export async function handleRetryDeadLetter(
       return jsonResponse(
         { error: "Event not found or subscription inactive" },
         404,
+        request,
+        env,
       );
     }
 
-    return jsonResponse({
-      success: true,
-      message: "Event queued for retry",
-      event_id: eventId,
-      subscription_id: subscriptionId,
-    });
+    return jsonResponse(
+      {
+        success: true,
+        message: "Event queued for retry",
+        event_id: eventId,
+        subscription_id: subscriptionId,
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",
@@ -371,6 +433,8 @@ export async function handleRetryDeadLetter(
     return jsonResponse(
       { error: "Failed to retry event", message: err.message },
       500,
+      request,
+      env,
     );
   }
 }

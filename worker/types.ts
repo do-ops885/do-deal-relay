@@ -330,6 +330,7 @@ export interface Env {
   EMAIL_WEBHOOK_SECRET?: string;
   WEBHOOK_SECRET?: string;
   RESEARCH_USE_REAL_FETCHING?: string;
+  ALLOWED_ORIGINS?: string;
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;

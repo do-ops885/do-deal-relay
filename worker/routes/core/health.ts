@@ -74,7 +74,7 @@ export async function handleHealth(
   };
 
   const statusCode = health.status === "healthy" ? 200 : 503;
-  return jsonResponse(health, statusCode, request);
+  return jsonResponse(health, statusCode, request, env);
 }
 
 export async function handleReady(
@@ -88,6 +88,7 @@ export async function handleReady(
     { ready: isReady, ...body },
     isReady ? 200 : 503,
     request,
+    env,
   );
 }
 
@@ -99,6 +100,7 @@ export async function handleLive(
     { alive: true, timestamp: new Date().toISOString() },
     200,
     request,
+    env,
   );
 }
 
@@ -180,6 +182,7 @@ export async function handleMetrics(
       },
       200,
       request,
+      env,
     );
   }
 
