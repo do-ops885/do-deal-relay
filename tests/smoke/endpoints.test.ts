@@ -75,7 +75,7 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       }
       expect([200, 401, 404]).toContain(res.status);
       if (res.status === 200) {
-        const body = await res.json();
+        const body = (await res.json()) as any;
         expect(Array.isArray(body)).toBe(true);
       } else if (res.status === 404 || res.status === 401) {
         const body = (await res.json()) as any;

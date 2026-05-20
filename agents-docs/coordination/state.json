@@ -102,6 +102,8 @@
   "last_handoff": "v0.1.6-release-complete",
   "blockers": [],
   "pending_tasks": [
+    "Resolve PR #313 merge conflicts (13 conflicted files)",
+    "Merge feat/api-auth-implementation into main",
     "Re-run benchmark to measure combined performance improvement",
     "Consider re-benchmarking and bumping to v0.1.6"
   ],

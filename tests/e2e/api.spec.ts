@@ -14,7 +14,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("status", "healthy");
     expect(body).toHaveProperty("version");
     expect(body).toHaveProperty("timestamp");
@@ -25,7 +25,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("ready");
     expect(body.ready).toBe(true);
   });
@@ -35,7 +35,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("alive");
     expect(body.alive).toBe(true);
   });
@@ -49,7 +49,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
   });
 
@@ -61,7 +61,7 @@ test.describe("Deals API", () => {
     const contentType = response.headers()["content-type"];
     expect(contentType).toContain("application/json");
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("deals");
     expect(Array.isArray(body.deals)).toBe(true);
   });
@@ -73,7 +73,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
   });
 
@@ -84,7 +84,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeLessThanOrEqual(5);
   });
@@ -100,7 +100,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("deals");
     expect(body).toHaveProperty("meta");
     expect(Array.isArray(body.deals)).toBe(true);
@@ -115,7 +115,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body.meta.sort_by).toBe("confidence");
   });
 
@@ -126,7 +126,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    const body = await response.json();
+    const body = (await response.json()) as any;
     expect(body).toHaveProperty("top_deals");
     expect(body).toHaveProperty("expiring_soon");
     expect(body).toHaveProperty("recently_added");
@@ -151,7 +151,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("qualityMetrics");
     } else {
       expect(response.status()).toBe(401);
@@ -167,7 +167,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("locked");
     } else {
       expect(response.status()).toBe(401);
@@ -183,7 +183,7 @@ test.describe("Protected API Endpoints", () => {
 
     if (API_KEY) {
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body).toHaveProperty("logs");
       expect(Array.isArray(body.logs)).toBe(true);
     } else {

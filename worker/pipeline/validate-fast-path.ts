@@ -14,6 +14,24 @@ import type { ValidationCacheEntry } from "../types/validation-cache";
 import { recordValidationCacheMetric } from "../lib/metrics";
 
 /**
+ * Runtime type guard for PipelineMetrics. Since `metrics` is typed as `unknown`,
+ * we validate the shape before casting, providing runtime safety beyond the
+ * TypeScript compiler's static analysis.
+ */
+function isPipelineMetrics(value: unknown): value is PipelineMetrics {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "run_id" in value &&
+    typeof (value as Record<string, unknown>).run_id === "string" &&
+    "start_time" in value &&
+    typeof (value as Record<string, unknown>).start_time === "number" &&
+    "success" in value &&
+    typeof (value as Record<string, unknown>).success === "boolean"
+  );
+}
+
+/**
  * Result of the fast-path validation phase.
  * @property valid - Whether the deal passed fast-path validation
  * @property error - Error message if validation failed
@@ -37,7 +55,7 @@ export async function validateDealFastPath(
     fingerprint: string;
     source?: string;
     traceId?: string;
-    metrics?: PipelineMetrics;
+    metrics?: unknown;
   },
 ): Promise<FastPathResult> {
   // Use STAGING_KV for validation cache as proposed, or fallback to DEALS_LOG if STAGING_KV is not ideal
@@ -64,10 +82,10 @@ export async function validateDealFastPath(
     ]);
 
   if (cachedByFingerprint?.status === "duplicate") {
-    if (input.metrics)
+    if (isPipelineMetrics(input.metrics)) {
       recordValidationCacheMetric(input.metrics, "hit_total", 1);
-    if (input.metrics)
       recordValidationCacheMetric(input.metrics, "dedup_hit_total", 1);
+    }
     return {
       hit: true,
       source: "kv:fingerprint",
@@ -79,17 +97,20 @@ export async function validateDealFastPath(
     cachedByUrl?.status === "accepted" ||
     cachedByUrl?.status === "rejected"
   ) {
-    if (input.metrics)
+    if (isPipelineMetrics(input.metrics)) {
       recordValidationCacheMetric(input.metrics, "hit_total", 1);
+    }
     return { hit: true, source: "kv:url", decision: cachedByUrl };
   }
 
-  if (input.metrics)
+  if (isPipelineMetrics(input.metrics)) {
     recordValidationCacheMetric(input.metrics, "miss_total", 1);
+  }
 
   if (indexedByFingerprint) {
-    if (input.metrics)
+    if (isPipelineMetrics(input.metrics)) {
       recordValidationCacheMetric(input.metrics, "d1_lookup_total", 1);
+    }
     const entry: ValidationCacheEntry = {
       status: indexedByFingerprint.status,
       reason: indexedByFingerprint.reason ?? undefined,
@@ -114,8 +135,9 @@ export async function validateDealFastPath(
     hit: false,
     source: "none",
     persist: async (decision) => {
-      if (input.metrics)
+      if (isPipelineMetrics(input.metrics)) {
         recordValidationCacheMetric(input.metrics, "write_total", 1);
+      }
       const entry: ValidationCacheEntry = {
         ...decision,
         fingerprint: input.fingerprint,

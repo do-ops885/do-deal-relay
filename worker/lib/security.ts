@@ -5,7 +5,6 @@
  * Implements URL validation, IP filtering, and logging of security events.
  */
 
-import { CONFIG } from "../config";
 import { logger } from "./global-logger";
 
 const SECURITY_CONSTANTS = {
@@ -15,6 +14,23 @@ const SECURITY_CONSTANTS = {
   IPV4_PARTS: 4,
   IPV4_PART_SHIFT: 8,
   IPV6_EXPANDED_PARTS: 8,
+  BLOCKED_HOSTS: [
+    "169.254.169.254",
+    "metadata.google.internal",
+    "localhost",
+    "127.0.0.1",
+    "::1",
+  ] as const,
+  BLOCKED_IP_RANGES: [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "127.0.0.0/8",
+    "169.254.0.0/16",
+    "::1/128",
+    "fc00::/7",
+    "fe80::/10",
+  ] as const,
 } as const;
 
 /**
@@ -44,7 +60,9 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     const hostname = parsed.hostname.toLowerCase();
 
     // Block explicitly blocked hosts
-    if ((CONFIG.BLOCKED_HOSTS as readonly string[]).includes(hostname)) {
+    if (
+      (SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)
+    ) {
       logger.warn(`SSRF Blocked: Prohibited host detected: ${hostname}`, {
         component: "security",
         hostname,
@@ -115,7 +133,7 @@ function isIpAddress(hostname: string): boolean {
  * Checks if an IP address belongs to a private or reserved range.
  */
 function isPrivateIP(ip: string): boolean {
-  for (const range of CONFIG.BLOCKED_IP_RANGES) {
+  for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
     if (isIpInCidr(ip, range)) {
       return true;
     }

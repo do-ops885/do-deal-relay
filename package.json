@@ -32,7 +32,10 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
+    "@types/node": "^25.8.0",
+    "discord.js": "^14.26.4",
     "protobufjs": "8.3.0",
+    "telegraf": "^4.16.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -52,8 +55,7 @@
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.3.0",
     "uuid": "14.0.0",
-    "@playwright/test": "^1.60.0",
-    "ws": "8.20.1"
+    "@playwright/test": "^1.60.0"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Deal, LogEntry } from "../../../worker/types";
-import type { PipelineMetrics } from "../../../worker/lib/metrics";
+import type { PipelineMetrics } from "../../../worker/types";
 import {
   calculateValueDistribution,
   calculateExpiringSoon,

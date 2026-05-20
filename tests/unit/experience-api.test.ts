@@ -170,7 +170,7 @@ describe("Experience API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(503);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.error).toBe("D1 database not configured");
     });
 
@@ -320,7 +320,7 @@ describe("Experience API Endpoints", () => {
       const response = await worker.fetch(request, envWithDb);
 
       expect(response.status).toBe(200);
-      const body = await response.json();
+      const body = (await response.json()) as any;
       expect(body.total_events).toBe(0);
     });
   });

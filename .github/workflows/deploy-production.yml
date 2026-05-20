@@ -68,7 +68,13 @@ jobs:
             exit 0
           fi
 
-          STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          # Prefer explicit worker host secret; fall back to account-derived subdomain
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
+          if [ -n "${WORKER_HOST}" ]; then
+            STAGING_URL="https://${WORKER_HOST}/health"
+          else
+            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          fi
           echo "Verifying staging environment is healthy..."
 
           if ! curl -sf "${STAGING_URL}"; then

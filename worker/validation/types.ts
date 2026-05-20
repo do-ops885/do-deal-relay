@@ -1,8 +1,5 @@
 import { Deal, PipelineContext } from "../types";
 
-/**
- * Result of the full validation pipeline for a batch of deals.
- */
 export interface ValidationResult {
   valid: Deal[];
   invalid: Array<{ deal: Deal; reasons: string[] }>;
@@ -16,9 +13,6 @@ export interface ValidationResult {
   };
 }
 
-/**
- * Result of a single validation gate for a specific deal.
- */
 export interface GateResult {
   passed: boolean;
   reason?: string;
