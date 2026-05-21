@@ -145,7 +145,7 @@ export async function handleRegister(
 
     const token = await createToken(
       { sub: id, role: "viewer", email: email.toLowerCase() },
-      env.JWT_SECRET || "dev-secret",
+      env.JWT_SECRET,
       "24h",
     );
 
