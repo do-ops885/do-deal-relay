@@ -115,7 +115,8 @@ export async function handleHealth(
     kvLock.connected &&
     kvSources.connected;
   const allDepsHealthy =
-    snapshot || !allKvConnected ? false : allKvConnected && d1Check.connected;
+  const allDepsHealthy =
+    snapshot || !allKvConnected ? false : d1Check.connected;
 
   const recentRuns = logs.filter((l) => l.phase === "finalize").length;
   const successfulRuns = logs.filter(
