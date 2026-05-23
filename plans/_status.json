@@ -1,0 +1,17 @@
+{
+  "nextAvailable": {
+    "plan": "001",
+    "adr": "010"
+  },
+  "registered": [
+    "ADR-002-e2e-testing-strategy.md",
+    "ADR-002-manual-entry-ux-enhancements.md",
+    "ADR-003-patch-release-v0.1.4.md",
+    "ADR-004-observability-enablement.md",
+    "ADR-005-jules-api-docs-correction.md",
+    "ADR-005-scheduled-benchmarks.md",
+    "ADR-006-root-folder-hygiene.md",
+    "ADR-008-api-authentication.md",
+    "ADR-009-merge-conflict-resolution-pr324.md"
+  ]
+}

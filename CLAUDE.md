@@ -13,4 +13,4 @@
 - **Skills**: Load via `skill <name>` (e.g., `skill agent-coordination`).
 
 ## Sub-Agents
-Available in `.opencode/agents/` and referenced in `agents-docs/agents/`.
+Available in `.claude/agents/` and referenced in `agents-docs/agents/`. Use as **context firewalls**.

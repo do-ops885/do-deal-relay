@@ -8,5 +8,5 @@
 
 ## Constraints
 - **Sub-Agents**: Use OpenCode sub-agents if complex delegation is required.
-- **Verification**: Run `./scripts/quality_gate.sh` frequently to ensure zero-regression documentation updates.
+- **Verification**: Run `./scripts/quality_gate.sh` frequently.
 - **Direct Access**: Use standard shell commands for research; reference `agents-docs/` for decision rules.
