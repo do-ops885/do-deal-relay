@@ -129,11 +129,47 @@ function isIpAddress(hostname: string): boolean {
 }
 
 /**
+ * Normalizes an IP address, converting IPv4-mapped IPv6 to standard IPv4.
+ * Handles both standard representation and hex-encoded IPv4 segments.
+ */
+function normalizeIp(ip: string): string {
+  const normalized = ip.toLowerCase();
+
+  // Check for IPv4-mapped IPv6 (e.g., ::ffff:127.0.0.1 or 0:0:0:0:0:ffff:127.0.0.1)
+  // Also handles cases where the last 32 bits are represented as hex segments (e.g., ::ffff:7f00:1)
+  const mappedMatch = normalized.match(/^(?:[0:]+:ffff:)(.+)$/);
+  if (mappedMatch?.[1]) {
+    const inner = mappedMatch[1];
+    // If it's already in dotted-decimal format
+    if (inner.includes(".")) {
+      return inner;
+    }
+    // If it's in hex format (e.g., 7f00:1)
+    if (inner.includes(":")) {
+      const parts = inner.split(":");
+      if (parts.length === 2) {
+        const high = parseInt(parts[0]!, 16);
+        const low = parseInt(parts[1]!, 16);
+        return [
+          (high >> 8) & 0xff,
+          high & 0xff,
+          (low >> 8) & 0xff,
+          low & 0xff,
+        ].join(".");
+      }
+    }
+  }
+
+  return normalized;
+}
+
+/**
  * Checks if an IP address belongs to a private or reserved range.
  */
 function isPrivateIP(ip: string): boolean {
+  const normalizedIp = normalizeIp(ip);
   for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
-    if (isIpInCidr(ip, range)) {
+    if (isIpInCidr(normalizedIp, range)) {
       return true;
     }
   }
@@ -151,18 +187,33 @@ function isIpInCidr(ip: string, cidr: string): boolean {
 
     if (!range) return false;
 
-    if (!range.includes(":") && !ip.includes(":")) {
-      const ipNum = ipToLong(ip);
-      const rangeNum = ipToLong(range);
-      const bitsNum = bitsStr ? Number(bitsStr) : 0;
+    const normalizedIp = normalizeIp(ip);
+    const normalizedRange = normalizeIp(range);
+
+    const ipIsV4 = !normalizedIp.includes(":");
+    const rangeIsV4 = !normalizedRange.includes(":");
+
+    // Both are IPv4
+    if (ipIsV4 && rangeIsV4) {
+      const ipNum = ipToLong(normalizedIp);
+      const rangeNum = ipToLong(normalizedRange);
+      const bitsNum = bitsStr ? Number(bitsStr) : 32;
       const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
       return (ipNum & mask) === (rangeNum & mask);
     }
 
-    if (range.includes(":") && ip.includes(":")) {
-      // IPv6 local/private checks
-      if (ip === "::1" || ip === "0:0:0:0:0:0:0:1" || ip === "::") return true;
-      if (/^(fc|fd|fe[89ab]|fec0)/i.test(ip)) return true;
+    // Both are IPv6
+    if (!ipIsV4 && !rangeIsV4) {
+      const ipBigInt = ipv6ToBigInt(normalizedIp);
+      const rangeBigInt = ipv6ToBigInt(normalizedRange);
+      const bitsNum = bitsStr ? Number(bitsStr) : 128;
+
+      if (bitsNum === 0) return true;
+
+      // Create mask for BigInt comparison
+      const mask =
+        (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
+      return (ipBigInt & mask) === (rangeBigInt & mask);
     }
   } catch {
     return false;
