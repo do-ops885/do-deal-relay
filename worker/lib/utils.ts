@@ -56,22 +56,23 @@ export async function fetchInBatches<T, R>(
 }
 
 /**
- * Performs async write/delete operations in batches.
- * Unlike fetchInBatches, this waits for all operations to complete
- * and returns counts of success/failure.
+ * Executes a list of asynchronous operations in concurrent batches.
+ * Unlike fetchInBatches, this tracks the number of successful and failed operations
+ * instead of returning the results of each operation.
  *
- * @template T The type of input items
- * @param items Array of items to process
- * @param operation Async function to apply to each item (e.g., delete, put)
- * @param batchSize Number of concurrent operations per batch
- * @returns Object with success and failure counts
+ * @template T - The type of items being processed.
+ * @param items - An array of items to iterate over.
+ * @param operation - An async function to apply to each item.
+ * @param batchSize - The number of operations to run concurrently in each batch. Defaults to CONFIG.KV_BATCH_SIZE.
+ * @returns A promise that resolves to an object containing the count of successful and failed operations.
  *
  * @example
- * const result = await executeInBatches<KVKey>(
- *   keys,
- *   (key) => env.DEALS_STAGING.delete(key.name)
+ * ```typescript
+ * const { success, failed } = await executeInBatches(
+ *   ['key1', 'key2'],
+ *   async (key) => await env.MY_KV.delete(key)
  * );
- * console.log(`Deleted ${result.success} keys, ${result.failed} failures`);
+ * ```
  */
 export async function executeInBatches<T>(
   items: T[],

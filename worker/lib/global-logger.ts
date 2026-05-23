@@ -18,32 +18,46 @@ interface LogEntry {
   context?: LogContext;
 }
 
+const LOGGER_CONSTANTS = {
+  PRIORITY_DEBUG: 0,
+  PRIORITY_INFO: 1,
+  PRIORITY_WARN: 2,
+  PRIORITY_ERROR: 3,
+} as const;
+
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
+  debug: LOGGER_CONSTANTS.PRIORITY_DEBUG,
+  info: LOGGER_CONSTANTS.PRIORITY_INFO,
+  warn: LOGGER_CONSTANTS.PRIORITY_WARN,
+  error: LOGGER_CONSTANTS.PRIORITY_ERROR,
 };
 
 let minLevel: LogLevel = "info";
 let globalContext: LogContext = {};
 
 /**
- * Set minimum log level
+ * Sets the minimum log level for the global logger.
+ * Only messages with a priority equal to or higher than the specified level will be logged.
+ *
+ * @param level - The minimum log level to set ("debug", "info", "warn", "error").
  */
 export function setLogLevel(level: LogLevel): void {
   minLevel = level;
 }
 
 /**
- * Set global context attached to all log entries
+ * Sets the global context that will be attached to all subsequent log entries.
+ * This context is merged with the existing global context and any local context provided during logging.
+ *
+ * @param context - The context object containing additional metadata to include in logs.
  */
 export function setLogContext(context: LogContext): void {
   globalContext = { ...globalContext, ...context };
 }
 
 /**
- * Clear global context
+ * Clears all previously set global context.
+ * Subsequent logs will only contain local context if provided.
  */
 export function clearLogContext(): void {
   globalContext = {};
