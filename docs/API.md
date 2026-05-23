@@ -20,7 +20,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -41,7 +41,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": true,
   "status": "healthy",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "checks": {
     "kv_connection": true,
     "last_run_success": true,
@@ -74,7 +74,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": false,
   "status": "degraded",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "checks": {
     "kv_connection": false,
     "last_run_success": false,
@@ -93,6 +93,61 @@ Liveness probe - returns 200 if service is running. Minimal check used by orches
 {
   "alive": true,
   "timestamp": "2026-04-04T12:00:00Z"
+}
+```
+
+---
+
+### GET /deals/similar
+
+Get deals similar to a specific deal code or domain.
+
+**Query Parameters:**
+
+- `code` (string): Referral code to find similar deals for
+- `domain` (string): Domain to find deals for (if code not found)
+- `limit` (number): Max similar deals to return (default: 5)
+
+**Response:**
+
+```json
+{
+  "reference": {
+    "id": "sha256-hash",
+    "title": "Trading212",
+    "code": "ABC123",
+    "domain": "trading212.com"
+  },
+  "similar": [...],
+  "total": 3
+}
+```
+
+---
+
+### GET /api/deals/:id/explain
+
+Get an explanation of why a deal was ranked or scored as it was.
+
+**Parameters:**
+
+- `id` (string): The deal ID (sha256 hash)
+
+**Response:**
+
+```json
+{
+  "deal_id": "sha256-hash",
+  "score": 85.5,
+  "factors": [
+    {
+      "name": "trust",
+      "value": 0.9,
+      "impact": "positive",
+      "description": "High source trust score"
+    }
+  ],
+  "summary": "This deal is highly rated due to high source trust and recent discovery."
 }
 ```
 
@@ -261,7 +316,7 @@ Get full snapshot with metadata.
 
 ```json
 {
-  "version": "0.1.3",
+  "version": "0.1.6",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",
@@ -307,92 +362,6 @@ validation_gate_rejection_ratio{gate="source_trust"} 0.1000
 
 ---
 
-### POST /api/research
-
-Research referral codes for a specific domain or query.
-
-**Request Body:**
-
-```json
-{
-  "query": "trading212 referral code",
-  "domain": "trading212.com",
-  "depth": "thorough",
-  "sources": ["all"],
-  "max_results": 20,
-  "options": {
-    "use_real_fetching": false
-  }
-}
-```
-
-**Parameters:**
-
-- `query` (string, required): Search query for referral codes
-- `domain` (string, optional): Target domain to search for
-- `depth` (string, optional): Research depth - 'quick', 'thorough', or 'deep' (default: 'quick')
-- `sources` (array, optional): Sources to search - 'all' or specific sources like ['producthunt', 'reddit', 'hackernews', 'github']
-- `max_results` (number, optional): Maximum results to return (default: 10, max: 100)
-- `options.use_real_fetching` (boolean, optional): Enable real web fetching (default: false, uses simulation)
-
-**Response:**
-
-```json
-{
-  "query": "trading212 referral code",
-  "domain": "trading212.com",
-  "discovered_codes": [
-    {
-      "code": "ABC123XYZ",
-      "url": "https://trading212.com/invite/ABC123XYZ",
-      "source": "known_pattern:trading212.com",
-      "discovered_at": "2024-03-31T12:00:00Z",
-      "reward_summary": "Free share worth up to £100",
-      "confidence": 0.85
-    }
-  ],
-  "research_metadata": {
-    "sources_checked": ["known_pattern:trading212.com", "producthunt", "reddit"],
-    "search_queries": ["trading212 referral", "trading212 invite"],
-    "research_duration_ms": 1250,
-    "agent_id": "research-agent-1711886400000",
-    "used_real_fetching": false
-  }
-}
-```
-
-**Research Sources:**
-
-When `sources` is set to `["all"]` or specific sources, the system searches:
-
-- `known_pattern`: Known referral programs with defined patterns (e.g., trading212.com)
-- `producthunt`: Product Hunt for product referral programs
-- `reddit`: Reddit discussions about referral codes
-- `hackernews`: Hacker News referral discussions
-- `github`: GitHub repositories with referral documentation
-- `company_site`: Direct company website scraping
-
-**Real vs Simulated Fetching:**
-
-By default (`use_real_fetching: false`), the system uses simulation to generate realistic referral codes based on known patterns. When enabled:
-
-- The system fetches real web content from the specified sources
-- Extracts referral codes using pattern matching
-- Returns actual discovered codes with confidence scores
-- Falls back to simulation if fetching fails
-
-**Rate Limiting:**
-
-Research requests are rate-limited per source (10 requests per minute per source). When rate limited, the system returns a 429 status with retry information.
-
-**Status Codes:**
-
-- 200: Research completed successfully
-- 400: Invalid request parameters
-- 429: Rate limited - retry after specified time
-- 500: Research failed
-
----
 
 ### POST /api/discover
 
@@ -722,6 +691,38 @@ Deactivate a referral code.
 
 ---
 
+### POST /api/referrals/:code/reactivate
+
+Reactivate a previously deactivated referral code.
+
+**Parameters:**
+
+- `code` (string): The referral code to reactivate
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Referral reactivated successfully",
+  "referral": {
+    "id": "abc123-sha256",
+    "code": "GcCOCxbo",
+    "url": "https://trading212.com/invite/GcCOCxbo",
+    "domain": "trading212.com",
+    "status": "active"
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Reactivated successfully
+- 404: Referral not found
+- 409: Referral is already active
+
+---
+
 ### POST /api/research
 
 Research referral codes for a specific domain or query.
@@ -787,6 +788,134 @@ When `sources` is set to `["all"]` or specific sources, the system searches:
 - 400: Invalid request
 - 415: Content-Type must be application/json
 - 500: Research failed
+
+---
+
+## Validation API
+
+Endpoints for validating referral URLs, codes, and retrieving validation system statistics.
+
+### POST /api/validate/url
+
+Validate a single referral URL for accessibility, redirects, and security (SSRF).
+
+**Request Body:**
+
+```json
+{
+  "url": "https://example.com/invite/CODE123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "url": "https://example.com/invite/CODE123",
+  "valid": true,
+  "status": 200,
+  "content_type": "text/html",
+  "redirects": [],
+  "performance": {
+    "duration_ms": 250
+  }
+}
+```
+
+---
+
+### POST /api/validate/batch
+
+Validate multiple URLs in a single request.
+
+**Request Body:**
+
+```json
+{
+  "urls": ["https://site1.com/ref1", "https://site2.com/ref2"],
+  "checkRewards": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "summary": {
+    "total": 2,
+    "valid": 2,
+    "invalid": 0,
+    "errors": 0
+  },
+  "urls": [...],
+  "errors": []
+}
+```
+
+---
+
+### GET /api/validation/stats
+
+Get comprehensive validation system statistics and deal health metrics.
+
+**Response:**
+
+```json
+{
+  "validation": {
+    "timestamp": "2024-03-31T12:00:00Z",
+    "total": 150,
+    "valid": 142,
+    "invalid": 8,
+    "errors": 0
+  },
+  "deals": {
+    "total": 150,
+    "active": 120,
+    "expired": 5,
+    "expiring_7d": 12
+  },
+  "providers": {
+    "supported": ["trading212.com", "revolut.com", "wise.com", ...]
+  }
+}
+```
+
+---
+
+### POST /api/deals/:code/validate
+
+Perform a full validation check on an existing deal by its code.
+
+**Parameters:**
+
+- `code` (string): The referral code to validate
+
+**Request Body (Optional):**
+
+```json
+{
+  "checkUrl": true,
+  "checkCode": true,
+  "checkRewards": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "deal": {
+    "id": "sha256-hash",
+    "code": "ABC123",
+    "status": "active"
+  },
+  "valid": true,
+  "issues": [],
+  "url": { "valid": true, "status": 200 },
+  "code": { "valid": true, "details": "Pattern matches" }
+}
+```
 
 ---
 
@@ -2783,5 +2912,80 @@ Trigger manual experience aggregation across all deals.
 - `503` - D1 database not configured
 
 **Note:** Aggregation also runs automatically daily at 9am via cron job.
+
+---
+
+## Admin API
+
+Administrative endpoints for system management and API key control. Requires admin-level API key.
+
+### POST /api/admin/keys
+
+Create a new API key for a user or agent.
+
+**Request Body:**
+
+```json
+{
+  "userId": "agent-007",
+  "role": "user",
+  "expiresAt": "2025-12-31T23:59:59Z",
+  "rateLimit": {
+    "requestsPerMinute": 60,
+    "requestsPerHour": 1000
+  }
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "apiKey": "ddr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "message": "API key created successfully. Store this key securely..."
+}
+```
+
+---
+
+### GET /api/admin/keys
+
+List all active API keys (sanitized, keys are not shown).
+
+**Response:**
+
+```json
+{
+  "keys": [
+    {
+      "hash": "sha256-hash-of-key",
+      "userId": "agent-007",
+      "role": "user",
+      "createdAt": "2024-03-31T12:00:00Z",
+      "lastUsed": "2024-03-31T12:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /api/admin/keys/:hash
+
+Revoke an API key by its hash.
+
+**Parameters:**
+
+- `hash` (string): The SHA-256 hash of the API key to revoke
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "API key revoked successfully"
+}
+```
 
 ---
