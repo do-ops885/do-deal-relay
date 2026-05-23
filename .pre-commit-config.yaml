@@ -27,6 +27,20 @@ repos:
         additional_dependencies:
           - prettier@3.2.5
 
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: ['--severity=warning']
+        files: \.(sh|bash)$
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        files: \.md$
+        exclude: ^(plans/|reports/|memory/|node_modules/)
+
   - repo: local
     hooks:
       - id: tsc

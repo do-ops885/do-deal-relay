@@ -113,3 +113,53 @@ As new lessons are discovered, add them to this table. Keep the table sorted by 
 - **Architectural Consistency**: Preserve existing state-machine and modular gate architecture.
 - **Incremental Changes**: Make small, verified changes.
 - **Verification**: Always use read-only tools to confirm the effect of your changes.
+
+## New Skills (Added 2026)
+
+The following skills have been added to enhance the development workflow:
+
+### github-pr-sentinel
+Automated PR quality gate that validates:
+- All 13 quality gates pass
+- Git status is clean
+- Branch naming conventions
+- Merge base currency with origin/main
+
+Usage: `.agents/skills/github-pr-sentinel/scripts/validate-pr.sh`
+
+### atomic-commit
+Enforces atomic, logically isolated commits with conventional commit formatting.
+See `.agents/skills/atomic-commit/skill.md` for detailed guidelines.
+
+### learn
+Captures lessons learned from completed tasks for continuous improvement.
+
+Usage: `.agents/skills/learn/scripts/capture-lesson.sh "<title>"`
+
+### memory-context
+Long-term knowledge retention with categorized memory banks:
+- Architecture decisions
+- Domain knowledge
+- Reusable patterns
+- Operational procedures
+- Tool configurations
+
+Setup: `.agents/skills/memory-context/scripts/init-memory.sh`
+Add entry: `.agents/skills/memory-context/scripts/add-memory.sh <category> <title>`
+Search: `grep -ril "<term>" memory/`
+
+## Pre-commit Enhancements
+
+The pre-commit configuration now includes:
+- **shellcheck**: Validates shell scripts (--severity=warning)
+- **markdownlint**: Lints Markdown files (excludes plans/, reports/, memory/)
+
+Run `pre-commit install` to enable these hooks.
+
+## GitHub Actions Security
+
+All GitHub Actions must be pinned to full 40-character SHAs for security.
+
+Validate: `./scripts/validate-github-actions-shas.sh`
+Auto-pin: `./scripts/pin-actions-to-sha.py [--dry-run]`
+
