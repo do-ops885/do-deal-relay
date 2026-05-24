@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/cloudflare";
 import { executePipeline } from "./state-machine";
 import { notify } from "./notify";
 import { setGitHubToken, initGitHubCircuitBreaker } from "./lib/github/index";
@@ -95,7 +96,7 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 // Main Worker Entry Point
 // ============================================================================
 
-export default {
+const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
@@ -522,6 +523,9 @@ export default {
         });
       }
     } catch (error) {
+      if (env.SENTRY_DSN) {
+        Sentry.captureException(error);
+      }
       console.error("Scheduled execution error:", error);
       await notify(env, {
         type: "system_error",
@@ -535,4 +539,22 @@ export default {
       });
     }
   },
+};
+
+const wrapped = Sentry.withSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN,
+    environment: env.ENVIRONMENT,
+  }),
+  worker,
+);
+
+export default {
+  ...wrapped,
+  fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    return wrapped.fetch(request, env, ctx || { waitUntil: () => {}, passThroughOnException: () => {} });
+  },
+  scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    return wrapped.scheduled(event, env, ctx || { waitUntil: () => {}, passThroughOnException: () => {} });
+  }
 };

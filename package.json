@@ -32,6 +32,7 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
+    "@sentry/cloudflare": "^10.53.1",
     "@types/node": "^25.9.1",
     "discord.js": "^14.26.4",
     "protobufjs": "8.3.0",

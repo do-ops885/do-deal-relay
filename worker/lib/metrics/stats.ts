@@ -207,6 +207,19 @@ export function formatMetricsForPrometheus(
     `deals_pipeline_duration_ms ${stats.avg_duration_ms}`,
   ];
 
+  if (metrics.length > 0) {
+    const lastSuccessfulRun = metrics.find((m) => m.success);
+    if (lastSuccessfulRun && lastSuccessfulRun.end_time) {
+      lines.push(
+        `# HELP deals_pipeline_last_success_timestamp_seconds Timestamp of the last successful pipeline run`,
+      );
+      lines.push(`# TYPE deals_pipeline_last_success_timestamp_seconds gauge`);
+      lines.push(
+        `deals_pipeline_last_success_timestamp_seconds ${Math.floor(lastSuccessfulRun.end_time / 1000)}`,
+      );
+    }
+  }
+
   // Add detailed phase timings
   if (metrics.length > 0) {
     const detailed = getDetailedPhaseTimingStats(metrics);

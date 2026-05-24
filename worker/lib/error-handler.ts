@@ -2,6 +2,7 @@
 // Global Error Handler
 // ============================================================================
 
+import * as Sentry from "@sentry/cloudflare";
 import { logger } from "./global-logger";
 import { PipelineError } from "../types";
 import type { ErrorClass, PipelinePhase } from "../types";
@@ -60,6 +61,18 @@ export function handleError(
     error,
     (context?.phase as PipelinePhase) || "init",
   );
+
+  // Capture in Sentry if integrated
+  Sentry.captureException(classified.originalError, {
+    extra: {
+      component: context?.component || "unknown",
+      error_class: classified.errorClass,
+      phase: classified.phase,
+      retryable: classified.retryable,
+      run_id: context?.run_id,
+      ...context,
+    },
+  });
 
   logger.error(classified.message, {
     component: context?.component || "unknown",

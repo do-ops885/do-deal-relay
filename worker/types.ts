@@ -330,6 +330,7 @@ export interface Env {
   EMAIL_WEBHOOK_SECRET?: string;
   WEBHOOK_SECRET: string;
   API_ENCRYPTION_KEY: string;
+  SENTRY_DSN?: string;
   RESEARCH_USE_REAL_FETCHING?: string;
   _validated?: boolean;
   ALLOWED_ORIGINS?: string;
@@ -349,6 +350,7 @@ export interface HealthStatus {
   timestamp: string;
   checks: {
     kv_connection: boolean;
+    d1_connection?: boolean;
     last_run_success: boolean;
     snapshot_valid: boolean;
   };
