@@ -44,6 +44,8 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
     DEALS_DB: "DEALS_DB" in overrides ? overrides.DEALS_DB : defaultDb,
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",

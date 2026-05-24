@@ -25,6 +25,8 @@ describe("Worker Initialization", () => {
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
     DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
