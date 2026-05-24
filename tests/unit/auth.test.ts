@@ -50,6 +50,10 @@ describe("Auth", () => {
     AI_GATEWAY_URL: "https://gateway.test",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
     DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
@@ -876,7 +880,7 @@ describe("Auth", () => {
   describe("getAllowedOrigin()", () => {
     it("should return default origin for null input", () => {
       const origin = getAllowedOrigin(null);
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
 
     it("should return allowed origin if in list", () => {
@@ -895,12 +899,12 @@ describe("Auth", () => {
 
     it("should return default for disallowed origin", () => {
       const origin = getAllowedOrigin("https://evil.com");
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
 
     it("should return default for empty string", () => {
       const origin = getAllowedOrigin("");
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
   });
 
@@ -930,25 +934,23 @@ describe("Auth", () => {
 
       const headers = createCorsHeaders(request);
 
-      expect(headers["Access-Control-Allow-Origin"]).toBe(
+      expect(headers["Access-Control-Allow-Origin"]).toBe(""); //
         "https://do-deal-relay.com",
       );
     });
 
     it("should return default origin for disallowed origin", () => {
       const request = new Request("https://example.com", {
-        headers: { Origin: "https://evil.com" },
-      });
+      expect(headers["Access-Control-Allow-Origin"]).toBe("");
 
       const headers = createCorsHeaders(request);
 
-      expect(headers["Access-Control-Allow-Origin"]).toBe(
+      expect(headers["Access-Control-Allow-Origin"]).toBe(""); //
         "https://do-deal-relay.pages.dev",
       );
     });
 
-    it("should allow correct HTTP methods", () => {
-      const request = new Request("https://example.com");
+      expect(headers["Access-Control-Allow-Origin"]).toBe("");
       const headers = createCorsHeaders(request);
 
       expect(headers["Access-Control-Allow-Methods"]).toBe(

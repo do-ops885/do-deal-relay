@@ -52,19 +52,17 @@ export async function handleEmailIncoming(
   env: Env,
 ): Promise<Response> {
   try {
-    // Verify webhook signature if configured (CRITICAL SECURITY FIX)
-    if (env.EMAIL_WEBHOOK_SECRET) {
-      const verification = await verifyEmailWebhook(
-        request,
-        env.EMAIL_WEBHOOK_SECRET,
-      );
-      if (!verification.valid) {
-        logger.warn("Email webhook signature verification failed", {
-          component: "email-api",
-          error: verification.error,
-        });
-        return unauthorizedResponse("Invalid webhook signature", request, env);
-      }
+    // Verify webhook signature (CRITICAL SECURITY FIX - Mandatory)
+    const verification = await verifyEmailWebhook(
+      request,
+      env.EMAIL_WEBHOOK_SECRET,
+    );
+    if (!verification.valid) {
+      logger.warn("Email webhook signature verification failed", {
+        component: "email-api",
+        error: verification.error,
+      });
+      return unauthorizedResponse("Invalid webhook signature", request, env);
     }
 
     // Parse email from request body

@@ -27,6 +27,14 @@ const SECURITY_CONSTANTS = {
     "192.168.0.0/16",
     "127.0.0.0/8",
     "169.254.0.0/16",
+    "100.64.0.0/10",
+    "192.0.0.0/24",
+    "192.0.2.0/24",
+    "198.18.0.0/15",
+    "198.51.100.0/24",
+    "203.0.113.0/24",
+    "224.0.0.0/4",
+    "240.0.0.0/4",
     "::1/128",
     "fc00::/7",
     "fe80::/10",
@@ -286,5 +294,55 @@ async function resolveHostname(hostname: string): Promise<string[]> {
       },
     );
     return [];
+  }
+}
+
+/**
+ * Validates a referral URL to prevent open redirects.
+ * Ensures the URL uses HTTPS and its hostname matches the intended domain.
+ */
+export function validateReferralUrl(url: string, domain: string): boolean {
+  try {
+    const parsed = new URL(url);
+
+    // 1. Enforce HTTPS
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    // 2. Domain matching (normalized)
+    const urlHostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    const targetDomain = domain.toLowerCase().replace(/^www\./, "");
+
+    if (urlHostname !== targetDomain) {
+      return false;
+    }
+
+    // 3. Block common redirect bypasses in search params
+    const suspiciousParams = ["redirect", "url", "next", "return", "callback"];
+    for (const param of suspiciousParams) {
+      if (parsed.searchParams.has(param)) {
+        const val = parsed.searchParams.get(param);
+        if (val && (val.includes("://") || val.startsWith("//"))) {
+          // If it looks like a full URL, ensure it's on the same domain
+          try {
+            const nestedUrl = new URL(val);
+            const nestedHostname = nestedUrl.hostname
+              .toLowerCase()
+              .replace(/^www\./, "");
+            if (nestedHostname !== targetDomain) {
+              return false;
+            }
+          } catch {
+            // If it's not a valid URL but contains protocol markers, block it
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  } catch {
+    return false;
   }
 }
