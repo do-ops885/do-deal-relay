@@ -53,11 +53,6 @@ describe("Research API Integration", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      EMAIL_WEBHOOK_SECRET: "test-email-secret",
       DEALS_DB: {} as any,
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;

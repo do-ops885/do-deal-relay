@@ -53,6 +53,10 @@ export async function handleEmailIncoming(
 ): Promise<Response> {
   try {
     // Verify webhook signature (CRITICAL SECURITY FIX - Mandatory)
+    if (!env.EMAIL_WEBHOOK_SECRET) {
+      throw new Error("EMAIL_WEBHOOK_SECRET is not configured");
+    }
+
     const verification = await verifyEmailWebhook(
       request,
       env.EMAIL_WEBHOOK_SECRET,
