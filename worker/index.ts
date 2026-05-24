@@ -334,7 +334,11 @@ export default {
 
       // Webhook routes
       const webhookPath = path.startsWith("/api") ? path.slice(4) : path;
-      const webhookResponse = await handleWebhookRoutes(request, env, webhookPath);
+      const webhookResponse = await handleWebhookRoutes(
+        request,
+        env,
+        webhookPath,
+      );
       if (webhookResponse) return webhookResponse;
 
       // Experience Feedback API

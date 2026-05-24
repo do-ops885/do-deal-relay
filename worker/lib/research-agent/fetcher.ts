@@ -857,13 +857,22 @@ export function extractReferralsFromContent(
   if (source.selectors && content.includes("<")) {
     try {
       const $ = cheerio.load(content);
-      const { container, code: codeSelector, reward: rewardSelector, url: urlSelector } = source.selectors;
+      const {
+        container,
+        code: codeSelector,
+        reward: rewardSelector,
+        url: urlSelector,
+      } = source.selectors;
 
       $(container).each((_, el) => {
         const code = $(el).find(codeSelector).text().trim();
         if (code && code.length >= 4) {
-          const reward = rewardSelector ? $(el).find(rewardSelector).text().trim() : undefined;
-          let url = urlSelector ? $(el).find(urlSelector).attr("href") : undefined;
+          const reward = rewardSelector
+            ? $(el).find(rewardSelector).text().trim()
+            : undefined;
+          let url = urlSelector
+            ? $(el).find(urlSelector).attr("href")
+            : undefined;
 
           if (url && !url.startsWith("http")) {
             try {
