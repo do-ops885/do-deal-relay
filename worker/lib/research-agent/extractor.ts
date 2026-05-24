@@ -3,6 +3,9 @@ import {
   type ExtractSelectorSet,
 } from "../../config";
 
+import { logger } from "../global-logger";
+
+
 export interface ExtractionConfig {
   selectors: string[];
   attributes?: string[];
@@ -247,4 +250,3 @@ export function extractByConfig(
   return result;
 }
 
-import { logger } from "../global-logger";
