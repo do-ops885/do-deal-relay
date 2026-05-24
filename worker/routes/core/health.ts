@@ -58,7 +58,7 @@ export async function handleHealth(
     getPipelineStatus(env),
     getRecentLogs(env, 100),
     checkD1Connection(env.DEALS_DB),
-    checkKVAccess(env.DEALS_PROD, env),
+    checkKVAccess(env.DEALS_PROD as any, env),
   ]);
 
   const snapshot = results[0].status === "fulfilled" ? results[0].value : null;
@@ -80,7 +80,11 @@ export async function handleHealth(
   const healthy = !!(d1Healthy && kvHealthy && snapshot);
 
   if (!healthy && env.ENVIRONMENT === "test") {
-    console.error("Health check failed:", { d1Healthy, kvHealthy, hasSnapshot: !!snapshot });
+    console.error("Health check failed:", {
+      d1Healthy,
+      kvHealthy,
+      hasSnapshot: !!snapshot,
+    });
   }
 
   const health: HealthStatus = {

@@ -96,7 +96,7 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 // Main Worker Entry Point
 // ============================================================================
 
-const worker = {
+const worker: ExportedHandler<Env> = {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
@@ -410,7 +410,7 @@ const worker = {
     }
   },
 
-  async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
+  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     // Validate configuration at startup to fail fast on misconfiguration
     try {
       validateConfig(env);
@@ -425,7 +425,7 @@ const worker = {
       return;
     }
 
-    const cron = event.cron;
+    const cron = controller.cron;
     const timestamp = new Date().toISOString();
 
     logger.info(`Scheduled event triggered: ${cron}`, {
@@ -550,11 +550,26 @@ const wrapped = Sentry.withSentry(
 );
 
 export default {
-  ...wrapped,
-  fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return wrapped.fetch(request, env, ctx || { waitUntil: () => {}, passThroughOnException: () => {} });
+  fetch(
+    request: Request,
+    env: Env,
+    ctx?: ExecutionContext,
+  ): Promise<Response> | Response {
+    return (wrapped as any).fetch(
+      request,
+      env,
+      ctx || { waitUntil: () => {}, passThroughOnException: () => {} },
+    );
   },
-  scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    return wrapped.scheduled(event, env, ctx || { waitUntil: () => {}, passThroughOnException: () => {} });
-  }
+  scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx?: ExecutionContext,
+  ): Promise<void> | void {
+    return (wrapped as any).scheduled(
+      controller,
+      env,
+      ctx || { waitUntil: () => {}, passThroughOnException: () => {} },
+    );
+  },
 };
