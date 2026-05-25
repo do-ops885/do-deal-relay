@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.9",
-    "@cloudflare/workers-types": "^4.20260524.1",
+    "@cloudflare/workers-types": "^4.20260525.1",
     "@playwright/test": "^1.60.0",
     "@types/js-yaml": "^4.0.9",
     "@vitest/coverage-v8": "^4.1.7",
