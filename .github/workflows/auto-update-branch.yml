@@ -2,16 +2,16 @@
 name: Auto Update & Merge PRs
 
 on:
-  pull_request_target:          # ← works for Dependabot + regular PRs
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]            # ← also triggers when main gets new commits
+    branches: [main]
 
-permissions: {}                 # deny all by default
+permissions: {}
 
 jobs:
 
-  # ── Job 1: Update any outdated branch when main changes ──────────────────
+  # ── Job 1: Update all open branches when main changes ────────────────────
   update-all-branches:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -19,7 +19,8 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/github-script@v7
+      - name: Update outdated PR branches
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -42,7 +43,7 @@ jobs:
               }
             }
 
-  # ── Job 2: Auto-merge Dependabot PRs by semver level ─────────────────────
+  # ── Job 2: Auto-merge Dependabot PRs ─────────────────────────────────────
   dependabot-automerge:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -52,22 +53,20 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2     # ← official action, latest
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7  # v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge patch updates (safe)
+      - name: Auto-merge patch updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge minor updates (optional)
+      - name: Auto-merge minor updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Major updates → left for manual review (no step = no auto-merge)
