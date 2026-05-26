@@ -2,6 +2,7 @@
  * MCP Route Handler - Resources
  *
  * Handles resources/list, resources/templates/list, and resources/read JSON-RPC methods.
+ * Supports cursor-based pagination for resource listing.
  */
 
 import type { Env } from "../../types";
@@ -16,18 +17,26 @@ import {
   getResourceTemplates,
   readResource,
 } from "../../lib/mcp/resources";
-import { paginate } from "../../lib/mcp/utils";
+import { paginateList, DEFAULT_PAGE_SIZE } from "../../lib/mcp/pagination";
 
 /**
- * Handle resources/list request with pagination support
+ * Handle resources/list request with cursor-based pagination
  */
 export async function handleResourcesList(params?: {
   cursor?: string;
+  limit?: number;
 }): Promise<ResourcesListResult> {
   const resources = getResources();
 
-  const PAGE_SIZE = 5;
-  const { items, nextCursor } = paginate(resources, params?.cursor, PAGE_SIZE);
+  const limit = params?.limit ?? DEFAULT_PAGE_SIZE;
+  const pageSize = Math.min(Math.max(1, limit), 100);
+
+  const { items, nextCursor } = paginateList(
+    resources,
+    params?.cursor,
+    pageSize,
+    (item) => item.uri,
+  );
 
   return { resources: items, nextCursor };
 }
