@@ -538,7 +538,7 @@ export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
   depth: WebResearchRequest["depth"] = "thorough",
-  useRealFetching = false,
+  useRealFetching?: boolean,
 ): Promise<ReferralResearchResult> {
   const request: WebResearchRequest = {
     query: `${domain} referral code invite program`,
