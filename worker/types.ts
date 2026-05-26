@@ -333,63 +333,10 @@ export interface Env {
   RESEARCH_USE_REAL_FETCHING?: string;
   _validated?: boolean;
   ALLOWED_ORIGINS?: string;
-  JWT_SECRET?: string;
-  JWT_REFRESH_SECRET?: string;
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;
   ENABLE_VALIDATION_CACHE?: string;
-}
-
-// ============================================================================
-// Auth System Types
-// ============================================================================
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  password_hash: string;
-  role: "admin" | "user" | "viewer" | "api_consumer";
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserPublic {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateUserInput {
-  email: string;
-  name: string;
-  password: string;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface UpdateUserInput {
-  name?: string;
-  email?: string;
-}
-
-export interface AuditLogEntry {
-  id: string;
-  user_id: string | null;
-  action: string;
-  resource: string;
-  ip: string | null;
-  user_agent: string | null;
-  created_at: string;
 }
 
 // ============================================================================
@@ -400,12 +347,10 @@ export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
   version: string;
   timestamp: string;
-  uptime_seconds?: number;
   checks: {
     kv_connection: boolean;
     last_run_success: boolean;
     snapshot_valid: boolean;
-    d1_connected?: boolean;
   };
   components?: {
     kv_stores: {
@@ -414,11 +359,6 @@ export interface HealthStatus {
       deals_log: boolean;
       deals_lock: boolean;
       deals_sources: boolean;
-    };
-    d1_database?: {
-      connected: boolean;
-      latency_ms: number;
-      error?: string;
     };
     pipeline: {
       last_run: string;

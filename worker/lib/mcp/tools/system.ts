@@ -20,11 +20,6 @@ import {
   GetSimilarDealsInputSchema,
 } from "../handlers/discovery";
 import { handleGetLogs, GetLogsInputSchema } from "../handlers/logging";
-import {
-  handleCheckProgress,
-  handleCancelOperation,
-  handleListOperations,
-} from "../handlers/progress";
 
 export const systemTools: Tool[] = [
   {
@@ -170,84 +165,6 @@ export const systemTools: Tool[] = [
       openWorldHint: false,
     },
   },
-  {
-    name: "check_progress",
-    title: "Check Operation Progress",
-    description:
-      "Check the progress of a long-running MCP operation by operationId. If no operationId is provided, lists all active operations.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        operationId: { type: "string" },
-      },
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        operationId: { type: "string" },
-        status: { type: "string" },
-        progress: { type: "number" },
-        total: { type: "number" },
-        message: { type: "string" },
-      },
-    },
-    annotations: {
-      title: "Check Progress",
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: false,
-    },
-  },
-  {
-    name: "cancel_operation",
-    title: "Cancel Operation",
-    description:
-      "Cancel a running MCP operation by operationId. Only running operations can be cancelled.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        operationId: { type: "string" },
-      },
-      required: ["operationId"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        success: { type: "boolean" },
-        message: { type: "string" },
-        operationId: { type: "string" },
-      },
-    },
-    annotations: {
-      title: "Cancel Operation",
-      destructiveHint: true,
-      idempotentHint: false,
-      openWorldHint: false,
-    },
-  },
-  {
-    name: "list_operations",
-    title: "List Active Operations",
-    description:
-      "List all currently active MCP operations with their status and progress.",
-    inputSchema: {
-      type: "object",
-      properties: {},
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        operations: { type: "array" },
-        count: { type: "number" },
-      },
-    },
-    annotations: {
-      title: "List Operations",
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: false,
-    },
-  },
 ];
 
 export const systemToolHandlers: Record<string, ToolHandler> = {
@@ -258,7 +175,4 @@ export const systemToolHandlers: Record<string, ToolHandler> = {
     handleGetSimilarDeals(GetSimilarDealsInputSchema.parse(args), env),
   get_deal_highlights: (args, env) => handleGetDealHighlights(args, env),
   get_logs: (args, env) => handleGetLogs(GetLogsInputSchema.parse(args), env),
-  check_progress: (args, env) => handleCheckProgress(args, env),
-  cancel_operation: (args, env) => handleCancelOperation(args, env),
-  list_operations: (args, env) => handleListOperations(args, env),
 };

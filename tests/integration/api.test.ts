@@ -110,7 +110,7 @@ describe("API Endpoints", () => {
       DEALS_DB: {
         prepare: vi.fn().mockReturnValue({
           bind: vi.fn().mockReturnThis(),
-          first: vi.fn().mockResolvedValue({ test: 1 }),
+          first: vi.fn(),
           run: vi.fn().mockResolvedValue({ success: true }),
           all: vi.fn().mockResolvedValue({ results: [] }),
         }),

@@ -93,10 +93,7 @@ export type MCPMethod =
   | "notifications/tools/list_changed"
   | "notifications/resources/updated"
   | "notifications/resources/list_changed"
-  | "notifications/prompts/list_changed"
-  | "check_progress"
-  | "cancel_operation"
-  | "list_operations";
+  | "notifications/prompts/list_changed";
 
 // ============================================================================
 // Content Block Types
@@ -223,10 +220,8 @@ export interface ToolsListResult {
 export interface ToolCallParams {
   name: string;
   arguments?: StringKeyObject;
-  cursor?: string;
   _meta?: {
     progressToken?: string | number;
-    stream?: boolean;
   };
 }
 
@@ -236,8 +231,6 @@ export interface ToolCallParams {
 export interface ToolCallResult {
   content: ContentBlock[];
   isError?: boolean;
-  stream?: boolean;
-  operationId?: string;
   structuredContent?: unknown;
   _meta?: {
     progress?: {
@@ -450,12 +443,8 @@ export const ToolsListParamsSchema = z.object({
 export const ToolCallParamsSchema = z.object({
   name: z.string(),
   arguments: z.record(z.unknown()).optional(),
-  cursor: z.string().optional(),
   _meta: z
-    .object({
-      progressToken: z.union([z.string(), z.number()]).optional(),
-      stream: z.boolean().optional(),
-    })
+    .object({ progressToken: z.union([z.string(), z.number()]).optional() })
     .optional(),
 });
 
