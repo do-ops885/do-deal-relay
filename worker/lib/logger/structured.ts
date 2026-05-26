@@ -6,7 +6,7 @@ import {
   TRACE_INDEX_PREFIX,
 } from "./types";
 
-class StructuredLogger implements Logger {
+export class StructuredLogger implements Logger {
   private env: Env;
   private runId: string;
   private traceId: string;
