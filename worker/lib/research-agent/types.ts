@@ -13,6 +13,12 @@ export interface ResearchSource {
     reward: RegExp[];
     url: RegExp[];
   };
+  selectors?: {
+    container: string;
+    code: string;
+    reward?: string;
+    url?: string;
+  };
   priority: number;
   // API-specific configuration
   apiConfig?: SourceApiConfig;
@@ -294,6 +300,12 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
       ],
       url: [/https?:\/\/[^\s"]+/gi],
     },
+    selectors: {
+      container: "article",
+      code: ".referral-code",
+      reward: ".reward-info",
+      url: "a.referral-link",
+    },
     priority: 1,
     apiConfig: {
       type: "graphql",
@@ -321,6 +333,11 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
         /\$[\d,]+(?:\.\d{2})?/g,
       ],
       url: [/\/invite\/([A-Z0-9_-]+)/gi, /\/refer\/([A-Z0-9_-]+)/gi],
+    },
+    selectors: {
+      container: ".referral-section, .invite-box",
+      code: ".code, [data-testid='referral-code']",
+      reward: ".reward, .bonus-desc",
     },
     priority: 1,
     apiConfig: {
