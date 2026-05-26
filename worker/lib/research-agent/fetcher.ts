@@ -1,5 +1,6 @@
 import { ResearchSource } from "./types";
 import { CONFIG } from "../../config";
+import * as cheerio from "cheerio";
 import { validateFetchUrl } from "../security";
 import type {
   ProductHuntResponse,
@@ -852,7 +853,60 @@ export function extractReferralsFromContent(
   const referrals: ExtractedReferral[] = [];
   const now = new Date().toISOString();
 
-  // Extract codes with context
+  // Use cheerio for structured extraction if selectors are provided
+  if (source.selectors && content.includes("<")) {
+    try {
+      const $ = cheerio.load(content);
+      const {
+        container,
+        code: codeSelector,
+        reward: rewardSelector,
+        url: urlSelector,
+      } = source.selectors;
+
+      $(container).each((_, el) => {
+        const code = $(el).find(codeSelector).text().trim();
+        if (code && code.length >= 4) {
+          const reward = rewardSelector
+            ? $(el).find(rewardSelector).text().trim()
+            : undefined;
+          let url = urlSelector
+            ? $(el).find(urlSelector).attr("href")
+            : undefined;
+
+          if (url && !url.startsWith("http")) {
+            try {
+              url = new URL(url, source.baseUrl).toString();
+            } catch {
+              // Ignore invalid URLs
+            }
+          }
+
+          if (!url) {
+            url = generateReferralUrl(sourceName, code);
+          }
+
+          referrals.push({
+            code: code.toUpperCase(),
+            url,
+            source: `${sourceName}_selector`,
+            discoveredAt: now,
+            rewardSummary: reward,
+            confidence: 0.85, // Higher confidence for selector-based matches
+            context: $(el).text().trim().substring(0, 200),
+          });
+        }
+      });
+
+      if (referrals.length > 0) {
+        return referrals;
+      }
+    } catch (error) {
+      console.error(`Selector extraction failed for ${sourceName}:`, error);
+    }
+  }
+
+  // Fallback to RegEx: Extract codes with context
   const codeMatches = extractWithContext(
     content,
     source.extractionPatterns.code,
