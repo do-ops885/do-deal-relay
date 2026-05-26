@@ -1,8 +1,8 @@
 /**
  * Authentication & Authorization Middleware
  *
- * Implements API key authentication for sensitive endpoints.
- * Uses HMAC-SHA256 for secure API key validation.
+ * Implements JWT-based and API key authentication for endpoints.
+ * JWT uses Web Crypto API HMAC-SHA256; API keys use KV-backed storage.
  */
 
 import type { Env } from "../types";
@@ -18,10 +18,17 @@ export { getAllowedOrigin };
 // Types
 // ============================================================================
 
+export type AuthRole =
+  | "admin"
+  | "user"
+  | "viewer"
+  | "api_consumer"
+  | "readonly";
+
 export interface AuthResult {
   authenticated: boolean;
   userId?: string;
-  role?: "admin" | "user" | "readonly";
+  role?: AuthRole;
   error?: string;
   requestsPerMinute?: number;
   requestsPerHour?: number;
@@ -30,7 +37,7 @@ export interface AuthResult {
 export interface ApiKeyConfig {
   key: string;
   userId: string;
-  role: "admin" | "user" | "readonly";
+  role: AuthRole;
   createdAt: string;
   expiresAt?: string;
   lastUsed?: string;
@@ -223,33 +230,54 @@ export function extractApiKey(request: Request): string | null {
 /**
  * Authenticate request middleware
  *
- * Usage:
- * ```typescript
- * const auth = await authenticateRequest(request, env);
- * if (!auth.authenticated) {
- *   return unauthorizedResponse(auth.error || "Unauthorized");
- * }
- * ```
+ * Tries JWT Bearer token first, then falls back to API key verification.
+ * JWT tokens are decoded and verified using Web Crypto API HMAC-SHA256.
  */
 export async function authenticateRequest(
   request: Request,
   env: Env,
 ): Promise<AuthResult> {
-  const apiKey = extractApiKey(request);
-  if (!apiKey) {
-    return { authenticated: false, error: "Missing API key" };
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    if (!token) {
+      return { authenticated: false, error: "Missing token" };
+    }
+
+    // Try JWT verification first (if JWT_SECRET is configured)
+    if (env.JWT_SECRET) {
+      try {
+        const { verifyToken } = await import("./jwt");
+        const payload = await verifyToken(token, env.JWT_SECRET);
+        if (payload) {
+          return {
+            authenticated: true,
+            userId: payload.sub as string,
+            role: (payload.role as AuthRole) ?? "viewer",
+          };
+        }
+      } catch {
+        // JWT verification failed, fall through to API key check
+      }
+    }
+
+    // Fall back to API key verification
+    return await verifyApiKey(env, token);
   }
 
-  return await verifyApiKey(env, apiKey);
+  // Try X-API-Key header
+  const apiKeyHeader = request.headers.get("X-API-Key");
+  if (apiKeyHeader) {
+    return await verifyApiKey(env, apiKeyHeader);
+  }
+
+  return { authenticated: false, error: "Missing API key" };
 }
 
 /**
  * Require authentication middleware factory
  */
-export function requireAuth(
-  env: Env,
-  requiredRole?: "admin" | "user" | "readonly",
-) {
+export function requireAuth(env: Env, requiredRole?: AuthRole) {
   return async (request: Request): Promise<AuthResult | Response> => {
     const auth = await authenticateRequest(request, env);
 
@@ -271,7 +299,7 @@ export function requireAuth(
 export async function withAuth(
   request: Request,
   env: Env,
-  requiredRole: "admin" | "user" | "readonly" | undefined,
+  requiredRole: AuthRole | undefined,
   handler: (auth: AuthResult) => Promise<Response>,
 ): Promise<Response> {
   const middleware = requireAuth(env, requiredRole);
