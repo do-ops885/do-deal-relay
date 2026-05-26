@@ -37,7 +37,12 @@ import {
   validateResourceReadParams,
   checkMCPRateLimit,
 } from "./utils";
-import { MCPErrorCodes } from "../../lib/mcp/types";
+import { MCPErrorCodes, MCPMethod } from "../../lib/mcp/types";
+import {
+  handleCheckProgress,
+  handleCancelOperation,
+  handleListOperations,
+} from "../../lib/mcp/handlers/progress";
 
 // ============================================================================
 // Main Route Handler
@@ -156,7 +161,9 @@ export async function handleMCPRequest(
         break;
 
       case "tools/list": {
-        const toolsListParams = params as { cursor?: string } | undefined;
+        const toolsListParams = params as
+          | { cursor?: string; limit?: number }
+          | undefined;
         result = await handleToolsList(toolsListParams);
         break;
       }
@@ -176,12 +183,18 @@ export async function handleMCPRequest(
             400,
           );
         }
-        result = await handleToolCall(validatedParams, env, request);
+        const callResult = await handleToolCall(validatedParams, env, request);
+        if (callResult instanceof Response) {
+          return callResult;
+        }
+        result = callResult;
         break;
       }
 
       case "resources/list": {
-        const resourcesListParams = params as { cursor?: string } | undefined;
+        const resourcesListParams = params as
+          | { cursor?: string; limit?: number }
+          | undefined;
         result = await handleResourcesList(resourcesListParams);
         break;
       }
@@ -215,6 +228,30 @@ export async function handleMCPRequest(
           status: 202,
           headers: getMCPCorsHeaders(request, env),
         });
+
+      case "check_progress": {
+        result = await handleCheckProgress(
+          params as Record<string, unknown>,
+          env,
+        );
+        break;
+      }
+
+      case "cancel_operation": {
+        result = await handleCancelOperation(
+          params as Record<string, unknown>,
+          env,
+        );
+        break;
+      }
+
+      case "list_operations": {
+        result = await handleListOperations(
+          params as Record<string, unknown>,
+          env,
+        );
+        break;
+      }
 
       default:
         return createJSONResponse(
