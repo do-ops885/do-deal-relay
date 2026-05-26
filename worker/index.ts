@@ -196,21 +196,7 @@ export default {
         });
       }
 
-      // Referral API
-      if (path === "/api/referrals") {
-        if (request.method === "GET") {
-          return withAuth(request, env, undefined, () =>
-            handleGetReferrals(url, env),
-          );
-        }
-        if (request.method === "POST") {
-          return withAuth(request, env, "user", () =>
-            handleCreateReferral(request, env),
-          );
-        }
-      }
-
-      // Referral Action Routes (deactivate/reactivate)
+      // Referral Action Routes (deactivate/reactivate) - Moved up to avoid shadowing
       const referralActionMatch = path.match(
         /^\/api\/referrals\/([^/]+)\/(deactivate|reactivate)$/,
       );
@@ -226,6 +212,20 @@ export default {
         if (code && action === "reactivate") {
           return withAuth(request, env, "user", () =>
             handleReactivateReferral(code, env),
+          );
+        }
+      }
+
+      // Referral API
+      if (path === "/api/referrals") {
+        if (request.method === "GET") {
+          return withAuth(request, env, undefined, () =>
+            handleGetReferrals(url, env),
+          );
+        }
+        if (request.method === "POST") {
+          return withAuth(request, env, "user", () =>
+            handleCreateReferral(request, env),
           );
         }
       }
@@ -333,7 +333,12 @@ export default {
       }
 
       // Webhook routes
-      const webhookResponse = await handleWebhookRoutes(request, env, path);
+      const webhookPath = path.startsWith("/api") ? path.slice(4) : path;
+      const webhookResponse = await handleWebhookRoutes(
+        request,
+        env,
+        webhookPath,
+      );
       if (webhookResponse) return webhookResponse;
 
       // Experience Feedback API
