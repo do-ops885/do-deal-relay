@@ -54,6 +54,7 @@ describe("Research API Integration", () => {
       API_ENCRYPTION_KEY: "test-key",
       DEALS_DB: {} as any,
       NOTIFICATION_THRESHOLD: "100",
+      RESEARCH_USE_REAL_FETCHING: "false",
     } as unknown as Env;
 
     vi.stubGlobal("fetch", vi.fn());
@@ -91,6 +92,7 @@ describe("Research API Integration", () => {
 
   it("should use real fetching when ENVIRONMENT is production", async () => {
     mockEnv.ENVIRONMENT = "production";
+    mockEnv.RESEARCH_USE_REAL_FETCHING = "true";
 
     // Mock fetch for real fetching attempt
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
