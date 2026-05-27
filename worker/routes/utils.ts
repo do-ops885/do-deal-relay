@@ -48,7 +48,7 @@ export function getAllowedOrigin(origin?: string | null, env?: Env): string {
   if (origin && allowed.includes(origin)) {
     return origin;
   }
-  return allowed[0]!; // Default to primary production domain
+  return ""; // Return empty string if origin not allowed (prevents wildcard bypass)
 }
 
 /**

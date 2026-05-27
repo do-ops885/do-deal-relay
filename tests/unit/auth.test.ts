@@ -876,7 +876,7 @@ describe("Auth", () => {
   describe("getAllowedOrigin()", () => {
     it("should return default origin for null input", () => {
       const origin = getAllowedOrigin(null);
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
 
     it("should return allowed origin if in list", () => {
@@ -895,12 +895,12 @@ describe("Auth", () => {
 
     it("should return default for disallowed origin", () => {
       const origin = getAllowedOrigin("https://evil.com");
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
 
     it("should return default for empty string", () => {
       const origin = getAllowedOrigin("");
-      expect(origin).toBe("https://do-deal-relay.pages.dev");
+      expect(origin).toBe("");
     });
   });
 
@@ -942,9 +942,7 @@ describe("Auth", () => {
 
       const headers = createCorsHeaders(request);
 
-      expect(headers["Access-Control-Allow-Origin"]).toBe(
-        "https://do-deal-relay.pages.dev",
-      );
+      expect(headers["Access-Control-Allow-Origin"]).toBe("");
     });
 
     it("should allow correct HTTP methods", () => {

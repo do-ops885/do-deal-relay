@@ -28,7 +28,7 @@ import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
 import { jsonResponse, errorResponse } from "./utils";
-import { validateFetchUrl } from "../lib/security";
+import { validateFetchUrl, validateReferralUrl } from "../lib/security";
 
 // ============================================================================
 // Referral Management Handlers
@@ -128,6 +128,19 @@ export async function handleCreateReferral(
     if (!code || !url || !domain) {
       return jsonResponse(
         { error: "Missing required fields: code, url, domain" },
+        400,
+        request,
+        env,
+      );
+    }
+
+    // Validate referral URL against domain (Security Hardening)
+    if (!validateReferralUrl(url, domain)) {
+      return jsonResponse(
+        {
+          error: "Invalid referral URL",
+          message: "The URL must use HTTPS and match the provided domain.",
+        },
         400,
         request,
         env,
