@@ -57,6 +57,7 @@ describe("Referral Deactivation", () => {
       AI_GATEWAY_URL: "https://example.com",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
+      EMAIL_WEBHOOK_SECRET: "test-email-secret",
       TRUST_THRESHOLD: "0.5",
       NOTIFICATION_THRESHOLD: "10",
       ENVIRONMENT: "test",

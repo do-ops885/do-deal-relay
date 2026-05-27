@@ -34,6 +34,7 @@ export function validateConfig(env: Env): void {
     "AI_GATEWAY_URL",
     "TRUST_THRESHOLD",
     "WEBHOOK_SECRET",
+    "EMAIL_WEBHOOK_SECRET",
     "API_ENCRYPTION_KEY",
     "DEALS_DB",
     "ENVIRONMENT",

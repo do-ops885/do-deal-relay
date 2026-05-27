@@ -364,9 +364,7 @@ export default {
 
       // Email API
       if (path === "/api/email/incoming" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleEmailIncoming(request, env),
-        );
+        return handleEmailIncoming(request, env);
       }
       if (path === "/api/email/parse" && request.method === "POST") {
         return withAuth(request, env, "user", () =>
