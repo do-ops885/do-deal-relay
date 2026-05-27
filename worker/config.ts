@@ -38,6 +38,12 @@ export const CONFIG = {
   RESEARCH_MAX_SOURCES_PER_QUERY: 5,
   RESEARCH_MIN_CONFIDENCE: 0.3,
   RESEARCH_CACHE_TTL_MINUTES: 60,
+  RESEARCH_USE_REAL_FETCHING_DEFAULT: true,
+  RESEARCH_CACHE_TTL_SECONDS: 3600,
+  RESEARCH_RATE_LIMIT_WINDOW_MS: 60000,
+  RESEARCH_MAX_RETRIES: 3,
+  RESEARCH_RETRY_BASE_DELAY_MS: 1000,
+  RESEARCH_RETRY_MAX_DELAY_MS: 30000,
 
   // API Rate Limits
   API_RATE_LIMITS: {
@@ -275,6 +281,108 @@ export const DEFAULT_SOURCES = [
     active: true,
   },
 ];
+
+// ============================================================================
+// Research Selector Configs for Known Domains
+// ============================================================================
+
+export interface ExtractSelectorSet {
+  dealTitle: string[];
+  price: string[];
+  source: string[];
+  description: string[];
+  keyPoints: string[];
+  code: string[];
+  reward: string[];
+}
+
+export const RESEARCH_SELECTOR_CONFIGS: Record<string, ExtractSelectorSet> = {
+  "trading212.com": {
+    dealTitle: [
+      ".campaign-title",
+      "h1.invite-title",
+      "[data-testid='campaign-name']",
+    ],
+    price: [".reward-amount", ".bonus-value", "[data-reward]"],
+    source: [".source-name", ".broker-name"],
+    description: [".campaign-description", ".terms-text"],
+    keyPoints: [".feature-list li", ".benefits-list li"],
+    code: ["[data-ref-code]", ".referral-code", ".invite-code"],
+    reward: [".reward-amount", "[data-reward]", ".bonus-value"],
+  },
+  "revolut.com": {
+    dealTitle: [".referral-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".referral-description", ".terms"],
+    keyPoints: [".benefits li", ".features li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "wise.com": {
+    dealTitle: [".invite-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".invite-description", ".terms"],
+    keyPoints: [".benefits li", ".how-it-works li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "robinhood.com": {
+    dealTitle: [".referral-title", "h1"],
+    price: [".bonus-amount", ".reward-value", ".stock-value"],
+    source: [".source-name"],
+    description: [".referral-description", ".terms"],
+    keyPoints: [".features li", ".benefits li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "webull.com": {
+    dealTitle: [".invite-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".invite-description", ".terms"],
+    keyPoints: [".features li", ".steps li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "crypto.com": {
+    dealTitle: [".referral-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".referral-description", ".terms"],
+    keyPoints: [".features li", ".benefits li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "binance.com": {
+    dealTitle: [".referral-title", ".activity-title", "h1"],
+    price: [".bonus-amount", ".reward-value", "[data-bonus]"],
+    source: [".source-name"],
+    description: [".referral-description", ".activity-desc"],
+    keyPoints: [".features li", ".rules li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "coinbase.com": {
+    dealTitle: [".invite-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".invite-description", ".terms"],
+    keyPoints: [".benefits li", ".features li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+  "paypal.com": {
+    dealTitle: [".referral-title", "h1"],
+    price: [".bonus-amount", ".reward-value"],
+    source: [".source-name"],
+    description: [".referral-description", ".terms"],
+    keyPoints: [".benefits li", ".features li"],
+    code: ["[data-ref-code]", ".referral-code"],
+    reward: [".bonus-amount", ".reward-value"],
+  },
+};
 
 // ============================================================================
 // Error Messages

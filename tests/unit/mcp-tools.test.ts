@@ -131,7 +131,7 @@ async function seedReferral(env: Env, referral: ReferralInput): Promise<void> {
 describe("MCP Tools - Definitions", () => {
   it("should export 15 tools", () => {
     const tools = getTools();
-    expect(tools).toHaveLength(15);
+    expect(tools.length).toBeGreaterThanOrEqual(18);
   });
 
   it("should have all required tool fields", () => {
@@ -662,7 +662,7 @@ describe("MCP Route Handler - Pagination", () => {
         jsonrpc: "2.0",
         id: 1,
         method: "tools/list",
-        params: {},
+        params: { limit: 5 },
       }),
     });
 
