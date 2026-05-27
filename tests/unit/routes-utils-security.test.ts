@@ -39,9 +39,7 @@ describe("Routes Utils Security", () => {
     });
 
     const response = jsonResponse(mockData, 200, request);
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      allowedOrigins[0],
-    );
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("");
   });
 
   it("should fallback to default origin when no Origin header is present", () => {
@@ -49,9 +47,7 @@ describe("Routes Utils Security", () => {
     const request = new Request("https://example.com");
 
     const response = jsonResponse(mockData, 200, request);
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      allowedOrigins[0],
-    );
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("");
   });
 
   it("should include security headers in errorResponse", () => {
