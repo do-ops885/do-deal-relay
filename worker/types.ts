@@ -396,6 +396,25 @@ export interface AuditLogEntry {
 // Health & Metrics Types
 // ============================================================================
 
+export interface DashboardStats {
+  stats: {
+    total: number;
+    active: number;
+    quarantined: number;
+    rejected: number;
+  };
+  recentActivity: {
+    runs: number;
+    dealsFound: number;
+    errors: number;
+  };
+  systemHealth: {
+    status: "healthy" | "degraded" | "unhealthy";
+    checks: Record<string, boolean>;
+  };
+  timestamp: string;
+}
+
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
   version: string;

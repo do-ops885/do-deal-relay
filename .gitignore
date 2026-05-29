@@ -1,3 +1,67 @@
-```ts
+# Dependencies
+node_modules/
 
-```
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+*.key
+*.pem
+secrets/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Wrangler
+.wrangler/
+.dev.vars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Agent specific
+state.json
+.agents/state/
+temp/BIDIRECTIONAL_*
+temp/SWARM_*
+.worktrees/
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Prettier/Formatter
+.prettierignore
+
+# YAML lint
+.yamllint
+
+# VERSION file
+VERSION
+
+

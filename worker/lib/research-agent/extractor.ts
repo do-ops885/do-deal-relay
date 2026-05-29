@@ -5,7 +5,6 @@ import {
 
 import { logger } from "../global-logger";
 
-
 export interface ExtractionConfig {
   selectors: string[];
   attributes?: string[];
@@ -164,7 +163,7 @@ function buildSelectorRegex(parsed: ParsedSelector): RegExp {
     const tagName = parsed.tag || "[a-zA-Z][a-zA-Z0-9_-]*";
     return new RegExp(
       `<${tagName}[^>]*>([\\s\\S]{0,${MAX_MATCH_LENGTH}}?)<\\/${tagName}[^>]*>`,
-      "gi"
+      "gi",
     );
   }
 }
@@ -184,7 +183,10 @@ function extractBySelector(html: string, selector: string): ExtractedContent {
   const htmlMatches: string[] = [];
   const attributes: Record<string, string[]> = {};
 
-  const textRegex = new RegExp(regex.source.replace(/(\[\\s\\S\\]{[^}]*\\})/g, '([^<]*)'), regex.flags);
+  const textRegex = new RegExp(
+    regex.source.replace(/(\[\\s\\S\\]{[^}]*\\})/g, "([^<]*)"),
+    regex.flags,
+  );
   let textMatch: RegExpExecArray | null;
   while ((textMatch = textRegex.exec(html)) !== null) {
     if (textMatch[1]) {
@@ -240,13 +242,14 @@ export function extractByConfig(
 ): ExtractedContent {
   const result: ExtractedContent = { text: [], attributes: {}, html: [] };
 
-  for (const selectorConfig of config.selectors) {
-    const extracted = extractBySelector(html, selectorConfig.selector);
-    result.text.push(...extracted.text);
-    result.html.push(...extracted.html);
-    Object.assign(result.attributes, extracted.attributes);
+  for (const selectors of Object.values(config)) {
+    for (const selector of selectors) {
+      const extracted = extractBySelector(html, selector);
+      result.text.push(...extracted.text);
+      result.html.push(...extracted.html);
+      Object.assign(result.attributes, extracted.attributes);
+    }
   }
 
   return result;
 }
-

@@ -79,7 +79,13 @@ export class RequestManager {
       return inflight;
     }
 
-    const fetchPromise = this.executeWithRetry(url, options, startTime, domain, cacheKey);
+    const fetchPromise = this.executeWithRetry(
+      url,
+      options,
+      startTime,
+      domain,
+      cacheKey,
+    );
     this.setInflight(inflightKey, fetchPromise);
 
     try {
@@ -92,7 +98,9 @@ export class RequestManager {
 
   start(): void {
     if (this.cleanupTimer) return;
-    this.cleanupTimer = setInterval(() => { this.cleanupInflight(); }, INFLIGHT_CLEANUP_INTERVAL_MS);
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupInflight();
+    }, INFLIGHT_CLEANUP_INTERVAL_MS);
   }
 
   stop(): void {
@@ -102,7 +110,13 @@ export class RequestManager {
     }
   }
 
-  private async executeWithRetry(url: string, options: FetchOptions, startTime: number, domain: string, cacheKey: string): Promise<FetchResponse> {
+  private async executeWithRetry(
+    url: string,
+    options: FetchOptions,
+    startTime: number,
+    domain: string,
+    cacheKey: string,
+  ): Promise<FetchResponse> {
     let lastError: string | undefined;
     let attempt = 0;
     const maxRetries = CONFIG.RESEARCH_MAX_RETRIES;
@@ -114,7 +128,9 @@ export class RequestManager {
         const waitTime = await this.getRateLimitResetTime(domain);
         lastError = `Rate limited for ${domain}, retry in ${Math.ceil(waitTime / 1000)}s`;
         if (attempt <= maxRetries) {
-          await this.delay(Math.min(waitTime, CONFIG.RESEARCH_RETRY_MAX_DELAY_MS));
+          await this.delay(
+            Math.min(waitTime, CONFIG.RESEARCH_RETRY_MAX_DELAY_MS),
+          );
         }
         continue;
       }
@@ -124,7 +140,13 @@ export class RequestManager {
 
       if (result.success) {
         const cacheTtl = CONFIG.RESEARCH_CACHE_TTL_SECONDS;
-        await this.setCache(cacheKey, { content: result.content, contentType: result.contentType, statusCode: result.statusCode, createdAt: Date.now(), expiresAt: Date.now() + cacheTtl * 1000 });
+        await this.setCache(cacheKey, {
+          content: result.content,
+          contentType: result.contentType,
+          statusCode: result.statusCode,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + cacheTtl * 1000,
+        });
         return result;
       }
 
@@ -136,28 +158,81 @@ export class RequestManager {
     }
 
     const totalDuration = Date.now() - startTime;
-    return { success: false, content: "", contentType: "", statusCode: 0, error: lastError || `Failed after ${maxRetries} retries`, fetchDurationMs: totalDuration, cached: false };
+    return {
+      success: false,
+      content: "",
+      contentType: "",
+      statusCode: 0,
+      error: lastError || `Failed after ${maxRetries} retries`,
+      fetchDurationMs: totalDuration,
+      cached: false,
+    };
   }
 
-  private async executeSingleFetch(url: string, options: FetchOptions, startTime: number): Promise<FetchResponse> {
+  private async executeSingleFetch(
+    url: string,
+    options: FetchOptions,
+    startTime: number,
+  ): Promise<FetchResponse> {
     if (!(await validateFetchUrl(url))) {
-      return { success: false, content: "", contentType: "", statusCode: 403, error: "Blocked by SSRF protection", fetchDurationMs: Date.now() - startTime, cached: false };
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "Blocked by SSRF protection",
+        fetchDurationMs: Date.now() - startTime,
+        cached: false,
+      };
     }
 
     try {
       const timeoutMs = options.timeoutMs ?? CONFIG.RESEARCH_FETCH_TIMEOUT_MS;
-      const response = await fetch(url, { method: options.method || "GET", headers: { "User-Agent": CONFIG.USER_AGENT, Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.9", ...options.headers }, body: options.body, cf: options.cf, signal: AbortSignal.timeout(timeoutMs) });
+      const response = await fetch(url, {
+        method: options.method || "GET",
+        headers: {
+          "User-Agent": CONFIG.USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          ...options.headers,
+        },
+        body: options.body,
+        cf: options.cf,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
       const contentType = response.headers.get("content-type") || "";
       const content = await response.text();
-      return { success: true, content, contentType, statusCode: response.status, fetchDurationMs: Date.now() - startTime, cached: false };
+      return {
+        success: true,
+        content,
+        contentType,
+        statusCode: response.status,
+        fetchDurationMs: Date.now() - startTime,
+        cached: false,
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      return { success: false, content: "", contentType: "", statusCode: 0, error: errorMessage, fetchDurationMs: Date.now() - startTime, cached: false };
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 0,
+        error: errorMessage,
+        fetchDurationMs: Date.now() - startTime,
+        cached: false,
+      };
     }
   }
 
   private extractDomain(url: string): string {
-    try { const urlObj = new URL(url); return urlObj.hostname; } catch { return url; }
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return url;
+    }
   }
 
   private shouldRetry(statusCode: number): boolean {
@@ -165,7 +240,9 @@ export class RequestManager {
   }
 
   private calculateBackoff(attempt: number): number {
-    const base = 100; const max = 5000; return Math.min(base * Math.pow(2, attempt - 1), max);
+    const base = 100;
+    const max = 5000;
+    return Math.min(base * Math.pow(2, attempt - 1), max);
   }
 
   private delay(ms: number): Promise<void> {
@@ -181,7 +258,9 @@ export class RequestManager {
       const windowMs = CONFIG.RESEARCH_RATE_LIMIT_WINDOW_MS;
       const recent = entry.timestamps.filter((t) => now - t < windowMs);
       return recent.length < CONFIG.RESEARCH_MAX_REQUESTS_PER_DOMAIN;
-    } catch { return true; }
+    } catch {
+      return true;
+    }
   }
 
   private async getRateLimitResetTime(domain: string): Promise<number> {
@@ -193,7 +272,9 @@ export class RequestManager {
       const windowMs = CONFIG.RESEARCH_RATE_LIMIT_WINDOW_MS;
       const oldest = Math.min(...entry.timestamps);
       return Math.max(0, oldest + windowMs - now);
-    } catch { return 0; }
+    } catch {
+      return 0;
+    }
   }
 
   private async recordRateLimitHit(domain: string): Promise<void> {
@@ -203,23 +284,40 @@ export class RequestManager {
       const entry: RateLimitEntry = raw ? JSON.parse(raw) : { timestamps: [] };
       entry.timestamps.push(Date.now());
       const windowMs = CONFIG.RESEARCH_RATE_LIMIT_WINDOW_MS;
-      await this.kv.put(key, JSON.stringify(entry), { expirationTtl: Math.ceil(windowMs / 1000) });
+      await this.kv.put(key, JSON.stringify(entry), {
+        expirationTtl: Math.ceil(windowMs / 1000),
+      });
     } catch {}
   }
 
   private cleanupInflight(): void {
     const now = Date.now();
     for (const [key, entry] of this.inflightRequests) {
-      if (now - entry.createdAt > this.inflightTtlMs) { this.inflightRequests.delete(key); }
+      if (now - entry.createdAt > this.inflightTtlMs) {
+        this.inflightRequests.delete(key);
+      }
     }
   }
 
-  private async buildCacheKey(url: string, options: FetchOptions): Promise<string> {
-    const sortedHeaders = options.headers ? Object.entries(options.headers).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}:${v}`).join("|") : "";
+  private async buildCacheKey(
+    url: string,
+    options: FetchOptions,
+  ): Promise<string> {
+    const sortedHeaders = options.headers
+      ? Object.entries(options.headers)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => `${k}:${v}`)
+          .join("|")
+      : "";
     let bodyHash = "";
     if (options.body) {
-      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(options.body));
-      bodyHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+      const hashBuffer = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(options.body),
+      );
+      bodyHash = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
     }
     return `${CACHE_KEY_PREFIX}${Buffer.from(`${url}|${options.method || "GET"}|${sortedHeaders}|${bodyHash}`).toString("base64url")}`;
   }
@@ -227,7 +325,10 @@ export class RequestManager {
   private getInflight(key: string): Promise<FetchResponse> | null {
     const entry = this.inflightRequests.get(key);
     if (!entry) return null;
-    if (Date.now() - entry.createdAt > this.inflightTtlMs) { this.inflightRequests.delete(key); return null; }
+    if (Date.now() - entry.createdAt > this.inflightTtlMs) {
+      this.inflightRequests.delete(key);
+      return null;
+    }
     return entry.promise;
   }
 
@@ -236,7 +337,18 @@ export class RequestManager {
   }
 
   private async getCached(cacheKey: string): Promise<CacheEntry | null> {
-    try { const raw = await this.kv.get(cacheKey); if (!raw) return null; const entry: CacheEntry = JSON.parse(raw); if (entry.expiresAt < Date.now()) { await this.kv.delete(cacheKey); return null; } return entry; } catch { return null; }
+    try {
+      const raw = await this.kv.get(cacheKey);
+      if (!raw) return null;
+      const entry: CacheEntry = JSON.parse(raw);
+      if (entry.expiresAt < Date.now()) {
+        await this.kv.delete(cacheKey);
+        return null;
+      }
+      return entry;
+    } catch {
+      return null;
+    }
   }
 
   private async setCache(cacheKey: string, entry: CacheEntry): Promise<void> {

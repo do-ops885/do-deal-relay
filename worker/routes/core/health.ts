@@ -1,7 +1,78 @@
-import type { Env, HealthStatus, LogEntry } from "../types";
-import { handleError } from "../lib/error-handler";
-import { logger } from "../lib/global-logger";
-import { jsonResponse } from "./utils";
+import type { Env, HealthStatus, LogEntry, PipelineMetrics } from "../../types";
+import { jsonResponse } from "../utils";
+
+export async function handleHealth(
+  env: Env,
+  request: Request,
+): Promise<Response> {
+  return getHealthStatus(request, env);
+}
+
+export async function handleReady(
+  env: Env,
+  request: Request,
+): Promise<Response> {
+  try {
+    await env.DEALS_DB.prepare("SELECT 1").first();
+    return jsonResponse({ ready: true }, 200, request, env);
+  } catch {
+    return jsonResponse(
+      { ready: false, reason: "D1 unavailable" },
+      503,
+      request,
+      env,
+    );
+  }
+}
+
+export async function handleLive(
+  env: Env,
+  request: Request,
+): Promise<Response> {
+  return jsonResponse({ alive: true }, 200, request, env);
+}
+
+export async function handleMetrics(
+  env: Env,
+  format: string,
+  request: Request,
+): Promise<Response> {
+  try {
+    const indexRaw = await env.DEALS_LOG.get("metrics:index");
+    const runIds: string[] = indexRaw ? JSON.parse(indexRaw) : [];
+
+    let discovered = 0;
+    let passed_trust_filter = 0;
+    let validated = 0;
+    let published = 0;
+
+    if (runIds.length > 0) {
+      const latestRaw = await env.DEALS_LOG.get(`metrics:${runIds[0]}`);
+      if (latestRaw) {
+        const metrics: PipelineMetrics = JSON.parse(latestRaw);
+        discovered = metrics.deals_processed.discovered;
+        passed_trust_filter = metrics.deals_processed.passed_trust_filter;
+        validated = metrics.deals_processed.validated;
+        published = metrics.deals_processed.published;
+      }
+    }
+
+    const conversion_rate =
+      discovered > 0 ? `${((published / discovered) * 100).toFixed(1)}%` : "0%";
+
+    const funnel = {
+      discovered,
+      passed_trust_filter,
+      passed_all_validation: validated,
+      published,
+      conversion_rate,
+    };
+
+    return jsonResponse({ funnel }, 200, request, env);
+  } catch {
+    return jsonResponse({ error: "Failed to get metrics" }, 500, request, env);
+  }
+}
 
 export async function getHealthStatus(
   request: Request,
@@ -16,11 +87,11 @@ export async function getHealthStatus(
 
     const kvChecks = await checkKVConnections(env);
 
-    const kvProd = kvChecks.DEALS_PROD;
-    const kvStaging = kvChecks.DEALS_STAGING;
-    const kvLog = kvChecks.DEALS_LOG;
-    const kvLock = kvChecks.DEALS_LOCK;
-    const kvSources = kvChecks.DEALS_SOURCES;
+    const kvProd = kvChecks.DEALS_PROD ?? { connected: false };
+    const kvStaging = kvChecks.DEALS_STAGING ?? { connected: false };
+    const kvLog = kvChecks.DEALS_LOG ?? { connected: false };
+    const kvLock = kvChecks.DEALS_LOCK ?? { connected: false };
+    const kvSources = kvChecks.DEALS_SOURCES ?? { connected: false };
 
     const allKvConnected =
       kvProd.connected &&
@@ -55,7 +126,8 @@ export async function getHealthStatus(
       uptime_seconds: uptimeSeconds,
       checks: {
         kv_connection: allKvConnected,
-        last_run_success: recentRuns > 0 ? successfulRuns === recentRuns : false,
+        last_run_success:
+          recentRuns > 0 ? successfulRuns === recentRuns : false,
         snapshot_valid: snapshot !== null,
         d1_connected: d1Check.connected,
       },
@@ -73,8 +145,9 @@ export async function getHealthStatus(
           error: d1Check.error,
         },
         pipeline: {
-          last_run: logs.length > 0 ? logs[0].ts : "",
-          last_success: logs.length > 0 ? logs[0].status === "complete" : false,
+          last_run: logs.length > 0 ? logs[0]!.ts : "",
+          last_success:
+            logs.length > 0 ? logs[0]!.status === "complete" : false,
           average_duration_ms: 0,
         },
         external_services: {
@@ -83,23 +156,29 @@ export async function getHealthStatus(
       },
       metrics: {
         total_runs_24h: recentRuns,
-        success_rate_24h: recentRuns > 0 ? (successfulRuns / recentRuns) * 100 : 0,
+        success_rate_24h:
+          recentRuns > 0 ? (successfulRuns / recentRuns) * 100 : 0,
         avg_deals_per_run: 0,
       },
       last_run:
         logs.length > 0
           ? {
-              run_id: logs[0].run_id,
-              timestamp: logs[0].ts,
-              duration_ms: logs[0].duration_ms || 0,
+              run_id: logs[0]!.run_id,
+              timestamp: logs[0]!.ts,
+              duration_ms: logs[0]!.duration_ms || 0,
               deals_count: 0,
             }
           : undefined,
     };
 
     return jsonResponse(response, 200, request, env);
-  } catch (error) {
-    return handleError(error, request, env, "Failed to get health status");
+  } catch {
+    return jsonResponse(
+      { error: "Failed to get health status" },
+      500,
+      request,
+      env,
+    );
   }
 }
 
@@ -107,8 +186,7 @@ async function getLatestSnapshot(env: Env): Promise<boolean> {
   try {
     const result = await env.DEALS_DB.prepare(
       "SELECT snapshot_hash FROM snapshots ORDER BY generated_at DESC LIMIT 1",
-    )
-      .first();
+    ).first();
     return result !== null;
   } catch {
     return false;
@@ -159,13 +237,16 @@ async function checkKVConnections(env: Env): Promise<{
 
   for (let i = 0; i < kvKeys.length; i++) {
     const kvKey = kvKeys[i];
+    if (kvKey === undefined) continue;
     try {
       const ns = env[kvKey as keyof Env] as unknown;
-      kvChecks[kvKey] = !!(
-        ns &&
-        typeof ns === "object" &&
-        "get" in (ns as Record<string, unknown>)
-      );
+      kvChecks[kvKey] = {
+        connected: !!(
+          ns &&
+          typeof ns === "object" &&
+          "get" in (ns as Record<string, unknown>)
+        ),
+      };
     } catch {
       kvChecks[kvKey] = { connected: false };
     }

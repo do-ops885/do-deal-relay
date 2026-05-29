@@ -115,47 +115,84 @@ CREATE VIRTUAL TABLE IF NOT EXISTS referrals_fts USING fts5(
 );
 
 -- ============================================================================
--- API Keys Table
+-- User Management & Authentication
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS api_keys (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  key_hash TEXT NOT NULL UNIQUE,
-  user_id TEXT NOT NULL,
-  role TEXT CHECK(role IN ('admin', 'user', 'readonly')) DEFAULT 'user',
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  expires_at TEXT,
-  last_used_at TEXT,
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'viewer',
   is_active INTEGER DEFAULT 1,
-  rate_limit_requests_per_minute INTEGER DEFAULT 60,
-  rate_limit_requests_per_hour INTEGER DEFAULT 1000,
-  metadata TEXT -- JSON
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS roles (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+  role_id TEXT NOT NULL REFERENCES roles(id),
+  permission_id TEXT NOT NULL REFERENCES permissions(id),
+  PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  expires_at TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS api_keys (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  key_hash TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  permissions TEXT DEFAULT '[]', -- JSON array of specific overrides
+  last_used_at TEXT,
+  expires_at TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
 -- ============================================================================
 -- Audit Log (for all system actions)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS audit_log (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
   action TEXT NOT NULL,
-  actor_id TEXT,
-  actor_type TEXT CHECK(actor_type IN ('user', 'api_key', 'system', 'ai_agent')),
-  resource_type TEXT NOT NULL,
+  resource TEXT,
+  resource_type TEXT,
   resource_id TEXT,
   details TEXT, -- JSON
   ip_address TEXT,
   user_agent TEXT,
-  correlation_id TEXT
+  correlation_id TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action);
-CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_log(resource_type, resource_id);
 
 -- ============================================================================
@@ -252,12 +289,13 @@ ORDER BY date DESC;
 
 -- API key usage statistics
 CREATE VIEW IF NOT EXISTS v_api_key_usage AS
-SELECT 
+SELECT
   ak.user_id,
-  ak.role,
+  u.role,
   COUNT(al.id) as action_count,
-  MAX(al.timestamp) as last_action
+  MAX(al.created_at) as last_action
 FROM api_keys ak
-LEFT JOIN audit_log al ON al.actor_id = ak.user_id AND al.actor_type = 'api_key'
-WHERE ak.is_active = 1
-GROUP BY ak.user_id, ak.role;
+JOIN users u ON u.id = ak.user_id
+LEFT JOIN audit_log al ON al.user_id = ak.user_id
+WHERE u.is_active = 1
+GROUP BY ak.user_id, u.role;

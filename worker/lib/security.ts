@@ -53,18 +53,32 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") {
-      logger.warn(`SSRF Blocked: Non-HTTPS protocol detected: ${url}`, { component: "security", protocol: parsed.protocol, url });
+      logger.warn(`SSRF Blocked: Non-HTTPS protocol detected: ${url}`, {
+        component: "security",
+        protocol: parsed.protocol,
+        url,
+      });
       return false;
     }
     const hostname = parsed.hostname.toLowerCase();
-    if ((SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)) {
-      logger.warn(`SSRF Blocked: Prohibited host detected: ${hostname}`, { component: "security", hostname, url });
+    if (
+      (SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)
+    ) {
+      logger.warn(`SSRF Blocked: Prohibited host detected: ${hostname}`, {
+        component: "security",
+        hostname,
+        url,
+      });
       return false;
     }
     const cleanHostname = hostname.replace(/^[|]$/g, "");
     if (isIpAddress(cleanHostname)) {
       if (isPrivateIP(cleanHostname)) {
-        logger.warn(`SSRF Blocked: Private IP address detected: ${hostname}`, { component: "security", ip: hostname, url });
+        logger.warn(`SSRF Blocked: Private IP address detected: ${hostname}`, {
+          component: "security",
+          ip: hostname,
+          url,
+        });
         return false;
       }
     } else {
@@ -72,14 +86,20 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       if (resolvedIps.length === 0) return false;
       for (const ip of resolvedIps) {
         if (isPrivateIP(ip)) {
-          logger.warn(`SSRF Blocked: Host ${hostname} resolved to private IP ${ip}`, { component: "security", hostname, ip, url });
+          logger.warn(
+            `SSRF Blocked: Host ${hostname} resolved to private IP ${ip}`,
+            { component: "security", hostname, ip, url },
+          );
           return false;
         }
       }
     }
     return true;
   } catch (error) {
-    logger.error(`SSRF Validation error for URL ${url}: ${(error as Error).message}`, { component: "security", url });
+    logger.error(
+      `SSRF Validation error for URL ${url}: ${(error as Error).message}`,
+      { component: "security", url },
+    );
     return false;
   }
 }
@@ -100,7 +120,12 @@ function normalizeIp(ip: string): string {
       if (parts.length === 2) {
         const high = parseInt(parts[0]!, 16);
         const low = parseInt(parts[1]!, 16);
-        return [(high >> 8) & 0xff, high & 0xff, (low >> 8) & 0xff, low & 0xff].join(".");
+        return [
+          (high >> 8) & 0xff,
+          high & 0xff,
+          (low >> 8) & 0xff,
+          low & 0xff,
+        ].join(".");
       }
     }
   }
@@ -118,7 +143,8 @@ function isPrivateIP(ip: string): boolean {
 function isIpInCidr(ip: string, cidr: string): boolean {
   try {
     const parts = cidr.split("/");
-    const range = parts[0]; const bitsStr = parts[1];
+    const range = parts[0];
+    const bitsStr = parts[1];
     if (!range) return false;
     const normalizedIp = normalizeIp(ip);
     const normalizedRange = normalizeIp(range);
@@ -136,17 +162,22 @@ function isIpInCidr(ip: string, cidr: string): boolean {
       const rangeBigInt = ipv6ToBigInt(normalizedRange);
       const bitsNum = bitsStr ? Number(bitsStr) : 128;
       if (bitsNum === 0) return true;
-      const mask = (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
+      const mask =
+        (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
       return (ipBigInt & mask) === (rangeBigInt & mask);
     }
-  } catch { return false; }
+  } catch {
+    return false;
+  }
   return false;
 }
 
 function ipToLong(ip: string): number {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
   if (parts.length !== SECURITY_CONSTANTS.IPV4_PARTS) return 0;
-  return ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0;
+  return (
+    ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0
+  );
 }
 
 function ipv6ToBigInt(ipv6: string): bigint {
@@ -156,7 +187,8 @@ function ipv6ToBigInt(ipv6: string): bigint {
       const [leftStr, rightStr] = ipv6.split("::");
       const left = leftStr ? leftStr.split(":") : [];
       const right = rightStr ? rightStr.split(":") : [];
-      const missing = SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS - (left.length + right.length);
+      const missing =
+        SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS - (left.length + right.length);
       parts = [...left, ...new Array(missing).fill("0"), ...right];
     } else {
       parts = ipv6.split(":");
@@ -164,17 +196,30 @@ function ipv6ToBigInt(ipv6: string): bigint {
     if (parts.length !== SECURITY_CONSTANTS.IPV6_EXPANDED_PARTS) return 0n;
     const hex = parts.map((p) => (p || "0").padStart(4, "0")).join("");
     return BigInt("0x" + hex);
-  } catch { return 0n; }
+  } catch {
+    return 0n;
+  }
 }
 
 async function resolveHostname(hostname: string): Promise<string[]> {
   try {
-    const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`, { headers: { accept: "application/dns-json" }, signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS) });
+    const response = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`,
+      {
+        headers: { accept: "application/dns-json" },
+        signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),
+      },
+    );
     if (!response.ok) return [];
-    const data = (await response.json()) as { Answer?: Array<{ data: string }> };
+    const data = (await response.json()) as {
+      Answer?: Array<{ data: string }>;
+    };
     return data.Answer?.map((a) => a.data) || [];
   } catch (error) {
-    logger.error(`DNS resolution failed for ${hostname}: ${(error as Error).message}`, { component: "security", hostname });
+    logger.error(
+      `DNS resolution failed for ${hostname}: ${(error as Error).message}`,
+      { component: "security", hostname },
+    );
     return [];
   }
 }
