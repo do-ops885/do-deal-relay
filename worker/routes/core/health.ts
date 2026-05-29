@@ -1,266 +1,175 @@
-/**
- * Core API Routes - Health Endpoints
- *
- * Handles /health, /health/ready, /health/live, /metrics
- */
+import type { Env, HealthStatus, LogEntry } from "../types";
+import { handleError } from "../lib/error-handler";
+import { logger } from "../lib/global-logger";
+import { jsonResponse } from "./utils";
 
-import { getProductionSnapshot } from "../../lib/storage";
-import { getPipelineStatus } from "../../state-machine";
-import { getRecentLogs } from "../../lib/logger";
-import { getRecentMetrics } from "../../lib/metrics/index";
-import {
-  calculateAggregateStats,
-  formatMetricsForPrometheus,
-} from "../../lib/metrics/stats";
-import { CONFIG } from "../../config";
-import type { Env, HealthStatus, LogEntry } from "../../types";
-import { jsonResponse, SECURITY_HEADERS } from "../utils";
-
-/**
- * Check D1 Connection
- */
-async function checkD1Connection(db: D1Database): Promise<boolean> {
+export async function getHealthStatus(
+  request: Request,
+  env: Env,
+): Promise<Response> {
   try {
-    const result = await db.prepare("SELECT 1").first();
-    return !!result;
-  } catch {
-    return false;
-  }
-}
+    const startTime = Date.now();
 
-/**
- * Check KV Access
- */
-async function checkKVAccess(kv: KVNamespace, env: Env): Promise<boolean> {
-  try {
-    // In test environment, skip the write check if KV is heavily mocked
-    if (env.ENVIRONMENT === "test") {
-      await kv.get("__dummy__");
-      return true;
+    const snapshot = await getLatestSnapshot(env);
+    const logs = await getRecentLogs(env);
+    const d1Check = await checkD1Connection(env);
+
+    const kvChecks = await checkKVConnections(env);
+
+    const kvProd = kvChecks.DEALS_PROD;
+    const kvStaging = kvChecks.DEALS_STAGING;
+    const kvLog = kvChecks.DEALS_LOG;
+    const kvLock = kvChecks.DEALS_LOCK;
+    const kvSources = kvChecks.DEALS_SOURCES;
+
+    const allKvConnected =
+      kvProd.connected &&
+      kvStaging.connected &&
+      kvLog.connected &&
+      kvLock.connected &&
+      kvSources.connected;
+    const allDepsHealthy =
+      snapshot || !allKvConnected ? false : d1Check.connected;
+
+    const recentRuns = logs.filter((l) => l.phase === "finalize").length;
+    const successfulRuns = logs.filter(
+      (l) => l.phase === "finalize" && l.status === "complete",
+    ).length;
+
+    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+
+    if (!allDepsHealthy || !allKvConnected) {
+      overallStatus = "degraded";
     }
-    const key = "__health_check__";
-    await kv.put(key, "ok", { expirationTtl: 60 });
-    const val = await kv.get(key);
-    return val === "ok";
-  } catch {
-    return false;
-  }
-}
 
-export async function handleHealth(
-  env: Env,
-  request?: Request,
-): Promise<Response> {
-  // Optimization: Parallelize dependency checks, snapshot, status and log retrieval
-  // This reduces latency by performing independent I/O operations concurrently
-  const results = await Promise.allSettled([
-    getProductionSnapshot(env),
-    getPipelineStatus(env),
-    getRecentLogs(env, 100),
-    checkD1Connection(env.DEALS_DB),
-    checkKVAccess(env.DEALS_PROD as any, env),
-  ]);
+    if (!d1Check.connected || !allKvConnected) {
+      overallStatus = "unhealthy";
+    }
 
-  const snapshot = results[0].status === "fulfilled" ? results[0].value : null;
-  const status =
-    results[1].status === "fulfilled"
-      ? results[1].value
-      : { locked: false, last_run: null };
-  const logs =
-    results[2].status === "fulfilled" ? (results[2].value as LogEntry[]) : [];
-  const d1Healthy = results[3].status === "fulfilled" && results[3].value;
-  const kvHealthy = results[4].status === "fulfilled" && results[4].value;
+    const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
 
-  const recentRuns = logs.filter((l) => l.phase === "finalize").length;
-  const successfulRuns = logs.filter(
-    (l) => l.phase === "finalize" && l.status === "complete",
-  ).length;
-
-  // System is healthy only if both D1 and KV are reachable and we have a snapshot
-  const healthy = !!(d1Healthy && kvHealthy && snapshot);
-
-  if (!healthy && env.ENVIRONMENT === "test") {
-    console.error("Health check failed:", {
-      d1Healthy,
-      kvHealthy,
-      hasSnapshot: !!snapshot,
-    });
-  }
-
-  const health: HealthStatus = {
-    status: healthy ? "healthy" : "degraded",
-    timestamp: new Date().toISOString(),
-    version: CONFIG.VERSION,
-    checks: {
-      kv_connection: !!kvHealthy,
-      d1_connection: !!d1Healthy,
-      last_run_success: !!status.last_run,
-      snapshot_valid: !!snapshot,
-    },
-    components: {
-      kv_stores: {
-        deals_prod: !!kvHealthy,
-        deals_staging: true,
-        deals_log: true,
-        deals_lock: !status.locked,
-        deals_sources: true,
+    const response: HealthStatus = {
+      status: overallStatus,
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      uptime_seconds: uptimeSeconds,
+      checks: {
+        kv_connection: allKvConnected,
+        last_run_success: recentRuns > 0 ? successfulRuns === recentRuns : false,
+        snapshot_valid: snapshot !== null,
+        d1_connected: d1Check.connected,
       },
-      pipeline: {
-        last_run: status.last_run?.timestamp || new Date().toISOString(),
-        last_success: !!status.last_run,
-        average_duration_ms: 0,
+      components: {
+        kv_stores: {
+          deals_prod: kvProd.connected,
+          deals_staging: kvStaging.connected,
+          deals_log: kvLog.connected,
+          deals_lock: kvLock.connected,
+          deals_sources: kvSources.connected,
+        },
+        d1_database: {
+          connected: d1Check.connected,
+          latency_ms: d1Check.latencyMs,
+          error: d1Check.error,
+        },
+        pipeline: {
+          last_run: logs.length > 0 ? logs[0].ts : "",
+          last_success: logs.length > 0 ? logs[0].status === "complete" : false,
+          average_duration_ms: 0,
+        },
+        external_services: {
+          github_api: true,
+        },
       },
-      external_services: {
-        github_api: true,
+      metrics: {
+        total_runs_24h: recentRuns,
+        success_rate_24h: recentRuns > 0 ? (successfulRuns / recentRuns) * 100 : 0,
+        avg_deals_per_run: 0,
       },
-    },
-    metrics: {
-      total_runs_24h: recentRuns,
-      success_rate_24h: recentRuns > 0 ? successfulRuns / recentRuns : 0,
-      avg_deals_per_run: snapshot?.stats.active || 0,
-    },
-  };
-
-  const statusCode = health.status === "healthy" ? 200 : 503;
-  return jsonResponse(health, statusCode, request, env);
-}
-
-export async function handleReady(
-  env: Env,
-  request?: Request,
-): Promise<Response> {
-  const health = await handleHealth(env, request);
-  const body = (await health.json()) as HealthStatus;
-  const isReady = body.status === "healthy";
-  return jsonResponse(
-    { ready: isReady, ...body },
-    isReady ? 200 : 503,
-    request,
-    env,
-  );
-}
-
-export async function handleLive(
-  env: Env,
-  request?: Request,
-): Promise<Response> {
-  return jsonResponse(
-    { alive: true, timestamp: new Date().toISOString() },
-    200,
-    request,
-    env,
-  );
-}
-
-export async function handleMetrics(
-  env: Env,
-  format: string = "prometheus",
-  request?: Request,
-): Promise<Response> {
-  // Optimization: Parallelize snapshot, log and metrics retrieval to reduce total latency
-  const [
-    snapshot,
-    logs,
-    pipelineMetrics,
-    cumulativeRejections,
-    cumulativePasses,
-  ] = await Promise.all([
-    getProductionSnapshot(env),
-    getRecentLogs(env, 1000),
-    getRecentMetrics(env, 100),
-    import("../../lib/metrics/stats").then((m) =>
-      m.getCumulativeGateRejections(env),
-    ),
-    import("../../lib/metrics/stats").then((m) =>
-      m.getCumulativeGatePasses(env),
-    ),
-  ]);
-
-  const stats = calculateAggregateStats(pipelineMetrics);
-
-  const runs = logs.filter((l) => l.phase === "finalize").length;
-  const successes = logs.filter(
-    (l) => l.phase === "publish" && l.status === "complete",
-  ).length;
-  const candidates = logs.reduce((sum, l) => sum + (l.candidate_count || 0), 0);
-  const valid = logs.reduce((sum, l) => sum + (l.valid_count || 0), 0);
-  const duplicates = logs.reduce((sum, l) => sum + (l.duplicate_count || 0), 0);
-
-  if (format === "json") {
-    // Use latest run for more accurate funnel if available, fallback to consistent averages
-    const hasMetrics = pipelineMetrics && pipelineMetrics.length > 0;
-    const latestRun = hasMetrics ? pipelineMetrics[0] : null;
-
-    const funnel = {
-      discovered: latestRun
-        ? latestRun.deals_processed.discovered
-        : stats.avg_deals_per_run.discovered,
-      passed_trust_filter: latestRun
-        ? latestRun.deals_processed.passed_trust_filter
-        : stats.avg_deals_per_run.passed_trust_filter,
-      passed_all_validation: latestRun
-        ? latestRun.deals_processed.validated
-        : stats.avg_deals_per_run.validated,
-      published: latestRun
-        ? latestRun.deals_processed.published
-        : stats.avg_deals_per_run.published,
-      conversion_rate: "0%",
+      last_run:
+        logs.length > 0
+          ? {
+              run_id: logs[0].run_id,
+              timestamp: logs[0].ts,
+              duration_ms: logs[0].duration_ms || 0,
+              deals_count: 0,
+            }
+          : undefined,
     };
 
-    if (funnel.discovered > 0) {
-      funnel.conversion_rate = `${((funnel.published / funnel.discovered) * 100).toFixed(1)}%`;
-    }
+    return jsonResponse(response, 200, request, env);
+  } catch (error) {
+    return handleError(error, request, env, "Failed to get health status");
+  }
+}
 
-    return jsonResponse(
-      {
-        summary: {
-          total_runs: runs,
-          successful_runs: successes,
-          avg_duration_ms: stats.avg_duration_ms,
-          success_rate: stats.success_rate,
-        },
-        deals: {
-          active: snapshot?.stats.active || 0,
-          discovered_total: candidates,
-          validated_total: valid,
-          duplicate_total: duplicates,
-        },
-        funnel,
-        phases: stats.avg_phase_timings,
-      },
-      200,
-      request,
-      env,
-    );
+async function getLatestSnapshot(env: Env): Promise<boolean> {
+  try {
+    const result = await env.DEALS_DB.prepare(
+      "SELECT snapshot_hash FROM snapshots ORDER BY generated_at DESC LIMIT 1",
+    )
+      .first();
+    return result !== null;
+  } catch {
+    return false;
+  }
+}
+
+async function getRecentLogs(env: Env): Promise<LogEntry[]> {
+  try {
+    const result = await env.DEALS_LOG.list();
+    return result.keys.map((k) => JSON.parse(k.metadata as string) as LogEntry);
+  } catch {
+    return [];
+  }
+}
+
+async function checkD1Connection(env: Env): Promise<{
+  connected: boolean;
+  latencyMs: number;
+  error?: string;
+}> {
+  const start = Date.now();
+  try {
+    await env.DEALS_DB.prepare("SELECT 1").first();
+    return {
+      connected: true,
+      latencyMs: Date.now() - start,
+    };
+  } catch (error) {
+    return {
+      connected: false,
+      latencyMs: Date.now() - start,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+async function checkKVConnections(env: Env): Promise<{
+  [key: string]: { connected: boolean };
+}> {
+  const kvKeys = [
+    "DEALS_PROD",
+    "DEALS_STAGING",
+    "DEALS_LOG",
+    "DEALS_LOCK",
+    "DEALS_SOURCES",
+  ];
+  const kvChecks: Record<string, { connected: boolean }> = {};
+
+  for (let i = 0; i < kvKeys.length; i++) {
+    const kvKey = kvKeys[i];
+    try {
+      const ns = env[kvKey as keyof Env] as unknown;
+      kvChecks[kvKey] = !!(
+        ns &&
+        typeof ns === "object" &&
+        "get" in (ns as Record<string, unknown>)
+      );
+    } catch {
+      kvChecks[kvKey] = { connected: false };
+    }
   }
 
-  let metrics = formatMetricsForPrometheus(
-    stats,
-    pipelineMetrics,
-    cumulativeRejections,
-    cumulativePasses,
-  );
-
-  // Add legacy metrics for backward compatibility
-  metrics += `
-# HELP deals_runs_total Total discovery runs (legacy)
-deals_runs_total ${runs}
-# HELP deals_publish_success_total Successful publishes (legacy)
-deals_publish_success_total ${successes}
-# HELP deals_candidate_deals_total Candidate deals discovered (legacy)
-deals_candidate_deals_total ${candidates}
-# HELP deals_valid_deals_total Valid deals after validation (legacy)
-deals_valid_deals_total ${valid}
-# HELP deals_duplicate_deals_total Duplicate deals filtered (legacy)
-deals_duplicate_deals_total ${duplicates}
-# HELP deals_active_deals Current active deals in production (legacy)
-deals_active_deals ${snapshot?.stats.active || 0}
-`.trim();
-
-  return new Response(metrics, {
-    headers: {
-      "Content-Type": "text/plain",
-      ...SECURITY_HEADERS,
-    },
-  });
+  return kvChecks;
 }

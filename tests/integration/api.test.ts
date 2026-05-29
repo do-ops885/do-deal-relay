@@ -110,7 +110,7 @@ describe("API Endpoints", () => {
       DEALS_DB: {
         prepare: vi.fn().mockReturnValue({
           bind: vi.fn().mockReturnThis(),
-          first: vi.fn().mockResolvedValue({ 1: 1 }),
+          first: vi.fn().mockResolvedValue({ test: 1 }),
           run: vi.fn().mockResolvedValue({ success: true }),
           all: vi.fn().mockResolvedValue({ results: [] }),
         }),
@@ -118,6 +118,7 @@ describe("API Endpoints", () => {
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
+      EMAIL_WEBHOOK_SECRET: "test-email-secret",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

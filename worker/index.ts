@@ -35,6 +35,7 @@ import {
   handleMCPCall,
   handleMCPInfo,
 } from "./routes/mcp";
+import { handleMCPStream } from "./routes/mcp-stream";
 import {
   handleValidateUrl,
   handleValidateBatch,
@@ -46,6 +47,14 @@ import {
   handleListApiKeys,
   handleRevokeApiKey,
 } from "./routes/admin/keys";
+import {
+  handleRegister,
+  handleLogin,
+  handleRefreshToken,
+  handleGetCurrentUser,
+  handleUpdateProfile,
+  handleListUsers,
+} from "./routes/auth";
 import { withAuth } from "./lib/auth";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import {
@@ -68,6 +77,12 @@ import {
   handleEmailParse,
   handleEmailHelp,
 } from "./routes/email";
+import { handleSystemHealth } from "./routes/health";
+import {
+  handleDashboardStats,
+  handleDashboardRecentActivity,
+  handleDashboardSystemHealth,
+} from "./routes/dashboard";
 import { validateConfig } from "./lib/config-utils";
 
 // ============================================================================
@@ -127,6 +142,7 @@ const worker: ExportedHandler<Env> = {
       if (path === "/health") return handleHealth(env, request);
       if (path === "/health/ready") return handleReady(env, request);
       if (path === "/health/live") return handleLive(env, request);
+      if (path === "/health/system") return handleSystemHealth(env, request);
 
       // Metrics
       if (path === "/metrics") {
@@ -197,21 +213,7 @@ const worker: ExportedHandler<Env> = {
         });
       }
 
-      // Referral API
-      if (path === "/api/referrals") {
-        if (request.method === "GET") {
-          return withAuth(request, env, undefined, () =>
-            handleGetReferrals(url, env),
-          );
-        }
-        if (request.method === "POST") {
-          return withAuth(request, env, "user", () =>
-            handleCreateReferral(request, env),
-          );
-        }
-      }
-
-      // Referral Action Routes (deactivate/reactivate)
+      // Referral Action Routes (deactivate/reactivate) - Moved up to avoid shadowing
       const referralActionMatch = path.match(
         /^\/api\/referrals\/([^/]+)\/(deactivate|reactivate)$/,
       );
@@ -227,6 +229,20 @@ const worker: ExportedHandler<Env> = {
         if (code && action === "reactivate") {
           return withAuth(request, env, "user", () =>
             handleReactivateReferral(code, env),
+          );
+        }
+      }
+
+      // Referral API
+      if (path === "/api/referrals") {
+        if (request.method === "GET") {
+          return withAuth(request, env, undefined, () =>
+            handleGetReferrals(url, env),
+          );
+        }
+        if (request.method === "POST") {
+          return withAuth(request, env, "user", () =>
+            handleCreateReferral(request, env),
           );
         }
       }
@@ -295,6 +311,13 @@ const worker: ExportedHandler<Env> = {
         );
       }
 
+      // MCP SSE Streaming Endpoint
+      if (path === "/mcp/stream" && request.method === "GET") {
+        return withAuth(request, env, "user", () =>
+          handleMCPStream(request, env),
+        );
+      }
+
       // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
       if (path === "/mcp") {
         return withAuth(request, env, "user", () =>
@@ -334,7 +357,12 @@ const worker: ExportedHandler<Env> = {
       }
 
       // Webhook routes
-      const webhookResponse = await handleWebhookRoutes(request, env, path);
+      const webhookPath = path.startsWith("/api") ? path.slice(4) : path;
+      const webhookResponse = await handleWebhookRoutes(
+        request,
+        env,
+        webhookPath,
+      );
       if (webhookResponse) return webhookResponse;
 
       // Experience Feedback API
@@ -360,9 +388,7 @@ const worker: ExportedHandler<Env> = {
 
       // Email API
       if (path === "/api/email/incoming" && request.method === "POST") {
-        return withAuth(request, env, "user", () =>
-          handleEmailIncoming(request, env),
-        );
+        return handleEmailIncoming(request, env);
       }
       if (path === "/api/email/parse" && request.method === "POST") {
         return withAuth(request, env, "user", () =>
@@ -395,6 +421,54 @@ const worker: ExportedHandler<Env> = {
             handleRevokeApiKey(request, hash, env),
           );
         }
+      }
+
+      // Dashboard API
+      if (path === "/api/dashboard/stats" && request.method === "GET") {
+        return withAuth(request, env, "admin", () =>
+          handleDashboardStats(env, request),
+        );
+      }
+      if (
+        path === "/api/dashboard/recent-activity" &&
+        request.method === "GET"
+      ) {
+        return withAuth(request, env, "admin", () =>
+          handleDashboardRecentActivity(env, request),
+        );
+      }
+      if (path === "/api/dashboard/system-health" && request.method === "GET") {
+        return withAuth(request, env, "admin", () =>
+          handleDashboardSystemHealth(env, request),
+        );
+      }
+
+      // Auth API - Registration & Login (no auth required for register/login)
+      if (path === "/api/auth/register" && request.method === "POST") {
+        return handleRegister(request, env);
+      }
+      if (path === "/api/auth/login" && request.method === "POST") {
+        return handleLogin(request, env);
+      }
+      if (path === "/api/auth/refresh" && request.method === "POST") {
+        return handleRefreshToken(request, env);
+      }
+
+      // User API - Authenticated endpoints
+      if (path === "/api/users/me" && request.method === "GET") {
+        return withAuth(request, env, undefined, (auth) =>
+          handleGetCurrentUser(auth, request, env),
+        );
+      }
+      if (path === "/api/users/me" && request.method === "PATCH") {
+        return withAuth(request, env, undefined, (auth) =>
+          handleUpdateProfile(auth, request, env),
+        );
+      }
+      if (path === "/api/users" && request.method === "GET") {
+        return withAuth(request, env, "admin", (auth) =>
+          handleListUsers(auth, request, env),
+        );
       }
 
       // 404
