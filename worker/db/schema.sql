@@ -289,12 +289,13 @@ ORDER BY date DESC;
 
 -- API key usage statistics
 CREATE VIEW IF NOT EXISTS v_api_key_usage AS
-SELECT 
+SELECT
   ak.user_id,
-  ak.role,
+  u.role,
   COUNT(al.id) as action_count,
-  MAX(al.timestamp) as last_action
+  MAX(al.created_at) as last_action
 FROM api_keys ak
-LEFT JOIN audit_log al ON al.actor_id = ak.user_id AND al.actor_type = 'api_key'
-WHERE ak.is_active = 1
-GROUP BY ak.user_id, ak.role;
+JOIN users u ON u.id = ak.user_id
+LEFT JOIN audit_log al ON al.user_id = ak.user_id
+WHERE u.is_active = 1
+GROUP BY ak.user_id, u.role;

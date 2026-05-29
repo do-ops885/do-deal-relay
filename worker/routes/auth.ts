@@ -1,10 +1,8 @@
 import type { Env, User, UserPublic, CreateUserInput, LoginInput, UpdateUserInput } from "../types";
-import { handleError } from "../lib/error-handler";
 import { logger } from "../lib/global-logger";
 import { jsonResponse, errorResponse } from "./utils";
 import { generateUUID } from "../lib/crypto";
 import { createToken, hashPassword, verifyPassword } from "../lib/jwt";
-import { hasPermission } from "../middleware/authorization";
 import type { AuthResult } from "../lib/auth";
 
 
@@ -28,6 +26,86 @@ function getUserResponse(user: UserPublic): object {
   return { id: user.id, email: user.email, name: user.name, role: user.role, isActive: Boolean(user.is_active), createdAt: user.created_at, updatedAt: user.updated_at };
 }
 
+// ============================================================================
+// Handle functions (called by index.ts router)
+// ============================================================================
+
+export async function handleRegister(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = (await request.json()) as CreateUserInput;
+    if (!body.email || !body.password || !body.name) {
+      return errorResponse("Email, password, and name are required", 400, undefined, request, env);
+    }
+    return registerUser(body, request, env);
+  } catch {
+    return errorResponse("Invalid request body", 400, undefined, request, env);
+  }
+}
+
+export async function handleLogin(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = (await request.json()) as LoginInput;
+    if (!body.email || !body.password) {
+      return errorResponse("Email and password are required", 400, undefined, request, env);
+    }
+    return loginUser(body, request, env);
+  } catch {
+    return errorResponse("Invalid request body", 400, undefined, request, env);
+  }
+}
+
+export async function handleRefreshToken(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = (await request.json()) as { refreshToken: string };
+    if (!body.refreshToken) {
+      return errorResponse("Refresh token is required", 400, undefined, request, env);
+    }
+    return refreshAccessToken(body.refreshToken, request, env);
+  } catch {
+    return errorResponse("Invalid request body", 400, undefined, request, env);
+  }
+}
+
+export async function handleGetCurrentUser(auth: AuthResult, request: Request, env: Env): Promise<Response> {
+  try {
+    if (!auth.userId) return errorResponse("Unauthorized", 401, undefined, request, env);
+    const user = await getUserById(auth.userId, env);
+    if (!user) return errorResponse("User not found", 404, undefined, request, env);
+    return jsonResponse(getUserResponse(toPublicUser(user)), 200, request, env);
+  } catch (error) { logger.error("Failed to get profile", { error: String(error) }); return errorResponse("Failed to get profile", 500, undefined, request, env); }
+}
+
+export async function handleUpdateProfile(auth: AuthResult, request: Request, env: Env): Promise<Response> {
+  try {
+    if (!auth.userId) return errorResponse("Unauthorized", 401, undefined, request, env);
+    const body = (await request.json()) as UpdateUserInput;
+    return updateProfile(auth.userId, body, request, env);
+  } catch {
+    return errorResponse("Invalid request body", 400, undefined, request, env);
+  }
+}
+
+export async function handleListUsers(auth: AuthResult, request: Request, env: Env): Promise<Response> {
+  try {
+    if (!auth.userId) return errorResponse("Unauthorized", 401, undefined, request, env);
+    const result = await env.DEALS_DB.prepare("SELECT id, email, name, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC").all();
+    const users = (result.results || []).map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      isActive: Boolean(row.is_active),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+    return jsonResponse({ users }, 200, request, env);
+  } catch (error) { logger.error("Failed to list users", { error: String(error) }); return errorResponse("Failed to list users", 500, undefined, request, env); }
+}
+
+// ============================================================================
+// Core auth logic
+// ============================================================================
+
 export async function registerUser(input: CreateUserInput, request: Request, env: Env): Promise<Response> {
   try {
     const existing = await env.DEALS_DB.prepare("SELECT id FROM users WHERE email = ?").bind(input.email.toLowerCase()).first();
@@ -40,7 +118,7 @@ export async function registerUser(input: CreateUserInput, request: Request, env
     const user = await getUserById(id, env);
     if (!user) return errorResponse("User registration failed", 500, undefined, request, env);
     return jsonResponse(getUserResponse(toPublicUser(user)), 201, request, env);
-  } catch (error) { return handleError(error, request, env, "Failed to register user"); }
+  } catch (error) { logger.error("Failed to register user", { error: String(error) }); return errorResponse("Failed to register user", 500, undefined, request, env); }
 }
 
 export async function loginUser(input: LoginInput, request: Request, env: Env): Promise<Response> {
@@ -53,7 +131,7 @@ export async function loginUser(input: LoginInput, request: Request, env: Env): 
     const refreshToken = await createToken({ sub: user.id, type: "refresh" }, getRefreshSecret(env), "7d");
     await logAuditAction(user.id, "user_login", "users", request, env, { userId: user.id });
     return jsonResponse({ user: getUserResponse(toPublicUser(user)), accessToken, refreshToken, expiresIn: 86400 }, 200, request, env);
-  } catch (error) { return handleError(error, request, env, "Failed to login user"); }
+  } catch (error) { logger.error("Failed to login user", { error: String(error) }); return errorResponse("Failed to login user", 500, undefined, request, env); }
 }
 
 export async function refreshAccessToken(token: string, request: Request, env: Env): Promise<Response> {
@@ -63,13 +141,13 @@ export async function refreshAccessToken(token: string, request: Request, env: E
     const payload = await verifyJwt(token, refreshSecret);
     if (!payload) return errorResponse("Invalid or expired refresh token", 401, undefined, request, env);
     if (payload.type !== "refresh") return errorResponse("Invalid token type", 401, undefined, request, env);
-    const user = await getUserById(payload.sub, env);
+    const user = await getUserById(payload.sub as string, env);
     if (!user || !user.is_active) return errorResponse("User not found or inactive", 401, undefined, request, env);
     const newAccessToken = await createToken({ sub: user.id, role: user.role, email: user.email }, getJwtSecret(env), "24h");
     const newRefreshToken = getRefreshSecret(env) ? await createToken({ sub: user.id, type: "refresh" }, getRefreshSecret(env), "7d") : undefined;
     await logAuditAction(user.id, "token_refresh", "users", request, env, { userId: user.id });
     return jsonResponse({ accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 86400 }, 200, request, env);
-  } catch (error) { return handleError(error, request, env, "Failed to refresh token"); }
+  } catch (error) { logger.error("Failed to refresh token", { error: String(error) }); return errorResponse("Failed to refresh token", 500, undefined, request, env); }
 }
 
 export async function getProfile(userId: string, request: Request, env: Env): Promise<Response> {
@@ -77,7 +155,7 @@ export async function getProfile(userId: string, request: Request, env: Env): Pr
     const user = await getUserById(userId, env);
     if (!user) return errorResponse("User not found", 404, undefined, request, env);
     return jsonResponse(getUserResponse(toPublicUser(user)), 200, request, env);
-  } catch (error) { return handleError(error, request, env, "Failed to get profile"); }
+  } catch (error) { logger.error("Failed to get profile", { error: String(error) }); return errorResponse("Failed to get profile", 500, undefined, request, env); }
 }
 
 export async function updateProfile(userId: string, input: UpdateUserInput, request: Request, env: Env): Promise<Response> {
@@ -96,22 +174,7 @@ export async function updateProfile(userId: string, input: UpdateUserInput, requ
     if (!updated) return errorResponse("User update failed", 500, undefined, request, env);
     await logAuditAction(userId, "user_update", "users", request, env, { userId, changes: Object.keys(input) });
     return jsonResponse(getUserResponse(toPublicUser(updated)), 200, request, env);
-  } catch (error) { return handleError(error, request, env, "Failed to update profile"); }
-}
-
-export async function validateToken(token: string, request: Request, env: Env): Promise<AuthResult> {
-  try {
-    const { verifyToken: verifyJwt } = await import("../lib/jwt");
-    const payload = await verifyJwt(token, getJwtSecret(env));
-    if (!payload) return { valid: false, payload: null, isRefreshToken: false };
-    return { valid: true, payload, isRefreshToken: false };
-  } catch (error) {
-    const { verifyToken: verifyJwt } = await import("../lib/jwt");
-    const refreshSecret = getRefreshSecret(env);
-    const payload = await verifyJwt(token, refreshSecret);
-    if (!payload) throw new Error("Invalid refresh token");
-    return { valid: false, payload, isRefreshToken: true };
-  }
+  } catch (error) { logger.error("Failed to update profile", { error: String(error) }); return errorResponse("Failed to update profile", 500, undefined, request, env); }
 }
 
 async function getUserById(id: string, env: Env): Promise<User | null> {
@@ -128,7 +191,7 @@ async function logAuditAction(userId: string | null, action: string, resource: s
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const userAgent = request.headers.get("User-Agent") || "unknown";
     const now = new Date().toISOString();
-    await env.DEALS_DB.prepare("INSERT INTO audit_log (id, user_id, action, resource, ip, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, userId, action, resource, ip, userAgent, now).run();
+    await env.DEALS_DB.prepare("INSERT INTO audit_log (id, user_id, action, resource, ip_address, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, userId, action, resource, ip, userAgent, now).run();
   } catch {}
 }
 
