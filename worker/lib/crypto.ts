@@ -100,6 +100,26 @@ export function calculateStringSimilarity(a: string, b: string): number {
 }
 
 /**
+ * Encode a string or Uint8Array to base64url format
+ */
+export function base64urlEncode(input: string | Uint8Array): string {
+  let bytes: Uint8Array;
+  if (typeof input === "string") {
+    bytes = new TextEncoder().encode(input);
+  } else {
+    bytes = input;
+  }
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+/**
  * Calculate URL similarity (for semantic deduplication)
  */
 export function calculateUrlSimilarity(

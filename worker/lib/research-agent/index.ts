@@ -40,7 +40,7 @@ export {
 // Extractor
 export {
   extractContent,
-  extractWithSelectorSet,
+  extractByConfig as extractWithSelectorSet,
   type ExtractionConfig,
   type ExtractedContent,
 } from "./extractor";

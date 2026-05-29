@@ -15,7 +15,7 @@ export function buildSlashCommands(): unknown[] {
     new SlashCommandBuilder()
       .setName("help")
       .setDescription("Show help information")
-      .addStringOption((option: unknown) =>
+      .addStringOption((option) =>
         option
           .setName("command")
           .setDescription("Specific command to get help for")

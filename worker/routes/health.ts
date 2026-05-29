@@ -180,7 +180,7 @@ export async function handleSystemHealth(
       uptime_seconds: Math.floor((Date.now() - START_TIME) / 1000),
       environment: env.ENVIRONMENT || "unknown",
       checks: {
-        kv_connection: dependencies.kv_deals_prod.status === "healthy",
+        kv_connection: dependencies.kv_deals_prod?.status === "healthy",
         last_run_success: !!pipeValue?.last_run,
         snapshot_valid: !!snapValue,
       },
