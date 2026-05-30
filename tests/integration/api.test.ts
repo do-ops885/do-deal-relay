@@ -147,8 +147,19 @@ describe("API Endpoints", () => {
     });
 
     it("should return 503 when snapshot is missing", async () => {
+      const emptyDbEnv = {
+        ...mockEnv,
+        DEALS_DB: {
+          prepare: vi.fn().mockReturnValue({
+            bind: vi.fn().mockReturnThis(),
+            first: vi.fn().mockResolvedValue(null),
+            run: vi.fn().mockResolvedValue({ success: true }),
+            all: vi.fn().mockResolvedValue({ results: [] }),
+          }),
+        } as any,
+      };
       const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, emptyDbEnv as any);
 
       expect(response.status).toBe(503);
       const body = (await response.json()) as any;
@@ -183,6 +194,18 @@ describe("API Endpoints", () => {
         },
       });
       mockKvStorage.set("prod:snapshot:prod", snapshot);
+      mockKvStorage.set("log:metrics:index", JSON.stringify(["test-run"]));
+      mockKvStorage.set(
+        "log:metrics:test-run",
+        JSON.stringify({
+          deals_processed: {
+            discovered: 10,
+            passed_trust_filter: 9,
+            validated: 8,
+            published: 8,
+          },
+        }),
+      );
 
       const request = new Request("http://localhost/metrics", {
         headers: authHeader,
@@ -696,17 +719,9 @@ describe("API Endpoints", () => {
     it("should handle KV errors gracefully", async () => {
       const brokenEnv = {
         ...mockEnv,
-        DEALS_PROD: {
-          get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
-        DEALS_LOG: {
-          get: vi.fn().mockRejectedValue(new Error("KV error")),
-          put: vi.fn().mockRejectedValue(new Error("KV error")),
-          list: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
-        DEALS_LOCK: {
-          get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
+        DEALS_PROD: undefined,
+        DEALS_LOG: undefined,
+        DEALS_LOCK: undefined,
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");

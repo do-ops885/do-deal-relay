@@ -60,7 +60,10 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       });
       return false;
     }
-    const hostname = parsed.hostname.toLowerCase();
+    const hostname = parsed.hostname
+      .toLowerCase()
+      .replace(/^\[/, "")
+      .replace(/\]$/, "");
     if (
       (SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)
     ) {

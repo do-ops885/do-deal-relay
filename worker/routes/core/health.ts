@@ -1,5 +1,6 @@
 import type { Env, HealthStatus, LogEntry, PipelineMetrics } from "../../types";
 import { jsonResponse } from "../utils";
+import { VERSION } from "../../version";
 
 export async function handleHealth(
   env: Env,
@@ -57,6 +58,28 @@ export async function handleMetrics(
       }
     }
 
+    if (format === "prometheus") {
+      const metrics = [
+        "# HELP deals_discovered_total Total deals discovered",
+        `deals_discovered_total ${discovered}`,
+        "# HELP deals_passed_trust_filter_total Total deals passed trust filter",
+        `deals_passed_trust_filter_total ${passed_trust_filter}`,
+        "# HELP deals_validated_total Total deals validated",
+        `deals_validated_total ${validated}`,
+        "# HELP deals_active_deals Total active deals published",
+        `deals_active_deals ${published}`,
+        "# HELP deals_runs_total Total discovery runs",
+        `deals_runs_total ${runIds.length}`,
+      ].join("\n");
+
+      return new Response(metrics, {
+        headers: {
+          "Content-Type": "text/plain",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     const conversion_rate =
       discovered > 0 ? `${((published / discovered) * 100).toFixed(1)}%` : "0%";
 
@@ -99,8 +122,7 @@ export async function getHealthStatus(
       kvLog.connected &&
       kvLock.connected &&
       kvSources.connected;
-    const allDepsHealthy =
-      snapshot || !allKvConnected ? false : d1Check.connected;
+    const allDepsHealthy = snapshot && allKvConnected && d1Check.connected;
 
     const recentRuns = logs.filter((l) => l.phase === "finalize").length;
     const successfulRuns = logs.filter(
@@ -109,11 +131,11 @@ export async function getHealthStatus(
 
     let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
 
-    if (!allDepsHealthy || !allKvConnected) {
+    if (!allDepsHealthy) {
       overallStatus = "degraded";
     }
 
-    if (!d1Check.connected || !allKvConnected) {
+    if (!allKvConnected || !d1Check.connected) {
       overallStatus = "unhealthy";
     }
 
@@ -121,7 +143,7 @@ export async function getHealthStatus(
 
     const response: HealthStatus = {
       status: overallStatus,
-      version: "1.0.0",
+      version: VERSION,
       timestamp: new Date().toISOString(),
       uptime_seconds: uptimeSeconds,
       checks: {
@@ -171,7 +193,8 @@ export async function getHealthStatus(
           : undefined,
     };
 
-    return jsonResponse(response, 200, request, env);
+    const statusCode = overallStatus === "healthy" ? 200 : 503;
+    return jsonResponse(response, statusCode, request, env);
   } catch {
     return jsonResponse(
       { error: "Failed to get health status" },

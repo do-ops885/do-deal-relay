@@ -76,7 +76,7 @@ export async function verifyToken(
 
 function base64urlDecode(str: string): Uint8Array {
   const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const binaryString = Buffer.from(base64, "base64").toString("binary");
+  const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++)
     bytes[i] = binaryString.charCodeAt(i);
@@ -107,11 +107,11 @@ export async function hashPassword(password: string): Promise<string> {
     false,
     ["deriveBits"],
   );
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+  const bits = (await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt as any, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     256,
-  );
+  )) as any;
   const computedHash = base64urlEncode(new Uint8Array(bits));
   const saltStr = base64urlEncode(salt);
   return saltStr + "." + computedHash;
@@ -134,16 +134,16 @@ export async function verifyPassword(
       false,
       ["deriveBits"],
     );
-    const bits = await crypto.subtle.deriveBits(
+    const bits = (await crypto.subtle.deriveBits(
       {
         name: "PBKDF2",
-        salt: new TextEncoder().encode(salt),
+        salt: base64urlDecode(salt) as any,
         iterations: 100000,
         hash: "SHA-256",
       },
       keyMaterial,
       256,
-    );
+    )) as any;
     const computedHash = base64urlEncode(new Uint8Array(bits));
     return constantTimeCompare(computedHash, expectedHash);
   } catch {
