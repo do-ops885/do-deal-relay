@@ -281,11 +281,15 @@ Secrets are encrypted and stored by Cloudflare. Set them per environment:
 ```bash
 # Production secrets
 wrangler secret put GITHUB_TOKEN --env production
+wrangler secret put JWT_SECRET --env production
+wrangler secret put JWT_REFRESH_SECRET --env production
 wrangler secret put TELEGRAM_BOT_TOKEN --env production
 wrangler secret put TELEGRAM_CHAT_ID --env production
 
 # Staging secrets
 wrangler secret put GITHUB_TOKEN --env staging
+wrangler secret put JWT_SECRET --env staging
+wrangler secret put JWT_REFRESH_SECRET --env staging
 wrangler secret put TELEGRAM_BOT_TOKEN --env staging
 wrangler secret put TELEGRAM_CHAT_ID --env staging
 ```
@@ -293,6 +297,8 @@ wrangler secret put TELEGRAM_CHAT_ID --env staging
 | Secret                 | Required    | Purpose                        |
 | ---------------------- | ----------- | ------------------------------ |
 | GITHUB_TOKEN           | HIGH (P1)   | GitHub commits, PR creation    |
+| JWT_SECRET             | HIGH (P1)   | Secret for JWT token signing   |
+| JWT_REFRESH_SECRET     | HIGH (P1)   | Secret for JWT refresh tokens  |
 | TELEGRAM_BOT_TOKEN     | Optional    | Telegram notifications         |
 | TELEGRAM_CHAT_ID       | Optional    | Telegram destination chat      |
 

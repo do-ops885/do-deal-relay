@@ -6,8 +6,28 @@ Production: `https://your-worker.workers.dev`
 
 ## Authentication
 
-No authentication required for public endpoints.
-For admin endpoints (future), API key via header: `X-API-Key: your-key`
+The system uses two primary authentication methods:
+
+1.  **JWT Bearer Tokens**: Used for user-authenticated sessions. Obtain a token via `/api/auth/login`.
+    - Header: `Authorization: Bearer <your-jwt-token>`
+2.  **API Keys**: Used for programmatic access by agents or external systems.
+    - Header: `X-API-Key: <your-api-key>`
+    - Alternatively: `Authorization: Bearer <your-api-key>`
+
+### Roles and Permissions
+
+| Role | Description |
+|------|-------------|
+| `admin` | Full system access, including key management and pipeline control. |
+| `user` | Standard access: submit deals, use research tools, and manage profile. |
+| `viewer` | Read-only access to deals and status. |
+
+**Public Endpoints**:
+- `/health`, `/health/ready`, `/health/live`, `/health/system`
+- `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
+- `/api/email/incoming` (uses HMAC signature if configured)
+
+Most other endpoints require authentication (at least `viewer` role).
 
 ## Endpoints
 
@@ -15,37 +35,24 @@ For admin endpoints (future), API key via header: `X-API-Key: your-key`
 
 Check system health status.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/health"
+```
+
 **Response:**
 
 ```json
 {
   "status": "healthy",
-  "version": "0.1.6",
-  "timestamp": "2024-03-31T12:00:00Z",
+  "version": "1.0.0",
+  "timestamp": "2026-05-17T12:00:00Z",
+  "uptime_seconds": 3600,
   "checks": {
     "kv_connection": true,
     "last_run_success": true,
-    "snapshot_valid": true
-  }
-}
-```
-
-#### GET /health/ready
-
-Readiness probe - returns 200 when all dependencies are healthy.
-
-**Response** (200 OK):
-
-```json
-{
-  "ready": true,
-  "status": "healthy",
-  "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.6",
-  "checks": {
-    "kv_connection": true,
-    "last_run_success": true,
-    "snapshot_valid": true
+    "snapshot_valid": true,
+    "d1_connected": true
   },
   "components": {
     "kv_stores": {
@@ -55,15 +62,41 @@ Readiness probe - returns 200 when all dependencies are healthy.
       "deals_lock": true,
       "deals_sources": true
     },
+    "d1_database": {
+      "connected": true,
+      "latency_ms": 10
+    },
     "pipeline": {
-      "last_run": "2026-04-04T11:00:00Z",
+      "last_run": "2026-05-17T11:00:00Z",
       "last_success": true,
       "average_duration_ms": 0
     },
     "external_services": {
       "github_api": true
     }
+  },
+  "metrics": {
+    "total_runs_24h": 4,
+    "success_rate_24h": 100,
+    "avg_deals_per_run": 0
   }
+}
+```
+
+#### GET /health/ready
+
+Readiness probe - returns 200 when all dependencies are healthy.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/health/ready"
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "ready": true
 }
 ```
 
@@ -72,14 +105,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
 ```json
 {
   "ready": false,
-  "status": "degraded",
-  "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.6",
-  "checks": {
-    "kv_connection": false,
-    "last_run_success": false,
-    "snapshot_valid": false
-  }
+  "reason": "D1 unavailable"
 }
 ```
 
@@ -87,12 +113,56 @@ Readiness probe - returns 200 when all dependencies are healthy.
 
 Liveness probe - returns 200 if service is running. Minimal check used by orchestrators (Kubernetes, etc.) to verify the worker is alive.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/health/live"
+```
+
 **Response** (200 OK):
 
 ```json
 {
   "alive": true,
-  "timestamp": "2026-04-04T12:00:00Z"
+  "timestamp": "2026-05-17T12:00:00Z"
+}
+```
+
+#### GET /health/system
+
+Comprehensive system health check with dependency latency and status.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/health/system"
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "status": "healthy",
+  "version": "0.1.6",
+  "timestamp": "2026-05-17T12:00:00Z",
+  "uptime_seconds": 3600,
+  "environment": "production",
+  "checks": {
+    "kv_connection": true,
+    "last_run_success": true,
+    "snapshot_valid": true
+  },
+  "dependencies": {
+    "d1_database": { "status": "healthy", "name": "D1 Database", "latency_ms": 15 },
+    "kv_deals_prod": { "status": "healthy", "name": "KV Deals Prod", "latency_ms": 10 },
+    "kv_deals_staging": { "status": "healthy", "name": "KV Deals Staging", "latency_ms": 8 },
+    "kv_deals_log": { "status": "healthy", "name": "KV Deals Log", "latency_ms": 12 },
+    "kv_deals_lock": { "status": "healthy", "name": "KV Deals Lock", "latency_ms": 5 },
+    "kv_deals_sources": { "status": "healthy", "name": "KV Deals Sources", "latency_ms": 9 }
+  },
+  "pipeline": {
+    "locked": false,
+    "last_run": "2026-05-17T11:00:00Z",
+    "last_success": true
+  }
 }
 ```
 
@@ -101,6 +171,11 @@ Liveness probe - returns 200 if service is running. Minimal check used by orches
 ### GET /deals/similar
 
 Get deals similar to a specific deal code or domain.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/deals/similar?code=ABC123"
+```
 
 **Query Parameters:**
 
@@ -129,6 +204,12 @@ Get deals similar to a specific deal code or domain.
 
 Get an explanation of why a deal was ranked or scored as it was.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/deals/sha256-hash/explain" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Parameters:**
 
 - `id` (string): The deal ID (sha256 hash)
@@ -156,6 +237,11 @@ Get an explanation of why a deal was ranked or scored as it was.
 ### GET /deals/ranked
 
 Get ranked and sorted deals with composite scoring.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/deals/ranked?sort_by=confidence&limit=10"
+```
 
 **Query Parameters:**
 
@@ -201,6 +287,11 @@ Get ranked and sorted deals with composite scoring.
 
 Get highlighted deals (top, expiring soon, recently added).
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/deals/highlights?limit=3"
+```
+
 **Query Parameters:**
 
 - `limit` (number): Deals per category (default: 5)
@@ -225,6 +316,12 @@ Get highlighted deals (top, expiring soon, recently added).
 ### GET /api/analytics
 
 Get comprehensive deal analytics and insights.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/analytics?days=30" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
 
 **Query Parameters:**
 
@@ -279,6 +376,11 @@ Get comprehensive deal analytics and insights.
 
 Get active deals (filtered array).
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/deals?category=finance"
+```
+
 **Query Parameters:**
 
 - `category` (string): Filter by category (e.g., 'trading', 'crypto')
@@ -312,13 +414,18 @@ Get active deals (filtered array).
 
 Get full snapshot with metadata.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/deals.json"
+```
+
 **Response:**
 
 ```json
 {
   "version": "0.1.6",
-  "generated_at": "2024-03-31T12:00:00Z",
-  "run_id": "deals-2024-03-31-12",
+  "generated_at": "2026-05-17T12:00:00Z",
+  "run_id": "deals-2026-05-17-12",
   "snapshot_hash": "abc123...",
   "stats": {
     "total": 50,
@@ -335,6 +442,12 @@ Get full snapshot with metadata.
 ### GET /metrics
 
 Prometheus-compatible metrics.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/metrics" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
 
 **Response:**
 
@@ -367,6 +480,12 @@ validation_gate_rejection_ratio{gate="source_trust"} 0.1000
 
 Trigger manual discovery (triggers pipeline).
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/discover" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -388,6 +507,12 @@ Trigger manual discovery (triggers pipeline).
 
 Get current pipeline status.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/status" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -407,6 +532,12 @@ Get current pipeline status.
 ### GET /api/log
 
 Get research logs.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/log?count=10" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
 
 **Query Parameters:**
 
@@ -443,6 +574,14 @@ Get research logs.
 
 Submit a new deal for validation.
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/submit" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"url": "https://example.com/invite/CODE123", "code": "CODE123", "source": "example.com"}'
+```
+
 **Request Body:**
 
 ```json
@@ -472,6 +611,221 @@ Submit a new deal for validation.
 
 ---
 
+## Auth API
+
+Public endpoints for user registration and authentication.
+
+### POST /api/auth/register
+
+Register a new user account.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "securepassword123", "name": "Jane Doe"}'
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "name": "Jane Doe"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "name": "Jane Doe",
+  "role": "user",
+  "isActive": true,
+  "createdAt": "2026-05-17T12:00:00Z",
+  "updatedAt": "2026-05-17T12:00:00Z"
+}
+```
+
+---
+
+### POST /api/auth/login
+
+Authenticate and receive JWT access and refresh tokens.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "securepassword123"}'
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "role": "user",
+    "isActive": true,
+    "createdAt": "2026-05-17T12:00:00Z",
+    "updatedAt": "2026-05-17T12:00:00Z"
+  },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "eyJhbG...",
+  "expiresIn": 86400
+}
+```
+
+---
+
+### POST /api/auth/refresh
+
+Exchange a refresh token for a new access token.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken": "your-refresh-token"}'
+```
+
+**Request Body:**
+
+```json
+{
+  "refreshToken": "eyJhbG..."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "accessToken": "eyJhbG...",
+  "refreshToken": "eyJhbG...",
+  "expiresIn": 86400
+}
+```
+
+---
+
+## User API
+
+Manage user profiles and accounts.
+
+### GET /api/users/me
+
+Get the currently authenticated user's profile.
+
+**Authentication**: Bearer Token required.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/users/me" \
+  -H "Authorization: Bearer <your-access-token>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "name": "Jane Doe",
+  "role": "user",
+  "isActive": true,
+  "createdAt": "2026-05-17T12:00:00Z",
+  "updatedAt": "2026-05-17T12:00:00Z"
+}
+```
+
+---
+
+### PATCH /api/users/me
+
+Update the current user's profile information.
+
+**Authentication**: Bearer Token required.
+
+**Example:**
+```bash
+curl -X PATCH "https://your-worker.workers.dev/api/users/me" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Jane Smith"}'
+```
+
+**Request Body:**
+
+```json
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "uuid",
+  "email": "jane.smith@example.com",
+  "name": "Jane Smith",
+  "role": "user",
+  "isActive": true,
+  "updatedAt": "2026-05-17T12:30:00Z"
+}
+```
+
+---
+
+### GET /api/users
+
+List all registered users (Admin only).
+
+**Authentication**: Admin role required.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/users" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "Jane Doe",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2026-05-17T12:00:00Z",
+      "updatedAt": "2026-05-17T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
 ## Referral API
 
 Manage referral codes with full CRUD operations and research capabilities.
@@ -479,6 +833,11 @@ Manage referral codes with full CRUD operations and research capabilities.
 ### GET /api/referrals
 
 Search and list referral codes with filtering.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/referrals?domain=trading212.com&status=active"
+```
 
 **Query Parameters:**
 
@@ -501,7 +860,7 @@ Search and list referral codes with filtering.
       "domain": "trading212.com",
       "status": "active",
       "source": "api",
-      "submitted_at": "2024-03-31T12:00:00Z",
+      "submitted_at": "2026-05-17T12:00:00Z",
       "metadata": {
         "title": "Trading212 Referral",
         "description": "Free share worth up to £100",
@@ -523,6 +882,14 @@ Search and list referral codes with filtering.
 ### POST /api/referrals
 
 Create a new referral code.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/referrals" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"code": "MYCODE123", "url": "https://example.com/invite/MYCODE123", "domain": "example.com"}'
+```
 
 **Request Body:**
 
@@ -594,6 +961,20 @@ Get a specific referral by code.
 
 - `code` (string): The referral code to look up
 
+**Query Parameters:**
+
+- `redirect` (boolean): If `true`, redirects to the referral URL instead of returning JSON (default: `false`)
+
+**Example (JSON):**
+```bash
+curl "https://your-worker.workers.dev/api/referrals/GcCOCxbo"
+```
+
+**Example (Redirect):**
+```bash
+curl -I "https://your-worker.workers.dev/api/referrals/GcCOCxbo?redirect=true"
+```
+
 **Response:**
 
 ```json
@@ -605,7 +986,7 @@ Get a specific referral by code.
     "domain": "trading212.com",
     "status": "active",
     "source": "api",
-    "submitted_at": "2024-03-31T12:00:00Z",
+      "submitted_at": "2026-05-17T12:00:00Z",
     "submitted_by": "api",
     "expires_at": "2024-12-31T23:59:59Z",
     "deactivated_at": null,
@@ -642,6 +1023,14 @@ Get a specific referral by code.
 ### POST /api/referrals/:code/deactivate
 
 Deactivate a referral code.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/referrals/GcCOCxbo/deactivate" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"reason": "expired"}'
+```
 
 **Parameters:**
 
@@ -695,6 +1084,12 @@ Deactivate a referral code.
 
 Reactivate a previously deactivated referral code.
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/referrals/GcCOCxbo/reactivate" \
+  -H "Authorization: Bearer <your-access-token>"
+```
+
 **Parameters:**
 
 - `code` (string): The referral code to reactivate
@@ -726,6 +1121,14 @@ Reactivate a previously deactivated referral code.
 ### POST /api/research
 
 Research referral codes for a specific domain or query.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/research" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"query": "trading212 referral code", "domain": "trading212.com"}'
+```
 
 **Request Body:**
 
@@ -799,6 +1202,14 @@ Endpoints for validating referral URLs, codes, and retrieving validation system 
 
 Validate a single referral URL for accessibility, redirects, and security (SSRF).
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/validate/url" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"url": "https://example.com/invite/CODE123"}'
+```
+
 **Request Body:**
 
 ```json
@@ -827,6 +1238,14 @@ Validate a single referral URL for accessibility, redirects, and security (SSRF)
 ### POST /api/validate/batch
 
 Validate multiple URLs in a single request.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/validate/batch" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"urls": ["https://site1.com/ref1", "https://site2.com/ref2"]}'
+```
 
 **Request Body:**
 
@@ -858,12 +1277,18 @@ Validate multiple URLs in a single request.
 
 Get comprehensive validation system statistics and deal health metrics.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/validation/stats" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
 {
   "validation": {
-    "timestamp": "2024-03-31T12:00:00Z",
+    "timestamp": "2026-05-17T12:00:00Z",
     "total": 150,
     "valid": 142,
     "invalid": 8,
@@ -886,6 +1311,12 @@ Get comprehensive validation system statistics and deal health metrics.
 ### POST /api/deals/:code/validate
 
 Perform a full validation check on an existing deal by its code.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/deals/ABC123/validate" \
+  -H "Authorization: Bearer <your-access-token>"
+```
 
 **Parameters:**
 
@@ -1025,6 +1456,12 @@ curl "https://your-worker.workers.dev/api/d1/suggestions?q=trad&limit=5"
 
 Get comprehensive database statistics.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/d1/stats" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -1113,6 +1550,12 @@ curl "https://your-worker.workers.dev/api/d1/deals?status=all&limit=100"
 
 List all domains with deal counts.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/d1/domains" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -1141,6 +1584,12 @@ List all domains with deal counts.
 ### GET /api/d1/categories
 
 List all categories with deal counts.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/d1/categories" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
 
 **Response:**
 
@@ -1217,6 +1666,12 @@ curl "https://your-worker.workers.dev/api/d1/migrations?action=init"
 
 Check D1 database health and connectivity.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/d1/health" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -1290,6 +1745,14 @@ Search deals using natural language queries like "trading deals with $100 bonuse
 ### POST /api/nlq
 
 Execute a natural language query to search for deals.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/nlq" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"query": "trading platforms with $100 signup bonus", "limit": 5}'
+```
 
 **Request Body:**
 
@@ -1374,6 +1837,12 @@ curl -X POST "https://your-worker.workers.dev/api/nlq" \
 
 Execute a natural language query via URL parameter (simplified interface for quick queries).
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/nlq?q=crypto%20deals&limit=5" \
+  -H "Authorization: Bearer <your-access-token>"
+```
+
 **Query Parameters:**
 
 - `q` (string, required): Natural language search query (max 500 characters)
@@ -1402,6 +1871,14 @@ curl "https://your-worker.workers.dev/api/nlq?q=finance&include_expired=true"
 ### POST /api/nlq/explain
 
 Explain how a query would be parsed without executing it. Useful for debugging and understanding query interpretation.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/nlq/explain" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"query": "high value crypto signup bonuses"}'
+```
 
 **Request Body:**
 
@@ -1551,7 +2028,7 @@ Subscribe to receive webhook events when referrals change.
     "events": ["referral.created", "referral.updated"],
     "secret": "whsec_xxxxxxxxxxxxxxxxxxxxxx",
     "active": true,
-    "created_at": "2024-03-31T12:00:00Z"
+      "created_at": "2026-05-17T12:00:00Z"
   }
 }
 ```
@@ -1645,7 +2122,7 @@ List active webhook subscriptions for a partner.
       "url": "https://example.com/webhooks",
       "events": ["referral.created", "referral.updated"],
       "active": true,
-      "created_at": "2024-03-31T12:00:00Z",
+      "created_at": "2026-05-17T12:00:00Z",
       "filters": {
         "domains": ["trading212.com"],
         "status": ["active"]
@@ -1709,7 +2186,7 @@ Register a new webhook partner for incoming webhooks.
     "active": true,
     "allowed_events": ["referral.created", "referral.updated"],
     "rate_limit_per_minute": 100,
-    "created_at": "2024-03-31T12:00:00Z"
+    "created_at": "2026-05-17T12:00:00Z"
   }
 }
 ```
@@ -1754,7 +2231,7 @@ Get details for a specific webhook partner.
     "active": true,
     "allowed_events": ["referral.created", "referral.updated"],
     "rate_limit_per_minute": 100,
-    "created_at": "2024-03-31T12:00:00Z"
+    "created_at": "2026-05-17T12:00:00Z"
   }
 }
 ```
@@ -2037,7 +2514,7 @@ Get the current sync state for a partner.
 {
   "state": {
     "partner_id": "partner_trading212",
-    "last_sync_at": "2024-03-31T12:00:00Z",
+    "last_sync_at": "2026-05-17T12:00:00Z",
     "cursor": "cursor_token_xyz",
     "sync_version": 42,
     "pending_changes": 5,
@@ -2070,6 +2547,18 @@ Process incoming emails to extract referral codes, parse email content for testi
 ### POST /api/email/incoming
 
 Receive and process emails via webhook to extract referral codes. Supports HMAC signature verification for secure email processing.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/email/incoming" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "user@example.com",
+    "to": "referrals@do-deal-relay.com",
+    "subject": "Trading212 Referral",
+    "text": "My code is ABC123"
+  }'
+```
 
 **Request Headers**:
 
@@ -2167,6 +2656,14 @@ curl -X POST "https://your-worker.workers.dev/api/email/incoming" \
 
 Parse email content for testing email extraction without storing results. Useful for debugging email parsing logic and verifying extraction patterns.
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/email/parse" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"from": "test@example.com", "subject": "Referral Code", "text": "Code: XYZ789 for Robinhood"}'
+```
+
 **Request Headers**:
 
 - `Content-Type` (string, required): `application/json`
@@ -2244,6 +2741,11 @@ curl -X POST "https://your-worker.workers.dev/api/email/parse" \
 ### GET /api/email/help
 
 Get help email content template for replying to users who need assistance with email submissions.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/email/help"
+```
 
 **Response (200)**:
 
@@ -2819,6 +3321,14 @@ Track user/agent interactions with deals for analytics and learning.
 
 Submit an experience event for a deal.
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/experience" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-access-token>" \
+  -d '{"deal_code": "ABC123", "event_type": "click", "score": 50}'
+```
+
 **Request Body:**
 
 ```json
@@ -2863,6 +3373,11 @@ Submit an experience event for a deal.
 
 Get aggregated experience data for a specific deal.
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/experience/ABC123"
+```
+
 **Response** (200 OK):
 
 ```json
@@ -2896,6 +3411,12 @@ Get aggregated experience data for a specific deal.
 
 Trigger manual experience aggregation across all deals.
 
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/experience/aggregate" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response** (200 OK):
 
 ```json
@@ -2915,6 +3436,108 @@ Trigger manual experience aggregation across all deals.
 
 ---
 
+## Dashboard API
+
+Endpoints for retrieving system-wide statistics and status for administrative dashboards.
+
+### GET /api/dashboard/stats
+
+Get high-level deal counts and system status.
+
+**Authentication**: Admin role required.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/stats" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "stats": {
+    "total": 150,
+    "active": 120,
+    "quarantined": 20,
+    "rejected": 10
+  },
+  "recentActivity": {
+    "runs": 4,
+    "dealsFound": 25,
+    "errors": 0
+  },
+  "systemHealth": {
+    "status": "healthy",
+    "checks": {
+      "DEALS_PROD": true,
+      "DEALS_STAGING": true,
+      "DEALS_LOG": true,
+      "DEALS_LOCK": true,
+      "DEALS_SOURCES": true,
+      "d1_connection": true
+    }
+  },
+  "timestamp": "2026-05-17T12:00:00Z"
+}
+```
+
+---
+
+### GET /api/dashboard/recent-activity
+
+Get pipeline activity from the last 24 hours.
+
+**Authentication**: Admin role required.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/recent-activity" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "runs": 4,
+  "dealsFound": 25,
+  "errors": 0
+}
+```
+
+---
+
+### GET /api/dashboard/system-health
+
+Get a summary of system component connectivity.
+
+**Authentication**: Admin role required.
+
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/system-health" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "DEALS_PROD": true,
+    "DEALS_STAGING": true,
+    "DEALS_LOG": true,
+    "DEALS_LOCK": true,
+    "DEALS_SOURCES": true,
+    "d1_connection": true
+  }
+}
+```
+
+---
+
 ## Admin API
 
 Administrative endpoints for system management and API key control. Requires admin-level API key.
@@ -2922,6 +3545,14 @@ Administrative endpoints for system management and API key control. Requires adm
 ### POST /api/admin/keys
 
 Create a new API key for a user or agent.
+
+**Example:**
+```bash
+curl -X POST "https://your-worker.workers.dev/api/admin/keys" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin-access-token>" \
+  -d '{"userId": "agent-007", "role": "user"}'
+```
 
 **Request Body:**
 
@@ -2953,6 +3584,12 @@ Create a new API key for a user or agent.
 
 List all active API keys (sanitized, keys are not shown).
 
+**Example:**
+```bash
+curl "https://your-worker.workers.dev/api/admin/keys" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
+
 **Response:**
 
 ```json
@@ -2974,6 +3611,12 @@ List all active API keys (sanitized, keys are not shown).
 ### DELETE /api/admin/keys/:hash
 
 Revoke an API key by its hash.
+
+**Example:**
+```bash
+curl -X DELETE "https://your-worker.workers.dev/api/admin/keys/sha256-hash-of-key" \
+  -H "Authorization: Bearer <admin-access-token>"
+```
 
 **Parameters:**
 
