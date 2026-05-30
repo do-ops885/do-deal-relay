@@ -70,6 +70,7 @@ export async function handleMetrics(
         `deals_active_deals ${published}`,
         "# HELP deals_runs_total Total discovery runs",
         `deals_runs_total ${runIds.length}`,
+        "", // Trailing newline
       ].join("\n");
 
       return new Response(metrics, {
@@ -129,14 +130,10 @@ export async function getHealthStatus(
       (l) => l.phase === "finalize" && l.status === "complete",
     ).length;
 
-    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+    let overallStatus: "healthy" | "degraded" | "unhealthy" = "unhealthy";
 
-    if (!allDepsHealthy) {
-      overallStatus = "degraded";
-    }
-
-    if (!allKvConnected || !d1Check.connected) {
-      overallStatus = "unhealthy";
+    if (allKvConnected && d1Check.connected) {
+      overallStatus = snapshot ? "healthy" : "degraded";
     }
 
     const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
@@ -150,7 +147,7 @@ export async function getHealthStatus(
         kv_connection: allKvConnected,
         last_run_success:
           recentRuns > 0 ? successfulRuns === recentRuns : false,
-        snapshot_valid: snapshot !== null,
+        snapshot_valid: snapshot,
         d1_connected: d1Check.connected,
       },
       components: {
@@ -210,7 +207,15 @@ async function getLatestSnapshot(env: Env): Promise<boolean> {
     const result = await env.DEALS_DB.prepare(
       "SELECT snapshot_hash FROM snapshots ORDER BY generated_at DESC LIMIT 1",
     ).first();
-    return result !== null;
+    if (result !== null) return true;
+  } catch (e) {
+    // Ignore error if table doesn't exist, try fallback
+  }
+
+  try {
+    // Fallback to KV for hybrid migration state
+    const kvSnapshot = await env.DEALS_PROD.get("snapshot:prod", "json");
+    return kvSnapshot !== null;
   } catch {
     return false;
   }

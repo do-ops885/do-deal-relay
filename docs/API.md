@@ -45,7 +45,7 @@ curl "https://your-worker.workers.dev/health"
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0",
+  "version": "0.1.6",
   "timestamp": "2026-05-17T12:00:00Z",
   "uptime_seconds": 3600,
   "checks": {
