@@ -25,6 +25,12 @@ describe("Enhanced Config Validation", () => {
     expect(() => validateConfig(validEnv)).not.toThrow();
   });
 
+  it("should pass when EMAIL_WEBHOOK_SECRET is missing", () => {
+    const env = { ...validEnv } as any;
+    delete env.EMAIL_WEBHOOK_SECRET;
+    expect(() => validateConfig(env)).not.toThrow();
+  });
+
   it("should throw when DEALS_PROD is missing", () => {
     const env = { ...validEnv } as any;
     delete env.DEALS_PROD;
