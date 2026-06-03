@@ -21,7 +21,10 @@ async function validateUrlPreservation(): Promise<void> {
   console.log("Agent URL Preservation Validation");
   console.log("========================================\n");
 
-  const proxy = (await getPlatformProxy({})) as unknown;
+  const proxy = (await getPlatformProxy({})) as {
+    env: { DEALS_SOURCES: unknown };
+    dispose: () => Promise<void>;
+  };
   const baseUrl = "http://localhost";
 
   try {

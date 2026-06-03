@@ -18,10 +18,17 @@ export { getAllowedOrigin };
 // Types
 // ============================================================================
 
+export type AuthRole =
+  | "admin"
+  | "user"
+  | "readonly"
+  | "viewer"
+  | "api_consumer";
+
 export interface AuthResult {
   authenticated: boolean;
   userId?: string;
-  role?: "admin" | "user" | "readonly";
+  role?: AuthRole;
   error?: string;
   requestsPerMinute?: number;
   requestsPerHour?: number;

@@ -52,6 +52,18 @@ const SECURITY_CONSTANTS = {
  * @param url - The URL to validate
  * @returns boolean indicating if the URL is safe to fetch
  */
+export async function validateReferralUrl(
+  url: string,
+  domain: string,
+): Promise<boolean> {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && parsed.hostname === domain;
+  } catch {
+    return false;
+  }
+}
+
 export async function validateFetchUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
