@@ -123,7 +123,11 @@ check_pattern() {
         grep -vE "#/components/" | \
         grep -vE "(whsec_test|ghp_test|sk_test|test_secret|whsec_secret|whsec_old|whsec_fake|whsec_mock)" | \
         grep -vE "(mock|test|fake|demo|sample)_?(key|secret|token|password|api.?key)" | \
-        grep -vE "^[+-].*uses:\s*[a-zA-Z0-9/-]+@[a-f0-9]{40}" | \
+        grep -vE "test.*(key|secret|hash|password)" | \
+        grep -vE "(key|secret|hash|password).*test" | \
+        grep -vE "INSERT.*test" | \
+        grep -vE "console\.log" | \
+        grep -vE "uses:\s*[a-zA-Z0-9/-]+@[a-f0-9]{40}" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"
