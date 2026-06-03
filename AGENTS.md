@@ -28,7 +28,7 @@ We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Archi
 
 2. **DECOMPOSE & PLAN (Phase 2)**
    - **Action**: Break down the problem into atomic, testable tasks. Record these in a plan file under `plans/`.
-   - **Instruction**: produce a written plan, wait for confirmation for non-trivial tasks.
+   - **Instruction**: produce a written plan, wait for confirmation for non-trivial tasks. **Mandatory**: Load `plans/GOAP_STATE.md` and `plans/ACTIONS.md` before starting non-trivial planning.
 
 3. **EXECUTE & COORDINATE (Phase 3)**
    - **Action**: Execute tasks systematically using the atomic commit workflow.
@@ -37,6 +37,24 @@ We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Archi
 
 4. **SYNTHESIZE (Phase 4)**
    - **Action**: Extract discoveries and update project-specific documentation or `AGENTS.md` contexts.
+
+## Session Checklist
+
+### Before starting any task
+- [ ] Load `plans/GOAP_STATE.md`
+- [ ] Load `plans/ACTIONS.md`
+- [ ] Review uncommitted changes with `git status --short` and `git diff HEAD`
+- [ ] LOC pre-check: `find worker -name '*.ts' ! -name '*.d.ts' -exec wc -l {} + | sort -rn | head -20` — fix any file > 500 LOC before starting new work
+- [ ] Check CI baseline with `gh run list --workflow=ci.yml --limit 3` (if `gh` available)
+
+### Before claiming completion
+- [ ] Run `npm run typecheck`
+- [ ] Run `npm run test`
+- [ ] Run `npm run lint`
+- [ ] Run `./scripts/quality_gate.sh`
+- [ ] Update `plans/GOAP_STATE.md`
+- [ ] Update `plans/ACTIONS.md`
+- [ ] Add any new regressions / prevention rules to `progress/LEARNINGS.md`
 
 ## Atomic Commit Workflow (Mandatory)
 
@@ -82,7 +100,7 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 
 - **Allowed in root**: Only standard config files (package.json, wrangler.jsonc, etc.).
 - **Documentation**: MUST be in `docs/` or `agents-docs/`.
-- **Plans/Reports**: MUST be in `plans/` or `reports/`.
+- **Plans/Reports**: MUST be in `plans/`, `progress/`, or `reports/`.
 - **Skills**: Canonical source is `.agents/skills/`.
 - **Temporary Files**: MUST be in `temp/`. Diagnostic or transient files (e.g., `typecheck_*.txt`) in the root are forbidden.
 
@@ -100,14 +118,7 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 
 ## Lessons Learned
 
-| Date | Issue | Root Cause | Prevention |
-|------|-------|-----------|------------|
-| 2026-06-03 | E2E + Smoke Tests failed in CI (missing `EMAIL_WEBHOOK_SECRET`) | `validateConfig()` requires `EMAIL_WEBHOOK_SECRET` but CI workflow only passed `WEBHOOK_SECRET` and `API_ENCRYPTION_KEY` to `wrangler dev` | When adding a new required env var to `validateConfig()`, update ALL CI workflows that start `wrangler dev` (ci.yml E2E/Smoke jobs, deploy-staging.yml, deploy-production.yml) |
-| 2026-06-03 | E2E metrics test expected Prometheus format, got JSON | Main changed `/metrics` to return JSON by default, E2E tests still expected `text/plain` with `# HELP` | After endpoint behavior changes, update ALL test files (unit, integration, E2E, smoke) that assert on response format |
-| 2026-05-20 | PR #324 merge conflicts (6 files) | PR branch and `main` both modified same security/auth files in parallel (`worker/config.ts`, `worker/lib/security.ts`, `worker/lib/research-agent/fetcher.ts`, `worker/routes/referrals.ts`, `worker/index.ts`) | Use the Shared Files Protocol; check active branches before modifying security infrastructure files |
-| 2026-05-20 | Post-merge TS errors (test imports of deleted modules, wrong function arity) | Main branch deleted `worker/pipeline/discovery-utils.ts` that PR branch's tests still imported; main added `request` param to `handleGetReferralByCode` | Run `npm run typecheck` and full test suite immediately after merge resolution |
-
-As new lessons are discovered, add them to this table. Keep the table sorted by most recent date first.
+Operational lessons and regression prevention rules are maintained in [progress/LEARNINGS.md](progress/LEARNINGS.md). **Every correction becomes a rule.**
 
 ## Agent Guidance
 
