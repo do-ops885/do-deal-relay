@@ -86,28 +86,28 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 - **Skills**: Canonical source is `.agents/skills/`.
 - **Temporary Files**: MUST be in `temp/`. Diagnostic or transient files (e.g., `typecheck_*.txt`) in the root are forbidden.
 
-## Branch & PR Coordination
+## Shared Files Protocol
 
-- **Shared Files Protocol**: The following files are frequently modified across branches and require explicit coordination: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `worker/lib/research-agent/fetcher.ts`, `.github/workflows/*.yml`. Before modifying any of these, check active PRs to avoid merge conflicts.
-- **File Ownership Check**: When running parallel agents, enumerate all files each agent will modify. If ANY file overlaps between agents, switch to sequential/hybrid execution.
-- **Merge Base Strategy**: Always fetch `origin/main` before starting work and rebase onto the latest `main` before creating a PR.
-- **Conflict Prevention Checklist** before creating a PR:
-  - [ ] `git merge origin/main --no-commit --no-ff` to detect conflicts early
-  - [ ] All 13 quality gates pass
-  - [ ] TypeScript strict mode compiles with zero errors
-  - [ ] No test files import deleted/removed modules
-  - [ ] Function signatures match across all call sites
+See skill: `typescript-coding-standards` — hot file coordination rules.
 
 ## Lessons Learned
 
-| Date | Issue | Root Cause | Prevention |
-|------|-------|-----------|------------|
-| 2026-06-03 | E2E + Smoke Tests failed in CI (missing `EMAIL_WEBHOOK_SECRET`) | `validateConfig()` requires `EMAIL_WEBHOOK_SECRET` but CI workflow only passed `WEBHOOK_SECRET` and `API_ENCRYPTION_KEY` to `wrangler dev` | When adding a new required env var to `validateConfig()`, update ALL CI workflows that start `wrangler dev` (ci.yml E2E/Smoke jobs, deploy-staging.yml, deploy-production.yml) |
-| 2026-06-03 | E2E metrics test expected Prometheus format, got JSON | Main changed `/metrics` to return JSON by default, E2E tests still expected `text/plain` with `# HELP` | After endpoint behavior changes, update ALL test files (unit, integration, E2E, smoke) that assert on response format |
-| 2026-05-20 | PR #324 merge conflicts (6 files) | PR branch and `main` both modified same security/auth files in parallel (`worker/config.ts`, `worker/lib/security.ts`, `worker/lib/research-agent/fetcher.ts`, `worker/routes/referrals.ts`, `worker/index.ts`) | Use the Shared Files Protocol; check active branches before modifying security infrastructure files |
-| 2026-05-20 | Post-merge TS errors (test imports of deleted modules, wrong function arity) | Main branch deleted `worker/pipeline/discovery-utils.ts` that PR branch's tests still imported; main added `request` param to `handleGetReferralByCode` | Run `npm run typecheck` and full test suite immediately after merge resolution |
+See [`agents-docs/LEARNINGS.md`](agents-docs/LEARNINGS.md). Rule: every correction becomes a rule.
 
-As new lessons are discovered, add them to this table. Keep the table sorted by most recent date first.
+## Skills
+
+Use these canonical skills for common work:
+- `typescript-coding-standards` — TS workflow rules, config contracts, endpoint assertion rules
+- `jules-usage` — delegation pattern for high-cost work
+- `trust-model` — trust threshold and trust scoring guidance
+- `validation-gates` — per-deal validation pipeline rules
+
+## Delegation Guidance
+
+- Actions with estimated cost >= 12 should be evaluated for delegation through `jules-usage`.
+- Cost rubric is defined in [`agents-docs/hard-constraints.md`](agents-docs/hard-constraints.md).
+- Delegated work must be recorded in [`plans/ACTIONS.md`](plans/ACTIONS.md) with `status: delegated`.
+- Add `jules_issue: <number>` when delegated.
 
 ## Agent Guidance
 
