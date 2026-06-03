@@ -151,11 +151,14 @@ jobs:
           # Pass required secrets for startup validation
           export WEBHOOK_SECRET="whsec_ci_test_secret"
           export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
+          export EMAIL_WEBHOOK_SECRET="ci_email_webhook_test_secret"
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
+          echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
           npx wrangler dev --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
-            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long > wrangler.log 2>&1 &
+            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
+            --var EMAIL_WEBHOOK_SECRET:ci_email_webhook_test_secret > wrangler.log 2>&1 &
           WRANGLER_PID=$!
           echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
 
@@ -213,11 +216,14 @@ jobs:
           # Pass required secrets for startup validation
           export WEBHOOK_SECRET="whsec_ci_test_secret"
           export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
+          export EMAIL_WEBHOOK_SECRET="ci_email_webhook_test_secret"
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
+          echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
           npx wrangler dev --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
-            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long &
+            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
+            --var EMAIL_WEBHOOK_SECRET:ci_email_webhook_test_secret &
           WRANGLER_PID=$!
           for _i in {1..30}; do
             if curl -s http://localhost:8787/health/live > /dev/null; then
