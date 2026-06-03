@@ -93,7 +93,7 @@ When querying the system, the **COMPLETE URL is always returned** in the `url` f
 ## Related Documentation
 
 - [AGENTS.md](../AGENTS.md) - Master coordination hub
-- [Guard Rails](../guard-rails.md) - Safety mechanisms
+- [Hard Constraints](../hard-constraints.md) - Safety mechanisms
 
 ````
 
