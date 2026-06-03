@@ -227,6 +227,8 @@ test.describe("CORS Headers", () => {
     expect(response.status()).toBe(200);
 
     const headers = response.headers();
-    expect(headers["access-control-allow-origin"]).toBe("http://localhost:8787");
+    expect(headers["access-control-allow-origin"]).toBe(
+      "http://localhost:8787",
+    );
   });
 });
