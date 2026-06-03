@@ -1,0 +1,296 @@
+/**
+ * Refresh Token Storage
+ *
+ * Manages refresh token lifecycle in D1 for reuse detection and revocation.
+ * Implements token family tracking: each login creates a new family,
+ * rotation extends within the same family, and reuse detection revokes
+ * entire families when a previously-used token is presented.
+ *
+ * @module worker/lib/refresh-tokens
+ */
+
+import type { Env } from "../types";
+import { hashRefreshToken, generateTokenFamily } from "./jwt";
+import { generateUUID } from "./crypto";
+import { logger } from "./global-logger";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface RefreshTokenRecord {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  family: string;
+  expires_at: string;
+  revoked_at: string | null;
+  replaced_by: string | null;
+  created_at: string;
+}
+
+export interface CreateRefreshTokenResult {
+  id: string;
+  family: string;
+  expiresAt: string;
+}
+
+export interface VerifyRefreshTokenResult {
+  valid: boolean;
+  userId?: string;
+  family?: string;
+  error?: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const REFRESH_TOKEN_EXPIRY_DAYS = 30;
+const MAX_ACTIVE_FAMILIES_PER_USER = 5;
+
+// ============================================================================
+// Functions
+// ============================================================================
+
+/**
+ * Store a new refresh token in D1.
+ *
+ * @param env - Worker environment
+ * @param userId - User ID
+ * @param token - Raw refresh token (will be hashed before storage)
+ * @param family - Token family ID (for rotation tracking)
+ * @returns Token metadata including expiry
+ */
+export async function storeRefreshToken(
+  env: Env,
+  userId: string,
+  token: string,
+  family?: string,
+): Promise<CreateRefreshTokenResult> {
+  const id = generateUUID();
+  const tokenHash = await hashRefreshToken(token);
+  const tokenFamily = family || generateTokenFamily();
+  const now = new Date();
+  const expiresAt = new Date(
+    now.getTime() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  await env.DEALS_DB.prepare(
+    `INSERT INTO refresh_tokens (id, user_id, token_hash, family, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      id,
+      userId,
+      tokenHash,
+      tokenFamily,
+      expiresAt.toISOString(),
+      now.toISOString(),
+    )
+    .run();
+
+  // Clean up old families for this user (keep only MAX_ACTIVE_FAMILIES_PER_USER)
+  await cleanupOldFamilies(env, userId);
+
+  return {
+    id,
+    family: tokenFamily,
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+
+/**
+ * Verify a refresh token and check for reuse.
+ *
+ * Token family reuse detection:
+ * - If the token is revoked, reject it
+ * - If the token was replaced (rotation), revoke entire family
+ * - If valid, return user info for token rotation
+ */
+export async function verifyRefreshToken(
+  env: Env,
+  token: string,
+): Promise<VerifyRefreshTokenResult> {
+  const tokenHash = await hashRefreshToken(token);
+
+  const record = await env.DEALS_DB.prepare(
+    "SELECT * FROM refresh_tokens WHERE token_hash = ?",
+  )
+    .bind(tokenHash)
+    .first<RefreshTokenRecord>();
+
+  if (!record) {
+    return { valid: false, error: "Refresh token not found" };
+  }
+
+  // Check if token is expired
+  if (new Date(record.expires_at) < new Date()) {
+    return { valid: false, error: "Refresh token expired" };
+  }
+
+  // Check if token is revoked
+  if (record.revoked_at) {
+    // REUSE DETECTION: A revoked token was reused.
+    // This likely means a token was stolen. Revoke the entire family.
+    logger.warn("Refresh token reuse detected - revoking family", {
+      userId: record.user_id,
+      family: record.family,
+      tokenId: record.id,
+    });
+    await revokeTokenFamily(env, record.family);
+    return {
+      valid: false,
+      error: "Token revoked - all sessions in this family have been revoked",
+    };
+  }
+
+  // Check if token was replaced (already rotated)
+  if (record.replaced_by) {
+    // This token was already used to get a new one.
+    // This could be a replay attack. Revoke the entire family.
+    logger.warn("Refresh token replay detected - revoking family", {
+      userId: record.user_id,
+      family: record.family,
+      tokenId: record.id,
+      replacedBy: record.replaced_by,
+    });
+    await revokeTokenFamily(env, record.family);
+    return {
+      valid: false,
+      error:
+        "Token already used - all sessions in this family have been revoked",
+    };
+  }
+
+  return {
+    valid: true,
+    userId: record.user_id,
+    family: record.family,
+  };
+}
+
+/**
+ * Rotate a refresh token: mark the old one as replaced and create a new one.
+ *
+ * @returns The new refresh token record (raw token must be generated by caller)
+ */
+export async function rotateRefreshToken(
+  env: Env,
+  oldTokenId: string,
+  newTokenHash: string,
+  newTokenId: string,
+): Promise<void> {
+  // Mark old token as replaced
+  await env.DEALS_DB.prepare(
+    "UPDATE refresh_tokens SET replaced_by = ? WHERE id = ?",
+  )
+    .bind(newTokenId, oldTokenId)
+    .run();
+}
+
+/**
+ * Revoke all refresh tokens for a specific family.
+ */
+export async function revokeTokenFamily(
+  env: Env,
+  family: string,
+): Promise<number> {
+  const now = new Date().toISOString();
+  const result = await env.DEALS_DB.prepare(
+    "UPDATE refresh_tokens SET revoked_at = ? WHERE family = ? AND revoked_at IS NULL",
+  )
+    .bind(now, family)
+    .run();
+
+  logger.info("Revoked refresh token family", {
+    family,
+    tokensRevoked: result.meta?.changes || 0,
+  });
+
+  return result.meta?.changes || 0;
+}
+
+/**
+ * Revoke all refresh tokens for a user (logout everywhere).
+ */
+export async function revokeAllUserTokens(
+  env: Env,
+  userId: string,
+): Promise<number> {
+  const now = new Date().toISOString();
+  const result = await env.DEALS_DB.prepare(
+    "UPDATE refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL",
+  )
+    .bind(now, userId)
+    .run();
+
+  logger.info("Revoked all refresh tokens for user", {
+    userId,
+    tokensRevoked: result.meta?.changes || 0,
+  });
+
+  return result.meta?.changes || 0;
+}
+
+/**
+ * Clean up expired and old refresh tokens for a user.
+ * Keeps only the most recent MAX_ACTIVE_FAMILIES_PER_USER families.
+ */
+async function cleanupOldFamilies(env: Env, userId: string): Promise<void> {
+  try {
+    // Delete expired tokens
+    await env.DEALS_DB.prepare(
+      "DELETE FROM refresh_tokens WHERE user_id = ? AND expires_at < datetime('now')",
+    )
+      .bind(userId)
+      .run();
+
+    // Get distinct families ordered by most recent activity
+    const families = await env.DEALS_DB.prepare(
+      `SELECT family, MAX(created_at) as latest
+       FROM refresh_tokens
+       WHERE user_id = ? AND revoked_at IS NULL
+       GROUP BY family
+       ORDER BY latest DESC`,
+    )
+      .bind(userId)
+      .all<{ family: string; latest: string }>();
+
+    // If more than MAX_ACTIVE_FAMILIES_PER_USER, revoke the oldest
+    if (
+      families.results &&
+      families.results.length > MAX_ACTIVE_FAMILIES_PER_USER
+    ) {
+      const familiesToRevoke = families.results.slice(
+        MAX_ACTIVE_FAMILIES_PER_USER,
+      );
+      for (const f of familiesToRevoke) {
+        await revokeTokenFamily(env, f.family);
+      }
+    }
+  } catch (error) {
+    // Non-critical: log and continue
+    logger.warn("Failed to cleanup old token families", {
+      userId,
+      error: String(error),
+    });
+  }
+}
+
+/**
+ * Count active (non-revoked, non-expired) refresh tokens for a user.
+ */
+export async function countActiveTokens(
+  env: Env,
+  userId: string,
+): Promise<number> {
+  const result = await env.DEALS_DB.prepare(
+    `SELECT COUNT(*) as count FROM refresh_tokens
+     WHERE user_id = ? AND revoked_at IS NULL AND expires_at > datetime('now')`,
+  )
+    .bind(userId)
+    .first<{ count: number }>();
+
+  return result?.count || 0;
+}
