@@ -7,7 +7,7 @@ import {
 } from "../../worker/lib/jwt";
 
 describe("JWT Utilities", () => {
-  const secret = "test-secret-key-for-jwt-testing";
+  const secret = process.env.JWT_SECRET || "test-secret-key-for-jwt-testing";
   const payload = { sub: "user123", role: "admin" };
 
   it("should create and verify a valid JWT token", async () => {
@@ -37,7 +37,7 @@ describe("JWT Utilities", () => {
   });
 
   it("should hash and verify passwords", async () => {
-    const password = "my-secure-password-123!";
+    const password = process.env.TEST_PASSWORD || "my-secure-password-123!";
     const hash = await hashPassword(password);
     expect(hash).toBeDefined();
     expect(hash.includes(".")).toBe(true);

@@ -187,13 +187,15 @@ export async function executeReferralResearch(
 
   // Get API keys for potential real fetching
   const apiKeys = getApiKeys(env);
-  // Default to real fetching unless explicitly disabled
-  const envDisablesRealFetching = env.RESEARCH_USE_REAL_FETCHING === "false";
+  const hasApiKeys = Boolean(
+    apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
+  );
+  // Auto-enable real fetching when API keys are available, unless explicitly disabled
+  const envAllowsRealFetching =
+    env.ENVIRONMENT === "production" ||
+    env.RESEARCH_USE_REAL_FETCHING === "true";
   const useRealFetching =
-    request.options?.use_real_fetching ??
-    (envDisablesRealFetching
-      ? false
-      : CONFIG.RESEARCH_USE_REAL_FETCHING_DEFAULT);
+    request.options?.use_real_fetching ?? envAllowsRealFetching ?? hasApiKeys;
 
   // Gather research from multiple sources
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];

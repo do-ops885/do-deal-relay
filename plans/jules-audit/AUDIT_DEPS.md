@@ -1,26 +1,9 @@
-# AUDIT DEPS
-
-## Findings
-The following dependencies were identified as outdated or having safe upgrades:
+# Dependency Audit
 
 | package | current | available | risk | upgrade safe? |
 |---------|---------|-----------|------|---------------|
-| @cloudflare/workers-types | 4.20260516.1 | 4.20260517.1 | Low | Yes (Minor) |
+| protobufjs | 8.3.0 | 8.4.2 | low | yes |
+| zod | 3.22.4 | 3.25.76 | low | yes |
 
-## Actions Taken
-- Updated `@cloudflare/workers-types` to `4.20260517.1`.
-- Verified compilation and tests with `./scripts/quality_gate.sh`.
-
-## Human Review Required
-- `zod`: current 3.25.76, latest 4.4.3. Major version upgrade required, potential breaking changes.
-
----
-
-# Track A - Dependency Audit
-
-| package | current | available | risk | upgrade safe? |
-|---------|---------|-----------|------|---------------|
-| @cloudflare/workers-types | 4.20260517.1 | 4.20260518.1 | Low | Yes |
-
-## Human Review Required (Major Versions)
-- zod: 3.25.76 -> 4.4.3
+## Human Review Required (Major Upgrades)
+- zod | 3.22.4 -> 4.4.3 | high | Breaking changes in V4
