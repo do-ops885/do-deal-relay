@@ -1,4 +1,4 @@
-import { base64urlEncode, sha256, generateUUID } from "./crypto";
+import { base64urlEncode } from "./crypto";
 
 /**
  * Creates a JWT token with the given payload and secret.
@@ -162,21 +162,35 @@ function constantTimeCompare(a: string, b: string): boolean {
 
 /**
  * Hash a refresh token for secure storage.
- * Never store plaintext tokens - always hash before storage.
- *
- * @param token - The plaintext refresh token to hash
- * @returns SHA-256 hash of the token
+ * Uses SHA-256 hashing with a random salt.
  */
 export async function hashRefreshToken(token: string): Promise<string> {
-  return sha256(token);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(token),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256,
+  );
+  const computedHash = base64urlEncode(new Uint8Array(bits));
+  const saltStr = base64urlEncode(salt);
+  return saltStr + "." + computedHash;
 }
 
 /**
  * Generate a unique token family identifier.
- * Each login creates a new family; rotation extends within the same family.
- *
- * @returns Unique family identifier (UUID v4)
+ * Used for tracking token rotation and detecting reuse.
  */
 export function generateTokenFamily(): string {
-  return generateUUID();
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
