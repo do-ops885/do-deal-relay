@@ -1,137 +1,140 @@
-# Follow-Up Plan: Issues Not Addressed in PR #396
+# Follow-Up Plan: Issues Not Addressed in This Run
 
 > Created: 2026-06-03
-> Reason: These issues require significant additional work or are operational incidents
+> Updated: 2026-06-03 (after dependabot merge)
 
 ---
 
-## Resolved CI Issues (Fixed in This Run)
+## Resolved in This Run
 
-| Issue | Root Cause | Fix |
-|-------|-----------|-----|
-| E2E Tests failure | `validateConfig()` requires `EMAIL_WEBHOOK_SECRET` (config-utils.ts:37) but CI workflow only passed `WEBHOOK_SECRET` and `API_ENCRYPTION_KEY` to `wrangler dev` | Added `EMAIL_WEBHOOK_SECRET` to `.dev.vars` writes, `--var` flags, and `export` statements in ci.yml |
-| Smoke Tests failure | Same root cause — worker crashed at startup with `Missing required config: EMAIL_WEBHOOK_SECRET` | Same fix as above |
-| E2E metrics test failure | Metrics endpoint on main now returns JSON by default, but E2E tests expected Prometheus text format | Updated `api.spec.ts` and `auth.spec.ts` to expect `application/json` and `funnel` property |
-| E2E CORS test failure | `getAllowedOrigin()` returns `""` when no `Origin` header sent; Playwright strips empty headers | Updated test to send `Origin: http://localhost:8787` header |
-
-## Regression Prevention Rule
-
-**When adding a new required environment variable to `validateConfig()`, always update ALL CI workflows that start `wrangler dev`** (ci.yml E2E Tests job, ci.yml Smoke Tests job, deploy-staging.yml, deploy-production.yml).
+| Item | Resolution |
+|------|------------|
+| Dependabot PR #395 (wrangler-action 4.0) | Merged into feature branch |
+| Dependabot PR #394 (actions/checkout 6.0) | Merged into feature branch |
+| Dependabot PR #393 (pre-commit-hooks 6.0) | Merged into feature branch |
+| Dependabot PR #392 (protobufjs 8.5.0) | Merged into feature branch |
+| Dependabot PR #391 (@types/node 25.9.1) | Merged into feature branch |
+| Dependabot PR #390 (testing group) | Merged into feature branch |
+| Dependabot PR #389 (cloudflare group) | Merged into feature branch |
+| npm audit vulnerabilities | 0 critical, 0 high |
 
 ---
 
 ## Issues Not Fixable in This Run
 
-### Operational Incidents (Not Code Issues)
+### Operational Incidents (27 rollback issues)
 These are automated rollback/deployment failure issues. They require investigation of the deployment pipeline, not code changes.
 
 | Issue | Type | Action Required |
 |-------|------|-----------------|
-| #387 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #385 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #383 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #382 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #381 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #379 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #378 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #377 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #376 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #375 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #373 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #372 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #370 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #369 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #367 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #357 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #353 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #351 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #347 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #346 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #345 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #339 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #338 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #337 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #335 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
-| #334 | ROLLBACK FAILED | Investigate deployment failure root cause |
-| #333 | ROLLBACK FAILED | Investigate deployment failure root cause |
-| #332 | AUTOMATED ROLLBACK | Investigate deployment failure root cause |
-| #329 | AUTOMATED ROLLBACK | Investigate deployment failure root cause |
-| #328 | AUTOMATED ROLLBACK | Investigate deployment failure root cause |
+| #387, #385, #383, #382, #381 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
+| #379, #378, #377, #376, #375 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
+| #373, #372, #370, #369, #367 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
+| #357, #353, #351, #347, #346 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
+| #345, #339, #338, #337, #335 | ROLLBACK REQUIRED | Investigate deployment failure root cause |
+| #334, #333 | ROLLBACK FAILED | Investigate deployment failure root cause |
+| #332, #329, #328 | AUTOMATED ROLLBACK | Investigate deployment failure root cause |
 
-**Recommendation**: Create a single issue to investigate and fix the deployment pipeline. The repeated rollback failures suggest a systemic issue with the CI/CD configuration.
+**Root Cause Analysis**:
+- Production deployment failures are recurring (27 issues since 2026-05-19)
+- The wrangler-action v4.0 upgrade should help stabilize deployments
+- Need to verify that CI/CD pipeline works with new action versions
+
+**Recommendation**: 
+1. After this PR merges, monitor production deployment
+2. If still failing, create a dedicated issue to investigate the deployment pipeline
+3. Consider adding deployment health checks and rollback automation
 
 ---
 
-### Feature Epics (Require Significant Work)
+### Feature Epics (P1-P3)
 
-#### Semantic Search Epic (#297)
+#### P1 - High Priority
+
+##### Real Web Research with AI Extraction (#289)
+| Issue | Feature | Complexity | Estimated Effort |
+|-------|---------|------------|------------------|
+| #285 | Switch research agent to real web fetching | Medium | 2-3 days |
+| #286 | CSS selector-based content extraction with cheerio | Medium | 1-2 days |
+| #287 | AI-powered content summarization | Medium | 2-3 days |
+| #288 | Rate limiting, caching, request management | Medium | 2-3 days |
+
+**Dependencies**: Cheerio, LLM API access, KV for caching
+**Recommendation**: Implement in v0.1.7 release
+
+##### User Management & Authentication (#284)
+| Issue | Feature | Complexity | Estimated Effort |
+|-------|---------|------------|------------------|
+| #284 | User management API endpoints | High | 3-5 days |
+| - | JWT authentication | Medium | 2-3 days |
+| - | RBAC authorization | Medium | 2-3 days |
+
+**Dependencies**: D1 database, JWT library
+**Recommendation**: Implement in v0.1.7 release
+
+#### P2 - Medium Priority
+
+##### MCP Pagination & Progress Notifications (#293)
+| Issue | Feature | Complexity | Estimated Effort |
+|-------|---------|------------|------------------|
+| #290 | Cursor-based pagination | Medium | 2-3 days |
+| #291 | Progress notification support | Medium | 2-3 days |
+| #292 | Result streaming (SSE) | Medium | 3-5 days |
+
+**Dependencies**: MCP protocol extensions
+**Recommendation**: Implement in v0.2.0 release
+
+#### P3 - Lower Priority
+
+##### Semantic Search (#297)
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #294 | Vector embeddings integration | High | 2-3 days |
 | #295 | Semantic search API endpoint | Medium | 1 day |
 | #296 | Embedding generation pipeline | High | 2-3 days |
-| #297 | Semantic Search Epic (full) | Very High | 5-7 days |
 
-**Dependencies**: Requires Cloudflare Vectorize or similar vector database integration.
+**Dependencies**: Cloudflare Vectorize, Embedding API
+**Recommendation**: Implement in v0.3.0 release
 
-**Recommendation**: Defer to v0.2.0 release. This is a significant feature that requires:
-1. Vector database setup (Cloudflare Vectorize)
-2. Embedding generation pipeline
-3. Search API with similarity scoring
-4. Integration with existing deal discovery pipeline
+##### Web UI Dashboard (#302)
+| Issue | Feature | Complexity | Estimated Effort |
+|-------|---------|------------|------------------|
+| #298 | Dashboard layout and architecture | Medium | 3-5 days |
+| #299 | Deal management views | Medium | 2-3 days |
+| #300 | Analytics and monitoring views | Medium | 2-3 days |
+| #301 | Referral tracking interface | Medium | 2-3 days |
 
----
-
-### Remaining P3 Features
-
-#### Web UI Dashboard Sub-features
-While the dashboard API is implemented, the full Web UI (React/Vue frontend) is not included in this PR.
-
-| Issue | Feature | Status |
-|-------|---------|--------|
-| #298 | Dashboard layout and component architecture | API implemented, UI pending |
-| #299 | Deal management views | API implemented, UI pending |
-| #300 | Analytics and monitoring dashboard views | API implemented, UI pending |
-| #301 | Referral tracking interface | API implemented, UI pending |
-| #302 | Web UI Dashboard Epic | API implemented, UI pending |
-
-**Recommendation**: Create a separate frontend repository or use a framework like Next.js to build the dashboard UI.
+**Dependencies**: React/Vue, Tailwind CSS, Chart library
+**Recommendation**: Create separate frontend repository
 
 ---
 
-### Dependabot PRs (Require CI Fix)
+### Manual PRs
 
-| PR | Update | Status |
-|----|--------|--------|
-| #395 | cloudflare/wrangler-action 3.15→4.0 | Tests failing |
-| #394 | actions/checkout 4.3→6.0 | Tests failing |
-| #393 | pre-commit-hooks v5→6 | Tests failing |
-| #392 | protobufjs 8.4→8.5 | Tests failing |
-| #391 | @types/node 25.8→25.9 | Tests failing |
-| #390 | testing group (3 updates) | Tests failing |
-| #389 | cloudflare group (4 updates) | Tests failing |
-
-**Root Cause**: The dependabot PRs are failing because the test suite has pre-existing issues that are now fixed in PR #396.
-
-**Recommendation**: After PR #396 is merged, rebase and re-trigger the dependabot PRs. The test failures should be resolved.
+| PR | Title | Status | Action |
+|----|-------|--------|--------|
+| #359 | Jules Audit - deps | Open | Review and merge if tests pass |
+| #348 | Repository impact analysis | Open | Review and merge if relevant |
 
 ---
 
 ## Priority Matrix
 
-| Priority | Issue | Action | Owner |
-|----------|-------|--------|-------|
-| P0 | Deployment rollback issues | Investigate CI/CD pipeline | DevOps |
-| P1 | Dependabot PRs | Rebase after PR #396 merge | Automated |
-| P2 | Semantic Search Epic | Plan for v0.2.0 | Product |
-| P3 | Web UI Dashboard | Separate frontend project | Frontend team |
+| Priority | Issue | Action | Target Release |
+|----------|-------|--------|----------------|
+| P0 | Deployment rollback issues | Monitor after merge | Immediate |
+| P1 | Real Web Research (#289) | Plan implementation | v0.1.7 |
+| P1 | User Management (#284) | Plan implementation | v0.1.7 |
+| P2 | MCP Pagination (#293) | Plan implementation | v0.2.0 |
+| P3 | Semantic Search (#297) | Defer to v0.3.0 | v0.3.0 |
+| P3 | Web UI Dashboard (#302) | Separate project | v0.3.0 |
 
 ---
 
 ## Next Steps
 
-1. **Merge PR #396** - Contains all implemented features and bug fixes
-2. **Investigate deployment pipeline** - Create issue for rollback failures
-3. **Rebase dependabot PRs** - After PR #396 merge
-4. **Plan Semantic Search** - Create detailed design document for v0.2.0
-5. **Create frontend project** - Separate repository for Web UI
+1. **Merge this PR** - Contains all dependabot updates
+2. **Monitor production deployment** - Verify wrangler-action v4.0 works
+3. **Rebase #359 and #348** - After this PR merges
+4. **Plan v0.1.7** - Include Real Web Research and User Management epics
+5. **Create frontend project** - Separate repository for Web UI Dashboard
