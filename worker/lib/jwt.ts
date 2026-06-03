@@ -159,3 +159,38 @@ function constantTimeCompare(a: string, b: string): boolean {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return result === 0;
 }
+
+/**
+ * Hash a refresh token for secure storage.
+ * Uses SHA-256 hashing with a random salt.
+ */
+export async function hashRefreshToken(token: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(token),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256,
+  );
+  const computedHash = base64urlEncode(new Uint8Array(bits));
+  const saltStr = base64urlEncode(salt);
+  return saltStr + "." + computedHash;
+}
+
+/**
+ * Generate a unique token family identifier.
+ * Used for tracking token rotation and detecting reuse.
+ */
+export function generateTokenFamily(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}

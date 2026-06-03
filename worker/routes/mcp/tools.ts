@@ -2,7 +2,6 @@
  * MCP Route Handler - Tools
  *
  * Handles tools/list and tools/call JSON-RPC methods.
- * Supports cursor-based pagination and SSE streaming.
  */
 
 import type { Env } from "../../types";
@@ -12,20 +11,13 @@ import {
   type ToolCallParams,
 } from "../../lib/mcp/types";
 import { getTools, executeTool } from "../../lib/mcp/tools";
-import {
-  paginateList,
-  DEFAULT_PAGE_SIZE,
-  type PaginatedResult,
-} from "../../lib/mcp/pagination";
-import { type ProgressNotification } from "../../lib/mcp/utils";
-import { handleStreamingToolCall } from "../mcp-stream";
+import { paginate, type ProgressNotification } from "../../lib/mcp/utils";
 
 /**
- * Handle tools/list request with cursor-based pagination
+ * Handle tools/list request with pagination support
  */
 export async function handleToolsList(params?: {
   cursor?: string;
-  limit?: number;
 }): Promise<ToolsListResult> {
   const tools = getTools();
 
@@ -44,14 +36,11 @@ export async function handleToolsList(params?: {
     annotations: tool.annotations,
   }));
 
-  const limit = params?.limit ?? DEFAULT_PAGE_SIZE;
-  const pageSize = Math.min(Math.max(1, limit), 100);
-
-  const { items, nextCursor } = paginateList(
+  const PAGE_SIZE = 5;
+  const { items, nextCursor } = paginate(
     serializedTools,
     params?.cursor,
-    pageSize,
-    (item) => item.name,
+    PAGE_SIZE,
   );
 
   return {
@@ -61,25 +50,16 @@ export async function handleToolsList(params?: {
 }
 
 /**
- * Handle tools/call request with progress tracking and optional streaming
+ * Handle tools/call request with progress tracking
  */
 export async function handleToolCall(
   params: ToolCallParams,
   env: Env,
   request: Request,
-): Promise<ToolCallResult | Response> {
-  const { name, arguments: args = {}, cursor, _meta } = params;
+): Promise<ToolCallResult> {
+  const { name, arguments: args = {}, _meta } = params;
 
-  if (_meta?.stream) {
-    return handleStreamingToolCall(params, env, request);
-  }
-
-  const mergedArgs = { ...(args || {}) } as Record<string, unknown>;
-  if (cursor) {
-    mergedArgs.cursor = cursor;
-  }
-
-  const result = await executeTool(name, mergedArgs, env, request);
+  const result = await executeTool(name, args, env, request);
 
   if (_meta?.progressToken) {
     const progressNotification: ProgressNotification = {

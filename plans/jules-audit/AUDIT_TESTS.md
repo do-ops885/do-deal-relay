@@ -1,11 +1,12 @@
-# Track C - Test Coverage
+# Test Coverage Audit
 
-## Identified Gaps
-- worker/lib/nlq/lexer.ts (0% coverage)
-- worker/lib/nlq/parser.ts (0% coverage)
-- worker/lib/nlq/intent.ts (0% coverage)
+## Uncovered Core Logic
+- worker/email/extraction.ts: 97.08% lines, but some branches uncovered.
+- worker/lib/logger/query.ts: 36.66% coverage.
+- worker/lib/expiration/notifications.ts: 26.86% coverage.
+- worker/routes/validation.ts: 0% coverage.
 
 ## Proposed New Tests
-1. Add unit tests for `worker/lib/nlq/lexer.ts` to verify tokenization logic.
-2. Add unit tests for `worker/lib/nlq/parser.ts` to verify query parsing.
-3. Add unit tests for `worker/lib/nlq/intent.ts` to verify intent classification.
+1. Unit tests for worker/lib/expiration/notifications.ts (critical business logic).
+2. Unit tests for worker/lib/logger/query.ts.
+3. Basic integration test for worker/routes/validation.ts.

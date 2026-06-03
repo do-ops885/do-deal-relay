@@ -1,0 +1,784 @@
+worker/state-machine.ts:export async function executePipeline(env: Env): Promise<{
+worker/state-machine.ts:export async function getPipelineStatus(env: Env): Promise<{
+worker/pipeline/score.ts:export async function score(
+worker/pipeline/score.ts:export function calculateSourceDiversity(deals: Deal[]): number {
+worker/pipeline/score.ts:export function calculateUniquenessScore(
+worker/pipeline/score.ts:export async function evolveSourceTrust(
+worker/pipeline/discover.ts:export async function discover(
+worker/pipeline/validate-fast-path.ts:export async function validateDealFastPath(
+worker/pipeline/normalize.ts:export function normalize(deals: Deal[], ctx: PipelineContext): Deal[] {
+worker/pipeline/normalize.ts:export async function regenerateDealId(deal: Deal): Promise<string> {
+worker/pipeline/normalize.ts:export function verifyNormalization(deals: Deal[]): {
+worker/pipeline/stage.ts:export async function stage(
+worker/pipeline/stage.ts:export function prepareSnapshot(
+worker/pipeline/dedupe.ts:export function deduplicate(
+worker/publish.ts:export async function publishSnapshot(
+worker/publish.ts:export async function rollbackSnapshot(
+worker/config.ts:export const CONFIG = {
+worker/config.ts:export const DEFAULT_SOURCES = [
+worker/config.ts:export const ERROR_MESSAGES = {
+worker/config.ts:export const VALIDATION_GATES = [
+worker/index.ts:export default {
+worker/validation/pipeline.ts:export async function validate(
+worker/validation/pipeline.ts:export function shouldQuarantine(deal: Deal): boolean {
+worker/validation/pipeline.ts:export function calculateValidationRatio(result: ValidationResult): number {
+worker/validation/types.ts:export function getContextHash(
+worker/validation/types.ts:export function setContextHash(
+worker/validation/gates/freshness.ts:export function validateFreshness(deal: Deal): GateResult {
+worker/validation/gates/schema-validation.ts:export function validateSchema(deal: Deal): GateResult {
+worker/validation/gates/trust-score.ts:export function validateTrustScore(deal: Deal, env: Env): GateResult {
+worker/validation/gates/normalization-verification.ts:export function verifyNormalization(deal: Deal): GateResult {
+worker/validation/gates/snapshot-hash-verification.ts:export async function verifySnapshotHash(
+worker/validation/gates/duplicate-check.ts:export function checkDeduplication(
+worker/validation/gates/second-pass-validation.ts:export function validateSecondPass(deal: Deal): GateResult {
+worker/validation/gates/idempotency-check.ts:export function checkIdempotency(
+worker/validation/gates/price-sanity.ts:export function validatePriceSanity(deal: Deal): GateResult {
+worker/email/templates/commands.ts:export function createSuccessConfirmation(
+worker/email/templates/commands.ts:export function createDeactivationConfirmation(
+worker/email/templates/responses.ts:export function createSearchResultsEmail(
+worker/email/templates/responses.ts:export function createErrorEmail(
+worker/email/templates/responses.ts:export function createHelpEmail(): EmailTemplate {
+worker/email/templates/responses.ts:export function createLowConfidenceEmail(
+worker/email/templates/index.ts:export function createConfirmationEmail(
+worker/email/templates/index.ts:export * from "./types";
+worker/email/templates/index.ts:export * from "./commands";
+worker/email/templates/index.ts:export * from "./responses";
+worker/email/templates.ts:export {
+worker/email/extraction.ts:export function extractUrls(text: string): string[] {
+worker/email/extraction.ts:export function extractReferralUrl(
+worker/email/extraction.ts:export function detectService(email: ParsedEmail): string {
+worker/email/extraction.ts:export function getServicePattern(
+worker/email/extraction.ts:export function extractCode(
+worker/email/extraction.ts:export function extractReward(
+worker/email/extraction.ts:export function extractExpiry(
+worker/email/extraction.ts:export function extractReferralFromEmail(email: ParsedEmail): ExtractionResult {
+worker/email/extraction.ts:export function detectEmailType(email: ParsedEmail): EmailCommandType {
+worker/email/handler.ts:export { processEmail, emailWorkerHandler } from "./handlers/incoming";
+worker/email/handlers/parse.ts:export { parseCommand } from "../patterns";
+worker/email/handlers/commands.ts:export async function handleAddCommand(
+worker/email/handlers/commands.ts:export async function handleDeactivateCommand(
+worker/email/handlers/commands.ts:export async function handleSearchCommand(
+worker/email/handlers/commands.ts:export async function handleDigestCommand(
+worker/email/handlers/index.ts:export { processEmail, emailWorkerHandler } from "./incoming";
+worker/email/handlers/index.ts:export { parseCommand } from "./parse";
+worker/email/handlers/index.ts:export { createHelpEmail } from "./help";
+worker/email/handlers/index.ts:export { sendEmailReply } from "./utils";
+worker/email/handlers/index.ts:export {
+worker/email/handlers/index.ts:export { handleForwardedEmail, handleHelpCommand } from "./forwarded";
+worker/email/handlers/incoming.ts:export async function processEmail(
+worker/email/handlers/incoming.ts:export async function emailWorkerHandler(
+worker/email/handlers/utils.ts:export async function sendEmailReply(
+worker/email/handlers/help.ts:export { createHelpEmail } from "../templates";
+worker/email/handlers/forwarded.ts:export async function handleForwardedEmail(
+worker/email/handlers/forwarded.ts:export async function handleHelpCommand(
+worker/email/index.ts:export * from "./types";
+worker/email/index.ts:export * from "./patterns";
+worker/email/index.ts:export * from "./extraction";
+worker/email/index.ts:export * from "./security";
+worker/email/index.ts:export * from "./templates";
+worker/email/index.ts:export * from "./handler";
+worker/email/types.ts:export const EmailCommandTypeSchema = z.enum([
+worker/email/types.ts:export const ParsedEmailSchema = z.object({
+worker/email/types.ts:export const ParsedCommandSchema = z.object({
+worker/email/types.ts:export const ExtractionResultSchema = z.object({
+worker/email/types.ts:export const EmailProcessingResultSchema = z.object({
+worker/email/patterns.ts:export {
+worker/email/patterns/index.ts:export { SERVICE_PATTERNS } from "./referral";
+worker/email/patterns/index.ts:export { parseCommand, GENERIC_PATTERNS } from "./command";
+worker/email/patterns/index.ts:export const DOMAIN_TO_SERVICE: Record<string, string> = {
+worker/email/patterns/command.ts:export function parseCommand(email: {
+worker/email/patterns/command.ts:export const GENERIC_PATTERNS = {
+worker/email/patterns/referral.ts:export const SERVICE_PATTERNS: Record<string, ServicePattern> = {
+worker/email/security.ts:export async function validateSecurity(
+worker/email/security.ts:export function isWhitelisted(email: string): boolean {
+worker/email/security.ts:export async function isBlacklisted(
+worker/email/security.ts:export function sanitizeContent(content: string): string {
+worker/email/security.ts:export function getSenderDomain(email: string): string | null {
+worker/email/security.ts:export function checkSuspiciousPatterns(email: ParsedEmail): string[] {
+worker/notify.ts:export async function notify(
+worker/notify.ts:export async function notifyHighValueDeals(
+worker/routes/email.ts:export async function handleEmailIncoming(
+worker/routes/email.ts:export async function handleEmailParse(
+worker/routes/email.ts:export async function handleEmailHelp(
+worker/routes/email.ts:export async function handleEmailWorker(
+worker/routes/core/analytics.ts:export async function handleAnalytics(
+worker/routes/core/health.ts:export async function handleHealth(
+worker/routes/core/health.ts:export async function handleReady(
+worker/routes/core/health.ts:export async function handleLive(
+worker/routes/core/health.ts:export async function handleMetrics(
+worker/routes/core/index.ts:export { handleHealth, handleReady, handleLive, handleMetrics } from "./health";
+worker/routes/core/index.ts:export {
+worker/routes/core/index.ts:export { handleDiscover, handleStatus, handleGetLogs } from "./pipeline";
+worker/routes/core/index.ts:export { handleSubmit } from "./submit";
+worker/routes/core/index.ts:export { handleAnalytics } from "./analytics";
+worker/routes/core/deals.ts:export async function handleGetDeals(
+worker/routes/core/deals.ts:export async function handleSimilarDeals(
+worker/routes/core/deals.ts:export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
+worker/routes/core/deals.ts:export async function handleDealHighlights(
+worker/routes/core/deals.ts:export async function handleExplainDeal(
+worker/routes/core/pipeline.ts:export async function handleDiscover(
+worker/routes/core/pipeline.ts:export async function handleStatus(
+worker/routes/core/pipeline.ts:export async function handleGetLogs(
+worker/routes/core/submit.ts:export async function handleSubmit(
+worker/routes/referrals.ts:export async function handleGetReferrals(
+worker/routes/referrals.ts:export async function handleCreateReferral(
+worker/routes/referrals.ts:export async function handleGetReferralByCode(
+worker/routes/referrals.ts:export async function handleDeactivateReferral(
+worker/routes/referrals.ts:export async function handleReactivateReferral(
+worker/routes/referrals.ts:export async function handleResearch(
+worker/routes/referrals.ts:export async function handleGetResearchResults(
+worker/routes/mcp/resources.ts:export async function handleResourcesList(params?: {
+worker/routes/mcp/resources.ts:export async function handleResourceTemplatesList(): Promise<ResourceTemplatesListResult> {
+worker/routes/mcp/resources.ts:export async function handleResourceRead(
+worker/routes/mcp/index.ts:export async function handleMCPRequest(
+worker/routes/mcp/index.ts:export async function handleMCPListTools(
+worker/routes/mcp/index.ts:export async function handleMCPCall(
+worker/routes/mcp/index.ts:export async function handleMCPInfo(
+worker/routes/mcp/tools.ts:export async function handleToolsList(params?: {
+worker/routes/mcp/tools.ts:export async function handleToolCall(
+worker/routes/mcp/utils.ts:export const SERVER_INFO = {
+worker/routes/mcp/utils.ts:export const SERVER_CAPABILITIES = {
+worker/routes/mcp/utils.ts:export const SERVER_INSTRUCTIONS = `
+worker/routes/mcp/utils.ts:export function getMCPCorsHeaders(
+worker/routes/mcp/utils.ts:export function createSuccessResponse(
+worker/routes/mcp/utils.ts:export function createErrorResponse(
+worker/routes/mcp/utils.ts:export function createJSONResponse(
+worker/routes/mcp/utils.ts:export function validateJSONRPCRequest(body: unknown): JSONRPCRequest | null {
+worker/routes/mcp/utils.ts:export function validateInitializeParams(
+worker/routes/mcp/utils.ts:export function validateToolCallParams(params: unknown): ToolCallParams | null {
+worker/routes/mcp/utils.ts:export function validateResourceReadParams(
+worker/routes/mcp/utils.ts:export async function checkMCPRateLimit(request: Request, env: Env) {
+worker/routes/mcp/utils.ts:export { MCP_PROTOCOL_VERSION };
+worker/routes/mcp/initialize.ts:export async function handleInitialize(
+worker/routes/mcp/initialize.ts:export async function handlePing(): Promise<{}> {
+worker/routes/validation.ts:export async function handleValidateUrl(
+worker/routes/validation.ts:export async function handleValidateBatch(
+worker/routes/validation.ts:export async function handleGetValidationStats(
+worker/routes/validation.ts:export async function handleValidateDeal(
+worker/routes/experience.ts:export async function handleSubmitExperience(
+worker/routes/experience.ts:export async function handleGetExperience(
+worker/routes/experience.ts:export async function handleRunAggregation(
+worker/routes/utils.ts:export function getAllowedOrigins(env?: Env): string[] {
+worker/routes/utils.ts:export const SECURITY_HEADERS: Record<string, string> = {
+worker/routes/utils.ts:export function getAllowedOrigin(origin?: string | null, env?: Env): string {
+worker/routes/utils.ts:export function jsonResponse(
+worker/routes/utils.ts:export function jsonResponseWithOrigin(
+worker/routes/utils.ts:export function errorResponse(
+worker/routes/utils.ts:export function unauthorizedResponse(
+worker/routes/utils.ts:export function forbiddenResponse(
+worker/routes/utils.ts:export function validateUrl(
+worker/routes/utils.ts:export const ALLOWED_REDIRECT_DOMAINS = [
+worker/routes/utils.ts:export function validateRedirect(url: string): boolean {
+worker/routes/bulk/import.ts:export async function handleBulkImport(
+worker/routes/bulk/import.ts:export async function processBulkImportItem(
+worker/routes/bulk/export.ts:export async function handleBulkExport(
+worker/routes/bulk/index.ts:export { handleBulkImport, processBulkImportItem } from "./import";
+worker/routes/bulk/index.ts:export { handleBulkExport } from "./export";
+worker/routes/webhooks.ts:export {
+worker/routes/admin/keys.ts:export async function handleCreateApiKey(
+worker/routes/admin/keys.ts:export async function handleListApiKeys(
+worker/routes/admin/keys.ts:export async function handleRevokeApiKey(
+worker/routes/d1/index.ts:export async function handleD1Request(
+worker/routes/d1/admin.ts:export async function authenticateD1Request(
+worker/routes/d1/admin.ts:export async function handleD1Migrations(
+worker/routes/d1/admin.ts:export async function handleD1Health(env: Env): Promise<Response> {
+worker/routes/d1/deals.ts:export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
+worker/routes/d1/deals.ts:export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
+worker/routes/d1/deals.ts:export async function handleD1Recommended(
+worker/routes/d1/deals.ts:export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
+worker/routes/d1/stats.ts:export async function handleD1Stats(env: Env): Promise<Response> {
+worker/routes/d1/stats.ts:export async function handleD1Domains(env: Env): Promise<Response> {
+worker/routes/d1/stats.ts:export async function handleD1Categories(env: Env): Promise<Response> {
+worker/routes/d1/search.ts:export async function handleD1Search(url: URL, env: Env): Promise<Response> {
+worker/routes/d1/search.ts:export async function handleD1Suggestions(
+worker/routes/webhooks/index.ts:export async function handleWebhookRoutes(
+worker/routes/webhooks/index.ts:export { handleIncomingWebhookRequest } from "./incoming";
+worker/routes/webhooks/index.ts:export {
+worker/routes/webhooks/index.ts:export { handleCreateSyncConfig, handleGetSyncState } from "./sync";
+worker/routes/webhooks/index.ts:export {
+worker/routes/webhooks/incoming.ts:export async function handleIncomingWebhookRequest(
+worker/routes/webhooks/sync.ts:export async function handleCreateSyncConfig(
+worker/routes/webhooks/sync.ts:export async function handleGetSyncState(
+worker/routes/webhooks/types.ts:export const VALID_WEBHOOK_EVENTS: WebhookEventType[] = [
+worker/routes/webhooks/types.ts:export function jsonResponse(
+worker/routes/webhooks/subscriptions.ts:export async function requireAuth(
+worker/routes/webhooks/subscriptions.ts:export async function handleSubscribe(
+worker/routes/webhooks/subscriptions.ts:export async function handleUnsubscribe(
+worker/routes/webhooks/subscriptions.ts:export async function handleListSubscriptions(
+worker/routes/webhooks/subscriptions.ts:export async function handleCreatePartner(
+worker/routes/webhooks/subscriptions.ts:export async function handleGetPartner(
+worker/routes/webhooks/subscriptions.ts:export async function handleGetDeadLetterQueue(
+worker/routes/webhooks/subscriptions.ts:export async function handleRetryDeadLetter(
+worker/routes/nlq/index.ts:export { executeNLQ, parseNaturalLanguageQuery } from "./handlers";
+worker/routes/nlq/index.ts:export async function handleNLQRequest(
+worker/routes/nlq/handlers.ts:export { executeNLQ, parseNaturalLanguageQuery } from "./service";
+worker/routes/nlq/handlers.ts:export async function handleNLQ(request: Request, env: Env): Promise<Response> {
+worker/routes/nlq/handlers.ts:export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
+worker/routes/nlq/handlers.ts:export async function handleNLQExplain(
+worker/routes/nlq/service.ts:export async function executeNLQ(
+worker/routes/nlq/service.ts:export function parseNaturalLanguageQuery(query: string): {
+worker/routes/nlq/utils.ts:export const ENDPOINT_PATH = "/api/nlq";
+worker/routes/nlq/utils.ts:export function generateTraceId(): string {
+worker/routes/nlq/utils.ts:export function getNLQLogger(env: Env, traceId: string) {
+worker/routes/nlq/utils.ts:export function getRateLimitConfig() {
+worker/types.ts:export const RewardTypeSchema = z.enum(["cash", "credit", "percent", "item"]);
+worker/types.ts:export const RewardSchema = z.object({
+worker/types.ts:export const SourceSchema = z.object({
+worker/types.ts:export const ExpirySchema = z.object({
+worker/types.ts:export const DealMetadataSchema = z.object({
+worker/types.ts:export const DealSchema = z.object({
+worker/types.ts:export const SnapshotStatsSchema = z.object({
+worker/types.ts:export const SnapshotSchema = z.object({
+worker/types.ts:export const LogEntrySchema = z.object({
+worker/types.ts:export const SourceClassificationSchema = z.enum([
+worker/types.ts:export const SourceConfigSchema = z.object({
+worker/types.ts:export const PipelinePhaseSchema = z.enum([
+worker/types.ts:export const FailurePathSchema = z.enum([
+worker/types.ts:export const ErrorClassSchema = z.enum([
+worker/types.ts:export class PipelineError extends Error {
+worker/types.ts:export const GetDealsQuerySchema = z.object({
+worker/types.ts:export const SubmitDealBodySchema = z.object({
+worker/types.ts:export const ReferralInputSchema = z.object({
+worker/types.ts:export const ReferralDeactivateBodySchema = z.object({
+worker/types.ts:export const ReferralSearchQuerySchema = z.object({
+worker/types.ts:export const WebResearchRequestSchema = z.object({
+worker/types.ts:export const ExperienceEventTypeSchema = z.enum([
+worker/types.ts:export const ExperienceEventInputSchema = z.object({
+worker/version.ts:export const VERSION = "0.1.6";
+worker/lib/referral-storage/dual-write.ts:export async function storeReferralDual(
+worker/lib/referral-storage/dual-write.ts:export async function getReferralById(
+worker/lib/referral-storage/dual-write.ts:export async function getReferralByCode(
+worker/lib/referral-storage/dual-write.ts:export async function updateReferralStatus(
+worker/lib/referral-storage/dual-write.ts:export async function deactivateReferral(
+worker/lib/referral-storage/dual-write.ts:export async function reactivateReferral(
+worker/lib/referral-storage/dual-write.ts:export async function searchReferralsD1(
+worker/lib/referral-storage/dual-write.ts:export async function getExpiringReferralsD1(
+worker/lib/referral-storage/dual-write.ts:export async function getReferralStatsD1(env: Env): Promise<{
+worker/lib/referral-storage/index.ts:export { REFERRAL_KEYS } from "./types";
+worker/lib/referral-storage/index.ts:export {
+worker/lib/referral-storage/index.ts:export {
+worker/lib/referral-storage/types.ts:export const REFERRAL_KEYS = {
+worker/lib/referral-storage/types.ts:export async function updateReferralIndices(
+worker/lib/referral-storage/types.ts:export async function updateStatusLists(
+worker/lib/referral-storage/types.ts:export async function logReferralChange(
+worker/lib/referral-storage/crud.ts:export async function storeReferralInput(
+worker/lib/referral-storage/crud.ts:export async function getReferralById(
+worker/lib/referral-storage/crud.ts:export async function getReferralByCode(
+worker/lib/referral-storage/crud.ts:export async function updateReferralStatus(
+worker/lib/referral-storage/crud.ts:export async function deactivateReferral(
+worker/lib/referral-storage/crud.ts:export async function reactivateReferral(
+worker/lib/referral-storage/search.ts:export async function getReferralsByDomain(
+worker/lib/referral-storage/search.ts:export async function getReferralsByStatus(
+worker/lib/referral-storage/search.ts:export async function searchReferrals(
+worker/lib/referral-storage/search.ts:export async function storeResearchResults(
+worker/lib/referral-storage/search.ts:export async function getLatestResearch(
+worker/lib/referral-storage/search.ts:export function referralToDeal(referral: ReferralInput): Omit<Deal, "id"> {
+worker/lib/referral-storage/search.ts:export async function getActiveReferralsAsDeals(env: Env): Promise<Deal[]> {
+worker/lib/referral-storage/search.ts:export async function deactivateExpiredReferrals(env: Env): Promise<number> {
+worker/lib/circuit-breaker.ts:export class CircuitBreaker {
+worker/lib/circuit-breaker.ts:export class CircuitBreakerOpenError extends Error {
+worker/lib/circuit-breaker.ts:export function createGitHubCircuitBreaker(env?: Env): CircuitBreaker {
+worker/lib/circuit-breaker.ts:export function createTelegramCircuitBreaker(env?: Env): CircuitBreaker {
+worker/lib/circuit-breaker.ts:export function getSourceCircuitBreaker(
+worker/lib/circuit-breaker.ts:export function clearSourceCircuitBreakers(): void {
+worker/lib/circuit-breaker.ts:export function getAllCircuitBreakerMetrics(): Record<
+worker/lib/circuit-breaker.ts:export function resetAllMetrics(): void {
+worker/lib/circuit-breaker.ts:export function createCircuitBreaker(
+worker/lib/circuit-breaker.ts:export async function callWithCircuitBreaker<T>(
+worker/lib/circuit-breaker.ts:export function getCircuitBreakerMetrics(
+worker/lib/circuit-breaker.ts:export async function resetCircuitBreaker(
+worker/lib/error-handler.ts:export function classifyError(
+worker/lib/error-handler.ts:export function handleError(
+worker/lib/error-handler.ts:export async function withErrorHandling<T>(
+worker/lib/error-handler.ts:export function toPipelineError(
+worker/lib/config-utils.ts:export function getTrustThreshold(env: Env): number {
+worker/lib/config-utils.ts:export function validateConfig(env: Env): void {
+worker/lib/rate-limit.ts:export async function checkRateLimit(
+worker/lib/rate-limit.ts:export async function getClientIdentifier(
+worker/lib/rate-limit.ts:export function createRateLimitHeaders(result: RateLimitResult): Headers {
+worker/lib/rate-limit.ts:export function createRateLimitMiddleware(
+worker/lib/rate-limit.ts:export function getPerKeyRateLimitConfig(
+worker/lib/rate-limit.ts:export function getRateLimitConfig(endpoint: string): RateLimitConfig {
+worker/lib/rate-limit.ts:export async function resetRateLimit(
+worker/lib/webhook/index.ts:export {
+worker/lib/webhook/index.ts:export {
+worker/lib/webhook/index.ts:export {
+worker/lib/webhook/index.ts:export { handleIncomingWebhook } from "./incoming";
+worker/lib/webhook/incoming.ts:export async function handleIncomingWebhook(
+worker/lib/webhook/types.ts:export const DEFAULT_RETRY_POLICY: RetryPolicy = {
+worker/lib/webhook/types.ts:export const WEBHOOK_RATE_LIMIT_TTL = 3600; // 1 hour
+worker/lib/webhook/types.ts:export function getWebhookKV(env: Env): KVNamespace | null {
+worker/lib/webhook/types.ts:export function generateId(): string {
+worker/lib/webhook/subscriptions.ts:export async function getWebhookPartner(
+worker/lib/webhook/subscriptions.ts:export async function getWebhookPartners(env: Env): Promise<WebhookPartner[]> {
+worker/lib/webhook/subscriptions.ts:export async function saveWebhookPartner(
+worker/lib/webhook/subscriptions.ts:export async function createWebhookPartner(
+worker/lib/webhook/subscriptions.ts:export async function createSubscription(
+worker/lib/webhook/subscriptions.ts:export async function getSubscription(
+worker/lib/webhook/subscriptions.ts:export async function getPartnerSubscriptions(
+worker/lib/webhook/subscriptions.ts:export async function updateSubscription(
+worker/lib/webhook/subscriptions.ts:export async function deleteSubscription(
+worker/lib/webhook/subscriptions.ts:export async function getSyncState(
+worker/lib/webhook/subscriptions.ts:export async function saveSyncState(env: Env, state: SyncState): Promise<void> {
+worker/lib/webhook/subscriptions.ts:export async function createSyncConfig(
+worker/lib/webhook/delivery.ts:export async function sendOutgoingWebhooks(
+worker/lib/webhook/delivery.ts:export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
+worker/lib/webhook/delivery.ts:export async function retryDeadLetterEvent(
+worker/lib/validation/url-validator.ts:export async function validateUrl(
+worker/lib/validation/url-validator.ts:export async function checkUrlStatusBatch(
+worker/lib/validation/url-validator.ts:export async function detectRedirects(
+worker/lib/validation/url-validator.ts:export function isUrlDead(result: UrlValidationResult): boolean {
+worker/lib/validation/url-validator.ts:export function getValidationSummary(results: UrlValidationResult[]): {
+worker/lib/validation/code-validator.ts:export function validateCodeFormat(
+worker/lib/validation/code-validator.ts:export function getSupportedProviders(): string[] {
+worker/lib/validation/code-validator.ts:export function getProviderFormat(provider: string): ProviderFormat | null {
+worker/lib/validation/code-validator.ts:export async function validateCodeOnPage(
+worker/lib/validation/code-validator.ts:export async function testCodeRedemption(
+worker/lib/validation/code-validator.ts:export async function validateCodeComplete(
+worker/lib/validation/code-validator.ts:export async function validateCodesBatch(
+worker/lib/validation/reward-scraper.ts:export async function scrapeCurrentRewards(
+worker/lib/validation/reward-scraper.ts:export function extractRewardFromHTML(html: string): ExtractedReward | null {
+worker/lib/validation/reward-scraper.ts:export async function detectRewardChanges(
+worker/lib/validation/reward-scraper.ts:export async function batchScrapeRewards(
+worker/lib/validation/reward-scraper.ts:export function getDealsWithRewardChanges(
+worker/lib/validation/reward-scraper.ts:export function getScrapingStats(results: RewardScrapeResult[]): {
+worker/lib/mcp/handlers/report.ts:export const ReportDealInputSchema = z.object({
+worker/lib/mcp/handlers/report.ts:export async function handleReportDeal(
+worker/lib/mcp/handlers/discovery.ts:export const GetSimilarDealsInputSchema = z.object({
+worker/lib/mcp/handlers/discovery.ts:export async function handleGetSimilarDeals(
+worker/lib/mcp/handlers/discovery.ts:export async function handleGetDealHighlights(
+worker/lib/mcp/handlers/logging.ts:export const GetLogsInputSchema = z.object({
+worker/lib/mcp/handlers/logging.ts:export async function handleGetLogs(
+worker/lib/mcp/handlers/referrals.ts:export const GetDealInputSchema = z.object({
+worker/lib/mcp/handlers/referrals.ts:export const AddReferralInputSchema = z.object({
+worker/lib/mcp/handlers/referrals.ts:export async function handleGetDeal(
+worker/lib/mcp/handlers/referrals.ts:export async function handleAddReferral(
+worker/lib/mcp/handlers/validation.ts:export const ValidateDealInputSchema = z.object({
+worker/lib/mcp/handlers/validation.ts:export async function handleValidateDeal(
+worker/lib/mcp/handlers/pipeline.ts:export async function handleGetPipelineStatus(
+worker/lib/mcp/handlers/pipeline.ts:export async function handleTriggerDiscovery(
+worker/lib/mcp/handlers/categories.ts:export const ListCategoriesInputSchema = z.object({
+worker/lib/mcp/handlers/categories.ts:export async function handleListCategories(
+worker/lib/mcp/handlers/experience.ts:export const ExperienceDealInputSchema = z.object({
+worker/lib/mcp/handlers/experience.ts:export async function handleExperienceDeal(
+worker/lib/mcp/handlers/stats.ts:export async function handleGetStats(
+worker/lib/mcp/handlers/nlq.ts:export const NaturalLanguageQueryInputSchema = z.object({
+worker/lib/mcp/handlers/nlq.ts:export async function handleNaturalLanguageQuery(
+worker/lib/mcp/handlers/search.ts:export const SearchDealsInputSchema = z.object({
+worker/lib/mcp/handlers/search.ts:export async function handleSearchDeals(
+worker/lib/mcp/handlers/research.ts:export const ResearchDomainInputSchema = z.object({
+worker/lib/mcp/handlers/research.ts:export async function handleResearchDomain(
+worker/lib/mcp/resources.ts:export const MCP_RESOURCES: Resource[] = [
+worker/lib/mcp/resources.ts:export const MCP_RESOURCE_TEMPLATES: ResourceTemplate[] = [
+worker/lib/mcp/resources.ts:export async function readResource(
+worker/lib/mcp/resources.ts:export function getResources(): Resource[] {
+worker/lib/mcp/resources.ts:export function getResourceTemplates(): ResourceTemplate[] {
+worker/lib/mcp/resources.ts:export function matchResourceTemplate(
+worker/lib/mcp/types.ts:export const MCP_PROTOCOL_VERSION = "2025-11-25";
+worker/lib/mcp/types.ts:export const MCP_PROTOCOL_VERSION_FALLBACK = "2025-03-26";
+worker/lib/mcp/types.ts:export const JSONRPCRequestSchema = z.object({
+worker/lib/mcp/types.ts:export const InitializeParamsSchema = z.object({
+worker/lib/mcp/types.ts:export const ToolsListParamsSchema = z.object({
+worker/lib/mcp/types.ts:export const ToolCallParamsSchema = z.object({
+worker/lib/mcp/types.ts:export const ResourcesListParamsSchema = z.object({
+worker/lib/mcp/types.ts:export const ResourceReadParamsSchema = z.object({
+worker/lib/mcp/types.ts:export const MCPErrorCodes = {
+worker/lib/mcp/utils.ts:export function encodeCursor(offset: number, limit: number): string {
+worker/lib/mcp/utils.ts:export function decodeCursor(
+worker/lib/mcp/utils.ts:export function paginate<T>(
+worker/lib/mcp/utils.ts:export function createProgressMeta(
+worker/lib/mcp/utils.ts:export async function withProgress<T extends Record<string, unknown>>(
+worker/lib/mcp/tools/user.ts:export const userTools: Tool[] = [
+worker/lib/mcp/tools/user.ts:export const userToolHandlers: Record<string, ToolHandler> = {
+worker/lib/mcp/tools/index.ts:export { dealTools, researchTools, userTools, systemTools };
+worker/lib/mcp/tools/index.ts:export {
+worker/lib/mcp/tools/index.ts:export const MCP_TOOLS: Tool[] = [
+worker/lib/mcp/tools/index.ts:export async function executeTool(
+worker/lib/mcp/tools/index.ts:export function getTools(): Tool[] {
+worker/lib/mcp/tools/system.ts:export const systemTools: Tool[] = [
+worker/lib/mcp/tools/system.ts:export const systemToolHandlers: Record<string, ToolHandler> = {
+worker/lib/mcp/tools/deals.ts:export const dealTools: Tool[] = [
+worker/lib/mcp/tools/deals.ts:export const dealToolHandlers: Record<string, ToolHandler> = {
+worker/lib/mcp/tools/research.ts:export const researchTools: Tool[] = [
+worker/lib/mcp/tools/research.ts:export const researchToolHandlers: Record<string, ToolHandler> = {
+worker/lib/cache.ts:export class KVCache {
+worker/lib/cache.ts:export function createSourceCache(env: Env): KVCache {
+worker/lib/cache.ts:export function createGitHubCache(env: Env): KVCache {
+worker/lib/cache.ts:export function createRobotsTxtCache(env: Env): KVCache {
+worker/lib/cache.ts:export function createSnapshotCache(env: Env): KVCache {
+worker/lib/cache.ts:export function createStagingSnapshotCache(env: Env): KVCache {
+worker/lib/cache.ts:export function getAllCacheMetrics(): Record<string, CacheMetrics> {
+worker/lib/cache.ts:export function resetAllCacheMetrics(): void {
+worker/lib/cache.ts:export async function clearAllCaches(env: Env): Promise<void> {
+worker/lib/cache.ts:export async function resetAllCaches(env: Env): Promise<void> {
+worker/lib/categorization/definitions.ts:export const CATEGORY_DEFINITIONS: Record<string, CategoryDefinition> = {
+worker/lib/categorization/index.ts:export function autoCategorize(deal: Deal): DealMetadata {
+worker/lib/categorization/index.ts:export function batchAutoCategorize(deals: Deal[]): Deal[] {
+worker/lib/categorization/index.ts:export function getCategoryStats(deals: Deal[]): Record<string, number> {
+worker/lib/categorization/index.ts:export function getTagStats(deals: Deal[]): Record<string, number> {
+worker/lib/categorization/scoring.ts:export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
+worker/lib/categorization/scoring.ts:export function calculateCategoryScores(deal: Deal): Map<string, number> {
+worker/lib/categorization/scoring.ts:export function calculateTagScores(deal: Deal): Map<string, number> {
+worker/lib/guard-rails.ts:export async function checkSafety(deal: Deal): Promise<GuardRailResult> {
+worker/lib/guard-rails.ts:export function checkResourceLimits(deals: Deal[]): GuardRailResult {
+worker/lib/guard-rails.ts:export function checkRateLimit(
+worker/lib/guard-rails.ts:export function checkDataQuality(deals: Deal[]): GuardRailResult {
+worker/lib/guard-rails.ts:export function checkConsistency(
+worker/lib/guard-rails.ts:export async function runGuardRails(
+worker/lib/guard-rails.ts:export async function enforceGuardRails(
+worker/lib/rate-limit-kv.ts:export function createRateLimitKVStore(
+worker/lib/rate-limit-kv.ts:export async function checkRateLimitKV(
+worker/lib/rate-limit-kv.ts:export async function getRateLimitKVState(
+worker/lib/rate-limit-kv.ts:export async function resetRateLimitKV(
+worker/lib/rate-limit-kv.ts:export async function getAllRateLimitStates(
+worker/lib/rate-limit-kv.ts:export function createRateLimitKVMiddleware(
+worker/lib/rate-limit-kv.ts:export async function batchCheckRateLimitKV(
+worker/lib/rate-limit-kv.ts:export async function getRateLimitStats(env: Env): Promise<{
+worker/lib/ranking.ts:export function calculateDealScore(deal: Deal): number {
+worker/lib/ranking.ts:export function calculateDetailedScore(deal: Deal): {
+worker/lib/ranking.ts:export function sortDeals(
+worker/lib/ranking.ts:export function rankDeals(
+worker/lib/ranking.ts:export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
+worker/lib/ranking.ts:export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
+worker/lib/ranking.ts:export function getRecentDeals(deals: Deal[], days: number = 7): Deal[] {
+worker/lib/ranking.ts:export function getHighValueDeals(
+worker/lib/explainability.ts:export function explainDeal(
+worker/lib/github/workflows.ts:export async function getWorkflowRuns(
+worker/lib/github/workflows.ts:export async function getWorkflowStatusSummary(
+worker/lib/github/workflows.ts:export async function waitForWorkflowsComplete(
+worker/lib/github/index.ts:export * from "./types";
+worker/lib/github/index.ts:export * from "./core";
+worker/lib/github/index.ts:export * from "./workflows";
+worker/lib/github/core.ts:export async function safeResponseJson<T>(response: Response): Promise<T> {
+worker/lib/github/core.ts:export let githubCircuitBreaker: CircuitBreaker | undefined;
+worker/lib/github/core.ts:export function getGitHubLogger(env?: Env) {
+worker/lib/github/core.ts:export function initGitHubCircuitBreaker(env?: GitHubCacheEnv): void {
+worker/lib/github/core.ts:export function setGitHubToken(token: string): void {
+worker/lib/github/core.ts:export function resetGitHubToken(): void {
+worker/lib/github/core.ts:export function getGitHubConfig() {
+worker/lib/github/core.ts:export async function getFileContent(
+worker/lib/github/core.ts:export async function commitFile(
+worker/lib/github/core.ts:export async function commitSnapshot(
+worker/lib/github/core.ts:export async function createGitHubIssue(
+worker/lib/github/core.ts:export async function getRecentCommits(
+worker/lib/github/core.ts:export async function isSnapshotCommitted(
+worker/lib/github/core.ts:export async function verifyCommit(
+worker/lib/metrics/index.ts:export * from "./core";
+worker/lib/metrics/index.ts:export * from "./stats";
+worker/lib/metrics/stats.ts:export async function getCumulativeGateRejections(
+worker/lib/metrics/stats.ts:export async function getCumulativeGatePasses(
+worker/lib/metrics/stats.ts:export function calculateAggregateStats(metrics: PipelineMetrics[]) {
+worker/lib/metrics/stats.ts:export function formatMetricsForPrometheus(
+worker/lib/metrics/stats.ts:export function getDetailedPhaseTimingStats(
+worker/lib/metrics/stats.ts:export function getPhaseTimingStats(
+worker/lib/metrics/core.ts:export function createMetrics(run_id: string): PipelineMetrics {
+worker/lib/metrics/core.ts:export function recordPhaseTiming(
+worker/lib/metrics/core.ts:export function recordDealCount(
+worker/lib/metrics/core.ts:export function recordError(metrics: PipelineMetrics): void {
+worker/lib/metrics/core.ts:export function recordRetry(metrics: PipelineMetrics): void {
+worker/lib/metrics/core.ts:export function recordValidationGateRejection(
+worker/lib/metrics/core.ts:export function recordValidationGatePass(
+worker/lib/metrics/core.ts:export function recordValidationCacheMetric(
+worker/lib/metrics/core.ts:export function finalizeMetrics(
+worker/lib/metrics/core.ts:export async function storeMetrics(
+worker/lib/metrics/core.ts:export async function getMetrics(
+worker/lib/metrics/core.ts:export async function getRecentMetrics(
+worker/lib/hmac.ts:export async function generateHmacSignature(
+worker/lib/hmac.ts:export async function verifyHmacSignature(
+worker/lib/hmac.ts:export function timingSafeEqual(a: string, b: string): boolean {
+worker/lib/hmac.ts:export function parseSignatureHeader(
+worker/lib/hmac.ts:export async function generateWebhookHeaders(
+worker/lib/hmac.ts:export function generateWebhookSecret(): string {
+worker/lib/hmac.ts:export async function hashIdempotencyKey(key: string): Promise<string> {
+worker/lib/hmac.ts:export async function hashRequest(
+worker/lib/logger/export.ts:export async function exportLogsAsJSONL(env: Env): Promise<string> {
+worker/lib/logger/export.ts:export async function exportStructuredLogsAsJSONL(env: Env): Promise<string> {
+worker/lib/logger/index.ts:export * from "./types";
+worker/lib/logger/index.ts:export * from "./structured";
+worker/lib/logger/index.ts:export * from "./legacy";
+worker/lib/logger/index.ts:export * from "./query";
+worker/lib/logger/index.ts:export * from "./export";
+worker/lib/logger/legacy.ts:export async function appendLog(
+worker/lib/logger/legacy.ts:export function createLogBuilder(run_id: string, trace_id: string): LogBuilder {
+worker/lib/logger/legacy.ts:export class LogBuilder {
+worker/lib/logger/structured.ts:export function createStructuredLogger(
+worker/lib/logger/types.ts:export const LOG_KEY_PREFIX = "log:";
+worker/lib/logger/types.ts:export const LOG_INDEX_KEY = "log:index";
+worker/lib/logger/types.ts:export const STRUCTURED_LOG_PREFIX = "logs:";
+worker/lib/logger/types.ts:export const TRACE_INDEX_PREFIX = "trace:";
+worker/lib/logger/query.ts:export async function getRunLogs(
+worker/lib/logger/query.ts:export async function queryLogsByRunId(
+worker/lib/logger/query.ts:export async function queryLogsByTraceId(
+worker/lib/logger/query.ts:export async function getRecentLogs(
+worker/lib/logger/query.ts:export async function getRecentStructuredLogs(
+worker/lib/auth.ts:export { getAllowedOrigin };
+worker/lib/auth.ts:export async function hashApiKey(key: string): Promise<string> {
+worker/lib/auth.ts:export function generateApiKey(): string {
+worker/lib/auth.ts:export async function storeApiKey(
+worker/lib/auth.ts:export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
+worker/lib/auth.ts:export async function revokeApiKey(
+worker/lib/auth.ts:export async function verifyApiKey(
+worker/lib/auth.ts:export function extractApiKey(request: Request): string | null {
+worker/lib/auth.ts:export async function authenticateRequest(
+worker/lib/auth.ts:export function requireAuth(
+worker/lib/auth.ts:export async function withAuth(
+worker/lib/auth.ts:export function createCorsHeaders(
+worker/lib/auth.ts:export function createSecurityHeaders(): Record<string, string> {
+worker/lib/logger.ts:export * from "./logger/index";
+worker/lib/storage.ts:export async function getProductionSnapshot(
+worker/lib/storage.ts:export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
+worker/lib/storage.ts:export async function writeStagingSnapshot(
+worker/lib/storage.ts:export async function promoteToProduction(
+worker/lib/storage.ts:export async function revertProduction(
+worker/lib/storage.ts:export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
+worker/lib/storage.ts:export async function updateSourceRegistry(
+worker/lib/storage.ts:export async function getSourceConfig(
+worker/lib/storage.ts:export async function updateSourceTrust(
+worker/lib/storage.ts:export async function recordSourceValidation(
+worker/lib/storage.ts:export async function getDealById(env: Env, id: string): Promise<Deal | null> {
+worker/lib/storage.ts:export async function getDealsByCode(env: Env, code: string): Promise<Deal[]> {
+worker/lib/storage.ts:export async function getDealsByCategory(
+worker/lib/storage.ts:export async function getActiveDeals(env: Env): Promise<Deal[]> {
+worker/lib/storage.ts:export async function getQuarantinedDeals(env: Env): Promise<Deal[]> {
+worker/lib/storage.ts:export async function setLastRunMetadata(
+worker/lib/storage.ts:export async function getLastRunMetadata(env: Env) {
+worker/lib/storage.ts:export async function clearStaging(env: Env): Promise<void> {
+worker/lib/utils.ts:export async function fetchInBatches<T, R>(
+worker/lib/utils.ts:export async function executeInBatches<T>(
+worker/lib/utils.ts:export function chunkArray<T>(array: T[], size: number): T[][] {
+worker/lib/utils.ts:export async function retryWithBackoff<T>(
+worker/lib/webhook-sdk.ts:export class WebhookClient {
+worker/lib/webhook-sdk.ts:export class WebhookServer {
+worker/lib/webhook-sdk.ts:export function generatePartnerSecret(): string {
+worker/lib/webhook-sdk.ts:export async function createWebhookHeaders(
+worker/lib/webhook-sdk.ts:export function isReferralCreatedEvent(
+worker/lib/webhook-sdk.ts:export function isReferralUpdatedEvent(
+worker/lib/webhook-sdk.ts:export function isReferralDeactivatedEvent(
+worker/lib/webhook-sdk.ts:export function isPingEvent(
+worker/lib/analytics/calculators.ts:export function calculateDealsOverTime(
+worker/lib/analytics/calculators.ts:export function calculateCategoryBreakdown(
+worker/lib/analytics/calculators.ts:export function calculateSourcePerformance(
+worker/lib/analytics/calculators.ts:export function calculateValueDistribution(
+worker/lib/analytics/calculators.ts:export function calculateExpiringSoon(
+worker/lib/analytics/calculators.ts:export function calculateQualityMetrics(
+worker/lib/analytics/index.ts:export async function generateDealAnalytics(
+worker/lib/analytics/index.ts:export async function generateAnalyticsSummary(
+worker/lib/analytics/index.ts:export { generateDashboardHTML } from "./dashboard";
+worker/lib/analytics/dashboard.ts:export function generateDashboardHTML(analytics: DealAnalytics): string {
+worker/lib/expiration-manager.ts:export function findExpiringDeals(
+worker/lib/expiration-manager.ts:export function checkAllExpiryWindows(
+worker/lib/expiration-manager.ts:export async function sendExpiryNotifications(
+worker/lib/expiration-manager.ts:export function findNewlyExpiredDeals(
+worker/lib/expiration-manager.ts:export async function sendExpiredNotifications(
+worker/lib/expiration-manager.ts:export async function runExpirationCheck(
+worker/lib/expiration-manager.ts:export function getExpirationStats(deals: Deal[]): {
+worker/lib/security.ts:export async function validateFetchUrl(url: string): Promise<boolean> {
+worker/lib/d1/client.ts:export class D1Client {
+worker/lib/d1/client.ts:export function createD1Client(
+worker/lib/d1/client.ts:export function createD1ReadClient(
+worker/lib/d1/client.ts:export function createD1WriteClient(db: D1Database): D1Client {
+worker/lib/d1/index.ts:export {
+worker/lib/d1/index.ts:export {
+worker/lib/d1/index.ts:export {
+worker/lib/d1/index.ts:export const SCHEMA_VERSION = "1.0.0";
+worker/lib/d1/experience.ts:export async function submitExperienceEvent(
+worker/lib/d1/experience.ts:export async function getExperienceAggregate(
+worker/lib/d1/experience.ts:export async function runAggregation(
+worker/lib/d1/queries.ts:export async function searchDeals(
+worker/lib/d1/queries.ts:export async function getSearchSuggestions(
+worker/lib/d1/queries.ts:export async function getDealsByDomain(
+worker/lib/d1/queries.ts:export async function getDealsByCategory(
+worker/lib/d1/queries.ts:export async function getDomainsWithCounts(
+worker/lib/d1/queries.ts:export async function getCategoriesWithCounts(
+worker/lib/d1/queries.ts:export async function getActiveDeals(
+worker/lib/d1/queries.ts:export async function getExpiringDeals(
+worker/lib/d1/queries.ts:export async function getRecentDeals(
+worker/lib/d1/queries.ts:export async function getDealStats(db: D1Database): Promise<DealStats> {
+worker/lib/d1/queries.ts:export async function getDealTimeSeries(
+worker/lib/d1/queries.ts:export async function insertDeal(
+worker/lib/d1/queries.ts:export async function insertReferralCode(
+worker/lib/d1/queries.ts:export async function getReferralCodesByDeal(
+worker/lib/d1/queries.ts:export async function getReferralCodeByString(
+worker/lib/d1/queries.ts:export async function getTopDomains(
+worker/lib/d1/queries.ts:export async function getReferralUsageStats(
+worker/lib/d1/queries.ts:export async function getSimilarDealsD1(
+worker/lib/d1/queries.ts:export async function getRecommendedDealsD1(
+worker/lib/d1/queries.ts:export async function getTrendingDealsD1(
+worker/lib/d1/migrations.ts:export const MIGRATIONS: Migration[] = [
+worker/lib/d1/migrations.ts:export class MigrationRunner {
+worker/lib/d1/migrations.ts:export function createMigrationRunner(db: D1Database): MigrationRunner {
+worker/lib/d1/migrations.ts:export async function initDatabase(db: D1Database): Promise<MigrationResult> {
+worker/lib/d1/migrations.ts:export async function getMigrationStatus(
+worker/lib/expiration/scheduling.ts:export const EXPIRY_CHECK_KEY = "meta:last_expiry_check";
+worker/lib/expiration/scheduling.ts:export const EXPIRED_DEALS_KEY = "meta:expired_deals";
+worker/lib/expiration/scheduling.ts:export const NOTIFIED_EXPIRING_KEY = "meta:notified_expiring";
+worker/lib/expiration/scheduling.ts:export const VALIDATION_STATS_KEY = "meta:validation_stats";
+worker/lib/expiration/scheduling.ts:export const LAST_VALIDATION_KEY = "meta:last_validation";
+worker/lib/expiration/scheduling.ts:export async function scheduleExpiryCheck(env: Env): Promise<void> {
+worker/lib/expiration/scheduling.ts:export async function storeValidationStats(
+worker/lib/expiration/scheduling.ts:export async function getValidationStats(env: Env): Promise<{
+worker/lib/expiration/scheduling.ts:export async function getNotifiedExpiringDeals(env: Env): Promise<string[]> {
+worker/lib/expiration/scheduling.ts:export async function recordNotifiedExpiringDeals(
+worker/lib/expiration/scheduling.ts:export async function getLastValidationResults(env: Env): Promise<{
+worker/lib/expiration/index.ts:export { findExpiringDeals, checkExpiringDeals } from "./finding";
+worker/lib/expiration/index.ts:export { validateDealsBatch, deactivateInvalidDeals } from "./validation";
+worker/lib/expiration/index.ts:export { sendExpiryNotifications, notifyExpiringDeals } from "./notifications";
+worker/lib/expiration/index.ts:export { markExpiredDeals } from "./mark-expired";
+worker/lib/expiration/index.ts:export {
+worker/lib/expiration/index.ts:export async function checkDealExpirations(env: Env): Promise<{
+worker/lib/expiration/index.ts:export async function runFullValidationSweep(env: Env): Promise<{
+worker/lib/expiration/index.ts:export function isExpiringSoon(deal: Deal, days: number): boolean {
+worker/lib/expiration/index.ts:export function calculateExpiryUrgency(deal: Deal): number {
+worker/lib/expiration/validation.ts:export async function validateDealsBatch(
+worker/lib/expiration/validation.ts:export async function deactivateInvalidDeals(env: Env): Promise<{
+worker/lib/expiration/mark-expired.ts:export async function markExpiredDeals(env: Env): Promise<number> {
+worker/lib/expiration/notifications.ts:export async function sendExpiryNotifications(
+worker/lib/expiration/notifications.ts:export async function notifyExpiringDeals(env: Env): Promise<{
+worker/lib/expiration/notifications.ts:export async function sendExpiredNotifications(
+worker/lib/expiration/finding.ts:export {
+worker/lib/expiration/finding.ts:export async function findExpiringDeals(
+worker/lib/expiration/finding.ts:export async function checkExpiringDeals(
+worker/lib/feature-flags.ts:export async function isFeatureEnabled(
+worker/lib/feature-flags.ts:export async function getFeatureFlag(
+worker/lib/feature-flags.ts:export async function setFeatureFlag(
+worker/lib/feature-flags.ts:export async function deleteFeatureFlag(
+worker/lib/feature-flags.ts:export async function getAllFeatureFlags(
+worker/lib/feature-flags.ts:export async function initializeDefaultFlags(env: Env): Promise<void> {
+worker/lib/feature-flags.ts:export async function getFeatureFlagStats(env: Env): Promise<{
+worker/lib/feature-flags.ts:export function createFeatureFlagMiddleware(
+worker/lib/feature-flags.ts:export async function batchCheckFlags(
+worker/lib/validation-cache/key.ts:export function normalizeUrl(input: string): string {
+worker/lib/validation-cache/key.ts:export async function sha256Hex(input: string): Promise<string> {
+worker/lib/validation-cache/key.ts:export async function buildUrlCacheKey(url: string): Promise<string> {
+worker/lib/validation-cache/key.ts:export async function buildFingerprintKey(
+worker/lib/validation-cache/index-repository.ts:export class ValidationIndexRepository {
+worker/lib/validation-cache/repository.ts:export class ValidationCacheRepository {
+worker/lib/validation-cache/repository.ts:export function ttlForStatus(status: ValidationCacheEntry["status"]): number {
+worker/lib/research-agent/orchestrator.ts:export async function executeReferralResearch(
+worker/lib/research-agent/orchestrator.ts:export async function convertResearchToReferrals(
+worker/lib/research-agent/orchestrator.ts:export async function researchAllReferralPossibilities(
+worker/lib/research-agent/orchestrator.ts:export { fetchFromSource, extractReferralsFromContent, researchRateLimiter };
+worker/lib/research-agent/fetcher.ts:export async function fetchProductHuntDeals(
+worker/lib/research-agent/fetcher.ts:export async function fetchGitHubTrending(
+worker/lib/research-agent/fetcher.ts:export async function fetchHackerNewsDeals(
+worker/lib/research-agent/fetcher.ts:export async function fetchRedditDeals(
+worker/lib/research-agent/fetcher.ts:export async function fetchGenericPageContent(
+worker/lib/research-agent/fetcher.ts:export async function fetchFromSource(
+worker/lib/research-agent/fetcher.ts:export function extractReferralsFromContent(
+worker/lib/research-agent/fetcher.ts:export class ResearchRateLimiter {
+worker/lib/research-agent/fetcher.ts:export const researchRateLimiter = new ResearchRateLimiter(10, 60000);
+worker/lib/research-agent/index.ts:export {
+worker/lib/research-agent/index.ts:export {
+worker/lib/research-agent/index.ts:export {
+worker/lib/research-agent/index.ts:export {
+worker/lib/research-agent/types.ts:export const KNOWN_REFERRAL_PROGRAMS: {
+worker/lib/research-agent/types.ts:export const RESEARCH_SOURCES: ResearchSource[] = [
+worker/lib/research-agent/types.ts:export function normalizeResearchQuery(query: string, domain?: string): string {
+worker/lib/research-agent/types.ts:export function generateSearchQueries(
+worker/lib/research-agent/types.ts:export function generatePotentialCodes(
+worker/lib/research-agent/types.ts:export function generateSampleCode(domain: string, index: number): string {
+worker/lib/research-agent/types.ts:export function simulateDiscovery(
+worker/lib/research-agent/types.ts:export function generateSimulatedCode(source: string, index: number): string {
+worker/lib/research-agent/types.ts:export function generateSimulatedReward(source: string): string {
+worker/lib/research-agent/types.ts:export function deduplicateCodes(
+worker/lib/research-agent/types.ts:export function extractRewardValue(rewardSummary?: string): number | undefined {
+worker/lib/research-agent/types.ts:export function getDefaultResearchConfig(): ResearchConfig {
+worker/lib/research-agent/sources.ts:export function addResearchSource(source: ResearchSource): void {
+worker/lib/research-agent/sources.ts:export function getResearchSources(): ResearchSource[] {
+worker/lib/research-agent/sources.ts:export function getSourceByName(name: string): ResearchSource | undefined {
+worker/lib/research-agent/sources.ts:export function registerKnownProgram(
+worker/lib/research-agent/sources.ts:export function getSourceApiConfig(
+worker/lib/research-agent/sources.ts:export function updateSourceApiConfig(
+worker/lib/research-agent/sources.ts:export function getApiEnabledSources(): ResearchSource[] {
+worker/lib/research-agent/sources.ts:export const SOURCE_RATE_LIMITS: {
+worker/lib/research-agent/sources.ts:export function getSourceRateLimit(sourceName: string): {
+worker/lib/research-agent/sources.ts:export const SOURCE_AUTH_ENV_VARS: {
+worker/lib/research-agent/sources.ts:export function getSourceAuthEnvVars(sourceName: string): {
+worker/lib/eu-ai-act-logger.ts:export class EUAIActLogger {
+worker/lib/eu-ai-act-logger.ts:export function createComplianceLogger(
+worker/lib/eu-ai-act-logger.ts:export function getRetentionPolicy(systemType?: string): number {
+worker/lib/global-logger.ts:export function setLogLevel(level: LogLevel): void {
+worker/lib/global-logger.ts:export function setLogContext(context: LogContext): void {
+worker/lib/global-logger.ts:export function clearLogContext(): void {
+worker/lib/global-logger.ts:export const logger = {
+worker/lib/crypto.ts:export async function sha256(input: string): Promise<string> {
+worker/lib/crypto.ts:export async function generateDealId(
+worker/lib/crypto.ts:export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
+worker/lib/crypto.ts:export function generateRunId(date: Date = new Date()): string {
+worker/lib/crypto.ts:export function generateUUID(): string {
+worker/lib/crypto.ts:export function calculateStringSimilarity(a: string, b: string): number {
+worker/lib/crypto.ts:export function calculateUrlSimilarity(
+worker/lib/lock.ts:export async function acquireLock(
+worker/lib/lock.ts:export async function releaseLock(env: Env, trace_id: string): Promise<void> {
+worker/lib/lock.ts:export async function extendLock(
+worker/lib/lock.ts:export async function getLockStatus(env: Env): Promise<{
+worker/lib/nlq/hybrid-classifier.ts:export {
+worker/lib/nlq/intent.ts:export function classifyIntent(
+worker/lib/nlq/intent.ts:export function getSecondaryIntents(
+worker/lib/nlq/intent.ts:export function isComparisonQuery(query: string): boolean {
+worker/lib/nlq/intent.ts:export function isRankingQuery(query: string): boolean {
+worker/lib/nlq/intent.ts:export function extractRankingCriteria(
+worker/lib/nlq/ai-enhancer.ts:export {
+worker/lib/nlq/index.ts:export {
+worker/lib/nlq/index.ts:export {
+worker/lib/nlq/index.ts:export {
+worker/lib/nlq/index.ts:export {
+worker/lib/nlq/parser.ts:export { tokenize, removeStopwords } from "./lexer";
+worker/lib/nlq/parser.ts:export { extractEntities, getTopEntities } from "./entities";
+worker/lib/nlq/parser.ts:export function parseQuery(
+worker/lib/nlq/parser.ts:export function cleanQueryForSearch(
+worker/lib/nlq/types.ts:export const NLQIntentSchema = z.enum([
+worker/lib/nlq/types.ts:export const RewardTypeSchema = z.enum(["cash", "credit", "percent", "item"]);
+worker/lib/nlq/types.ts:export const ComparisonOperatorSchema = z.enum([
+worker/lib/nlq/types.ts:export const SortOrderSchema = z.enum(["asc", "desc"]);
+worker/lib/nlq/types.ts:export const SortFieldSchema = z.enum([
+worker/lib/nlq/types.ts:export const NLQRequestSchema = z.object({
+worker/lib/nlq/types.ts:export const DEFAULT_NLQ_CONFIG: NLQConfig = {
+worker/lib/nlq/query-builder/sql.ts:export function buildWhereClause(query: StructuredQuery): {
+worker/lib/nlq/query-builder/sql.ts:export function buildOrderByClause(query: StructuredQuery): string {
+worker/lib/nlq/query-builder/executor.ts:export async function executeStructuredQuery(
+worker/lib/nlq/query-builder/index.ts:export { buildWhereClause, buildOrderByClause } from "./sql";
+worker/lib/nlq/query-builder/index.ts:export { executeStructuredQuery } from "./executor";
+worker/lib/nlq/query-builder/index.ts:export { explainQuery } from "./explanation";
+worker/lib/nlq/query-builder/index.ts:export function buildStructuredQuery(
+worker/lib/nlq/query-builder/explanation.ts:export function explainQuery(
+worker/lib/nlq/ai/intent.ts:export async function classifyIntent(
+worker/lib/nlq/ai/intent.ts:export function validateIntent(intent: string): ExtractedIntent["primary"] {
+worker/lib/nlq/ai/expansion.ts:export const SYNONYM_MAP: Map<string, string[]> = new Map([
+worker/lib/nlq/ai/expansion.ts:export async function expandQuery(
+worker/lib/nlq/ai/expansion.ts:export function createEmptyExpansion(query: string): QueryExpansion {
+worker/lib/nlq/ai/index.ts:export { SYNONYM_MAP } from "./expansion";
+worker/lib/nlq/ai/index.ts:export { VALID_COMPARATOR_OPS } from "./entities";
+worker/lib/nlq/ai/index.ts:export class AIQueryEnhancer {
+worker/lib/nlq/ai/index.ts:export async function enhanceQuery(
+worker/lib/nlq/ai/index.ts:export function isComplexQuery(query: string): boolean {
+worker/lib/nlq/ai/index.ts:export async function enhanceQueriesBatch(
+worker/lib/nlq/ai/entities.ts:export const SENTIMENT_MAP: Record<string, { score: number; weight: number }> =
+worker/lib/nlq/ai/entities.ts:export const COMPARATOR_PATTERNS = [
+worker/lib/nlq/ai/entities.ts:export const VALID_COMPARATOR_OPS = [
+worker/lib/nlq/ai/entities.ts:export async function extractEntities(
+worker/lib/nlq/ai/entities.ts:export function extractRuleBasedEntities(
+worker/lib/nlq/ai/entities.ts:export function deduplicateEntities(entities: Entity[]): Entity[] {
+worker/lib/nlq/lexer.ts:export function tokenize(
+worker/lib/nlq/lexer.ts:export function removeStopwords(
+worker/lib/nlq/hybrid/ai-decision.ts:export const DEFAULT_CLASSIFIER_OPTIONS: Required<HybridClassifierOptions> = {
+worker/lib/nlq/hybrid/ai-decision.ts:export function selectMethod(
+worker/lib/nlq/hybrid/ai-decision.ts:export function shouldUseAI(
+worker/lib/nlq/hybrid/index.ts:export class HybridClassifier {
+worker/lib/nlq/hybrid/index.ts:export async function classifyQuery(
+worker/lib/nlq/hybrid/index.ts:export async function classifyQueriesBatch(
+worker/lib/nlq/hybrid/index.ts:export function createClassifier(
+worker/lib/nlq/hybrid/index.ts:export { shouldUseAI } from "./ai-decision";
+worker/lib/nlq/hybrid/rule-classifier.ts:export const INTENT_PATTERNS: Record<ExtractedIntent["primary"], RegExp[]> = {
+worker/lib/nlq/hybrid/rule-classifier.ts:export const CATEGORY_PATTERNS: Record<string, RegExp[]> = {
+worker/lib/nlq/hybrid/rule-classifier.ts:export const REWARD_PATTERNS: Record<string, RegExp[]> = {
+worker/lib/nlq/hybrid/rule-classifier.ts:export const SENTIMENT_PATTERNS = {
+worker/lib/nlq/hybrid/rule-classifier.ts:export function classifyWithRules(
+worker/lib/nlq/hybrid/rule-classifier.ts:export function normalizeQuery(query: string): string {
+worker/lib/nlq/hybrid/rule-classifier.ts:export function detectIntent(query: string): ExtractedIntent {
+worker/lib/nlq/hybrid/rule-classifier.ts:export function extractEntitiesWithRules(
+worker/lib/nlq/hybrid/rule-classifier.ts:export function buildExpansions(
+worker/lib/nlq/hybrid/rule-classifier.ts:export function buildFiltersFromEntities(
+worker/lib/nlq/hybrid/rule-classifier.ts:export function calculateRuleConfidence(
+worker/lib/nlq/entities.ts:export function extractEntities(
+worker/lib/nlq/entities.ts:export function getTopEntities(
