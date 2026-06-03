@@ -32,19 +32,19 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.1",
     "discord.js": "^14.26.4",
-    "protobufjs": "8.4.2",
+    "protobufjs": "8.5.0",
     "telegraf": "^4.16.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.10",
+    "@cloudflare/vitest-pool-workers": "^0.16.11",
     "@cloudflare/workers-types": "^4.20260518.1",
     "@playwright/test": "^1.60.0",
     "@types/js-yaml": "^4.0.9",
-    "@vitest/coverage-v8": "^4.1.6",
-    "artillery": "^2.0.31",
+    "@vitest/coverage-v8": "^4.1.8",
+    "artillery": "^2.0.32",
     "miniflare": "^4.20260515.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
@@ -54,7 +54,7 @@
   "overrides": {
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
-    "protobufjs": "8.4.2",
+    "protobufjs": "8.5.0",
     "uuid": "14.0.0",
     "@playwright/test": "^1.60.0",
     "ws": "8.20.1",
