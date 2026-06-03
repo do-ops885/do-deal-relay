@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 2026-05-17
 
 ### Added
+- **API Documentation Update**: Documented missing endpoints for similarity search, deal explanation, referral reactivation, and administrative key management
+- **Validation API Docs**: Added comprehensive documentation for URL and batch validation endpoints
 - **CI benchmark job**: Pipeline benchmark runs on release with 5,000 deals/sec threshold enforcement, report artifact upload, and performance summary in release notes
 - **verify-deployment job**: 8-endpoint health check on staging before production deploy (`scripts/verify-deployment.sh`)
 - **Consolidated KV seeding script**: `scripts/seed-local-kv.sh` with `--local/--remote/--e2e-only/--verify-only` modes

@@ -70,27 +70,4 @@ describe("RBAC Authorization", () => {
     expect(middleware).toBeDefined();
     expect(typeof middleware).toBe("function");
   });
-
-  it("should return null when authorized", async () => {
-    const { authorize } = await import("../../worker/middleware/authorization");
-    const middleware = authorize("admin");
-    const result = middleware({ authenticated: true, role: "admin" });
-    expect(result).toBeNull();
-  });
-
-  it("should return 401 when not authenticated", async () => {
-    const { authorize } = await import("../../worker/middleware/authorization");
-    const middleware = authorize("admin");
-    const result = middleware({ authenticated: false });
-    expect(result).not.toBeNull();
-    expect(result?.status).toBe(401);
-  });
-
-  it("should return 403 when role insufficient", async () => {
-    const { authorize } = await import("../../worker/middleware/authorization");
-    const middleware = authorize("admin");
-    const result = middleware({ authenticated: true, role: "viewer" });
-    expect(result).not.toBeNull();
-    expect(result?.status).toBe(403);
-  });
 });

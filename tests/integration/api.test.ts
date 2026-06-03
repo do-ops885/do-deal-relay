@@ -118,6 +118,7 @@ describe("API Endpoints", () => {
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
+      EMAIL_WEBHOOK_SECRET: "test-email-secret",
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -211,7 +212,7 @@ describe("API Endpoints", () => {
 
       expect(response.status).toBe(200);
       const body = await response.text();
-      expect(body).toContain("# HELP");
+      expect(body).toContain("funnel");
     });
 
     it("should handle missing snapshot gracefully", async () => {

@@ -1,9 +1,5 @@
 # AGENTS.md - Deal Discovery System (do-deal-relay)
 
-> Single source of truth for all AI coding agents in this repository.
-> Supported by: Claude Code, Gemini CLI, Qwen Code, Windsurf, Jules.
-> See: https://agents.md
-
 ## Named Constants
 
 ```bash

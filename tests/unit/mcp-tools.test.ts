@@ -51,6 +51,7 @@ function createMockEnv(): Env {
     AI_GATEWAY_URL: "https://gateway.test",
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
+    EMAIL_WEBHOOK_SECRET: "test-email-secret",
     DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
     D1: {} as D1Database,

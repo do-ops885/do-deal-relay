@@ -64,6 +64,8 @@ export function generateUUID(): string {
  * Uses Jaccard similarity on character bigrams
  */
 export function calculateStringSimilarity(a: string, b: string): number {
+  if (a === b) return 1.0;
+
   const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const strA = normalize(a);
   const strB = normalize(b);
@@ -71,10 +73,11 @@ export function calculateStringSimilarity(a: string, b: string): number {
   if (strA === strB) return 1.0;
   if (strA.length < 2 || strB.length < 2) return 0.0;
 
-  const getBigrams = (s: string): Set<string> => {
-    const bigrams = new Set<string>();
+  const getBigrams = (s: string): Set<number> => {
+    const bigrams = new Set<number>();
     for (let i = 0; i < s.length - 1; i++) {
-      bigrams.add(s.slice(i, i + 2));
+      // Pack two characters into a single number to avoid string allocations
+      bigrams.add((s.charCodeAt(i) << 16) | s.charCodeAt(i + 1));
     }
     return bigrams;
   };

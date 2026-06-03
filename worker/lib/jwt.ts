@@ -77,8 +77,7 @@ export async function verifyToken(
 function base64urlDecode(str: string): Uint8Array {
   const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const binaryString = Buffer.from(base64, "base64").toString("binary");
-  const buffer = new ArrayBuffer(binaryString.length);
-  const bytes = new Uint8Array(buffer);
+  const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++)
     bytes[i] = binaryString.charCodeAt(i);
   return bytes;

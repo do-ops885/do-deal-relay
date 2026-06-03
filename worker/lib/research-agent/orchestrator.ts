@@ -187,9 +187,6 @@ export async function executeReferralResearch(
 
   // Get API keys for potential real fetching
   const apiKeys = getApiKeys(env);
-  const hasApiKeys = Boolean(
-    apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
-  );
   // Default to real fetching unless explicitly disabled
   const envDisablesRealFetching = env.RESEARCH_USE_REAL_FETCHING === "false";
   const useRealFetching =
@@ -539,7 +536,7 @@ export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
   depth: WebResearchRequest["depth"] = "thorough",
-  useRealFetching = true,
+  useRealFetching?: boolean,
 ): Promise<ReferralResearchResult> {
   const request: WebResearchRequest = {
     query: `${domain} referral code invite program`,

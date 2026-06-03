@@ -1,14 +1,14 @@
 /**
  * MCP Progress Notification Support
  *
- * Track long-running operations via KV with 1-hour TTL.
+ * Track long-running operations via D1 database with atomic operations.
  * Provides factories and helpers for progress state management.
  */
 
 import type { Env } from "../../types";
 
 const PROGRESS_KV_PREFIX = "mcp:progress:";
-const PROGRESS_INDEX_KEY = "mcp:progress:index";
+const PROGRESS_INDEX_TABLE = "mcp_progress_index";
 const PROGRESS_TTL_SECONDS = 3600;
 
 export type ProgressStatus = "running" | "completed" | "failed" | "cancelled";
@@ -48,38 +48,51 @@ function progressKey(operationId: string): string {
   return `${PROGRESS_KV_PREFIX}${operationId}`;
 }
 
+/**
+ * Ensures the progress index table exists in D1 database.
+ */
+async function ensureProgressIndexTable(env: Env): Promise<void> {
+  try {
+    await env.DEALS_DB.exec(
+      `CREATE TABLE IF NOT EXISTS ${PROGRESS_INDEX_TABLE} (operationId TEXT PRIMARY KEY, toolName TEXT NOT NULL, createdAt TEXT NOT NULL)`,
+    );
+  } catch {}
+}
+
 async function updateIndex(env: Env, entry: ProgressIndexEntry): Promise<void> {
   try {
-    const raw = await env.DEALS_PROD.get(PROGRESS_INDEX_KEY);
-    const index: ProgressIndexEntry[] = raw ? JSON.parse(raw) : [];
-    index.push(entry);
-    const staleCutoff = Date.now() - PROGRESS_TTL_SECONDS * 1000;
-    const filtered = index.filter(
-      (e) => new Date(e.createdAt).getTime() > staleCutoff,
-    );
-    if (filtered.length > 200) {
-      filtered.splice(0, filtered.length - 200);
-    }
-    await env.DEALS_PROD.put(PROGRESS_INDEX_KEY, JSON.stringify(filtered), {
-      expirationTtl: PROGRESS_TTL_SECONDS,
-    });
-  } catch {
-    // Index best-effort; failure should not block progress tracking
-  }
+    await ensureProgressIndexTable(env);
+    await env.DEALS_DB.prepare(
+      `
+      INSERT INTO ${PROGRESS_INDEX_TABLE} (operationId, toolName, createdAt)
+      VALUES (?, ?, ?)
+      ON CONFLICT(operationId) DO NOTHING
+    `,
+    )
+      .bind(entry.operationId, entry.toolName, entry.createdAt)
+      .run();
+  } catch {}
 }
 
 async function removeFromIndex(env: Env, operationId: string): Promise<void> {
   try {
-    const raw = await env.DEALS_PROD.get(PROGRESS_INDEX_KEY);
-    if (!raw) return;
-    const index: ProgressIndexEntry[] = JSON.parse(raw);
-    const filtered = index.filter((e) => e.operationId !== operationId);
-    await env.DEALS_PROD.put(PROGRESS_INDEX_KEY, JSON.stringify(filtered), {
-      expirationTtl: PROGRESS_TTL_SECONDS,
-    });
-  } catch {
-    // Best-effort
-  }
+    await ensureProgressIndexTable(env);
+    await env.DEALS_DB.prepare(
+      `DELETE FROM ${PROGRESS_INDEX_TABLE} WHERE operationId = ?`,
+    )
+      .bind(operationId)
+      .run();
+  } catch {}
+}
+
+async function cleanupStaleIndex(env: Env): Promise<void> {
+  try {
+    await env.DEALS_DB.prepare(
+      `DELETE FROM ${PROGRESS_INDEX_TABLE} WHERE createdAt < datetime('now', '-' || ? || ' seconds')`,
+    )
+      .bind(PROGRESS_TTL_SECONDS.toString())
+      .run();
+  } catch {}
 }
 
 export function createProgressTracker(
@@ -87,7 +100,6 @@ export function createProgressTracker(
   env: Env,
 ): ProgressTracker {
   const now = new Date().toISOString();
-
   const writeState = async (state: Partial<ProgressState>): Promise<void> => {
     const existing = await getProgress(operationId, env);
     const defaults: ProgressState = {
@@ -111,7 +123,6 @@ export function createProgressTracker(
       expirationTtl: PROGRESS_TTL_SECONDS,
     });
   };
-
   return {
     operationId,
     updateProgress: async (
@@ -173,9 +184,13 @@ export async function getProgress(
 
 export async function listOperations(env: Env): Promise<ProgressIndexEntry[]> {
   try {
-    const raw = await env.DEALS_PROD.get(PROGRESS_INDEX_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as ProgressIndexEntry[];
+    await ensureProgressIndexTable(env);
+    const result = await env.DEALS_DB.prepare(
+      `SELECT operationId, toolName, createdAt FROM ${PROGRESS_INDEX_TABLE} WHERE createdAt > datetime('now', '-' || ? || ' seconds') LIMIT 200`,
+    )
+      .bind(PROGRESS_TTL_SECONDS.toString())
+      .all<ProgressIndexEntry>();
+    return result.results;
   } catch {
     return [];
   }

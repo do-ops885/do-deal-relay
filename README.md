@@ -4,7 +4,7 @@
 [![Security](https://github.com/do-ops885/do-deal-relay/actions/workflows/security.yml/badge.svg)](https://github.com/do-ops885/do-deal-relay/actions/workflows/security.yml)
 [![Nightly](https://github.com/do-ops885/do-deal-relay/actions/workflows/nightly.yml/badge.svg)](https://github.com/do-ops885/do-deal-relay/actions/workflows/nightly.yml)
 
-**Version**: 0.1.3 | **Status**: Active / Testing
+**Version**: 0.1.6 | **Status**: Active / Testing
 
 Autonomous AI-agent deal discovery system on Cloudflare Workers.
 
@@ -34,6 +34,7 @@ npm install
 | `npm run lint` | Type check + format check |
 | `npm run lint:fix` | Type check + auto-fix formatting |
 | `npm run verify` | Run full local validation (pre-push) |
+| `npm run benchmark` | Run pipeline performance benchmark |
 | `npm run deploy` | Deploy to production |
 
 ### For AI Agents
@@ -66,10 +67,20 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
+The system utilizes Cloudflare D1 (SQLite) for structured data and identity management:
+
+- **Users**: Identity management including email, hashed passwords, and primary roles.
+- **RBAC**: A granular Role-Based Access Control system with `roles`, `permissions`, and `role_permissions`.
+- **Sessions**: Web-based session tracking for authenticated users.
+- **API Keys**: Enhanced programmatic access keys linked to users with specific permission overrides.
+- **Audit Logs**: Comprehensive tracking of all system and user actions for security auditing.
+- **Deals & Referrals**: Structured storage for discovered deals and referral codes with FTS5 search support.
+
 ## Safety & Quality
 
 - **9 Validation Gates**: Per-deal integrity checks (schema, trust, dedupe, etc.)
 - **12 Quality Gates**: System-wide CI/CD checks (tests, lint, security, audit)
+- **Performance Thresholds**: Pipeline benchmark enforced at 5,000 deals/sec
 
 ## CI/CD Pipeline
 
@@ -79,7 +90,7 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 | Security | Push/PR + Daily | Secret detection, dependency audit |
 | Nightly | Daily 3 AM UTC | Full test suite + load tests |
 | Deploy Staging | Push to develop | Deploy to staging environment |
-| Deploy Production | Push to main + tags | Deploy to production with verification |
+| Deploy Production | Push to main + tags | Deploy to production with 8-endpoint health verification |
 | Canary | Manual | Canary releases with traffic splitting |
 | Rollback | Manual | Emergency rollback to previous version |
 
