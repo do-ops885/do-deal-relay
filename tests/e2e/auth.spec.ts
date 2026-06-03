@@ -79,7 +79,7 @@ test.describe("Successful Authenticated Access", () => {
       headers: { "X-API-Key": ADMIN_KEY },
     });
     expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toContain("text/plain");
+    expect(response.headers()["content-type"]).toContain("application/json");
   });
 
   test("GET /api/status returns 200 for admin role", async ({ request }) => {

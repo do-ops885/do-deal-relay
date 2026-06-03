@@ -191,7 +191,7 @@ test.describe("Protected API Endpoints", () => {
     }
   });
 
-  test("GET /metrics returns Prometheus metrics (requires auth)", async ({
+  test("GET /metrics returns metrics data (requires auth)", async ({
     request,
   }) => {
     const response = await request.get("/metrics", {
@@ -201,9 +201,9 @@ test.describe("Protected API Endpoints", () => {
     if (API_KEY) {
       expect(response.status()).toBe(200);
       const contentType = response.headers()["content-type"];
-      expect(contentType).toContain("text/plain");
-      const body = await response.text();
-      expect(body).toContain("# HELP");
+      expect(contentType).toContain("application/json");
+      const body = await response.json();
+      expect(body).toHaveProperty("funnel");
     } else {
       expect(response.status()).toBe(401);
     }
@@ -220,11 +220,13 @@ test.describe("404 Handling", () => {
 
 test.describe("CORS Headers", () => {
   test("API endpoints include CORS headers", async ({ request }) => {
-    const response = await request.get("/health");
+    const response = await request.get("/health", {
+      headers: { Origin: "http://localhost:8787" },
+    });
 
     expect(response.status()).toBe(200);
 
     const headers = response.headers();
-    expect(headers["access-control-allow-origin"]).toBeDefined();
+    expect(headers["access-control-allow-origin"]).toBe("http://localhost:8787");
   });
 });
