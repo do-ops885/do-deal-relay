@@ -32,7 +32,7 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.1",
     "discord.js": "^14.26.4",
     "protobufjs": "8.5.0",
     "telegraf": "^4.16.3",
