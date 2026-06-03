@@ -68,11 +68,11 @@ describe("Circuit Breaker", () => {
 
   describe("CircuitBreaker class", () => {
     describe("constructor and initialization", () => {
-      it("should create circuit breaker with default options", () => {
+      it("should create circuit breaker with default options", async () => {
         const cb = new CircuitBreaker("test-cb");
 
         expect(cb).toBeInstanceOf(CircuitBreaker);
-        expect(cb.getState()).resolves.toBe("closed");
+        await expect(cb.getState()).resolves.toBe("closed");
       });
 
       it("should create circuit breaker with custom options", () => {
