@@ -5,6 +5,21 @@
 
 ---
 
+## Resolved CI Issues (Fixed in This Run)
+
+| Issue | Root Cause | Fix |
+|-------|-----------|-----|
+| E2E Tests failure | `validateConfig()` requires `EMAIL_WEBHOOK_SECRET` (config-utils.ts:37) but CI workflow only passed `WEBHOOK_SECRET` and `API_ENCRYPTION_KEY` to `wrangler dev` | Added `EMAIL_WEBHOOK_SECRET` to `.dev.vars` writes, `--var` flags, and `export` statements in ci.yml |
+| Smoke Tests failure | Same root cause — worker crashed at startup with `Missing required config: EMAIL_WEBHOOK_SECRET` | Same fix as above |
+| E2E metrics test failure | Metrics endpoint on main now returns JSON by default, but E2E tests expected Prometheus text format | Updated `api.spec.ts` and `auth.spec.ts` to expect `application/json` and `funnel` property |
+| E2E CORS test failure | `getAllowedOrigin()` returns `""` when no `Origin` header sent; Playwright strips empty headers | Updated test to send `Origin: http://localhost:8787` header |
+
+## Regression Prevention Rule
+
+**When adding a new required environment variable to `validateConfig()`, always update ALL CI workflows that start `wrangler dev`** (ci.yml E2E Tests job, ci.yml Smoke Tests job, deploy-staging.yml, deploy-production.yml).
+
+---
+
 ## Issues Not Fixable in This Run
 
 ### Operational Incidents (Not Code Issues)
