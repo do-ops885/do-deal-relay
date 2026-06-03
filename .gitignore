@@ -1,26 +1,33 @@
 # Dependencies
-node_modules
+node_modules/
 
-# Build output
+# Build outputs
 dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+*.key
+*.pem
+secrets/
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
 
 # Wrangler
 .wrangler/
-
-# Test results
-test-results/
-
-# Coverage
-coverage/
-
-# Migration files
-migrations/
-
-
-# Environment
-.env
-.env.*
-!.env.example
+.dev.vars
 
 # IDE
 .vscode/
@@ -32,9 +39,29 @@ migrations/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
+# Temporary files
+temp/
+tmp/
+*.tmp
 
-# TypeScript
-*.tsbuildinfo
+# Agent specific
+state.json
+.agents/state/
+temp/BIDIRECTIONAL_*
+temp/SWARM_*
+.worktrees/
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Prettier/Formatter
+.prettierignore
+
+# YAML lint
+.yamllint
+
+# VERSION file
+VERSION
+
+

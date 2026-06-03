@@ -337,20 +337,44 @@ export interface Env {
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;
   ENABLE_VALIDATION_CACHE?: string;
+  // Auth secrets
+  JWT_SECRET?: string;
+  JWT_REFRESH_SECRET?: string;
 }
 
 // ============================================================================
 // Health & Metrics Types
 // ============================================================================
 
+export interface DashboardStats {
+  stats: {
+    total: number;
+    active: number;
+    quarantined: number;
+    rejected: number;
+  };
+  recentActivity: {
+    runs: number;
+    dealsFound: number;
+    errors: number;
+  };
+  systemHealth: {
+    status: "healthy" | "degraded" | "unhealthy";
+    checks: Record<string, boolean>;
+  };
+  timestamp: string;
+}
+
 export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
   version: string;
   timestamp: string;
+  uptime_seconds?: number;
   checks: {
     kv_connection: boolean;
     last_run_success: boolean;
     snapshot_valid: boolean;
+    d1_connected?: boolean;
   };
   components?: {
     kv_stores: {
@@ -359,6 +383,11 @@ export interface HealthStatus {
       deals_log: boolean;
       deals_lock: boolean;
       deals_sources: boolean;
+    };
+    d1_database?: {
+      connected: boolean;
+      latency_ms: number;
+      error?: string;
     };
     pipeline: {
       last_run: string;
@@ -602,4 +631,45 @@ export interface ExperienceAggregate {
   negative_events: number;
   avg_score: number;
   last_updated: number;
+}
+
+// ============================================================================
+// Auth / User Types
+// ============================================================================
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  password_hash: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPublic {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateUserInput {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface UpdateUserInput {
+  name?: string;
+  email?: string;
 }

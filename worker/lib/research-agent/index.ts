@@ -37,6 +37,24 @@ export {
   fetchGenericPageContent,
 } from "./fetcher";
 
+// Extractor
+export {
+  extractContent,
+  extractByConfig as extractWithSelectorSet,
+  type ExtractionConfig,
+  type ExtractedContent,
+} from "./extractor";
+
+// Summarizer
+export {
+  summarizeContent,
+  summarizeFromExtracted,
+  type ResearchSummary,
+} from "./summarizer";
+
+// Request Manager
+export { RequestManager } from "./request-manager";
+
 // Types
 export type {
   ResearchSource,

@@ -1,21 +1,164 @@
+import { base64urlEncode, sha256, generateUUID } from "./crypto";
+
 /**
- * JWT Utilities
- *
- * Provides token hashing and family generation for refresh token management.
- * Uses Web Crypto API for secure hashing.
- *
- * @module worker/lib/jwt
+ * Creates a JWT token with the given payload and secret.
+ * Uses Web Crypto API for secure signing.
  */
+export async function createToken(
+  payload: Record<string, unknown>,
+  secret: string,
+  expiresIn: string | number,
+): Promise<string> {
+  const header = { alg: "HS256", typ: "JWT" };
+  const encodedHeader = base64urlEncode(JSON.stringify(header));
+  const encodedPayload = base64urlEncode(
+    JSON.stringify({ ...payload, exp: calculateExpiry(expiresIn) }),
+  );
+  const signatureInput = encodedHeader + "." + encodedPayload;
 
-import { sha256, generateUUID } from "./crypto";
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
 
-// ============================================================================
-// Types
-// ============================================================================
+  const signatureBuf = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(signatureInput),
+  );
+  const encodedSignature = base64urlEncode(new Uint8Array(signatureBuf));
 
-// ============================================================================
-// Functions
-// ============================================================================
+  return signatureInput + "." + encodedSignature;
+}
+
+/**
+ * Verifies a JWT token and returns the decoded payload.
+ * Uses Web Crypto API for secure verification.
+ */
+export async function verifyToken(
+  token: string,
+  secret: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const encodedHeader = parts[0];
+    const encodedPayload = parts[1];
+    const encodedSignature = parts[2];
+    if (!encodedHeader || !encodedPayload || !encodedSignature) return null;
+
+    const signatureInput = encodedHeader + "." + encodedPayload;
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    const signatureBytes = base64urlDecode(encodedSignature);
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      signatureBytes.buffer as ArrayBuffer,
+      new TextEncoder().encode(signatureInput),
+    );
+    if (!isValid) return null;
+    const payloadBytes = base64urlDecode(encodedPayload);
+    const payloadStr = new TextDecoder().decode(payloadBytes);
+    return JSON.parse(payloadStr) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function base64urlDecode(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const binaryString = Buffer.from(base64, "base64").toString("binary");
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++)
+    bytes[i] = binaryString.charCodeAt(i);
+  return bytes;
+}
+
+function calculateExpiry(expiresIn: string | number): number {
+  if (typeof expiresIn === "number") return Date.now() + expiresIn * 1000;
+  const match = expiresIn.match(/^(\d+)([smhd])$/);
+  if (!match) throw new Error("Invalid expiresIn format: " + expiresIn);
+  const value = parseInt(match[1]!, 10);
+  const unit = match[2]!;
+  const multipliers: Record<string, number> = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+  return Date.now() + value * multipliers[unit]!;
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256,
+  );
+  const computedHash = base64urlEncode(new Uint8Array(bits));
+  const saltStr = base64urlEncode(salt);
+  return saltStr + "." + computedHash;
+}
+
+export async function verifyPassword(
+  password: string,
+  storedHash: string,
+): Promise<boolean> {
+  try {
+    const separatorIndex = storedHash.indexOf(".");
+    if (separatorIndex === -1) return false;
+    const saltStr = storedHash.slice(0, separatorIndex);
+    const expectedHash = storedHash.slice(separatorIndex + 1);
+    if (!saltStr || !expectedHash) return false;
+    const salt = base64urlDecode(saltStr);
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password),
+      "PBKDF2",
+      false,
+      ["deriveBits"],
+    );
+    const bits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: salt.buffer as ArrayBuffer,
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      keyMaterial,
+      256,
+    );
+    const computedHash = base64urlEncode(new Uint8Array(bits));
+    return constantTimeCompare(computedHash, expectedHash);
+  } catch {
+    return false;
+  }
+}
+
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++)
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return result === 0;
+}
 
 /**
  * Hash a refresh token for secure storage.
@@ -35,14 +178,5 @@ export async function hashRefreshToken(token: string): Promise<string> {
  * @returns Unique family identifier (UUID v4)
  */
 export function generateTokenFamily(): string {
-  return generateUUID();
-}
-
-/**
- * Generate a cryptographically secure refresh token.
- *
- * @returns Random refresh token string
- */
-export function generateRefreshToken(): string {
   return generateUUID();
 }

@@ -67,6 +67,15 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
+The system utilizes Cloudflare D1 (SQLite) for structured data and identity management:
+
+- **Users**: Identity management including email, hashed passwords, and primary roles.
+- **RBAC**: A granular Role-Based Access Control system with `roles`, `permissions`, and `role_permissions`.
+- **Sessions**: Web-based session tracking for authenticated users.
+- **API Keys**: Enhanced programmatic access keys linked to users with specific permission overrides.
+- **Audit Logs**: Comprehensive tracking of all system and user actions for security auditing.
+- **Deals & Referrals**: Structured storage for discovered deals and referral codes with FTS5 search support.
+
 ## Safety & Quality
 
 - **9 Validation Gates**: Per-deal integrity checks (schema, trust, dedupe, etc.)

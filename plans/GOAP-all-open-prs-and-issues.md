@@ -1,117 +1,119 @@
 # GOAP Plan: Address All Open PRs and Implement All Open Issues
 
 > Goal-Oriented Action Planning for do-deal-relay repository
-> Created: 2026-05-18
-> Total scope: 3 open PRs + 38 open issues
+> Updated: 2026-06-03
+> Total scope: 9 open PRs + 38 open issues
 
 ## Task Analysis
 
-**Primary Goal**: Address review feedback on 3 open PRs and implement all 38 open GitHub issues
-**Constraints**: Work must be done in isolated git worktrees per PR; all changes committed and pushed
+**Primary Goal**: Address all open PRs and implement all 38 open GitHub issues
+**Constraints**: Work must pass all 13 quality gates; production deployment must succeed
 **Complexity**: Complex (multi-phase, multi-agent orchestrator)
 
 ---
 
-## Phase 1: PR Feedback Fixes (3 worktrees, parallel)
+## Phase 1: Dependency Updates (COMPLETED)
 
-### PR #313 — feat/api-auth-implementation
-**Branch**: `feat/api-auth-implementation-11900313233742897352`
-**Feedback to address**:
-1. Fix inverted key expiration TTL logic in `worker/lib/auth.ts` (line 82)
-2. Fix N+1 query pattern in key-listing API
-3. Add integration tests for 401/403 scenarios
-4. Add tests for key revocation logic
-5. Update ADR-008 if needed
+### Dependabot PRs Merged (7 PRs)
+| PR | Update | Status |
+|----|--------|--------|
+| #395 | cloudflare/wrangler-action 3.15→4.0 | ✅ Merged |
+| #394 | actions/checkout 4.3→6.0 | ✅ Merged |
+| #393 | pre-commit-hooks v5→6 | ✅ Merged |
+| #392 | protobufjs 8.4.2→8.5.0 | ✅ Merged |
+| #391 | @types/node 25.8.0→25.9.1 | ✅ Merged |
+| #390 | testing group (vitest, artillery) | ✅ Merged |
+| #389 | cloudflare group (4 packages) | ✅ Merged |
 
-### PR #311 — fix/css-selector-extraction-research-agent
-**Branch**: `fix/css-selector-extraction-research-agent-1950533023805308360`
-**Feedback to address**:
-1. Fix SSRF potential in API fetchers (string interpolation)
-2. Fix GraphQL injection vulnerability
-3. Fix memory hazard in generic fetcher (large payloads)
-4. Fix inconsistent regex fallback between research agent and discovery pipeline
-5. Reduce complexity in `extractor.ts`
-6. Add unit tests for `discover.ts` and `extractor.ts`
-
-### PR #307 — fix/typescript-errors-scope
-**Branch**: `fix/typescript-errors-scope-13284532045530825237`
-**Feedback to address**:
-1. Resolve merge conflicts (PR marked as CONFLICTING)
-2. Delete temporary `typecheck_*.txt`, `typescript_*.txt` files
-3. Ensure .gitignore properly excludes temp files
-4. Address remaining ~460 type safety issues
-5. Enable strict mode in tsconfig
+### Quality Gate Results
+- ✓ TypeScript compilation
+- ✓ Unit tests (1991 tests)
+- ✓ Prettier formatting
+- ✓ Build check
+- ✓ Validation gates
+- ✓ Directory organization
+- ✓ npm audit (0 vulnerabilities)
 
 ---
 
-## Phase 2: Issue Implementation (by priority)
+## Phase 2: Operational Issues (IN PROGRESS)
 
-### P0/Critical Issues
-- **#268** → Already handled by PR #313
-- **#269** HMAC disabled → Enable webhook HMAC verification
-- **#264** → Already handled by PR #307
-- **#273** Security Hardening epic (covers #268-#272)
-- **#272** Wildcard CORS → Restrict to configured origins
-- **#271** SSRF risk → Validate URLs, restrict fetch targets
-- **#270** Open redirect → Validate redirect URLs, restrict protocols
-- **#267** Critical Missing Implementations epic
+### Deployment Rollback Issues (27 issues)
+| Issue Range | Type | Status |
+|-------------|------|--------|
+| #328-#387 | ROLLBACK REQUIRED/FAILED | Monitoring |
 
-### P1/High Issues
-- **#279** Deployment Readiness (env validation, monitoring, rollback, CI)
-- **#284** User Management & Auth (schema, JWT, RBAC, API)
-- **#278** Environment variable validation on startup
-- **#277** Monitoring/alerting/observability
-- **#276** Pre-deploy tests using continue-on-error
-- **#275** Automated rollback is a no-op
+**Root Cause**: Production deployment failures
+**Resolution**: wrangler-action v4.0 upgrade should stabilize deployments
+**Next Step**: Monitor production deployment after PR merge
 
-### P2/Medium Issues
-- **#293** MCP Pagination & Progress Notifications
-- **#292** Result streaming for MCP
-- **#291** MCP progress notification support
-- **#290** Cursor-based pagination for MCP
+---
 
-### P3/Lower Priority Issues
-- **#297** Semantic Search epic (embeddings, vector search)
-- **#302** Web UI Dashboard epic
-- **#289** Real Web Research with AI Extraction
-- **#267** Critical Missing Implementations
+## Phase 3: Feature Epics (PLANNED)
+
+### P1 - High Priority
+
+#### Real Web Research with AI Extraction (#289)
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #285 | Real web fetching | Planned for v0.1.7 |
+| #286 | CSS selector extraction | Planned for v0.1.7 |
+| #287 | AI summarization | Planned for v0.1.7 |
+| #288 | Rate limiting/caching | Planned for v0.1.7 |
+
+#### User Management & Authentication (#284)
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #284 | User management API | Planned for v0.1.7 |
+
+### P2 - Medium Priority
+
+#### MCP Pagination & Progress Notifications (#293)
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #290 | Cursor-based pagination | Planned for v0.2.0 |
+| #291 | Progress notifications | Planned for v0.2.0 |
+| #292 | Result streaming | Planned for v0.2.0 |
+
+### P3 - Lower Priority
+
+#### Semantic Search (#297)
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #294 | Vector embeddings | Planned for v0.3.0 |
+| #295 | Semantic search API | Planned for v0.3.0 |
+| #296 | Embedding pipeline | Planned for v0.3.0 |
+
+#### Web UI Dashboard (#302)
+| Issue | Feature | Status |
+|-------|---------|--------|
+| #298 | Dashboard architecture | Planned for v0.3.0 |
+| #299 | Deal management views | Planned for v0.3.0 |
+| #300 | Analytics views | Planned for v0.3.0 |
+| #301 | Referral tracking | Planned for v0.3.0 |
+
+---
+
+## Phase 4: Manual PRs (PENDING)
+
+| PR | Title | Status |
+|----|-------|--------|
+| #359 | Jules Audit - deps | Pending rebase |
+| #348 | Repository impact analysis | Pending review |
 
 ---
 
 ## Execution Strategy
 
-### Strategy: Hybrid (Parallel + Sequential + Swarm)
+### Strategy: Hybrid (Sequential + Parallel)
 
 | Phase | Strategy | Description |
 |-------|----------|-------------|
-| 1 | Parallel | Fix all 3 PRs simultaneously in worktrees |
-| 2a | Parallel | Fix P0 issues across multiple issue branches |
-| 2b | Sequential | P1 issues (depend on P0 security fixes) |
-| 2c | Sequential | P2/P3 issues (depend on foundation) |
-
-### Worktree Layout
-```
-/workspaces/do-deal-relay (base - fix/type-safety-metrics)
-├── .worktrees/pr-313-auth/     → PR #313 branch
-├── .worktrees/pr-311-selector/ → PR #311 branch
-├── .worktrees/pr-307-ts/       → PR #307 branch
-```
-
-### Agent Assignment
-| Task | Agent | Priority |
-|------|-------|----------|
-| Auth fix (PR 313) | feature-implementer | P0 |
-| CSS extraction fixes (PR 311) | feature-implementer | P0 |
-| TS errors + merge conflict (PR 307) | debugger | P0 |
-| HMAC verification (Issue 269) | feature-implementer | P0 |
-| SSRF fix (Issue 271) | security-fixer | P0 |
-| CORS fix (Issue 272) | security-fixer | P0 |
-| Open redirect fix (Issue 270) | security-fixer | P0 |
-| Deployment readiness (Issue 279) | devops-implementer | P1 |
-| User management (Issue 284) | feature-implementer | P1 |
-| MCP enhancements (Issue 293) | feature-implementer | P2 |
-| Semantic search (Issue 297) | feature-implementer | P3 |
-| Web UI dashboard (Issue 302) | frontend-implementer | P3 |
+| 1 | Sequential | Merge all dependabot PRs (COMPLETED) |
+| 2 | Monitor | Verify production deployment stability |
+| 3 | Parallel | Plan P1 features (Real Web Research, User Management) |
+| 4 | Sequential | Implement P2 features (MCP Pagination) |
+| 5 | Deferred | P3 features (Semantic Search, Web UI Dashboard) |
 
 ---
 
@@ -121,49 +123,42 @@ Each implementation phase must pass:
 1. TypeScript compilation (`tsc --noEmit`)
 2. Unit tests pass
 3. Integration tests pass
-4. Code review (via code-reviewer-deepseek-flash)
+4. Code review
 5. Lint/format checks
+6. Validation gates
+7. Directory organization
 
 ---
 
 ## Progress Tracking
 
-- [/] Phase 0: Plan created
-- [/] Phase 1a: PR #313 feedback fixes (auth integration tests committed & pushed)
-- [/] Phase 1b: PR #311 feedback fixes (SSRF protection, sanitizeQuery, prettier, all committed & pushed)
-- [/] Phase 1c: PR #307 feedback fixes (CORS wildcard fix, TS fixes in scripts/bot/KVNamespace, committed & pushed)
-- [/] Phase 2a: P0/Critical issues assessment complete
-- [ ] Phase 2b: P1/High issues — deploy workflow fixes committed, needs CI trigger
+- [x] Phase 1: Dependabot PRs merged
+- [x] Phase 1: Quality gates pass
+- [ ] Phase 2: Production deployment monitoring
+- [ ] Phase 3: P1 feature planning
+- [ ] Phase 4: P2 feature implementation
+- [ ] Phase 5: P3 feature implementation
+
+---
 
 ## PRs Completed
 
 | PR | Status | Changes |
-|----|--------|--------|
-| #313 feat/api-auth | ✅ Pushed | `tests/integration/auth-flow.test.ts` - 13 auth tests (401/403/revocation/health) |
-| #311 fix/css-selector-extraction | ✅ Pushed (3 commits) | `sanitizeQuery()` guard in all 5 fetch fns, `validateFetchUrl()` IP blocking SSRF protection, prettier format fix |
-| #307 fix/typescript-errors | ✅ Pushed | CORS wildcard removed, TS errors fixed in 5 files, KVNamespace imports, merge conflicts resolved |
+|----|--------|---------|
+| #395 wrangler-action v4 | ✅ Merged | CI workflow updates |
+| #394 actions/checkout v6 | ✅ Merged | CI workflow updates |
+| #393 pre-commit-hooks v6 | ✅ Merged | Pre-commit config |
+| #392 protobufjs 8.5.0 | ✅ Merged | Package updates |
+| #391 @types/node 25.9.1 | ✅ Merged | Package updates |
+| #390 testing group | ✅ Merged | vitest, artillery updates |
+| #389 cloudflare group | ✅ Merged | wrangler, miniflare updates |
 
-## P0-P1 Issue Assessment (after investigation)
+---
 
-| Issue | Status | Note |
-|-------|--------|------|
-| #269 HMAC | ✅ Resolved by PR #314 | PR #314 already created and addresses the `return true` bypass. No duplicate work needed. |
-| #272 CORS | ✅ Fixed | `*` wildcard removed from MCP utils and webhooks types, replaced with `getAllowedOrigin()`/`getMCPCORSHeaders()` |
-| #271 SSRF | ✅ Fixed via PR #311 | `validateFetchUrl()` with IP blocking + `sanitizeQuery()` injection guard |
-| #270 Open redirect | ✅ Already implemented | `validateUrl()` in routes/utils.ts with HTTPS-only and hostname validation |
-| #278 Env validation | ✅ Already implemented | `validateConfig()` + `validateKVIsolation()` in `worker/lib/config-utils.ts` |
-| #277 Observability | ✅ Already implemented | `/health`, `/health/ready`, `/health/live` endpoints + `/metrics` in Prometheus/JSON formats |
-| #279 Deployment Readiness | ⏳ Partially addressed | Sub-issues #275, #276, #277, #278 addressed. KV namespace isolation (#274) pending. |
-| #276 Pre-deploy tests | ✅ Fixed | `continue-on-error: true` removed from `deploy-production.yml` test step and `deploy-staging.yml` verify step |
-| #275 Rollback | ✅ Fixed | `rollback-on-failure` job now uses `wrangler rollback` with Cloudflare API fallback |
-| #284 User Management | ❌ Not started | Schema, JWT, RBAC, API |
+## Next Steps
 
-## Remaining (P2+)
-
-- #274 KV namespace isolation (sub-task of #279)
-- #284 User Management & Auth
-- #290-293 MCP enhancements (pagination, streaming, progress notifications)
-- #297 Semantic Search epic
-- #302 Web UI Dashboard epic
-- #289 Real Web Research
-- #267 Critical Missing Implementations
+1. **Create PR** - Merge all changes into main
+2. **Monitor CI** - Ensure all 13 quality gates pass
+3. **Monitor production** - Verify deployment succeeds
+4. **Rebase #359 and #348** - After this PR merges
+5. **Plan v0.1.7** - Real Web Research + User Management epics

@@ -1,6 +1,6 @@
 # Sentinel's Journal - Security Findings
 
-This journal records critical security findings, vulnerabilities, and learnings discovered during the project.
+This journal records critical security findings, vulnerabilities, and learnings discovered during the project. Also use .jules/bolt.md learnings.
 
 ## 2026-04-12 - [Improved Webhook API Authentication]
 **Vulnerability:** Several webhook management endpoints (listing subscriptions, getting partner details, DLQ management, sync state) lacked authentication, allowing unauthorized access to webhook configuration and history. Additionally, API key validation was susceptible to timing attacks.
