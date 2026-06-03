@@ -6,7 +6,8 @@
 
 import { SlashCommandBuilder } from "discord.js";
 
-export function buildSlashCommands(): unknown[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildSlashCommands(): any[] {
   return [
     new SlashCommandBuilder()
       .setName("start")

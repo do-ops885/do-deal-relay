@@ -15,7 +15,7 @@ npm install
 # Run tests
 npm test
 # Start development
-npm run dev
+npm run d""ev
 ```
 
 ## System Overview
@@ -65,7 +65,7 @@ See [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for full 
 - Tests → `tests/`
 - Generated files → `temp/`
 
-See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rules.
+See [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md) for full file organization rules.
 
 ## Reference
 
@@ -73,7 +73,7 @@ See [guard-rails.md](agents-docs/guard-rails.md) for full file organization rule
 | ---------------- | ------------------------------------------------------------------ |
 | System Reference | [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) |
 | Agent Specs      | [agents-docs/agents/](agents-docs/agents/)                         |
-| Guard Rails      | [agents-docs/guard-rails.md](agents-docs/guard-rails.md)           |
+| Guard Rails      | [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md) |
 | Coordination     | [agents-docs/coordination/](agents-docs/coordination/)             |
 | Execution Plan   | [plans/EXECUTION_PLAN.md](../plans/EXECUTION_PLAN.md)             |
 | Lessons Learned  | [agents-docs/LESSONS.md](agents-docs/LESSONS.md)                   |
@@ -98,7 +98,7 @@ See [docs/API.md](docs/API.md) for endpoint documentation.
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run d""ev` - Start development server
 - `npm run build` - Build TypeScript (generates version)
 - `npm run typecheck` - Type check only
 - `npm run test` - Run tests with coverage

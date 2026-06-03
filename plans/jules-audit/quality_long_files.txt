@@ -1,0 +1,17 @@
+    552 worker/pipeline/discover.ts
+    538 worker/index.ts
+    514 worker/routes/referrals.ts
+    552 worker/routes/validation.ts
+    605 worker/types.ts
+    651 worker/lib/referral-storage/dual-write.ts
+    738 worker/lib/validation/url-validator.ts
+    719 worker/lib/validation/code-validator.ts
+    763 worker/lib/validation/reward-scraper.ts
+    513 worker/lib/mcp/types.ts
+    512 worker/lib/d1/client.ts
+    974 worker/lib/d1/queries.ts
+    642 worker/lib/d1/migrations.ts
+    559 worker/lib/research-agent/orchestrator.ts
+   1052 worker/lib/research-agent/fetcher.ts
+    623 worker/lib/research-agent/types.ts
+  40424 total

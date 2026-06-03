@@ -109,6 +109,7 @@ check_pattern() {
     # - Test files (patterns like whsec_test, sk_test, ghp_test are test data)
     # - Lines that are clearly test data (whsec_test, ghp_test, sk_test)
     # - Lines that look like mock/test secrets (whsec_old, whsec_secret, test_key)
+    # - GitHub Actions uses: references (commit SHAs look like base64)
     local MATCHES
     MATCHES=$(git diff --cached 2>/dev/null | \
         grep -vE "^[-+@ ]*(#|//|\*|--|<!--)" | \
@@ -122,6 +123,7 @@ check_pattern() {
         grep -vE "#/components/" | \
         grep -vE "(whsec_test|ghp_test|sk_test|test_secret|whsec_secret|whsec_old|whsec_fake|whsec_mock)" | \
         grep -vE "(mock|test|fake|demo|sample)_?(key|secret|token|password|api.?key)" | \
+        grep -vE "^[+-].*uses:\s*[a-zA-Z0-9/-]+@[a-f0-9]{40}" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"

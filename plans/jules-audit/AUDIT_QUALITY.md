@@ -1,19 +1,28 @@
-# Track B - Code Quality
+# Code Quality Audit
+
+## Magic Numbers & Constants
+- worker/config.ts: HACKERNEWS rate limit uses a HACK comment.
+
+## Deprecated Code
+- worker/routes/webhooks.ts: Marked as deprecated. Should be removed if all functionality moved to worker/routes/webhooks/index.ts.
 
 ## File Length Violations (> 500 lines)
-- worker/pipeline/discover.ts (552 lines) - Action: Refactor to reduce size.
-
-## Magic Numbers
-- worker/state-machine.ts:108: 300 (lock extension)
-- worker/state-machine.ts:190: 1000 (retry delay)
-- worker/pipeline/discover.ts:239: 3 (concurrency)
-- worker/pipeline/normalize.ts:166: 4, 50 (code length)
-- worker/pipeline/dedupe.ts:40, 41, 42: 25, 100, 500 (value tiers)
+- worker/pipeline/discover.ts (552)
+- worker/index.ts (538)
+- worker/routes/referrals.ts (514)
+- worker/routes/validation.ts (552)
+- worker/types.ts (605)
+- worker/lib/referral-storage/dual-write.ts (651)
+- worker/lib/validation/url-validator.ts (738)
+- worker/lib/validation/code-validator.ts (719)
+- worker/lib/validation/reward-scraper.ts (763)
+- worker/lib/d1/queries.ts (974)
+- worker/lib/d1/migrations.ts (642)
+- worker/lib/research-agent/fetcher.ts (1052)
+- worker/lib/research-agent/types.ts (623)
 
 ## Untyped 'any'
-- worker/lib/github/workflows.ts:23: workflow_runs: any[]
-- worker/lib/github/core.ts:249: author: any
+- Found multiple 'any' usages in worker/lib/research-agent/fetcher.ts and worker/lib/research-agent/orchestrator.ts.
 
-## TODO/FIXME/HACK
-- worker/config.ts:46: HACKERNEWS (HACK)
-- worker/routes/webhooks.ts:4: DEPRECATED
+## Console Logs
+- None found in production paths (checked worker/ directory).

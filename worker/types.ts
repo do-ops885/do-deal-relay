@@ -333,63 +333,13 @@ export interface Env {
   RESEARCH_USE_REAL_FETCHING?: string;
   _validated?: boolean;
   ALLOWED_ORIGINS?: string;
-  JWT_SECRET?: string;
-  JWT_REFRESH_SECRET?: string;
   // D1 Migration Feature Flags
   USE_D1_READS?: string;
   DISABLE_DUAL_WRITE?: string;
   ENABLE_VALIDATION_CACHE?: string;
-}
-
-// ============================================================================
-// Auth System Types
-// ============================================================================
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  password_hash: string;
-  role: "admin" | "user" | "viewer" | "api_consumer";
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserPublic {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateUserInput {
-  email: string;
-  name: string;
-  password: string;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface UpdateUserInput {
-  name?: string;
-  email?: string;
-}
-
-export interface AuditLogEntry {
-  id: string;
-  user_id: string | null;
-  action: string;
-  resource: string;
-  ip: string | null;
-  user_agent: string | null;
-  created_at: string;
+  // Auth secrets
+  JWT_SECRET?: string;
+  JWT_REFRESH_SECRET?: string;
 }
 
 // ============================================================================
@@ -681,4 +631,45 @@ export interface ExperienceAggregate {
   negative_events: number;
   avg_score: number;
   last_updated: number;
+}
+
+// ============================================================================
+// Auth / User Types
+// ============================================================================
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  password_hash: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPublic {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateUserInput {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface UpdateUserInput {
+  name?: string;
+  email?: string;
 }

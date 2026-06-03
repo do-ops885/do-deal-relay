@@ -1,42 +1,27 @@
-# AGENTS.md - Deal Discovery System (do-deal-relay)
+# Agent Coordination Hub - do-deal-relay
 
 ## Named Constants
-
-```bash
-# File size limits (lines)
-readonly MAX_LINES_PER_SOURCE_FILE=500
-readonly MAX_LINES_PER_SKILL_MD=250
-readonly MAX_LINES_AGENTS_MD=200
-
-# Repository Constraints
-readonly TRUST_THRESHOLD_MIN=0.0
-readonly TRUST_THRESHOLD_MAX=1.0
-readonly GLOBAL_CANDIDATE_BUDGET=1000
-
-# Git/PR configuration
-readonly MAX_COMMIT_SUBJECT_LENGTH=72
-```
+Essential bounds for the repository.
+See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 
 ## Development Phases (Agent Workflow)
-
-We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Architecture Decision Records) for structured development.
+We use a GOAP approach combined with ADRs for structured development.
 
 1. **ANALYZE & STRATEGIZE (Phase 1)**
-   - **Action**: Evaluate the problem, identify architecture requirements. Write an **ADR** (Architecture Decision Record) detailing the context, decision, and consequences.
-   - **Storage**: Save the ADR in the `plans/` directory.
-   - **Instruction**: Analyze the repository before asking questions. Infer from existing patterns first.
+   - **Action**: Evaluate the problem, identify architecture requirements. Write an **ADR** in `plans/`.
+   - **Instruction**: Analyze the repository before asking questions.
 
 2. **DECOMPOSE & PLAN (Phase 2)**
    - **Action**: Break down the problem into atomic, testable tasks. Record these in a plan file under `plans/`.
    - **Instruction**: produce a written plan, wait for confirmation for non-trivial tasks. **Mandatory**: Load `plans/GOAP_STATE.md` and `plans/ACTIONS.md` before starting non-trivial planning.
 
 3. **EXECUTE & COORDINATE (Phase 3)**
-   - **Action**: Execute tasks systematically using the atomic commit workflow.
+   - **Action**: Execute tasks using the atomic commit workflow.
    - **Mandatory**: Run `./scripts/quality_gate.sh` before every commit.
-   - **Instruction**: Respect existing 9 validation gates. Avoid speculative rewrites.
+   - **Instruction**: Respect existing 9 validation gates.
 
 4. **SYNTHESIZE (Phase 4)**
-   - **Action**: Extract discoveries and update project-specific documentation or `AGENTS.md` contexts.
+   - **Action**: Extract discoveries and update project-specific documentation or `agents-docs/LEARNINGS.md`.
 
 ## Session Checklist
 
@@ -57,8 +42,7 @@ We use a GOAP (Goal-Oriented Action Planning) approach combined with ADRs (Archi
 - [ ] Add any new regressions / prevention rules to `progress/LEARNINGS.md`
 
 ## Atomic Commit Workflow (Mandatory)
-
-All agent-driven changes MUST use the helper script:
+All agent-driven changes MUST use:
 ```bash
 ./scripts/ai-commit.sh --type <type> [--scope <scope>] --subject <subject> [--body <body>]
 ```
@@ -121,8 +105,5 @@ The system enforces 9 mandatory validation gates in the worker pipeline (`worker
 Operational lessons and regression prevention rules are maintained in [progress/LEARNINGS.md](progress/LEARNINGS.md). **Every correction becomes a rule.**
 
 ## Agent Guidance
-
-- **Minimal Clarification**: Do not ask questions that can be answered by analyzing the repo.
-- **Architectural Consistency**: Preserve existing state-machine and modular gate architecture.
-- **Incremental Changes**: Make small, verified changes.
-- **Verification**: Always use read-only tools to confirm the effect of your changes.
+- **Minimal Clarification**: Do not ask questions that can be answered by analysis.
+- **Verification**: Always use read-only tools to confirm effects.
