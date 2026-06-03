@@ -137,4 +137,4 @@ Before completing any task:
 | Quality Gate Script | `scripts/quality_gate.sh`          |
 | Validation Gates    | `.agents/skills/validation-gates/` |
 | Security Guidelines | `SECURITY.md`                      |
-| Guard Rails         | `agents-docs/guard-rails.md`       |
+| Guard Rails         | `agents-docs/hard-constraints.md`       |

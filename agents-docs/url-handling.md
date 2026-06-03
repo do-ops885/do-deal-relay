@@ -178,6 +178,6 @@ curl -s http://localhost:8787/api/referrals/TEST123 | jq '.referral.url'
 
 ## Related Documentation
 
-- [Guard Rails](./guard-rails.md) - Safety mechanisms including URL validation
+- [Hard Constraints](./hard-constraints.md) - Safety mechanisms including URL validation
 - [AGENTS.md](../AGENTS.md) - Master coordination hub
 - [API Documentation](../docs/API.md) - API endpoint specifications
