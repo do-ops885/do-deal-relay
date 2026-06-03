@@ -124,9 +124,10 @@ export async function verifyPassword(
   try {
     const separatorIndex = storedHash.indexOf(".");
     if (separatorIndex === -1) return false;
-    const salt = storedHash.slice(0, separatorIndex);
+    const saltStr = storedHash.slice(0, separatorIndex);
     const expectedHash = storedHash.slice(separatorIndex + 1);
-    if (!salt || !expectedHash) return false;
+    if (!saltStr || !expectedHash) return false;
+    const salt = base64urlDecode(saltStr);
     const keyMaterial = await crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(password),
@@ -137,7 +138,7 @@ export async function verifyPassword(
     const bits = await crypto.subtle.deriveBits(
       {
         name: "PBKDF2",
-        salt: new TextEncoder().encode(salt),
+        salt: salt.buffer as ArrayBuffer,
         iterations: 100000,
         hash: "SHA-256",
       },

@@ -40,7 +40,7 @@ describe("JWT Utilities", () => {
     const password = "my-secure-password-123!";
     const hash = await hashPassword(password);
     expect(hash).toBeDefined();
-    expect(hash.includes(":")).toBe(true);
+    expect(hash.includes(".")).toBe(true);
 
     const isValid = await verifyPassword(password, hash);
     expect(isValid).toBe(true);
