@@ -71,9 +71,8 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       });
       return false;
     }
-    const cleanHostname = hostname.replace(/^[|]$/g, "");
-    if (isIpAddress(cleanHostname)) {
-      if (isPrivateIP(cleanHostname)) {
+    if (isIpAddress(hostname)) {
+      if (isPrivateIP(hostname)) {
         logger.warn(`SSRF Blocked: Private IP address detected: ${hostname}`, {
           component: "security",
           ip: hostname,
@@ -201,25 +200,57 @@ function ipv6ToBigInt(ipv6: string): bigint {
   }
 }
 
+/**
+ * Resolves a hostname to a list of IP addresses (IPv4 and IPv6).
+ * Uses DNS-over-HTTPS (DoH) for secure resolution.
+ */
 async function resolveHostname(hostname: string): Promise<string[]> {
   try {
-    const response = await fetch(
-      `https://cloudflare-dns.com/dns-query?name=${hostname}&type=A`,
-      {
-        headers: { accept: "application/dns-json" },
-        signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),
-      },
-    );
-    if (!response.ok) return [];
-    const data = (await response.json()) as {
-      Answer?: Array<{ data: string }>;
-    };
-    return data.Answer?.map((a) => a.data) || [];
+    // Resolve both A and AAAA records in parallel
+    const [ipv4, ipv6] = await Promise.all([
+      fetchDns(hostname, "A"),
+      fetchDns(hostname, "AAAA"),
+    ]);
+
+    return [...ipv4, ...ipv6];
   } catch (error) {
     logger.error(
       `DNS resolution failed for ${hostname}: ${(error as Error).message}`,
       { component: "security", hostname },
     );
+    return [];
+  }
+}
+
+/**
+ * Helper to fetch DNS records of a specific type via DoH.
+ */
+async function fetchDns(
+  hostname: string,
+  type: "A" | "AAAA",
+): Promise<string[]> {
+  try {
+    const params = new URLSearchParams({
+      name: hostname,
+      type: type,
+    });
+
+    const response = await fetch(
+      `https://cloudflare-dns.com/dns-query?${params.toString()}`,
+      {
+        headers: { accept: "application/dns-json" },
+        signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),
+      },
+    );
+
+    if (!response.ok) return [];
+
+    const data = (await response.json()) as {
+      Answer?: Array<{ data: string }>;
+    };
+
+    return data.Answer?.map((a) => a.data) || [];
+  } catch {
     return [];
   }
 }
