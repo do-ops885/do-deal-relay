@@ -59,6 +59,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
         code: "DATABASE_UNAVAILABLE",
       } as NLQError,
       503,
+      request,
+      env,
     );
   }
 
@@ -84,6 +86,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
         retry_after: rateLimitResult.resetTime - Math.floor(Date.now() / 1000),
       } as NLQError,
       429,
+      request,
+      env,
     );
 
     // Add rate limit headers
@@ -104,6 +108,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
         code: "METHOD_NOT_ALLOWED",
       } as NLQError,
       405,
+      request,
+      env,
     );
   }
 
@@ -129,6 +135,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
           },
         } as NLQError,
         400,
+        request,
+        env,
       );
     }
 
@@ -145,6 +153,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
         code: "PARSE_ERROR",
       } as NLQError,
       400,
+      request,
+      env,
     );
   }
 
@@ -234,6 +244,8 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
         },
       } as NLQError,
       500,
+      request,
+      env,
     );
   }
 }
@@ -251,7 +263,11 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
  * curl "/api/nlq?q=trading%20platforms%20with%20bonus"
  * ```
  */
-export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
+export async function handleNLQGet(
+  url: URL,
+  env: Env,
+  request?: Request,
+): Promise<Response> {
   const traceId = generateTraceId();
   const logger = getNLQLogger(env, traceId);
 
@@ -263,6 +279,8 @@ export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
         code: "DATABASE_UNAVAILABLE",
       } as NLQError,
       503,
+      request,
+      env,
     );
   }
 
@@ -278,6 +296,8 @@ export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
         code: "MISSING_PARAMETER",
       } as NLQError,
       400,
+      request,
+      env,
     );
   }
 
@@ -290,6 +310,8 @@ export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
         code: "QUERY_TOO_LONG",
       } as NLQError,
       400,
+      request,
+      env,
     );
   }
 
@@ -316,6 +338,8 @@ export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
         results,
       } as NLQResult,
       200,
+      request,
+      env,
     );
   } catch (error) {
     logger.error(
@@ -330,6 +354,8 @@ export async function handleNLQGet(url: URL, env: Env): Promise<Response> {
         code: "EXECUTION_ERROR",
       } as NLQError,
       500,
+      request,
+      env,
     );
   }
 }
@@ -354,6 +380,8 @@ export async function handleNLQExplain(
         code: "DATABASE_UNAVAILABLE",
       } as NLQError,
       503,
+      request,
+      env,
     );
   }
 
@@ -370,6 +398,8 @@ export async function handleNLQExplain(
           code: "PARSE_ERROR",
         } as NLQError,
         400,
+        request,
+        env,
       );
     }
   } else {
@@ -385,6 +415,8 @@ export async function handleNLQExplain(
         code: "MISSING_PARAMETER",
       } as NLQError,
       400,
+      request,
+      env,
     );
   }
 
@@ -409,6 +441,8 @@ export async function handleNLQExplain(
         explanation: explainQuery(parsed, structured),
       },
       200,
+      request,
+      env,
     );
   } catch (error) {
     return jsonResponse(
@@ -418,6 +452,8 @@ export async function handleNLQExplain(
         code: "EXPLAIN_ERROR",
       } as NLQError,
       500,
+      request,
+      env,
     );
   }
 }
