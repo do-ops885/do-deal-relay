@@ -98,6 +98,13 @@ function calculateExpiry(expiresIn: string | number): number {
   return Date.now() + value * multipliers[unit]!;
 }
 
+/**
+ * Hashes a password using PBKDF2 with a random salt.
+ * Returns the salt and hash as a base64-encoded string.
+ *
+ * @param password The plain-text password to hash
+ * @returns A string in the format "salt.hash" (base64-encoded)
+ */
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const keyMaterial = await crypto.subtle.importKey(
@@ -117,6 +124,13 @@ export async function hashPassword(password: string): Promise<string> {
   return saltStr + "." + computedHash;
 }
 
+/**
+ * Verifies a password against a stored hash.
+ *
+ * @param password The plain-text password to verify
+ * @param storedHash The stored hash (format "salt.hash")
+ * @returns True if the password matches the hash
+ */
 export async function verifyPassword(
   password: string,
   storedHash: string,
