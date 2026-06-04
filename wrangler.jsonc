@@ -67,6 +67,15 @@
       "database_id": "22222222-2222-2222-2222-222222222222",
     },
   ],
+  // Vectorize index for semantic search over deals and referrals
+  // Index name must match SEMANTIC_SEARCH_CONFIG.INDEX_NAME in worker/lib/search/types.ts
+  // Free tier limits: 100 indexes, 1000 namespaces, 1000 vectors/upsert, topK=50
+  "vectorize": [
+    {
+      "binding": "DEAL_EMBEDDINGS",
+      "index_name": "deal-embeddings",
+    },
+  ],
   // Environment-specific configurations
   "env": {
     // Development environment for local testing
@@ -129,6 +138,12 @@
           "database_id": "22222222-2222-2222-2222-222222222222",
         },
       ],
+      "vectorize": [
+        {
+          "binding": "DEAL_EMBEDDINGS",
+          "index_name": "deal-embeddings",
+        },
+      ],
     },
     // Production environment (explicitly defined for --env production flag)
     "production": {
@@ -172,6 +187,12 @@
           "binding": "DEALS_DB",
           "database_name": "deals-db",
           "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+        },
+      ],
+      "vectorize": [
+        {
+          "binding": "DEAL_EMBEDDINGS",
+          "index_name": "deal-embeddings",
         },
       ],
     },
