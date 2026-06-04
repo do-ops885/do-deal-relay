@@ -55,6 +55,7 @@ import {
 import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
 import { handleWebhookRoutes } from "./routes/webhooks";
+import { handleSemanticSearch } from "./routes/semantic-search";
 import { logger } from "./lib/global-logger";
 import {
   handleSubmitExperience,
@@ -258,6 +259,13 @@ export default {
         const domain = path.replace("/api/research/", "");
         return withAuth(request, env, undefined, () =>
           handleGetResearchResults(domain, env),
+        );
+      }
+
+      // Semantic search (Vectorize + Workers AI)
+      if (path === "/api/semantic-search" && request.method === "POST") {
+        return withAuth(request, env, "user", () =>
+          handleSemanticSearch(request, env),
         );
       }
 

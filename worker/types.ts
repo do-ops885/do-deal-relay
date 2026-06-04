@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { KVNamespace, D1Database } from "@cloudflare/workers-types";
+import type {
+  KVNamespace,
+  D1Database,
+  VectorizeIndex,
+} from "@cloudflare/workers-types";
 
 // ============================================================================
 // Core Deal Schema
@@ -340,6 +344,8 @@ export interface Env {
   // Auth secrets
   JWT_SECRET?: string;
   JWT_REFRESH_SECRET?: string;
+  // Vectorize index for semantic search (binding declared in wrangler.jsonc)
+  DEAL_EMBEDDINGS?: VectorizeIndex;
 }
 
 // ============================================================================
