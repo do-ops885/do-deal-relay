@@ -194,7 +194,7 @@ test.describe("Protected API Endpoints", () => {
   test("GET /metrics returns metrics data (requires auth)", async ({
     request,
   }) => {
-    const response = await request.get("/metrics", {
+    const response = await request.get("/metrics?format=json", {
       headers: authHeaders,
     });
 

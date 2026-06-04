@@ -75,7 +75,7 @@ test.describe("Authorization (403)", () => {
 
 test.describe("Successful Authenticated Access", () => {
   test("GET /metrics returns 200 for admin role", async ({ request }) => {
-    const response = await request.get("/metrics", {
+    const response = await request.get("/metrics?format=json", {
       headers: { "X-API-Key": ADMIN_KEY },
     });
     expect(response.status()).toBe(200);
