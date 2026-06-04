@@ -27,3 +27,10 @@ Verification rules and checks to ensure correctness across the codebase.
 
 - **Trigger**: Modifying the deal discovery or normalization logic.
 - **Check**: The `schema_validation` gate in the pipeline and unit tests in `tests/unit/validation/`.
+
+## Skill-First Workflow
+**Rule**: When a task overlaps with a loaded or available skill, follow the skill's documented workflow instead of improvising.
+
+- **Concrete Trigger**: Any task where a relevant skill exists in `.agents/skills/` (e.g., Codacy analysis, coverage setup, code review).
+- **Concrete Check**: Load the skill with `skill()` and verify the task is addressed by the skill's documented steps, CLI commands, and output-parsing patterns. If the skill's workflow is incomplete, update the skill rather than creating ad-hoc scripts.
+- **Example**: Parsing Codacy JSON output should use the `codacy-analysis-cli` skill's documented `jq` commands (Step 5: Interpret results) rather than writing a throwaway Python script.

@@ -56,3 +56,4 @@ Rule: every correction becomes a rule. See [agents-docs/LEARNINGS.md](agents-doc
 ## Agent Guidance
 - **Minimal Clarification**: Do not ask questions that can be answered by analysis.
 - **Verification**: Always use read-only tools to confirm effects.
+- **Skill-First Workflow**: When a skill is loaded or available in `.agents/skills/`, follow its documented workflows, CLI commands, and output-parsing patterns. Never create throwaway scripts for tasks a skill already covers. If a skill's workflow is insufficient, update the skill itself rather than bypassing it. See [agents-docs/LEARNINGS.md](agents-docs/LEARNINGS.md) (2026-06-04 entries).
