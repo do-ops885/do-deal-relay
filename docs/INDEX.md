@@ -59,7 +59,7 @@ docs/
 agents-docs/
 ├── README.md              # Agent coordination hub
 ├── LESSONS.md             # Self-learning system
-├── guard-rails.md         # Safety documentation
+├── hard-constraints.md         # Safety documentation
 ├── agents/                # Agent specifications
 │   ├── test-agent.md
 │   ├── validation-agent.md
