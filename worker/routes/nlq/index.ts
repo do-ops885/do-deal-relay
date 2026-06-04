@@ -49,7 +49,7 @@ export async function handleNLQRequest(
       return handleNLQ(request, env);
     }
     if (request.method === "GET") {
-      return handleNLQGet(url, env);
+      return handleNLQGet(url, env, request);
     }
     return jsonResponse(
       {

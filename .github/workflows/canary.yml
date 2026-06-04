@@ -121,13 +121,12 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Status**: Deployed"
           echo "- **Traffic**: ${PERCENTAGE}%"
-          # Prefer explicit worker host secret; fall back to account-derived subdomain
           WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -n "${WORKER_HOST}" ]; then
-            STAGING_URL="https://${WORKER_HOST}"
-          else
-            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
+          if [ -z "${WORKER_HOST}" ]; then
+            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+            exit 1
           fi
+          STAGING_URL="https://${WORKER_HOST}"
           echo "- **URL**: ${STAGING_URL}"
 
       - name: Wait for canary duration
@@ -145,22 +144,16 @@ jobs:
     steps:
       - name: Health check loop
         run: |
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
           DURATION="${{ needs.setup-canary.outputs.duration }}"
           END_TIME=$(($(date +%s) + DURATION * 60))
 
-          if [ -z "${ACCOUNT_ID}" ]; then
-            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping monitoring"
-            exit 0
+          if [ -z "${WORKER_HOST}" ]; then
+            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+            exit 1
           fi
 
-          # Prefer explicit worker host secret; fall back to account-derived subdomain
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -n "${WORKER_HOST}" ]; then
-            CANARY_URL="https://${WORKER_HOST}"
-          else
-            CANARY_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev"
-          fi
+          CANARY_URL="https://${WORKER_HOST}"
           HEALTHY=0
           FAILED=0
 

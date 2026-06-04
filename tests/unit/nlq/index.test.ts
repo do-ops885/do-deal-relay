@@ -63,7 +63,7 @@ describe("NLQ Route Handler", () => {
 
       await handleNLQRequest(request, url, mockEnv);
 
-      expect(handlers.handleNLQGet).toHaveBeenCalledWith(url, mockEnv);
+      expect(handlers.handleNLQGet).toHaveBeenCalledWith(url, mockEnv, request);
     });
 
     it("should route POST /api/nlq/explain to handleNLQExplain", async () => {

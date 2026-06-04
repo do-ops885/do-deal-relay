@@ -60,21 +60,14 @@ jobs:
       - name: Verify staging is healthy
         if: github.ref == 'refs/heads/main'
         run: |
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-
-          if [ -z "${ACCOUNT_ID}" ]; then
-            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping staging health check"
-            exit 0
-          fi
-
-          # Prefer explicit worker host secret; fall back to account-derived subdomain
           WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -n "${WORKER_HOST}" ]; then
-            STAGING_URL="https://${WORKER_HOST}/health"
-          else
-            STAGING_URL="https://do-deal-relay-staging.${ACCOUNT_ID}.workers.dev/health"
+          if [ -z "${WORKER_HOST}" ]; then
+            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+            exit 1
           fi
-          echo "Verifying staging environment is healthy..."
+
+          STAGING_URL="https://${WORKER_HOST}/health"
+          echo "Verifying staging environment is healthy at ${STAGING_URL}..."
 
           if ! curl -sf "${STAGING_URL}"; then
             echo "❌ Staging not healthy. Aborting production deployment."

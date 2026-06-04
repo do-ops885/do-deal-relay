@@ -27,3 +27,17 @@ Verification rules and checks to ensure correctness across the codebase.
 
 - **Trigger**: Modifying the deal discovery or normalization logic.
 - **Check**: The `schema_validation` gate in the pipeline and unit tests in `tests/unit/validation/`.
+
+## Skill-First Workflow
+**Rule**: When a task overlaps with a loaded or available skill, follow the skill's documented workflow instead of improvising.
+
+- **Concrete Trigger**: Any task where a relevant skill exists in `.agents/skills/` (e.g., Codacy analysis, coverage setup, code review).
+- **Concrete Check**: Load the skill with `skill()` and verify the task is addressed by the skill's documented steps, CLI commands, and output-parsing patterns. If the skill's workflow is incomplete, update the skill rather than creating ad-hoc scripts.
+- **Example**: Parsing Codacy JSON output should use the `codacy-analysis-cli` skill's documented `jq` commands (Step 5: Interpret results) rather than writing a throwaway Python script.
+
+## Fix-Forward
+**Rule**: Always attempt to fix pre-existing issues and warnings encountered during work. If a fix is not possible, document it as a follow-up in `plans/`.
+
+- **Concrete Trigger**: Linter warnings, type errors, deprecated APIs, or CI issues found while working on a task — even if they are unrelated to the current task.
+- **Concrete Check**: Before committing, scan modified files for warnings. Fix what is fixable. If an issue cannot be resolved (upstream bug, out-of-scope, external dependency), create a `plans/FOLLOWUP-<brief-slug>.md` with the issue description, root cause, and proposed resolution.
+- **Example**: While fixing Codacy CI issues, encountering deprecated `node:crypto` usage in a neighboring file — fix it in the same commit rather than leaving it for later.

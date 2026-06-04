@@ -114,7 +114,7 @@ describe("API Endpoints", () => {
           run: vi.fn().mockResolvedValue({ success: true }),
           all: vi.fn().mockResolvedValue({ results: [] }),
         }),
-      } as any,
+      } as unknown as Env["DEALS_DB"],
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -139,6 +139,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(["healthy", "degraded"]).toContain(body.status);
       expect(body.version).toBeDefined();
@@ -149,6 +150,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv);
 
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect([200, 503]).toContain(response.status);
       expect(["healthy", "degraded"]).toContain(body.status);
@@ -189,6 +191,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.funnel).toBeDefined();
     });
@@ -211,8 +214,11 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      const contentType = response.headers.get("Content-Type") || "";
+      expect(contentType).toContain("text/plain");
       const body = await response.text();
-      expect(body).toContain("funnel");
+      expect(body).toContain("# HELP");
+      expect(body).toContain("pipeline_");
     });
 
     it("should handle missing snapshot gracefully", async () => {
@@ -222,6 +228,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.funnel).toBeDefined();
       expect(body.funnel.discovered).toBe(0);
@@ -260,6 +267,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body).toHaveLength(2);
@@ -272,6 +280,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(404);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.error).toBe("No deals available");
     });
@@ -307,6 +316,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveLength(1);
       expect(body[0].metadata.category).toContain("referral");
@@ -345,6 +355,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveLength(1);
       expect(body[0].reward.value).toBe(75);
@@ -374,6 +385,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveLength(5);
     });
@@ -388,6 +400,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       expect((await response.json()) as any).toHaveProperty("error");
     });
   });
@@ -405,6 +418,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveProperty("version");
       expect(body).toHaveProperty("generated_at");
@@ -445,6 +459,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.deals).toHaveLength(1);
     });
@@ -508,6 +523,7 @@ describe("API Endpoints", () => {
 
       // Should return error response
       expect(response.status).toBeGreaterThanOrEqual(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveProperty("success");
     });
@@ -521,6 +537,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveProperty("locked");
     });
@@ -540,6 +557,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       // Lock status depends on implementation
       expect(body).toHaveProperty("locked");
@@ -562,6 +580,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body).toHaveProperty("logs");
       expect(body).toHaveProperty("count");
@@ -583,6 +602,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.logs).toBeDefined();
     });
@@ -629,6 +649,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(201);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body).toHaveProperty("deal_id");
@@ -646,6 +667,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(415);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       expect((await response.json()) as any).toHaveProperty("error");
     });
 
@@ -659,6 +681,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(400);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       expect((await response.json()) as any).toHaveProperty("error");
     });
 
@@ -681,6 +704,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(409);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(body.error).toContain("already exists");
     });
@@ -708,6 +732,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(404);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       expect((await response.json()) as any).toHaveProperty("error");
     });
 
@@ -716,21 +741,22 @@ describe("API Endpoints", () => {
         ...mockEnv,
         DEALS_PROD: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
+        } as unknown as Env["DEALS_DB"],
         DEALS_LOG: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
           put: vi.fn().mockRejectedValue(new Error("KV error")),
           list: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
+        } as unknown as Env["DEALS_DB"],
         DEALS_LOCK: {
           get: vi.fn().mockRejectedValue(new Error("KV error")),
-        } as any,
+        } as unknown as Env["DEALS_DB"],
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, brokenEnv);
 
       expect([200, 503]).toContain(response.status);
+      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
       expect(["healthy", "degraded", "unhealthy"]).toContain(body.status);
     });

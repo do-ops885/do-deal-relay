@@ -5,8 +5,8 @@
 
 import { logger } from "../../global-logger";
 import type { Env } from "../../../types";
-import type { EnhancedQuery, QueryFilters } from "../ai-enhancer";
-import { AIQueryEnhancer, isComplexQuery } from "../ai-enhancer";
+import type { EnhancedQuery, QueryFilters } from "../ai";
+import { AIQueryEnhancer, isComplexQuery } from "../ai";
 import {
   classifyWithRules,
   normalizeQuery,

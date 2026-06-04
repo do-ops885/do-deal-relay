@@ -7,11 +7,7 @@ import { logger } from "../../global-logger";
 import { CONFIG } from "../../../config";
 import { getTrustThreshold } from "../../config-utils";
 import type { Env } from "../../../types";
-import type {
-  EnhancedQuery,
-  ExtractedIntent,
-  QueryFilters,
-} from "../ai-enhancer";
+import type { EnhancedQuery, ExtractedIntent, QueryFilters } from "../ai";
 
 // Rule-based patterns for quick classification
 export const INTENT_PATTERNS: Record<ExtractedIntent["primary"], RegExp[]> = {
@@ -256,7 +252,7 @@ export function buildExpansions(
       fintech: ["financial app", "money app", "finance tool"],
     };
 
-    const syns = categorySynonyms[categoryEntity.value];
+    const syns = categorySynonyms[categoryEntity.value as string];
     if (syns) {
       synonyms.set(categoryEntity.value, syns);
       for (const syn of syns) {
@@ -322,7 +318,10 @@ export function calculateRuleConfidence(
   // Add confidence from entities
   if (entities.length > 0) {
     const avgEntityConfidence =
-      entities.reduce((sum, e) => sum + e.confidence, 0) / entities.length;
+      entities.reduce(
+        (sum: number, e: { confidence: number }) => sum + e.confidence,
+        0,
+      ) / entities.length;
     confidence += avgEntityConfidence * 0.3;
   }
 

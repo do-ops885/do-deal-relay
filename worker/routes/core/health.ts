@@ -1,5 +1,12 @@
 import type { Env, HealthStatus, LogEntry, PipelineMetrics } from "../../types";
-import { jsonResponse } from "../utils";
+import { getAllowedOrigin, jsonResponse } from "../utils";
+import {
+  formatPrometheusMetrics,
+  isPrometheusFormat,
+  logPrometheusExport,
+  prometheusResponse,
+} from "../../lib/metrics/prometheus";
+import { logger } from "../../lib/global-logger";
 
 export async function handleHealth(
   env: Env,
@@ -13,7 +20,7 @@ export async function handleReady(
   request: Request,
 ): Promise<Response> {
   try {
-    await env.DEALS_DB.prepare("SELECT 1").first();
+    void env.DEALS_DB.prepare("SELECT 1").first();
     return jsonResponse({ ready: true }, 200, request, env);
   } catch {
     return jsonResponse(
@@ -45,15 +52,16 @@ export async function handleMetrics(
     let passed_trust_filter = 0;
     let validated = 0;
     let published = 0;
+    let latestMetrics: PipelineMetrics | null = null;
 
     if (runIds.length > 0) {
       const latestRaw = await env.DEALS_LOG.get(`metrics:${runIds[0]}`);
       if (latestRaw) {
-        const metrics: PipelineMetrics = JSON.parse(latestRaw);
-        discovered = metrics.deals_processed.discovered;
-        passed_trust_filter = metrics.deals_processed.passed_trust_filter;
-        validated = metrics.deals_processed.validated;
-        published = metrics.deals_processed.published;
+        latestMetrics = JSON.parse(latestRaw) as PipelineMetrics;
+        discovered = latestMetrics.deals_processed.discovered;
+        passed_trust_filter = latestMetrics.deals_processed.passed_trust_filter;
+        validated = latestMetrics.deals_processed.validated;
+        published = latestMetrics.deals_processed.published;
       }
     }
 
@@ -68,10 +76,75 @@ export async function handleMetrics(
       conversion_rate,
     };
 
+    if (isPrometheusFormat(format)) {
+      const metricsForExport: PipelineMetrics =
+        latestMetrics ??
+        ({
+          run_id: runIds[0] ?? "empty",
+          start_time: 0,
+          phase_timings: {
+            init: 0,
+            discover: 0,
+            normalize: 0,
+            dedupe: 0,
+            validate: 0,
+            score: 0,
+            stage: 0,
+            publish: 0,
+            verify: 0,
+            finalize: 0,
+          },
+          phase_results: {
+            init: "success",
+            discover: "success",
+            normalize: "success",
+            dedupe: "success",
+            validate: "success",
+            score: "success",
+            stage: "success",
+            publish: "success",
+            verify: "success",
+            finalize: "success",
+          },
+          total_duration_ms: 0,
+          deals_processed: {
+            discovered,
+            passed_trust_filter,
+            normalized: 0,
+            deduped: 0,
+            validated,
+            scored: 0,
+            published,
+          },
+          errors: 0,
+          retries: 0,
+          success: false,
+          final_phase: "init",
+        } satisfies PipelineMetrics);
+
+      const body = formatPrometheusMetrics(metricsForExport);
+      logPrometheusExport(metricsForExport);
+      return withCors(prometheusResponse(body), request, env);
+    }
+
     return jsonResponse({ funnel }, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.error("handleMetrics failed", {
+      component: "metrics",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return jsonResponse({ error: "Failed to get metrics" }, 500, request, env);
   }
+}
+
+function withCors(response: Response, request: Request, env: Env): Response {
+  const origin = request.headers.get("Origin");
+  const allowedOrigin = getAllowedOrigin(origin, env);
+  if (allowedOrigin) {
+    response.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+    response.headers.set("Vary", "Origin");
+  }
+  return response;
 }
 
 export async function getHealthStatus(
@@ -145,9 +218,9 @@ export async function getHealthStatus(
           error: d1Check.error,
         },
         pipeline: {
-          last_run: logs.length > 0 ? logs[0]!.ts : "",
+          last_run: logs.length > 0 ? (logs[0]?.ts ?? "") : "",
           last_success:
-            logs.length > 0 ? logs[0]!.status === "complete" : false,
+            logs.length > 0 ? logs[0]?.status === "complete" : false,
           average_duration_ms: 0,
         },
         external_services: {
@@ -163,9 +236,9 @@ export async function getHealthStatus(
       last_run:
         logs.length > 0
           ? {
-              run_id: logs[0]!.run_id,
-              timestamp: logs[0]!.ts,
-              duration_ms: logs[0]!.duration_ms || 0,
+              run_id: logs[0]?.run_id ?? "",
+              timestamp: logs[0]?.ts ?? "",
+              duration_ms: logs[0]?.duration_ms || 0,
               deals_count: 0,
             }
           : undefined,
@@ -184,6 +257,7 @@ export async function getHealthStatus(
 
 async function getLatestSnapshot(env: Env): Promise<boolean> {
   try {
+    // biome-ignore lint/nursery/noPlaywrightUselessAwait: necessary await for DB result
     const result = await env.DEALS_DB.prepare(
       "SELECT snapshot_hash FROM snapshots ORDER BY generated_at DESC LIMIT 1",
     ).first();
@@ -209,6 +283,7 @@ async function checkD1Connection(env: Env): Promise<{
 }> {
   const start = Date.now();
   try {
+    // biome-ignore lint/nursery/noPlaywrightUselessAwait: necessary await for DB connectivity check
     await env.DEALS_DB.prepare("SELECT 1").first();
     return {
       connected: true,

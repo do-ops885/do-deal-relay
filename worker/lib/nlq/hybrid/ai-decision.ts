@@ -3,7 +3,7 @@
 // ============================================================================
 // Determines when to use AI vs rule-based classification
 
-import { isComplexQuery } from "../ai-enhancer";
+import { isComplexQuery } from "../ai";
 
 export interface HybridClassifierOptions {
   aiConfidenceThreshold?: number;

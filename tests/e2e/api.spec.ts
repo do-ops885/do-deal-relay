@@ -5,8 +5,9 @@ import { test, expect } from "@playwright/test";
  * Tests the Deal Discovery System using Playwright
  */
 
-const API_KEY = process.env.TEST_API_KEY || "";
-const IS_CI = !!process.env.CI;
+// biome-ignore-start lint/security/noSecrets: test fixtures, not real keys
+const API_KEY = "ddr_admin_test_key_0000000000000000";
+// biome-ignore-end lint/security/noSecrets
 
 test.describe("Health Endpoints", () => {
   test("GET /health returns healthy status", async ({ request }) => {
@@ -14,6 +15,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("status", "healthy");
     expect(body).toHaveProperty("version");
@@ -25,6 +27,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("ready");
     expect(body.ready).toBe(true);
@@ -35,6 +38,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("alive");
     expect(body.alive).toBe(true);
@@ -49,6 +53,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
   });
@@ -61,6 +66,7 @@ test.describe("Deals API", () => {
     const contentType = response.headers()["content-type"];
     expect(contentType).toContain("application/json");
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("deals");
     expect(Array.isArray(body.deals)).toBe(true);
@@ -73,6 +79,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
   });
@@ -84,6 +91,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeLessThanOrEqual(5);
@@ -100,6 +108,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("deals");
     expect(body).toHaveProperty("meta");
@@ -115,6 +124,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body.meta.sort_by).toBe("confidence");
   });
@@ -126,6 +136,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
     expect(body).toHaveProperty("top_deals");
     expect(body).toHaveProperty("expiring_soon");
@@ -136,12 +147,6 @@ test.describe("Ranked Deals API", () => {
 test.describe("Protected API Endpoints", () => {
   const authHeaders = { "X-API-Key": API_KEY };
 
-  test.beforeEach(() => {
-    if (IS_CI && !API_KEY) {
-      throw new Error("TEST_API_KEY must be provided in CI environment");
-    }
-  });
-
   test("GET /api/analytics returns analytics data (requires auth)", async ({
     request,
   }) => {
@@ -149,13 +154,10 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
-      expect(body).toHaveProperty("qualityMetrics");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("qualityMetrics");
   });
 
   test("GET /api/status returns pipeline status (requires auth)", async ({
@@ -165,13 +167,10 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
-      expect(body).toHaveProperty("locked");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("locked");
   });
 
   test("GET /api/log returns recent logs (requires auth)", async ({
@@ -181,32 +180,25 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      const body = (await response.json()) as any;
-      expect(body).toHaveProperty("logs");
-      expect(Array.isArray(body.logs)).toBe(true);
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("logs");
+    expect(Array.isArray(body.logs)).toBe(true);
   });
 
   test("GET /metrics returns metrics data (requires auth)", async ({
     request,
   }) => {
-    const response = await request.get("/metrics", {
+    const response = await request.get("/metrics?format=json", {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      const contentType = response.headers()["content-type"];
-      expect(contentType).toContain("application/json");
-      const body = await response.json();
-      expect(body).toHaveProperty("funnel");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    const contentType = response.headers()["content-type"];
+    expect(contentType).toContain("application/json");
+    const body = await response.json();
+    expect(body).toHaveProperty("funnel");
   });
 });
 
