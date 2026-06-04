@@ -46,4 +46,22 @@ describe("Security Utils - validateFetchUrl SSRF Bypass Prevention", () => {
     const result = await validateFetchUrl("https://one.one.one.one/");
     expect(result).toBe(true);
   });
+
+  it("should block domains that resolve to private IPv6 addresses", async () => {
+    // Mock DNS resolution: A record empty, AAAA record returns private IPv6
+    (global.fetch as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ Answer: [] }), // A record
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          Answer: [{ data: "fc00::1" }], // AAAA record
+        }),
+      });
+
+    const result = await validateFetchUrl("https://private-ipv6.com/");
+    expect(result).toBe(false);
+  });
 });
