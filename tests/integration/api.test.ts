@@ -211,8 +211,11 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
+      const contentType = response.headers.get("Content-Type") || "";
+      expect(contentType).toContain("text/plain");
       const body = await response.text();
-      expect(body).toContain("funnel");
+      expect(body).toContain("# HELP");
+      expect(body).toContain("pipeline_");
     });
 
     it("should handle missing snapshot gracefully", async () => {
