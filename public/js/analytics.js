@@ -36,12 +36,6 @@ function fmtNum(n) {
   return n.toLocaleString("en-US");
 }
 
-function fmtPct(n) {
-  n = Number(n);
-  if (!Number.isFinite(n)) return "0%";
-  return (n * 100).toFixed(n < 0.1 ? 1 : 0) + "%";
-}
-
 function fmtRel(ts, now = Date.now()) {
   if (!ts) return "";
   const d = new Date(ts);

@@ -15,11 +15,6 @@ const STATUS_LABEL = {
   reported: "Reported",
 };
 
-function esc(v) {
-  if (v == null) return "";
-  return String(v).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
-}
-
 function fmtNum(n) {
   n = Number(n);
   if (!Number.isFinite(n)) return "0";

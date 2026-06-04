@@ -91,8 +91,10 @@ body {
   line-height: 1.5;
   color: var(--color-text);
   background: var(--color-bg);
+  /* biome-ignore-start lint/suspicious/noDuplicateProperties: dvh fallback */
   min-height: 100vh;
   min-height: 100dvh;
+  /* biome-ignore-end lint/suspicious/noDuplicateProperties */
   transition:
     background-color var(--transition-base),
     color var(--transition-base);
@@ -520,6 +522,7 @@ a:hover {
     top: var(--header-height);
     transform: none;
     visibility: visible;
+    /* biome-ignore lint/suspicious/noDuplicateProperties: dvh fallback */
     height: calc(100vh - var(--header-height));
     height: calc(100dvh - var(--header-height));
     z-index: 1;

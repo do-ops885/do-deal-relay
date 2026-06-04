@@ -20,7 +20,7 @@ export async function handleReady(
   request: Request,
 ): Promise<Response> {
   try {
-    await env.DEALS_DB.prepare("SELECT 1").first();
+    void env.DEALS_DB.prepare("SELECT 1").first();
     return jsonResponse({ ready: true }, 200, request, env);
   } catch {
     return jsonResponse(
@@ -218,9 +218,9 @@ export async function getHealthStatus(
           error: d1Check.error,
         },
         pipeline: {
-          last_run: logs.length > 0 ? logs[0]!.ts : "",
+          last_run: logs.length > 0 ? (logs[0]?.ts ?? "") : "",
           last_success:
-            logs.length > 0 ? logs[0]!.status === "complete" : false,
+            logs.length > 0 ? logs[0]?.status === "complete" : false,
           average_duration_ms: 0,
         },
         external_services: {
@@ -236,9 +236,9 @@ export async function getHealthStatus(
       last_run:
         logs.length > 0
           ? {
-              run_id: logs[0]!.run_id,
-              timestamp: logs[0]!.ts,
-              duration_ms: logs[0]!.duration_ms || 0,
+              run_id: logs[0]?.run_id ?? "",
+              timestamp: logs[0]?.ts ?? "",
+              duration_ms: logs[0]?.duration_ms || 0,
               deals_count: 0,
             }
           : undefined,
@@ -257,6 +257,7 @@ export async function getHealthStatus(
 
 async function getLatestSnapshot(env: Env): Promise<boolean> {
   try {
+    // biome-ignore lint/nursery/noPlaywrightUselessAwait: necessary await for DB result
     const result = await env.DEALS_DB.prepare(
       "SELECT snapshot_hash FROM snapshots ORDER BY generated_at DESC LIMIT 1",
     ).first();
@@ -282,6 +283,7 @@ async function checkD1Connection(env: Env): Promise<{
 }> {
   const start = Date.now();
   try {
+    // biome-ignore lint/nursery/noPlaywrightUselessAwait: necessary await for DB connectivity check
     await env.DEALS_DB.prepare("SELECT 1").first();
     return {
       connected: true,

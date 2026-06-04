@@ -64,7 +64,7 @@
    - Deps: none
    - Output: Issues closed with GOAP plan references
 
-### Quality Gate 1
+### Quality Gate - Phase 1
 - [ ] All 34 rollback issues closed
 - [ ] Deployment runbook exists
 - [ ] Previously-implemented issues verified and closed
@@ -96,7 +96,7 @@
    - Files: `worker/lib/research-agent/fetcher.ts`, `worker/config.ts`
    - Output: `RESEARCH_USE_REAL_FETCHING=true` default, error handling, retry logic
 
-### Quality Gate 2
+### Quality Gate - Phase 2
 - [ ] Rate limiting: 100 req/min per domain verified
 - [ ] Caching: KV-based, >50% cache hit rate in tests
 - [ ] AI summarization: Produces structured `ResearchSummary` output
@@ -131,7 +131,7 @@
    - Files: `docs/monitoring-setup.md`
    - Output: Checkly/Pingdom setup guide, alerting rules
 
-### Quality Gate 3
+### Quality Gate - Phase 3
 - [ ] `/health` returns all dependency statuses
 - [ ] `/metrics` returns Prometheus-format metrics
 - [ ] Documentation covers external monitoring setup

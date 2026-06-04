@@ -1,4 +1,4 @@
-import { createRouter, parseHash } from "./router.js";
+import { createRouter } from "./router.js";
 import { api, ApiError } from "./api.js";
 
 const THEME_KEY = "ddr:theme";

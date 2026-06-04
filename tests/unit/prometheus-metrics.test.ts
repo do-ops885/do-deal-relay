@@ -302,8 +302,11 @@ describe("handleMetrics integration with Prometheus format", () => {
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
       AI_GATEWAY_URL: "https://ai.test",
+      // biome-ignore lint/security/noSecrets: test fixture
       WEBHOOK_SECRET: "x",
+      // biome-ignore lint/security/noSecrets: test fixture
       API_ENCRYPTION_KEY: "x",
+      // biome-ignore lint/security/noSecrets: test fixture
       EMAIL_WEBHOOK_SECRET: "x",
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;

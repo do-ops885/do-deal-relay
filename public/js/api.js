@@ -143,7 +143,7 @@ async function getDeal(id, { signal } = {}) {
     if (primaryError instanceof ApiError && primaryError.type !== "not_found") {
       try {
         return await request(ENDPOINTS.dealExplain(id), { signal });
-      } catch (fallbackError) {
+      } catch {
         throw primaryError;
       }
     }

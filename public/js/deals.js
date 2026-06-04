@@ -30,6 +30,7 @@ const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
 ];
 
+// biome-ignore-start lint/security/noSecrets: HTML entity map, not secrets
 const HTML_ENTITIES = {
   "&": "&amp;",
   "<": "&lt;",
@@ -37,6 +38,7 @@ const HTML_ENTITIES = {
   '"': "&quot;",
   "'": "&#39;",
 };
+// biome-ignore-end lint/security/noSecrets
 
 function escapeHtml(value) {
   if (value == null) return "";
