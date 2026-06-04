@@ -48,6 +48,15 @@ export interface FastPathResult {
   }) => Promise<void>;
 }
 
+/**
+ * Performs a high-speed validation of a deal candidate using pre-computed rules
+ * and cache lookups. This bypasses more expensive full-page scraping if the
+ * candidate can be quickly confirmed or rejected.
+ *
+ * @param env The environment bindings
+ * @param input The deal candidate input to validate
+ * @returns Object containing valid status and optional reason
+ */
 export async function validateDealFastPath(
   env: Env,
   input: {
