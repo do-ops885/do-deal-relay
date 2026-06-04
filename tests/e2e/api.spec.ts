@@ -5,8 +5,9 @@ import { test, expect } from "@playwright/test";
  * Tests the Deal Discovery System using Playwright
  */
 
-const API_KEY = process.env.TEST_API_KEY || "";
-const IS_CI = !!process.env.CI;
+// biome-ignore-start lint/security/noSecrets: test fixtures, not real keys
+const API_KEY = "ddr_admin_test_key_0000000000000000";
+// biome-ignore-end lint/security/noSecrets
 
 test.describe("Health Endpoints", () => {
   test("GET /health returns healthy status", async ({ request }) => {
@@ -45,7 +46,6 @@ test.describe("Health Endpoints", () => {
 });
 
 test.describe("Deals API", () => {
-  // biome-ignore-next-line lint/security/noSecrets: test API key from env
   const authHeaders = { "X-API-Key": API_KEY };
 
   test("GET /deals returns deals list", async ({ request }) => {
@@ -147,12 +147,6 @@ test.describe("Ranked Deals API", () => {
 test.describe("Protected API Endpoints", () => {
   const authHeaders = { "X-API-Key": API_KEY };
 
-  test.beforeEach(() => {
-    if (IS_CI && !API_KEY) {
-      throw new Error("TEST_API_KEY must be provided in CI environment");
-    }
-  });
-
   test("GET /api/analytics returns analytics data (requires auth)", async ({
     request,
   }) => {
@@ -160,14 +154,10 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body: Record<string, unknown> = (await response.json()) as any;
-      expect(body).toHaveProperty("qualityMetrics");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("qualityMetrics");
   });
 
   test("GET /api/status returns pipeline status (requires auth)", async ({
@@ -177,14 +167,10 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body: Record<string, unknown> = (await response.json()) as any;
-      expect(body).toHaveProperty("locked");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("locked");
   });
 
   test("GET /api/log returns recent logs (requires auth)", async ({
@@ -194,15 +180,11 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body: Record<string, unknown> = (await response.json()) as any;
-      expect(body).toHaveProperty("logs");
-      expect(Array.isArray(body.logs)).toBe(true);
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("logs");
+    expect(Array.isArray(body.logs)).toBe(true);
   });
 
   test("GET /metrics returns metrics data (requires auth)", async ({
@@ -212,15 +194,11 @@ test.describe("Protected API Endpoints", () => {
       headers: authHeaders,
     });
 
-    if (API_KEY) {
-      expect(response.status()).toBe(200);
-      const contentType = response.headers()["content-type"];
-      expect(contentType).toContain("application/json");
-      const body = await response.json();
-      expect(body).toHaveProperty("funnel");
-    } else {
-      expect(response.status()).toBe(401);
-    }
+    expect(response.status()).toBe(200);
+    const contentType = response.headers()["content-type"];
+    expect(contentType).toContain("application/json");
+    const body = await response.json();
+    expect(body).toHaveProperty("funnel");
   });
 });
 
