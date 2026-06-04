@@ -39,5 +39,5 @@ Verification rules and checks to ensure correctness across the codebase.
 **Rule**: Always attempt to fix pre-existing issues and warnings encountered during work. If a fix is not possible, document it as a follow-up in `plans/`.
 
 - **Concrete Trigger**: Linter warnings, type errors, deprecated APIs, or CI issues found while working on a task — even if they are unrelated to the current task.
-- **Concrete Check**: Before committing, scan modified files and their neighbors for warnings. Fix what is fixable. If an issue cannot be resolved (upstream bug, out-of-scope, external dependency), create a `plans/FOLLOWUP-<brief-slug>.md` with the issue description, root cause, and proposed resolution.
+- **Concrete Check**: Before committing, scan modified files for warnings. Fix what is fixable. If an issue cannot be resolved (upstream bug, out-of-scope, external dependency), create a `plans/FOLLOWUP-<brief-slug>.md` with the issue description, root cause, and proposed resolution.
 - **Example**: While fixing Codacy CI issues, encountering deprecated `node:crypto` usage in a neighboring file — fix it in the same commit rather than leaving it for later.
