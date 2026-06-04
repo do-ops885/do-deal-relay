@@ -103,6 +103,7 @@ for file in $(find . -name "*.md" -not -path "./node_modules/*" -not -path "./.g
     if [[ "$file" == docs/* ]] || \
        [[ "$file" == agents-docs/* ]] || \
        [[ "$file" == plans/* ]] || \
+       [[ "$file" == progress/* ]] || \
        [[ "$file" == reports/* ]] || \
        [[ "$file" == .github/* ]] || \
        [[ "$file" == .agents/skills/* ]] || \
