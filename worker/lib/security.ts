@@ -230,6 +230,15 @@ async function fetchDns(
   type: "A" | "AAAA",
 ): Promise<string[]> {
   try {
+    // Strict hostname validation to prevent parameter injection and satisfy security scans.
+    // Hostnames must only contain alphanumeric characters, dots, and hyphens.
+    // Also enforcing a maximum length of 253 characters (DNS standard).
+    const hostnameRegex =
+      /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+    if (!hostnameRegex.test(hostname)) {
+      return [];
+    }
+
     const params = new URLSearchParams({
       name: hostname,
       type: type,
