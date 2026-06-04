@@ -10,20 +10,9 @@ While applying the Fix-Forward rule during Codacy CI fix work, the following pre
 
 ## Issues Found
 
-### 1. console.log in production source files (8 files)
+### 1. console.log in source files — FALSE POSITIVE (Resolved)
 
-These files contain `console.log` calls that should use the structured logger instead:
-
-- `worker/lib/feature-flags.ts`
-- `worker/lib/logger/structured.ts`
-- `worker/lib/rate-limit-kv.ts`
-- `worker/lib/validation/url-validator.ts`
-- `worker/lib/validation/reward-scraper.ts`
-- `worker/lib/validation/code-validator.ts`
-- `worker/lib/global-logger.ts`
-- `worker/lib/webhook-sdk.ts`
-
-**Note**: `global-logger.ts` and `logger/structured.ts` may legitimately use `console.log` as part of the logging infrastructure itself. The other 6 files should migrate to the structured logger.
+All 12 `console.log` instances found across 6 files are inside JSDoc `@example` comment blocks or commented-out code — none are in executable code. No migration needed. (`global-logger.ts` and `logger/structured.ts` legitimately use `console.log` as part of the logging infrastructure.)
 
 ### 2. TODO/FIXME markers (1 file)
 
