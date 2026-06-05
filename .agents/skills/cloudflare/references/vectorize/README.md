@@ -2,9 +2,7 @@
 
 Globally distributed vector database for AI applications. Store and query vector embeddings for semantic search, recommendations, RAG, and classification.
 
-**Status:** Generally Available (GA) | **Last Updated:** 2026-06-05
-
-> **No dashboard UI.** Vectorize has no Cloudflare web console. All index lifecycle, metadata, and bulk operations are performed via the `wrangler` CLI (`npx wrangler vectorize ...`) or the Cloudflare HTTP API. Plan CI/CD accordingly.
+**Status:** Generally Available (GA) | **Last Updated:** 2026-01-27
 
 ## Quick Start
 
@@ -19,30 +17,26 @@ Globally distributed vector database for AI applications. Store and query vector
 const matches = await env.VECTORIZE.query(queryVector, { topK: 5 });
 ```
 
-## Key Features (V2)
+## Key Features
 
-- **10M vectors per index**
+- **10M vectors per index** (V2)
 - Dimensions up to 1536 (32-bit float)
 - Three distance metrics: cosine, euclidean, dot-product
-- Metadata filtering (up to 10 metadata indexes per index)
+- Metadata filtering (up to 10 indexes)
 - Namespace support (50K namespaces paid, 1K free)
-- `queryById()` for V2 vector-to-vector search
-- topK up to 100 (without values/metadata) or 50 (with)
-- Batch upsert: 1,000/call (Workers) or 5,000/call (HTTP API)
-- Wrangler **3.71.0+** required
 - Seamless Workers AI integration
 - Global distribution
 
 ## Reading Order
 
-| Task               | Files to Read           |
-| ------------------ | ----------------------- |
-| New to Vectorize   | README only             |
-| Implement feature  | README + api + patterns |
-| Setup/configure    | README + configuration  |
-| Debug issues       | gotchas                 |
-| Integrate with AI  | README + patterns       |
-| RAG implementation | README + patterns       |
+| Task | Files to Read |
+|------|---------------|
+| New to Vectorize | README only |
+| Implement feature | README + api + patterns |
+| Setup/configure | README + configuration |
+| Debug issues | gotchas |
+| Integrate with AI | README + patterns |
+| RAG implementation | README + patterns |
 
 ## File Guide
 
@@ -64,11 +58,11 @@ What are you building?
 └─ Pre-normalized vectors → dot-product
 ```
 
-| Metric        | Best For                             | Score Interpretation              |
-| ------------- | ------------------------------------ | --------------------------------- |
-| `cosine`      | Text embeddings, semantic similarity | Higher = closer (1.0 = identical) |
-| `euclidean`   | Absolute distance, spatial data      | Lower = closer (0.0 = identical)  |
-| `dot-product` | Recommendations, normalized vectors  | Higher = closer                   |
+| Metric | Best For | Score Interpretation |
+|--------|----------|---------------------|
+| `cosine` | Text embeddings, semantic similarity | Higher = closer (1.0 = identical) |
+| `euclidean` | Absolute distance, spatial data | Lower = closer (0.0 = identical) |
+| `dot-product` | Recommendations, normalized vectors | Higher = closer |
 
 **Note:** Index configuration is immutable. Cannot change dimensions or metric after creation.
 
@@ -97,7 +91,7 @@ const result = await env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [query] });
 // 2. Query Vectorize
 const matches = await env.VECTORIZE.query(result.data[0], {
   topK: 5,
-  returnMetadata: "indexed",
+  returnMetadata: "indexed"
 });
 ```
 
@@ -105,23 +99,19 @@ const matches = await env.VECTORIZE.query(result.data[0], {
 
 ```typescript
 // 1. Generate query embedding
-const embedding = await env.AI.run("@cf/baai/bge-base-en-v1.5", {
-  text: [query],
-});
+const embedding = await env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [query] });
 
 // 2. Search Vectorize
 const matches = await env.VECTORIZE.query(embedding.data[0], { topK: 5 });
 
 // 3. Fetch full documents from R2/D1/KV
-const docs = await Promise.all(
-  matches.matches.map((m) =>
-    env.R2.get(m.metadata.key).then((obj) => obj?.text()),
-  ),
-);
+const docs = await Promise.all(matches.matches.map(m => 
+  env.R2.get(m.metadata.key).then(obj => obj?.text())
+));
 
 // 4. Generate LLM response with context
 const answer = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
-  prompt: `Context: ${docs.join("\n\n")}\n\nQuestion: ${query}\n\nAnswer:`,
+  prompt: `Context: ${docs.join("\n\n")}\n\nQuestion: ${query}\n\nAnswer:`
 });
 ```
 
@@ -129,13 +119,11 @@ const answer = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
 
 See `gotchas.md` for details. Most important:
 
-1. **No dashboard UI** - all operations are wrangler CLI or HTTP API
-2. **Async mutations**: Inserts take 5-10s to be queryable
-3. **Batch limits (V2)**: 1,000 vectors/call (Workers) or 5,000/call (HTTP API)
-4. **Metadata truncation**: `"indexed"` returns first 64 bytes only
-5. **topK limits (V2)**: Max 50 with `returnValues` or `returnMetadata: "all"`, max 100 without
-6. **Metadata indexes first**: Must create before inserting vectors
-7. **Index config immutable**: Cannot change dimensions/metric after creation
+1. **Async mutations**: Inserts take 5-10s to be queryable
+2. **500 batch limit**: Workers API enforces 500 vectors per call (undocumented)
+3. **Metadata truncation**: `"indexed"` returns first 64 bytes only
+4. **topK with metadata**: Max 20 (not 100) when using returnValues or returnMetadata: "all"
+5. **Metadata indexes first**: Must create before inserting vectors
 
 ## Resources
 

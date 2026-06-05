@@ -1,10 +1,6 @@
 ---
 name: durable-objects
 description: Create and review Cloudflare Durable Objects. Use when building stateful coordination (chat rooms, multiplayer games, booking systems), implementing RPC methods, SQLite storage, alarms, WebSockets, or reviewing DO code for best practices. Covers Workers integration, wrangler config, and testing with Vitest. Biases towards retrieval from Cloudflare docs over pre-trained knowledge.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
 ---
 
 # Durable Objects
@@ -15,12 +11,12 @@ Build stateful, coordinated applications on Cloudflare's edge using Durable Obje
 
 Your knowledge of Durable Objects APIs and configuration may be outdated. **Prefer retrieval over pre-training** for any Durable Objects task.
 
-| Resource       | URL                                                               |
-| -------------- | ----------------------------------------------------------------- |
-| Docs           | https://developers.cloudflare.com/durable-objects/                |
-| API Reference  | https://developers.cloudflare.com/durable-objects/api/            |
+| Resource | URL |
+|----------|-----|
+| Docs | https://developers.cloudflare.com/durable-objects/ |
+| API Reference | https://developers.cloudflare.com/durable-objects/api/ |
 | Best Practices | https://developers.cloudflare.com/durable-objects/best-practices/ |
-| Examples       | https://developers.cloudflare.com/durable-objects/examples/       |
+| Examples | https://developers.cloudflare.com/durable-objects/examples/ |
 
 Fetch the relevant doc page when implementing features.
 
@@ -45,13 +41,13 @@ Search: `blockConcurrencyWhile`, `idFromName`, `getByName`, `setAlarm`, `sql.exe
 
 ### Use Durable Objects For
 
-| Need                      | Example                                           |
-| ------------------------- | ------------------------------------------------- |
-| Coordination              | Chat rooms, multiplayer games, collaborative docs |
-| Strong consistency        | Inventory, booking systems, turn-based games      |
-| Per-entity storage        | Multi-tenant SaaS, per-user data                  |
-| Persistent connections    | WebSockets, real-time notifications               |
-| Scheduled work per entity | Subscription renewals, game timeouts              |
+| Need | Example |
+|------|---------|
+| Coordination | Chat rooms, multiplayer games, collaborative docs |
+| Strong consistency | Inventory, booking systems, turn-based games |
+| Per-entity storage | Multi-tenant SaaS, per-user data |
+| Persistent connections | WebSockets, real-time notifications |
+| Scheduled work per entity | Subscription renewals, game timeouts |
 
 ### Do NOT Use For
 
@@ -67,9 +63,9 @@ Search: `blockConcurrencyWhile`, `idFromName`, `getByName`, `setAlarm`, `sql.exe
 // wrangler.jsonc
 {
   "durable_objects": {
-    "bindings": [{ "name": "MY_DO", "class_name": "MyDurableObject" }],
+    "bindings": [{ "name": "MY_DO", "class_name": "MyDurableObject" }]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MyDurableObject"] }],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MyDurableObject"] }]
 }
 ```
 
@@ -98,7 +94,7 @@ export class MyDurableObject extends DurableObject<Env> {
   async addItem(data: string): Promise<number> {
     const result = this.ctx.storage.sql.exec<{ id: number }>(
       "INSERT INTO items (data) VALUES (?) RETURNING id",
-      data,
+      data
     );
     return result.one().id;
   }
@@ -188,19 +184,3 @@ describe("MyDO", () => {
   });
 });
 ```
-
-## Rationalizations
-
-| Concern | Counter-Argument |
-|---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
-## Red Flags
-
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
