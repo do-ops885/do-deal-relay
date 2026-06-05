@@ -433,9 +433,9 @@ while IFS= read -r file; do
         fi
     fi
 
-    # Scripts should be in scripts/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
+    # Scripts should be in scripts/ or tests/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
     if [[ "$file" == *.sh ]]; then
-        if [[ "$file" != scripts/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
+        if [[ "$file" != scripts/* ]] && [[ "$file" != tests/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
             error "Shell script outside allowed directories: $file"
             MISPLACED=1
         fi

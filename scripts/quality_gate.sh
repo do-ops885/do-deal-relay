@@ -173,6 +173,13 @@ fi
 # Check 13: Dependabot configuration validation
 run_check "Dependabot config" "${SCRIPT_DIR}/validate-dependabot.sh"
 
+# Check 14: Shell unit tests (worker-host.sh resolution logic)
+# Lightweight (~ < 1s) — guards against regressions in the hostname resolution
+# helper used by every CI workflow that touches a deployed environment.
+if [ -f "${ROOT_DIR}/tests/unit/worker-host.test.sh" ]; then
+    run_check "Shell unit tests (worker-host.sh)" "bash ${ROOT_DIR}/tests/unit/worker-host.test.sh"
+fi
+
 # If there are errors, output them and exit with failure
 if [ ${#ERRORS[@]} -gt 0 ]; then
     echo ""

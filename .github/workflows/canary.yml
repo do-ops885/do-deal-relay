@@ -92,8 +92,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy to Cloudflare Workers (handled by Cloudflare Builds — see Settings → Builds)
         id: deploy
+        if: ${{ false }}
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -123,6 +124,9 @@ jobs:
           STAGING_HOST="$(bash scripts/worker-host.sh staging || true)"
           if [ -z "${STAGING_HOST}" ]; then
             echo "❌ Could not resolve staging host"
+            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
+            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
+            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
             exit 1
           fi
           STAGING_URL="https://${STAGING_HOST}"
@@ -157,7 +161,9 @@ jobs:
 
           if [ -z "${CANARY_HOST}" ]; then
             echo "❌ Could not resolve canary (staging) host"
-            echo "   Set WORKER_HOST repo variable (Settings → Variables)" >&2
+            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
+            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
+            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
             exit 1
           fi
 

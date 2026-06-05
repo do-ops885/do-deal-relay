@@ -171,28 +171,55 @@ Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 
 ### Required Repository Variables
 
-Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab → **New repository variable**.
+The CI workflows read a single variable: `WORKER_HOST`. The workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. This is stored as a *variable* (not a secret) because the workers.dev hostname is not sensitive.
 
-| Variable Name | Value | Notes |
-|---------------|-------|-------|
-| `WORKER_HOST` | **Required** — the workers.dev hostname (or custom domain). The Cloudflare workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. This is stored as a *variable* (not a secret) because the workers.dev hostname is not sensitive. | e.g., `do-deal-relay.do-it-119.workers.dev`, or `deals.example.com` for a custom domain |
+#### Recommended: GitHub Environments (2026 best practice)
+
+Scope `WORKER_HOST` per environment — `${{ vars.WORKER_HOST }}` then auto-resolves based on the job's `environment:` key. This is the cleanest pattern and survives adding new envs without renaming variables.
+
+1. **Settings** → **Environments** → **New environment** → create `production` and `staging`
+2. Open each environment → **Add variable** → name: `WORKER_HOST` → value: the appropriate hostname
+   - `production` env → `WORKER_HOST = do-deal-relay.do-it-119.workers.dev`
+   - `staging` env → `WORKER_HOST = do-deal-relay-staging.do-it-119.workers.dev`
+3. In the workflow, jobs that declare `environment: production` (or `staging`) automatically get the environment-scoped value; repo-level acts as fallback
+
+#### Alternative: single repository variable
+
+If both envs share a hostname (custom domain, or you only have one env), set it at the repo level:
+
+- **Settings** → **Secrets and variables** → **Actions** → **Variables** → **New repository variable**
+- Name: `WORKER_HOST`, value: e.g. `deals.example.com`
+
+In CI workflows, expose it via:
+
+```yaml
+env:
+  WORKER_HOST: ${{ vars.WORKER_HOST }}
+```
 
 ### How Worker URLs Are Resolved
 
 All CI workflows resolve the worker URL via `scripts/worker-host.sh <env>`. This script requires the `WORKER_HOST` variable (or env var) to be set and returns exit code 2 otherwise. The `account_id` (a hex hash) is **not** usable to derive the workers.dev hostname.
 
-Resolution order in `scripts/worker-host.sh`:
+Resolution order in `scripts/worker-host.sh` (first non-empty wins):
 
-1. `$WORKER_HOST` (primary; set via `${{ vars.WORKER_HOST }}` in CI)
+1. `$WORKER_HOST` (primary; set via `${{ vars.WORKER_HOST }}` in CI — auto-resolves per GitHub Environment)
 2. `$CLOUDFLARE_WORKER_HOST` (legacy alias, still accepted for backward compatibility)
 3. `$WORKER_HOST_OVERRIDE` (ad-hoc override for testing)
 4. Else: exit 2 with an actionable error pointing the operator to set the variable.
 
 ```bash
+# Production deploy (WORKER_HOST scoped to the 'production' GH Environment)
 $ WORKER_HOST=do-deal-relay.do-it-119.workers.dev \
     scripts/worker-host.sh production
 do-deal-relay.do-it-119.workers.dev
 
+# Staging deploy (WORKER_HOST scoped to the 'staging' GH Environment)
+$ WORKER_HOST=do-deal-relay-staging.do-it-119.workers.dev \
+    scripts/worker-host.sh staging
+do-deal-relay-staging.do-it-119.workers.dev
+
+# Custom domain override
 $ WORKER_HOST=deals.example.com scripts/worker-host.sh production
 deals.example.com
 ```
@@ -504,15 +531,65 @@ npx wrangler kv key list --namespace-id be3c0fc148b749b49a59aa7cfa23e3ac
 
 **Symptom**: `❌ WORKER_HOST is not set` or `❌ Staging not healthy` early in the deploy job.
 
-**Cause**: The `WORKER_HOST` repo variable is unset.
+**Cause**: No resolvable hostname for the requested env. The Cloudflare workers.dev hostname cannot be derived from `CLOUDFLARE_ACCOUNT_ID` — it must be set explicitly.
 
-**Fix**:
-1. Confirm `WORKER_HOST` is set in repo **Settings → Secrets and variables → Actions → Variables** (not Secrets — the workers.dev hostname is not sensitive).
-2. Confirm `CLOUDFLARE_ACCOUNT_ID` secret is set (needed for the API rollback path).
-3. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`.
-4. If using a custom domain, set `WORKER_HOST=deals.example.com`.
+**Fix** — recommended: **GitHub Environments** (single `WORKER_HOST` per env)
 
-Legacy alias `CLOUDFLARE_WORKER_HOST` is still accepted by `scripts/worker-host.sh` for backward compatibility, but the canonical name going forward is `WORKER_HOST`.
+1. **Settings** → **Environments** → open `staging` (create it if missing)
+2. **Add variable** → name `WORKER_HOST` → value `do-deal-relay-staging.do-it-119.workers.dev`
+3. Repeat for the `production` environment with the production hostname
+4. Confirm the workflow job declares `environment: staging` (or `production`); GitHub then injects `${{ vars.WORKER_HOST }}` per env
+
+**Other checks**:
+1. Confirm `CLOUDFLARE_ACCOUNT_ID` secret is set (needed for the API rollback path).
+2. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`.
+3. If using a custom domain, set the variable to that domain (e.g. `deals.example.com`).
+
+Legacy alias `CLOUDFLARE_WORKER_HOST` and ad-hoc `WORKER_HOST_OVERRIDE` are still accepted by `scripts/worker-host.sh` for backward compatibility.
+
+### PR Check `Workers Builds: do-deal-relay` Fails (Name Mismatch / In 0s)
+
+**Symptom**: Cloudflare's own check on the PR (`Workers Builds: do-deal-relay`) reports failure — often `in 0s` — with an error like:
+
+> The name in your Wrangler configuration file (...) must match the name of your Worker.
+
+**Cause**: Two competing deploy paths for the same Worker:
+
+1. **Cloudflare Builds** — triggered by Git push, posts check runs on the PR.
+2. **`cloudflare/wrangler-action`** — was also invoked from `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml`.
+
+Both call `wrangler deploy` for the same Worker → race condition + the Cloudflare Builds check sees a different `name` in the dashboard than in `wrangler.jsonc` (e.g. the root `name: "do-deal-relay"` vs the env's `name: "do-deal-relay-staging"`).
+
+**Fix** (2026 best practice per [Cloudflare Workers Builds docs](https://developers.cloudflare.com/workers/ci-cd/builds/)):
+
+- **Cloudflare Builds owns `wrangler deploy`** — it already runs on push, supports PR previews via `wrangler versions upload`, posts check runs, and integrates natively.
+- **GitHub Actions keeps the things Cloudflare Builds cannot do**:
+  - Pre-merge CI: typecheck, lint, unit tests, quality gate (`.github/workflows/ci.yml`)
+  - Scheduled discovery triggers (`.github/workflows/discovery.yml`)
+  - Canary deployment logic, rollback workflow, smoke tests, KV seeding
+  - Issue creation on failure
+- The 4 `cloudflare/wrangler-action` invocations in `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml` are now disabled with `if: false` (no-op) to stop the double-deploy. They can be deleted once the migration is confirmed stable.
+- If the Cloudflare Builds failure persists, verify the `name` in `wrangler.jsonc` matches the Worker name on the Cloudflare dashboard. For envs, the convention `do-deal-relay-<env>` with base `do-deal-relay` is supported; otherwise set `WRANGLER_CI_OVERRIDE_NAME` in the Build env vars.
+
+### Branch → Environment Mapping (Cloudflare Builds)
+
+Deploys are driven by **Git branch**, not by a job label. Cloudflare Builds watches two branches and runs a different `wrangler` command for each:
+
+| Git branch | Worker hostname | Cloudflare Build "Deploy command" | Worker name in Cloudflare dashboard |
+|-----------|-----------------|------------------------------------|--------------------------------------|
+| `main`    | `do-deal-relay.do-it-119.workers.dev` | `npx wrangler deploy --env production` | `do-deal-relay` (the `env.production` block in `wrangler.jsonc`) |
+| `staging` | `do-deal-relay-staging.do-it-119.workers.dev` | `npx wrangler deploy --env staging` | `do-deal-relay-staging` (the `env.staging` block in `wrangler.jsonc`) |
+| any other branch (PR) | preview URL | `npx wrangler versions upload` (default) | (preview) |
+
+Configure this in the Cloudflare dashboard: **Workers & Pages** → your Worker → **Settings** → **Builds** → **Build configuration**:
+
+1. **Production branch** = `main`
+2. **Deploy command** = `npx wrangler deploy --env production`
+3. Enable **Builds for non-production branches** and set **Non-production branch deploy command** = `npx wrangler deploy --env staging` (because every non-`main` branch should target the staging Worker in this repo's setup — change if you want true per-branch preview URLs).
+
+> **Caveat**: Cloudflare Builds' "non-production branch" setting is a single toggle — it applies to *all* non-production branches with the same deploy command. If you need a true per-branch preview (`feature/foo` → its own preview Worker), use `npx wrangler versions upload` (the default) which produces ephemeral preview URLs that don't replace the staging Worker. The current setup intentionally targets the staging Worker from the `staging` branch only — other branches produce version uploads, not real deploys.
+
+If you later need to disable automatic deploys (e.g. for review-only PR builds), change the deploy command to `npx wrangler versions upload` — builds will still run, but the version won't be promoted to the active deployment.
 
 ### Type Errors After Merge
 
