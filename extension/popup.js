@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     statCaptured: document.getElementById("stat-captured"),
     statSubmitted: document.getElementById("stat-submitted"),
     statSuccess: document.getElementById("stat-success"),
+    manualCodeError: document.getElementById("manual-code-error"),
   };
 
   // ============================================================================
@@ -328,13 +329,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function captureManual() {
     const code = elements.manualCode.value.trim();
-    if (!code) {
-      showToast("Please enter a referral code", "error");
-      return;
-    }
-
-    if (!/^[A-Z0-9]+$/i.test(code)) {
-      showToast("Code must be alphanumeric only", "error");
+    if (!validateManualCode(code)) {
       return;
     }
 
@@ -461,12 +456,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Event Listeners
   // ============================================================================
 
+  function validateManualCode(code) {
+    const isValid = /^[A-Z0-9]{4,20}$/i.test(code);
+
+    if (code.length > 0) {
+      elements.manualCode.classList.toggle("invalid", !isValid);
+      elements.manualCodeError.classList.toggle("hidden", isValid);
+    } else {
+      elements.manualCode.classList.remove("invalid");
+      elements.manualCodeError.classList.add("hidden");
+    }
+
+    elements.manualBtn.disabled = !isValid;
+    return isValid;
+  }
+
   function setupEventListeners() {
     // Capture button
     elements.captureBtn.addEventListener("click", captureSelected);
 
     // Manual entry
     elements.manualBtn.addEventListener("click", captureManual);
+    elements.manualCode.addEventListener("input", (e) => {
+      validateManualCode(e.target.value.trim());
+    });
     elements.manualCode.addEventListener("keypress", (e) => {
       if (e.key === "Enter") captureManual();
     });
