@@ -34,6 +34,7 @@
   "dependencies": {
     "@types/node": "^25.9.1",
     "discord.js": "^14.26.4",
+    "js-yaml": "^4.2.0",
     "protobufjs": "8.5.0",
     "telegraf": "^4.16.3",
     "zod": "^3.22.4"
