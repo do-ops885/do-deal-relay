@@ -93,15 +93,13 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Workers (handled by Cloudflare Builds — see Settings → Builds)
-        id: deploy
-        if: ${{ false }}
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env staging
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "Deploy is handled by Cloudflare Builds (Settings → Builds)."
+          echo "This step is intentionally a no-op to prevent a double-deploy"
+          echo "and the 'Workers Builds: do-deal-relay failed in 0s' name-mismatch"
+          echo "that occurs when both Cloudflare Builds and wrangler-action run."
+          echo "If you re-enable cloudflare/wrangler-action here, you will race"
+          echo "Cloudflare Builds. See docs/deployment-runbook.md for details."
 
       - name: Configure canary traffic split
         env:
