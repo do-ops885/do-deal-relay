@@ -84,8 +84,7 @@ These are used by CI/CD workflows to deploy via wrangler.
 | Secret | Purpose | Where to Find |
 |--------|---------|---------------|
 | `CLOUDFLARE_API_TOKEN` | Authenticates wrangler deploys from CI | Cloudflare dashboard → My Profile → API Tokens |
-| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account. Used to derive the default worker URL when `CLOUDFLARE_WORKER_HOST` is unset. | Cloudflare dashboard → right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | (Optional) Override the default worker hostname. If unset, URLs are derived from `CLOUDFLARE_ACCOUNT_ID` + the worker name in `wrangler.jsonc` (e.g. `do-deal-relay.${ACCOUNT_ID}.workers.dev`). Set this only when using a custom domain/route. | e.g. `deals.example.com` |
+| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account. Cannot be used to derive the workers.dev hostname — that requires the `account_subdomain` slug (see `WORKER_HOST` variable). | Cloudflare dashboard → right sidebar |
 
 ---
 
@@ -169,18 +168,32 @@ Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 |-------------|-------|-------|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers permissions | Token must have `Workers Scripts:Edit` and `KV Storage:Edit`, and `Vectorize:Edit` for semantic search |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID. Required: used by `wrangler deploy` and the API rollback path. | Found in dashboard right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | **Required** — the workers.dev hostname. The Cloudflare workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. | e.g., `do-deal-relay.do-it-119.workers.dev` |
+
+### Required Repository Variables
+
+Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab → **New repository variable**.
+
+| Variable Name | Value | Notes |
+|---------------|-------|-------|
+| `WORKER_HOST` | **Required** — the workers.dev hostname (or custom domain). The Cloudflare workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. This is stored as a *variable* (not a secret) because the workers.dev hostname is not sensitive. | e.g., `do-deal-relay.do-it-119.workers.dev`, or `deals.example.com` for a custom domain |
 
 ### How Worker URLs Are Resolved
 
-All CI workflows resolve the worker URL via `scripts/worker-host.sh <env>`. This script requires `CLOUDFLARE_WORKER_HOST` to be set and returns an error otherwise. The `account_id` (a hex hash) is **not** usable to derive the workers.dev hostname.
+All CI workflows resolve the worker URL via `scripts/worker-host.sh <env>`. This script requires the `WORKER_HOST` variable (or env var) to be set and returns exit code 2 otherwise. The `account_id` (a hex hash) is **not** usable to derive the workers.dev hostname.
+
+Resolution order in `scripts/worker-host.sh`:
+
+1. `$WORKER_HOST` (primary; set via `${{ vars.WORKER_HOST }}` in CI)
+2. `$CLOUDFLARE_WORKER_HOST` (legacy alias, still accepted for backward compatibility)
+3. `$WORKER_HOST_OVERRIDE` (ad-hoc override for testing)
+4. Else: exit 2 with an actionable error pointing the operator to set the variable.
 
 ```bash
-$ CLOUDFLARE_WORKER_HOST=do-deal-relay.do-it-119.workers.dev \
+$ WORKER_HOST=do-deal-relay.do-it-119.workers.dev \
     scripts/worker-host.sh production
 do-deal-relay.do-it-119.workers.dev
 
-$ CLOUDFLARE_WORKER_HOST=deals.example.com scripts/worker-host.sh production
+$ WORKER_HOST=deals.example.com scripts/worker-host.sh production
 deals.example.com
 ```
 
@@ -487,16 +500,19 @@ npx wrangler kv key list --namespace-id be3c0fc148b749b49a59aa7cfa23e3ac
 3. Check if the API token has expired
 4. Regenerate at: Cloudflare dashboard → My Profile → API Tokens
 
-### CI Fails at "Verify staging is healthy"
+### CI Fails at "Verify staging is healthy" with `❌ WORKER_HOST is not set`
 
-**Symptom**: `❌ CLOUDFLARE_WORKER_HOST secret not set` or `❌ Staging not healthy` early in the deploy job.
+**Symptom**: `❌ WORKER_HOST is not set` or `❌ Staging not healthy` early in the deploy job.
 
-**Cause**: `CLOUDFLARE_WORKER_HOST` secret is unset in the repo.
+**Cause**: The `WORKER_HOST` repo variable is unset.
 
-**Fix**: This should be self-healing as of #423 — workflows derive the URL from `CLOUDFLARE_ACCOUNT_ID` automatically. If you still see this error:
-1. Confirm `CLOUDFLARE_ACCOUNT_ID` is set in repo secrets
-2. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`
-3. If using a custom domain, set `CLOUDFLARE_WORKER_HOST=deals.example.com`
+**Fix**:
+1. Confirm `WORKER_HOST` is set in repo **Settings → Secrets and variables → Actions → Variables** (not Secrets — the workers.dev hostname is not sensitive).
+2. Confirm `CLOUDFLARE_ACCOUNT_ID` secret is set (needed for the API rollback path).
+3. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`.
+4. If using a custom domain, set `WORKER_HOST=deals.example.com`.
+
+Legacy alias `CLOUDFLARE_WORKER_HOST` is still accepted by `scripts/worker-host.sh` for backward compatibility, but the canonical name going forward is `WORKER_HOST`.
 
 ### Type Errors After Merge
 

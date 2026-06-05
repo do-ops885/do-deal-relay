@@ -1,5 +1,7 @@
 # Vectorize API Reference
 
+> **No dashboard UI.** Index lifecycle, metadata index management, and bulk operations are CLI/API only. The `Vectorize` binding on `env.*` is the runtime API documented below.
+
 ## Types
 
 ```typescript
@@ -15,7 +17,7 @@ interface VectorizeVector {
 
 ```typescript
 const matches = await env.VECTORIZE.query(queryVector, {
-  topK: 10, // Max 100 (or 20 with returnValues/returnMetadata:"all")
+  topK: 10, // Max 100 (or 50 with returnValues/returnMetadata:"all")
   returnMetadata: "indexed", // "none" | "indexed" | "all"
   returnValues: false,
   namespace: "tenant-123",
@@ -24,7 +26,7 @@ const matches = await env.VECTORIZE.query(queryVector, {
 // matches.matches[0] = { id, score, metadata? }
 ```
 
-**returnMetadata:** `"none"` (fastest) → `"indexed"` (recommended) → `"all"` (topK max 20)
+**returnMetadata:** `"none"` (fastest) → `"indexed"` (recommended) → `"all"` (topK max 50)
 
 **queryById (V2 only):** Search using existing vector as query.
 
@@ -42,7 +44,7 @@ await env.VECTORIZE.insert([{ id, values, metadata }]);
 await env.VECTORIZE.upsert([{ id, values, metadata }]);
 ```
 
-**Max 500 vectors per call.** Queryable after 5-10 seconds.
+**Max 1,000 vectors per call (V2 Workers API), 5,000 via HTTP API.** Queryable after 5-10 seconds.
 
 ## Other Operations
 
@@ -77,13 +79,13 @@ Requires metadata index. Filter operators:
 | --------------------------- | ---------- | ------- |
 | No metadata                 | 100        | Fastest |
 | `returnMetadata: "indexed"` | 100        | Fast    |
-| `returnMetadata: "all"`     | 20         | Slower  |
-| `returnValues: true`        | 20         | Slower  |
+| `returnMetadata: "all"`     | 50         | Slower  |
+| `returnValues: true`        | 50         | Slower  |
 
-**Batch operations:** Always batch (500/call) for optimal throughput.
+**Batch operations:** Always batch (1,000/call V2 Workers) for optimal throughput.
 
 ```typescript
-for (let i = 0; i < vectors.length; i += 500) {
-  await env.VECTORIZE.upsert(vectors.slice(i, i + 500));
+for (let i = 0; i < vectors.length; i += 1000) {
+  await env.VECTORIZE.upsert(vectors.slice(i, i + 1000));
 }
 ```

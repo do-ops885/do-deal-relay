@@ -60,12 +60,12 @@ jobs:
       - name: Verify staging is healthy
         if: github.ref == 'refs/heads/main'
         env:
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           STAGING_HOST="$(bash scripts/worker-host.sh staging)"
           if [ -z "${STAGING_HOST}" ]; then
             echo "❌ Could not resolve staging host"
-            echo "   Set CLOUDFLARE_WORKER_HOST in repo secrets" >&2
+            echo "   Set WORKER_HOST repo variable (Settings → Variables)" >&2
             echo "   (e.g. do-deal-relay-staging.do-it-119.workers.dev)" >&2
             exit 1
           fi
@@ -121,7 +121,7 @@ jobs:
         id: verify
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production)"
 
@@ -153,7 +153,7 @@ jobs:
         id: seed-kv
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production)"
 
@@ -225,7 +225,7 @@ jobs:
         id: smoke-tests
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production)"
 
@@ -274,7 +274,7 @@ jobs:
         id: discovery
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production)"
           if [ -n "${PROD_HOST}" ]; then
@@ -288,7 +288,7 @@ jobs:
       - name: Create deployment summary
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production || true)"
           REF_NAME="${{ github.ref_name }}"
@@ -392,7 +392,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           echo "Attempting automated rollback..."
           if wrangler rollback --env production \

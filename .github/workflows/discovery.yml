@@ -36,14 +36,14 @@ jobs:
       - name: Trigger discovery pipeline
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           echo "Triggering scheduled discovery on production..."
 
           PROD_HOST="$(bash scripts/worker-host.sh production)"
           if [ -z "${PROD_HOST}" ]; then
             echo "❌ Could not resolve production host"
-            echo "   Set CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_WORKER_HOST" >&2
+            echo "   Set WORKER_HOST repo variable (Settings → Variables)" >&2
             exit 1
           fi
 
@@ -68,7 +68,7 @@ jobs:
       - name: Wait and verify
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production)"
           if [ -z "${PROD_HOST}" ]; then
@@ -104,14 +104,14 @@ jobs:
       - name: Trigger discovery on staging
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           echo "Triggering discovery on staging..."
 
           STAGING_HOST="$(bash scripts/worker-host.sh staging)"
           if [ -z "${STAGING_HOST}" ]; then
             echo "❌ Could not resolve staging host"
-            echo "   Set CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_WORKER_HOST" >&2
+            echo "   Set WORKER_HOST repo variable (Settings → Variables)" >&2
             exit 1
           fi
 

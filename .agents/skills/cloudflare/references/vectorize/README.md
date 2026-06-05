@@ -2,7 +2,9 @@
 
 Globally distributed vector database for AI applications. Store and query vector embeddings for semantic search, recommendations, RAG, and classification.
 
-**Status:** Generally Available (GA) | **Last Updated:** 2026-01-27
+**Status:** Generally Available (GA) | **Last Updated:** 2026-06-05
+
+> **No dashboard UI.** Vectorize has no Cloudflare web console. All index lifecycle, metadata, and bulk operations are performed via the `wrangler` CLI (`npx wrangler vectorize ...`) or the Cloudflare HTTP API. Plan CI/CD accordingly.
 
 ## Quick Start
 
@@ -17,13 +19,17 @@ Globally distributed vector database for AI applications. Store and query vector
 const matches = await env.VECTORIZE.query(queryVector, { topK: 5 });
 ```
 
-## Key Features
+## Key Features (V2)
 
-- **10M vectors per index** (V2)
+- **10M vectors per index**
 - Dimensions up to 1536 (32-bit float)
 - Three distance metrics: cosine, euclidean, dot-product
-- Metadata filtering (up to 10 indexes)
+- Metadata filtering (up to 10 metadata indexes per index)
 - Namespace support (50K namespaces paid, 1K free)
+- `queryById()` for V2 vector-to-vector search
+- topK up to 100 (without values/metadata) or 50 (with)
+- Batch upsert: 1,000/call (Workers) or 5,000/call (HTTP API)
+- Wrangler **3.71.0+** required
 - Seamless Workers AI integration
 - Global distribution
 
@@ -123,11 +129,13 @@ const answer = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
 
 See `gotchas.md` for details. Most important:
 
-1. **Async mutations**: Inserts take 5-10s to be queryable
-2. **500 batch limit**: Workers API enforces 500 vectors per call (undocumented)
-3. **Metadata truncation**: `"indexed"` returns first 64 bytes only
-4. **topK with metadata**: Max 20 (not 100) when using returnValues or returnMetadata: "all"
-5. **Metadata indexes first**: Must create before inserting vectors
+1. **No dashboard UI** - all operations are wrangler CLI or HTTP API
+2. **Async mutations**: Inserts take 5-10s to be queryable
+3. **Batch limits (V2)**: 1,000 vectors/call (Workers) or 5,000/call (HTTP API)
+4. **Metadata truncation**: `"indexed"` returns first 64 bytes only
+5. **topK limits (V2)**: Max 50 with `returnValues` or `returnMetadata: "all"`, max 100 without
+6. **Metadata indexes first**: Must create before inserting vectors
+7. **Index config immutable**: Cannot change dimensions/metric after creation
 
 ## Resources
 

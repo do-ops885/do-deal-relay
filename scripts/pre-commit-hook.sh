@@ -128,6 +128,9 @@ check_pattern() {
         grep -vE "INSERT.*test" | \
         grep -vE "console\.log" | \
         grep -vE "uses:\s*[a-zA-Z0-9/-]+@[a-f0-9]{40}" | \
+        grep -vE "^diff --git " | \
+        grep -vE "^index [0-9a-f]+\.\." | \
+        grep -vE "^(\+\+\+|---) [ab]/" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"

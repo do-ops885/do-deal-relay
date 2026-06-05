@@ -105,7 +105,7 @@ jobs:
       - name: Configure canary traffic split
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-}"
           PERCENTAGE="${{ needs.setup-canary.outputs.percentage }}"
@@ -149,7 +149,7 @@ jobs:
       - name: Health check loop
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
           CANARY_HOST="$(bash scripts/worker-host.sh staging)"
           DURATION="${{ needs.setup-canary.outputs.duration }}"
@@ -157,7 +157,7 @@ jobs:
 
           if [ -z "${CANARY_HOST}" ]; then
             echo "❌ Could not resolve canary (staging) host"
-            echo "   Set CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_WORKER_HOST" >&2
+            echo "   Set WORKER_HOST repo variable (Settings → Variables)" >&2
             exit 1
           fi
 

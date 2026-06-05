@@ -1,5 +1,7 @@
 # Vectorize Patterns
 
+> **No dashboard UI.** Every pattern below assumes you have already created the index via `npx wrangler vectorize create <name> --dimensions=N --metric=cosine` (or in CI). There is no console-based way to inspect or modify indexes.
+
 ## Workers AI Integration
 
 ```typescript
@@ -85,10 +87,10 @@ const matches = await env.VECTORIZE.query(vec, {
 });
 ```
 
-## Batch Ingestion
+## Batch Ingestion (V2)
 
 ```typescript
-const BATCH = 500;
+const BATCH = 1000; // V2 limit for Workers API
 for (let i = 0; i < vectors.length; i += BATCH) {
   await env.VECTORIZE.upsert(vectors.slice(i, i + BATCH));
 }
@@ -97,8 +99,9 @@ for (let i = 0; i < vectors.length; i += BATCH) {
 ## Best Practices
 
 1. **Pass `data[0]`** not `data` or full response
-2. **Batch 500** vectors per upsert
+2. **Batch 1,000** vectors per upsert (V2 Workers limit; 5,000 via HTTP API)
 3. **Create metadata indexes** before inserting
 4. **Use namespaces** for tenant isolation (faster than filters)
 5. **`returnMetadata: "indexed"`** for best speed/data balance
 6. **Handle 5-10s mutation delay** in async operations
+7. **Create the index in CI** with `npx wrangler vectorize create` before `wrangler deploy` runs
