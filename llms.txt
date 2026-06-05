@@ -1,0 +1,22 @@
+# do-deal-relay
+
+Autonomous AI-agent deal discovery system on Cloudflare Workers.
+
+## Core Features
+- Multi-source deal discovery
+- 9-gate validation pipeline (Schema, Trust, Dedupe, etc.)
+- Cloudflare D1/KV storage
+- RBAC and JWT-based authentication
+- Real-time metrics and health monitoring
+
+## Agent Infrastructure
+- GOAP-based development workflow
+- Atomic commit workflow (`scripts/ai-commit.sh`)
+- 13-gate system quality checks (`scripts/quality_gate.sh`)
+- Extensive skills library in `.agents/skills/`
+
+## Documentation
+- [AGENTS.md](AGENTS.md) - Coordination hub
+- [docs/API.md](docs/API.md) - API reference
+- [agents-docs/](agents-docs/) - Detailed agent guardrails
+- [plans/](plans/) - Implementation designs and ADRs

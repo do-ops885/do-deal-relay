@@ -1,0 +1,48 @@
+# do-deal-relay - Full Context
+
+## Architecture
+Autonomous deal relay system utilizing Cloudflare Workers, D1 (SQLite), and KV namespaces. Implements a multi-stage pipeline: Discovery -> Validation (9 Gates) -> Publication.
+
+## Key Directories
+- `worker/`: Core TypeScript source code
+  - `worker/lib/`: Reusable logic (Security, NLQ, Auth, D1)
+  - `worker/routes/`: API endpoint handlers
+  - `worker/validation/`: Pipeline logic
+- `scripts/`: Operational and CI automation
+- `tests/`: Vitest (Unit/Integration) and Playwright (E2E)
+- `.agents/`: Agent configuration and skills
+- `agents-docs/`: Hard constraints, accuracy guardrails, and self-learning patterns
+- `plans/`: ADRs (Architecture Decision Records) and GOAP state trackers
+
+## Verification Gates
+### Quality Gates (13)
+1. TypeScript compilation
+2. Unit tests
+3. Validation orchestration
+4. Directory organization
+5. Build check
+6. Prettier format
+7. YAML syntax
+8. GH Actions validation
+9. Secret detection
+10. Dependency audit
+11. Skill symlinks
+12. Git hooks
+13. Dependabot validation
+
+### Validation Gates (9)
+1. Schema validation
+2. Normalization
+3. Deduplication
+4. Source trust
+5. Reward plausibility
+6. Expiry validation
+7. Second pass
+8. Idempotency
+9. Snapshot hash
+
+## Operational Safeguards
+- 500-line file limit for source files
+- HTTPS-only fetch with SSRF protection
+- Atomic commits with mandatory quality gate checks
+- Trust threshold enforcement for all published deals
