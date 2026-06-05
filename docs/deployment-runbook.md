@@ -547,33 +547,45 @@ npx wrangler kv key list --namespace-id be3c0fc148b749b49a59aa7cfa23e3ac
 
 Legacy alias `CLOUDFLARE_WORKER_HOST` and ad-hoc `WORKER_HOST_OVERRIDE` are still accepted by `scripts/worker-host.sh` for backward compatibility.
 
-### PR Check `Workers Builds: do-deal-relay` Fails (Name Mismatch / In 0s)
+### PR Check `Workers Builds: do-deal-relay` Fails (In 0s)
 
-**Symptom**: Cloudflare's own check on the PR (`Workers Builds: do-deal-relay`) reports failure — often `in 0s` — with an error like:
+**Symptom**: Cloudflare's own check on the PR (`Workers Builds: do-deal-relay`) reports failure — often `in 0s` — with no build log content (or a redirect to a dashboard URL). The URL points to a build that never produced any output.
 
-> The name in your Wrangler configuration file (...) must match the name of your Worker.
-
-**Cause**: Two competing deploy paths for the same Worker:
-
-1. **Cloudflare Builds** — triggered by Git push, posts check runs on the PR.
-2. **`cloudflare/wrangler-action`** — was also invoked from `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml`.
-
-Both call `wrangler deploy` for the same Worker → race condition + the Cloudflare Builds check sees a different `name` in the dashboard than in `wrangler.jsonc` (e.g. the root `name: "do-deal-relay"` vs the env's `name: "do-deal-relay-staging"`).
+**Cause**: The Cloudflare GitHub App ("Cloudflare Workers and Pages") is connected to this repo and triggers its own build on every push. That build runs outside our control — the Cloudflare dashboard's **Settings → Builds** panel owns the build command, branch filters, and previews. The configuration there is not stored in the repo and frequently drifts or breaks (e.g. wrong `name` mapping, missing wrangler install step, expired OAuth grant).
 
 **Fix** (2026 best practice per [Cloudflare Workers Builds docs](https://developers.cloudflare.com/workers/ci-cd/builds/)):
 
-- **Cloudflare Builds owns `wrangler deploy`** — it already runs on push, supports PR previews via `wrangler versions upload`, posts check runs, and integrates natively.
-- **GitHub Actions keeps the things Cloudflare Builds cannot do**:
-  - Pre-merge CI: typecheck, lint, unit tests, quality gate (`.github/workflows/ci.yml`)
-  - Scheduled discovery triggers (`.github/workflows/discovery.yml`)
-  - Canary deployment logic, rollback workflow, smoke tests, KV seeding
-  - Issue creation on failure
-- The 4 `cloudflare/wrangler-action` invocations in `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml` are now disabled with `if: false` (no-op) to stop the double-deploy. They can be deleted once the migration is confirmed stable.
-- If the Cloudflare Builds failure persists, verify the `name` in `wrangler.jsonc` matches the Worker name on the Cloudflare dashboard. For envs, the convention `do-deal-relay-<env>` with base `do-deal-relay` is supported; otherwise set `WRANGLER_CI_OVERRIDE_NAME` in the Build env vars.
+- **GitHub Actions owns `wrangler deploy`** via `cloudflare/wrangler-action` in `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml`. This is the only path that runs in CI today.
+- **Disconnect the Cloudflare GitHub App** from this repo so the `Workers Builds: do-deal-relay` check stops appearing on PRs. See [Disconnecting the Cloudflare GitHub App](#disconnecting-the-cloudflare-github-app) below.
+- After disconnecting, deploys happen only via GitHub Actions workflows; the Cloudflare dashboard's **Builds** panel becomes inert for this repo.
 
-### Branch → Environment Mapping (Cloudflare Builds)
+### Disconnecting the Cloudflare GitHub App
 
-Deploys are driven by **Git branch**, not by a job label. Cloudflare Builds watches two branches and runs a different `wrangler` command for each:
+The `cloudflare-workers-and-pages[bot]` posts the failing check on every PR. It comes from the **Cloudflare Workers and Pages** GitHub App, installed at the account or repo level. Disconnecting is a one-time UI step and cannot be scripted from the repo:
+
+1. Open `https://github.com/settings/installations` (or this repo's **Settings → Integrations → GitHub Apps**).
+2. Find **Cloudflare Workers and Pages** in the list.
+3. Click **Configure** → scroll to **Repository access**.
+4. Either:
+   - Move this repo (`do-ops885/do-deal-relay`) to **Only select repositories** and uncheck it, **or**
+   - Click **Uninstall** for the whole account (only if no other repos need it).
+5. Confirm. The app's webhook is removed within ~30 seconds.
+6. Open a new PR — the `Workers Builds: do-deal-relay` check will no longer appear.
+
+> **Alternative (per-Cloudflare-account)**: Cloudflare also has a per-account "Workers Builds" integration in the Cloudflare dashboard (**Workers & Pages → your Worker → Settings → Builds → Disconnect**). Disconnecting here stops Cloudflare from building on push but does not remove the GitHub App; the app will still post informational comments on PRs. To kill the bot completely, disconnect at the GitHub level as above.
+
+After disconnect, the only thing deploying to Cloudflare is `cloudflare/wrangler-action` in the four workflows. The `branch → environment` mapping is then defined by the workflow job's `environment:` key, not by Cloudflare's dashboard:
+
+| Git branch | GH Actions workflow | `environment:` | `wrangler` command | Worker hostname |
+|---|---|---|---|---|
+| `main` | `deploy-production.yml` (on push), `release.yml` (on tag) | `production` | `deploy --env production` | `do-deal-relay.do-it-119.workers.dev` |
+| `staging` | `deploy-production.yml` (on push), `canary.yml` (manual), `release.yml` (pre-release) | `staging` | `deploy --env staging` | `do-deal-relay-staging.do-it-119.workers.dev` |
+| any other branch (PR) | `ci.yml` runs previews via `wrangler versions upload` | n/a | `versions upload` | ephemeral preview URL |
+| manual rollback | `rollback.yml` (workflow_dispatch) | `production` | `deploy --env production` | `do-deal-relay.do-it-119.workers.dev` |
+
+### Historical: Branch → Environment Mapping (Cloudflare Builds — removed)
+
+This section is retained for archaeology only. Before the `Workers Builds` GitHub App was disconnected, deploys were driven by **Git branch** in the Cloudflare dashboard's **Settings → Builds**:
 
 | Git branch | Worker hostname | Cloudflare Build "Deploy command" | Worker name in Cloudflare dashboard |
 |-----------|-----------------|------------------------------------|--------------------------------------|
@@ -581,7 +593,7 @@ Deploys are driven by **Git branch**, not by a job label. Cloudflare Builds watc
 | `staging` | `do-deal-relay-staging.do-it-119.workers.dev` | `npx wrangler deploy --env staging` | `do-deal-relay-staging` (the `env.staging` block in `wrangler.jsonc`) |
 | any other branch (PR) | preview URL | `npx wrangler versions upload` (default) | (preview) |
 
-Configure this in the Cloudflare dashboard: **Workers & Pages** → your Worker → **Settings** → **Builds** → **Build configuration**:
+Configuration was in the Cloudflare dashboard: **Workers & Pages** → your Worker → **Settings** → **Builds** → **Build configuration**:
 
 1. **Production branch** = `main`
 2. **Deploy command** = `npx wrangler deploy --env production`
