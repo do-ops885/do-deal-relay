@@ -2,15 +2,25 @@
 // Cryptographic Utilities
 // ============================================================================
 
+const ENCODER = new TextEncoder();
+const HEX_TABLE = Array.from({ length: 256 }, (_, i) =>
+  i.toString(16).padStart(2, "0"),
+);
+
 /**
  * Generate SHA-256 hash of input string
+ * Optimized with shared TextEncoder and hex lookup table
  */
 export async function sha256(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
+  const data = ENCODER.encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hashArray = new Uint8Array(hashBuffer);
+  let result = "";
+  for (let i = 0; i < hashArray.length; i++) {
+    const hex = HEX_TABLE[hashArray[i]!];
+    if (hex) result += hex;
+  }
+  return result;
 }
 
 /**
@@ -60,33 +70,82 @@ export function generateUUID(): string {
 }
 
 /**
+ * Efficiently check if a character code is alphanumeric
+ */
+function isAlphanumeric(code: number): boolean {
+  return (
+    (code >= 48 && code <= 57) || // 0-9
+    (code >= 65 && code <= 90) || // A-Z
+    (code >= 97 && code <= 122) // a-z
+  );
+}
+
+/**
+ * Efficiently lowercase a character code if it's uppercase
+ */
+function toLowerCode(code: number): number {
+  return code >= 65 && code <= 90 ? code + 32 : code;
+}
+
+/**
+ * Compare two strings for equality after normalization without allocations
+ */
+export function normalizedEquals(a: string, b: string): boolean {
+  let i = 0;
+  let j = 0;
+
+  while (i < a.length || j < b.length) {
+    // Find next alphanumeric in A
+    while (i < a.length && !isAlphanumeric(a.charCodeAt(i))) i++;
+    // Find next alphanumeric in B
+    while (j < b.length && !isAlphanumeric(b.charCodeAt(j))) j++;
+
+    if (i === a.length || j === b.length) {
+      return i === a.length && j === b.length;
+    }
+
+    if (toLowerCode(a.charCodeAt(i)) !== toLowerCode(b.charCodeAt(j))) {
+      return false;
+    }
+
+    i++;
+    j++;
+  }
+
+  return true;
+}
+
+/**
  * Calculate similarity between two strings (0-1)
- * Uses Jaccard similarity on character bigrams
+ * Uses Jaccard similarity on character bigrams with zero-allocation normalization
  */
 export function calculateStringSimilarity(a: string, b: string): number {
   if (a === b) return 1.0;
-
-  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const strA = normalize(a);
-  const strB = normalize(b);
-
-  if (strA === strB) return 1.0;
-  if (strA.length < 2 || strB.length < 2) return 0.0;
+  if (normalizedEquals(a, b)) return 1.0;
 
   const getBigrams = (s: string): Set<number> => {
     const bigrams = new Set<number>();
-    for (let i = 0; i < s.length - 1; i++) {
-      // Pack two characters into a single number to avoid string allocations
-      bigrams.add((s.charCodeAt(i) << 16) | s.charCodeAt(i + 1));
+    let prevCode = -1;
+
+    for (let i = 0; i < s.length; i++) {
+      const rawCode = s.charCodeAt(i);
+      if (isAlphanumeric(rawCode)) {
+        const code = toLowerCode(rawCode);
+        if (prevCode !== -1) {
+          // Pack two characters into a single number to avoid string allocations
+          bigrams.add((prevCode << 16) | code);
+        }
+        prevCode = code;
+      }
     }
     return bigrams;
   };
 
-  const setA = getBigrams(strA);
-  const setB = getBigrams(strB);
+  const setA = getBigrams(a);
+  const setB = getBigrams(b);
 
-  // Performance optimization: Calculate intersection size directly to avoid additional Set/Array allocations
-  // Uses the Inclusion-Exclusion Principle: |A ∪ B| = |A| + |B| - |A ∩ B|
+  if (setA.size === 0 || setB.size === 0) return 0.0;
+
   let intersectionSize = 0;
   const [smaller, larger] = setA.size < setB.size ? [setA, setB] : [setB, setA];
   for (const item of smaller) {
@@ -105,7 +164,7 @@ export function calculateStringSimilarity(a: string, b: string): number {
 export function base64urlEncode(input: string | Uint8Array): string {
   let bytes: Uint8Array;
   if (typeof input === "string") {
-    bytes = new TextEncoder().encode(input);
+    bytes = ENCODER.encode(input);
   } else {
     bytes = input;
   }
