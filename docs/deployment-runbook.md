@@ -31,6 +31,7 @@ Before deploying, ensure you have:
 
 - [ ] 5 KV namespaces created and bound in `wrangler.jsonc` (see Section 2 for IDs)
 - [ ] D1 database created and bound in `wrangler.jsonc`
+- [ ] Vectorize index `deal-embeddings` (768 dims, cosine metric) — required for semantic search
 - [ ] `workers.dev` subdomain registered on the Cloudflare account
 - [ ] GitHub Actions secrets configured (see Section 4)
 
@@ -83,8 +84,8 @@ These are used by CI/CD workflows to deploy via wrangler.
 | Secret | Purpose | Where to Find |
 |--------|---------|---------------|
 | `CLOUDFLARE_API_TOKEN` | Authenticates wrangler deploys from CI | Cloudflare dashboard → My Profile → API Tokens |
-| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account | Cloudflare dashboard → right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | (Optional) Custom worker hostname for health checks | If using a custom domain/route |
+| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account. Used to derive the default worker URL when `CLOUDFLARE_WORKER_HOST` is unset. | Cloudflare dashboard → right sidebar |
+| `CLOUDFLARE_WORKER_HOST` | (Optional) Override the default worker hostname. If unset, URLs are derived from `CLOUDFLARE_ACCOUNT_ID` + the worker name in `wrangler.jsonc` (e.g. `do-deal-relay.${ACCOUNT_ID}.workers.dev`). Set this only when using a custom domain/route. | e.g. `deals.example.com` |
 
 ---
 
@@ -100,6 +101,22 @@ These are used by CI/CD workflows to deploy via wrangler.
 6. Click **Save**
 
 Repeat for each secret. Set secrets on **both** `staging` and `production` worker instances.
+
+### Setting up the Vectorize Index
+
+Required for semantic search (`/api/semantic-search`). Run the **Vectorize Index Setup** workflow from the Actions tab with `confirm: true` to create the `deal-embeddings` index. The index must exist before `wrangler deploy` succeeds.
+
+Manual equivalent:
+
+```bash
+# Production
+npx wrangler vectorize create "deal-embeddings" \
+  --dimensions=768 --metric=cosine --env production
+
+# Staging (if using a separate index)
+npx wrangler vectorize create "deal-embeddings-staging" \
+  --dimensions=768 --metric=cosine --env staging
+```
 
 ### Setting Worker Secrets via Wrangler CLI
 
@@ -150,9 +167,22 @@ Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 
 | Secret Name | Value | Notes |
 |-------------|-------|-------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers permissions | Token must have `Workers Scripts:Edit` and `KV Storage:Edit` |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Found in dashboard right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | (Optional) Custom worker hostname | e.g., `do-deal-relay.do-it-119.workers.dev` |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers permissions | Token must have `Workers Scripts:Edit` and `KV Storage:Edit`, and `Vectorize:Edit` for semantic search |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID. Required: used by `wrangler deploy` and the API rollback path. | Found in dashboard right sidebar |
+| `CLOUDFLARE_WORKER_HOST` | **Required** — the workers.dev hostname. The Cloudflare workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. | e.g., `do-deal-relay.do-it-119.workers.dev` |
+
+### How Worker URLs Are Resolved
+
+All CI workflows resolve the worker URL via `scripts/worker-host.sh <env>`. This script requires `CLOUDFLARE_WORKER_HOST` to be set and returns an error otherwise. The `account_id` (a hex hash) is **not** usable to derive the workers.dev hostname.
+
+```bash
+$ CLOUDFLARE_WORKER_HOST=do-deal-relay.do-it-119.workers.dev \
+    scripts/worker-host.sh production
+do-deal-relay.do-it-119.workers.dev
+
+$ CLOUDFLARE_WORKER_HOST=deals.example.com scripts/worker-host.sh production
+deals.example.com
+```
 
 ### Required GitHub Environments
 
@@ -456,6 +486,17 @@ npx wrangler kv key list --namespace-id be3c0fc148b749b49a59aa7cfa23e3ac
 2. Verify `CLOUDFLARE_ACCOUNT_ID` matches the account
 3. Check if the API token has expired
 4. Regenerate at: Cloudflare dashboard → My Profile → API Tokens
+
+### CI Fails at "Verify staging is healthy"
+
+**Symptom**: `❌ CLOUDFLARE_WORKER_HOST secret not set` or `❌ Staging not healthy` early in the deploy job.
+
+**Cause**: `CLOUDFLARE_WORKER_HOST` secret is unset in the repo.
+
+**Fix**: This should be self-healing as of #423 — workflows derive the URL from `CLOUDFLARE_ACCOUNT_ID` automatically. If you still see this error:
+1. Confirm `CLOUDFLARE_ACCOUNT_ID` is set in repo secrets
+2. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`
+3. If using a custom domain, set `CLOUDFLARE_WORKER_HOST=deals.example.com`
 
 ### Type Errors After Merge
 

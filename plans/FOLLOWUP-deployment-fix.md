@@ -1,17 +1,29 @@
 # Follow-up: Deployment Workflow Fix
 
+**Status**: ✅ Resolved (see plan `FIX-issue-423-worker-host.md`)
+
 ## Issue
 Production deployment fails because staging health check fails.
 
 ## Root Cause
-The staging environment (`do-deal-relay-staging`) is not healthy or not deployed.
+The workflow read `WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"`, but the `CLOUDFLARE_WORKER_HOST` secret was **not set in the GitHub repository**. The variable expanded to an empty string, producing an invalid URL (`https:///health`) which failed the curl health check, which in turn blocked the production deploy, which triggered rollback, which also failed (wrangler 4.79.0 auth bug).
 
-## Error Message
+## Resolution
+
+Introduced `scripts/worker-host.sh` which derives the worker hostname from
+`CLOUDFLARE_ACCOUNT_ID` and the worker name in `wrangler.jsonc`. The
+`CLOUDFLARE_WORKER_HOST` secret is now an **optional override** for custom
+domains — no longer required for default `*.workers.dev` URLs.
+
+Workflows updated: `deploy-production.yml`, `discovery.yml`, `canary.yml`.
+
+## Error Message (before fix)
 ```
+❌ CLOUDFLARE_WORKER_HOST secret not set
 ❌ Staging not healthy. Aborting production deployment.
 ```
 
-## Investigation Required
+## Remaining Investigation (out of scope of #423)
 
 1. **Check if staging worker exists**:
    ```bash

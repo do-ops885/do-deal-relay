@@ -34,16 +34,20 @@ jobs:
 
     steps:
       - name: Trigger discovery pipeline
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
         run: |
           echo "Triggering scheduled discovery on production..."
 
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -z "${WORKER_HOST}" ]; then
-            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          if [ -z "${PROD_HOST}" ]; then
+            echo "❌ Could not resolve production host"
+            echo "   Set CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_WORKER_HOST" >&2
             exit 1
           fi
 
-          PROD_URL="https://${WORKER_HOST}"
+          PROD_URL="https://${PROD_HOST}"
           echo "Production URL: ${PROD_URL}"
 
           # Health check first
@@ -62,14 +66,17 @@ jobs:
           echo "Discovery triggered successfully: ${RESPONSE}"
 
       - name: Wait and verify
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
         run: |
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -z "${WORKER_HOST}" ]; then
-            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          if [ -z "${PROD_HOST}" ]; then
+            echo "❌ Could not resolve production host"
             exit 1
           fi
 
-          PROD_URL="https://${WORKER_HOST}"
+          PROD_URL="https://${PROD_HOST}"
 
           echo "Waiting 2 minutes for discovery to complete..."
           sleep 120
@@ -95,16 +102,20 @@ jobs:
 
     steps:
       - name: Trigger discovery on staging
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_WORKER_HOST: ${{ secrets.CLOUDFLARE_WORKER_HOST }}
         run: |
           echo "Triggering discovery on staging..."
 
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -z "${WORKER_HOST}" ]; then
-            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+          STAGING_HOST="$(bash scripts/worker-host.sh staging)"
+          if [ -z "${STAGING_HOST}" ]; then
+            echo "❌ Could not resolve staging host"
+            echo "   Set CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_WORKER_HOST" >&2
             exit 1
           fi
 
-          STAGING_URL="https://${WORKER_HOST}"
+          STAGING_URL="https://${STAGING_HOST}"
 
           # Health check
           echo "Checking staging health..."
