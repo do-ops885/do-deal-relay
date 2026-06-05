@@ -442,6 +442,17 @@
         border-color: #4f46e5;
       }
 
+      .error-text {
+        color: #ef4444;
+        font-size: 11px;
+        margin-top: -6px;
+        margin-bottom: 10px;
+      }
+
+      .manual-input.invalid {
+        border-color: #ef4444;
+      }
+
       .hidden {
         display: none !important;
       }
@@ -556,8 +567,12 @@
           id="manual-code"
           placeholder="Enter referral code..."
           maxlength="20"
+          aria-describedby="manual-code-error"
         />
-        <button class="btn btn-secondary" id="manual-btn">
+        <div id="manual-code-error" class="error-text hidden" aria-live="polite">
+          Code must be alphanumeric (4-20 chars)
+        </div>
+        <button class="btn btn-secondary" id="manual-btn" disabled>
           Add Code Manually
         </button>
       </div>
