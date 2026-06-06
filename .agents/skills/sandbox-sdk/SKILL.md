@@ -175,3 +175,20 @@ See `examples/openai-agents` for complete integration pattern.
 
 - **[references/api-quick-ref.md](references/api-quick-ref.md)** - Full API with options and return types
 - **[references/examples.md](references/examples.md)** - Example index with use cases
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| The 10-minute sleep window means cold-start latency on idle sandboxes. | Containers resume on next `getSandbox()` call. The latency is the cost of per-execution isolation, which is the security property that justifies the SDK. |
+| Reaching for the internal `CommandClient` / `FileClient` would feel faster than `sandbox.*` methods. | Internal clients bypass lifecycle management, error normalization, and the `destroy()` cleanup path. The "speed" is a one-call win that becomes a multi-hour incident. |
+| Hardcoding `sandboxId` per request would simplify code. | It also collapses every user's session into a single namespace — the same RCE-grade mistake as a shared DB connection string. Use user/session identifiers. |
+| Forgetting `destroy()` for a one-off sandbox seems harmless. | Forgotten sandboxes bill forever (10-minute idle ticks). Cleanup is the contract, not a nicety. |
+
+## Red Flags
+
+- [ ] Do not import `CommandClient` or `FileClient` directly — use `sandbox.*` methods.
+- [ ] Do not omit `export { Sandbox }` from the Worker entry — deployment will fail.
+- [ ] Do not hardcode `sandboxId` for multi-user workloads.
+- [ ] Do not skip `destroy()` for temporary sandboxes.
+- [ ] Do not call `getSandbox()` with a constant ID in a multi-tenant Worker.

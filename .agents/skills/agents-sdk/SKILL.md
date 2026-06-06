@@ -219,3 +219,22 @@ function App() {
 - **[references/voice.md](references/voice.md)** — `@cloudflare/voice` STT/TTS
 - **[references/codemode.md](references/codemode.md)** — Code Mode for tool orchestration
 - **[references/browse-the-web.md](references/browse-the-web.md)** — CDP browser tools
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| `Agent` from `agents` looks like a class — using `implements Agent` should work. | The class must `extends Agent` to inherit `this.ctx`, `this.env`, `this.setState`, and the WebSocket lifecycle. `implements` loses the runtime contract. |
+| `state` is a regular field; mutating it directly feels faster than `setState`. | Direct mutation skips persistence, broadcast to connected clients, and React re-renders. The whole point of `setState` is that it is the persistence boundary. |
+| On-chat handler `this.state.messages.push(...)` is concise. | Concise, but bypasses `saveMessages` and breaks observability. Use the `saveMessages` helper or rebuild the messages array. |
+| Calling `this.sql.exec(...)` without a transaction is fine for single statements. | Multi-statement writes are silently non-atomic. The D1/DO storage layer requires `this.ctx.storage.transactional(...)` or `this.sql.batch(...)` for any non-trivial update. |
+| Email/Queue/Workflow integrations look like other Workers APIs. | They are runtime-coupled to the Agent class via `this.ctx`/`this.env`. Treating them as static utilities loses lifecycle and per-agent isolation. |
+
+## Red Flags
+
+- [ ] Do not use `implements Agent` — must be `extends Agent` to retain `this.ctx`, `this.env`, `this.setState`.
+- [ ] Do not mutate `this.state` directly; always use `setState` to trigger persistence + broadcast.
+- [ ] Do not skip `saveMessages` for chat history — `this.state.messages.push` is not a substitute.
+- [ ] Do not call `this.sql.exec` for multi-statement writes without a transaction.
+- [ ] Do not store secrets in `this.state` — use `env` bindings or Secrets Store.
+- [ ] Do not close the WebSocket without calling `this.close()` from the server side; clients can't see raw close frames.

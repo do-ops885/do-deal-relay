@@ -55,3 +55,6 @@ agents-docs/coordination/handoff-log.jsonl
 # Auto-generated skill evaluation JSON results
 .agents/skills/evals/results.json
 .agents/skills/*/evals/test_results.json
+
+# Skill scaffolding templates are copied into new projects, not formatted here
+.agents/skills/**/templates/**

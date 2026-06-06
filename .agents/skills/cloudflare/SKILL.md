@@ -243,3 +243,20 @@ Need IaC? → pulumi/ (Pulumi), terraform/ (Terraform), or api/ (REST API)
 | Static Assets | `references/static-assets/` |
 | Bindings | `references/bindings/` |
 | Cache Reserve | `references/cache-reserve/` |
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| The "Cloudflare skill" can be skipped because sub-skills cover everything. | Sub-skills are the deep references; this skill is the index + retrieval orchestration. Skipping it means the agent has to discover the right sub-skill by trial and error. |
+| Cached references are fine to use without re-fetching. | Cloudflare product behavior changes between compat dates. Stale references produce code that breaks against the current runtime. The skill mandates fresh fetches. |
+| The Terraform/Pulumi references are interchangeable. | They are not — Pulumi uses TypeScript with provider packages, Terraform uses HCL with its own state model. Choosing the wrong reference produces a non-functional config. |
+| Skipping the official Cloudflare docs link and citing a blog post is fine. | Blog posts are 6-12 months behind the canonical docs. Official docs reflect what shipped, not what was previewed. |
+
+## Red Flags
+
+- [ ] Do not answer a Cloudflare product question without first checking the relevant `references/` subdirectory.
+- [ ] Do not cite a blog post or third-party tutorial when an official `developers.cloudflare.com` page exists.
+- [ ] Do not treat sub-skills as a substitute for this index — load both for non-trivial questions.
+- [ ] Do not assume a Cloudflare product's free tier limits — they change quarterly.
+- [ ] Do not skip the `compatibility_date` context — runtime behavior varies across dates.

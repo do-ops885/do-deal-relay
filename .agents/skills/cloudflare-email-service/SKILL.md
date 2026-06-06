@@ -101,3 +101,23 @@ Read the reference that matches your situation. You don't need all of them.
 - **[references/routing.md](references/routing.md)** — Inbound `email()` handler, forwarding, replying, parsing. For receiving emails.
 - **[references/cli-and-mcp.md](references/cli-and-mcp.md)** — Domain setup, wrangler commands, MCP tools. For first-time setup.
 - **[references/deliverability.md](references/deliverability.md)** — SPF/DKIM/DMARC, bounces, suppressions, best practices.
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| `message.raw` looks like any other ReadableStream — re-reading should be fine. | The raw stream is single-use. A second `await message.raw` returns empty, breaking parsers downstream. Buffer it first. |
+| Email Service is just an SMTP replacement; reputation can be ignored. | Sender reputation is the deliverability gate. Bounces from fake addresses, spam-flagged content, and missing SPF/DKIM/DMARC all degrade the domain. |
+| The REST `from` field name should be consistent with the Workers binding. | They are not the same — REST uses `address`, Workers uses `email`. This is a documented divergence, not a bug. |
+| Sending marketing email through Cloudflare is fine since there's no documented ban. | The platform is for transactional email. Newsletter/campaign sends trigger anti-spam heuristics faster than transactional traffic, and ToS violations are reversible only by the platform team. |
+| Hardcoding the API token in a server-side request is acceptable in private code. | Tokens in code get committed, scraped by CI log aggregators, and leaked through error messages. The cost of a leaked token is a full account rotation. |
+
+## Red Flags
+
+- [ ] Do not read `message.raw` more than once — buffer it first with `new Response(message.raw).arrayBuffer()`.
+- [ ] Do not send from an unverified domain — onboarding via `wrangler email sending enable` is required first.
+- [ ] Do not use Email Service for marketing/bulk/newsletter sends — use a dedicated platform.
+- [ ] Do not forward to unverified destinations — `message.forward()` requires pre-verified addresses.
+- [ ] Do not hardcode `CLOUDFLARE_API_TOKEN` or any sender secret in source code.
+- [ ] Do not assume REST and Workers bindings use the same field names (`address` vs `email`, `reply_to` vs `replyTo`).
+- [ ] Do not skip SPF/DKIM/DMARC setup — missing records drop deliverability to near zero.

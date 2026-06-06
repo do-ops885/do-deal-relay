@@ -199,3 +199,21 @@ Present findings as:
 2. **Top Issues** - Prioritized list of problems with estimated impact (high/medium/low)
 3. **Recommendations** - Specific, actionable fixes with code snippets or config changes
 4. **Codebase Findings** - Framework/bundler detected, optimization opportunities (omit if no codebase access)
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| Field-lab data is noisy; a single Lighthouse run might be enough. | Lighthouse runs from one datacenter with one device. CWV thresholds are calibrated against 75th-percentile field data across real users — lab-only audits miss network/regional variance. |
+| Optimizing LCP first always wins. | If CLS is poor the layout keeps shifting, blocking interaction. If INP is poor the user feels the page is broken regardless of paint speed. The order depends on the current metrics, not a heuristic. |
+| A 1.2s LCP is "fine" because the threshold is 2.5s. | "Good" thresholds are ceilings, not targets. Headroom is what survives a CDN hiccup or a 3rd-party script regressing. |
+| Recommending generic things like "minify JS" or "use a CDN" is safe filler. | Most production sites have already done these. Generic advice signals the audit didn't actually look at the codebase, which destroys trust. |
+
+## Red Flags
+
+- [ ] Do not report Lighthouse lab numbers as field CWV — they're different measurements.
+- [ ] Do not present CWV as a single "score" — LCP, INP, CLS are independent and the user must see all three.
+- [ ] Do not skip CLS analysis on dynamic-content pages (SPAs, infinite scroll, ad-heavy pages).
+- [ ] Do not recommend changes without an estimated impact (high/medium/low) and a rationale.
+- [ ] Do not assume the production deployment matches the local dev environment — confirm CDN/caching headers in production.
+- [ ] Do not bypass the Core Web Vitals Summary table — it is the audit's primary deliverable.

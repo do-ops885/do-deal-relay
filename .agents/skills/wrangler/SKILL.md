@@ -920,3 +920,23 @@ wrangler docs configuration
 7. **Test locally first**: `wrangler dev` with local bindings before deploying.
 8. **Use `--dry-run` before major deploys**: Validate changes without deployment.
 9. **Never embed secrets in commands**: Use interactive prompts (`wrangler secret put`), file-based input (`wrangler secret bulk`), or secure CI environment variables. Never echo, log, or pass secret values as CLI arguments.
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| `wrangler deploy` to prod is faster than going through staging first. | Staging catches binding misconfigurations, missing secrets, and `compatibility_date` regressions before users see them. The "saved time" is one bad deploy away from an outage. |
+| Hardcoding resource IDs in `wrangler.jsonc` is more explicit than auto-provisioning. | Explicit IDs are fine for stable resources, but new resources (KV, R2, D1) created via the dashboard often end up in the wrong account/region. Auto-provisioning is reproducible. |
+| `--dry-run` adds a CI step that just runs the build twice. | `--dry-run` validates config + bundle compatibility without the network call. A failed dry-run is 10x cheaper than a failed prod deploy. |
+| Embedding the API token in `CLOUDFLARE_API_TOKEN=$TOKEN wrangler ...` works in CI logs we don't keep. | The token leaks through process listings (`/proc/*/environ`), shell history, and error messages with `set -x`. Use `wrangler secret` or CI env. |
+| Skipping `wrangler types` because the project doesn't use TypeScript. | JavaScript Workers also benefit from JSDoc + generated types. The generated `.d.ts` catches binding name typos the runtime would only catch at request time. |
+
+## Red Flags
+
+- [ ] Do not embed `CLOUDFLARE_API_TOKEN` or any secret value in a `wrangler` command line.
+- [ ] Do not pass secrets via `echo $SECRET | wrangler secret put ...` in CI logs without `set +x`.
+- [ ] Do not skip staging for production deploys.
+- [ ] Do not delete a binding from `wrangler.jsonc` before removing all references in the Worker.
+- [ ] Do not bump `compatibility_date` without running the full test suite against a `wrangler dev` session.
+- [ ] Do not commit secrets to `wrangler.jsonc` or `wrangler.toml` — only `vars` and `binding` IDs.
+- [ ] Do not run `wrangler tail` against production from a shared terminal without redacting PII.

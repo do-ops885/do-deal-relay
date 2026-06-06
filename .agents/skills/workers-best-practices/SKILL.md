@@ -125,3 +125,23 @@ This skill covers Workers-specific best practices and code review. For related t
 - **Provide evidence.** Reference line numbers, tool output, or docs links.
 - **Focus on what developers will copy.** Workers code in examples and docs gets pasted into production.
 - **Correctness over completeness.** A concise example that works beats a comprehensive one with errors.
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| Reviewing only the diff is faster than reading the full file. | Workers patterns are contextual — `env.X` access in a `fetch` handler is fine, the same expression in a Durable Object class is a bug. Diffs hide the class boundary. |
+| Flagging style nits (semicolons, import ordering) is harmless. | Noise drowns signal. Reviewers (human or AI) start skimming, then miss the real issue. Reserve comments for things that affect correctness. |
+| `as unknown as T` is a quick way to make a type error go away. | It hides the real mismatch. Fixing the underlying type is almost always possible and almost always reveals a real design flaw. |
+| `any` on the `Env` interface is a small shortcut during prototyping. | Every binding access (`env.KV_NAMESPACE.get(...)`) becomes untyped. The shortcut costs hours the first time the binding name changes. |
+| "It works locally" is good enough without checking `compatibility_date`. | The runtime behavior of bindings (Streaming, R2, Durable Objects) changes between dates. Pinning the date is the only way to know what shipped where. |
+
+## Red Flags
+
+- [ ] Do not flag an issue without a code reference (`file:line`) or a docs link.
+- [ ] Do not recommend `as unknown as T` or `as any` casts — fix the type instead.
+- [ ] Do not skip the `references/rules.md` lookup for any rule you cite.
+- [ ] Do not review only the diff — read the surrounding class/module for context.
+- [ ] Do not assume `compatibility_date` doesn't matter — it gates runtime behavior.
+- [ ] Do not invent Worker APIs from memory; fetch `developers.cloudflare.com/workers` first.
+- [ ] Do not use `implements DurableObject` — it must be `extends DurableObject` to retain `this.ctx` and `this.env`.

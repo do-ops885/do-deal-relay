@@ -161,3 +161,23 @@ Every snippet you write must include `data-action="turnstile-spin-v1"`. Account-
 - Do not propose features outside the wizard (custom Worker code, custom domains, advanced WAF rules) unless asked.
 - Do not call siteverify from the browser.
 - Do not deploy the Worker into a different account than the widget.
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| The 11-step wizard feels heavier than the equivalent `wrangler deploy` would be without it. | The wizard is the only path that guarantees Step 11 (real siteverify round-trip) runs. Skipping validation to save time produces "works on my machine" Workers that 404 in production. |
+| Requiring `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` blocks the agent in sandboxes without Cloudflare auth. | The skill's whole purpose is to provision a Cloudflare widget + Worker. Without auth there is nothing to do — fail fast and report. |
+| Re-running `worker-deploy.sh` with a hash suffix on name conflict could confuse the user about which Worker is "theirs". | Name conflict is rare; the suffix is visible in the script output and stored in the returned `worker_name`. Better than blocking on a collision. |
+| Excluding `.agents/skills/**/templates/**` from vitest means the template tests are never exercised in CI. | The template tests require `CLOUDFLARE_API_TOKEN` and are meant to run inside a freshly-provisioned project, not in the source repo. CI gating on credentials we don't have would always skip anyway. |
+
+## Red Flags
+
+- [ ] Do not write `TURNSTILE_SECRET_KEY` to a file, repo, or commit message — use `wrangler secret put`.
+- [ ] Do not skip the Step 11 siteverify validation, even if the deploy succeeded.
+- [ ] Do not propose custom Worker code, custom domains, or WAF rules outside the wizard scope.
+- [ ] Do not call the siteverify endpoint from the browser; the secret must never leave the Worker.
+- [ ] Do not deploy the managed Worker into a different Cloudflare account than the widget.
+- [ ] Do not rely on a `$WORKER_NAME` env var — use the `worker_name` field returned by `worker-deploy.sh`.
+- [ ] Do not use PATCH to update widget domains — Turnstile returns `10405 Method not allowed`; use PUT.
+- [ ] Do not migrate reCAPTCHA Enterprise automatically — point the user at the migration guide instead.

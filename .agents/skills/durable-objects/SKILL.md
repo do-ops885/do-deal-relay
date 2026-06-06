@@ -184,3 +184,23 @@ describe("MyDO", () => {
   });
 });
 ```
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|-----------------|
+| `implements DurableObject` should work like any other interface. | The class **must** `extends DurableObject` to inherit `this.ctx`, `this.env`, and the constructor that binds them. `implements` is a common migration mistake from pre-2024 DO types. |
+| `this.env` and `this.ctx` look like class fields — calling `env.X` from inside a method should be equivalent. | Inside `extends DurableObject`, the inherited fields are `this.env` / `this.ctx`. Using the global `env` works in `fetch` handlers but not in DO methods. |
+| `blockConcurrencyWhile()` is opt-in for performance. | Without it, the first request can race with `constructor` work and corrupt state. The default is "skip"; for any DO that initializes state in the constructor, you must wrap. |
+| SQLite inside a DO is the same as Cloudflare D1. | D1 is the HTTP-fronted product; the DO SQLite (`this.ctx.storage.sql`) is per-DO with synchronous semantics, no HTTP overhead, and `transactional()` blocks. Using D1 APIs inside a DO is a layered mistake. |
+| `getByName` and `idFromName` are equivalent shortcuts. | `getByName` is the one-call helper that resolves the ID *and* the stub. `idFromName` + `get` is the two-call form. Both work, but mixing them obscures intent. |
+| Storing non-serializable values (Date, Map, Set) in `this.ctx.storage` should be fine. | The storage layer is JSON-serialized. `Date` becomes a string, `Map`/`Set` become `{}`/`[]`. Use `JSON.parse(JSON.stringify(...))` defensively or store ISO strings. |
+
+## Red Flags
+
+- [ ] Do not use `implements DurableObject` — must be `extends DurableObject` to retain `this.ctx`, `this.env`.
+- [ ] Do not access the global `env` from inside a DO method; use `this.env` and `this.ctx`.
+- [ ] Do not skip `blockConcurrencyWhile()` when the constructor mutates `this.ctx.storage`.
+- [ ] Do not use D1 client APIs inside a DO — use `this.ctx.storage.sql` and `transactional()`.
+- [ ] Do not store `Date`, `Map`, `Set`, or other non-JSON values directly in `this.ctx.storage` without explicit serialization.
+- [ ] Do not call `getByName` on every request — IDs are stable; cache the stub in your Worker when possible.
