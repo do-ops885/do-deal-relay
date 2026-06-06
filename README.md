@@ -111,6 +111,9 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 | `ENVIRONMENT` | Yes | Deployment environment (production, staging, development) |
 | `GITHUB_REPO` | Yes | GitHub repository path (e.g., `org/repo`) |
 | `GITHUB_TOKEN` | No | GitHub personal access token |
+| `EMAIL_WEBHOOK_SECRET` | Yes | Secret for verifying incoming email webhooks |
+| `JWT_SECRET` | Yes | Secret for signing access tokens |
+| `JWT_REFRESH_SECRET` | No | Secret for signing refresh tokens (optional) |
 | `NOTIFICATION_THRESHOLD` | No | Score threshold for sending notifications |
 | `CANDIDATE_BUDGET_GLOBAL` | No | Max candidates per run |
 

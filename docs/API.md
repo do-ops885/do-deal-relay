@@ -586,6 +586,45 @@ Create a new referral code.
 
 ---
 
+### GET /api/research/:domain
+
+Get research results for a specific domain.
+
+**Parameters:**
+
+- `domain` (string): The domain to get research results for (e.g., 'trading212.com')
+
+**Response:**
+
+```json
+{
+  "domain": "trading212.com",
+  "discovered_codes": [
+    {
+      "code": "ABC123",
+      "url": "https://trading212.com/invite/ABC123",
+      "source": "known_pattern",
+      "discovered_at": "2024-03-31T12:00:00Z",
+      "confidence": 0.9
+    }
+  ],
+  "research_metadata": {
+    "sources_checked": ["known_pattern"],
+    "search_queries": [],
+    "research_duration_ms": 150,
+    "agent_id": "research-agent",
+    "used_real_fetching": false
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 500: Failed to get research results
+
+---
+
 ### GET /api/referrals/:code
 
 Get a specific referral by code.
@@ -1017,6 +1056,68 @@ Get search suggestions for autocomplete (requires at least 2 characters).
 
 ```bash
 curl "https://your-worker.workers.dev/api/d1/suggestions?q=trad&limit=5"
+```
+
+---
+
+### GET /api/d1/similar
+
+Find similar deals based on a deal ID.
+
+**Query Parameters:**
+
+- `deal_id` (string, required): The deal ID to find matches for
+- `limit` (number): Max results (default: 5)
+- `include_expired` (boolean): Include expired deals (default: false)
+
+**Response:**
+
+```json
+{
+  "similar": [...],
+  "total": 3
+}
+```
+
+---
+
+### GET /api/d1/recommended
+
+Get recommended deals based on user domains.
+
+**Query Parameters:**
+
+- `domains` (string, required): Comma-separated list of domains
+- `limit` (number): Max results (default: 10)
+
+**Response:**
+
+```json
+{
+  "recommended": [...],
+  "total": 5
+}
+```
+
+---
+
+### GET /api/d1/trending
+
+Get trending deals based on recent activity.
+
+**Query Parameters:**
+
+- `days` (number): Time period for trending (default: 7)
+- `limit` (number): Max results (default: 10)
+
+**Response:**
+
+```json
+{
+  "trending": [...],
+  "total": 5,
+  "period_days": 7
+}
 ```
 
 ---
@@ -1488,6 +1589,57 @@ curl -X POST "https://your-worker.workers.dev/api/nlq/explain" \
 # Using GET with query parameter
 curl "https://your-worker.workers.dev/api/nlq/explain?q=trading%20deals%20with%20$100%20bonuses"
 ```
+
+---
+
+## Semantic Search API
+
+Natural language search using Cloudflare Vectorize and Workers AI embeddings.
+
+### POST /api/semantic-search
+
+Execute a semantic search query.
+
+**Request Body:**
+
+```json
+{
+  "query": "best trading apps with signup bonus",
+  "limit": 20,
+  "min_score": 0.3
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "best trading apps with signup bonus",
+  "results": [
+    {
+      "deal": { ... },
+      "score": 0.85,
+      "match_type": "semantic"
+    }
+  ],
+  "meta": {
+    "total": 5,
+    "returned": 5,
+    "execution_time_ms": 120,
+    "embedding_time_ms": 45,
+    "vectorize_time_ms": 15,
+    "model": "@cf/baai/bge-base-en-v1.5",
+    "index_name": "deal-embeddings"
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 400: Invalid request body
+- 503: Semantic search unavailable (missing bindings)
 
 ---
 
