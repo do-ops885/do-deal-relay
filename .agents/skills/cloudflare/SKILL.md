@@ -1,10 +1,6 @@
 ---
 name: cloudflare
-description: Comprehensive Cloudflare platform skill covering Workers, Pages, storage (KV, D1, R2), AI (Workers AI, Vectorize, Agents SDK), networking (Tunnel, Spectrum), security (WAF, DDoS), and infrastructure-as-code (Terraform, Pulumi). Use for any Cloudflare development task. Biases towards retrieval from Cloudflare docs over pre-trained knowledge.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
+description: Comprehensive Cloudflare platform skill covering Workers, Pages, storage (KV, D1, R2), AI (Workers AI, Vectorize, Agents SDK), feature flags (Flagship), networking (Tunnel, Spectrum), security (WAF, DDoS), and infrastructure-as-code (Terraform, Pulumi). Use for any Cloudflare development task. Biases towards retrieval from Cloudflare docs over pre-trained knowledge.
 references:
   - workers
   - pages
@@ -23,16 +19,26 @@ Your knowledge of Cloudflare APIs, types, limits, and pricing may be outdated. *
 
 Fetch the **latest** information before citing specific numbers, API signatures, or configuration options. Do not rely on baked-in knowledge or these reference files alone.
 
-| Source                 | How to retrieve                                                       | Use for                                                   |
-| ---------------------- | --------------------------------------------------------------------- | --------------------------------------------------------- |
-| Cloudflare docs        | `cloudflare-docs` search tool or `https://developers.cloudflare.com/` | Limits, pricing, API reference, compatibility dates/flags |
-| Workers types          | `npm pack @cloudflare/workers-types` or check `node_modules`          | Type signatures, binding shapes, handler types            |
-| Wrangler config schema | `node_modules/wrangler/config-schema.json`                            | Config fields, binding shapes, allowed values             |
-| Product changelogs     | `https://developers.cloudflare.com/changelog/`                        | Recent changes to limits, features, deprecations          |
+| Source | How to retrieve | Use for |
+|--------|----------------|---------|
+| Cloudflare docs | `cloudflare-docs` search tool or `https://developers.cloudflare.com/` | Limits, pricing, API reference, compatibility dates/flags |
+| Workers types | `npm pack @cloudflare/workers-types` or check `node_modules` | Type signatures, binding shapes, handler types |
+| Wrangler config schema | `node_modules/wrangler/config-schema.json` | Config fields, binding shapes, allowed values |
+| Product changelogs | `https://developers.cloudflare.com/changelog/` | Recent changes to limits, features, deprecations |
 
 When a reference file and the docs disagree, **trust the docs**. This is especially important for: numeric limits, pricing tiers, type signatures, and configuration options.
 
 ## Quick Decision Trees
+
+### "I need feature flags"
+
+```
+Need feature flags?
+└─ Feature toggles, targeting rules, percentage rollouts → flagship/
+   ├─ Evaluate in Workers → Flagship binding (env.FLAGS)
+   ├─ Evaluate in Node.js / browser → OpenFeature SDK (@cloudflare/flagship)
+   └─ Manage flags via API → Flagship REST API
+```
 
 ### "I need to run code"
 
@@ -57,6 +63,7 @@ Need storage?
 ├─ Key-value (config, sessions, cache) → kv/
 ├─ Relational SQL → d1/ (SQLite) or hyperdrive/ (existing Postgres/MySQL)
 ├─ Object/file storage (S3-compatible) → r2/
+├─ Versioned file trees (repos, build outputs, checkpoints) → artifacts/
 ├─ Message queue (async processing) → queues/
 ├─ Vector embeddings (AI/semantic search) → vectorize/
 ├─ Strongly-consistent per-entity state → durable-objects/ (DO storage)
@@ -128,242 +135,128 @@ Need analytics?
 Need IaC? → pulumi/ (Pulumi), terraform/ (Terraform), or api/ (REST API)
 ```
 
-## Best Practices
-
-Reference the comprehensive [Best Practices Guide](../../../docs/BEST_PRACTICES.md) for detailed guidance.
-
-### Quick Reference
-
-| Category | Rule | Example |
-|----------|------|---------|
-| **Security** | Use `crypto.randomUUID()` not `Math.random()` | `const id = crypto.randomUUID()` |
-| **Performance** | Stream response bodies | `return new Response(response.body, ...)` |
-| **Type Safety** | Never use `as unknown as T` | Use type guards instead |
-| **Configuration** | Use `wrangler.jsonc` with `nodejs_compat` | See config examples below |
-| **Error Handling** | Use `waitUntil()` for background work | `ctx.waitUntil(logAsync())` |
-| **Logging** | Structured logging with correlation IDs | `logger.info('msg', { id })` |
-
-### Security
-
-```typescript
-// ✅ Good - cryptographically secure
-const id = crypto.randomUUID();
-
-// ❌ Bad - predictable, not secure
-const id = Math.random().toString(36);
-```
-
-### Performance
-
-```typescript
-// ✅ Good - streaming for large responses
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const response = await fetch('https://api.example.com/large-data');
-    return new Response(response.body, {
-      status: response.status,
-      headers: response.headers
-    });
-  }
-};
-
-// ❌ Bad - buffers entire response
-const text = await response.text();  // Memory intensive
-```
-
-### Type Safety
-
-```typescript
-// ❌ Bad - bypasses type safety entirely
-const result = unsafeData as unknown as Deal;
-
-// ✅ Good - proper type guards
-function isDeal(obj: unknown): obj is Deal {
-  return obj && typeof obj === 'object' &&
-         'id' in obj && 'title' in obj;
-}
-
-if (isDeal(data)) {
-  // data is properly typed as Deal
-}
-```
-
-### Configuration
-
-```jsonc
-// wrangler.jsonc
-{
-  "name": "my-worker",
-  "compatibility_date": "2026-03-31",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
-  }
-}
-```
-
-### Error Handling
-
-```typescript
-// ✅ Good - fire-and-forget background tasks
-export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    ctx.waitUntil(logToAnalytics(request));
-    return new Response('OK');
-  }
-};
-```
-
-### Structured Logging
-
-```typescript
-// ✅ Good - structured logging with correlation IDs
-interface LogEntry {
-  timestamp: string;
-  level: 'info' | 'warn' | 'error';
-  message: string;
-  correlationId: string;
-  context?: Record<string, unknown>;
-}
-
-function log(level: LogEntry['level'], message: string, context?: Record<string, unknown>) {
-  const entry: LogEntry = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    correlationId: crypto.randomUUID(),
-    context
-  };
-  console.log(JSON.stringify(entry));
-}
-```
-
 ## Product Index
 
-### Compute & Runtime
+### Feature Flags
+| Product | Reference |
+|---------|-----------|
+| Flagship | `references/flagship/` |
 
-| Product               | Reference                           |
-| --------------------- | ----------------------------------- |
-| Workers               | `references/workers/`               |
-| Pages                 | `references/pages/`                 |
-| Pages Functions       | `references/pages-functions/`       |
-| Durable Objects       | `references/durable-objects/`       |
-| Workflows             | `references/workflows/`             |
-| Containers            | `references/containers/`            |
+### Compute & Runtime
+| Product | Reference |
+|---------|-----------|
+| Workers | `references/workers/` |
+| Pages | `references/pages/` |
+| Pages Functions | `references/pages-functions/` |
+| Durable Objects | `references/durable-objects/` |
+| Workflows | `references/workflows/` |
+| Containers | `references/containers/` |
 | Workers for Platforms | `references/workers-for-platforms/` |
-| Cron Triggers         | `references/cron-triggers/`         |
-| Tail Workers          | `references/tail-workers/`          |
-| Snippets              | `references/snippets/`              |
-| Smart Placement       | `references/smart-placement/`       |
+| Cron Triggers | `references/cron-triggers/` |
+| Tail Workers | `references/tail-workers/` |
+| Snippets | `references/snippets/` |
+| Smart Placement | `references/smart-placement/` |
 
 ### Storage & Data
-
-| Product         | Reference                     |
-| --------------- | ----------------------------- |
-| KV              | `references/kv/`              |
-| D1              | `references/d1/`              |
-| R2              | `references/r2/`              |
-| Queues          | `references/queues/`          |
-| Hyperdrive      | `references/hyperdrive/`      |
-| DO Storage      | `references/do-storage/`      |
-| Secrets Store   | `references/secrets-store/`   |
-| Pipelines       | `references/pipelines/`       |
+| Product | Reference |
+|---------|-----------|
+| KV | `references/kv/` |
+| D1 | `references/d1/` |
+| R2 | `references/r2/` |
+| Artifacts | `references/artifacts/` |
+| Queues | `references/queues/` |
+| Hyperdrive | `references/hyperdrive/` |
+| DO Storage | `references/do-storage/` |
+| Secrets Store | `references/secrets-store/` |
+| Pipelines | `references/pipelines/` |
 | R2 Data Catalog | `references/r2-data-catalog/` |
-| R2 SQL          | `references/r2-sql/`          |
+| R2 SQL | `references/r2-sql/` |
 
 ### AI & Machine Learning
-
-| Product    | Reference                |
-| ---------- | ------------------------ |
+| Product | Reference |
+|---------|-----------|
 | Workers AI | `references/workers-ai/` |
-| Vectorize  | `references/vectorize/`  |
+| Vectorize | `references/vectorize/` |
 | Agents SDK | `references/agents-sdk/` |
 | AI Gateway | `references/ai-gateway/` |
-| AI Search  | `references/ai-search/`  |
+| AI Search | `references/ai-search/` |
 
 ### Networking & Connectivity
-
-| Product              | Reference                          |
-| -------------------- | ---------------------------------- |
-| Tunnel               | `references/tunnel/`               |
-| Spectrum             | `references/spectrum/`             |
-| TURN                 | `references/turn/`                 |
+| Product | Reference |
+|---------|-----------|
+| Tunnel | `references/tunnel/` |
+| Spectrum | `references/spectrum/` |
+| TURN | `references/turn/` |
 | Network Interconnect | `references/network-interconnect/` |
-| Argo Smart Routing   | `references/argo-smart-routing/`   |
-| Workers VPC          | `references/workers-vpc/`          |
+| Argo Smart Routing | `references/argo-smart-routing/` |
+| Workers VPC | `references/workers-vpc/` |
 
 ### Security
-
-| Product         | Reference                    |
-| --------------- | ---------------------------- |
-| WAF             | `references/waf/`            |
-| DDoS Protection | `references/ddos/`           |
-| Bot Management  | `references/bot-management/` |
-| API Shield      | `references/api-shield/`     |
-| Turnstile       | `references/turnstile/`      |
+| Product | Reference |
+|---------|-----------|
+| WAF | `references/waf/` |
+| DDoS Protection | `references/ddos/` |
+| Bot Management | `references/bot-management/` |
+| API Shield | `references/api-shield/` |
+| Turnstile | `references/turnstile/` |
 
 ### Media & Content
-
-| Product           | Reference                       |
-| ----------------- | ------------------------------- |
-| Images            | `references/images/`            |
-| Stream            | `references/stream/`            |
+| Product | Reference |
+|---------|-----------|
+| Images | `references/images/` |
+| Stream | `references/stream/` |
 | Browser Rendering | `references/browser-rendering/` |
-| Zaraz             | `references/zaraz/`             |
+| Zaraz | `references/zaraz/` |
 
 ### Real-Time Communication
-
-| Product      | Reference                  |
-| ------------ | -------------------------- |
-| RealtimeKit  | `references/realtimekit/`  |
+| Product | Reference |
+|---------|-----------|
+| RealtimeKit | `references/realtimekit/` |
 | Realtime SFU | `references/realtime-sfu/` |
 
 ### Developer Tools
-
-| Product               | Reference                        |
-| --------------------- | -------------------------------- |
-| Wrangler              | `references/wrangler/`           |
-| Miniflare             | `references/miniflare/`          |
-| C3                    | `references/c3/`                 |
-| Observability         | `references/observability/`      |
-| GraphQL Analytics API | `references/graphql-api/`        |
-| Analytics Engine      | `references/analytics-engine/`   |
-| Web Analytics         | `references/web-analytics/`      |
-| Sandbox               | `references/sandbox/`            |
-| Workerd               | `references/workerd/`            |
-| Workers Playground    | `references/workers-playground/` |
+| Product | Reference |
+|---------|-----------|
+| Wrangler | `references/wrangler/` |
+| Miniflare | `references/miniflare/` |
+| C3 | `references/c3/` |
+| Observability | `references/observability/` |
+| GraphQL Analytics API | `references/graphql-api/` |
+| Analytics Engine | `references/analytics-engine/` |
+| Web Analytics | `references/web-analytics/` |
+| Sandbox | `references/sandbox/` |
+| Workerd | `references/workerd/` |
+| Workers Playground | `references/workers-playground/` |
 
 ### Infrastructure as Code
-
-| Product   | Reference               |
-| --------- | ----------------------- |
-| Pulumi    | `references/pulumi/`    |
+| Product | Reference |
+|---------|-----------|
+| Pulumi | `references/pulumi/` |
 | Terraform | `references/terraform/` |
-| API       | `references/api/`       |
+| API | `references/api/` |
 
 ### Other Services
-
-| Product       | Reference                   |
-| ------------- | --------------------------- |
+| Product | Reference |
+|---------|-----------|
 | Email Routing | `references/email-routing/` |
 | Email Workers | `references/email-workers/` |
 | Static Assets | `references/static-assets/` |
-| Bindings      | `references/bindings/`      |
+| Bindings | `references/bindings/` |
 | Cache Reserve | `references/cache-reserve/` |
 
 ## Rationalizations
 
 | Concern | Counter-Argument |
-|---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+|---------|-----------------|
+| The "Cloudflare skill" can be skipped because sub-skills cover everything. | Sub-skills are the deep references; this skill is the index + retrieval orchestration. Skipping it means the agent has to discover the right sub-skill by trial and error. |
+| Cached references are fine to use without re-fetching. | Cloudflare product behavior changes between compat dates. Stale references produce code that breaks against the current runtime. The skill mandates fresh fetches. |
+| The Terraform/Pulumi references are interchangeable. | They are not — Pulumi uses TypeScript with provider packages, Terraform uses HCL with its own state model. Choosing the wrong reference produces a non-functional config. |
+| Skipping the official Cloudflare docs link and citing a blog post is fine. | Blog posts are 6-12 months behind the canonical docs. Official docs reflect what shipped, not what was previewed. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Do not answer a Cloudflare product question without first checking the relevant `references/` subdirectory.
+- [ ] Do not cite a blog post or third-party tutorial when an official `developers.cloudflare.com` page exists.
+- [ ] Do not treat sub-skills as a substitute for this index — load both for non-trivial questions.
+- [ ] Do not assume a Cloudflare product's free tier limits — they change quarterly.
+- [ ] Do not skip the `compatibility_date` context — runtime behavior varies across dates.

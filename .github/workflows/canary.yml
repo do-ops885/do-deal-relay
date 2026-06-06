@@ -103,8 +103,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Configure canary traffic split
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-}"
           PERCENTAGE="${{ needs.setup-canary.outputs.percentage }}"
 
           if [ -z "${ACCOUNT_ID}" ]; then
@@ -117,16 +120,20 @@ jobs:
           # This is a placeholder for the configuration step
           echo "Canary deployed with ${PERCENTAGE}% traffic allocation"
 
+          STAGING_HOST="$(bash scripts/worker-host.sh staging || true)"
+          if [ -z "${STAGING_HOST}" ]; then
+            echo "❌ Could not resolve staging host"
+            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
+            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
+            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
+            exit 1
+          fi
+          STAGING_URL="https://${STAGING_HOST}"
+
           echo "## Canary Status" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Status**: Deployed"
           echo "- **Traffic**: ${PERCENTAGE}%"
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
-          if [ -z "${WORKER_HOST}" ]; then
-            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
-            exit 1
-          fi
-          STAGING_URL="https://${WORKER_HOST}"
           echo "- **URL**: ${STAGING_URL}"
 
       - name: Wait for canary duration
@@ -143,17 +150,23 @@ jobs:
 
     steps:
       - name: Health check loop
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          WORKER_HOST="${{ secrets.CLOUDFLARE_WORKER_HOST }}"
+          CANARY_HOST="$(bash scripts/worker-host.sh staging)"
           DURATION="${{ needs.setup-canary.outputs.duration }}"
           END_TIME=$(($(date +%s) + DURATION * 60))
 
-          if [ -z "${WORKER_HOST}" ]; then
-            echo "❌ CLOUDFLARE_WORKER_HOST secret not set"
+          if [ -z "${CANARY_HOST}" ]; then
+            echo "❌ Could not resolve canary (staging) host"
+            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
+            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
+            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
             exit 1
           fi
 
-          CANARY_URL="https://${WORKER_HOST}"
+          CANARY_URL="https://${CANARY_HOST}"
           HEALTHY=0
           FAILED=0
 

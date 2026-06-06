@@ -23,7 +23,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Standard fetch uses Cache Reserve automatically
     return await fetch(request);
-  },
+  }
 };
 ```
 
@@ -44,7 +44,7 @@ if (!response) {
 return await fetch(request);
 
 // ✅ CORRECT: Use Cache API only for custom cache namespaces
-const customCache = await caches.open("my-custom-cache");
+const customCache = await caches.open('my-custom-cache');
 let response = await customCache.match(request);
 if (!response) {
   response = await fetch(request);
@@ -61,26 +61,26 @@ if (!response) {
 const purgeCacheReserveByURL = async (
   zoneId: string,
   apiToken: string,
-  urls: string[],
+  urls: string[]
 ) => {
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ files: urls }),
-    },
+      body: JSON.stringify({ files: urls })
+    }
   );
   return await response.json();
 };
 
 // Example usage
-await purgeCacheReserveByURL("zone123", "token456", [
-  "https://example.com/image.jpg",
-  "https://example.com/video.mp4",
+await purgeCacheReserveByURL('zone123', 'token456', [
+  'https://example.com/image.jpg',
+  'https://example.com/video.mp4'
 ]);
 ```
 
@@ -91,18 +91,14 @@ await purgeCacheReserveByURL("zone123", "token456", [
 await fetch(
   `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
   {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ tags: ["tag1", "tag2"] }),
-  },
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags: ['tag1', 'tag2'] })
+  }
 );
 ```
 
 **Purge behavior:**
-
 - **By URL**: Immediate removal from Cache Reserve + edge cache
 - **By tag/host/prefix**: Revalidation only, assets remain in storage (costs continue)
 
@@ -112,7 +108,7 @@ await fetch(
 // Requires Cache Reserve OFF first
 await fetch(
   `https://api.cloudflare.com/client/v4/zones/${zoneId}/cache/cache_reserve_clear`,
-  { method: "POST", headers: { Authorization: `Bearer ${apiToken}` } },
+  { method: 'POST', headers: { 'Authorization': `Bearer ${apiToken}` } }
 );
 
 // Check status: GET same endpoint returns { state: "In-progress" | "Completed" }
@@ -138,24 +134,24 @@ Navigate to **Caching > Cache Reserve** to view:
 // Logpush field: CacheReserveUsed (boolean) - filter for Cache Reserve hits
 // Query Cache Reserve hits in analytics
 const logpushQuery = `
-  SELECT
-    ClientRequestHost,
-    COUNT(*) as requests,
+  SELECT 
+    ClientRequestHost, 
+    COUNT(*) as requests, 
     SUM(EdgeResponseBytes) as bytes_served,
     COUNT(CASE WHEN CacheReserveUsed = true THEN 1 END) as cache_reserve_hits,
     COUNT(CASE WHEN CacheReserveUsed = false THEN 1 END) as cache_reserve_misses
-  FROM http_requests
+  FROM http_requests 
   WHERE Timestamp >= NOW() - INTERVAL '24 hours'
-  GROUP BY ClientRequestHost
+  GROUP BY ClientRequestHost 
   ORDER BY requests DESC
 `;
 
 // Filter only Cache Reserve hits
 const crHitsQuery = `
   SELECT ClientRequestHost, COUNT(*) as requests, SUM(EdgeResponseBytes) as bytes
-  FROM http_requests
+  FROM http_requests 
   WHERE CacheReserveUsed = true AND Timestamp >= NOW() - INTERVAL '7 days'
-  GROUP BY ClientRequestHost
+  GROUP BY ClientRequestHost 
   ORDER BY bytes DESC
 `;
 ```
@@ -170,9 +166,7 @@ query CacheReserveAnalytics($zoneTag: string, $since: string, $until: string) {
         filter: { datetime_geq: $since, datetime_leq: $until }
         limit: 1000
       ) {
-        dimensions {
-          date
-        }
+        dimensions { date }
         sum {
           cachedBytes
           cachedRequests

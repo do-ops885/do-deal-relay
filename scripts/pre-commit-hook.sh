@@ -128,6 +128,9 @@ check_pattern() {
         grep -vE "INSERT.*test" | \
         grep -vE "console\.log" | \
         grep -vE "uses:\s*[a-zA-Z0-9/-]+@[a-f0-9]{40}" | \
+        grep -vE "^diff --git " | \
+        grep -vE "^index [0-9a-f]+\.\." | \
+        grep -vE "^(\+\+\+|---) [ab]/" | \
         grep -E "$pattern" || true)
     if [ -n "$MATCHES" ]; then
         error "Potential secret detected ($name):"
@@ -386,6 +389,8 @@ ALLOWED_ROOT_FILES=(
     ".codesandbox"
     ".devcontainer"
     ".pre-commit-config.yaml"
+    ".codacy.yml"
+    ".codacy.yaml"
 )
 
 ROOT_VIOLATIONS=0
@@ -430,9 +435,9 @@ while IFS= read -r file; do
         fi
     fi
 
-    # Scripts should be in scripts/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
+    # Scripts should be in scripts/ or tests/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
     if [[ "$file" == *.sh ]]; then
-        if [[ "$file" != scripts/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
+        if [[ "$file" != scripts/* ]] && [[ "$file" != tests/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
             error "Shell script outside allowed directories: $file"
             MISPLACED=1
         fi

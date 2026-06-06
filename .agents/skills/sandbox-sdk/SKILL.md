@@ -1,10 +1,6 @@
 ---
 name: sandbox-sdk
 description: Build sandboxed applications for secure code execution. Load when building AI code execution, code interpreters, CI/CD systems, interactive dev environments, or executing untrusted code. Covers Sandbox SDK lifecycle, commands, files, code interpreter, and preview URLs. Biases towards retrieval from Cloudflare docs over pre-trained knowledge.
-metadata:
-  version: "1.0.0"
-  author: do-ops
-  spec: "agentskills.io"
 ---
 
 # Cloudflare Sandbox SDK
@@ -22,12 +18,12 @@ docker info  # Must succeed - Docker required for local dev
 
 Your knowledge of the Sandbox SDK may be outdated. **Prefer retrieval over pre-training** for any Sandbox SDK task.
 
-| Resource      | URL                                                          |
-| ------------- | ------------------------------------------------------------ |
-| Docs          | https://developers.cloudflare.com/sandbox/                   |
-| API Reference | https://developers.cloudflare.com/sandbox/api/               |
-| Examples      | https://github.com/cloudflare/sandbox-sdk/tree/main/examples |
-| Get Started   | https://developers.cloudflare.com/sandbox/get-started/       |
+| Resource | URL |
+|----------|-----|
+| Docs | https://developers.cloudflare.com/sandbox/ |
+| API Reference | https://developers.cloudflare.com/sandbox/api/ |
+| Examples | https://github.com/cloudflare/sandbox-sdk/tree/main/examples |
+| Get Started | https://developers.cloudflare.com/sandbox/get-started/ |
 
 When implementing features, fetch the relevant doc page or example first.
 
@@ -37,49 +33,47 @@ When implementing features, fetch the relevant doc page or example first.
 
 ```jsonc
 {
-  "containers": [
-    {
-      "class_name": "Sandbox",
-      "image": "./Dockerfile",
-      "instance_type": "lite",
-      "max_instances": 1,
-    },
-  ],
+  "containers": [{
+    "class_name": "Sandbox",
+    "image": "./Dockerfile",
+    "instance_type": "lite",
+    "max_instances": 1
+  }],
   "durable_objects": {
-    "bindings": [{ "class_name": "Sandbox", "name": "Sandbox" }],
+    "bindings": [{ "class_name": "Sandbox", "name": "Sandbox" }]
   },
-  "migrations": [{ "new_sqlite_classes": ["Sandbox"], "tag": "v1" }],
+  "migrations": [{ "new_sqlite_classes": ["Sandbox"], "tag": "v1" }]
 }
 ```
 
 **Worker entry** - must re-export Sandbox class:
 
 ```typescript
-import { getSandbox } from "@cloudflare/sandbox";
-export { Sandbox } from "@cloudflare/sandbox"; // Required export
+import { getSandbox } from '@cloudflare/sandbox';
+export { Sandbox } from '@cloudflare/sandbox';  // Required export
 ```
 
 ## Quick Reference
 
-| Task                   | Method                                                       |
-| ---------------------- | ------------------------------------------------------------ |
-| Get sandbox            | `getSandbox(env.Sandbox, 'user-123')`                        |
-| Run command            | `await sandbox.exec('python script.py')`                     |
-| Run code (interpreter) | `await sandbox.runCode(code, { language: 'python' })`        |
-| Write file             | `await sandbox.writeFile('/workspace/app.py', content)`      |
-| Read file              | `await sandbox.readFile('/workspace/app.py')`                |
-| Create directory       | `await sandbox.mkdir('/workspace/src', { recursive: true })` |
-| List files             | `await sandbox.listFiles('/workspace')`                      |
-| Expose port            | `await sandbox.exposePort(8080)`                             |
-| Destroy                | `await sandbox.destroy()`                                    |
+| Task | Method |
+|------|--------|
+| Get sandbox | `getSandbox(env.Sandbox, 'user-123')` |
+| Run command | `await sandbox.exec('python script.py')` |
+| Run code (interpreter) | `await sandbox.runCode(code, { language: 'python' })` |
+| Write file | `await sandbox.writeFile('/workspace/app.py', content)` |
+| Read file | `await sandbox.readFile('/workspace/app.py')` |
+| Create directory | `await sandbox.mkdir('/workspace/src', { recursive: true })` |
+| List files | `await sandbox.listFiles('/workspace')` |
+| Expose port | `await sandbox.exposePort(8080)` |
+| Destroy | `await sandbox.destroy()` |
 
 ## Core Patterns
 
 ### Execute Commands
 
 ```typescript
-const sandbox = getSandbox(env.Sandbox, "user-123");
-const result = await sandbox.exec("python --version");
+const sandbox = getSandbox(env.Sandbox, 'user-123');
+const result = await sandbox.exec('python --version');
 // result: { stdout, stderr, exitCode, success }
 ```
 
@@ -88,10 +82,10 @@ const result = await sandbox.exec("python --version");
 Use `runCode()` for executing LLM-generated code with rich outputs:
 
 ```typescript
-const ctx = await sandbox.createCodeContext({ language: "python" });
+const ctx = await sandbox.createCodeContext({ language: 'python' });
 
-await sandbox.runCode("import pandas as pd; data = [1,2,3]", { context: ctx });
-const result = await sandbox.runCode("sum(data)", { context: ctx });
+await sandbox.runCode('import pandas as pd; data = [1,2,3]', { context: ctx });
+const result = await sandbox.runCode('sum(data)', { context: ctx });
 // result.results[0].text = "6"
 ```
 
@@ -102,20 +96,20 @@ State persists within context. Create explicit contexts for production.
 ### File Operations
 
 ```typescript
-await sandbox.mkdir("/workspace/project", { recursive: true });
-await sandbox.writeFile("/workspace/project/main.py", code);
-const file = await sandbox.readFile("/workspace/project/main.py");
-const files = await sandbox.listFiles("/workspace/project");
+await sandbox.mkdir('/workspace/project', { recursive: true });
+await sandbox.writeFile('/workspace/project/main.py', code);
+const file = await sandbox.readFile('/workspace/project/main.py');
+const files = await sandbox.listFiles('/workspace/project');
 ```
 
 ## When to Use What
 
-| Need                    | Use         | Why                             |
-| ----------------------- | ----------- | ------------------------------- |
-| Shell commands, scripts | `exec()`    | Direct control, streaming       |
-| LLM-generated code      | `runCode()` | Rich outputs, state persistence |
-| Build/test pipelines    | `exec()`    | Exit codes, stderr capture      |
-| Data analysis           | `runCode()` | Charts, tables, pandas          |
+| Need | Use | Why |
+|------|-----|-----|
+| Shell commands, scripts | `exec()` | Direct control, streaming |
+| LLM-generated code | `runCode()` | Rich outputs, state persistence |
+| Build/test pipelines | `exec()` | Exit codes, stderr capture |
+| Data analysis | `runCode()` | Charts, tables, pandas |
 
 ## Extending the Dockerfile
 
@@ -158,7 +152,7 @@ See: https://developers.cloudflare.com/sandbox/guides/expose-services/
 The SDK provides helpers for OpenAI Agents at `@cloudflare/sandbox/openai`:
 
 ```typescript
-import { Shell, Editor } from "@cloudflare/sandbox/openai";
+import { Shell, Editor } from '@cloudflare/sandbox/openai';
 ```
 
 See `examples/openai-agents` for complete integration pattern.
@@ -185,15 +179,16 @@ See `examples/openai-agents` for complete integration pattern.
 ## Rationalizations
 
 | Concern | Counter-Argument |
-|---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+|---------|-----------------|
+| The 10-minute sleep window means cold-start latency on idle sandboxes. | Containers resume on next `getSandbox()` call. The latency is the cost of per-execution isolation, which is the security property that justifies the SDK. |
+| Reaching for the internal `CommandClient` / `FileClient` would feel faster than `sandbox.*` methods. | Internal clients bypass lifecycle management, error normalization, and the `destroy()` cleanup path. The "speed" is a one-call win that becomes a multi-hour incident. |
+| Hardcoding `sandboxId` per request would simplify code. | It also collapses every user's session into a single namespace — the same RCE-grade mistake as a shared DB connection string. Use user/session identifiers. |
+| Forgetting `destroy()` for a one-off sandbox seems harmless. | Forgotten sandboxes bill forever (10-minute idle ticks). Cleanup is the contract, not a nicety. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Do not import `CommandClient` or `FileClient` directly — use `sandbox.*` methods.
+- [ ] Do not omit `export { Sandbox }` from the Worker entry — deployment will fail.
+- [ ] Do not hardcode `sandboxId` for multi-user workloads.
+- [ ] Do not skip `destroy()` for temporary sandboxes.
+- [ ] Do not call `getSandbox()` with a constant ID in a multi-tenant Worker.

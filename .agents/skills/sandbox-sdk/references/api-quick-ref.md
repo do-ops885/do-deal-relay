@@ -24,7 +24,7 @@ await sandbox.exec(command: string, options?: ExecOptions): Promise<ExecResult>
 interface ExecOptions {
   cwd?: string;           // Working directory
   env?: Record<string, string>;  // Environment variables
-  timeout?: number;       // Timeout in ms (default: 60000)
+  timeout?: number;       // Timeout in ms (no default; runs without timeout if unset)
   stdin?: string;         // Input to command
 }
 
@@ -97,7 +97,7 @@ Errors include context about the operation:
 
 ```typescript
 try {
-  await sandbox.exec("invalid-command");
+  await sandbox.exec('invalid-command');
 } catch (error) {
   // error.message includes command and sandbox context
 }
@@ -106,8 +106,8 @@ try {
 For `runCode()`, check `result.error` instead of catching:
 
 ```typescript
-const result = await sandbox.runCode("1/0", { language: "python" });
+const result = await sandbox.runCode('1/0', { language: 'python' });
 if (result.error) {
-  console.error(result.error.name); // "ZeroDivisionError"
+  console.error(result.error.name);  // "ZeroDivisionError"
 }
 ```

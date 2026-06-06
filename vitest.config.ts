@@ -16,6 +16,8 @@ export default defineConfig({
       "**/tests/e2e/**", // Playwright E2E tests
       "**/dist/**",
       "**/.wrangler/**",
+      // Skill scaffolding templates are copied into new projects, not run here
+      "**/.agents/skills/**/templates/**",
     ],
     coverage: {
       provider: "v8",

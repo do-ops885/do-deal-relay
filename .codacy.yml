@@ -1,0 +1,19 @@
+---
+# Codacy configuration file
+# https://docs.codacy.com/repositories-configure/codacy-configuration-file/
+#
+# Excludes skill scaffolding templates (code copied into user projects) and
+# other generated/auxiliary paths from analysis.
+
+exclude_paths:
+  - ".agents/skills/**/templates/**"
+  - ".agents/skills/**/references/templates/**"
+  - "coverage/**"
+  - "node_modules/**"
+  - "dist/**"
+  - ".wrangler/**"
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/*.test.sh"
+  - "**/*.spec.ts"
+  - "**/*.spec.js"

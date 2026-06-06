@@ -31,6 +31,7 @@ Before deploying, ensure you have:
 
 - [ ] 5 KV namespaces created and bound in `wrangler.jsonc` (see Section 2 for IDs)
 - [ ] D1 database created and bound in `wrangler.jsonc`
+- [ ] Vectorize index `deal-embeddings` (768 dims, cosine metric) — required for semantic search
 - [ ] `workers.dev` subdomain registered on the Cloudflare account
 - [ ] GitHub Actions secrets configured (see Section 4)
 
@@ -83,8 +84,7 @@ These are used by CI/CD workflows to deploy via wrangler.
 | Secret | Purpose | Where to Find |
 |--------|---------|---------------|
 | `CLOUDFLARE_API_TOKEN` | Authenticates wrangler deploys from CI | Cloudflare dashboard → My Profile → API Tokens |
-| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account | Cloudflare dashboard → right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | (Optional) Custom worker hostname for health checks | If using a custom domain/route |
+| `CLOUDFLARE_ACCOUNT_ID` | Identifies the Cloudflare account. Cannot be used to derive the workers.dev hostname — that requires the `account_subdomain` slug (see `WORKER_HOST` variable). | Cloudflare dashboard → right sidebar |
 
 ---
 
@@ -100,6 +100,22 @@ These are used by CI/CD workflows to deploy via wrangler.
 6. Click **Save**
 
 Repeat for each secret. Set secrets on **both** `staging` and `production` worker instances.
+
+### Setting up the Vectorize Index
+
+Required for semantic search (`/api/semantic-search`). Run the **Vectorize Index Setup** workflow from the Actions tab with `confirm: true` to create the `deal-embeddings` index. The index must exist before `wrangler deploy` succeeds.
+
+Manual equivalent:
+
+```bash
+# Production
+npx wrangler vectorize create "deal-embeddings" \
+  --dimensions=768 --metric=cosine --env production
+
+# Staging (if using a separate index)
+npx wrangler vectorize create "deal-embeddings-staging" \
+  --dimensions=768 --metric=cosine --env staging
+```
 
 ### Setting Worker Secrets via Wrangler CLI
 
@@ -150,9 +166,63 @@ Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 
 | Secret Name | Value | Notes |
 |-------------|-------|-------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers permissions | Token must have `Workers Scripts:Edit` and `KV Storage:Edit` |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Found in dashboard right sidebar |
-| `CLOUDFLARE_WORKER_HOST` | (Optional) Custom worker hostname | e.g., `do-deal-relay.do-it-119.workers.dev` |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers permissions | Token must have `Workers Scripts:Edit` and `KV Storage:Edit`, and `Vectorize:Edit` for semantic search |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID. Required: used by `wrangler deploy` and the API rollback path. | Found in dashboard right sidebar |
+
+### Required Repository Variables
+
+The CI workflows read a single variable: `WORKER_HOST`. The workers.dev URL pattern is `<worker-name>.<account-subdomain>.workers.dev`; the `account-subdomain` is a slug chosen at account creation (e.g. `do-it-119`) and **cannot be derived from `CLOUDFLARE_ACCOUNT_ID`**. This is stored as a *variable* (not a secret) because the workers.dev hostname is not sensitive.
+
+#### Recommended: GitHub Environments (2026 best practice)
+
+Scope `WORKER_HOST` per environment — `${{ vars.WORKER_HOST }}` then auto-resolves based on the job's `environment:` key. This is the cleanest pattern and survives adding new envs without renaming variables.
+
+1. **Settings** → **Environments** → **New environment** → create `production` and `staging`
+2. Open each environment → **Add variable** → name: `WORKER_HOST` → value: the appropriate hostname
+   - `production` env → `WORKER_HOST = do-deal-relay.do-it-119.workers.dev`
+   - `staging` env → `WORKER_HOST = do-deal-relay-staging.do-it-119.workers.dev`
+3. In the workflow, jobs that declare `environment: production` (or `staging`) automatically get the environment-scoped value; repo-level acts as fallback
+
+#### Alternative: single repository variable
+
+If both envs share a hostname (custom domain, or you only have one env), set it at the repo level:
+
+- **Settings** → **Secrets and variables** → **Actions** → **Variables** → **New repository variable**
+- Name: `WORKER_HOST`, value: e.g. `deals.example.com`
+
+In CI workflows, expose it via:
+
+```yaml
+env:
+  WORKER_HOST: ${{ vars.WORKER_HOST }}
+```
+
+### How Worker URLs Are Resolved
+
+All CI workflows resolve the worker URL via `scripts/worker-host.sh <env>`. This script requires the `WORKER_HOST` variable (or env var) to be set and returns exit code 2 otherwise. The `account_id` (a hex hash) is **not** usable to derive the workers.dev hostname.
+
+Resolution order in `scripts/worker-host.sh` (first non-empty wins):
+
+1. `$WORKER_HOST` (primary; set via `${{ vars.WORKER_HOST }}` in CI — auto-resolves per GitHub Environment)
+2. `$CLOUDFLARE_WORKER_HOST` (legacy alias, still accepted for backward compatibility)
+3. `$WORKER_HOST_OVERRIDE` (ad-hoc override for testing)
+4. Else: exit 2 with an actionable error pointing the operator to set the variable.
+
+```bash
+# Production deploy (WORKER_HOST scoped to the 'production' GH Environment)
+$ WORKER_HOST=do-deal-relay.do-it-119.workers.dev \
+    scripts/worker-host.sh production
+do-deal-relay.do-it-119.workers.dev
+
+# Staging deploy (WORKER_HOST scoped to the 'staging' GH Environment)
+$ WORKER_HOST=do-deal-relay-staging.do-it-119.workers.dev \
+    scripts/worker-host.sh staging
+do-deal-relay-staging.do-it-119.workers.dev
+
+# Custom domain override
+$ WORKER_HOST=deals.example.com scripts/worker-host.sh production
+deals.example.com
+```
 
 ### Required GitHub Environments
 
@@ -456,6 +526,82 @@ npx wrangler kv key list --namespace-id be3c0fc148b749b49a59aa7cfa23e3ac
 2. Verify `CLOUDFLARE_ACCOUNT_ID` matches the account
 3. Check if the API token has expired
 4. Regenerate at: Cloudflare dashboard → My Profile → API Tokens
+
+### CI Fails at "Verify staging is healthy" with `❌ WORKER_HOST is not set`
+
+**Symptom**: `❌ WORKER_HOST is not set` or `❌ Staging not healthy` early in the deploy job.
+
+**Cause**: No resolvable hostname for the requested env. The Cloudflare workers.dev hostname cannot be derived from `CLOUDFLARE_ACCOUNT_ID` — it must be set explicitly.
+
+**Fix** — recommended: **GitHub Environments** (single `WORKER_HOST` per env)
+
+1. **Settings** → **Environments** → open `staging` (create it if missing)
+2. **Add variable** → name `WORKER_HOST` → value `do-deal-relay-staging.do-it-119.workers.dev`
+3. Repeat for the `production` environment with the production hostname
+4. Confirm the workflow job declares `environment: staging` (or `production`); GitHub then injects `${{ vars.WORKER_HOST }}` per env
+
+**Other checks**:
+1. Confirm `CLOUDFLARE_ACCOUNT_ID` secret is set (needed for the API rollback path).
+2. Confirm the latest commit on the running branch contains `scripts/worker-host.sh`.
+3. If using a custom domain, set the variable to that domain (e.g. `deals.example.com`).
+
+Legacy alias `CLOUDFLARE_WORKER_HOST` and ad-hoc `WORKER_HOST_OVERRIDE` are still accepted by `scripts/worker-host.sh` for backward compatibility.
+
+### PR Check `Workers Builds: do-deal-relay` Fails (In 0s)
+
+**Symptom**: Cloudflare's own check on the PR (`Workers Builds: do-deal-relay`) reports failure — often `in 0s` — with no build log content (or a redirect to a dashboard URL). The URL points to a build that never produced any output.
+
+**Cause**: The Cloudflare GitHub App ("Cloudflare Workers and Pages") is connected to this repo and triggers its own build on every push. That build runs outside our control — the Cloudflare dashboard's **Settings → Builds** panel owns the build command, branch filters, and previews. The configuration there is not stored in the repo and frequently drifts or breaks (e.g. wrong `name` mapping, missing wrangler install step, expired OAuth grant).
+
+**Fix** (2026 best practice per [Cloudflare Workers Builds docs](https://developers.cloudflare.com/workers/ci-cd/builds/)):
+
+- **GitHub Actions owns `wrangler deploy`** via `cloudflare/wrangler-action` in `deploy-production.yml`, `canary.yml`, `release.yml`, `rollback.yml`. This is the only path that runs in CI today.
+- **Disconnect the Cloudflare GitHub App** from this repo so the `Workers Builds: do-deal-relay` check stops appearing on PRs. See [Disconnecting the Cloudflare GitHub App](#disconnecting-the-cloudflare-github-app) below.
+- After disconnecting, deploys happen only via GitHub Actions workflows; the Cloudflare dashboard's **Builds** panel becomes inert for this repo.
+
+### Disconnecting the Cloudflare GitHub App
+
+The `cloudflare-workers-and-pages[bot]` posts the failing check on every PR. It comes from the **Cloudflare Workers and Pages** GitHub App, installed at the account or repo level. Disconnecting is a one-time UI step and cannot be scripted from the repo:
+
+1. Open `https://github.com/settings/installations` (or this repo's **Settings → Integrations → GitHub Apps**).
+2. Find **Cloudflare Workers and Pages** in the list.
+3. Click **Configure** → scroll to **Repository access**.
+4. Either:
+   - Move this repo (`do-ops885/do-deal-relay`) to **Only select repositories** and uncheck it, **or**
+   - Click **Uninstall** for the whole account (only if no other repos need it).
+5. Confirm. The app's webhook is removed within ~30 seconds.
+6. Open a new PR — the `Workers Builds: do-deal-relay` check will no longer appear.
+
+> **Alternative (per-Cloudflare-account)**: Cloudflare also has a per-account "Workers Builds" integration in the Cloudflare dashboard (**Workers & Pages → your Worker → Settings → Builds → Disconnect**). Disconnecting here stops Cloudflare from building on push but does not remove the GitHub App; the app will still post informational comments on PRs. To kill the bot completely, disconnect at the GitHub level as above.
+
+After disconnect, the only thing deploying to Cloudflare is `cloudflare/wrangler-action` in the four workflows. The `branch → environment` mapping is then defined by the workflow job's `environment:` key, not by Cloudflare's dashboard:
+
+| Git branch | GH Actions workflow | `environment:` | `wrangler` command | Worker hostname |
+|---|---|---|---|---|
+| `main` | `deploy-production.yml` (on push), `release.yml` (on tag) | `production` | `deploy --env production` | `do-deal-relay.do-it-119.workers.dev` |
+| `staging` | `deploy-production.yml` (on push), `canary.yml` (manual), `release.yml` (pre-release) | `staging` | `deploy --env staging` | `do-deal-relay-staging.do-it-119.workers.dev` |
+| any other branch (PR) | `ci.yml` runs previews via `wrangler versions upload` | n/a | `versions upload` | ephemeral preview URL |
+| manual rollback | `rollback.yml` (workflow_dispatch) | `production` | `deploy --env production` | `do-deal-relay.do-it-119.workers.dev` |
+
+### Historical: Branch → Environment Mapping (Cloudflare Builds — removed)
+
+This section is retained for archaeology only. Before the `Workers Builds` GitHub App was disconnected, deploys were driven by **Git branch** in the Cloudflare dashboard's **Settings → Builds**:
+
+| Git branch | Worker hostname | Cloudflare Build "Deploy command" | Worker name in Cloudflare dashboard |
+|-----------|-----------------|------------------------------------|--------------------------------------|
+| `main`    | `do-deal-relay.do-it-119.workers.dev` | `npx wrangler deploy --env production` | `do-deal-relay` (the `env.production` block in `wrangler.jsonc`) |
+| `staging` | `do-deal-relay-staging.do-it-119.workers.dev` | `npx wrangler deploy --env staging` | `do-deal-relay-staging` (the `env.staging` block in `wrangler.jsonc`) |
+| any other branch (PR) | preview URL | `npx wrangler versions upload` (default) | (preview) |
+
+Configuration was in the Cloudflare dashboard: **Workers & Pages** → your Worker → **Settings** → **Builds** → **Build configuration**:
+
+1. **Production branch** = `main`
+2. **Deploy command** = `npx wrangler deploy --env production`
+3. Enable **Builds for non-production branches** and set **Non-production branch deploy command** = `npx wrangler deploy --env staging` (because every non-`main` branch should target the staging Worker in this repo's setup — change if you want true per-branch preview URLs).
+
+> **Caveat**: Cloudflare Builds' "non-production branch" setting is a single toggle — it applies to *all* non-production branches with the same deploy command. If you need a true per-branch preview (`feature/foo` → its own preview Worker), use `npx wrangler versions upload` (the default) which produces ephemeral preview URLs that don't replace the staging Worker. The current setup intentionally targets the staging Worker from the `staging` branch only — other branches produce version uploads, not real deploys.
+
+If you later need to disable automatic deploys (e.g. for review-only PR builds), change the deploy command to `npx wrangler versions upload` — builds will still run, but the version won't be promoted to the active deployment.
 
 ### Type Errors After Merge
 
