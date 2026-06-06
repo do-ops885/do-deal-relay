@@ -70,8 +70,8 @@
   "d1_databases": [
     {
       "binding": "DEALS_DB",
-      "database_name": "do-deal-relay",
-      "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+      "database_name": "deals-db-staging",
+      "database_id": "22222222-2222-2222-2222-222222222222",
     },
   ],
   // Vectorize index for semantic search over deals and referrals
@@ -155,8 +155,8 @@
       "d1_databases": [
         {
           "binding": "DEALS_DB",
-          "database_name": "do-deal-relay",
-          "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+          "database_name": "deals-db-staging",
+          "database_id": "22222222-2222-2222-2222-222222222222",
         },
       ],
       "vectorize": [
@@ -213,7 +213,7 @@
       "d1_databases": [
         {
           "binding": "DEALS_DB",
-          "database_name": "do-deal-relay",
+          "database_name": "deals-db",
           "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
         },
       ],
