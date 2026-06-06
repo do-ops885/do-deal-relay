@@ -57,6 +57,8 @@ ALLOWED_ROOT_FILES=(
     "state\.json"
     "markdownlint\.toml"
     "\.pre-commit-config\.yaml"
+    "\.codacy\.yml"
+    "\.codacy\.yaml"
 )
 
 # Get all files in root (not in subdirectories)

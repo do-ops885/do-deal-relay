@@ -389,6 +389,8 @@ ALLOWED_ROOT_FILES=(
     ".codesandbox"
     ".devcontainer"
     ".pre-commit-config.yaml"
+    ".codacy.yml"
+    ".codacy.yaml"
 )
 
 ROOT_VIOLATIONS=0
