@@ -1,3 +1,4 @@
+import { VERSION } from "../../version";
 import type { Env, HealthStatus, LogEntry, PipelineMetrics } from "../../types";
 import { getAllowedOrigin, jsonResponse } from "../utils";
 import {
@@ -194,7 +195,7 @@ export async function getHealthStatus(
 
     const response: HealthStatus = {
       status: overallStatus,
-      version: "1.0.0",
+      version: VERSION,
       timestamp: new Date().toISOString(),
       uptime_seconds: uptimeSeconds,
       checks: {
