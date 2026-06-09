@@ -30,26 +30,40 @@ jobs:
     environment: production
     timeout-minutes: 30
 
-    if: github.event.schedule == '0 */6 * * *' || github.event.inputs.environment == 'production'
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.event.schedule != ''
 
     steps:
-      - name: Trigger discovery pipeline
+      - name: Resolve production host
+        id: resolve_host
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          echo "Triggering scheduled discovery on production..."
+          if [ -z "${WORKER_HOST}" ]; then
+            echo "⚠️  WORKER_HOST is not set on the 'production' GitHub Environment."
+            echo "    Skipping scheduled discovery. Set WORKER_HOST to enable."
+            echo "host=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
-          if [ -z "${PROD_HOST}" ]; then
-            echo "❌ Could not resolve production host"
-            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
-            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
-            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
+          if [ ! -f "scripts/worker-host.sh" ]; then
+            echo "❌ scripts/worker-host.sh not found in checkout"
+            echo "host=" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
-          PROD_URL="https://${PROD_HOST}"
+          HOST="$(bash scripts/worker-host.sh production)"
+          echo "Resolved production host: ${HOST}"
+          echo "host=${HOST}" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger discovery pipeline
+        if: steps.resolve_host.outputs.host != ''
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          PROD_URL="https://${{ steps.resolve_host.outputs.host }}"
           echo "Production URL: ${PROD_URL}"
 
           # Health check first
@@ -64,25 +78,14 @@ jobs:
             echo "Discovery trigger failed: ${RESPONSE}"
             exit 1
           }
-
           echo "Discovery triggered successfully: ${RESPONSE}"
 
       - name: Wait and verify
+        if: steps.resolve_host.outputs.host != ''
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
-          if [ -z "${PROD_HOST}" ]; then
-            echo "❌ Could not resolve production host"
-            echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
-            echo "     Settings → Environments → production → Variables → WORKER_HOST" >&2
-            echo "     Settings → Environments → staging    → Variables → WORKER_HOST" >&2
-            exit 1
-          fi
-
-          PROD_URL="https://${PROD_HOST}"
-
+          PROD_URL="https://${{ steps.resolve_host.outputs.host }}"
           echo "Waiting 2 minutes for discovery to complete..."
           sleep 120
 
@@ -111,6 +114,17 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
+          if [ -z "${WORKER_HOST}" ]; then
+            echo "⚠️  WORKER_HOST is not set on the 'staging' GitHub Environment."
+            echo "    Skipping scheduled discovery. Set WORKER_HOST to enable."
+            exit 0
+          fi
+
+          if [ ! -f "scripts/worker-host.sh" ]; then
+            echo "❌ scripts/worker-host.sh not found in checkout"
+            exit 1
+          fi
+
           echo "Triggering discovery on staging..."
 
           STAGING_HOST="$(bash scripts/worker-host.sh staging)"

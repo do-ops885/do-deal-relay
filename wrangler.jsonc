@@ -59,6 +59,13 @@
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
   },
+  "secrets": {
+    "required": [
+      "WEBHOOK_SECRET",
+      "EMAIL_WEBHOOK_SECRET",
+      "API_ENCRYPTION_KEY",
+    ],
+  },
   // D1 Database for advanced queries and full-text search
   "d1_databases": [
     {
@@ -93,6 +100,13 @@
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
       },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
+      },
     },
     // Staging environment for pre-production testing
     "staging": {
@@ -108,6 +122,13 @@
         "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
+      },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
       },
       "kv_namespaces": [
         {
@@ -159,6 +180,13 @@
         "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
+      },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
       },
       "kv_namespaces": [
         {

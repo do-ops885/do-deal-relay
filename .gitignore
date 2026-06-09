@@ -54,6 +54,7 @@ temp/SWARM_*
 # Generated files
 *.generated.ts
 *.generated.js
+worker-configuration.d.ts
 
 # Prettier/Formatter
 .prettierignore

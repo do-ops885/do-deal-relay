@@ -185,7 +185,7 @@ jobs:
       - name: Stop dev server
         if: always()
         run: |
-          if [ ! -z "$WRANGLER_PID" ]; then
+          if [ -n "$WRANGLER_PID" ]; then
             kill "$WRANGLER_PID" 2>/dev/null || true
           fi
       - name: Upload test results
