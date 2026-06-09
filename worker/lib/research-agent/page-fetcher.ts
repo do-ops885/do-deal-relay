@@ -85,13 +85,10 @@ export async function fetchGenericPageContent(
 function stripScriptAndStyleTags(input: string): string {
   const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script(?:\s+[^>]*)?>/gi;
   const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style(?:\s+[^>]*)?>/gi;
-  let result = input;
-  let previous: string;
-  do {
-    previous = result;
-    result = result.replace(SCRIPT_BLOCK, "").replace(STYLE_BLOCK, "");
-  } while (result !== previous);
-  return result;
+  const parts = input.split(SCRIPT_BLOCK);
+  const withoutScript = parts.join("");
+  const styleParts = withoutScript.split(STYLE_BLOCK);
+  return styleParts.join("");
 }
 
 function parseHtmlContent(url: string, html: string): PageContentResult {
