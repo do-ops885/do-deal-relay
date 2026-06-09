@@ -4,6 +4,20 @@
 
 set -euo pipefail
 
+ensure_dev_vars() {
+  if [ ! -f .dev.vars ]; then
+    cat > .dev.vars <<'EOF'
+WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod
+EMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod
+API_ENCRYPTION_KEY=e2e-test-encryption-key-32-chars-ok
+EOF
+    echo "✓ Created .dev.vars with E2E test secrets"
+  else
+    echo "✓ .dev.vars already exists, skipping creation"
+  fi
+}
+ensure_dev_vars
+
 echo "Seeding E2E test API keys..."
 
 # Admin Key: ddr_admin_test_key_0000000000000000
