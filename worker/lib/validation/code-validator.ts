@@ -1,72 +1,25 @@
-/**
- * Code Validator Module
- *
- * Validates referral code formats and verifies code existence on referral pages.
- * Tests code redemption possibilities where applicable.
- *
- * Features:
- * - Format validation per provider
- * - Code existence verification on pages
- * - Redemption testing (where possible)
- * - Provider-specific validation rules
- */
-
-import type { Deal, Env } from "../../types";
+import type { Env } from "../../types";
 import { logger } from "../global-logger";
-import { CircuitBreaker, getSourceCircuitBreaker } from "../circuit-breaker";
-import { CONFIG } from "../../config";
+import type {
+  CodeValidationResult,
+  PageValidationResult,
+  RedemptionTestResult,
+  ProviderFormat,
+} from "./code-validator-types";
+import { validateCodeOnPage, testCodeRedemption } from "./page-validation";
 
-// ============================================================================
-// Types
-// ============================================================================
+export type {
+  CodeValidationResult,
+  PageValidationResult,
+  RedemptionTestResult,
+  ProviderFormat,
+} from "./code-validator-types";
 
-export interface CodeValidationResult {
-  code: string;
-  provider: string;
-  valid: boolean;
-  formatValid: boolean;
-  existsOnPage?: boolean;
-  redeemable?: boolean;
-  errors: string[];
-  warnings: string[];
-  metadata?: {
-    normalizedCode?: string;
-    similarCodes?: string[];
-    detectedProvider?: string;
-  };
-  timestamp: string;
-}
-
-export interface PageValidationResult {
-  codeFound: boolean;
-  context?: string;
-  similarCodes: string[];
-  pageTitle?: string;
-  pageAccessible: boolean;
-  error?: string;
-}
-
-export interface RedemptionTestResult {
-  testable: boolean;
-  tested: boolean;
-  redeemable?: boolean;
-  error?: string;
-  requiresManualVerification: boolean;
-}
+export { validateCodeOnPage, testCodeRedemption } from "./page-validation";
 
 // ============================================================================
 // Provider-Specific Code Formats
 // ============================================================================
-
-interface ProviderFormat {
-  name: string;
-  patterns: RegExp[];
-  minLength: number;
-  maxLength: number;
-  allowedChars: RegExp;
-  caseSensitive: boolean;
-  examples: string[];
-}
 
 const PROVIDER_FORMATS: Record<string, ProviderFormat> = {
   generic: {
@@ -120,22 +73,6 @@ const PROVIDER_FORMATS: Record<string, ProviderFormat> = {
 // Code Format Validation
 // ============================================================================
 
-/**
- * Validate referral code format for a specific provider
- *
- * Checks code length, allowed characters, and provider-specific patterns.
- *
- * @param code - Referral code to validate
- * @param provider - Provider identifier (or "auto" for auto-detection)
- * @returns Validation result with format details
- * @example
- * ```typescript
- * const result = validateCodeFormat("REFERRAL123", "generic");
- * if (!result.valid) {
- *   console.log(`Invalid code format: ${result.errors.join(", ")}`);
- * }
- * ```
- */
 export function validateCodeFormat(
   code: string,
   provider: string,
@@ -144,7 +81,6 @@ export function validateCodeFormat(
   const warnings: string[] = [];
   const timestamp = new Date().toISOString();
 
-  // Basic validation
   if (!code || typeof code !== "string") {
     return {
       code: code || "",
@@ -171,10 +107,8 @@ export function validateCodeFormat(
     };
   }
 
-  // Get provider format
   const format = PROVIDER_FORMATS[provider] ?? PROVIDER_FORMATS.generic!;
 
-  // Check length
   if (trimmedCode.length < format.minLength) {
     errors.push(
       `Code too short: ${trimmedCode.length} chars (min: ${format.minLength})`,
@@ -186,14 +120,12 @@ export function validateCodeFormat(
     );
   }
 
-  // Check allowed characters
   if (!format.allowedChars.test(trimmedCode)) {
     errors.push(
       `Code contains invalid characters. Allowed: ${format.allowedChars.toString()}`,
     );
   }
 
-  // Check against patterns
   let patternMatch = false;
   for (const pattern of format.patterns) {
     if (pattern.test(trimmedCode)) {
@@ -206,7 +138,6 @@ export function validateCodeFormat(
     warnings.push("Code doesn't match expected pattern for this provider");
   }
 
-  // Normalize code (uppercase if not case sensitive)
   const normalizedCode = format.caseSensitive
     ? trimmedCode
     : trimmedCode.toUpperCase();
@@ -236,9 +167,6 @@ export function validateCodeFormat(
   };
 }
 
-/**
- * Auto-detect provider based on code format
- */
 function detectProvider(code: string): string {
   for (const [key, format] of Object.entries(PROVIDER_FORMATS)) {
     if (key === "generic") continue;
@@ -253,354 +181,18 @@ function detectProvider(code: string): string {
   return "generic";
 }
 
-/**
- * Get list of supported providers
- */
 export function getSupportedProviders(): string[] {
   return Object.keys(PROVIDER_FORMATS);
 }
 
-/**
- * Get provider format details
- */
 export function getProviderFormat(provider: string): ProviderFormat | null {
   return PROVIDER_FORMATS[provider] || null;
-}
-
-// ============================================================================
-// Page Code Validation
-// ============================================================================
-
-/**
- * Validate that a code exists on a referral page
- *
- * Fetches the page and searches for the code in the content.
- * Also looks for similar codes that might be variations.
- *
- * @param code - Code to search for
- * @param url - URL of the referral page
- * @param env - Worker environment
- * @returns Page validation result
- * @example
- * ```typescript
- * const result = await validateCodeOnPage("REF123", "https://example.com/refer", env);
- * if (!result.codeFound) {
- *   console.log("Code not found on page - may be expired");
- * }
- * ```
- */
-export async function validateCodeOnPage(
-  code: string,
-  url: string,
-  env?: Env,
-): Promise<PageValidationResult> {
-  logger.info(`Validating code on page: ${code} at ${url}`, {
-    component: "code-validator",
-  });
-
-  const domain = extractDomain(url);
-
-  // Get circuit breaker for this domain
-  const breaker = env
-    ? getSourceCircuitBreaker(domain, env)
-    : new CircuitBreaker(`validate-code:${domain}`, {
-        failureThreshold: 3,
-        resetTimeoutMs: 60000,
-        halfOpenMaxCalls: 2,
-      });
-
-  try {
-    const result = await breaker.execute(async () => {
-      return await fetchAndValidateCode(code, url);
-    });
-
-    logger.info(`Page code validation completed`, {
-      component: "code-validator",
-      codeFound: result.codeFound,
-      similarCodes: result.similarCodes.length,
-    });
-
-    return result;
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Validation failed";
-
-    logger.error(`Page code validation failed`, {
-      component: "code-validator",
-      error: errorMessage,
-    });
-
-    return {
-      codeFound: false,
-      similarCodes: [],
-      pageAccessible: false,
-      error: errorMessage,
-    };
-  }
-}
-
-/**
- * Fetch page and validate code exists
- */
-async function fetchAndValidateCode(
-  code: string,
-  url: string,
-): Promise<PageValidationResult> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": CONFIG.USER_AGENT,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      return {
-        codeFound: false,
-        similarCodes: [],
-        pageAccessible: false,
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      };
-    }
-
-    // HTML scraping: Pages are typically small (<1MB). Using response.text() is acceptable
-    // for searching referral codes in page content.
-    const html = await response.text();
-    const pageTitle = extractTitle(html);
-
-    // Search for code in HTML
-    const { found, context, similarCodes } = findCodeInHtml(code, html);
-
-    return {
-      codeFound: found,
-      context,
-      similarCodes,
-      pageTitle,
-      pageAccessible: true,
-    };
-  } catch (error) {
-    clearTimeout(timeout);
-    throw error;
-  }
-}
-
-/**
- * Extract title from HTML
- */
-function extractTitle(html: string): string | undefined {
-  const match = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  return match?.[1]?.trim();
-}
-
-/**
- * Find code in HTML content
- */
-function findCodeInHtml(
-  code: string,
-  html: string,
-): { found: boolean; context?: string; similarCodes: string[] } {
-  const normalizedCode = code.toUpperCase();
-  const upperHtml = html.toUpperCase();
-
-  // Direct match
-  const found = upperHtml.includes(normalizedCode);
-
-  // Get context if found
-  let context: string | undefined;
-  if (found) {
-    const index = upperHtml.indexOf(normalizedCode);
-    const start = Math.max(0, index - 50);
-    const end = Math.min(html.length, index + normalizedCode.length + 50);
-    context = html.slice(start, end).replace(/\s+/g, " ");
-  }
-
-  // Find similar codes (same prefix or pattern)
-  const similarCodes: string[] = [];
-  const codePattern = /[A-Z0-9_-]{4,30}/gi;
-  const matches = html.match(codePattern) || [];
-
-  for (const match of matches) {
-    const normalized = match.toUpperCase();
-    if (
-      normalized !== normalizedCode &&
-      !similarCodes.includes(normalized) &&
-      isSimilarCode(normalizedCode, normalized)
-    ) {
-      similarCodes.push(normalized);
-    }
-
-    // Limit similar codes
-    if (similarCodes.length >= 5) break;
-  }
-
-  return { found, context, similarCodes };
-}
-
-/**
- * Check if two codes are similar
- */
-function isSimilarCode(code1: string, code2: string): boolean {
-  // Same prefix (first 3 chars)
-  if (code1.slice(0, 3) === code2.slice(0, 3)) return true;
-
-  // Same suffix (last 3 chars)
-  if (code1.slice(-3) === code2.slice(-3)) return true;
-
-  // Levenshtein distance (for small differences)
-  if (levenshteinDistance(code1, code2) <= 2) return true;
-
-  return false;
-}
-
-/**
- * Calculate Levenshtein distance between two strings
- */
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i];
-  }
-
-  const firstRow = matrix[0];
-  if (firstRow) {
-    for (let j = 0; j <= str1.length; j++) {
-      firstRow[j] = j;
-    }
-  }
-
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      const prevRow = matrix[i - 1];
-      const currRow = matrix[i];
-      if (prevRow && currRow) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          currRow[j] = prevRow[j - 1] ?? 0;
-        } else {
-          currRow[j] =
-            Math.min(
-              (prevRow[j - 1] ?? 0) + 1, // substitution
-              (currRow[j - 1] ?? 0) + 1, // insertion
-              (prevRow[j] ?? 0) + 1, // deletion
-            ) ?? 0;
-        }
-      }
-    }
-  }
-
-  return matrix[str2.length]?.[str1.length] ?? 0;
-}
-
-// ============================================================================
-// Code Redemption Testing
-// ============================================================================
-
-/**
- * Test if a referral code is redeemable
- *
- * Attempts to validate code without actually redeeming it.
- * Note: Most providers don't expose APIs for this, so manual
- * verification may be required.
- *
- * @param code - Code to test
- * @param domain - Provider domain
- * @returns Redemption test result
- * @example
- * ```typescript
- * const result = await testCodeRedemption("REF123", "example.com");
- * if (!result.redeemable && result.requiresManualVerification) {
- *   console.log("Manual verification needed");
- * }
- * ```
- */
-export async function testCodeRedemption(
-  code: string,
-  domain: string,
-): Promise<RedemptionTestResult> {
-  logger.info(`Testing code redemption: ${code} at ${domain}`, {
-    component: "code-validator",
-  });
-
-  // Most providers don't expose redemption testing APIs
-  // This is a placeholder that indicates manual verification is needed
-
-  // Check if we have known redemption endpoints for this domain
-  const knownEndpoints = getRedemptionEndpoints(domain);
-
-  if (knownEndpoints.length === 0) {
-    return {
-      testable: false,
-      tested: false,
-      requiresManualVerification: true,
-      error: "No automated redemption testing available for this provider",
-    };
-  }
-
-  // Try known endpoints
-  for (const endpoint of knownEndpoints) {
-    try {
-      const result = await tryRedemptionEndpoint(code, endpoint);
-      if (result.tested) {
-        return result;
-      }
-    } catch {
-      // Continue to next endpoint
-    }
-  }
-
-  return {
-    testable: true,
-    tested: false,
-    requiresManualVerification: true,
-    error: "Could not verify redemption status",
-  };
-}
-
-/**
- * Get known redemption endpoints for a domain
- */
-function getRedemptionEndpoints(domain: string): string[] {
-  // Known endpoints for testing redemption (rarely available)
-  const endpoints: Record<string, string[]> = {
-    "trading212.com": ["/api/v1/referral/validate"],
-    // Add more as discovered
-  };
-
-  return endpoints[domain] || [];
-}
-
-/**
- * Try to validate code via redemption endpoint
- */
-async function tryRedemptionEndpoint(
-  _code: string,
-  _endpoint: string,
-): Promise<RedemptionTestResult> {
-  // This would make an actual API call to test redemption
-  // For now, we mark as requiring manual verification
-  return {
-    testable: true,
-    tested: false,
-    requiresManualVerification: true,
-  };
 }
 
 // ============================================================================
 // Utility Functions
 // ============================================================================
 
-/**
- * Extract domain from URL
- */
 function extractDomain(url: string): string {
   try {
     return new URL(url).hostname;
@@ -609,9 +201,10 @@ function extractDomain(url: string): string {
   }
 }
 
-/**
- * Complete code validation (format + page + redemption)
- */
+// ============================================================================
+// Complete Code Validation
+// ============================================================================
+
 export async function validateCodeComplete(
   code: string,
   provider: string,
@@ -620,20 +213,16 @@ export async function validateCodeComplete(
 ): Promise<CodeValidationResult> {
   const timestamp = new Date().toISOString();
 
-  // Step 1: Format validation
   const formatResult = validateCodeFormat(code, provider);
   if (!formatResult.valid) {
     return formatResult;
   }
 
-  // Step 2: Page validation
   const pageResult = await validateCodeOnPage(code, url, env);
 
-  // Step 3: Redemption test (if available)
   const domain = extractDomain(url);
   const redemptionResult = await testCodeRedemption(code, domain);
 
-  // Combine results
   const errors = [...formatResult.errors];
   const warnings = [...formatResult.warnings];
 
@@ -675,16 +264,12 @@ export async function validateCodeComplete(
   };
 }
 
-/**
- * Batch validate multiple codes
- */
 export async function validateCodesBatch(
   codes: Array<{ code: string; provider: string; url: string }>,
   env?: Env,
 ): Promise<CodeValidationResult[]> {
   const results: CodeValidationResult[] = [];
 
-  // Add delay between validations to be respectful
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -698,7 +283,6 @@ export async function validateCodesBatch(
       );
       results.push(result);
 
-      // Small delay between requests
       await delay(500);
     } catch (error) {
       const errorMessage =

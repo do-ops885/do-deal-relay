@@ -21,7 +21,7 @@ import {
 import {
   RESEARCH_SOURCES,
   KNOWN_REFERRAL_PROGRAMS,
-} from "../../worker/lib/research-agent/types";
+} from "../../worker/lib/research-agent/constants";
 
 let originalSources: typeof RESEARCH_SOURCES;
 let originalPrograms: typeof KNOWN_REFERRAL_PROGRAMS;

@@ -75,10 +75,11 @@ export type {
   CircuitBreakerState,
 } from "./types";
 
-// Utility functions from types
+// Constants
+export { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "./constants";
+
+// Utility functions
 export {
-  RESEARCH_SOURCES,
-  KNOWN_REFERRAL_PROGRAMS,
   normalizeResearchQuery,
   generateSearchQueries,
   generatePotentialCodes,
@@ -89,4 +90,4 @@ export {
   deduplicateCodes,
   extractRewardValue,
   getDefaultResearchConfig,
-} from "./types";
+} from "./helpers";

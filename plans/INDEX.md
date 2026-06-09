@@ -24,6 +24,7 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 
 ## Completed Plans (Recent)
 
+- [Fix CI LOC Violations (2026-06-09)](GOAP-fix-ci-loc-violations-2026-06-09.md) — Quality gate LOC enforcement fixed; 9 source files split under 600 lines; exclusion patterns corrected.
 - [GOAP Master Resolution (2026-06-04)](GOAP-master-resolution-2026-06-04.md) — **All non-blocked open issues resolved** via 3-agent swarm (10 issues: 8 closed, 1 duplicate, 1 blocked-keep-open).
 - [ADR-012: Master Implementation Strategy](ADR-012-master-implementation-strategy.md) — Strategy for the 47-issue backlog (PR #411).
 - [GOAP Web UI Dashboard Implementation](GOAP-web-ui-dashboard-implementation.md) — Dashboard epic (#298-#302) closed.
