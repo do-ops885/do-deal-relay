@@ -293,6 +293,9 @@ wrangler secret put TELEGRAM_CHAT_ID --env staging
 | Secret                 | Required    | Purpose                        |
 | ---------------------- | ----------- | ------------------------------ |
 | GITHUB_TOKEN           | HIGH (P1)   | GitHub commits, PR creation    |
+| JWT_SECRET             | HIGH (P1)   | Signing JWT access tokens      |
+| JWT_REFRESH_SECRET     | Optional    | Signing JWT refresh tokens     |
+| EMAIL_WEBHOOK_SECRET   | HIGH (P1)   | Verifying email webhooks       |
 | TELEGRAM_BOT_TOKEN     | Optional    | Telegram notifications         |
 | TELEGRAM_CHAT_ID       | Optional    | Telegram destination chat      |
 
@@ -723,6 +726,26 @@ For API-only workers like this, Bot Fight Mode can block automated scrapers:
 2. Enable **Bot Fight Mode** (Free) or **Bot Management** (Enterprise)
 
 > **Note**: WAF rules require Cloudflare proxying (orange cloud) on your DNS record. If your worker runs solely on `workers.dev` domain, some WAF features may have limited effect. For full edge security, add a custom domain and proxy through Cloudflare.
+
+### Semantic Search (Vectorize)
+
+The Semantic Search feature requires a Cloudflare Vectorize index named `deal-embeddings`.
+
+1. **Create Index**:
+   ```bash
+   wrangler vectorize create deal-embeddings --dimensions=768 --metric=cosine
+   ```
+
+2. **Update Configuration**:
+   Ensure the binding is present in `wrangler.jsonc`:
+   ```jsonc
+   "vectorize": [
+     {
+       "binding": "DEAL_EMBEDDINGS",
+       "index_name": "deal-embeddings"
+     }
+   ]
+   ```
 
 ---
 

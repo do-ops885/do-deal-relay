@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 2026-05-17
 
 ### Added
+- **API Documentation Completion**: Documented previously internal endpoints for semantic search, cached research retrieval, and advanced D1 query operations (similar, recommended, trending)
+- **Configuration Parity**: Synchronized README.md and DEPLOYMENT.md with source-mandatory environment variables (JWT secrets, Email webhooks) and Vectorize setup instructions
 - **API Documentation Update**: Documented missing endpoints for similarity search, deal explanation, referral reactivation, and administrative key management
 - **Validation API Docs**: Added comprehensive documentation for URL and batch validation endpoints
 - **CI benchmark job**: Pipeline benchmark runs on release with 5,000 deals/sec threshold enforcement, report artifact upload, and performance summary in release notes
