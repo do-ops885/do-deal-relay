@@ -1,9 +1,17 @@
-# Documentation Audit
+# AUDIT_DOCS
 
-## Missing JSDoc for Public APIs
-- worker/lib/nlq/index.ts: Re-exports lack JSDoc descriptions.
-- worker/lib/cache.ts: Some exported methods missing @param/@returns.
-- worker/lib/auth.ts: Validation helpers missing doc comments.
+## Missing Doc Comments (Public APIs)
 
-## Actionable
-- Add JSDoc to worker/lib/nlq/index.ts barrel file.
+### Pipeline & Validation
+- `worker/pipeline/score.ts`: `calculateSourceDiversity`, `calculateUniquenessScore`
+- `worker/pipeline/normalize.ts`: `normalize`, `verifyNormalization`
+- `worker/validation/pipeline.ts`: `shouldQuarantine`, `calculateValidationRatio`
+- `worker/validation/gates/*.ts`: Most gate functions (`validateFreshness`, `validateSchema`, etc.)
+
+### Email System
+- `worker/email/extraction.ts`: `extractUrls`, `extractReferralUrl`, `detectService`, etc.
+- `worker/email/templates/*.ts`: Confirmation and error email creators.
+
+### MCP & Middleware
+- `worker/routes/mcp/utils.ts`: Response creators and validators.
+- `worker/middleware/authorization.ts`: `hasPermission`, `authorize`.

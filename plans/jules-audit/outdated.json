@@ -1,0 +1,51 @@
+{
+  "@cloudflare/vitest-pool-workers": {
+    "current": "0.16.12",
+    "wanted": "0.16.13",
+    "latest": "0.16.13",
+    "dependent": "app",
+    "location": "/app/node_modules/@cloudflare/vitest-pool-workers"
+  },
+  "@cloudflare/workers-types": {
+    "current": "4.20260603.1",
+    "wanted": "4.20260609.1",
+    "latest": "4.20260609.1",
+    "dependent": "app",
+    "location": "/app/node_modules/@cloudflare/workers-types"
+  },
+  "@types/node": {
+    "current": "25.9.1",
+    "wanted": "25.9.2",
+    "latest": "25.9.2",
+    "dependent": "app",
+    "location": "/app/node_modules/@types/node"
+  },
+  "miniflare": {
+    "current": "4.20260601.0",
+    "wanted": "4.20260603.0",
+    "latest": "4.20260603.0",
+    "dependent": "app",
+    "location": "/app/node_modules/miniflare"
+  },
+  "protobufjs": {
+    "current": "8.5.0",
+    "wanted": "8.5.0",
+    "latest": "8.6.1",
+    "dependent": "app",
+    "location": "/app/node_modules/protobufjs"
+  },
+  "wrangler": {
+    "current": "4.97.0",
+    "wanted": "4.98.0",
+    "latest": "4.98.0",
+    "dependent": "app",
+    "location": "/app/node_modules/wrangler"
+  },
+  "zod": {
+    "current": "3.25.76",
+    "wanted": "3.25.76",
+    "latest": "4.4.3",
+    "dependent": "app",
+    "location": "/app/node_modules/zod"
+  }
+}
