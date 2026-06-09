@@ -202,7 +202,7 @@ loc_violations=0
 while IFS= read -r -d '' file; do
     # Skip excluded directories
     case "$file" in
-        node_modules/*|.git/*|dist/*|coverage/*) continue ;;
+        node_modules/*|.git/*|dist/*|coverage/*|docs/*|reports/*) continue ;;
     esac
 
     line_count=$(wc -l < "$file" 2>/dev/null || echo 0)
