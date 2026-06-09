@@ -83,8 +83,8 @@ export async function fetchGenericPageContent(
 }
 
 function stripScriptAndStyleTags(input: string): string {
-  const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
-  const STYLE_TAG = /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi;
+  const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script(?:\s+[^>]*)?>/gi;
+  const STYLE_TAG = /<style\b[^>]*>[\s\S]*?<\/style(?:\s+[^>]*)?>/gi;
   let result = input;
   let previous: string;
   do {
