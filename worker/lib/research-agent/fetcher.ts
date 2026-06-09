@@ -1,4 +1,8 @@
-import { ResearchSource, type FetchResult, type ExtractedReferral } from "./types";
+import {
+  ResearchSource,
+  type FetchResult,
+  type ExtractedReferral,
+} from "./types";
 import {
   fetchProductHuntDeals,
   fetchGitHubTrending,
