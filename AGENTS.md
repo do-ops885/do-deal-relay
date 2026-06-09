@@ -1,5 +1,5 @@
 # Agent Coordination Hub - do-deal-relay
-**Version**: 1.1.0
+**Version**: 1.2.0
 
 ## Core Constraints
 Essential bounds for all agents.
@@ -10,6 +10,13 @@ readonly TRUST_THRESHOLD=0.3  # Production default
 readonly MAX_DEALS_PER_RUN=1000
 ```
 See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
+
+## Development Phases
+We use a GOAP approach combined with structured development.
+1. **ANALYZE** - Understand the problem, check CI status (`./scripts/check-ci-status.sh`)
+2. **DECOMPOSE** - Break into atomic tasks, write plan in `plans/`
+3. **EXECUTE** - Implement with atomic commits, run quality gate after each
+4. **SYNTHESIZE** - Update docs, extract learnings
 
 ## Infrastructure Contracts
 ### KV Namespaces
@@ -31,6 +38,18 @@ See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 4. **Quality Gates**: Run `./scripts/quality_gate.sh` before any submission.
 5. **Typed Tools**: Follow signatures in [SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md).
 
+## Delegation Routing
+- **Self-Execute**: 1 trivial isolated edit (typos, single-line constants)
+- **Delegate**: 2+ files, architectural changes, tasks requiring judgment
+- **Swarm**: 5+ similar independent tasks (batch refactors, multi-file updates)
+- **Route**: research-agent (discovery) → code-crafter (implementation) → parallel-execution (batch)
+
+## Verification Priority
+1. Typecheck / build (fast, deterministic)
+2. Unit tests (validates logic)
+3. Integration tests (validates behavior)
+4. Lint / format (enforces style)
+
 ## Reference Docs
 - [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) — Tool signatures & gate details.
 - [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md) — Limits & safety rules.
@@ -41,4 +60,7 @@ See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 - Load via `skill <name>` (Claude) or direct read (Gemini/Qwen).
 
 ## Post-Task Protocol
-Append to `.agents/metrics.jsonl`: `{"timestamp": "<ISO-8601>", "agent": "jules", "task": "<desc>", "status": "completed", "duration_seconds": <int>}`
+Append to `.agents/metrics.jsonl`:
+```json
+{"timestamp": "<ISO-8601>", "agent": "<id>", "task": "<desc>", "skill_used": "<skill|null>", "status": "completed|failed|partial", "tokens_used": <int>, "duration_seconds": <int>, "notes": "<text>"}
+```

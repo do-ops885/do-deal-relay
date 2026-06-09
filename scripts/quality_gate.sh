@@ -12,6 +12,19 @@ cd "${ROOT_DIR}"
 
 ERRORS=()
 WARNINGS=()
+DRIFT_DETECTED=false
+
+# Pre-check: CI drift detection
+# If .github/ci-status/ci-status.json exists and CI is failing, warn early
+CI_STATUS_FILE="${ROOT_DIR}/.github/ci-status/ci-status.json"
+if [ -f "$CI_STATUS_FILE" ]; then
+    if grep -q '"overall":\s*"failure"' "$CI_STATUS_FILE" 2>/dev/null || \
+       grep -q '"overall":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null; then
+        DRIFT_DETECTED=true
+        WARNINGS+=("⚠ CI drift detected: .github/ci-status/ci-status.json shows CI is failing")
+        WARNINGS+=("  Local quality gate may pass while CI is broken. Verify CI status before merging.")
+    fi
+fi
 
 # Function to run a check and capture output
 run_check() {
@@ -180,6 +193,51 @@ if [ -f "${ROOT_DIR}/tests/unit/worker-host.test.sh" ]; then
     run_check "Shell unit tests (worker-host.sh)" "bash ${ROOT_DIR}/tests/unit/worker-host.test.sh"
 fi
 
+# Check 15: Lines-of-code (LOC) enforcement
+# Enforce MAX_LINES_PER_SOURCE_FILE (500) with warning at 500, fail at 600
+LOC_WARNING_THRESHOLD=500
+LOC_FAIL_THRESHOLD=600
+loc_violations=0
+
+while IFS= read -r -d '' file; do
+    # Skip excluded directories
+    case "$file" in
+        node_modules/*|.git/*|dist/*|coverage/*) continue ;;
+    esac
+
+    line_count=$(wc -l < "$file" 2>/dev/null || echo 0)
+    if [ "$line_count" -ge "$LOC_FAIL_THRESHOLD" ]; then
+        ERRORS+=("✗ File exceeds ${LOC_FAIL_THRESHOLD} lines: $file ($line_count lines)")
+        loc_violations=$((loc_violations + 1))
+    elif [ "$line_count" -ge "$LOC_WARNING_THRESHOLD" ]; then
+        WARNINGS+=("⚠ File approaching limit: $file ($line_count lines, limit ${LOC_FAIL_THRESHOLD})")
+    fi
+done < <(find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.sh" -o -name "*.md" \) -print0 2>/dev/null)
+
+if [ $loc_violations -gt 0 ]; then
+    ERRORS+=("Fix files exceeding ${LOC_FAIL_THRESHOLD} lines or increase MAX_LINES_PER_SOURCE_FILE in AGENTS.md")
+fi
+
+# Check 16: Context efficiency (agent documentation size)
+# Warn if AGENTS.md or SKILL.md files are oversized
+AGENTS_MD_WARNING=200
+SKILL_MD_WARNING=250
+
+if [ -f "${ROOT_DIR}/AGENTS.md" ]; then
+    agents_lines=$(wc -l < "${ROOT_DIR}/AGENTS.md" 2>/dev/null || echo 0)
+    if [ "$agents_lines" -ge "$AGENTS_MD_WARNING" ]; then
+        WARNINGS+=("⚠ AGENTS.md is $agents_lines lines (recommended max: ${AGENTS_MD_WARNING})")
+        WARNINGS+=("  Large context files reduce agent efficiency. Consider moving details to agents-docs/.")
+    fi
+fi
+
+while IFS= read -r -d '' skill_file; do
+    skill_lines=$(wc -l < "$skill_file" 2>/dev/null || echo 0)
+    if [ "$skill_lines" -ge "$SKILL_MD_WARNING" ]; then
+        WARNINGS+=("⚠ $skill_file is $skill_lines lines (recommended max: ${SKILL_MD_WARNING})")
+    fi
+done < <(find . -path "*/skills/*/SKILL.md" -print0 2>/dev/null)
+
 # If there are errors, output them and exit with failure
 if [ ${#ERRORS[@]} -gt 0 ]; then
     echo ""
@@ -209,6 +267,13 @@ if [ ${#WARNINGS[@]} -gt 0 ]; then
     for warning in "${WARNINGS[@]}"; do
         echo "$warning"
     done
+fi
+
+# CI status update hint (main branch only)
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+    echo ""
+    echo "Run \`./scripts/update-ci-status.sh\` to update CI status artifacts."
 fi
 
 # Success: Exit silently with code 0
