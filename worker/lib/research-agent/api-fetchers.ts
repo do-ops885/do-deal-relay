@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl, validateUrl } from "../security";
+import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
 import type {
   ProductHuntResponse,
   GitHubSearchResponse,
@@ -66,7 +66,7 @@ export async function fetchProductHuntDeals(
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiToken}`,
@@ -181,7 +181,7 @@ export async function fetchGitHubTrending(
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers,
       signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
@@ -275,7 +275,7 @@ export async function fetchHackerNewsDeals(
       };
     }
 
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",

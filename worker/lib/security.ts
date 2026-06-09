@@ -125,6 +125,16 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
   }
 }
 
+export async function validatedFetch(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
+  if (!validateUrl(url)) {
+    throw new Error("Invalid or disallowed URL");
+  }
+  return fetch(url, init);
+}
+
 function isIpAddress(hostname: string): boolean {
   const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
   return ipv4Pattern.test(hostname) || hostname.includes(":");

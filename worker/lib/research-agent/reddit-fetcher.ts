@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl, validateUrl } from "../security";
+import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
 import type { RedditListingResponse } from "./types";
 import type { FetchResult } from "./fetcher";
 
@@ -25,7 +25,7 @@ async function getRedditOAuthToken(
       return null;
     }
 
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "POST",
       headers: {
         Authorization: `Basic ${credentials}`,
@@ -89,7 +89,7 @@ export async function fetchRedditDeals(
       };
     }
 
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -165,7 +165,7 @@ async function fetchRedditPublic(
       };
     }
 
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
