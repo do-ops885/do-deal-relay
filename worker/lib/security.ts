@@ -49,6 +49,28 @@ const SECURITY_CONSTANTS = {
   ] as const,
 } as const;
 
+export function validateUrl(
+  url: string,
+  allowedDomains?: readonly string[],
+): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    if (allowedDomains && allowedDomains.length > 0) {
+      const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+      const allowed = allowedDomains.some(
+        (d) => hostname === d.toLowerCase().replace(/^www\./, ""),
+      );
+      if (!allowed) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function validateFetchUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);

@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
+import { validateFetchUrl, validateUrl } from "../security";
 import type { RedditListingResponse } from "./types";
 import type { FetchResult } from "./fetcher";
 
@@ -150,6 +150,17 @@ async function fetchRedditPublic(
         contentType: "",
         statusCode: 403,
         error: "Blocked by SSRF protection",
+        fetchDurationMs: Date.now() - startTime,
+      };
+    }
+
+    if (!validateUrl(url)) {
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "Invalid or disallowed URL",
         fetchDurationMs: Date.now() - startTime,
       };
     }

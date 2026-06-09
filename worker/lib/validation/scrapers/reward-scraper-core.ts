@@ -2,6 +2,7 @@ import type { Reward, Env } from "../../../types";
 import { logger } from "../../global-logger";
 import { CircuitBreaker, getSourceCircuitBreaker } from "../../circuit-breaker";
 import { CONFIG } from "../../../config";
+import { validateUrl, validateFetchUrl } from "../../security";
 import type { RewardScrapeResult } from "./types";
 import { SCRAPE_TIMEOUT_MS } from "./types";
 import { extractRewardFromHTML } from "./html-extractor";
@@ -17,6 +18,24 @@ export function extractDomain(url: string): string {
 async function performRewardScrape(
   url: string,
 ): Promise<Omit<RewardScrapeResult, "scrapedAt">> {
+  if (!validateUrl(url)) {
+    return {
+      url,
+      success: false,
+      rewardChanged: false,
+      error: "Invalid or disallowed URL",
+    };
+  }
+
+  if (!(await validateFetchUrl(url))) {
+    return {
+      url,
+      success: false,
+      rewardChanged: false,
+      error: "Blocked by SSRF protection",
+    };
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SCRAPE_TIMEOUT_MS);
 

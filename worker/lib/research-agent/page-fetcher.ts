@@ -93,8 +93,8 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
 
   const metaTags: MetaTags = {};
   const metaRegex = /<meta[^>]*>/gi;
-  let metaMatch;
-  while ((metaMatch = metaRegex.exec(html)) !== null) {
+  let metaMatch: RegExpExecArray | null = metaRegex.exec(html);
+  while (metaMatch !== null) {
     const tag = metaMatch[0];
     if (tag) {
       const nameMatch = tag.match(/name=["']([^"']*)["']/i);
@@ -103,6 +103,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
         metaTags[nameMatch[1]] = contentMatch[1];
       }
     }
+    metaMatch = metaRegex.exec(html);
   }
 
   let textContent = html;
@@ -110,8 +111,8 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
   do {
     previousTextContent = textContent;
     textContent = textContent
-      .replace(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi, "")
-      .replace(/<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi, "")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
       .replace(/<[^>]+>/g, " ");
   } while (textContent !== previousTextContent);
 
@@ -120,8 +121,8 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
 
   const links: Array<{ text: string; href: string }> = [];
   const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([^<]*)<\/a>/gi;
-  let linkMatch;
-  while ((linkMatch = linkRegex.exec(html)) !== null) {
+  let linkMatch: RegExpExecArray | null = linkRegex.exec(html);
+  while (linkMatch !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
     if (
@@ -134,6 +135,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
         : new URL(href, url).toString();
       links.push({ text, href: absoluteUrl });
     }
+    linkMatch = linkRegex.exec(html);
   }
 
   return {

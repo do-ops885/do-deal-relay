@@ -2,8 +2,6 @@ import type { Env } from "../../types";
 import { logger } from "../global-logger";
 import type {
   CodeValidationResult,
-  PageValidationResult,
-  RedemptionTestResult,
   ProviderFormat,
 } from "./code-validator-types";
 import { validateCodeOnPage, testCodeRedemption } from "./page-validation";

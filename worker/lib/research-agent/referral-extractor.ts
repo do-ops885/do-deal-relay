@@ -107,8 +107,8 @@ function extractWithContext(
   for (const pattern of patterns) {
     pattern.lastIndex = 0;
 
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
+    let match: RegExpExecArray | null = pattern.exec(content);
+    while (match !== null) {
       const matchedText = match[1] ?? match[0];
       if (!matchedText) continue;
       const key = matchedText.toLowerCase();
@@ -124,6 +124,7 @@ function extractWithContext(
       const context = content.slice(start, end);
 
       matches.push({ match: matchedText, context });
+      match = pattern.exec(content);
     }
   }
 

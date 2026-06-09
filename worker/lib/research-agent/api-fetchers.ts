@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
+import { validateFetchUrl, validateUrl } from "../security";
 import type {
   ProductHuntResponse,
   GitHubSearchResponse,
@@ -264,6 +264,17 @@ export async function fetchHackerNewsDeals(
   }
 
   try {
+    if (!validateUrl(url)) {
+      return {
+        success: false,
+        content: "",
+        contentType: "",
+        statusCode: 403,
+        error: "Invalid or disallowed URL",
+        fetchDurationMs: Date.now() - startTime,
+      };
+    }
+
     const response = await fetch(url, {
       method: "GET",
       headers: {

@@ -1,6 +1,8 @@
 # GOAP Plan: Fix CI LOC Violations (2026-06-09)
 
 **Status**: completed
+**PR**: [#445](https://github.com/do-ops885/do-deal-relay/pull/445)
+**Branch**: `fix/ci-loc-violations-2026-06-09`
 **Created**: 2026-06-09
 **Completed**: 2026-06-09
 **Issue**: CI failing on `CI + Labels Setup` and `Deploy - Production` workflows
@@ -10,10 +12,11 @@
 
 ## Problem Analysis
 
-The quality gate (`scripts/quality_gate.sh`, lines 196-219) scans all `.ts`, `.js`, `.sh`, `.md` files and fails any file ≥600 lines. Two issues:
+The quality gate (`scripts/quality_gate.sh`, lines 196-219) scans all `.ts`, `.js`, `.sh`, `.md` files and fails any file ≥600 lines. Three issues found:
 
 1. **Missing exclusions**: `tests/`, `.agents/`, `.claude/`, `.opencode/`, `plans/`, `public/` not excluded
 2. **Broken case patterns**: `find` outputs `./`-prefixed paths but `case` patterns lacked `./` prefix
+3. **Incorrect node_modules pattern**: `./.node_modules/*` should be `./node_modules/*`
 
 ---
 
@@ -23,7 +26,7 @@ The quality gate (`scripts/quality_gate.sh`, lines 196-219) scans all `.ts`, `.j
 **Changes to `scripts/quality_gate.sh`:**
 - Added missing directory exclusions: `tests/`, `.agents/`, `.claude/`, `.opencode/`, `plans/`, `public/`
 - Fixed `case` patterns to match `./`-prefixed paths from `find`
-- Added both `./dir/*` and `dir/*` patterns for robustness
+- Corrected `./.node_modules/*` to `./node_modules/*`
 
 **LOC check result**: 0 violations (was 40+)
 
@@ -57,13 +60,25 @@ All 9 files split successfully, each under 600 lines:
 
 ---
 
-## Verification
+## CI Status (PR #445)
 
-- ✅ `npm run build` passes
-- ✅ `npm run lint` passes (Prettier formatted)
-- ✅ LOC check: 0 violations (source files only)
-- ✅ All 9 source files under 600 lines
-- ✅ Plans folder updated
+| Check | Status |
+|-------|--------|
+| Quality Gate | ✅ pass |
+| Run Tests | ✅ pass |
+| Unit Tests | ✅ pass |
+| E2E Tests | ✅ pass |
+| Type Check | ✅ pass |
+| Build | ✅ pass |
+| Format Check | ✅ pass |
+| Validation Gates | ✅ pass |
+| Security Scan | ✅ pass |
+| Secret Detection | ✅ pass |
+| Workers Builds | ✅ pass |
+| Codacy Static Code Analysis | ❌ fail (pre-existing) |
+| CodeQL | ❌ fail (pre-existing) |
+
+**Note**: Codacy and CodeQL failures are pre-existing and unrelated to this PR. All core CI checks pass.
 
 ---
 
@@ -71,7 +86,7 @@ All 9 files split successfully, each under 600 lines:
 
 | File | Change |
 |------|--------|
-| `scripts/quality_gate.sh` | Fixed exclusion patterns |
+| `scripts/quality_gate.sh` | Fixed exclusion patterns (2 commits) |
 | `worker/lib/research-agent/fetcher.ts` | Split into 6 modules |
 | `worker/lib/research-agent/types.ts` | Split into 3 modules |
 | `worker/lib/d1/queries.ts` | Split into 9 modules |

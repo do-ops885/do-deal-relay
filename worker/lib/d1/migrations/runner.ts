@@ -8,11 +8,9 @@ import type {
 import { MIGRATIONS } from "./schema";
 
 export class MigrationRunner {
-  private db: D1Database;
   private client: ReturnType<typeof createD1Client>;
 
   constructor(db: D1Database) {
-    this.db = db;
     this.client = createD1Client(db);
   }
 
