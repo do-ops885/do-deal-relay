@@ -18,10 +18,21 @@ function detectCurrency(text: string, position: number): string | undefined {
   return undefined;
 }
 
+function stripScriptAndStyleTags(input: string): string {
+  const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+  const STYLE_TAG = /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi;
+  let result = input;
+  let previous: string;
+  do {
+    previous = result;
+    result = result.replace(SCRIPT_TAG, "").replace(STYLE_TAG, "");
+  } while (result !== previous);
+  return result;
+}
+
 function extractTextFromHtml(html: string): string {
-  return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+  const sanitized = stripScriptAndStyleTags(html);
+  return sanitized
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();

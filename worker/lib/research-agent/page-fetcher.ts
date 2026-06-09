@@ -82,6 +82,18 @@ export async function fetchGenericPageContent(
   }
 }
 
+function stripScriptAndStyleTags(input: string): string {
+  const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+  const STYLE_TAG = /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi;
+  let result = input;
+  let previous: string;
+  do {
+    previous = result;
+    result = result.replace(SCRIPT_TAG, "").replace(STYLE_TAG, "");
+  } while (result !== previous);
+  return result;
+}
+
 function parseHtmlContent(url: string, html: string): PageContentResult {
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   const title = titleMatch?.[1] ? titleMatch[1].trim() : "";
@@ -106,22 +118,14 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
     metaMatch = metaRegex.exec(html);
   }
 
-  let textContent = html;
-  let previousTextContent: string;
-  do {
-    previousTextContent = textContent;
-    textContent = textContent
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ");
-  } while (textContent !== previousTextContent);
-
+  const sanitized = stripScriptAndStyleTags(html);
+  let textContent = sanitized.replace(/<[^>]+>/g, " ");
   textContent = textContent.replace(/\s+/g, " ").trim();
   textContent = textContent.substring(0, 10000);
 
   const links: Array<{ text: string; href: string }> = [];
   const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([^<]*)<\/a>/gi;
-  let linkMatch: RegExpExecArray | null = linkRegex.exec(html);
+  let linkMatch: RegExpExecArray | null = linkRegex.exec(sanitized);
   while (linkMatch !== null) {
     const href = linkMatch[1];
     const text = linkMatch[2]?.trim() ?? "";
@@ -135,7 +139,7 @@ function parseHtmlContent(url: string, html: string): PageContentResult {
         : new URL(href, url).toString();
       links.push({ text, href: absoluteUrl });
     }
-    linkMatch = linkRegex.exec(html);
+    linkMatch = linkRegex.exec(sanitized);
   }
 
   return {
