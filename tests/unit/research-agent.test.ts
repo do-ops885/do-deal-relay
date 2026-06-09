@@ -7,8 +7,8 @@ import {
   extractReferralsFromContent,
   researchRateLimiter,
   fetchGenericPageContent,
+  RESEARCH_SOURCES,
 } from "../../worker/lib/research-agent";
-import { RESEARCH_SOURCES } from "../../worker/lib/research-agent/constants";
 import type { Env, WebResearchRequest } from "../../worker/types";
 import * as securityModule from "../../worker/lib/security";
 

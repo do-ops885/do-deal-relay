@@ -1,7 +1,7 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl } from "../security";
 import type { PageContentResult, MetaTags } from "./types";
-import type { FetchResult } from "./fetcher";
+import type { FetchResult } from "./types";
 
 export async function fetchGenericPageContent(
   url: string,

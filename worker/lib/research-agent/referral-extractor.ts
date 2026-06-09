@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { ResearchSource } from "./types";
-import type { ExtractedReferral } from "./fetcher";
+import type { ExtractedReferral } from "./types";
 
 export function extractReferralsFromContent(
   content: string,

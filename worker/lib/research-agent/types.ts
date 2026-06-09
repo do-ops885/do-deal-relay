@@ -180,3 +180,22 @@ export interface CircuitBreakerState {
   state: "closed" | "open" | "half-open";
   successCount: number;
 }
+
+export interface FetchResult {
+  success: boolean;
+  content: string;
+  contentType: string;
+  statusCode: number;
+  error?: string;
+  fetchDurationMs: number;
+}
+
+export interface ExtractedReferral {
+  code: string;
+  url: string;
+  source: string;
+  discoveredAt: string;
+  rewardSummary?: string;
+  confidence: number;
+  context?: string;
+}

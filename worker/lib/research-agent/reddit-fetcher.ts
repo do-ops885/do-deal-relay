@@ -1,7 +1,7 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
 import type { RedditListingResponse } from "./types";
-import type { FetchResult } from "./fetcher";
+import type { FetchResult } from "./types";
 
 let redditOAuthToken: { token: string; expiresAt: number } | null = null;
 

@@ -1,4 +1,4 @@
-import { ResearchSource } from "./types";
+import { ResearchSource, type FetchResult, type ExtractedReferral } from "./types";
 import {
   fetchProductHuntDeals,
   fetchGitHubTrending,
@@ -12,24 +12,7 @@ import {
   researchRateLimiter as _researchRateLimiter,
 } from "./rate-limiter";
 
-export interface FetchResult {
-  success: boolean;
-  content: string;
-  contentType: string;
-  statusCode: number;
-  error?: string;
-  fetchDurationMs: number;
-}
-
-export interface ExtractedReferral {
-  code: string;
-  url: string;
-  source: string;
-  discoveredAt: string;
-  rewardSummary?: string;
-  confidence: number;
-  context?: string;
-}
+export type { FetchResult, ExtractedReferral } from "./types";
 
 export async function fetchFromSource(
   source: ResearchSource,

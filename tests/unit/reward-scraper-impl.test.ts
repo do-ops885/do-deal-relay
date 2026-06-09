@@ -17,6 +17,15 @@ vi.mock("../../worker/lib/global-logger", () => ({
   },
 }));
 
+vi.mock("../../worker/lib/security", () => ({
+  validateUrl: vi.fn().mockReturnValue(true),
+  validateFetchUrl: vi.fn().mockResolvedValue(true),
+  validatedFetch: vi.fn().mockImplementation((url: string, init?: RequestInit) =>
+    global.fetch(url, init),
+  ),
+  validateReferralUrl: vi.fn().mockReturnValue(true),
+}));
+
 // Mock fetch
 const globalFetch = global.fetch;
 const mockFetch = vi.fn();

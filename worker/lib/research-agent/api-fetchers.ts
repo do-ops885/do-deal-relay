@@ -5,7 +5,7 @@ import type {
   GitHubSearchResponse,
   HackerNewsSearchResponse,
 } from "./types";
-import type { FetchResult } from "./fetcher";
+import type { FetchResult } from "./types";
 
 export async function fetchProductHuntDeals(
   apiToken: string | undefined,
