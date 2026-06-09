@@ -1,88 +1,71 @@
 # System Reference
+**Version**: 0.1.6 | **Status**: Production
 
-**System**: Deal Discovery System
-**Version**: 0.1.3 | **Status**: Production
+## Architecture: Two-Phase Publishing
+Candidate deals are staged, validated through 9 gates, then promoted to production.
+1. **Stage**: Write to `DEALS_STAGING`.
+2. **Publish**: Promoted to `DEALS_PROD` KV + GitHub commit.
+3. **Rollback**: Revert `DEALS_PROD` to previous snapshot.
 
-## Architecture
-
-### Two-Phase Publishing
-**Staging → Production** with 9 mandatory validation gates.
-
-### Validation Gates (Pass/Fail Semantics)
-
-1. **`schema_validation`**:
-   - **Pass**: Object matches `DealSchema` (Zod).
-   - **Fail**: Missing required fields, incorrect types, or validation errors.
-2. **`normalization_verification`**:
-   - **Pass**: Domain is lowercase, code is uppercase, no tracking params (utm_, etc.) in URL, `normalized_at` exists.
-   - **Fail**: Case mismatches or tracking parameters detected.
-3. **`deduplication_check`**:
-   - **Pass**: ID is unique in batch; Domain+Code pair is unique in batch.
-   - **Fail**: Redundant deal detected.
-4. **`source_trust`**:
-   - **Pass**: `deal.source.trust_score >= TRUST_THRESHOLD` (Dev: 0.1, Staging: 0.25, Prod: 0.3).
-   - **Fail**: Source trust insufficient.
-5. **`reward_plausibility`**:
-   - **Pass**: Reward value > 0; Cash < $10k; Percent <= 100%.
-   - **Fail**: Negative, zero, or suspiciously high/impossible rewards.
-6. **`expiry_validation`**:
-   - **Pass**: `expiry.date` is null OR in the future.
-   - **Fail**: Expiration date is in the past.
-7. **`second_pass_validation`**:
-   - **Pass**: Re-validated schema on normalized data; Code length 4-50 chars.
-   - **Fail**: Normalization broke schema or code length is invalid.
-8. **`idempotency_check`**:
-   - **Pass**: Deal ID does not exist in `DEALS_PROD` snapshot.
-   - **Fail**: Deal already published.
-9. **`snapshot_hash_verification`**:
-   - **Pass**: Deal data hash matches context hash (integrity check).
-   - **Fail**: Data corrupted or tampered during pipeline.
+## Validation Gates (Mandatory 9-Gate Pipeline)
+| Gate | Pass Condition | Fail Condition / Error |
+| :--- | :--- | :--- |
+| `schema_validation` | Object matches `DealSchema`. | `SchemaError`: Missing fields or type mismatch. |
+| `normalization_verification` | Domain is lowercase; Code is uppercase; No UTMs. | `NormalizationError`: Case or URL params detected. |
+| `deduplication_check` | ID and Domain+Code pair are unique in current batch. | `DuplicateError`: Identical deal exists in batch. |
+| `source_trust` | `source.trust_score >= 0.3` (Prod). | `TrustError`: Source trust below environment threshold. |
+| `reward_plausibility` | Value > 0; Cash < $10k; Percent <= 100%. | `PlausibilityError`: Impossible or suspicious rewards. |
+| `expiry_validation` | `expiry.date` is null or in the future. | `ExpiryError`: Date is in the past. |
+| `second_pass_validation` | Post-normalization schema re-verification. | `ValidationError`: Normalization broke schema. |
+| `idempotency_check` | Deal ID not in `DEALS_PROD` snapshot. | `IdempotencyError`: Deal already published. |
+| `snapshot_hash_verification` | Data hash matches pipeline context hash. | `IntegrityError`: Data tampered/corrupted in pipeline. |
 
 ## Infrastructure
-
 ### KV Namespaces
-| Binding | ID | Role |
+| Binding | Role | Access Pattern |
 | :--- | :--- | :--- |
-| `DEALS_PROD` | `23ee9b...` | Immutable production snapshots |
-| `DEALS_STAGING` | `b0db85...` | Mutable candidate deals |
-| `DEALS_LOG` | `1f1a90...` | Run history & metrics |
-| `DEALS_LOCK` | `e3ab52...` | Concurrency mutex (`discovery_lock`) |
-| `DEALS_SOURCES` | `be3c0f...` | Source registry & trust scores |
+| `DEALS_PROD` | Production snapshots | Read (Public), Write (Finalization) |
+| `DEALS_STAGING` | Candidate deals | Read/Write (Validation) |
+| `DEALS_LOG` | Run history & metrics | Write (Logger), Read (Admin) |
+| `DEALS_LOCK` | Concurrency mutex | Read/Write (`init` stage) |
+| `DEALS_SOURCES` | Source registry | Read (Trust), Write (Admin) |
 
-### D1 Database
-| Binding | Name | Purpose |
-| :--- | :--- | :--- |
-| `DEALS_DB` | `deals-db` | Full-text search & Referral metadata |
+### Scheduled Triggers
+- **`0 */6 * * *`**: Discovery pipeline.
+- **`0 9 * * *`**: Expirations & experience aggregation.
+- **`0 0 * * SUN`**: Weekly full validation sweep.
 
-## MCP Toolset (Model Context Protocol)
+## MCP Toolset (Tool Signatures)
 
 ### 1. Deals (`deals.ts`)
-- `search_deals(domain?, category?, status?, query?, limit?, sort_by?, order?, min_confidence?, min_trust?)`
-- `get_deal(code)`
-- `add_referral(code, url, domain, title?, description?, reward_type?, reward_value?, category?, expiry_date?)`
+- **`search_deals`**
+  - **Inputs**: `domain?`, `category?`, `status?` (active|inactive|expired|all), `query?`, `limit?` (1-100), `sort_by?` (confidence|recency|value|expiry|trust), `order?` (asc|desc), `min_confidence?`, `min_trust?`.
+  - **Outputs**: `{ deals: Deal[], total: number, filtered: number }`.
+- **`get_deal`**
+  - **Inputs**: `code: string` (Required).
+  - **Outputs**: Detailed `Deal` object.
+  - **Errors**: `404 Not Found` if code does not exist.
+- **`add_referral`**
+  - **Inputs**: `code`, `url`, `domain` (Required); `title?`, `description?`, `reward_type?` (cash|credit|percent|item), `reward_value?`, `category?` (string[]), `expiry_date?` (ISO).
+  - **Outputs**: `{ success: true, id: UUID, code: string, status: "quarantined" }`.
 
 ### 2. Research (`research.ts`)
-- `research_domain(domain, depth?, max_results?)`
-- `list_categories(include_descriptions?)`
-- `validate_deal(url, check_status?)`
+- **`research_domain`**
+  - **Inputs**: `domain` (Required), `depth?` (quick|thorough|deep), `max_results?` (1-50).
+  - **Outputs**: `{ discovered_codes: Deal[], metadata: object }`.
+- **`validate_deal`**
+  - **Inputs**: `url` (Required), `check_status?` (boolean).
+  - **Outputs**: `{ valid: boolean, url: string, extracted_code: string|null, security_check: object }`.
 
 ### 3. System (`system.ts`)
-- `get_stats(days?)`
-- `get_pipeline_status()`
-- `trigger_discovery()`
-- `get_similar_deals(code?, domain?, limit?)`
-- `get_deal_highlights(limit?)`
-- `get_logs(run_id?, count?)`
+- **`get_stats`**: `days?` -> Aggregates (Active, Discovered, Expiring).
+- **`trigger_discovery`**: `void` -> `{ success: boolean, message: string }`.
 
 ### 4. User (`user.ts`)
-- `report_deal(code, reason, comment?)`
-- `experience_deal(code, success, comment?)`
-- `natural_language_query(query, limit?, includeSql?)`
+- **`report_deal`**: `code`, `reason` (broken|expired|fraudulent|inaccurate|duplicate) -> `{ success: boolean }`.
+- **`experience_deal`**: `code`, `success: boolean` -> `{ success: true, new_confidence: number }`.
+- **`natural_language_query`**: `query` (string) -> `{ results: Deal[], count: number }`.
 
-## State Machine
-`init` → `discover` → `normalize` → `dedupe` → `validate` → `score` → `stage` → `publish` → `verify` → `finalize`
-
-## Related Documentation
-- [AGENTS.md](../AGENTS.md) - Behavioral contracts
-- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) - Directory rules
-- [GUARD_RAILS.md](./GUARD_RAILS.md) - Security & constraints
+## Operational Safety
+- **Idempotency**: Blocked by `DEALS_LOCK`. `run_id` required for all writes.
+- **Quarantine**: Auto-triggers if trust < 0.5 or reward > $500.
