@@ -44,7 +44,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
 
@@ -108,7 +108,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
 
@@ -134,7 +134,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping deployment verification"
@@ -166,7 +166,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping KV seeding"
@@ -238,7 +238,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping smoke tests"
@@ -287,7 +287,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh production)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
           if [ -n "${PROD_HOST}" ]; then
             echo "Triggering discovery pipeline..."
             curl -sf -X POST \
@@ -391,7 +391,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
 

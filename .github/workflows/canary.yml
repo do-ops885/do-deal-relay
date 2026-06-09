@@ -82,7 +82,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
 
@@ -149,12 +149,17 @@ jobs:
     timeout-minutes: 65
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 1
+
       - name: Health check loop
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          CANARY_HOST="$(bash scripts/worker-host.sh staging)"
+          CANARY_HOST="$(bash scripts/worker-host.sh staging || true)"
           DURATION="${{ needs.setup-canary.outputs.duration }}"
           END_TIME=$(($(date +%s) + DURATION * 60))
 

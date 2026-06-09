@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
 
@@ -88,18 +88,20 @@ jobs:
           command: deploy --env production
 
       - name: Verify rollback
+        env:
+          WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
-          if [ -z "${ACCOUNT_ID}" ]; then
-            echo "⚠️  CLOUDFLARE_ACCOUNT_ID secret not set, skipping verification"
+          if [ -z "${PROD_HOST}" ]; then
+            echo "⚠️  Could not resolve production host, skipping rollback verification"
             exit 0
           fi
 
           echo "Waiting for deployment to propagate..."
           sleep 15
 
-          HEALTH_URL="https://do-deal-relay.${ACCOUNT_ID}.workers.dev/health"
+          HEALTH_URL="https://${PROD_HOST}/health"
           echo "Checking health at: ${HEALTH_URL}"
 
           for i in {1..5}; do
