@@ -19,13 +19,13 @@ function detectCurrency(text: string, position: number): string | undefined {
 }
 
 function stripScriptAndStyleTags(input: string): string {
-  const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
-  const STYLE_TAG = /<style\b[^>]*>[\s\S]*?<\/style\s*>/gi;
+  const SCRIPT_BLOCK = /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi;
+  const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi;
   let result = input;
   let previous: string;
   do {
     previous = result;
-    result = result.replace(SCRIPT_TAG, "").replace(STYLE_TAG, "");
+    result = result.replace(SCRIPT_BLOCK, "").replace(STYLE_BLOCK, "");
   } while (result !== previous);
   return result;
 }
