@@ -1,7 +1,0 @@
-I have implemented the requested changes to address the CI timeout issues:
-1. Increased Unit Tests and E2E Tests job timeouts to 30 minutes in .github/workflows/ci.yml and .github/workflows/ci-and-labels.yml.
-2. Updated vitest.config.ts with:
-   - testTimeout: 10000 (10s)
-   - hookTimeout: 10000 (10s)
-   - poolOptions.forks.maxForks: 4 (for parallelism and stability)
-I verified the configuration by running a sample unit test locally, which passed correctly.
