@@ -92,18 +92,11 @@ jobs:
         with:
           node-version-file: ".nvmrc"
       - run: npm ci
-      - name: Run tests
-        run: |
-          if [ "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}" = "true" ]; then
-            ./scripts/run-tests-ci.sh --coverage
-          else
-            ./scripts/run-tests-ci.sh
-          fi
+      - run: ./scripts/run-tests-ci.sh
         env:
           NODE_ENV: test
       - name: Upload coverage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: coverage
           path: coverage/
