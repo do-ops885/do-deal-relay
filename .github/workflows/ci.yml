@@ -83,7 +83,7 @@ jobs:
     name: Unit Tests
     needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
@@ -92,11 +92,18 @@ jobs:
         with:
           node-version-file: ".nvmrc"
       - run: npm ci
-      - run: ./scripts/run-tests-ci.sh
+      - name: Run tests
+        run: |
+          if [ "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}" = "true" ]; then
+            ./scripts/run-tests-ci.sh --coverage
+          else
+            ./scripts/run-tests-ci.sh
+          fi
         env:
           NODE_ENV: test
       - name: Upload coverage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: coverage
           path: coverage/
@@ -113,7 +120,7 @@ jobs:
     name: E2E Tests
     needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:

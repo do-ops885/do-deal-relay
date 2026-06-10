@@ -10,7 +10,7 @@ set -o pipefail
 echo "Running tests with vitest..."
 
 # Run vitest and capture output
-OUTPUT=$(npm run test:ci 2>&1)
+OUTPUT=$(npm run test:ci -- "$@" 2>&1)
 EXIT_CODE=$?
 
 # Check if tests failed (including coverage threshold failures)
