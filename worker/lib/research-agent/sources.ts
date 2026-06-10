@@ -1,12 +1,8 @@
 // Research Source Management
 // ============================================================================
 
-import {
-  ResearchSource,
-  RESEARCH_SOURCES,
-  KNOWN_REFERRAL_PROGRAMS,
-  type SourceApiConfig,
-} from "./types";
+import type { ResearchSource, SourceApiConfig } from "./types";
+import { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "./constants";
 
 /**
  * Add a new research source

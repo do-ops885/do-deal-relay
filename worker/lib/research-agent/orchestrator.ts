@@ -11,19 +11,20 @@ import {
   researchRateLimiter,
   ExtractedReferral,
 } from "./fetcher";
-import {
+import type {
   ResearchSource,
-  RESEARCH_SOURCES,
-  KNOWN_REFERRAL_PROGRAMS,
+  CircuitBreakerState,
+  ResearchCacheEntry,
+} from "./types";
+import { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "./constants";
+import {
   normalizeResearchQuery,
   generateSearchQueries,
   generatePotentialCodes,
   simulateDiscovery,
   deduplicateCodes,
   extractRewardValue,
-  type CircuitBreakerState,
-  type ResearchCacheEntry,
-} from "./types";
+} from "./helpers";
 import { getSourceRateLimit } from "./sources";
 
 // ============================================================================
