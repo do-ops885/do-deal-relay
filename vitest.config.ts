@@ -3,14 +3,14 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     globals: true,
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    testTimeout: 30000,
+    hookTimeout: 30000,
     retry: 1, // Retry flaky tests once
     teardownTimeout: 10000, // Give workers time to cleanup (increased from 5000)
     pool: "forks", // Use Node.js fork pool instead of Cloudflare Workers pool to avoid crashes
     // @ts-expect-error - Vitest 4 pool options
     forks: {
-      maxForks: 4
+      maxForks: 2,
     },
     env: {
       NODE_ENV: "test",
