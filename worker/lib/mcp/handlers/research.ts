@@ -68,7 +68,10 @@ export async function handleResearchDomain(
         }));
     }
   } catch {
-    console.warn("MCP Research: real fetching failed, falling back to database", domain);
+    console.warn(
+      "MCP Research: real fetching failed, falling back to database",
+      domain,
+    );
   }
 
   const result = {
