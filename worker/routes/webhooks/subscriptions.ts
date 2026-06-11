@@ -22,6 +22,7 @@ import {
   type CreatePartnerRequest,
 } from "./types";
 import { requireAuth as unifiedRequireAuth } from "../../lib/auth";
+import { validateFetchUrl } from "../../lib/security";
 
 // ============================================================================
 // API Key Authentication
@@ -70,6 +71,17 @@ export async function handleSubscribe(
       new URL(body.url);
     } catch {
       return jsonResponse({ error: "Invalid URL format" }, 400, request, env);
+    }
+
+    // SSRF Protection: Ensure the URL is public and uses a safe protocol
+    const isSafe = await validateFetchUrl(body.url);
+    if (!isSafe) {
+      return jsonResponse(
+        { error: "Disallowed URL: Subscription blocked by SSRF protection" },
+        400,
+        request,
+        env,
+      );
     }
 
     const partnerId = body.partner_id || "default";
