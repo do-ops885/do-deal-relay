@@ -87,11 +87,13 @@ describe("url-validator", () => {
     });
 
     it("should handle redirect loops", async () => {
-      mockFetch.mockImplementation(() => Promise.resolve({
-        status: 302,
-        statusText: "Found",
-        headers: new Map([["location", "https://example.com/loop"]]),
-      }));
+      mockFetch.mockImplementation(() =>
+        Promise.resolve({
+          status: 302,
+          statusText: "Found",
+          headers: new Map([["location", "https://example.com/loop"]]),
+        }),
+      );
 
       const result = await validateUrl("https://example.com/loop");
       expect(result.valid).toBe(false);
