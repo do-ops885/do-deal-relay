@@ -15,6 +15,7 @@ import { getSubscription } from "./subscriptions";
 import { generateWebhookHeaders } from "../hmac";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
+import { validateFetchUrl } from "../security";
 
 // ============================================================================
 // Outgoing Webhooks
@@ -101,6 +102,18 @@ async function sendWebhookToSubscription(
   event: WebhookEvent,
   subscription: WebhookSubscription,
 ): Promise<void> {
+  // SSRF Protection: Ensure delivery URL is safe before fetching
+  const isSafe = await validateFetchUrl(subscription.url);
+  if (!isSafe) {
+    logger.warn(`Webhook delivery skipped: Unsafe URL detected`, {
+      component: "webhook",
+      subscription_id: subscription.id,
+      url: subscription.url,
+      event_id: event.id,
+    });
+    return;
+  }
+
   const payload = JSON.stringify(event);
   const retryPolicy = subscription.retry_policy || DEFAULT_RETRY_POLICY;
 
