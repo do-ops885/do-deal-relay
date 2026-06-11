@@ -112,7 +112,6 @@ Caused by: Error: Worker exited unexpectedly
 
 **Mitigation Strategies**:
 1. **Fork Pool Mode**: Switched to Node.js fork pool instead of Cloudflare pool
-2. **Test Wrapper Script**: `scripts/run-tests-ci.sh` checks for "passed" pattern
 3. **Dependency Updates**: Updated miniflare to v4.x to resolve undici vulnerabilities
 4. **Wait for Upstream**: Monitor @cloudflare/vitest-pool-workers releases
 

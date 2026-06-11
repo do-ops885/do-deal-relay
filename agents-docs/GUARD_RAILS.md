@@ -105,7 +105,7 @@ Allowed patterns:
 | CI Job | File | Local Equivalent | Status |
 |--------|------|------------------|--------|
 | Quality Gate | `ci.yml` | `quality_gate.sh` + pre-commit/pre-push | ✅ Matched |
-| Unit Tests | `ci.yml` | `run-tests-ci.sh` in pre-push | ✅ Matched |
+| Unit Tests | `ci.yml` | `npm run test:ci` in pre-push | ✅ Matched |
 | Validation Gates | `ci.yml` | `validate-codes.sh` in pre-push | ✅ Matched |
 | Security Scan | `ci.yml` | Secret patterns in pre-commit/pre-push | ✅ Matched |
 | Lint & Format | `ci.yml` | Prettier + TypeScript in pre-commit | ✅ Matched |
@@ -287,6 +287,5 @@ SKIP_TESTS=1 git push
 
 - `scripts/quality_gate.sh` - Full quality gate (all CI checks)
 - `scripts/validate-codes.sh` - 9 validation gates
-- `scripts/run-tests-ci.sh` - Test runner with worker crash handling
 - `.github/workflows/ci.yml` - GitHub Actions CI pipeline
 - `.github/workflows/security.yml` - Security scanning workflows

@@ -14,7 +14,7 @@ As of May 11, 2026, `npm audit` reports **0 vulnerabilities**.
 
 ## Known Residual Risks
 
-- **Vitest Worker Pool**: Occasional crashes during cleanup (handled by `scripts/run-tests-ci.sh`). No security impact identified.
+- **Vitest Worker Pool**: Occasional crashes during cleanup. No security impact identified.
 - **Dependency Lag**: Some devDependencies may be outdated but do not currently pose a security risk as per `npm audit`.
 
 ## Security Recommendations

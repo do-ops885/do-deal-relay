@@ -60,7 +60,7 @@ jobs:
 
           # Run tests to ensure updates don't break anything
           # Use wrapper script to handle vitest pool crashes (LESSON-022)
-          ./scripts/run-tests-ci.sh || {
+          npm run test:ci || {
             echo "⚠️ Tests failed after update"
             exit 1
           }
