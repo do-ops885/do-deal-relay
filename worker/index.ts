@@ -24,9 +24,11 @@ import {
   handleGetReferralByCode,
   handleDeactivateReferral,
   handleReactivateReferral,
+} from "./routes/referrals";
+import {
   handleResearch,
   handleGetResearchResults,
-} from "./routes/referrals";
+} from "./routes/referral-research";
 import { jsonResponse } from "./routes/utils";
 import {
   handleMCPRequest,
