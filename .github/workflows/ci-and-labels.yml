@@ -139,7 +139,7 @@ jobs:
         if: hashFiles('requirements.txt') != ''
 
       - name: Run tests (Node)
-        run: ./scripts/run-tests-ci.sh
+        run: npm run test:ci
         if: hashFiles('package.json') != ''
 
       - name: Run tests (Rust)

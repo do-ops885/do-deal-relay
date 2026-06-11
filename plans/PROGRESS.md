@@ -243,7 +243,7 @@ Critical for data integrity and rollback capability.
 The system enforces 12 quality gates via `./scripts/quality_gate.sh`:
 
 1. TypeScript compilation (`npm run lint`)
-2. Unit tests (`scripts/run-tests-ci.sh`)
+2. Unit tests (`npm run test:ci`)
 3. Validation gate orchestration check (`npm run validate`)
 4. Directory organization (`scripts/check-directory-organization.sh`)
 5. Build check (`npm run build`)

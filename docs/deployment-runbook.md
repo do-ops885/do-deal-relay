@@ -268,7 +268,7 @@ npx wrangler deploy --env staging
 **What it does**:
 1. Installs dependencies (`npm ci`)
 2. Type checks (`npx tsc --noEmit`)
-3. Runs test suite (`./scripts/run-tests-ci.sh`)
+3. Runs test suite (`npm run test:ci`)
 4. Deploys via `wrangler deploy --env staging`
 5. Health check with retries (5 attempts, 10s apart)
 6. Smoke tests: `/health`, `/metrics`, `/deals`, `/api/status`
