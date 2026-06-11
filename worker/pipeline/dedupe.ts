@@ -3,6 +3,14 @@ import { CONFIG } from "../config";
 import { calculateUrlSimilarity } from "../lib/crypto";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const REWARD_TIER_LOW = 25;
+const REWARD_TIER_MEDIUM = 100;
+const REWARD_TIER_HIGH = 500;
+
+// ============================================================================
 // Deduplication Pipeline
 // ============================================================================
 
@@ -37,9 +45,9 @@ function buildPartitionKey(deal: Deal): string {
   // Bucket reward values into tiers to avoid splitting near-identical values
   let valueTier: string;
   if (typeof deal.reward.value === "number") {
-    if (deal.reward.value <= 25) valueTier = "low";
-    else if (deal.reward.value <= 100) valueTier = "medium";
-    else if (deal.reward.value <= 500) valueTier = "high";
+    if (deal.reward.value <= REWARD_TIER_LOW) valueTier = "low";
+    else if (deal.reward.value <= REWARD_TIER_MEDIUM) valueTier = "medium";
+    else if (deal.reward.value <= REWARD_TIER_HIGH) valueTier = "high";
     else valueTier = "very_high";
   } else {
     valueTier = "unknown";
