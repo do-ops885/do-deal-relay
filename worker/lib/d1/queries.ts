@@ -6,7 +6,7 @@
 export type {
   DealSearchResult,
   DealStats,
-  ExpiringDeal,
+  ExpiringDealRow,
   ReferralCodeResult,
 } from "./types";
 

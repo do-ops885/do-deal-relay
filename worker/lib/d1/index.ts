@@ -54,7 +54,7 @@ export {
   // Types
   type DealSearchResult,
   type DealStats,
-  type ExpiringDeal,
+  type ExpiringDealRow,
   type ReferralCodeResult,
 } from "./queries";
 

@@ -56,7 +56,9 @@ async function ensureProgressIndexTable(env: Env): Promise<void> {
     await env.DEALS_DB.exec(
       `CREATE TABLE IF NOT EXISTS ${PROGRESS_INDEX_TABLE} (operationId TEXT PRIMARY KEY, toolName TEXT NOT NULL, createdAt TEXT NOT NULL)`,
     );
-  } catch {}
+  } catch (err) {
+    console.warn("MCP Progress: ensureProgressIndexTable failed", err);
+  }
 }
 
 async function updateIndex(env: Env, entry: ProgressIndexEntry): Promise<void> {
@@ -71,7 +73,9 @@ async function updateIndex(env: Env, entry: ProgressIndexEntry): Promise<void> {
     )
       .bind(entry.operationId, entry.toolName, entry.createdAt)
       .run();
-  } catch {}
+  } catch (err) {
+    console.warn("MCP Progress: updateIndex failed", entry.operationId, err);
+  }
 }
 
 async function removeFromIndex(env: Env, operationId: string): Promise<void> {
@@ -82,7 +86,9 @@ async function removeFromIndex(env: Env, operationId: string): Promise<void> {
     )
       .bind(operationId)
       .run();
-  } catch {}
+  } catch (err) {
+    console.warn("MCP Progress: removeFromIndex failed", operationId, err);
+  }
 }
 
 async function cleanupStaleIndex(env: Env): Promise<void> {
@@ -92,7 +98,9 @@ async function cleanupStaleIndex(env: Env): Promise<void> {
     )
       .bind(PROGRESS_TTL_SECONDS.toString())
       .run();
-  } catch {}
+  } catch (err) {
+    console.warn("MCP Progress: cleanupStaleIndex failed", err);
+  }
 }
 
 export function createProgressTracker(
@@ -177,7 +185,8 @@ export async function getProgress(
     const raw = await env.DEALS_PROD.get(progressKey(operationId));
     if (!raw) return null;
     return JSON.parse(raw) as ProgressState;
-  } catch {
+  } catch (err) {
+    console.warn("MCP Progress: getProgress failed", operationId, err);
     return null;
   }
 }
@@ -191,7 +200,8 @@ export async function listOperations(env: Env): Promise<ProgressIndexEntry[]> {
       .bind(PROGRESS_TTL_SECONDS.toString())
       .all<ProgressIndexEntry>();
     return result.results;
-  } catch {
+  } catch (err) {
+    console.warn("MCP Progress: listOperations failed", err);
     return [];
   }
 }

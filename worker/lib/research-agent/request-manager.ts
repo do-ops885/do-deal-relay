@@ -287,7 +287,9 @@ export class RequestManager {
       await this.kv.put(key, JSON.stringify(entry), {
         expirationTtl: Math.ceil(windowMs / 1000),
       });
-    } catch {}
+    } catch (err) {
+      console.warn("Research RequestManager: recordRateLimitHit failed", err);
+    }
   }
 
   private cleanupInflight(): void {

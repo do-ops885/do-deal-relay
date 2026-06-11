@@ -462,7 +462,9 @@ async function logAuditAction(
     )
       .bind(id, userId, action, resource, ip, userAgent, now)
       .run();
-  } catch {}
+  } catch (err) {
+    console.warn("Auth Audit: logAuditEvent failed", err);
+  }
 }
 
 export { getJwtSecret, getRefreshSecret };
