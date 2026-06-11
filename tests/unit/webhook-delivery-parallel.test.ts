@@ -156,7 +156,8 @@ describe("Webhook Delivery Optimization", () => {
       expect(mockKv.get).toHaveBeenCalledTimes(3);
 
       // Verify that fetch was called for the active subscriptions
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      // Each subscription triggers 2 fetch calls: DNS validation + actual delivery
+      expect(global.fetch).toHaveBeenCalledTimes(4);
     });
   });
 });
