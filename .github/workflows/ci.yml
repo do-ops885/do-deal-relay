@@ -7,6 +7,8 @@ name: CI
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,12 +31,12 @@ jobs:
         with:
           node-version-file: ".nvmrc"
       - run: npm ci
-      - run: npm run typecheck
+      - run: npm run lint
 
   format:
     name: Format Check
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
@@ -83,7 +85,7 @@ jobs:
     name: Unit Tests
     needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
@@ -92,13 +94,18 @@ jobs:
         with:
           node-version-file: ".nvmrc"
       - run: npm ci
-      - name: Run tests
-        run: |
-          if [ "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}" = "true" ]; then
-            ./scripts/run-tests-ci.sh --coverage
-          else
-            ./scripts/run-tests-ci.sh
-          fi
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+      - name: Run integration tests
+        if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+      - name: Run coverage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run test:unit -- --coverage
         env:
           NODE_ENV: test
       - name: Upload coverage
@@ -106,13 +113,13 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: coverage
-          path: coverage/
+          path: coverage-unit/
           retention-days: 7
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
-          files: ./coverage/lcov.info
+          files: ./coverage-unit/lcov.info
           fail_ci_if_error: false
           verbose: true
 
