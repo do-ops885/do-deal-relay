@@ -4,12 +4,13 @@
 
 import type { Env } from "../../types";
 import { handleError } from "../../lib/error-handler";
-import { createSyncConfig, getSyncState, saveSyncState } from "../../lib/webhook/index";
-import { requireAuth } from "./subscriptions";
 import {
-  jsonResponse,
-  type CreateSyncConfigRequest,
-} from "./types";
+  createSyncConfig,
+  getSyncState,
+  saveSyncState,
+} from "../../lib/webhook/index";
+import { requireAuth } from "./subscriptions";
+import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
 // ============================================================================
 // Sync Management
@@ -117,7 +118,12 @@ export async function handleTriggerSync(
     const state = await getSyncState(env, partnerId);
 
     if (!state) {
-      return jsonResponse({ error: "Sync config not found for partner" }, 404, request, env);
+      return jsonResponse(
+        { error: "Sync config not found for partner" },
+        404,
+        request,
+        env,
+      );
     }
 
     await saveSyncState(env, {
@@ -126,11 +132,16 @@ export async function handleTriggerSync(
       last_sync_at: new Date().toISOString(),
     });
 
-    return jsonResponse({
-      success: true,
-      message: `Sync triggered for partner ${partnerId}`,
-      state: { ...state, status: "syncing" },
-    }, 200, request, env);
+    return jsonResponse(
+      {
+        success: true,
+        message: `Sync triggered for partner ${partnerId}`,
+        state: { ...state, status: "syncing" },
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "webhook",

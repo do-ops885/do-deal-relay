@@ -292,17 +292,23 @@ export async function withAuth(
   if (auth.requestsPerMinute || auth.requestsPerHour) {
     const identifier = auth.userId || "unknown";
     const endpoint = new URL(request.url).pathname;
-    const perKeyConfig =
-      auth.requestsPerMinute
-        ? {
-            maxRequests: auth.requestsPerMinute,
-            windowSeconds: 60,
-            keyPrefix: `ratelimit:${identifier}`,
-          }
-        : undefined;
-    const rateLimitResult = await checkRateLimit(env, identifier, endpoint, perKeyConfig);
+    const perKeyConfig = auth.requestsPerMinute
+      ? {
+          maxRequests: auth.requestsPerMinute,
+          windowSeconds: 60,
+          keyPrefix: `ratelimit:${identifier}`,
+        }
+      : undefined;
+    const rateLimitResult = await checkRateLimit(
+      env,
+      identifier,
+      endpoint,
+      perKeyConfig,
+    );
     if (!rateLimitResult.allowed) {
-      const retryAfter = Math.ceil((rateLimitResult.resetTime - Date.now() / 1000));
+      const retryAfter = Math.ceil(
+        rateLimitResult.resetTime - Date.now() / 1000,
+      );
       return new Response(
         JSON.stringify({
           error: "Rate limit exceeded",

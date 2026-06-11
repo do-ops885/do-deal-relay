@@ -47,7 +47,10 @@ export async function handleWebhookRoutes(
     );
   }
 
-  if (path.startsWith("/webhooks/unsubscribe/") && request.method === "DELETE") {
+  if (
+    path.startsWith("/webhooks/unsubscribe/") &&
+    request.method === "DELETE"
+  ) {
     const subId = path.replace("/webhooks/unsubscribe/", "").split("/")[0];
     if (subId)
       return withAuth(request, env, "user", () =>
@@ -100,8 +103,14 @@ export async function handleWebhookRoutes(
     );
   }
 
-  if (path.startsWith("/webhooks/sync/") && path.endsWith("/trigger") && request.method === "POST") {
-    const partnerId = path.replace("/webhooks/sync/", "").replace("/trigger", "");
+  if (
+    path.startsWith("/webhooks/sync/") &&
+    path.endsWith("/trigger") &&
+    request.method === "POST"
+  ) {
+    const partnerId = path
+      .replace("/webhooks/sync/", "")
+      .replace("/trigger", "");
     if (partnerId)
       return withAuth(request, env, "user", () =>
         handleTriggerSync(request, env, partnerId),
