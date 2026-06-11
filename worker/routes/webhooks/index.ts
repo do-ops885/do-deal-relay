@@ -8,13 +8,18 @@ import { handleIncomingWebhookRequest } from "./incoming";
 import {
   handleSubscribe,
   handleUnsubscribe,
+  handleUnsubscribeById,
   handleListSubscriptions,
   handleCreatePartner,
   handleGetPartner,
   handleGetDeadLetterQueue,
   handleRetryDeadLetter,
 } from "./subscriptions";
-import { handleCreateSyncConfig, handleGetSyncState } from "./sync";
+import {
+  handleCreateSyncConfig,
+  handleGetSyncState,
+  handleTriggerSync,
+} from "./sync";
 
 // ============================================================================
 // Route Handler
@@ -40,6 +45,14 @@ export async function handleWebhookRoutes(
     return withAuth(request, env, "user", () =>
       handleUnsubscribe(request, env),
     );
+  }
+
+  if (path.startsWith("/webhooks/unsubscribe/") && request.method === "DELETE") {
+    const subId = path.replace("/webhooks/unsubscribe/", "").split("/")[0];
+    if (subId)
+      return withAuth(request, env, "user", () =>
+        handleUnsubscribeById(subId, env),
+      );
   }
 
   if (path === "/webhooks/subscriptions" && request.method === "GET") {
@@ -87,6 +100,14 @@ export async function handleWebhookRoutes(
     );
   }
 
+  if (path.startsWith("/webhooks/sync/") && path.endsWith("/trigger") && request.method === "POST") {
+    const partnerId = path.replace("/webhooks/sync/", "").replace("/trigger", "");
+    if (partnerId)
+      return withAuth(request, env, "user", () =>
+        handleTriggerSync(request, env, partnerId),
+      );
+  }
+
   if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
     if (partnerId)
@@ -104,13 +125,18 @@ export { handleIncomingWebhookRequest } from "./incoming";
 export {
   handleSubscribe,
   handleUnsubscribe,
+  handleUnsubscribeById,
   handleListSubscriptions,
   handleCreatePartner,
   handleGetPartner,
   handleGetDeadLetterQueue,
   handleRetryDeadLetter,
 } from "./subscriptions";
-export { handleCreateSyncConfig, handleGetSyncState } from "./sync";
+export {
+  handleCreateSyncConfig,
+  handleGetSyncState,
+  handleTriggerSync,
+} from "./sync";
 export {
   jsonResponse,
   type SubscribeRequest,

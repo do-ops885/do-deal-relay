@@ -41,7 +41,7 @@ export interface DealStats {
   }>;
 }
 
-export interface ExpiringDeal {
+export interface ExpiringDealRow {
   id: number;
   deal_id: string;
   title: string;

@@ -204,6 +204,49 @@ export async function handleUnsubscribe(
   }
 }
 
+export async function handleUnsubscribeById(
+  subscriptionId: string,
+  env: Env,
+): Promise<Response> {
+  try {
+    const deleted = await deleteSubscription(env, subscriptionId);
+
+    if (!deleted) {
+      return jsonResponse(
+        { error: "Subscription not found" },
+        404,
+        undefined,
+        env,
+      );
+    }
+
+    logger.info(`Webhook subscription deleted: ${subscriptionId}`, {
+      component: "webhook",
+    });
+
+    return jsonResponse(
+      {
+        success: true,
+        message: "Subscription deleted successfully",
+      },
+      200,
+      undefined,
+      env,
+    );
+  } catch (error) {
+    const err = handleError(error, {
+      component: "webhook",
+      handler: "handleUnsubscribeById",
+    });
+    return jsonResponse(
+      { error: "Failed to delete subscription", message: err.message },
+      500,
+      undefined,
+      env,
+    );
+  }
+}
+
 export async function handleListSubscriptions(
   request: Request,
   env: Env,
