@@ -55,6 +55,7 @@
     "wrangler": "4.98.0"
   },
   "overrides": {
+    "joi": "^18.2.1",
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.6.1",
