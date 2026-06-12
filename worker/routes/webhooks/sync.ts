@@ -10,6 +10,7 @@ import {
   saveSyncState,
 } from "../../lib/webhook/index";
 import { executeSync } from "../../lib/webhook/sync-executor";
+import { logger } from "../../lib/global-logger";
 import { requireAuth } from "./subscriptions";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
@@ -193,11 +194,10 @@ async function getSyncConfig(env: Env, partnerId: string) {
     );
     return raw as import("../../lib/webhook/types").SyncConfig | null;
   } catch (error) {
-    console.warn(
-      "Failed to fetch sync config for partner",
+    logger.warn("Failed to fetch sync config for partner", {
       partnerId,
-      (error as Error).message,
-    );
+      error: (error as Error).message,
+    });
     return null;
   }
 }
