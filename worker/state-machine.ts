@@ -363,6 +363,18 @@ async function executePhase(
         await publishSnapshot(env, ctx.snapshot!, ctx);
         if (ctx.metrics)
           recordDealCount(ctx.metrics, "published", ctx.scored.length);
+
+        if (ctx.scored.length > 0 && env.DEAL_EMBEDDINGS) {
+          try {
+            const { generateDealEmbeddings } = await import(
+              "./lib/search/embedding-pipeline"
+            );
+            await generateDealEmbeddings(env, ctx.scored);
+          } catch {
+            // Non-critical: embedding failure should not block pipeline
+          }
+        }
+
         return "verify";
       } catch (error) {
         return "revert";

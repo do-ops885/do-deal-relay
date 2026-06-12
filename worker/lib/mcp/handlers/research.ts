@@ -2,7 +2,10 @@ import { z } from "zod";
 import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getReferralsByDomain } from "../../referral-storage/search";
-import { executeReferralResearch } from "../../research-agent/orchestrator";
+import {
+  executeReferralResearch,
+  convertResearchToReferrals,
+} from "../../research-agent/orchestrator";
 
 export const ResearchDomainInputSchema = z.object({
   domain: z.string().describe("Domain to research (e.g., 'dropbox.com')"),
@@ -41,6 +44,7 @@ export async function handleResearchDomain(
   let used_real_fetching = false;
   let research_duration_ms = 0;
   let sources_checked: string[] = ["internal_database", "kv_storage"];
+  let persisted_count = 0;
 
   try {
     const researchStart = Date.now();
@@ -56,21 +60,40 @@ export async function handleResearchDomain(
     sources_checked = researchResult.research_metadata.sources_checked;
 
     if (researchResult.discovered_codes.length > 0) {
-      discovered_codes = researchResult.discovered_codes
-        .slice(0, max_results)
-        .map((r) => ({
+      const existingCodes = new Set(existing.map((r) => r.code));
+      const newCodes = researchResult.discovered_codes.filter(
+        (r) => !existingCodes.has(r.code),
+      );
+
+      discovered_codes = [
+        ...existing.slice(0, max_results).map((r) => ({
+          code: r.code,
+          url: r.url,
+          source: r.source || "existing_database",
+          discovered_at: r.submitted_at || new Date().toISOString(),
+          reward_summary: r.metadata?.reward_value
+            ? `${r.metadata.reward_value} ${r.metadata.reward_type || ""}`
+            : undefined,
+          confidence: r.metadata?.confidence_score || 0.5,
+        })),
+        ...newCodes.slice(0, max_results).map((r) => ({
           code: r.code,
           url: r.url,
           source: r.source,
           discovered_at: r.discovered_at,
           reward_summary: r.reward_summary,
           confidence: r.confidence,
-        }));
+        })),
+      ].slice(0, max_results);
+
+      const referrals = await convertResearchToReferrals(env, researchResult);
+      persisted_count = referrals.length;
     }
-  } catch {
-    console.warn(
-      "MCP Research: real fetching failed, falling back to database",
+  } catch (error) {
+    console.error(
+      "MCP Research: real fetching failed",
       domain,
+      (error as Error).message,
     );
   }
 
@@ -84,6 +107,7 @@ export async function handleResearchDomain(
       research_duration_ms,
       agent_id: "mcp-server",
       used_real_fetching,
+      persisted_count,
     },
   };
 
@@ -91,7 +115,7 @@ export async function handleResearchDomain(
     content: [
       {
         type: "text",
-        text: `🔍 Research results for "${domain}"\n\nFound ${discovered_codes.length} referral codes${used_real_fetching ? " (real fetching)" : " (database only)"}.`,
+        text: `Research results for "${domain}"\n\nFound ${discovered_codes.length} referral codes${used_real_fetching ? " (real fetching)" : " (database only)"}.${persisted_count > 0 ? ` Persisted ${persisted_count} new referrals.` : ""}`,
       },
       {
         type: "resource",
