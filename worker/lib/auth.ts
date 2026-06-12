@@ -11,7 +11,7 @@ import {
   unauthorizedResponse,
   forbiddenResponse,
 } from "../routes/utils";
-import { checkRateLimit } from "./rate-limit";
+import { checkRateLimit, createRateLimitHeaders } from "./rate-limit";
 
 export { getAllowedOrigin };
 
@@ -309,6 +309,8 @@ export async function withAuth(
       const retryAfter = Math.ceil(
         rateLimitResult.resetTime - Date.now() / 1000,
       );
+      const headers = createRateLimitHeaders(rateLimitResult);
+      headers.set("Content-Type", "application/json");
       return new Response(
         JSON.stringify({
           error: "Rate limit exceeded",
@@ -316,10 +318,7 @@ export async function withAuth(
         }),
         {
           status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "Retry-After": String(retryAfter || 60),
-          },
+          headers: Object.fromEntries(headers),
         },
       );
     }
