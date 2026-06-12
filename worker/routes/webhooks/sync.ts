@@ -9,6 +9,7 @@ import {
   getSyncState,
   saveSyncState,
 } from "../../lib/webhook/index";
+import { executeSync } from "../../lib/webhook/sync-executor";
 import { requireAuth } from "./subscriptions";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
@@ -126,19 +127,47 @@ export async function handleTriggerSync(
       );
     }
 
+    const config = await getSyncConfig(env, partnerId);
+    if (!config) {
+      return jsonResponse(
+        { error: "Sync config not found" },
+        404,
+        request,
+        env,
+      );
+    }
+
     await saveSyncState(env, {
       ...state,
       status: "syncing" as const,
       last_sync_at: new Date().toISOString(),
     });
 
+    const syncResult = await executeSync(env, config, {
+      ...state,
+      status: "syncing",
+      last_sync_at: new Date().toISOString(),
+    });
+
+    await saveSyncState(env, {
+      ...state,
+      status: syncResult.success ? "idle" : "error",
+      last_sync_at: new Date().toISOString(),
+      cursor: syncResult.cursor || state.cursor,
+      pending_changes: syncResult.failed,
+      last_error: syncResult.error,
+      sync_version: state.sync_version + 1,
+    });
+
     return jsonResponse(
       {
-        success: true,
-        message: `Sync triggered for partner ${partnerId}`,
-        state: { ...state, status: "syncing" },
+        success: syncResult.success,
+        message: `Sync ${syncResult.success ? "completed" : "failed"} for partner ${partnerId}`,
+        synced: syncResult.synced,
+        failed: syncResult.failed,
+        cursor: syncResult.cursor,
       },
-      200,
+      syncResult.success ? 200 : 500,
       request,
       env,
     );
@@ -153,5 +182,17 @@ export async function handleTriggerSync(
       request,
       env,
     );
+  }
+}
+
+async function getSyncConfig(env: Env, partnerId: string) {
+  try {
+    const raw = await env.DEALS_LOG.get(
+      `webhook:sync_config:${partnerId}`,
+      "json",
+    );
+    return raw as import("../../lib/webhook/types").SyncConfig | null;
+  } catch {
+    return null;
   }
 }
