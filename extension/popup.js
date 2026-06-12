@@ -252,7 +252,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const firstItem = elements.detectionList.querySelector(".detection-item");
       if (firstItem) {
         firstItem.classList.add("selected");
+        firstItem.setAttribute("aria-pressed", "true");
         state.selectedDetection = detections[0];
+        // Focus capture button for immediate "Zero-Click" submission
+        elements.captureBtn.focus();
       }
     }
   }
@@ -260,6 +263,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   function showNoDetections() {
     elements.detectionsSection.style.display = "none";
     updateScanStatus("none", "No referral codes detected on this page");
+    // Focus manual input for immediate typing
+    elements.manualCode.focus();
   }
 
   function updateScanStatus(status, text) {
@@ -450,6 +455,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.manualSection.classList.toggle("hidden");
     elements.settingsLink.textContent = isActive ? "Back" : "Settings";
     elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
+
+    if (isActive) {
+      // Focus API endpoint input when opening
+      elements.apiEndpoint.focus();
+    } else {
+      // Return focus to settings link when closing
+      elements.settingsLink.focus();
+    }
   }
 
   // ============================================================================
