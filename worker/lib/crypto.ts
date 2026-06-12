@@ -88,6 +88,24 @@ function toLowerCode(code: number): number {
 }
 
 /**
+ * Get index for alphanumeric character (0-35) for bitset mapping
+ */
+function getCharIndex(code: number): number {
+  if (code >= 97 && code <= 122) return code - 97; // a-z: 0-25
+  if (code >= 48 && code <= 57) return code - 48 + 26; // 0-9: 26-35
+  return -1;
+}
+
+/**
+ * Fast bitwise popcount for 32-bit integers
+ */
+function popcount(v: number): number {
+  v = v - ((v >> 1) & 0x55555555);
+  v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+  return (((v + (v >> 4)) & 0x0f0f0f0f) * 0x01010101) >> 24;
+}
+
+/**
  * Compare two strings for equality after normalization without allocations
  */
 export function normalizedEquals(a: string, b: string): boolean {
@@ -116,45 +134,61 @@ export function normalizedEquals(a: string, b: string): boolean {
 }
 
 /**
+ * Extracts character bigrams into a bitset for Jaccard similarity.
+ * 36 characters (a-z0-9) -> 36*36 = 1296 possible bigrams.
+ * 1296 bits / 32 = 40.5 words. 41 words total.
+ */
+function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
+  const bits = new Uint32Array(41);
+  let prevIdx = -1;
+  let count = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    const rawCode = s.charCodeAt(i);
+    if (isAlphanumeric(rawCode)) {
+      const idx = getCharIndex(toLowerCode(rawCode));
+      if (prevIdx !== -1) {
+        const bitIdx = prevIdx * 36 + idx;
+        const word = bitIdx >>> 5;
+        const bit = 1 << (bitIdx & 31);
+        const currentWord = bits[word];
+        if (currentWord !== undefined && !(currentWord & bit)) {
+          bits[word] = currentWord | bit;
+          count++;
+        }
+      }
+      prevIdx = idx;
+    }
+  }
+  return { bits, count };
+}
+
+/**
  * Calculate similarity between two strings (0-1)
- * Uses Jaccard similarity on character bigrams with zero-allocation normalization
+ * Uses Jaccard similarity on character bigrams with zero-allocation bitset normalization.
+ * Optimized to avoid Set/Map allocations by using a fixed-size bitset for 36x36 bigrams.
  */
 export function calculateStringSimilarity(a: string, b: string): number {
   if (a === b) return 1.0;
   if (normalizedEquals(a, b)) return 1.0;
 
-  const getBigrams = (s: string): Set<number> => {
-    const bigrams = new Set<number>();
-    let prevCode = -1;
+  const resA = getBigramBitset(a);
+  const resB = getBigramBitset(b);
 
-    for (let i = 0; i < s.length; i++) {
-      const rawCode = s.charCodeAt(i);
-      if (isAlphanumeric(rawCode)) {
-        const code = toLowerCode(rawCode);
-        if (prevCode !== -1) {
-          // Pack two characters into a single number to avoid string allocations
-          bigrams.add((prevCode << 16) | code);
-        }
-        prevCode = code;
-      }
-    }
-    return bigrams;
-  };
-
-  const setA = getBigrams(a);
-  const setB = getBigrams(b);
-
-  if (setA.size === 0 || setB.size === 0) return 0.0;
+  if (resA.count === 0 || resB.count === 0) return 0.0;
 
   let intersectionSize = 0;
-  const [smaller, larger] = setA.size < setB.size ? [setA, setB] : [setB, setA];
-  for (const item of smaller) {
-    if (larger.has(item)) {
-      intersectionSize++;
+  for (let i = 0; i < 41; i++) {
+    const aVal = resA.bits[i];
+    const bVal = resB.bits[i];
+    if (aVal === undefined || bVal === undefined) continue;
+    const common = aVal & bVal;
+    if (common) {
+      intersectionSize += popcount(common);
     }
   }
 
-  const unionSize = setA.size + setB.size - intersectionSize;
+  const unionSize = resA.count + resB.count - intersectionSize;
   return intersectionSize / unionSize;
 }
 
@@ -201,8 +235,9 @@ export function calculateUrlSimilarity(
     );
 
     // Compare query parameters (if present)
-    const paramsA = parsedA.searchParams.toString();
-    const paramsB = parsedB.searchParams.toString();
+    // Optimization: use raw search string instead of re-serializing params
+    const paramsA = parsedA.search ? parsedA.search.slice(1) : "";
+    const paramsB = parsedB.search ? parsedB.search.slice(1) : "";
     const paramsSim =
       paramsA || paramsB ? calculateStringSimilarity(paramsA, paramsB) : 1.0;
 
