@@ -192,7 +192,12 @@ async function getSyncConfig(env: Env, partnerId: string) {
       "json",
     );
     return raw as import("../../lib/webhook/types").SyncConfig | null;
-  } catch {
+  } catch (error) {
+    console.warn(
+      "Failed to fetch sync config for partner",
+      partnerId,
+      (error as Error).message,
+    );
     return null;
   }
 }
