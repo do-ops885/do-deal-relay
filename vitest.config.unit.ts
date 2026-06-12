@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     testTimeout: 10000,
+    teardownTimeout: 5000,
     pool: "threads",
     env: {
       NODE_ENV: "test",

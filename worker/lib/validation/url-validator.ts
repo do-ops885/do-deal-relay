@@ -343,10 +343,9 @@ export async function detectRedirects(
   });
 
   while (redirectCount <= MAX_REDIRECTS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-
       const response = await fetch(currentUrl, {
         method: "HEAD",
         headers: {
@@ -360,8 +359,6 @@ export async function detectRedirects(
         redirect: "manual",
         signal: controller.signal,
       });
-
-      clearTimeout(timeout);
 
       const location = response.headers.get("location");
       if (location && REDIRECT_STATUS_CODES.includes(response.status)) {
@@ -422,6 +419,8 @@ export async function detectRedirects(
         error: errorMessage,
         timestamp: new Date().toISOString(),
       };
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

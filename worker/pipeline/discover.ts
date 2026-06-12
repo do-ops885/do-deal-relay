@@ -5,6 +5,7 @@ import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
+import { createTimeoutSignal } from "../lib/utils";
 
 // ============================================================================
 // Constants
@@ -250,15 +251,23 @@ async function discoverFromSource(
         try {
           const url = `https://${source.domain}${pattern}`;
 
-          const response = await fetch(url, {
-            method: "GET",
-            headers: {
-              "User-Agent":
-                "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-              Accept: "text/html,application/json",
-            },
-            signal: AbortSignal.timeout(CONFIG.FETCH_TIMEOUT_MS),
-          });
+          const { signal, cleanup } = createTimeoutSignal(
+            CONFIG.FETCH_TIMEOUT_MS,
+          );
+          let response;
+          try {
+            response = await fetch(url, {
+              method: "GET",
+              headers: {
+                "User-Agent":
+                  "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+                Accept: "text/html,application/json",
+              },
+              signal,
+            });
+          } finally {
+            cleanup();
+          }
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);

@@ -16,7 +16,7 @@
     "lint:fix": "tsc --noEmit && prettier --write .",
     "test": "vitest run -c vitest.config.unit.ts",
     "test:ci": "npm run test:unit",
-    "test:unit": "vitest run -c vitest.config.unit.ts",
+    "test:unit": "timeout --signal=SIGKILL 300 vitest run -c vitest.config.unit.ts",
     "test:integration": "vitest run -c vitest.config.integration.ts",
     "test:e2e:setup": "bash tests/e2e/setup-auth.sh",
     "test:e2e": "npm run test:e2e:setup && playwright test",
