@@ -366,9 +366,8 @@ async function executePhase(
 
         if (ctx.scored.length > 0 && env.DEAL_EMBEDDINGS) {
           try {
-            const { generateDealEmbeddings } = await import(
-              "./lib/search/embedding-pipeline"
-            );
+            const { generateDealEmbeddings } =
+              await import("./lib/search/embedding-pipeline");
             await generateDealEmbeddings(env, ctx.scored);
           } catch {
             // Non-critical: embedding failure should not block pipeline

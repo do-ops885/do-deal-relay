@@ -34,7 +34,12 @@ export async function executeSync(
 ): Promise<SyncResult> {
   const partnerConfig = await getPartnerConfig(env, config.partner_id);
   if (!partnerConfig?.endpoint_url) {
-    return { success: false, synced: 0, failed: 0, error: "Partner endpoint not configured" };
+    return {
+      success: false,
+      synced: 0,
+      failed: 0,
+      error: "Partner endpoint not configured",
+    };
   }
 
   const snapshot = await getProductionSnapshot(env);
@@ -45,10 +50,14 @@ export async function executeSync(
   let deals = snapshot.deals;
 
   if (config.filters?.domains?.length) {
-    deals = deals.filter((d) => config.filters!.domains!.includes(d.source.domain));
+    deals = deals.filter((d) =>
+      config.filters!.domains!.includes(d.source.domain),
+    );
   }
   if (config.filters?.status?.length) {
-    deals = deals.filter((d) => config.filters!.status!.includes(d.metadata.status));
+    deals = deals.filter((d) =>
+      config.filters!.status!.includes(d.metadata.status),
+    );
   }
 
   const startIndex = state.cursor ? parseInt(state.cursor, 10) || 0 : 0;
@@ -61,7 +70,10 @@ export async function executeSync(
   for (let i = 0; i < deals.length; i += SYNC_BATCH_SIZE) {
     const batch = deals.slice(i, i + SYNC_BATCH_SIZE);
     const payload = batch.map((deal) =>
-      applyFieldMapping(deal as unknown as Record<string, string>, config.field_mapping),
+      applyFieldMapping(
+        deal as unknown as Record<string, string>,
+        config.field_mapping,
+      ),
     );
 
     try {
@@ -71,7 +83,10 @@ export async function executeSync(
       const response = await fetch(partnerConfig.endpoint_url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deals: payload, sync_version: state.sync_version }),
+        body: JSON.stringify({
+          deals: payload,
+          sync_version: state.sync_version,
+        }),
         signal: controller.signal,
       });
 

@@ -18,10 +18,7 @@ function dealToEmbeddingText(deal: Deal): string {
   return parts.filter(Boolean).join(" ");
 }
 
-function dealToVector(
-  deal: Deal,
-  embedding: number[],
-): DealVector {
+function dealToVector(deal: Deal, embedding: number[]): DealVector {
   const createdAtBucket =
     Math.floor(new Date(deal.source.discovered_at).getTime() / 300000) * 300000;
 
@@ -68,10 +65,9 @@ export async function generateDealEmbeddings(
         continue;
       }
 
-      const result = (await (env.AI.run as (model: string, inputs: unknown) => Promise<unknown>)(
-        EMBEDDING_MODEL,
-        { text: texts },
-      )) as { data?: number[][] };
+      const result = (await (
+        env.AI.run as (model: string, inputs: unknown) => Promise<unknown>
+      )(EMBEDDING_MODEL, { text: texts })) as { data?: number[][] };
 
       if (!Array.isArray(result.data) || result.data.length !== batch.length) {
         failed += batch.length;
