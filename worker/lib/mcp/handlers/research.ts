@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getReferralsByDomain } from "../../referral-storage/search";
+import { executeReferralResearch } from "../../research-agent/orchestrator";
 
 export const ResearchDomainInputSchema = z.object({
   domain: z.string().describe("Domain to research (e.g., 'dropbox.com')"),
@@ -18,20 +19,15 @@ export const ResearchDomainInputSchema = z.object({
     .describe("Maximum results"),
 });
 
-/**
- * Research domain tool handler
- */
 export async function handleResearchDomain(
   args: z.infer<typeof ResearchDomainInputSchema>,
   env: Env,
 ): Promise<ToolCallResult> {
   const { domain, depth, max_results } = args;
 
-  // First check existing referrals for this domain
   const existing = await getReferralsByDomain(env, domain);
 
-  // Build research response
-  const discovered_codes = existing.slice(0, max_results).map((r) => ({
+  let discovered_codes = existing.slice(0, max_results).map((r) => ({
     code: r.code,
     url: r.url,
     source: r.source || "existing_database",
@@ -42,17 +38,52 @@ export async function handleResearchDomain(
     confidence: r.metadata?.confidence_score || 0.5,
   }));
 
+  let used_real_fetching = false;
+  let research_duration_ms = 0;
+  let sources_checked: string[] = ["internal_database", "kv_storage"];
+
+  try {
+    const researchStart = Date.now();
+    const researchResult = await executeReferralResearch(env, {
+      query: domain,
+      domain,
+      depth,
+      max_results,
+      options: { use_real_fetching: true },
+    });
+    research_duration_ms = Date.now() - researchStart;
+    used_real_fetching = true;
+    sources_checked = researchResult.research_metadata.sources_checked;
+
+    if (researchResult.discovered_codes.length > 0) {
+      discovered_codes = researchResult.discovered_codes
+        .slice(0, max_results)
+        .map((r) => ({
+          code: r.code,
+          url: r.url,
+          source: r.source,
+          discovered_at: r.discovered_at,
+          reward_summary: r.reward_summary,
+          confidence: r.confidence,
+        }));
+    }
+  } catch {
+    console.warn(
+      "MCP Research: real fetching failed, falling back to database",
+      domain,
+    );
+  }
+
   const result = {
     query: domain,
     domain,
     discovered_codes,
     research_metadata: {
-      sources_checked: ["internal_database", "kv_storage"],
+      sources_checked,
       search_queries: [domain, `${domain} referral`, `${domain} promo`],
-      research_duration_ms: 0,
+      research_duration_ms,
       agent_id: "mcp-server",
-      used_real_fetching: false,
-      note: "Research queueing not yet implemented. Showing existing database results.",
+      used_real_fetching,
     },
   };
 
@@ -60,7 +91,7 @@ export async function handleResearchDomain(
     content: [
       {
         type: "text",
-        text: `🔍 Research results for "${domain}"\n\nFound ${discovered_codes.length} existing referral codes in the database.`,
+        text: `🔍 Research results for "${domain}"\n\nFound ${discovered_codes.length} referral codes${used_real_fetching ? " (real fetching)" : " (database only)"}.`,
       },
       {
         type: "resource",

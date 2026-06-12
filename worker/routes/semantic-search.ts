@@ -81,7 +81,7 @@ export async function handleSemanticSearch(
       success: true,
       query,
       results: filtered.map((h) => ({
-        deal: h.metadata as never,
+        deal: h.metadata as unknown as import("../lib/search/types").DealEmbeddingMetadata,
         score: h.score,
         match_type: "semantic",
       })),
