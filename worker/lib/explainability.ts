@@ -92,8 +92,8 @@ export function explainDeal(
     summary,
     factors: {
       validation: {
-        passed: [], // Note: Validation gate details would need per-deal persistence
-        failed: [],
+        passed: deal.metadata.validation_gates?.passed ?? [],
+        failed: deal.metadata.validation_gates?.failed ?? [],
       },
       scoring: {
         confidence,

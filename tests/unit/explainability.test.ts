@@ -60,4 +60,33 @@ describe("Deal Explainability", () => {
     expect(explanation.status).toBe("quarantined");
     expect(explanation.summary).toContain("quarantined");
   });
+
+  it("should read validation gate results from deal metadata", () => {
+    const dealWithGates = {
+      ...mockDeal,
+      metadata: {
+        ...mockDeal.metadata,
+        validation_gates: {
+          passed: ["schema_validation", "source_trust", "reward_plausibility"],
+          failed: ["expiry_validation"],
+          timestamp: new Date().toISOString(),
+        },
+      },
+    };
+    const explanation = explainDeal(dealWithGates as Deal);
+    expect(explanation.factors.validation.passed).toEqual([
+      "schema_validation",
+      "source_trust",
+      "reward_plausibility",
+    ]);
+    expect(explanation.factors.validation.failed).toEqual([
+      "expiry_validation",
+    ]);
+  });
+
+  it("should return empty arrays when validation_gates is absent", () => {
+    const explanation = explainDeal(mockDeal as Deal);
+    expect(explanation.factors.validation.passed).toEqual([]);
+    expect(explanation.factors.validation.failed).toEqual([]);
+  });
 });

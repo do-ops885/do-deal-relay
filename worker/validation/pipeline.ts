@@ -143,6 +143,14 @@ async function validateSingleDeal(
     });
   }
 
+  if (gatePasses.length > 0 || gateFailures.length > 0) {
+    deal.metadata.validation_gates = {
+      passed: [...gatePasses],
+      failed: [...gateFailures],
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   const isQuarantined = allPassed && shouldQuarantine(deal);
   if (allPassed) {
     deal.metadata.status = isQuarantined ? "quarantined" : "active";

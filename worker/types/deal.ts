@@ -32,6 +32,13 @@ export const DealMetadataSchema = z.object({
   normalized_at: z.string().datetime(),
   confidence_score: z.number().min(0),
   status: z.enum(["active", "quarantined", "rejected"]),
+  validation_gates: z
+    .object({
+      passed: z.array(z.string()),
+      failed: z.array(z.string()),
+      timestamp: z.string().datetime(),
+    })
+    .optional(),
 });
 
 export const DealSchema = z.object({
