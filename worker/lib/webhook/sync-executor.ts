@@ -1,6 +1,7 @@
 import type { Env } from "../../types";
 import type { SyncConfig, SyncState } from "../webhook/types";
 import { getProductionSnapshot } from "../storage";
+import { validatedFetch } from "../security";
 
 const SYNC_BATCH_SIZE = 50;
 const SYNC_TIMEOUT_MS = 25000;
@@ -80,7 +81,7 @@ export async function executeSync(
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
 
-      const response = await fetch(partnerConfig.endpoint_url, {
+      const response = await validatedFetch(partnerConfig.endpoint_url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
