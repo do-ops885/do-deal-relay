@@ -4,7 +4,11 @@
 
 import type { Env } from "../../types";
 import { handleError } from "../../lib/error-handler";
-import { createSyncConfig, getSyncState } from "../../lib/webhook/index";
+import {
+  createSyncConfig,
+  getSyncState,
+  saveSyncState,
+} from "../../lib/webhook/index";
 import { requireAuth } from "./subscriptions";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
@@ -78,7 +82,6 @@ export async function handleGetSyncState(
   partnerId: string,
 ): Promise<Response> {
   try {
-    // Check API key authentication
     const authError = await requireAuth(request, env);
     if (authError) return authError;
 
@@ -96,6 +99,56 @@ export async function handleGetSyncState(
     });
     return jsonResponse(
       { error: "Failed to get sync state", message: err.message },
+      500,
+      request,
+      env,
+    );
+  }
+}
+
+export async function handleTriggerSync(
+  request: Request,
+  env: Env,
+  partnerId: string,
+): Promise<Response> {
+  try {
+    const authError = await requireAuth(request, env);
+    if (authError) return authError;
+
+    const state = await getSyncState(env, partnerId);
+
+    if (!state) {
+      return jsonResponse(
+        { error: "Sync config not found for partner" },
+        404,
+        request,
+        env,
+      );
+    }
+
+    await saveSyncState(env, {
+      ...state,
+      status: "syncing" as const,
+      last_sync_at: new Date().toISOString(),
+    });
+
+    return jsonResponse(
+      {
+        success: true,
+        message: `Sync triggered for partner ${partnerId}`,
+        state: { ...state, status: "syncing" },
+      },
+      200,
+      request,
+      env,
+    );
+  } catch (error) {
+    const err = handleError(error, {
+      component: "webhook",
+      handler: "handleTriggerSync",
+    });
+    return jsonResponse(
+      { error: "Failed to trigger sync", message: err.message },
       500,
       request,
       env,

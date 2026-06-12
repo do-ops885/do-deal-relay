@@ -77,7 +77,7 @@ export type SemanticSearchRequest = z.infer<typeof SemanticSearchRequestSchema>;
  * Individual search result with similarity score.
  */
 export interface SemanticSearchResult {
-  deal: Deal;
+  deal: DealEmbeddingMetadata;
   score: number;
   match_type: "semantic" | "hybrid" | "keyword";
 }

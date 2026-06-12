@@ -30,7 +30,7 @@ import {
   getReferralUsageStats,
   type DealSearchResult,
   type DealStats,
-  type ExpiringDeal,
+  type ExpiringDealRow,
   type ReferralCodeResult,
 } from "../../worker/lib/d1/queries";
 
@@ -628,7 +628,7 @@ describe("D1 Queries", () => {
 
   describe("getExpiringDeals", () => {
     it("should return deals expiring within specified days", async () => {
-      const mockDeals: ExpiringDeal[] = [
+      const mockDeals: ExpiringDealRow[] = [
         {
           id: 1,
           deal_id: "deal-001",

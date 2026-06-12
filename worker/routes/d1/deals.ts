@@ -16,7 +16,7 @@ import {
   getRecommendedDealsD1,
   getTrendingDealsD1,
   type DealSearchResult,
-  type ExpiringDeal,
+  type ExpiringDealRow,
 } from "../../lib/d1/queries";
 
 // ============================================================================
@@ -82,7 +82,7 @@ export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
 
     // Filter by confidence if specified
     if (minConfidence !== undefined) {
-      results = results.filter((d: DealSearchResult | ExpiringDeal) => {
+      results = results.filter((d: DealSearchResult | ExpiringDealRow) => {
         // Only filter DealSearchResult which has confidence_score
         if ("confidence_score" in d && typeof d.confidence_score === "number") {
           return d.confidence_score >= minConfidence;

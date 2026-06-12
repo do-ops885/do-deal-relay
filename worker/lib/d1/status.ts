@@ -4,7 +4,7 @@
 
 import type { D1Database } from "@cloudflare/workers-types";
 import { createD1ReadClient } from "./client";
-import type { DealSearchResult, ExpiringDeal } from "./types";
+import type { DealSearchResult, ExpiringDealRow } from "./types";
 
 /**
  * Get active deals only
@@ -39,10 +39,10 @@ export async function getActiveDeals(
 export async function getExpiringDeals(
   db: D1Database,
   days: number = 7,
-): Promise<ExpiringDeal[]> {
+): Promise<ExpiringDealRow[]> {
   const client = createD1ReadClient(db);
 
-  const result = await client.query<ExpiringDeal>(
+  const result = await client.query<ExpiringDealRow>(
     `SELECT 
       d.id,
       d.deal_id,
