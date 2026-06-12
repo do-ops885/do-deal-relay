@@ -9,6 +9,15 @@ import { MCP_TOOLS, getTools, executeTool } from "../../worker/lib/mcp/tools";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
 
+vi.mock("../../worker/lib/research-agent/orchestrator", () => ({
+  executeReferralResearch: vi.fn().mockResolvedValue({
+    discovered_codes: [],
+    research_metadata: {
+      sources_checked: ["internal_database"],
+    },
+  }),
+}));
+
 // ============================================================================
 // Mock Factory
 // ============================================================================
