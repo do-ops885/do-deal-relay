@@ -134,6 +134,36 @@ export function normalizedEquals(a: string, b: string): boolean {
 }
 
 /**
+ * Extracts character bigrams into a bitset for Jaccard similarity.
+ * 36 characters (a-z0-9) -> 36*36 = 1296 possible bigrams.
+ * 1296 bits / 32 = 40.5 words. 41 words total.
+ */
+function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
+  const bits = new Uint32Array(41);
+  let prevIdx = -1;
+  let count = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    const rawCode = s.charCodeAt(i);
+    if (isAlphanumeric(rawCode)) {
+      const idx = getCharIndex(toLowerCode(rawCode));
+      if (prevIdx !== -1) {
+        const bitIdx = prevIdx * 36 + idx;
+        const word = bitIdx >>> 5;
+        const bit = 1 << (bitIdx & 31);
+        const currentWord = bits[word];
+        if (currentWord !== undefined && !(currentWord & bit)) {
+          bits[word] = currentWord | bit;
+          count++;
+        }
+      }
+      prevIdx = idx;
+    }
+  }
+  return { bits, count };
+}
+
+/**
  * Calculate similarity between two strings (0-1)
  * Uses Jaccard similarity on character bigrams with zero-allocation bitset normalization.
  * Optimized to avoid Set/Map allocations by using a fixed-size bitset for 36x36 bigrams.
@@ -141,33 +171,6 @@ export function normalizedEquals(a: string, b: string): boolean {
 export function calculateStringSimilarity(a: string, b: string): number {
   if (a === b) return 1.0;
   if (normalizedEquals(a, b)) return 1.0;
-
-  const getBigramBitset = (s: string) => {
-    // 36 characters (a-z0-9) -> 36*36 = 1296 possible bigrams.
-    // 1296 bits / 32 = 40.5 words. 41 words total.
-    const bits = new Uint32Array(41);
-    let prevIdx = -1;
-    let count = 0;
-
-    for (let i = 0; i < s.length; i++) {
-      const rawCode = s.charCodeAt(i);
-      if (isAlphanumeric(rawCode)) {
-        const idx = getCharIndex(toLowerCode(rawCode));
-        if (prevIdx !== -1) {
-          const bitIdx = prevIdx * 36 + idx;
-          const word = bitIdx >>> 5;
-          const bit = 1 << (bitIdx & 31);
-          const currentWord = bits[word];
-          if (currentWord !== undefined && !(currentWord & bit)) {
-            bits[word] = currentWord | bit;
-            count++;
-          }
-        }
-        prevIdx = idx;
-      }
-    }
-    return { bits, count };
-  };
 
   const resA = getBigramBitset(a);
   const resB = getBigramBitset(b);
