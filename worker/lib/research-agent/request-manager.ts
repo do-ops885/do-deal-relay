@@ -1,6 +1,7 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl } from "../security";
 import { logger } from "../global-logger";
+import { createTimeoutSignal } from "../utils";
 
 interface FetchOptions {
   method?: string;
@@ -188,29 +189,34 @@ export class RequestManager {
 
     try {
       const timeoutMs = options.timeoutMs ?? CONFIG.RESEARCH_FETCH_TIMEOUT_MS;
-      const response = await fetch(url, {
-        method: options.method || "GET",
-        headers: {
-          "User-Agent": CONFIG.USER_AGENT,
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          ...options.headers,
-        },
-        body: options.body,
-        cf: options.cf,
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      const contentType = response.headers.get("content-type") || "";
-      const content = await response.text();
-      return {
-        success: true,
-        content,
-        contentType,
-        statusCode: response.status,
-        fetchDurationMs: Date.now() - startTime,
-        cached: false,
-      };
+      const { signal, cleanup } = createTimeoutSignal(timeoutMs);
+      try {
+        const response = await fetch(url, {
+          method: options.method || "GET",
+          headers: {
+            "User-Agent": CONFIG.USER_AGENT,
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            ...options.headers,
+          },
+          body: options.body,
+          cf: options.cf,
+          signal,
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const content = await response.text();
+        return {
+          success: true,
+          content,
+          contentType,
+          statusCode: response.status,
+          fetchDurationMs: Date.now() - startTime,
+          cached: false,
+        };
+      } finally {
+        cleanup();
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";

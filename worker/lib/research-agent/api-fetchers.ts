@@ -1,5 +1,6 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
+import { createTimeoutSignal } from "../utils";
 import type {
   ProductHuntResponse,
   GitHubSearchResponse,
@@ -66,6 +67,9 @@ export async function fetchProductHuntDeals(
   }
 
   try {
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "POST",
       headers: {
@@ -74,8 +78,9 @@ export async function fetchProductHuntDeals(
         Accept: "application/json",
       },
       body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -181,11 +186,15 @@ export async function fetchGitHubTrending(
   }
 
   try {
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "GET",
       headers,
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -275,13 +284,17 @@ export async function fetchHackerNewsDeals(
       };
     }
 
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
       },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 

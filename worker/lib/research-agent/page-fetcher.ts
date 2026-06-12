@@ -1,5 +1,6 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl } from "../security";
+import { createTimeoutSignal } from "../utils";
 import type { PageContentResult, MetaTags } from "./types";
 import type { FetchResult } from "./types";
 
@@ -20,6 +21,9 @@ export async function fetchGenericPageContent(
   }
 
   try {
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -30,8 +34,9 @@ export async function fetchGenericPageContent(
         "Accept-Encoding": "gzip, deflate, br",
         Connection: "keep-alive",
       },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 

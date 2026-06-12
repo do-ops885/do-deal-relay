@@ -1,5 +1,17 @@
 import { CONFIG } from "../config";
 
+export function createTimeoutSignal(ms: number): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return {
+    signal: controller.signal,
+    cleanup: () => clearTimeout(timer),
+  };
+}
+
 /**
  * Fetches or performs async operations in batches to avoid platform limits
  * (like Cloudflare Workers' 50 subrequest limit per request).

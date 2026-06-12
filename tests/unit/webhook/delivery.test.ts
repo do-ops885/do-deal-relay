@@ -10,6 +10,10 @@ import type {
   DeadLetterEvent,
 } from "../../../worker/lib/webhook/types";
 
+vi.mock("../../../worker/lib/security", () => ({
+  validateFetchUrl: vi.fn().mockResolvedValue(true),
+}));
+
 // ============================================================================
 // Mock KV Namespace
 // ============================================================================

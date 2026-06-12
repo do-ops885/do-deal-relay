@@ -12,10 +12,9 @@ export async function tryHeadRequest(url: string): Promise<{
   location?: string;
   error?: string;
 }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
-
     const response = await fetch(url, {
       method: "HEAD",
       headers: {
@@ -30,8 +29,6 @@ export async function tryHeadRequest(url: string): Promise<{
       signal: controller.signal,
     });
 
-    clearTimeout(timeout);
-
     return {
       success: true,
       statusCode: response.status,
@@ -43,6 +40,8 @@ export async function tryHeadRequest(url: string): Promise<{
       success: false,
       error: error instanceof Error ? error.message : "HEAD request failed",
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -52,10 +51,9 @@ export async function tryGetRequest(url: string): Promise<{
   statusText?: string;
   error?: string;
 }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
-
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -70,8 +68,6 @@ export async function tryGetRequest(url: string): Promise<{
       signal: controller.signal,
     });
 
-    clearTimeout(timeout);
-
     return {
       success: true,
       statusCode: response.status,
@@ -82,6 +78,8 @@ export async function tryGetRequest(url: string): Promise<{
       success: false,
       error: error instanceof Error ? error.message : "GET request failed",
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

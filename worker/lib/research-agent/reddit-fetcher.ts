@@ -1,5 +1,6 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
+import { createTimeoutSignal } from "../utils";
 import type { RedditListingResponse } from "./types";
 import type { FetchResult } from "./types";
 
@@ -25,6 +26,9 @@ async function getRedditOAuthToken(
       return null;
     }
 
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "POST",
       headers: {
@@ -33,8 +37,9 @@ async function getRedditOAuthToken(
         "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
       },
       body: "grant_type=client_credentials",
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     if (!response.ok) {
       console.error(`Reddit OAuth error: ${response.status}`);
@@ -89,14 +94,18 @@ export async function fetchRedditDeals(
       };
     }
 
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
       },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 
@@ -165,14 +174,18 @@ async function fetchRedditPublic(
       };
     }
 
+    const { signal, cleanup } = createTimeoutSignal(
+      CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
+    );
     const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
         "User-Agent": "DealDiscoveryBot/1.0",
       },
-      signal: AbortSignal.timeout(CONFIG.RESEARCH_FETCH_TIMEOUT_MS),
+      signal,
     });
+    cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
 

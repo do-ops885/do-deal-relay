@@ -6,6 +6,7 @@
  */
 
 import { logger } from "./global-logger";
+import { createTimeoutSignal } from "./utils";
 
 const SECURITY_CONSTANTS = {
   DNS_TIMEOUT_MS: 2000,
@@ -276,20 +277,28 @@ async function fetchDns(
       type: type,
     });
 
+    const { signal, cleanup } = createTimeoutSignal(
+      SECURITY_CONSTANTS.DNS_TIMEOUT_MS,
+    );
+
     const response = await fetch(
       `https://cloudflare-dns.com/dns-query?${params.toString()}`,
       {
         headers: { accept: "application/dns-json" },
-        signal: AbortSignal.timeout(SECURITY_CONSTANTS.DNS_TIMEOUT_MS),
+        signal,
       },
     );
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      cleanup();
+      return [];
+    }
 
     const data = (await response.json()) as {
       Answer?: Array<{ data: string }>;
     };
 
+    cleanup();
     return data.Answer?.map((a) => a.data) || [];
   } catch {
     return [];

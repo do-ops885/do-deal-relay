@@ -40,6 +40,7 @@ import {
   verifyHmacSignature,
   parseSignatureHeader,
 } from "./hmac";
+import { createTimeoutSignal } from "./utils";
 
 // ============================================================================
 // Types
@@ -201,12 +202,13 @@ export class WebhookClient {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
+      const { signal, cleanup } = createTimeoutSignal(this.config.timeoutMs);
       try {
         const response = await fetch(this.config.baseUrl, {
           method: "POST",
           headers,
           body,
-          signal: AbortSignal.timeout(this.config.timeoutMs),
+          signal,
         });
 
         // Check Content-Length before reading to avoid memory issues with large responses
@@ -235,6 +237,7 @@ export class WebhookClient {
 
         throw new Error(`HTTP ${response.status}: ${responseBody}`);
       } catch (error) {
+        cleanup();
         lastError = error as Error;
 
         if (attempt < this.config.maxRetries) {
