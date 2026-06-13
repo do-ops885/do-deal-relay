@@ -9,6 +9,28 @@ Production: `https://your-worker.workers.dev`
 No authentication required for public endpoints.
 For admin endpoints (future), API key via header: `X-API-Key: your-key`
 
+## Rate Limiting
+
+The API implements token bucket rate limiting. Authenticated requests have separate quotas from anonymous requests.
+
+### Rate Limit Headers
+
+Every API response includes rate limit metadata in the headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Total requests allowed per window |
+| `X-RateLimit-Remaining` | Number of requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the current window resets |
+| `Retry-After` | Seconds to wait before retrying (only on 429 errors) |
+
+### Default Quotas
+
+- **Default**: 100 requests per 60 seconds
+- **Deal Submission** (`/api/submit`): 10 requests per 60 seconds
+- **Manual Discovery** (`/api/discover`): 5 requests per 300 seconds
+- **Research** (`/api/research`): 20 requests per 60 seconds
+
 ## Endpoints
 
 ### GET /health
@@ -2664,7 +2686,7 @@ Revoke an API key by its hash.
 
 **Parameters:**
 
-- `hash` (string): The SHA-256 hash of the API key to revoke
+- `hash` (string): The SHA-256 hash of the API key to revoke. The hash can be retrieved from the `GET /api/admin/keys` list.
 
 **Response:**
 

@@ -116,6 +116,8 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 | `JWT_REFRESH_SECRET` | No | Secret for signing refresh tokens (optional) |
 | `NOTIFICATION_THRESHOLD` | No | Score threshold for sending notifications |
 | `CANDIDATE_BUDGET_GLOBAL` | No | Max candidates per run |
+| `CANDIDATE_BUDGET_PER_SOURCE` | No | Base candidates per individual source |
+| `CANDIDATE_BUDGET_HIGH_TRUST_BONUS` | No | Extra budget bonus for high-trust sources |
 
 ### Current Settings
 
