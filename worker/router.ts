@@ -1,4 +1,5 @@
 import type { Env } from "./types";
+import { logger } from "./lib/global-logger";
 import {
   handleHealth,
   handleReady,
@@ -346,9 +347,15 @@ export async function handleRequest(
     // 404
     return jsonResponse({ error: "Not found" }, 404, request, env);
   } catch (error) {
-    console.error("Request handler error:", error);
+    logger.error("Request handler error:", {
+      component: "router",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return jsonResponse(
-      { error: "Internal server error", message: (error as Error).message },
+      {
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : String(error),
+      },
       500,
       request,
       env,

@@ -2,6 +2,7 @@ import { setGitHubToken, initGitHubCircuitBreaker } from "./lib/github/index";
 import type { Env } from "./types";
 import { jsonResponse } from "./routes/utils";
 import { validateConfig } from "./lib/config-utils";
+import { logger } from "./lib/global-logger";
 import { handleRequest } from "./router";
 import { handleScheduled } from "./scheduled";
 
@@ -28,7 +29,10 @@ export default {
     try {
       await ensureConfigValidated(env);
     } catch (error) {
-      console.error("Configuration error:", error);
+      logger.error("Configuration error:", {
+        component: "worker",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return jsonResponse(
         {
           error: "Configuration error",
@@ -51,7 +55,10 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      console.error("Scheduled execution configuration error:", error);
+      logger.error("Scheduled execution configuration error:", {
+        component: "worker",
+        error: error instanceof Error ? error.message : String(error),
+      });
       const { notify } = await import("./notify");
       await notify(env, {
         type: "system_error",

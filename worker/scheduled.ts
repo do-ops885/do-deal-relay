@@ -89,7 +89,9 @@ export async function handleScheduled(
 
     const result = await executePipeline(env);
     if (!result.success) {
-      console.error(`Pipeline failed at ${result.phase}: ${result.error}`);
+      logger.error(`Pipeline failed at ${result.phase}: ${result.error}`, {
+        component: "scheduled",
+      });
       await notify(env, {
         type: "system_error",
         severity: "critical",
@@ -107,15 +109,19 @@ export async function handleScheduled(
       });
     }
   } catch (error) {
-    console.error("Scheduled execution error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Scheduled execution error:", {
+      component: "scheduled",
+      error: errorMessage,
+    });
     await notify(env, {
       type: "system_error",
       severity: "critical",
       run_id: "scheduled",
-      message: `Scheduled execution failed: ${(error as Error).message}`,
+      message: `Scheduled execution failed: ${errorMessage}`,
       context: {
         cron,
-        error: (error as Error).message,
+        error: errorMessage,
       },
     });
   }
