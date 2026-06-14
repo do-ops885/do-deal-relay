@@ -165,6 +165,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
@@ -182,7 +183,11 @@ jobs:
           if [ "${HEALTH_STATUS}" = "503" ]; then
             echo "Fresh deployment detected (health=503), seeding KV..."
             # Create empty snapshot to initialize KV
-            curl -sf -X POST "${PROD_URL}/api/discover" || true
+            DISCOVER_AUTH=""
+            if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+              DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
+            fi
+            curl -sf -X POST ${DISCOVER_AUTH} "${PROD_URL}/api/discover" || true
             # Wait for discovery to complete
             sleep 5
             echo "KV seeded successfully"
@@ -237,6 +242,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
@@ -260,24 +266,33 @@ jobs:
             exit 1
           fi
 
-          # Test metrics endpoint
-          curl -sf "${PROD_URL}/metrics" || exit 1
-          echo "✅ Metrics endpoint OK"
+          # Authenticated endpoints require an API key (admin role for /metrics, /api/status)
+          if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+            AUTH_HEADER="X-API-Key: ${SMOKE_TEST_API_KEY}"
 
-          # Test deals endpoint (may return 404 for fresh deployments)
-          DEALS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${PROD_URL}/deals" || echo "000")
-          # SC2170 fix: use string comparison instead of -eq
-          if [ "${DEALS_STATUS}" = "200" ] || [ "${DEALS_STATUS}" = "404" ]; then
-            echo "✅ Deals endpoint OK (status: ${DEALS_STATUS})"
+            # Test metrics endpoint
+            curl -sf -H "${AUTH_HEADER}" "${PROD_URL}/metrics" || exit 1
+            echo "✅ Metrics endpoint OK"
+
+            # Test deals endpoint (may return 404 for fresh deployments)
+            DEALS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "${AUTH_HEADER}" "${PROD_URL}/deals" || echo "000")
+            # SC2170 fix: use string comparison instead of -eq
+            if [ "${DEALS_STATUS}" = "200" ] || [ "${DEALS_STATUS}" = "404" ]; then
+              echo "✅ Deals endpoint OK (status: ${DEALS_STATUS})"
+            else
+              echo "❌ Deals endpoint failed with status ${DEALS_STATUS}"
+              exit 1
+            fi
+
+            # Test API status endpoint
+            curl -sf -H "${AUTH_HEADER}" "${PROD_URL}/api/status" || exit 1
+            echo "✅ API status endpoint OK"
           else
-            echo "❌ Deals endpoint failed with status ${DEALS_STATUS}"
-            exit 1
+            echo "⚠️  SMOKE_TEST_API_KEY not set, skipping authenticated endpoint tests"
+            echo "    To enable: Settings → Environments → production → Secrets → SMOKE_TEST_API_KEY"
+            echo "    Create key: POST /api/admin/keys with admin role"
           fi
-
-          # Test API status endpoint
-          curl -sf "${PROD_URL}/api/status" || exit 1
-          echo "✅ API status endpoint OK"
 
           echo "All production smoke tests passed!"
 
@@ -286,11 +301,16 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           PROD_HOST="$(bash scripts/worker-host.sh production || true)"
           if [ -n "${PROD_HOST}" ]; then
             echo "Triggering discovery pipeline..."
-            curl -sf -X POST \
+            DISCOVER_AUTH=""
+            if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+              DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
+            fi
+            curl -sf -X POST ${DISCOVER_AUTH} \
               "https://${PROD_HOST}/api/discover" || true
           else
             echo "⚠️  Could not resolve production host, skipping discovery trigger"

@@ -67,6 +67,7 @@ jobs:
         if: steps.resolve_host.outputs.host != ''
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           PROD_URL="https://${{ steps.resolve_host.outputs.host }}"
           echo "Production URL: ${PROD_URL}"
@@ -79,7 +80,11 @@ jobs:
 
           # Trigger discovery
           echo "Triggering discovery..."
-          RESPONSE=$(curl -sf -X POST "${PROD_URL}/api/discover" 2>&1) || {
+          DISCOVER_AUTH=""
+          if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+            DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
+          fi
+          RESPONSE=$(curl -sf -X POST ${DISCOVER_AUTH} "${PROD_URL}/api/discover" 2>&1) || {
             echo "Discovery trigger failed: ${RESPONSE}"
             exit 1
           }
@@ -89,6 +94,7 @@ jobs:
         if: steps.resolve_host.outputs.host != ''
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           PROD_URL="https://${{ steps.resolve_host.outputs.host }}"
           echo "Waiting 2 minutes for discovery to complete..."
@@ -96,7 +102,11 @@ jobs:
 
           # Check status
           echo "Checking discovery status..."
-          STATUS=$(curl -sf "${PROD_URL}/api/status" 2>/dev/null || echo '{}')
+          STATUS_AUTH=""
+          if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+            STATUS_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
+          fi
+          STATUS=$(curl -sf ${STATUS_AUTH} "${PROD_URL}/api/status" 2>/dev/null || echo '{}')
           echo "Status: ${STATUS}"
 
       - name: Report to logs
@@ -123,6 +133,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
+          SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
           if [ -z "${WORKER_HOST}" ]; then
             echo "⚠️  WORKER_HOST is not set on the 'staging' GitHub Environment."
@@ -154,7 +165,11 @@ jobs:
 
           # Trigger discovery
           echo "Triggering discovery..."
-          curl -sf -X POST "${STAGING_URL}/api/discover" || {
+          DISCOVER_AUTH=""
+          if [ -n "${SMOKE_TEST_API_KEY}" ]; then
+            DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
+          fi
+          curl -sf -X POST ${DISCOVER_AUTH} "${STAGING_URL}/api/discover" || {
             echo "❌ Discovery trigger failed"
             exit 1
           }
