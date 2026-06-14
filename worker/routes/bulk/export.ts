@@ -163,9 +163,7 @@ export async function handleBulkExport(
     logger.error(`Bulk export error: ${err.message}`, {
       component: "bulk-api",
     });
-    return errorResponse("Bulk export failed", 500, {
-      message: err.message,
-    });
+    return errorResponse("Bulk export failed", 500);
   }
 }
 

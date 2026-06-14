@@ -78,31 +78,6 @@ export function jsonResponse(
 }
 
 /**
- * Create JSON response with specific origin (legacy helper, now uses jsonResponse)
- * @deprecated Use jsonResponse(data, status, request, env) instead
- */
-export function jsonResponseWithOrigin(
-  data: unknown,
-  status: number = 200,
-  origin?: string,
-  env?: Env,
-): Response {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": getAllowedOrigin(origin, env),
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, X-API-Key, X-Correlation-ID, X-Webhook-Signature, MCP-Session-Id",
-      "Access-Control-Allow-Credentials": "true",
-      Vary: "Origin",
-      ...SECURITY_HEADERS,
-    },
-  });
-}
-
-/**
  * Create error response with proper security headers
  */
 export function errorResponse(

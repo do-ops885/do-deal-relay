@@ -85,7 +85,7 @@ export async function executeTool(
       content: [
         {
           type: "text",
-          text: `❌ Tool execution failed: ${(error as Error).message}`,
+          text: "Tool execution failed",
         },
       ],
       isError: true,

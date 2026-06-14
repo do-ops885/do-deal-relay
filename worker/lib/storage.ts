@@ -3,6 +3,7 @@ import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { generateSnapshotHash } from "./crypto";
 import { executeInBatches } from "./utils";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // KV Storage Abstraction Layer
@@ -21,7 +22,10 @@ export async function getProductionSnapshot(
     );
     return data;
   } catch (error) {
-    console.error("Failed to get production snapshot:", error);
+    logger.error("Failed to get production snapshot", {
+      component: "storage",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -37,7 +41,10 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
     );
     return data;
   } catch (error) {
-    console.error("Failed to get staging snapshot:", error);
+    logger.error("Failed to get staging snapshot", {
+      component: "storage",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

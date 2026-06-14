@@ -4,6 +4,7 @@
 // Uses Workers AI to extract entities from complex queries
 
 import { logger } from "../../global-logger";
+import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
 import type { Entity } from "./types";
 
@@ -71,9 +72,10 @@ export async function extractEntities(
       const aiEntities = await extractEntitiesWithAI(ai, query);
       entities.push(...aiEntities);
     } catch (error) {
+      const err = toError(error);
       logger.warn("AI entity extraction failed", {
         query,
-        error: (error as Error).message,
+        error: err.message,
       });
     }
   }
@@ -201,8 +203,9 @@ Respond with only valid JSON, no markdown.`;
       metadata: e.metadata,
     }));
   } catch (error) {
+    const err = toError(error);
     logger.warn("AI entity parsing failed", {
-      error: (error as Error).message,
+      error: err.message,
     });
     return [];
   }

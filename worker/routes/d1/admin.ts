@@ -91,7 +91,6 @@ export async function handleD1Migrations(
     return jsonResponse(
       {
         error: "Failed to retrieve migration status",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );
@@ -143,7 +142,7 @@ export async function handleD1Health(env: Env): Promise<Response> {
       {
         success: false,
         healthy: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: "Database health check failed",
       },
       500,
     );

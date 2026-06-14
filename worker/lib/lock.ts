@@ -1,6 +1,8 @@
 import { CONFIG } from "../config";
 import { PipelineError, ErrorClass } from "../types";
 import type { Env } from "../types";
+import { toError } from "./sanitize-error";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Distributed Lock Implementation
@@ -58,8 +60,13 @@ export async function acquireLock(
         }
 
         // Lock expired, we can take over (log warning)
-        console.warn(
+        logger.warn(
           `Lock expired for run ${existing.run_id}, taking over with ${run_id}`,
+          {
+            component: "lock",
+            existing_run_id: existing.run_id,
+            new_run_id: run_id,
+          },
         );
       }
 
@@ -95,7 +102,7 @@ export async function acquireLock(
       }
       throw new PipelineError(
         "ConcurrencyError",
-        `Lock acquisition failed: ${(error as Error).message}`,
+        `Lock acquisition failed: ${toError(error).message}`,
         "init",
         true,
       );
@@ -118,21 +125,29 @@ export async function releaseLock(env: Env, trace_id: string): Promise<void> {
     const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
 
     if (!existing) {
-      console.warn("No active lock found during release");
+      logger.warn("No active lock found during release", { component: "lock" });
       return;
     }
 
     // Verify we're releasing our own lock
     if (existing.trace_id !== trace_id) {
-      console.warn(
+      logger.warn(
         `Lock owned by ${existing.trace_id}, cannot release with ${trace_id}`,
+        {
+          component: "lock",
+          owned_by: existing.trace_id,
+          requested_by: trace_id,
+        },
       );
       return;
     }
 
     await env.DEALS_LOCK.delete(LOCK_KEY);
   } catch (error) {
-    console.error("Failed to release lock:", error);
+    logger.error("Failed to release lock", {
+      component: "lock",
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Don't throw - lock will expire naturally
   }
 }
@@ -174,7 +189,7 @@ export async function extendLock(
     }
     throw new PipelineError(
       "ConcurrencyError",
-      `Lock extension failed: ${(error as Error).message}`,
+      `Lock extension failed: ${toError(error).message}`,
       "init",
       true,
     );

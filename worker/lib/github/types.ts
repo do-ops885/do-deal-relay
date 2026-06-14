@@ -2,9 +2,9 @@ export interface GitHubCommit {
   sha: string;
   message: string;
   author: {
-    name: string;
-    email: string;
-    date: string;
+    name?: string;
+    email?: string;
+    date?: string;
   };
 }
 

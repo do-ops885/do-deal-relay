@@ -81,7 +81,7 @@ export async function handleGetReferrals(
       handler: "handleGetReferrals",
     });
     return jsonResponse(
-      { error: "Failed to retrieve referrals", message: err.message },
+      { error: "Failed to retrieve referrals" },
       500,
       request,
       env,
@@ -230,7 +230,7 @@ export async function handleCreateReferral(
       handler: "handleCreateReferral",
     });
     return jsonResponse(
-      { error: "Failed to create referral", message: err.message },
+      { error: "Failed to create referral" },
       500,
       request,
       env,
@@ -268,7 +268,7 @@ export async function handleGetReferralByCode(
       handler: "handleGetReferralByCode",
     });
     return jsonResponse(
-      { error: "Failed to retrieve referral", message: err.message },
+      { error: "Failed to retrieve referral" },
       500,
       request,
       env,
@@ -344,7 +344,7 @@ export async function handleDeactivateReferral(
       handler: "handleDeactivateReferral",
     });
     return jsonResponse(
-      { error: "Failed to deactivate referral", message: err.message },
+      { error: "Failed to deactivate referral" },
       500,
       request,
       env,
@@ -396,9 +396,6 @@ export async function handleReactivateReferral(
       component: "api",
       handler: "handleReactivateReferral",
     });
-    return jsonResponse(
-      { error: "Failed to reactivate referral", message: err.message },
-      500,
-    );
+    return jsonResponse({ error: "Failed to reactivate referral" }, 500);
   }
 }

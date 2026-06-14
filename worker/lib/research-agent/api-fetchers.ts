@@ -1,6 +1,7 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
+import { toError } from "../sanitize-error";
 import type {
   ProductHuntResponse,
   GitHubSearchResponse,
@@ -118,12 +119,13 @@ export async function fetchProductHuntDeals(
       fetchDurationMs,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `ProductHunt fetch error: ${(error as Error).message}`,
+      error: `ProductHunt fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }
@@ -220,12 +222,13 @@ export async function fetchGitHubTrending(
       fetchDurationMs,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `GitHub fetch error: ${(error as Error).message}`,
+      error: `GitHub fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }
@@ -320,12 +323,13 @@ export async function fetchHackerNewsDeals(
       fetchDurationMs,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `HN fetch error: ${(error as Error).message}`,
+      error: `HN fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }

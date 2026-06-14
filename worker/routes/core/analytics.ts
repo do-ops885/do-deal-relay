@@ -10,6 +10,8 @@ import {
   generateDealAnalytics,
   generateAnalyticsSummary,
 } from "../../lib/analytics";
+import { toError } from "../../lib/sanitize-error";
+import { logger } from "../../lib/global-logger";
 
 /**
  * Handle analytics dashboard endpoint - GET /api/analytics
@@ -33,12 +35,13 @@ export async function handleAnalytics(
     const analytics = await generateDealAnalytics(env, days);
     return jsonResponse(analytics, 200, request, env);
   } catch (error) {
-    console.error("Analytics generation error:", error);
+    const err = toError(error);
+    logger.error("Analytics generation error", {
+      component: "analytics",
+      error_message: err.message,
+    });
     return jsonResponse(
-      {
-        error: "Failed to generate analytics",
-        message: (error as Error).message,
-      },
+      { error: "Failed to generate analytics" },
       500,
       request,
       env,

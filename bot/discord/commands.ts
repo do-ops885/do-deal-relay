@@ -4,7 +4,7 @@
  * Slash command definitions for the Discord bot.
  */
 
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildSlashCommands(): any[] {
@@ -26,19 +26,19 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("add")
       .setDescription("Add a new referral code")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("code")
           .setDescription("The referral code")
           .setRequired(false),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("url")
           .setDescription("The complete referral URL")
           .setRequired(false),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("reward")
           .setDescription("The reward/bonus for using this code")
@@ -48,13 +48,13 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("search")
       .setDescription("Search for referral codes by domain")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("domain")
           .setDescription("The domain to search for (e.g., trading212.com)")
           .setRequired(true),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("status")
           .setDescription("Filter by status")
@@ -68,7 +68,7 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("get")
       .setDescription("Get detailed information about a referral code")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("code")
           .setDescription("The referral code to look up")
@@ -78,13 +78,13 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("deactivate")
       .setDescription("Deactivate a referral code (Moderator+)")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("code")
           .setDescription("The referral code to deactivate")
           .setRequired(true),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("reason")
           .setDescription("Reason for deactivation")
@@ -97,7 +97,7 @@ export function buildSlashCommands(): any[] {
             { name: "User Request", value: "user_request" },
           ),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("notes")
           .setDescription("Additional notes")
@@ -107,7 +107,7 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("reactivate")
       .setDescription("Reactivate a referral code (Moderator+)")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("code")
           .setDescription("The referral code to reactivate")
@@ -117,13 +117,13 @@ export function buildSlashCommands(): any[] {
     new SlashCommandBuilder()
       .setName("research")
       .setDescription("Research referral codes for a domain")
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("domain")
           .setDescription("The domain to research (e.g., wise.com)")
           .setRequired(true),
       )
-      .addStringOption((option: any) =>
+      .addStringOption((option: SlashCommandStringOption) =>
         option
           .setName("depth")
           .setDescription("Research depth")

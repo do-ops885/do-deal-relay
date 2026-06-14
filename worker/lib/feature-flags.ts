@@ -9,6 +9,7 @@
  */
 
 import type { Env } from "../types";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Configuration
@@ -239,7 +240,10 @@ export async function getAllFeatureFlags(
       }
     }
   } catch (error) {
-    console.error("Failed to list feature flags:", error);
+    logger.error("Failed to list feature flags", {
+      component: "feature-flags",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return flags;
@@ -284,7 +288,10 @@ export async function initializeDefaultFlags(env: Env): Promise<void> {
     // Mark as initialized
     await env.DEALS_LOCK.put(DEFAULT_FLAGS_INITIALIZED_KEY, "true");
   } catch (error) {
-    console.error("Failed to initialize default flags:", error);
+    logger.error("Failed to initialize default flags", {
+      component: "feature-flags",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

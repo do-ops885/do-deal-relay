@@ -4,6 +4,7 @@ import { createHelpEmail } from "../email/templates";
 import { logger } from "../lib/global-logger";
 import { verifyHmacSignature, parseSignatureHeader } from "../lib/hmac";
 import { unauthorizedResponse, errorResponse, jsonResponse } from "./utils";
+import { toError } from "../lib/sanitize-error";
 
 // ============================================================================
 // Email API Routes
@@ -128,15 +129,15 @@ export async function handleEmailIncoming(
       env,
     );
   } catch (error) {
-    logger.error(`Email incoming error: ${(error as Error).message}`, {
+    const err = toError(error);
+    logger.error("Email incoming error", {
       component: "email-api",
+      error_message: err.message,
     });
     return errorResponse(
       "Failed to process email",
       500,
-      {
-        message: (error as Error).message,
-      },
+      undefined,
       request,
       env,
     );
@@ -203,18 +204,12 @@ export async function handleEmailParse(
       env,
     );
   } catch (error) {
-    logger.error(`Email parse error: ${(error as Error).message}`, {
+    const err = toError(error);
+    logger.error("Email parse error", {
       component: "email-api",
+      error_message: err.message,
     });
-    return errorResponse(
-      "Failed to parse email",
-      500,
-      {
-        message: (error as Error).message,
-      },
-      request,
-      env,
-    );
+    return errorResponse("Failed to parse email", 500, undefined, request, env);
   }
 }
 

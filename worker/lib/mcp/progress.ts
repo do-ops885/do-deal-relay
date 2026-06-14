@@ -6,6 +6,7 @@
  */
 
 import type { Env } from "../../types";
+import { logger } from "../global-logger";
 
 const PROGRESS_KV_PREFIX = "mcp:progress:";
 const PROGRESS_INDEX_TABLE = "mcp_progress_index";
@@ -57,7 +58,10 @@ async function ensureProgressIndexTable(env: Env): Promise<void> {
       `CREATE TABLE IF NOT EXISTS ${PROGRESS_INDEX_TABLE} (operationId TEXT PRIMARY KEY, toolName TEXT NOT NULL, createdAt TEXT NOT NULL)`,
     );
   } catch (err) {
-    console.warn("MCP Progress: ensureProgressIndexTable failed", err);
+    logger.warn("MCP Progress: ensureProgressIndexTable failed", {
+      component: "mcp-progress",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -74,7 +78,11 @@ async function updateIndex(env: Env, entry: ProgressIndexEntry): Promise<void> {
       .bind(entry.operationId, entry.toolName, entry.createdAt)
       .run();
   } catch (err) {
-    console.warn("MCP Progress: updateIndex failed", entry.operationId, err);
+    logger.warn("MCP Progress: updateIndex failed", {
+      component: "mcp-progress",
+      operationId: entry.operationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -87,7 +95,11 @@ async function removeFromIndex(env: Env, operationId: string): Promise<void> {
       .bind(operationId)
       .run();
   } catch (err) {
-    console.warn("MCP Progress: removeFromIndex failed", operationId, err);
+    logger.warn("MCP Progress: removeFromIndex failed", {
+      component: "mcp-progress",
+      operationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -99,7 +111,10 @@ async function cleanupStaleIndex(env: Env): Promise<void> {
       .bind(PROGRESS_TTL_SECONDS.toString())
       .run();
   } catch (err) {
-    console.warn("MCP Progress: cleanupStaleIndex failed", err);
+    logger.warn("MCP Progress: cleanupStaleIndex failed", {
+      component: "mcp-progress",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -186,7 +201,11 @@ export async function getProgress(
     if (!raw) return null;
     return JSON.parse(raw) as ProgressState;
   } catch (err) {
-    console.warn("MCP Progress: getProgress failed", operationId, err);
+    logger.warn("MCP Progress: getProgress failed", {
+      component: "mcp-progress",
+      operationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -201,7 +220,10 @@ export async function listOperations(env: Env): Promise<ProgressIndexEntry[]> {
       .all<ProgressIndexEntry>();
     return result.results;
   } catch (err) {
-    console.warn("MCP Progress: listOperations failed", err);
+    logger.warn("MCP Progress: listOperations failed", {
+      component: "mcp-progress",
+      error: err instanceof Error ? err.message : String(err),
+    });
     return [];
   }
 }

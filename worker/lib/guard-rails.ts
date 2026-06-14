@@ -1,5 +1,6 @@
 import { Deal, PipelineError, ErrorClass } from "../types";
 import { CONFIG } from "../config";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Guard Rails - Safety Mechanisms
@@ -292,7 +293,12 @@ export function checkConsistency(
   const missingHashes = before.hashes.filter((h) => !after.hashes.includes(h));
   if (missingHashes.length > 0 && missingHashes.length < before.count) {
     // Some loss is expected (deduplication, validation), but track it
-    console.warn(`${missingHashes.length} deals removed from pipeline`);
+    logger.warn(`${missingHashes.length} deals removed from pipeline`, {
+      component: "guard-rails",
+      removed_count: missingHashes.length,
+      before_count: before.count,
+      after_count: after.count,
+    });
   }
 
   if (issues.length > 0) {

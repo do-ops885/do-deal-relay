@@ -2,6 +2,7 @@ import { Deal, DealMetadata, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { updateSourceTrust } from "../lib/storage";
 import { logger } from "../lib/global-logger";
+import { toError } from "../lib/sanitize-error";
 
 // ============================================================================
 // Scoring Pipeline
@@ -224,9 +225,10 @@ export async function evolveSourceTrust(
         allValid,
       });
     } catch (error) {
+      const err = toError(error);
       logger.error(`Failed to evolve trust for ${domain}`, {
         domain,
-        error: (error as Error).message,
+        error: err.message,
       });
     }
   }

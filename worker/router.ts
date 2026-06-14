@@ -28,6 +28,8 @@ import {
   handleGetResearchResults,
 } from "./routes/referral-research";
 import { jsonResponse } from "./routes/utils";
+import { toError } from "./lib/sanitize-error";
+import { checkBodySize } from "./middleware/body-limit";
 import {
   handleMCPRequest,
   handleMCPListTools,
@@ -49,7 +51,7 @@ import { withAuth } from "./lib/auth";
 import { createRateLimitMiddleware } from "./lib/rate-limit";
 import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
-import { handleWebhookRoutes } from "./routes/webhooks";
+import { handleWebhookRoutes } from "./routes/webhooks/index";
 import { handleSemanticSearch } from "./routes/semantic-search";
 import {
   handleSubmitExperience,
@@ -132,6 +134,8 @@ export async function handleRequest(
 
     // Deal Submission
     if (path === "/api/submit" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 10 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
       return withAuth(request, env, "user", (auth) => {
         const rateLimiter = createRateLimitMiddleware(env, "/api/submit", auth);
         return rateLimiter(request, () => handleSubmit(request, env));
@@ -166,6 +170,8 @@ export async function handleRequest(
         );
       }
       if (request.method === "POST") {
+        const bodyTooLarge = checkBodySize(request, 5 * 1024);
+        if (bodyTooLarge) return bodyTooLarge;
         return withAuth(request, env, "user", () =>
           handleCreateReferral(request, env),
         );
@@ -185,6 +191,8 @@ export async function handleRequest(
 
     // Research API
     if (path === "/api/research" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 10 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
       return withAuth(request, env, "user", (auth) => {
         const rateLimiter = createRateLimitMiddleware(
           env,
@@ -205,21 +213,42 @@ export async function handleRequest(
 
     // Semantic search (Vectorize + Workers AI)
     if (path === "/api/semantic-search" && request.method === "POST") {
-      return withAuth(request, env, "user", () =>
-        handleSemanticSearch(request, env),
-      );
+      const bodyTooLarge = checkBodySize(request, 5 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/semantic-search",
+          auth,
+        );
+        return rateLimiter(request, () => handleSemanticSearch(request, env));
+      });
     }
 
     // Validation API
     if (path === "/api/validate/url" && request.method === "POST") {
-      return withAuth(request, env, "user", (auth) =>
-        handleValidateUrl(request, env, auth),
-      );
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/validate/url",
+          auth,
+        );
+        return rateLimiter(request, () =>
+          handleValidateUrl(request, env, auth),
+        );
+      });
     }
     if (path === "/api/validate/batch" && request.method === "POST") {
-      return withAuth(request, env, "user", (auth) =>
-        handleValidateBatch(request, env, auth),
-      );
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/validate/batch",
+          auth,
+        );
+        return rateLimiter(request, () =>
+          handleValidateBatch(request, env, auth),
+        );
+      });
     }
     if (path === "/api/validation/stats" && request.method === "GET") {
       return withAuth(request, env, "admin", () =>
@@ -245,6 +274,8 @@ export async function handleRequest(
 
     // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
     if (path === "/mcp") {
+      const bodyTooLarge = checkBodySize(request, 10 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
       return withAuth(request, env, "user", () =>
         handleMCPRequest(request, env),
       );
@@ -257,6 +288,8 @@ export async function handleRequest(
       );
     }
     if (path === "/mcp/v1/tools/call" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 10 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
       return withAuth(request, env, "user", () => handleMCPCall(request, env));
     }
     if (path === "/mcp/v1/info") {
@@ -309,12 +342,22 @@ export async function handleRequest(
 
     // Email API
     if (path === "/api/email/incoming" && request.method === "POST") {
-      return handleEmailIncoming(request, env);
+      const bodyTooLarge = checkBodySize(request, 100 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      const rateLimiter = createRateLimitMiddleware(env, "/api/email/incoming");
+      return rateLimiter(request, () => handleEmailIncoming(request, env));
     }
     if (path === "/api/email/parse" && request.method === "POST") {
-      return withAuth(request, env, "user", () =>
-        handleEmailParse(request, env),
-      );
+      const bodyTooLarge = checkBodySize(request, 10 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/email/parse",
+          auth,
+        );
+        return rateLimiter(request, () => handleEmailParse(request, env));
+      });
     }
     if (path === "/api/email/help" && request.method === "GET") {
       return withAuth(request, env, undefined, () => handleEmailHelp());
@@ -347,18 +390,12 @@ export async function handleRequest(
     // 404
     return jsonResponse({ error: "Not found" }, 404, request, env);
   } catch (error) {
-    logger.error("Request handler error:", {
+    const err = toError(error);
+    logger.error("Request handler error", {
       component: "router",
-      error: error instanceof Error ? error.message : String(error),
+      error_message: err.message,
+      error_stack: err.stack,
     });
-    return jsonResponse(
-      {
-        error: "Internal server error",
-        message: error instanceof Error ? error.message : String(error),
-      },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Internal server error" }, 500, request, env);
   }
 }

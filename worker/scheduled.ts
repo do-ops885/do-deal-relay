@@ -4,6 +4,7 @@ import type { Env } from "./types";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import { logger } from "./lib/global-logger";
 import { runAggregation } from "./lib/d1/experience";
+import { toError } from "./lib/sanitize-error";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -91,6 +92,8 @@ export async function handleScheduled(
     if (!result.success) {
       logger.error(`Pipeline failed at ${result.phase}: ${result.error}`, {
         component: "scheduled",
+        phase: result.phase,
+        error: result.error,
       });
       await notify(env, {
         type: "system_error",
@@ -109,19 +112,19 @@ export async function handleScheduled(
       });
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error("Scheduled execution error:", {
+    const err = toError(error);
+    logger.error("Scheduled execution error", {
       component: "scheduled",
-      error: errorMessage,
+      error_message: err.message,
     });
     await notify(env, {
       type: "system_error",
       severity: "critical",
       run_id: "scheduled",
-      message: `Scheduled execution failed: ${errorMessage}`,
+      message: `Scheduled execution failed`,
       context: {
         cron,
-        error: errorMessage,
+        error: err.message,
       },
     });
   }

@@ -58,3 +58,6 @@ agents-docs/coordination/handoff-log.jsonl
 
 # Skill scaffolding templates are copied into new projects, not formatted here
 .agents/skills/**/templates/**
+
+# Claude skill symlinks (broken symlinks cause parse errors)
+.claude/

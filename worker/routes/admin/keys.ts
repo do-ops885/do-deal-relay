@@ -53,11 +53,7 @@ export async function handleCreateApiKey(
       request,
     );
   } catch (error) {
-    return jsonResponse(
-      { error: "Failed to create API key", message: (error as Error).message },
-      500,
-      request,
-    );
+    return jsonResponse({ error: "Failed to create API key" }, 500, request);
   }
 }
 
@@ -81,11 +77,7 @@ export async function handleListApiKeys(
 
     return jsonResponse({ keys: sanitizedKeys }, 200, request);
   } catch (error) {
-    return jsonResponse(
-      { error: "Failed to list API keys", message: (error as Error).message },
-      500,
-      request,
-    );
+    return jsonResponse({ error: "Failed to list API keys" }, 500, request);
   }
 }
 
@@ -107,10 +99,6 @@ export async function handleRevokeApiKey(
       request,
     );
   } catch (error) {
-    return jsonResponse(
-      { error: "Failed to revoke API key", message: (error as Error).message },
-      500,
-      request,
-    );
+    return jsonResponse({ error: "Failed to revoke API key" }, 500, request);
   }
 }

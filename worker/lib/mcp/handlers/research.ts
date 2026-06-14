@@ -7,6 +7,7 @@ import {
   convertResearchToReferrals,
 } from "../../research-agent/orchestrator";
 import { logger } from "../../global-logger";
+import { toError } from "../../sanitize-error";
 
 export const ResearchDomainInputSchema = z.object({
   domain: z.string().describe("Domain to research (e.g., 'dropbox.com')"),
@@ -91,9 +92,10 @@ export async function handleResearchDomain(
       persisted_count = referrals.length;
     }
   } catch (error) {
+    const err = toError(error);
     logger.error("MCP Research: real fetching failed", {
       domain,
-      error: (error as Error).message,
+      error: err.message,
     });
   }
 

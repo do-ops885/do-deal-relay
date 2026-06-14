@@ -7,6 +7,8 @@
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
 import { createStructuredLogger } from "../../lib/logger";
+import { logger } from "../../lib/global-logger";
+import { toError } from "../../lib/sanitize-error";
 import {
   getDealsByDomain,
   getDealsByCategory,
@@ -112,7 +114,6 @@ export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Failed to retrieve deals",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );
@@ -160,7 +161,12 @@ export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
       env,
     );
   } catch (error) {
-    console.error("similar-deals-failed", { dealId, error: String(error) });
+    const err = toError(error);
+    logger.error("similar-deals-failed", {
+      component: "d1-deals",
+      dealId,
+      error: err.message,
+    });
     return jsonResponse(
       { error: "Failed to get similar deals" },
       500,
@@ -202,7 +208,11 @@ export async function handleD1Recommended(
       env,
     );
   } catch (error) {
-    console.error("recommended-deals-failed", { error: String(error) });
+    const err = toError(error);
+    logger.error("recommended-deals-failed", {
+      component: "d1-deals",
+      error: err.message,
+    });
     return jsonResponse(
       { error: "Failed to get recommended deals" },
       500,
@@ -241,7 +251,11 @@ export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
       period_days: days,
     });
   } catch (error) {
-    console.error("trending-deals-failed", { error: String(error) });
+    const err = toError(error);
+    logger.error("trending-deals-failed", {
+      component: "d1-deals",
+      error: err.message,
+    });
     return jsonResponse(
       { error: "Failed to get trending deals" },
       500,

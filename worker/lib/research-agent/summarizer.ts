@@ -1,5 +1,6 @@
 import { CONFIG } from "../../config";
 import { logger } from "../global-logger";
+import { toError } from "../sanitize-error";
 import type { ExtractedContent } from "./extractor";
 
 export interface ResearchSummary {
@@ -180,13 +181,11 @@ Return ONLY valid JSON with these exact fields:
         : [],
     };
   } catch (error) {
-    logger.warn(
-      `AI summarization failed, using rule-based: ${(error as Error).message}`,
-      {
-        component: "summarizer",
-        url,
-      },
-    );
+    const err = toError(error);
+    logger.warn(`AI summarization failed, using rule-based: ${err.message}`, {
+      component: "summarizer",
+      url,
+    });
     return null;
   }
 }

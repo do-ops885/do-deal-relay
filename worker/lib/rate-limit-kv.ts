@@ -9,6 +9,7 @@
  */
 
 import type { Env } from "../types";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Configuration
@@ -210,7 +211,11 @@ export async function checkRateLimitKV(
     };
   } catch (error) {
     // Fail open on KV errors
-    console.error("Rate limit KV check failed:", error);
+    logger.error("Rate limit KV check failed", {
+      component: "rate-limit-kv",
+      clientId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       allowed: true,
       remaining: maxRequests,
@@ -301,7 +306,10 @@ export async function getAllRateLimitStates(
       }
     }
   } catch (error) {
-    console.error("Failed to list rate limit states:", error);
+    logger.error("Failed to list rate limit states", {
+      component: "rate-limit-kv",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return states;

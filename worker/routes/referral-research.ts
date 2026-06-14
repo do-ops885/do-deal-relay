@@ -85,12 +85,7 @@ export async function handleResearch(
       component: "api",
       handler: "handleResearch",
     });
-    return jsonResponse(
-      { error: "Research failed", message: err.message },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Research failed" }, 500, request, env);
   }
 }
 
@@ -122,7 +117,7 @@ export async function handleGetResearchResults(
       handler: "handleGetResearchResults",
     });
     return jsonResponse(
-      { error: "Failed to get research results", message: err.message },
+      { error: "Failed to get research results" },
       500,
       request,
       env,

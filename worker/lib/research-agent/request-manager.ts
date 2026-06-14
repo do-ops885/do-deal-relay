@@ -294,7 +294,10 @@ export class RequestManager {
         expirationTtl: Math.ceil(windowMs / 1000),
       });
     } catch (err) {
-      console.warn("Research RequestManager: recordRateLimitHit failed", err);
+      logger.warn("Research RequestManager: recordRateLimitHit failed", {
+        component: "research-request-manager",
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

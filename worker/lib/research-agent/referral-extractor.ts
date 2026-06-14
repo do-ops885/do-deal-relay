@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { ResearchSource } from "./types";
 import type { ExtractedReferral } from "./types";
+import { logger } from "../global-logger";
 
 export function extractReferralsFromContent(
   content: string,
@@ -58,7 +59,11 @@ export function extractReferralsFromContent(
         return referrals;
       }
     } catch (error) {
-      console.error(`Selector extraction failed for ${sourceName}:`, error);
+      logger.error(`Selector extraction failed for ${sourceName}`, {
+        component: "referral-extractor",
+        sourceName,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

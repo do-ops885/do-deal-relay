@@ -1,4 +1,5 @@
 import { CONFIG } from "../config";
+import { logger } from "./global-logger";
 
 export function createTimeoutSignal(ms: number): {
   signal: AbortSignal;
@@ -56,10 +57,14 @@ export async function fetchInBatches<T, R>(
         }
       } else {
         // Log the error but continue processing other items
-        console.error(
-          `Batch operation failed for item at index ${i + index}:`,
-          result.reason,
-        );
+        logger.error(`Batch operation failed for item at index ${i + index}`, {
+          component: "utils",
+          index: i + index,
+          error:
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason),
+        });
       }
     });
   }
@@ -106,7 +111,13 @@ export async function executeInBatches<T>(
         success++;
       } else {
         failed++;
-        console.error("Batch operation failed:", result.reason);
+        logger.error("Batch operation failed", {
+          component: "utils",
+          error:
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason),
+        });
       }
     });
   }
@@ -170,8 +181,14 @@ export async function retryWithBackoff<T>(
           delayMs * Math.pow(2, attempt),
           CONFIG.MAX_RETRY_DELAY_MS,
         );
-        console.warn(
+        logger.warn(
           `Retry attempt ${attempt + 1}/${maxRetries} after ${backoffDelay}ms: ${lastError.message}`,
+          {
+            component: "utils",
+            attempt: attempt + 1,
+            maxRetries,
+            delay_ms: backoffDelay,
+          },
         );
         await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       }
