@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { discover } from "../../worker/pipeline/discover";
+import { parseHTMLContent } from "../../worker/pipeline/discover-parsers";
 import type {
   Deal,
   PipelineContext,
@@ -685,6 +686,59 @@ describe("Discovery Engine", () => {
 
       const result = await discover(env, ctx);
       expect(result.errors.length).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe("Reward matching (parseHTMLContent)", () => {
+    const mockSource = createMockSource({ domain: "rewards.com" });
+
+    it("should extract cash reward with USD currency from HTML", () => {
+      const html = `<p>referral_code=CASHUSD1 get $100 USD bonus</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_type).toBe("cash");
+      expect(deals[0]!.reward_value).toBe(100);
+      expect(deals[0]!.reward_currency).toBe("USD");
+    });
+
+    it("should extract percent reward from HTML", () => {
+      const html = `<p>referral_code=PRCENT20 earn 20% bonus</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_type).toBe("percent");
+      expect(deals[0]!.reward_value).toBe(20);
+    });
+
+    it("should default to credit type when no reward pattern found", () => {
+      const html = `<p>referral_code=NOREWRD1 sign up now</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_type).toBe("credit");
+      expect(deals[0]!.reward_value).toBe(0);
+    });
+
+    it("should extract reward with EUR currency", () => {
+      const html = `<p>referral_code=EURCODE1 bonus 50 EUR reward</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_type).toBe("cash");
+      expect(deals[0]!.reward_value).toBe(50);
+      expect(deals[0]!.reward_currency).toBe("EUR");
+    });
+
+    it("should handle comma-separated reward values", () => {
+      const html = `<p>referral_code=COMMACD1 get $1,000 USD bonus</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_value).toBe(1000);
+    });
+
+    it("should handle decimal reward values", () => {
+      const html = `<p>referral_code=DECIMAL1 get $20.99 USD bonus</p>`;
+      const deals = parseHTMLContent(html, mockSource);
+      expect(deals).toHaveLength(1);
+      expect(deals[0]!.reward_value).toBe(20.99);
+      expect(deals[0]!.reward_currency).toBe("USD");
     });
   });
 });

@@ -3,7 +3,6 @@ import {
   PipelineContext,
   FailurePath,
   PipelineError,
-  ErrorClass,
 } from "./types";
 import { CONFIG } from "./config";
 import { generateRunId, generateUUID } from "./lib/crypto";
@@ -14,10 +13,10 @@ import { logger } from "./lib/global-logger";
 import { discover } from "./pipeline/discover";
 import { normalize } from "./pipeline/normalize";
 import { deduplicate } from "./pipeline/dedupe";
-import { validate, calculateValidationRatio } from "./validation/pipeline";
-import { score, calculateSourceDiversity } from "./pipeline/score";
+import { validate } from "./validation/pipeline";
+import { score } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
-import { publishSnapshot, rollbackSnapshot } from "./publish";
+import { publishSnapshot } from "./publish";
 import { notify } from "./notify";
 import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
 import { runExpirationCheck } from "./lib/expiration-manager";
