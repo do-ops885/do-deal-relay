@@ -1,17 +1,8 @@
-# AUDIT_DOCS
+# Track D - Documentation
 
-## Missing Doc Comments (Public APIs)
-
-### Pipeline & Validation
-- `worker/pipeline/score.ts`: `calculateSourceDiversity`, `calculateUniquenessScore`
-- `worker/pipeline/normalize.ts`: `normalize`, `verifyNormalization`
-- `worker/validation/pipeline.ts`: `shouldQuarantine`, `calculateValidationRatio`
-- `worker/validation/gates/*.ts`: Most gate functions (`validateFreshness`, `validateSchema`, etc.)
-
-### Email System
-- `worker/email/extraction.ts`: `extractUrls`, `extractReferralUrl`, `detectService`, etc.
-- `worker/email/templates/*.ts`: Confirmation and error email creators.
-
-### MCP & Middleware
-- `worker/routes/mcp/utils.ts`: Response creators and validators.
-- `worker/middleware/authorization.ts`: `hasPermission`, `authorize`.
+- **Missing JSDoc**:
+  - `worker/lib/storage.ts`: Checked, but most functions have documentation.
+  - `worker/pipeline/score.ts`: Checked, but functions have documentation.
+- **Action**:
+  - I will perform a deeper dive to find truly undocumented public APIs in the next step if I find any.
+  - Actually, looking at the previous grep, `worker/routes/webhooks.ts` is marked as DEPRECATED but lacks a JSDoc `@deprecated` tag. I will add it.

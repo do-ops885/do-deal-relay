@@ -1,17 +1,9 @@
-worker/email/README.md:console.log(result);
-worker/routes/webhooks-README.md:  console.log(result);
-worker/routes/webhooks-README.md:    console.log(event.data.url); // https://example.com/invite/ABC123
-worker/lib/validation/url-validator.ts: *   console.log(`Deal URL invalid: ${result.error}`);
-worker/lib/validation/url-validator.ts: * console.log(`${results.validCount} valid, ${results.invalidCount} invalid`);
-worker/lib/validation/url-validator.ts: * console.log(`Redirects through: ${redirects.redirectChain.join(" -> ")}`);
-worker/lib/validation/code-validator.ts: *   console.log(`Invalid code format: ${result.errors.join(", ")}`);
-worker/lib/validation/code-validator.ts: *   console.log("Code not found on page - may be expired");
-worker/lib/validation/code-validator.ts: *   console.log("Manual verification needed");
-worker/lib/validation/reward-scraper.ts: *   console.log(`Current reward: ${result.currentReward.value}`);
-worker/lib/validation/reward-scraper.ts: *   console.log(`Reward decreased from ${change.previousReward.value} to ${change.currentReward.value}`);
-worker/lib/rate-limit-kv.ts: * console.log(`Remaining: ${result.remaining}`);
-worker/lib/logger/structured.ts:        console.log(consoleMessage, context || "");
-worker/lib/webhook-sdk.ts://   console.log(event.data.url); // Always a complete URL
-worker/lib/feature-flags.ts: * console.log(flag?.rolloutPercentage);
-worker/lib/feature-flags.ts: *   console.log(`${name}: ${flag.enabled}`);
-worker/lib/global-logger.ts:      console.log(output);
+worker/email/README.md:271:console.log(result);
+worker/routes/webhooks-README.md:153:  console.log(result);
+worker/routes/webhooks-README.md:258:    console.log(event.data.url); // https://example.com/invite/ABC123
+worker/lib/rate-limit-kv.ts:139: * console.log(`Remaining: ${result.remaining}`);
+worker/lib/logger/structured.ts:77:        console.log(consoleMessage, context || "");
+worker/lib/webhook-sdk.ts:34://   console.log(event.data.url); // Always a complete URL
+worker/lib/feature-flags.ts:140: * console.log(flag?.rolloutPercentage);
+worker/lib/feature-flags.ts:223: *   console.log(`${name}: ${flag.enabled}`);
+worker/lib/global-logger.ts:98:      console.log(output);
