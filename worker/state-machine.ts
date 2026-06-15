@@ -242,8 +242,7 @@ async function executePhase(
       if (ctx.candidates.length > 0) {
         try {
           await enforceGuardRails(ctx.candidates, "input");
-        } catch (error) {
-          const err = toError(error);
+        } catch {
           await notify(env, {
             type: "system_error",
             severity: "critical",

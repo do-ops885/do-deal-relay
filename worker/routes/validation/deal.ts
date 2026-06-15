@@ -66,8 +66,9 @@ export async function handleValidateDeal(
     }
 
     const deal = deals[0];
-    if (!deal)
+    if (!deal) {
       return errorResponse("Deal not found", 404, undefined, request, env);
+    }
 
     const results: {
       deal: {

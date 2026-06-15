@@ -44,7 +44,7 @@ export async function handleValidateBatch(
   try {
     const body = (await request.json()) as ValidateBatchBody;
 
-    if (!body.urls || !Array.isArray(body.urls)) {
+    if (!Array.isArray(body.urls)) {
       return errorResponse(
         "urls array is required",
         400,
@@ -121,14 +121,12 @@ export async function handleValidateBatch(
     const result = {
       summary,
       urls: urlResults.results,
-      rewards: rewardResults
-        ? rewardResults.map((r) => ({
-            url: r.url,
-            rewardChanged: r.rewardChanged,
-            currentReward: r.currentReward,
-            previousReward: r.previousReward,
-          }))
-        : undefined,
+      rewards: rewardResults?.map((r) => ({
+        url: r.url,
+        rewardChanged: r.rewardChanged,
+        currentReward: r.currentReward,
+        previousReward: r.previousReward,
+      })),
       errors: urlResults.errors,
     };
 

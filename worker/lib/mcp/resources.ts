@@ -26,7 +26,6 @@ import {
   generateAnalyticsSummary,
   generateDealAnalytics,
 } from "../analytics/index";
-import { toError } from "../sanitize-error";
 
 // ============================================================================
 // Resource Definitions
@@ -334,8 +333,7 @@ export async function readResource(
         },
       ],
     };
-  } catch (error) {
-    const err = toError(error);
+  } catch {
     return {
       contents: [
         {
