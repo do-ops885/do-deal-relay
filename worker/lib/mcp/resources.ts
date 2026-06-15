@@ -26,6 +26,7 @@ import {
   generateAnalyticsSummary,
   generateDealAnalytics,
 } from "../analytics/index";
+import { logger } from "../global-logger";
 
 // ============================================================================
 // Resource Definitions
@@ -333,7 +334,12 @@ export async function readResource(
         },
       ],
     };
-  } catch {
+  } catch (error) {
+    logger.debug("Resource read failed", {
+      component: "mcp-resources",
+      uri,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       contents: [
         {

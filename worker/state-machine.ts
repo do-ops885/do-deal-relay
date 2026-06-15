@@ -242,7 +242,12 @@ async function executePhase(
       if (ctx.candidates.length > 0) {
         try {
           await enforceGuardRails(ctx.candidates, "input");
-        } catch {
+        } catch (error) {
+          logger.debug("Guard rail check failed", {
+            component: "state-machine",
+            phase: "discover",
+            error: error instanceof Error ? error.message : String(error),
+          });
           await notify(env, {
             type: "system_error",
             severity: "critical",
@@ -371,13 +376,23 @@ async function executePhase(
             const { generateDealEmbeddings } =
               await import("./lib/search/embedding-pipeline");
             await generateDealEmbeddings(env, ctx.scored);
-          } catch {
+          } catch (error) {
             // Non-critical: embedding failure should not block pipeline
+            logger.debug("Embedding generation failed", {
+              component: "state-machine",
+              phase: "publish",
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
         }
 
         return "verify";
       } catch (error) {
+        logger.debug("Publish phase failed", {
+          component: "state-machine",
+          phase: "publish",
+          error: error instanceof Error ? error.message : String(error),
+        });
         return "revert";
       }
 

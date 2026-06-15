@@ -31,8 +31,6 @@ const DISCOVERY_CONSTANTS = {
   DESCRIPTION_CONTEXT_WINDOW: 300,
   EXPIRY_CONFIDENCE_DATE: 0.8,
   EXPIRY_CONFIDENCE_UNKNOWN: 0.3,
-  MIN_CODE_LENGTH: 6,
-  MAX_CODE_LENGTH: 20,
 } as const;
 
 // ============================================================================
