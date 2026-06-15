@@ -1,0 +1,125 @@
+{
+  "skill_name": "cloudflare",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to build a simple API that returns 'Hello World' using Cloudflare Workers. What is the basic structure?",
+      "expected_output": "The response should provide a standard ES module Worker structure with a fetch handler.",
+      "assertions": [
+        "The output includes an 'export default' block",
+        "The output includes a 'fetch' handler",
+        "The response mentions the 'Request' and 'Response' objects"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "How do I store and retrieve a user's session data using Cloudflare KV in a Worker?",
+      "expected_output": "The response should explain how to define a KV binding in wrangler.toml and use the env.BINDING.get/put methods.",
+      "assertions": [
+        "The output mentions 'wrangler.toml' for bindings",
+        "The output uses 'env.MY_KV.get' or similar syntax",
+        "The output explains the eventual consistency of KV"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to run a SQL query against a D1 database from my Worker. Can you show me an example of selecting all users from a 'users' table?",
+      "expected_output": "The response should demonstrate using 'env.DB.prepare().all()' or similar D1 API calls.",
+      "assertions": [
+        "The output includes 'env.DB.prepare'",
+        "The output uses '.all()' or '.first()' or '.run()'",
+        "The output mentions D1 as a serverless SQL database"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I need to upload an image to R2. How do I do that programmatically in a Worker?",
+      "expected_output": "The response should show using the R2 'put' method with a key and the image body.",
+      "assertions": [
+        "The output includes 'env.BUCKET.put'",
+        "The output mentions that R2 is S3-compatible",
+        "The output refers to the binding in the 'env' object"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I have a real-time chat application. Should I use Workers or Durable Objects for managing the room state?",
+      "expected_output": "The response should recommend Durable Objects for stateful, strongly-consistent coordination.",
+      "assertions": [
+        "The output recommends 'Durable Objects'",
+        "The output mentions 'strong consistency' or 'stateful'",
+        "The output explains that standard Workers are stateless"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "What's the difference between Cloudflare Pages and Cloudflare Workers? When should I use one over the other?",
+      "expected_output": "The response should contrast Pages (full-stack, frontend-heavy, Git-integrated) with Workers (logic-heavy, API-first).",
+      "assertions": [
+        "The output mentions 'Git integration' for Pages",
+        "The output describes Workers as 'event-driven' or 'serverless functions'",
+        "The output mentions 'Pages Functions' for full-stack logic"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I need to run an AI model like Llama 3 to generate text. How do I use Workers AI for this?",
+      "expected_output": "The response should demonstrate using 'env.AI.run()' with a model name and prompt.",
+      "assertions": [
+        "The output includes 'env.AI.run'",
+        "The output mentions '@cf/meta/llama-3-8b-instruct' or a similar model ID",
+        "The output explains the usage of the 'AI' binding"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "I want to implement semantic search. How do I use Vectorize to store embeddings?",
+      "expected_output": "The response should show how to insert vectors into a Vectorize index.",
+      "assertions": [
+        "The output includes 'env.VECTORIZE.insert'",
+        "The output mentions 'embeddings' or 'vector database'",
+        "The output mentions combining Vectorize with Workers AI for embedding generation"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "How do I expose a local server running on port 3000 to the internet securely using Cloudflare?",
+      "expected_output": "The response should recommend using Cloudflare Tunnel (Wrangler Tunnel).",
+      "assertions": [
+        "The output recommends 'Cloudflare Tunnel' or 'Argo Tunnel'",
+        "The output mentions the command 'cloudflared' or 'wrangler tunnel'",
+        "The output explains that no public IP or open ports are needed"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "I want to block all traffic from a specific country using the WAF. How do I configure this?",
+      "expected_output": "The response should guide the user to the WAF Custom Rules section or mention Terraform/API configuration.",
+      "assertions": [
+        "The output mentions 'WAF' or 'Custom Rules'",
+        "The output mentions 'ip.geoip.country'",
+        "The output mentions the 'Block' action"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "I need to log custom metrics for my application's performance. Should I use KV or Analytics Engine?",
+      "expected_output": "The response should recommend Workers Analytics Engine for high-cardinality, write-heavy metrics.",
+      "assertions": [
+        "The output recommends 'Workers Analytics Engine'",
+        "The output mentions 'high cardinality'",
+        "The output explains that KV is not suitable for high-volume metric writes"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "I need to perform a redirect for certain paths without running a full Worker. What's the best tool?",
+      "expected_output": "The response should suggest Cloudflare Snippets or Bulk Redirects.",
+      "assertions": [
+        "The output mentions 'Snippets'",
+        "The output mentions 'Redirect Rules' or 'Bulk Redirects'",
+        "The output explains that Snippets are more lightweight than Workers"
+      ]
+    }
+  ]
+}
