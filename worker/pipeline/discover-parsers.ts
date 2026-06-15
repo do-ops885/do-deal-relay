@@ -75,7 +75,7 @@ export function parseHTMLContent(
   const deals: ExtractedDeal[] = []; // Code length bounds: 6-20 characters
   const codePattern =
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
-  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
+  const urlPattern = /https?:\/\/[^\s"<>]+/i;
   // Note: no `g` flag — .match() with `g` returns full strings, not capture groups
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9]+[0-9,]*\.?[0-9]*)\s*(USD|EUR|GBP|%)?/i;
