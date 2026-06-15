@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Critical reward extraction bug** (PR #472): Removed `g` flag from `rewardPattern` regex in `discover-parsers.ts` that caused `.match()` to return full match strings instead of capture groups, completely breaking reward extraction (reward_value was always 0, reward_type always "credit")
+- **Dead imports removed** (PR #472): Cleaned up 4 unused imports from `state-machine.ts` (ErrorClass, calculateValidationRatio, calculateSourceDiversity, rollbackSnapshot)
+- **Regex consistency** (PR #473): Removed unnecessary `g` flag from `urlPattern` regex in `discover-parsers.ts` for consistency with the rewardPattern fix
+
+### Added
+- **Reward extraction tests** (PR #472): 6 unit tests verifying cash, percent, credit, EUR, comma-separated, and decimal reward extraction
+
 ## [0.1.6] - 2026-05-17
 
 ### Added
