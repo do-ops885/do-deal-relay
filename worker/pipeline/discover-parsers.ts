@@ -77,7 +77,7 @@ export function parseHTMLContent(
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
+    /(?:reward|bonus|get|earn)\s+\$?([0-9]+[0-9,]*\.?[0-9]*)\s*(USD|EUR|GBP|%)?/gi;
 
   let match: RegExpExecArray | null = codePattern.exec(content);
   while (match !== null) {
@@ -110,8 +110,8 @@ export function parseHTMLContent(
       title: extractTitle(content, code),
       description: extractDescription(content, code),
       reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
+        rewardMatch && rewardMatch[2]
+          ? rewardMatch[2] === "%"
             ? "percent"
             : "cash"
           : "credit",
@@ -120,7 +120,7 @@ export function parseHTMLContent(
           ? parseFloat(rewardMatch[1].replace(",", ""))
           : 0,
       reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
+        rewardMatch?.[2] && rewardMatch[2] !== "%" ? rewardMatch[2] : undefined,
     });
 
     match = codePattern.exec(content);
