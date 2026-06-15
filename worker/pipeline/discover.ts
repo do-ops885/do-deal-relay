@@ -1,8 +1,7 @@
-import { Deal, SourceConfig, PipelineError, PipelineContext } from "../types";
+import { Deal, SourceConfig, PipelineContext } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
 import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
-import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
