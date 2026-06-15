@@ -1,6 +1,7 @@
 import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../types";
 import { executeInBatches } from "./utils";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Cache Entry Types
@@ -91,7 +92,11 @@ export class KVCache {
       this.recordHit();
       return entry.data;
     } catch (error) {
-      console.error(`Cache get error for key ${key}:`, error);
+      logger.error(`Cache get error for key ${key}`, {
+        component: "cache",
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
       this.recordMiss();
       return null;
     }
@@ -114,7 +119,11 @@ export class KVCache {
         expirationTtl: effectiveTtl,
       });
     } catch (error) {
-      console.error(`Cache set error for key ${key}:`, error);
+      logger.error(`Cache set error for key ${key}`, {
+        component: "cache",
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -126,7 +135,11 @@ export class KVCache {
     try {
       await this.kv.delete(this.key(key));
     } catch (error) {
-      console.error(`Cache delete error for key ${key}:`, error);
+      logger.error(`Cache delete error for key ${key}`, {
+        component: "cache",
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -189,7 +202,10 @@ export class KVCache {
         this.kv.delete(key.name),
       );
     } catch (error) {
-      console.error("Cache clear error:", error);
+      logger.error("Cache clear error", {
+        component: "cache",
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }

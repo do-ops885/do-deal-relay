@@ -4,6 +4,7 @@
 
 import type { Deal, Env, ExpiringDeal } from "../types";
 import { notify } from "../notify";
+import { toError } from "./sanitize-error";
 
 const EXPIRY_WINDOWS = [7, 30, 90] as const;
 type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
@@ -105,9 +106,8 @@ export async function sendExpiryNotifications(
 
       sent++;
     } catch (error) {
-      errors.push(
-        `Failed to send ${window} notification: ${(error as Error).message}`,
-      );
+      const err = toError(error);
+      errors.push(`Failed to send ${window} notification: ${err.message}`);
     }
   }
 
@@ -176,9 +176,8 @@ export async function sendExpiredNotifications(
 
     sent = 1;
   } catch (error) {
-    errors.push(
-      `Failed to send expired notification: ${(error as Error).message}`,
-    );
+    const err = toError(error);
+    errors.push(`Failed to send expired notification: ${err.message}`);
   }
 
   return { sent, errors };

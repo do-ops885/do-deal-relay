@@ -51,7 +51,6 @@ export async function handleD1Stats(env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Failed to retrieve statistics",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );
@@ -89,7 +88,6 @@ export async function handleD1Domains(env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Failed to retrieve domains",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );
@@ -127,7 +125,6 @@ export async function handleD1Categories(env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Failed to retrieve categories",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );

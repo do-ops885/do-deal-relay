@@ -201,12 +201,7 @@ export async function handleSystemHealth(
       component: "health",
       handler: "handleSystemHealth",
     });
-    return jsonResponse(
-      { error: "Health check failed", message: err.message },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Health check failed" }, 500, request, env);
   }
 }
 

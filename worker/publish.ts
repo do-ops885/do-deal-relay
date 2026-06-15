@@ -8,6 +8,8 @@ import {
 } from "./lib/github/index";
 import { setLastRunMetadata } from "./lib/storage";
 import type { Env } from "./types";
+import { toError } from "./lib/sanitize-error";
+import { logger } from "./lib/global-logger";
 
 // ============================================================================
 // Production Publish Flow
@@ -60,7 +62,10 @@ export async function publishSnapshot(
     );
 
     if (alreadyCommitted) {
-      console.warn(`Snapshot ${snapshot.snapshot_hash} already committed`);
+      logger.warn(`Snapshot ${snapshot.snapshot_hash} already committed`, {
+        component: "publish",
+        snapshot_hash: snapshot.snapshot_hash,
+      });
       return { success: true };
     }
 
@@ -100,9 +105,10 @@ export async function publishSnapshot(
     if (error instanceof PipelineError) {
       throw error;
     }
+    const err = toError(error);
     throw new PipelineError(
       "PublishError",
-      `Publish failed: ${(error as Error).message}`,
+      `Publish failed: ${err.message}`,
       "publish",
       true,
     );
@@ -134,11 +140,7 @@ export async function rollbackSnapshot(
 
     // Rollback verification logging is handled by structured logger
   } catch (error) {
-    throw new PipelineError(
-      "PublishError",
-      (error as Error).message,
-      "publish",
-      false,
-    );
+    const err = toError(error);
+    throw new PipelineError("PublishError", err.message, "publish", false);
   }
 }

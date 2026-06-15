@@ -1,6 +1,7 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl } from "../security";
 import { createTimeoutSignal } from "../utils";
+import { toError } from "../sanitize-error";
 import type { PageContentResult, MetaTags } from "./types";
 import type { FetchResult } from "./types";
 
@@ -76,12 +77,13 @@ export async function fetchGenericPageContent(
       parsedContent: parsed,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `Fetch error: ${(error as Error).message}`,
+      error: `Fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }

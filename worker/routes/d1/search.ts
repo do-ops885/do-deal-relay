@@ -120,7 +120,6 @@ export async function handleD1Suggestions(
     return jsonResponse(
       {
         error: "Suggestions failed",
-        message: error instanceof Error ? error.message : String(error),
       },
       500,
     );

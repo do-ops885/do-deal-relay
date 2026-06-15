@@ -18,6 +18,8 @@ import type { Env } from "../../types";
 import { CONFIG } from "../../config";
 import { getTools, executeTool } from "../../lib/mcp/tools";
 import { createRateLimitHeaders } from "../../lib/rate-limit";
+import { toError } from "../../lib/sanitize-error";
+import { logger } from "../../lib/global-logger";
 import { handleInitialize, handlePing } from "./initialize";
 import { handleToolsList, handleToolCall } from "./tools";
 import {
@@ -245,14 +247,14 @@ export async function handleMCPRequest(
       },
     );
   } catch (error) {
-    console.error("MCP handler error:", error);
+    const err = toError(error);
+    logger.error("MCP handler error", {
+      component: "mcp",
+      error_message: err.message,
+    });
 
     return createJSONResponse(
-      createErrorResponse(
-        id,
-        MCPErrorCodes.INTERNAL_ERROR,
-        `Internal error: ${(error as Error).message}`,
-      ),
+      createErrorResponse(id, MCPErrorCodes.INTERNAL_ERROR, "Internal error"),
       env,
       request,
       500,
@@ -336,7 +338,6 @@ export async function handleMCPCall(
     return new Response(
       JSON.stringify({
         error: "Invalid request",
-        message: (error as Error).message,
       }),
       {
         status: 400,

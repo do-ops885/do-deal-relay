@@ -20,6 +20,7 @@ import { generateDealId } from "../../lib/crypto";
 import { logger } from "../../lib/global-logger";
 import { jsonResponse, errorResponse } from "../utils";
 import { checkRateLimit, getClientIdentifier } from "../../lib/rate-limit";
+import { toError } from "../../lib/sanitize-error";
 
 // ============================================================================
 // Configuration
@@ -207,9 +208,7 @@ export async function handleBulkImport(
     logger.error(`Bulk import error: ${err.message}`, {
       component: "bulk-api",
     });
-    return errorResponse("Bulk import failed", 500, {
-      message: err.message,
-    });
+    return errorResponse("Bulk import failed", 500);
   }
 }
 
@@ -271,13 +270,14 @@ export async function processBulkImportItem(
       };
     }
   } catch (error) {
+    const err = toError(error);
     return {
       index,
       success: false,
       code: item.code,
       message: "database error",
       referral_id: null,
-      errors: [`Failed to check existing: ${(error as Error).message}`],
+      errors: [`Failed to check existing: ${err.message}`],
     };
   }
 
@@ -346,13 +346,14 @@ export async function processBulkImportItem(
       errors: null,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       index,
       success: false,
       code: item.code,
       message: "storage error",
       referral_id: null,
-      errors: [`Failed to store: ${(error as Error).message}`],
+      errors: [`Failed to store: ${err.message}`],
     };
   }
 }

@@ -2,7 +2,10 @@
 import type { ValidationCacheEntry } from "../../types/validation-cache";
 
 type KVNamespaceLike = {
-  get(key: string, options?: { type: "json"; cacheTtl?: number }): Promise<any>;
+  get(
+    key: string,
+    options?: { type: "json"; cacheTtl?: number },
+  ): Promise<unknown>;
   put(
     key: string,
     value: string,
@@ -15,7 +18,7 @@ export class ValidationCacheRepository {
 
   async get(key: string): Promise<ValidationCacheEntry | null> {
     const result = await this.kv.get(key, { type: "json", cacheTtl: 300 });
-    return result ?? null;
+    return (result as ValidationCacheEntry) ?? null;
   }
 
   async put(

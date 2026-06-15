@@ -7,6 +7,7 @@ import type {
   D1Database,
   D1PreparedStatement,
 } from "@cloudflare/workers-types";
+import { logger } from "../global-logger";
 
 // ============================================================================
 // Error Types
@@ -333,7 +334,13 @@ export class D1Client {
             const res = results[i];
             if (comp && res !== undefined) await comp(res);
           } catch (compError) {
-            console.error("Compensation failed:", compError);
+            logger.error("Compensation failed", {
+              component: "d1-client",
+              error:
+                compError instanceof Error
+                  ? compError.message
+                  : String(compError),
+            });
           }
         }
       }
@@ -459,9 +466,11 @@ export class D1Client {
 
     const errorMessage =
       lastError instanceof Error ? lastError.message : String(lastError);
-    console.error(`D1 query failed after ${maxAttempts} attempts:`, {
+    logger.error(`D1 query failed after ${maxAttempts} attempts`, {
+      component: "d1-client",
       query: queryHint.substring(0, 100),
       error: errorMessage,
+      maxAttempts,
     });
 
     return { error: errorMessage } as R & { error?: string };

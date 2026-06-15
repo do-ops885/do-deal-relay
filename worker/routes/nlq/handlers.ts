@@ -236,10 +236,9 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Query execution failed",
-        message: error instanceof Error ? error.message : String(error),
+        message: "An error occurred while processing the query",
         code: "EXECUTION_ERROR",
         details: {
-          query: body.query,
           execution_time_ms: executionTime,
         },
       } as NLQError,
@@ -350,7 +349,7 @@ export async function handleNLQGet(
     return jsonResponse(
       {
         error: "Query execution failed",
-        message: error instanceof Error ? error.message : String(error),
+        message: "An error occurred while processing the query",
         code: "EXECUTION_ERROR",
       } as NLQError,
       500,
@@ -448,7 +447,7 @@ export async function handleNLQExplain(
     return jsonResponse(
       {
         error: "Explain failed",
-        message: error instanceof Error ? error.message : String(error),
+        message: "An error occurred while explaining the query",
         code: "EXPLAIN_ERROR",
       } as NLQError,
       500,

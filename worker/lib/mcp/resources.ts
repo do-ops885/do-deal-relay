@@ -333,7 +333,7 @@ export async function readResource(
         },
       ],
     };
-  } catch (error) {
+  } catch {
     return {
       contents: [
         {
@@ -342,7 +342,6 @@ export async function readResource(
           text: JSON.stringify(
             {
               error: "Failed to read resource",
-              message: (error as Error).message,
               uri,
             },
             null,

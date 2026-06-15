@@ -4,6 +4,7 @@
 // Uses Workers AI to classify query intent
 
 import { logger } from "../../global-logger";
+import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
 import type { ExtractedIntent } from "./types";
 
@@ -42,8 +43,9 @@ Respond with only valid JSON.`;
       confidence: Math.max(0, Math.min(1, parsed.confidence || 0.5)),
     };
   } catch (error) {
+    const err = toError(error);
     logger.warn("AI intent classification failed", {
-      error: (error as Error).message,
+      error: err.message,
     });
     return { primary: "search", confidence: 0.5 };
   }

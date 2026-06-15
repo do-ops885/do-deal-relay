@@ -7,6 +7,7 @@
 
 import { logger } from "./global-logger";
 import { createTimeoutSignal } from "./utils";
+import { toError } from "./sanitize-error";
 
 const SECURITY_CONSTANTS = {
   DNS_TIMEOUT_MS: 2000,
@@ -118,10 +119,11 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
     }
     return true;
   } catch (error) {
-    logger.error(
-      `SSRF Validation error for URL ${url}: ${(error as Error).message}`,
-      { component: "security", url },
-    );
+    const err = toError(error);
+    logger.error(`SSRF Validation error for URL ${url}: ${err.message}`, {
+      component: "security",
+      url,
+    });
     return false;
   }
 }
@@ -247,10 +249,11 @@ async function resolveHostname(hostname: string): Promise<string[]> {
 
     return [...ipv4, ...ipv6];
   } catch (error) {
-    logger.error(
-      `DNS resolution failed for ${hostname}: ${(error as Error).message}`,
-      { component: "security", hostname },
-    );
+    const err = toError(error);
+    logger.error(`DNS resolution failed for ${hostname}: ${err.message}`, {
+      component: "security",
+      hostname,
+    });
     return [];
   }
 }

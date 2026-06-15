@@ -13,6 +13,7 @@ import type {
 import { getWebhookKV, generateId, DEFAULT_RETRY_POLICY } from "./types";
 import { getSubscription } from "./subscriptions";
 import { generateWebhookHeaders } from "../hmac";
+import { toError } from "../sanitize-error";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
 import { validateFetchUrl } from "../security";
@@ -70,9 +71,10 @@ async function getAllActiveSubscriptions(
     // Filter for non-null results first to be safe, then check if active
     return subscriptions.filter((sub) => sub && sub.active);
   } catch (error) {
+    const err = toError(error);
     logger.error("Failed to get all active subscriptions", {
       component: "webhook",
-      error: (error as Error).message,
+      error: err.message,
     });
     return [];
   }
@@ -180,9 +182,10 @@ async function sendWebhookToSubscription(
         }
       }
     } catch (error) {
+      const err = toError(error);
       const attemptRecord: WebhookAttempt = {
         timestamp: new Date().toISOString(),
-        error: (error as Error).message,
+        error: err.message,
       };
       delivery.attempts.push(attemptRecord);
       delivery.status =
@@ -281,9 +284,10 @@ export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
     // Filter out potential null results (safe check)
     return entries.filter((entry) => entry !== null);
   } catch (error) {
+    const err = toError(error);
     logger.error("Failed to get dead letter queue", {
       component: "webhook",
-      error: (error as Error).message,
+      error: err.message,
     });
     return [];
   }

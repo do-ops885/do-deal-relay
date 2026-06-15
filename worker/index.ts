@@ -5,6 +5,7 @@ import { validateConfig } from "./lib/config-utils";
 import { logger } from "./lib/global-logger";
 import { handleRequest } from "./router";
 import { handleScheduled } from "./scheduled";
+import { toError } from "./lib/sanitize-error";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -29,18 +30,12 @@ export default {
     try {
       await ensureConfigValidated(env);
     } catch (error) {
-      logger.error("Configuration error:", {
+      const err = toError(error);
+      logger.error("Configuration error", {
         component: "worker",
-        error: error instanceof Error ? error.message : String(error),
+        error_message: err.message,
       });
-      return jsonResponse(
-        {
-          error: "Configuration error",
-          message: error instanceof Error ? error.message : String(error),
-        },
-        503,
-        request,
-      );
+      return jsonResponse({ error: "Configuration error" }, 503, request);
     }
 
     if (env.GITHUB_TOKEN) {
@@ -55,16 +50,17 @@ export default {
     try {
       validateConfig(env);
     } catch (error) {
-      logger.error("Scheduled execution configuration error:", {
+      const err = toError(error);
+      logger.error("Scheduled execution configuration error", {
         component: "worker",
-        error: error instanceof Error ? error.message : String(error),
+        error_message: err.message,
       });
       const { notify } = await import("./notify");
       await notify(env, {
         type: "system_error",
         severity: "critical",
         run_id: "scheduled-init",
-        message: `Configuration error: ${(error as Error).message}`,
+        message: `Configuration error`,
       });
       return;
     }

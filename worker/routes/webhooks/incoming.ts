@@ -81,7 +81,7 @@ export async function handleIncomingWebhookRequest(
         error: verification.error,
       });
       return jsonResponse(
-        { error: `Invalid webhook signature: ${verification.error}` },
+        { error: "Invalid webhook signature" },
         401,
         request,
         env,
@@ -114,7 +114,7 @@ export async function handleIncomingWebhookRequest(
       partner_id: partnerId,
     });
     return jsonResponse(
-      { error: "Failed to process webhook", message: err.message },
+      { error: "Failed to process webhook" },
       500,
       request,
       env,

@@ -1,22 +1,20 @@
-import type { Env } from "../../types";
+import type { Env } from "../../../types";
 import {
   ReferralResearchResult,
   WebResearchRequest,
   ReferralInput,
-} from "../../types";
-import { CONFIG } from "../../config";
+} from "../../../types";
+import { CONFIG } from "../../../config";
 import {
   fetchFromSource,
   extractReferralsFromContent,
   researchRateLimiter,
   ExtractedReferral,
-} from "./fetcher";
-import type {
-  ResearchSource,
-  CircuitBreakerState,
-  ResearchCacheEntry,
-} from "./types";
-import { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "./constants";
+} from "../fetcher";
+import { toError } from "../../sanitize-error";
+import { logger } from "../../global-logger";
+import type { ResearchSource } from "../types";
+import { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "../constants";
 import {
   normalizeResearchQuery,
   generateSearchQueries,
@@ -24,130 +22,10 @@ import {
   simulateDiscovery,
   deduplicateCodes,
   extractRewardValue,
-} from "./helpers";
-import { getSourceRateLimit } from "./sources";
-
-// ============================================================================
-// Circuit Breaker Management
-// ============================================================================
-
-const circuitBreakerStates = new Map<string, CircuitBreakerState>();
-
-/**
- * Check if a source circuit breaker is open (failing)
- */
-function isCircuitOpen(sourceName: string): boolean {
-  const state = circuitBreakerStates.get(sourceName);
-  if (!state) return false;
-
-  if (state.state === "open") {
-    // Check if recovery timeout has passed
-    if (Date.now() - state.lastFailureTime > 30000) {
-      // 30 second recovery
-      state.state = "half-open";
-      state.successCount = 0;
-      return false; // Allow one request through
-    }
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Record success for circuit breaker
- */
-function recordSuccess(sourceName: string): void {
-  const state = circuitBreakerStates.get(sourceName);
-  if (state && state.state === "half-open") {
-    state.successCount++;
-    if (state.successCount >= 3) {
-      // Reset after 3 successes
-      state.state = "closed";
-      state.failures = 0;
-    }
-  }
-}
-
-/**
- * Record failure for circuit breaker
- */
-function recordFailure(sourceName: string): void {
-  let state = circuitBreakerStates.get(sourceName);
-  if (!state) {
-    state = {
-      failures: 0,
-      lastFailureTime: 0,
-      state: "closed",
-      successCount: 0,
-    };
-    circuitBreakerStates.set(sourceName, state);
-  }
-
-  state.failures++;
-  state.lastFailureTime = Date.now();
-
-  if (state.failures >= 5) {
-    // Open circuit after 5 failures
-    state.state = "open";
-  }
-}
-
-// ============================================================================
-// Research Cache
-// ============================================================================
-
-const researchCache = new Map<string, ResearchCacheEntry>();
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-/**
- * Get cached research results
- */
-function getCachedResults(
-  query: string,
-  source: string,
-): ReferralResearchResult["discovered_codes"] | undefined {
-  const key = `${source}:${query.toLowerCase()}`;
-  const cached = researchCache.get(key);
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.results;
-  }
-
-  return undefined;
-}
-
-/**
- * Cache research results
- */
-function cacheResults(
-  query: string,
-  source: string,
-  results: ReferralResearchResult["discovered_codes"],
-): void {
-  const key = `${source}:${query.toLowerCase()}`;
-  researchCache.set(key, {
-    query,
-    source,
-    results,
-    timestamp: Date.now(),
-    expiresAt: Date.now() + CACHE_TTL_MS,
-  });
-
-  // Clean up old cache entries periodically
-  if (researchCache.size > 1000) {
-    const now = Date.now();
-    for (const [k, v] of researchCache.entries()) {
-      if (v.expiresAt < now) {
-        researchCache.delete(k);
-      }
-    }
-  }
-}
-
-// ============================================================================
-// API Keys from Environment
-// ============================================================================
+} from "../helpers";
+import { getSourceRateLimit } from "../sources";
+import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
+import { getCachedResults, cacheResults } from "./cache";
 
 function getApiKeys(env: Env) {
   return {
@@ -160,22 +38,6 @@ function getApiKeys(env: Env) {
   };
 }
 
-// ============================================================================
-// Main Research Orchestration
-// ============================================================================
-
-/**
- * Execute web research for referral codes.
- *
- * This function orchestrates research across multiple sources (Product Hunt, Reddit, GitHub, etc.)
- * using both simulation and real fetching if API keys are provided. It handles normalization,
- * deduplication, and caching of results.
- *
- * @param env - The Cloudflare Worker environment bindings.
- * @param request - The research request configuration.
- * @returns A promise that resolves to the aggregated research results.
- * @throws {PipelineError} If research execution fails critically.
- */
 export async function executeReferralResearch(
   env: Env,
   request: WebResearchRequest,
@@ -183,33 +45,27 @@ export async function executeReferralResearch(
   const startTime = Date.now();
   const agentId = `research-agent-${Date.now()}`;
 
-  // Normalize query
   const normalizedQuery = normalizeResearchQuery(request.query, request.domain);
 
-  // Get API keys for potential real fetching
   const apiKeys = getApiKeys(env);
   const hasApiKeys = Boolean(
     apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
   );
-  // Auto-enable real fetching when API keys are available, unless explicitly disabled
   const envAllowsRealFetching =
     env.ENVIRONMENT === "production" ||
     env.RESEARCH_USE_REAL_FETCHING === "true";
   const useRealFetching =
     request.options?.use_real_fetching ?? envAllowsRealFetching ?? hasApiKeys;
 
-  // Gather research from multiple sources
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
   const sourcesChecked: string[] = [];
   const searchQueries: string[] = [];
   const errors: string[] = [];
 
-  // If domain is known, use specialized patterns first
   if (request.domain && KNOWN_REFERRAL_PROGRAMS[request.domain]) {
     const knownProgram = KNOWN_REFERRAL_PROGRAMS[request.domain];
     sourcesChecked.push(`known_program:${request.domain}`);
 
-    // Generate potential codes based on patterns
     const potentialCodes = generatePotentialCodes(
       request.domain,
       request.depth,
@@ -227,12 +83,10 @@ export async function executeReferralResearch(
     }
   }
 
-  // Research from requested sources
   const sourcesToUse = request.sources || ["all"];
   const researchPromises: Promise<void>[] = [];
 
   if (sourcesToUse.includes("all")) {
-    // Use top priority sources in parallel
     const sources = RESEARCH_SOURCES.slice(
       0,
       CONFIG.RESEARCH_MAX_SOURCES_PER_QUERY,
@@ -253,10 +107,8 @@ export async function executeReferralResearch(
       researchPromises.push(promise);
     }
 
-    // Wait for all parallel research to complete
     await Promise.allSettled(researchPromises);
   } else {
-    // Use specified sources
     for (const sourceName of sourcesToUse) {
       const source = RESEARCH_SOURCES.find((s) => s.name === sourceName);
       if (!source) {
@@ -281,7 +133,6 @@ export async function executeReferralResearch(
     await Promise.allSettled(researchPromises);
   }
 
-  // Deduplicate and limit results
   const uniqueCodes = deduplicateCodes(discoveredCodes).slice(
     0,
     request.max_results,
@@ -301,17 +152,14 @@ export async function executeReferralResearch(
     },
   };
 
-  // Store research results if domain provided
   if (request.domain) {
-    // Store in KV for caching
     try {
       await env.DEALS_SOURCES.put(
         `research:${request.domain}:${Date.now()}`,
         JSON.stringify(result),
-        { expirationTtl: 86400 }, // 24 hours
+        { expirationTtl: 86400 },
       );
     } catch (e) {
-      // Non-critical error
       errors.push(`Failed to cache results: ${(e as Error).message}`);
     }
   }
@@ -319,9 +167,6 @@ export async function executeReferralResearch(
   return result;
 }
 
-/**
- * Research from a single source with circuit breaker and caching
- */
 async function researchFromSourceParallel(
   source: ResearchSource,
   query: string,
@@ -333,28 +178,23 @@ async function researchFromSourceParallel(
   searchQueries: string[],
   errors: string[],
 ): Promise<void> {
-  // Check circuit breaker
   if (isCircuitOpen(source.name)) {
     errors.push(`${source.name}: Circuit breaker is open`);
-    // Circuit open - don't add simulated data, just record error
     return;
   }
 
-  // Check rate limit
   const rateLimit = getSourceRateLimit(source.name);
   if (!researchRateLimiter.canMakeRequest(source.name)) {
     const waitTime = Math.ceil(
       researchRateLimiter.getTimeUntilNextWindow(source.name) / 1000,
     );
     errors.push(`Rate limited for ${source.name}, try again in ${waitTime}s`);
-    // Rate limited - don't add simulated data, just record error
     return;
   }
 
   sourcesChecked.push(source.name);
   researchRateLimiter.recordRequest(source.name);
 
-  // Check cache first
   const cached = getCachedResults(query, source.name);
   if (cached) {
     discoveredCodes.push(
@@ -366,27 +206,22 @@ async function researchFromSourceParallel(
     return;
   }
 
-  // Generate search queries for this source
   const queries = generateSearchQueries(query, source.name);
   searchQueries.push(...queries);
 
   if (useRealFetching && source.apiConfig) {
-    // Try real fetching
     try {
       const fetchResult = await fetchFromSource(source, query, apiKeys);
 
       if (fetchResult.success) {
-        // Record success for circuit breaker
         recordSuccess(source.name);
 
-        // Extract referrals from content
         const extracted = extractReferralsFromContent(
           fetchResult.content,
           source,
           source.name,
         );
 
-        // Convert to discovered codes format
         const newCodes: ReferralResearchResult["discovered_codes"] = [];
         for (const referral of extracted) {
           if (referral.confidence >= CONFIG.RESEARCH_MIN_CONFIDENCE) {
@@ -406,20 +241,17 @@ async function researchFromSourceParallel(
           }
         }
 
-        // Cache the results
         cacheResults(query, source.name, newCodes);
       } else {
         errors.push(`${source.name}: ${fetchResult.error}`);
         recordFailure(source.name);
-        // Don't fallback to simulation on fetch failure - record error only
       }
     } catch (error) {
-      errors.push(`${source.name}: ${(error as Error).message}`);
+      const err = toError(error);
+      errors.push(`${source.name}: ${err.message}`);
       recordFailure(source.name);
-      // Don't fallback to simulation on error - record error only
     }
   } else {
-    // Use simulation mode
     const simulatedCodes = simulateDiscovery(query, source, depth);
     discoveredCodes.push(
       ...simulatedCodes.map((c) => ({
@@ -431,9 +263,6 @@ async function researchFromSourceParallel(
   }
 }
 
-/**
- * Apply source-based confidence weighting
- */
 function applySourceConfidence(
   baseConfidence: number,
   sourceName: string,
@@ -450,17 +279,6 @@ function applySourceConfidence(
   return Math.min(0.95, baseConfidence * weight);
 }
 
-/**
- * Convert discovered research codes to ReferralInput for storage.
- *
- * Maps raw research results into the internal ReferralInput format, calculating
- * unique IDs and initial metadata. It also persists each new referral to KV storage.
- *
- * @param env - The Cloudflare Worker environment bindings.
- * @param researchResult - The result object from executeReferralResearch.
- * @param filterConfidence - Minimum confidence score (0-1) to include a code. Defaults to 0.5.
- * @returns A promise resolving to an array of mapped ReferralInput objects.
- */
 export async function convertResearchToReferrals(
   env: Env,
   researchResult: ReferralResearchResult,
@@ -472,7 +290,6 @@ export async function convertResearchToReferrals(
   for (const discovered of researchResult.discovered_codes) {
     if (discovered.confidence < filterConfidence) continue;
 
-    // Generate ID from code and domain using btoa
     const idInput = `${researchResult.domain}:${discovered.code}`;
     const id = `web-${btoa(idInput).replace(/[+/=]/g, "").substring(0, 32)}`;
 
@@ -482,7 +299,7 @@ export async function convertResearchToReferrals(
       url: discovered.url,
       domain: researchResult.domain,
       source: "web_research",
-      status: "quarantined", // Start as quarantined for review
+      status: "quarantined",
       submitted_at: now,
       submitted_by: discovered.source,
       metadata: {
@@ -501,40 +318,30 @@ export async function convertResearchToReferrals(
       },
       validation: {
         last_validated: now,
-        is_valid: undefined, // Not yet validated
+        is_valid: undefined,
         checked_urls: [discovered.url],
       },
     };
 
     referrals.push(referral);
 
-    // Store in KV
     try {
-      await env.DEALS_SOURCES.put(
-        `referral:${id}`,
-        JSON.stringify(referral),
-        { expirationTtl: 2592000 }, // 30 days
-      );
+      await env.DEALS_SOURCES.put(`referral:${id}`, JSON.stringify(referral), {
+        expirationTtl: 2592000,
+      });
     } catch (e) {
-      console.error(`Failed to store referral: ${(e as Error).message}`);
+      const err = toError(e);
+      logger.error("Failed to store referral", {
+        component: "research-orchestrator",
+        referral_id: id,
+        error: err.message,
+      });
     }
   }
 
   return referrals;
 }
 
-/**
- * Research all possible referral codes for a domain.
- *
- * A convenience wrapper around executeReferralResearch that generates a broad query
- * for a specific domain.
- *
- * @param env - The Cloudflare Worker environment bindings.
- * @param domain - The domain to research (e.g., 'notion.so').
- * @param depth - Depth of research ('shallow', 'normal', 'thorough'). Defaults to 'thorough'.
- * @param useRealFetching - Whether to attempt live API calls. Defaults to false.
- * @returns A promise resolving to the domain-specific research results.
- */
 export async function researchAllReferralPossibilities(
   env: Env,
   domain: string,
@@ -555,6 +362,5 @@ export async function researchAllReferralPossibilities(
   return executeReferralResearch(env, request);
 }
 
-// Re-export fetcher types and functions
 export { fetchFromSource, extractReferralsFromContent, researchRateLimiter };
 export type { ExtractedReferral };

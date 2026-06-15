@@ -138,7 +138,7 @@ export async function handleSubscribe(
       handler: "handleSubscribe",
     });
     return jsonResponse(
-      { error: "Failed to create subscription", message: err.message },
+      { error: "Failed to create subscription" },
       500,
       request,
       env,
@@ -196,7 +196,7 @@ export async function handleUnsubscribe(
       handler: "handleUnsubscribe",
     });
     return jsonResponse(
-      { error: "Failed to delete subscription", message: err.message },
+      { error: "Failed to delete subscription" },
       500,
       request,
       env,
@@ -239,7 +239,7 @@ export async function handleUnsubscribeById(
       handler: "handleUnsubscribeById",
     });
     return jsonResponse(
-      { error: "Failed to delete subscription", message: err.message },
+      { error: "Failed to delete subscription" },
       500,
       undefined,
       env,
@@ -282,7 +282,7 @@ export async function handleListSubscriptions(
       handler: "handleListSubscriptions",
     });
     return jsonResponse(
-      { error: "Failed to list subscriptions", message: err.message },
+      { error: "Failed to list subscriptions" },
       500,
       request,
       env,
@@ -349,7 +349,7 @@ export async function handleCreatePartner(
       handler: "handleCreatePartner",
     });
     return jsonResponse(
-      { error: "Failed to create partner", message: err.message },
+      { error: "Failed to create partner" },
       500,
       request,
       env,
@@ -393,12 +393,7 @@ export async function handleGetPartner(
       component: "webhook",
       handler: "handleGetPartner",
     });
-    return jsonResponse(
-      { error: "Failed to get partner", message: err.message },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Failed to get partner" }, 500, request, env);
   }
 }
 
@@ -438,12 +433,7 @@ export async function handleGetDeadLetterQueue(
       component: "webhook",
       handler: "handleGetDeadLetterQueue",
     });
-    return jsonResponse(
-      { error: "Failed to get DLQ", message: err.message },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Failed to get DLQ" }, 500, request, env);
   }
 }
 
@@ -485,11 +475,6 @@ export async function handleRetryDeadLetter(
       component: "webhook",
       handler: "handleRetryDeadLetter",
     });
-    return jsonResponse(
-      { error: "Failed to retry event", message: err.message },
-      500,
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Failed to retry event" }, 500, request, env);
   }
 }

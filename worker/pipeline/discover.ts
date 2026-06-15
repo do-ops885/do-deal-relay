@@ -6,6 +6,11 @@ import { generateDealId, calculateStringSimilarity } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
+import {
+  parseHTMLContent,
+  parseJSONContent,
+  buildDeal,
+} from "./discover-parsers";
 
 // ============================================================================
 // Constants
@@ -158,9 +163,6 @@ export async function discover(
 
   // Sort sources by trust score descending
   activeSources.sort((a, b) => b.trust_initial - a.trust_initial);
-
-  // Clear module-level content cache for fresh discovery run
-  contentCache.clear();
 
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
@@ -347,215 +349,4 @@ async function discoverFromSource(
   }
 
   return { deals, errors };
-}
-
-/**
- * Parse HTML content using selectors
- */
-function parseHTMLContent(
-  content: string,
-  source: SourceConfig,
-): ExtractedDeal[] {
-  const deals: ExtractedDeal[] = [];
-  const selectors = source.selectors || {};
-
-  const codePattern = new RegExp(
-    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
-    "gi",
-  );
-  const urlPattern = /https?:\/\/[^\s"<>]+/gi;
-  const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
-
-  let match;
-  while ((match = codePattern.exec(content)) !== null) {
-    const code = match[1];
-    if (code === undefined) continue;
-
-    const urlMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(urlPattern);
-
-    const rewardMatch = content
-      .slice(
-        Math.max(0, match.index - DISCOVERY_CONSTANTS.CONTEXT_WINDOW),
-        match.index + DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-      )
-      .match(rewardPattern);
-
-    deals.push({
-      code,
-      url:
-        urlMatch && urlMatch[0]
-          ? urlMatch[0]
-          : `https://${source.domain}/invite/${code}`,
-      title: extractTitle(content, code),
-      description: extractDescription(content, code),
-      reward_type:
-        rewardMatch && rewardMatch[3]
-          ? rewardMatch[3] === "%"
-            ? "percent"
-            : "cash"
-          : "credit",
-      reward_value:
-        rewardMatch && rewardMatch[1]
-          ? parseFloat(rewardMatch[1].replace(",", ""))
-          : 0,
-      reward_currency:
-        rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
-    });
-  }
-
-  const seen = new Set<string>();
-  return deals.filter((d) => {
-    if (seen.has(d.code)) return false;
-    seen.add(d.code);
-    return true;
-  });
-}
-
-/**
- * Parse JSON content
- */
-function parseJSONContent(
-  content: string,
-  source: SourceConfig,
-): ExtractedDeal[] {
-  try {
-    const data = JSON.parse(content);
-    const deals: ExtractedDeal[] = [];
-
-    const items = Array.isArray(data)
-      ? data
-      : data.deals || data.items || [data];
-
-    for (const item of items) {
-      if (item.code || item.referral_code || item.invite_code) {
-        deals.push({
-          code: item.code || item.referral_code || item.invite_code,
-          url:
-            item.url ||
-            item.link ||
-            `https://${source.domain}/invite/${item.code}`,
-          title: item.title || item.name || `${source.domain} Referral`,
-          description: item.description || `Referral code for ${source.domain}`,
-          reward_type: item.reward_type || (item.percent ? "percent" : "cash"),
-          reward_value: item.reward_value || item.amount || item.bonus || 0,
-          reward_currency: item.currency || item.reward_currency,
-          expiry_date: item.expiry || item.expires_at,
-        });
-      }
-    }
-
-    return deals;
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Build a complete Deal from extracted data
- */
-async function buildDeal(
-  extracted: ExtractedDeal,
-  source: SourceConfig,
-): Promise<Deal> {
-  const domain = source.domain;
-  const now = new Date().toISOString();
-
-  const id = await generateDealId(
-    domain,
-    extracted.code,
-    extracted.reward_type,
-  );
-
-  return {
-    id,
-    source: {
-      url: extracted.url,
-      domain,
-      discovered_at: now,
-      trust_score: source.trust_initial,
-    },
-    title: extracted.title,
-    description: extracted.description,
-    code: extracted.code,
-    url: extracted.url,
-    reward: {
-      type: extracted.reward_type as "cash" | "credit" | "percent" | "item",
-      value: extracted.reward_value,
-      currency: extracted.reward_currency,
-    },
-    expiry: {
-      date: extracted.expiry_date,
-      confidence: extracted.expiry_date
-        ? DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_DATE
-        : DISCOVERY_CONSTANTS.EXPIRY_CONFIDENCE_UNKNOWN,
-      type: extracted.expiry_date ? "hard" : "unknown",
-    },
-    metadata: {
-      category: ["referral", "signup"],
-      tags: [domain, extracted.reward_type],
-      normalized_at: now,
-      confidence_score: source.trust_initial,
-      status: "active",
-    },
-  };
-}
-
-/**
- * Extract content from context with memoization.
- * Caches context slices by (code, window) to avoid re-computing
- * the same slice when extracting both title and description.
- */
-const contentCache = new Map<string, string>();
-
-function extractContent(
-  content: string,
-  code: string,
-  window: number = DISCOVERY_CONSTANTS.CONTEXT_WINDOW,
-): string {
-  const cacheKey = `${code}:${window}`;
-  const cached = contentCache.get(cacheKey);
-  if (cached !== undefined) return cached;
-
-  const index = content.indexOf(code);
-  if (index === -1) {
-    contentCache.set(cacheKey, "");
-    return "";
-  }
-  const result = content.slice(Math.max(0, index - window), index + window);
-  contentCache.set(cacheKey, result);
-  return result;
-}
-
-function extractTitle(content: string, code: string): string {
-  const context = extractContent(content, code);
-  const titleMatch = context.match(/<title>([^<]+)/i);
-  if (titleMatch && titleMatch[1]) return titleMatch[1].trim();
-
-  const h1Match = context.match(/<h1[^>]*>([^<]+)/i);
-  if (h1Match && h1Match[1]) return h1Match[1].trim();
-
-  return "Referral Deal";
-}
-
-function extractDescription(content: string, code: string): string {
-  const context = extractContent(
-    content,
-    code,
-    DISCOVERY_CONSTANTS.DESCRIPTION_CONTEXT_WINDOW,
-  );
-  const metaMatch = context.match(
-    /<meta[^>]*description[^>]*content="([^"]+)"/i,
-  );
-  if (metaMatch && metaMatch[1]) return metaMatch[1].trim();
-
-  const pMatch = context.match(/<p[^>]*>([^<]+)/i);
-  if (pMatch && pMatch[1]) return pMatch[1].trim();
-
-  return `Use referral code ${code}`;
 }

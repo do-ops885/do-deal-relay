@@ -8,6 +8,7 @@ import {
   TRACE_INDEX_PREFIX,
 } from "./types";
 import { fetchInBatches } from "../utils";
+import { logger } from "../global-logger";
 
 export async function getRunLogs(
   env: Env,
@@ -31,7 +32,11 @@ export async function getRunLogs(
         new Date(a.ts).getTime() - new Date(b.ts).getTime(),
     );
   } catch (error) {
-    console.error("Failed to get run logs:", error);
+    logger.error("Failed to get run logs", {
+      component: "logger-query",
+      run_id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
@@ -63,7 +68,11 @@ export async function queryLogsByRunId(
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
   } catch (error) {
-    console.error("Failed to query logs by run_id:", error);
+    logger.error("Failed to query logs by run_id", {
+      component: "logger-query",
+      run_id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
@@ -91,7 +100,11 @@ export async function queryLogsByTraceId(
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
   } catch (error) {
-    console.error("Failed to query logs by trace_id:", error);
+    logger.error("Failed to query logs by trace_id", {
+      component: "logger-query",
+      trace_id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
@@ -121,7 +134,11 @@ export async function getRecentLogs(
 
     return entries;
   } catch (error) {
-    console.error("Failed to get recent logs:", error);
+    logger.error("Failed to get recent logs", {
+      component: "logger-query",
+      count,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
@@ -150,7 +167,11 @@ export async function getRecentStructuredLogs(
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
   } catch (error) {
-    console.error("Failed to get recent structured logs:", error);
+    logger.error("Failed to get recent structured logs", {
+      component: "logger-query",
+      count,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }

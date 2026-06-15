@@ -1,5 +1,7 @@
 import { Env, LogEntry, LogEntrySchema, PipelinePhase } from "../../types";
 import { LOG_INDEX_KEY, LOG_KEY_PREFIX, LogIndex } from "./types";
+import { toError } from "../sanitize-error";
+import { logger } from "../global-logger";
 
 export async function appendLog(
   env: Env,
@@ -13,7 +15,10 @@ export async function appendLog(
 
   const result = LogEntrySchema.safeParse(logEntry);
   if (!result.success) {
-    console.error("Invalid log entry:", result.error);
+    logger.error("Invalid log entry", {
+      component: "logger-legacy",
+      error: result.error.message,
+    });
     throw new Error(`Invalid log entry: ${result.error.message}`);
   }
 
@@ -45,8 +50,12 @@ export async function appendLog(
     runList.push(entryKey);
     await env.DEALS_LOG.put(runListKey, JSON.stringify(runList));
   } catch (error) {
-    console.error("Failed to append log:", error);
-    throw new Error(`Log append failed: ${(error as Error).message}`);
+    const err = toError(error);
+    logger.error("Failed to append log", {
+      component: "logger-legacy",
+      error: err.message,
+    });
+    throw new Error(`Log append failed: ${err.message}`);
   }
 }
 

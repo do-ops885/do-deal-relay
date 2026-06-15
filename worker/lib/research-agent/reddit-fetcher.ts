@@ -1,8 +1,10 @@
 import { CONFIG } from "../../config";
 import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
+import { toError } from "../sanitize-error";
 import type { RedditListingResponse } from "./types";
 import type { FetchResult } from "./types";
+import { logger } from "../global-logger";
 
 let redditOAuthToken: { token: string; expiresAt: number } | null = null;
 
@@ -42,7 +44,10 @@ async function getRedditOAuthToken(
     cleanup();
 
     if (!response.ok) {
-      console.error(`Reddit OAuth error: ${response.status}`);
+      logger.error(`Reddit OAuth error: ${response.status}`, {
+        component: "reddit-fetcher",
+        status: response.status,
+      });
       return null;
     }
 
@@ -58,7 +63,11 @@ async function getRedditOAuthToken(
 
     return data.access_token;
   } catch (error) {
-    console.error(`Reddit OAuth error: ${(error as Error).message}`);
+    const err = toError(error);
+    logger.error(`Reddit OAuth error: ${err.message}`, {
+      component: "reddit-fetcher",
+      error: err.message,
+    });
     return null;
   }
 }
@@ -131,12 +140,13 @@ export async function fetchRedditDeals(
       fetchDurationMs,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `Reddit fetch error: ${(error as Error).message}`,
+      error: `Reddit fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }
@@ -211,12 +221,13 @@ async function fetchRedditPublic(
       fetchDurationMs,
     };
   } catch (error) {
+    const err = toError(error);
     return {
       success: false,
       content: "",
       contentType: "",
       statusCode: 0,
-      error: `Reddit public fetch error: ${(error as Error).message}`,
+      error: `Reddit public fetch error: ${err.message}`,
       fetchDurationMs: Date.now() - startTime,
     };
   }

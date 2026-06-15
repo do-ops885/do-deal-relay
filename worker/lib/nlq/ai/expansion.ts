@@ -4,6 +4,7 @@
 // Expands queries with synonyms and alternative phrasings
 
 import { logger } from "../../global-logger";
+import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
 import type { QueryExpansion } from "./types";
 
@@ -47,8 +48,9 @@ export async function expandQuery(
       const aiExpansions = await expandWithAI(ai, query);
       expanded.push(...aiExpansions);
     } catch (error) {
+      const err = toError(error);
       logger.debug("AI query expansion failed", {
-        error: (error as Error).message,
+        error: err.message,
       });
     }
   }
@@ -83,8 +85,9 @@ Respond with only valid JSON.`;
 
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
+    const err = toError(error);
     logger.debug("AI expansion parsing failed", {
-      error: (error as Error).message,
+      error: err.message,
     });
     return [];
   }

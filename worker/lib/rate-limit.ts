@@ -14,6 +14,7 @@
 import type { Env } from "../types";
 import type { AuthResult, ApiKeyConfig } from "./auth";
 import { hashApiKey } from "./auth";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Configuration
@@ -50,6 +51,36 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
     maxRequests: 20,
     windowSeconds: 60,
     keyPrefix: "ratelimit:research",
+  },
+  "/api/email/incoming": {
+    maxRequests: 30,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:email",
+  },
+  "/api/email/parse": {
+    maxRequests: 20,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:email-parse",
+  },
+  "/api/validate/url": {
+    maxRequests: 20,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:validate",
+  },
+  "/api/validate/batch": {
+    maxRequests: 5,
+    windowSeconds: 300,
+    keyPrefix: "ratelimit:validate-batch",
+  },
+  "/api/semantic-search": {
+    maxRequests: 10,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:semantic",
+  },
+  "/webhooks/incoming": {
+    maxRequests: 50,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:webhook",
   },
   default: DEFAULT_CONFIG,
 };
@@ -143,7 +174,10 @@ export async function checkRateLimit(
     };
   } catch (error) {
     // If KV fails, allow the request (fail open)
-    console.error("Rate limit check failed:", error);
+    logger.error("Rate limit check failed", {
+      component: "rate-limit",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       allowed: true,
       remaining: config.maxRequests,

@@ -8,6 +8,7 @@
 import type { Env } from "../types";
 import type { ToolCallParams, ToolCallResult } from "../lib/mcp/types";
 import { executeTool } from "../lib/mcp/tools";
+import { toError } from "../lib/sanitize-error";
 import { createProgressTracker, getProgress } from "../lib/mcp/progress";
 import { getMCPCorsHeaders } from "./mcp/utils";
 
@@ -77,14 +78,14 @@ export async function handleStreamingToolCall(
 
       await writer.write(encoder.encode(encodeSSE("result", result)));
     } catch (error) {
-      const errorMessage = (error as Error).message;
-      await tracker.markFailed(errorMessage);
+      const err = toError(error);
+      await tracker.markFailed(err.message);
 
       await writer.write(
         encoder.encode(
           encodeSSE("error", {
             operationId,
-            error: errorMessage,
+            error: "Tool execution failed",
           }),
         ),
       );

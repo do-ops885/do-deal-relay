@@ -4,6 +4,7 @@
 
 import type { Env } from "../../types";
 import { withAuth } from "../../lib/auth";
+import { createRateLimitMiddleware } from "../../lib/rate-limit";
 import { handleIncomingWebhookRequest } from "./incoming";
 import {
   handleSubscribe,
@@ -33,7 +34,12 @@ export async function handleWebhookRoutes(
   // Incoming webhooks (public, signature verified)
   if (path.startsWith("/webhooks/incoming/") && request.method === "POST") {
     const partnerId = path.replace("/webhooks/incoming/", "").split("/")[0];
-    if (partnerId) return handleIncomingWebhookRequest(request, env, partnerId);
+    if (partnerId) {
+      const rateLimiter = createRateLimitMiddleware(env, "/webhooks/incoming");
+      return rateLimiter(request, () =>
+        handleIncomingWebhookRequest(request, env, partnerId),
+      );
+    }
   }
 
   // Subscription management (requires API key auth)

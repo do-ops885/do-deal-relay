@@ -9,6 +9,8 @@ import { CONFIG } from "./config";
 import { generateRunId, generateUUID } from "./lib/crypto";
 import { acquireLock, releaseLock, extendLock } from "./lib/lock";
 import { createLogBuilder, appendLog } from "./lib/logger";
+import { toError } from "./lib/sanitize-error";
+import { logger } from "./lib/global-logger";
 import { discover } from "./pipeline/discover";
 import { normalize } from "./pipeline/normalize";
 import { deduplicate } from "./pipeline/dedupe";
@@ -162,8 +164,8 @@ export async function executePipeline(env: Env): Promise<{
         phaseIndex++;
       } catch (error) {
         if (ctx.metrics) recordError(ctx.metrics);
-        const errorMessage = (error as Error).message;
-        ctx.errors.push({ phase: currentPhase, error: error as Error });
+        const err = toError(error);
+        ctx.errors.push({ phase: currentPhase, error: err });
 
         // Log error
         await appendLog(
@@ -172,7 +174,7 @@ export async function executePipeline(env: Env): Promise<{
             .status("error")
             .error(
               (error as PipelineError).errorClass || "UnknownError",
-              errorMessage,
+              err.message,
             )
             .duration(Date.now() - startTime)
             .build(),
@@ -197,7 +199,7 @@ export async function executePipeline(env: Env): Promise<{
           await storeMetrics(env, ctx.metrics);
         }
         await handleFailure("revert", ctx, env);
-        return { success: false, phase: currentPhase, error: errorMessage };
+        return { success: false, phase: currentPhase, error: err.message };
       }
     }
 
@@ -210,8 +212,8 @@ export async function executePipeline(env: Env): Promise<{
     // Success
     return { success: true, phase: "finalize" };
   } catch (error) {
-    const errorMessage = (error as Error).message;
-    return { success: false, phase: currentPhase, error: errorMessage };
+    const err = toError(error);
+    return { success: false, phase: currentPhase, error: err.message };
   } finally {
     // Always release lock
     await releaseLock(env, trace_id);
@@ -240,12 +242,12 @@ async function executePhase(
       if (ctx.candidates.length > 0) {
         try {
           await enforceGuardRails(ctx.candidates, "input");
-        } catch (error) {
+        } catch {
           await notify(env, {
             type: "system_error",
             severity: "critical",
             run_id: ctx.run_id,
-            message: `Guard rail failed on discovery input: ${(error as Error).message}`,
+            message: `Guard rail failed on discovery input`,
           });
           return "revert";
         }
@@ -394,7 +396,10 @@ async function executePhase(
         );
 
         if (expiryResult.errors.length > 0) {
-          console.warn("Expiration check errors:", expiryResult.errors);
+          logger.warn("Expiration check errors", {
+            component: "state-machine",
+            errors: expiryResult.errors,
+          });
         }
       }
 

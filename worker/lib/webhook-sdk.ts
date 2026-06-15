@@ -41,6 +41,7 @@ import {
   parseSignatureHeader,
 } from "./hmac";
 import { createTimeoutSignal } from "./utils";
+import { logger } from "./global-logger";
 
 // ============================================================================
 // Types
@@ -391,10 +392,16 @@ export class WebhookServer {
     try {
       const parsed = new URL(url);
       if (!parsed.protocol.startsWith("http")) {
-        console.warn(`Webhook received URL without protocol: ${url}`);
+        logger.warn(`Webhook received URL without protocol: ${url}`, {
+          component: "webhook-sdk",
+          url,
+        });
       }
     } catch {
-      console.warn(`Webhook received invalid URL: ${url}`);
+      logger.warn(`Webhook received invalid URL: ${url}`, {
+        component: "webhook-sdk",
+        url,
+      });
     }
   }
 }

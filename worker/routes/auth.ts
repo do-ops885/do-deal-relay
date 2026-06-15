@@ -463,7 +463,10 @@ async function logAuditAction(
       .bind(id, userId, action, resource, ip, userAgent, now)
       .run();
   } catch (err) {
-    console.warn("Auth Audit: logAuditEvent failed", err);
+    logger.warn("Auth Audit: logAuditEvent failed", {
+      component: "auth",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 

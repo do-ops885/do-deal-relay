@@ -36,7 +36,7 @@ export async function handleGetStats(
       content: [
         {
           type: "text",
-          text: `⚠️ Could not generate full statistics: ${(error as Error).message}`,
+          text: "Could not generate full statistics",
         },
         {
           type: "resource",
@@ -50,7 +50,6 @@ export async function handleGetStats(
                 topCategory: "N/A",
                 topSource: "N/A",
                 expiringNext7Days: 0,
-                error: (error as Error).message,
               },
               null,
               2,

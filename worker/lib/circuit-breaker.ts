@@ -137,10 +137,11 @@ export class CircuitBreaker {
         };
       }
     } catch (error) {
-      console.error(
-        `[CircuitBreaker:${this.name}] Failed to load state:`,
-        error,
-      );
+      logger.error(`[CircuitBreaker:${this.name}] Failed to load state`, {
+        component: "circuit-breaker",
+        name: this.name,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     return this.inMemoryState;
@@ -159,10 +160,11 @@ export class CircuitBreaker {
     try {
       await this.env.DEALS_PROD.put(this.getKvKey(), JSON.stringify(state));
     } catch (error) {
-      console.error(
-        `[CircuitBreaker:${this.name}] Failed to save state:`,
-        error,
-      );
+      logger.error(`[CircuitBreaker:${this.name}] Failed to save state`, {
+        component: "circuit-breaker",
+        name: this.name,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
