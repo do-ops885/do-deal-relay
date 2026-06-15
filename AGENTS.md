@@ -1,5 +1,5 @@
 # Agent Coordination Hub - do-deal-relay
-**Version**: 1.1.0
+**Version**: 0.1.7
 
 ## Core Constraints
 ```bash

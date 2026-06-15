@@ -1,3 +1,3 @@
 // Auto-generated from VERSION file - DO NOT EDIT
 // Single source of truth: /VERSION
-export const VERSION = "0.1.6";
+export const VERSION = "0.1.7";
