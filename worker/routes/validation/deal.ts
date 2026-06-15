@@ -61,14 +61,11 @@ export async function handleValidateDeal(
 
     const deals = await getDealsByCode(env, code);
 
-    if (deals.length === 0) {
+    if (deals.length === 0 || !deals[0]) {
       return errorResponse("Deal not found", 404, undefined, request, env);
     }
 
     const deal = deals[0];
-    if (!deal) {
-      return errorResponse("Deal not found", 404, undefined, request, env);
-    }
 
     const results: {
       deal: {

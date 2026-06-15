@@ -76,24 +76,24 @@ export function parseHTMLContent(
 ): ExtractedDeal[] {
   const deals: ExtractedDeal[] = [];
 
-  // eslint-disable-next-line security/detect-non-literal-regexp
-  // nosemgrep security/detect-non-literal-regexp
+  const codePatternPrefix =
+    "(?:referral|invite|promo)[_-]?(?:code)?[\"']?\\s*[:=]\\s*[\"']?";
+  const codePatternSuffix = `[A-Z0-9]{${String(DISCOVERY_CONSTANTS.MIN_CODE_LENGTH)},${String(DISCOVERY_CONSTANTS.MAX_CODE_LENGTH)}}`;
   const codePattern = new RegExp(
-    `(?:referral|invite|promo)[_-]?(?:code)?["']?\\s*[:=]\\s*["']?([A-Z0-9]{${DISCOVERY_CONSTANTS.MIN_CODE_LENGTH},${DISCOVERY_CONSTANTS.MAX_CODE_LENGTH}})`,
+    `${codePatternPrefix}(${codePatternSuffix})`,
     "gi",
   );
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
-  // eslint-disable-next-line security/detect-unsafe-regex
-  // nosemgrep security/detect-unsafe-regex
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
 
-  // eslint-disable-next-line no-restricted-syntax -- Constants are compile-time safe
-  let match: RegExpExecArray | null;
-  // eslint-disable-next-line no-cond-assign
-  while ((match = codePattern.exec(content)) !== null) {
-    const code = match[1];
-    if (code === undefined) continue;
+  let match: RegExpExecArray | null = codePattern.exec(content);
+  while (match !== null) {
+    const code: string | undefined = match[1];
+    if (!code) {
+      match = codePattern.exec(content);
+      continue;
+    }
 
     const urlMatch = content
       .slice(
@@ -130,6 +130,8 @@ export function parseHTMLContent(
       reward_currency:
         rewardMatch?.[3] && rewardMatch[3] !== "%" ? rewardMatch[3] : undefined,
     });
+
+    match = codePattern.exec(content);
   }
 
   const seen = new Set<string>();
