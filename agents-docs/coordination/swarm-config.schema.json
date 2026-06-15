@@ -221,8 +221,6 @@
                     "cloudflare",
                     "agents-sdk",
                     "durable-objects",
-                    "wrangler",
-                    "workers-best-practices",
                     "building-ai-agent-on-cloudflare",
                     "building-mcp-server-on-cloudflare",
                     "sandbox-sdk",

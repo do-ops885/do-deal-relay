@@ -9,7 +9,6 @@
 
 ## Executive Summary
 
-This report consolidates findings from a comprehensive swarm analysis of the do-deal-relay codebase, examining missing tasks, evals, tests, documentation, and production readiness gaps.
 
 ### Overall Status
 
@@ -76,30 +75,12 @@ This report consolidates findings from a comprehensive swarm analysis of the do-
 
 | Skill | Priority | Status |
 |-------|----------|--------|
-| circuit-breaker | HIGH | SKILL.md exists, no evals |
-| crypto-utils | HIGH | SKILL.md exists, no evals |
-| distributed-locking | HIGH | SKILL.md exists, no evals |
-| expiration-manager | MEDIUM | SKILL.md exists, no evals |
-| guard-rails | HIGH | SKILL.md exists, no evals |
-| metrics-pipeline | MEDIUM | SKILL.md exists, no evals |
-| stateful-pipeline | HIGH | SKILL.md exists, no evals |
-| structured-logging | MEDIUM | SKILL.md exists, no evals |
-| trust-model | MEDIUM | SKILL.md exists, no evals |
-| validation-gates | HIGH | SKILL.md exists, no evals |
-| web-doc-resolver | MEDIUM | SKILL.md exists, no evals |
-| webhook-system | MEDIUM | SKILL.md exists, no evals |
-| architecture-diagram | LOW | SKILL.md exists, no evals |
-| codeberg-api | LOW | SKILL.md exists, no evals |
-| do-deal-relay | LOW | SKILL.md exists, no evals |
-| iterative-refinement | LOW | SKILL.md exists, no evals |
 
 ### Skills with Invalid Evals Structure (3 skills)
 
 | Skill | Issue | Severity |
 |-------|-------|----------|
 | refcli | Missing id, prompt, assertions fields | HIGH |
-| privacy-first | Uses 'evaluations' instead of 'evals' key | MEDIUM |
-| shell-script-quality | Uses 'evaluations' instead of 'evals' key | MEDIUM |
 
 ### Skills with Weak Evals (6 skills)
 
@@ -244,7 +225,6 @@ This report consolidates findings from a comprehensive swarm analysis of the do-
 - [ ] Set production D1 database ID in wrangler.toml
 - [ ] Create .env.example template
 - [ ] Fix version inconsistencies
-- [ ] Create missing skill evals (16 skills)
 - [ ] Fix invalid eval structures (3 skills)
 - [ ] Create CHANGELOG.md
 
@@ -260,7 +240,6 @@ This report consolidates findings from a comprehensive swarm analysis of the do-
 
 ### Nice to Have (Medium/Low Priority)
 
-- [ ] Expand weak skill evals (6 skills)
 - [ ] Add integration tests for D1, MCP, webhooks
 - [ ] Create architecture diagrams
 - [ ] Add E2E tests for extension
@@ -292,7 +271,6 @@ This report consolidates findings from a comprehensive swarm analysis of the do-
 
 ### Short Term (Next 2 Weeks)
 
-1. Create missing skill evals (16 skills)
 2. Fix invalid eval structures
 3. Create CHANGELOG.md, CONTRIBUTING.md, TROUBLESHOOTING.md
 4. Update docs/API.md with missing endpoints
