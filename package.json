@@ -16,7 +16,7 @@
     "lint:fix": "tsc --noEmit && prettier --write .",
     "test": "vitest run -c vitest.config.unit.ts",
     "test:ci": "npm run test:unit",
-    "test:unit": "node -e \"try { require('child_process').execSync('vitest run -c vitest.config.unit.ts', {stdio:'inherit',timeout:300000}); } catch(e) { if(e.killed||e.signal==='SIGTERM') { console.log('vitest killed by timeout (known upstream hang)'); process.exit(0); } process.exit(e.status||1); }\"",
+    "test:unit": "node scripts/test-unit.js",
     "test:integration": "vitest run -c vitest.config.integration.ts",
     "test:e2e:setup": "bash tests/e2e/setup-auth.sh",
     "test:e2e": "npm run test:e2e:setup && playwright test",
