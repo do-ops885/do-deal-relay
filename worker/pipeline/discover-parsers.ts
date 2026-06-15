@@ -2,8 +2,6 @@ import { Deal, SourceConfig } from "../types";
 import { generateDealId } from "../lib/crypto";
 
 const DISCOVERY_CONSTANTS = {
-  MIN_CODE_LENGTH: 6,
-  MAX_CODE_LENGTH: 20,
   CONTEXT_WINDOW: 500,
   DESCRIPTION_CONTEXT_WINDOW: 300,
   EXPIRY_CONFIDENCE_DATE: 0.8,
@@ -74,15 +72,9 @@ export function parseHTMLContent(
   content: string,
   source: SourceConfig,
 ): ExtractedDeal[] {
-  const deals: ExtractedDeal[] = [];
-
-  const codePatternPrefix =
-    "(?:referral|invite|promo)[_-]?(?:code)?[\"']?\\s*[:=]\\s*[\"']?";
-  const codePatternSuffix = `[A-Z0-9]{${String(DISCOVERY_CONSTANTS.MIN_CODE_LENGTH)},${String(DISCOVERY_CONSTANTS.MAX_CODE_LENGTH)}}`;
-  const codePattern = new RegExp(
-    `${codePatternPrefix}(${codePatternSuffix})`,
-    "gi",
-  );
+  const deals: ExtractedDeal[] = []; // Hardcoded to match former MIN_CODE_LENGTH=6, MAX_CODE_LENGTH=20
+  const codePattern =
+    /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
   const rewardPattern =
     /(?:reward|bonus|get|earn)\s+\$?([0-9,]+(?:\.[0-9]+)?)\s*(USD|EUR|GBP|%)?/gi;
