@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@rolldown/binding-linux-x64-gnu": "^1.1.1",
-    "@types/node": "25.9.2",
+    "@types/node": "25.9.3",
     "discord.js": "^14.26.4",
     "js-yaml": "^4.2.0",
     "protobufjs": "8.6.3",
