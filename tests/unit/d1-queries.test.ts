@@ -723,58 +723,43 @@ describe("D1 Queries", () => {
   // ============================================================================
 
   describe("getDealStats", () => {
-    // TODO: Fix getDealStats tests - complex multi-query function with session handling
-    // Skipping due to mock complexity with queryFirst vs query chaining
-    it.skip("should return comprehensive deal statistics", async () => {
-      // Mock main stats query
-      const mockStatsResponse = {
-        results: [
-          {
-            total: 100,
-            active: 80,
-            quarantined: 10,
-            rejected: 5,
-            expired: 5,
-          },
-        ],
-        success: true,
-        meta: { rows_read: 1, rows_written: 0 },
-      };
-
-      // Mock domain breakdown
-      const mockDomainsResponse = {
-        results: [
-          { domain: "example.com", count: 20 },
-          { domain: "test.com", count: 15 },
-        ],
-        success: true,
-        meta: { rows_read: 2, rows_written: 0 },
-      };
-
-      // Mock reward type breakdown
-      const mockRewardResponse = {
-        results: [
-          { type: "cash", count: 40 },
-          { type: "credit", count: 30 },
-        ],
-        success: true,
-        meta: { rows_read: 2, rows_written: 0 },
-      };
-
-      // Mock categories
-      const mockCategoriesResponse = {
-        results: [{ categories: '["finance"]' }],
-        success: true,
-        meta: { rows_read: 1, rows_written: 0 },
-      };
-
-      // Setup mock responses - first() for queryFirst, run() for queries
-      // Note: queryFirst should return SingleResult with data as single object,
-      // but getDealStats accesses data[0] expecting array - mock returns array
-      currentMockStatement.first.mockResolvedValue([
-        mockStatsResponse.results[0],
-      ]);
-      currentMockStatement.run.mockResolvedValue(mockDomainsResponse);
+    it("should return comprehensive deal statistics", async () => {
+      // Setup mock responses for sequential queries in getDealStats
+      getMockStatement()
+        .run.mockResolvedValueOnce({
+          results: [
+            {
+              total: 100,
+              active: 80,
+              quarantined: 10,
+              rejected: 5,
+              expired: 5,
+            },
+          ],
+          success: true,
+          meta: { rows_read: 1, rows_written: 0 },
+        })
+        .mockResolvedValueOnce({
+          results: [
+            { domain: "example.com", count: 20 },
+            { domain: "test.com", count: 15 },
+          ],
+          success: true,
+          meta: { rows_read: 2, rows_written: 0 },
+        })
+        .mockResolvedValueOnce({
+          results: [
+            { type: "cash", count: 40 },
+            { type: "credit", count: 30 },
+          ],
+          success: true,
+          meta: { rows_read: 2, rows_written: 0 },
+        })
+        .mockResolvedValueOnce({
+          results: [{ categories: '["finance"]' }],
+          success: true,
+          meta: { rows_read: 1, rows_written: 0 },
+        });
 
       const stats = await getDealStats(mockDb as unknown as D1Database);
 
@@ -785,13 +770,15 @@ describe("D1 Queries", () => {
       expect(stats.expired).toBe(5);
       expect(stats.byDomain).toHaveLength(2);
       expect(stats.byRewardType).toHaveLength(2);
+      expect(stats.byCategory).toHaveLength(1);
     });
 
-    it.skip("should handle zeros when no data", async () => {
-      // queryFirst returns empty array when no data (for data[0] access)
-      currentMockStatement.first.mockResolvedValue([]);
-      // queries return empty arrays
-      currentMockStatement.run.mockResolvedValue({ results: [], meta: {} });
+    it("should handle zeros when no data", async () => {
+      getMockStatement().run.mockResolvedValue({
+        results: [],
+        success: true,
+        meta: { rows_read: 0, rows_written: 0 },
+      });
 
       const stats = await getDealStats(mockDb as unknown as D1Database);
 
@@ -802,37 +789,14 @@ describe("D1 Queries", () => {
       expect(stats.byRewardType).toEqual([]);
     });
 
-    it.skip("should return defaults on error", async () => {
-      currentMockStatement.first.mockRejectedValue(new Error("Database error"));
-
-      const stats = await getDealStats(mockDb as unknown as D1Database);
-
-      expect(stats.total).toBe(0);
-      expect(stats.active).toBe(0);
-    });
-
-    it.skip("should handle zeros when no data", async () => {
-      // queryFirst returns empty array when no data (for data[0] access)
-      currentMockStatement.first.mockResolvedValue([]);
-      // queries return empty arrays
-      currentMockStatement.run.mockResolvedValue({ results: [], meta: {} });
+    it("should return defaults on error", async () => {
+      getMockStatement().run.mockRejectedValue(new Error("Database error"));
 
       const stats = await getDealStats(mockDb as unknown as D1Database);
 
       expect(stats.total).toBe(0);
       expect(stats.active).toBe(0);
       expect(stats.byDomain).toEqual([]);
-      expect(stats.byCategory).toEqual([]);
-      expect(stats.byRewardType).toEqual([]);
-    });
-
-    it.skip("should return defaults on error", async () => {
-      currentMockStatement.first.mockRejectedValue(new Error("Database error"));
-
-      const stats = await getDealStats(mockDb as unknown as D1Database);
-
-      expect(stats.total).toBe(0);
-      expect(stats.active).toBe(0);
     });
   });
 
