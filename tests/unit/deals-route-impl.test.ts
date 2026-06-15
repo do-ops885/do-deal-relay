@@ -25,7 +25,7 @@ vi.mock("../../worker/routes/utils", () => ({
 describe("deals-route", () => {
   const mockEnv = {} as any;
   const mockSnapshot = {
-    version: "0.1.7",
+    version: "1.0.0",
     deals: [
       {
         id: "1",
