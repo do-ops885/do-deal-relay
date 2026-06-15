@@ -76,8 +76,9 @@ export function parseHTMLContent(
   const codePattern =
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
+  // Note: no `g` flag — .match() with `g` returns full strings, not capture groups
   const rewardPattern =
-    /(?:reward|bonus|get|earn)\s+\$?([0-9]+[0-9,]*\.?[0-9]*)\s*(USD|EUR|GBP|%)?/gi;
+    /(?:reward|bonus|get|earn)\s+\$?([0-9]+[0-9,]*\.?[0-9]*)\s*(USD|EUR|GBP|%)?/i;
 
   let match: RegExpExecArray | null = codePattern.exec(content);
   while (match !== null) {
