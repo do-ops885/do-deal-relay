@@ -7,13 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- **Critical reward extraction bug** (PR #472): Removed `g` flag from `rewardPattern` regex in `discover-parsers.ts` that caused `.match()` to return full match strings instead of capture groups, completely breaking reward extraction (reward_value was always 0, reward_type always "credit")
-- **Dead imports removed** (PR #472): Cleaned up 4 unused imports from `state-machine.ts` (ErrorClass, calculateValidationRatio, calculateSourceDiversity, rollbackSnapshot)
-- **Regex consistency** (PR #473): Removed unnecessary `g` flag from `urlPattern` regex in `discover-parsers.ts` for consistency with the rewardPattern fix
+## [0.1.7] - 2026-06-15
 
 ### Added
 - **Reward extraction tests** (PR #472): 6 unit tests verifying cash, percent, credit, EUR, comma-separated, and decimal reward extraction
+
+### Changed
+- **Security hardening** (PR #469): Structured logging, file splits, type safety improvements
+- **Extract routing logic** (PR #468): Extracted routing and scheduled logic from `worker/index.ts` into dedicated modules
+- **Debug logging** (PR #471): Added `logger.debug()` to 4 bare catch blocks in `resources.ts` and `state-machine.ts`, removed dead constants from `discover.ts`
+
+### Fixed
+- **API key auth in smoke tests** (PR #467): Added API key authentication to smoke tests and CI curl commands
+- **Critical reward extraction bug** (PR #472): Removed `g` flag from `rewardPattern` regex in `discover-parsers.ts` that caused `.match()` to return full match strings instead of capture groups, completely breaking reward extraction (reward_value was always 0, reward_type always "credit")
+- **Dead imports removed** (PR #472): Cleaned up 4 unused imports from `state-machine.ts` (ErrorClass, calculateValidationRatio, calculateSourceDiversity, rollbackSnapshot)
+- **Regex consistency** (PR #473): Removed unnecessary `g` flag from `urlPattern` regex in `discover-parsers.ts` for consistency with the rewardPattern fix
 
 ## [0.1.6] - 2026-05-17
 
@@ -185,7 +193,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality gate exits with code 2 to surface errors to agent
 - Progressive disclosure for skills (load on demand)
 
-[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.6...v0.1.7
 [0.2.0]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.0...v0.2.0
 [0.1.6]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.4...v0.1.5
