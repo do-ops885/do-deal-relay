@@ -168,7 +168,7 @@ site:github.com tokio spawn_blocking
 
 - **feature-implement**: Research before
 - **debug-troubleshoot**: Find patterns
-- **web-doc-resolver**: Fetch URLs
+- **researcher-docs**: Fetch and analyze technical documentation from URLs
 
 ## Best Practices
 
