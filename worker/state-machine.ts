@@ -388,6 +388,11 @@ async function executePhase(
 
         return "verify";
       } catch (error) {
+        logger.debug("Publish phase failed", {
+          component: "state-machine",
+          phase: "publish",
+          error: error instanceof Error ? error.message : String(error),
+        });
         return "revert";
       }
 

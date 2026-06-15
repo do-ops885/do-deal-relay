@@ -72,7 +72,7 @@ export function parseHTMLContent(
   content: string,
   source: SourceConfig,
 ): ExtractedDeal[] {
-  const deals: ExtractedDeal[] = []; // Bounds sourced from DISCOVERY_CODE_CONSTANTS in ./discovery-constants.ts
+  const deals: ExtractedDeal[] = [];  // Code length bounds: 6-20 characters
   const codePattern =
     /(?:referral|invite|promo)[_-]?(?:code)?["']?\s*[:=]\s*["']?([A-Z0-9]{6,20})/gi;
   const urlPattern = /https?:\/\/[^\s"<>]+/gi;
