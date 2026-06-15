@@ -1,7 +1,7 @@
 ---
 name: agents-update
 description: Optimize AGENTS.md by reducing noise and moving detailed content to agents-docs/. Keeps AGENTS.md under 140 lines as a quick reference hub while preserving all content in dedicated documentation files.
-version: 0.1.1
+version: 0.1.6
 author: swarm-optimization-team
 tags: [agents, documentation, optimization, swarm]
 ---

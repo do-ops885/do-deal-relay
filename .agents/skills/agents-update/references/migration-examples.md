@@ -129,7 +129,7 @@ Always run `./scripts/quality_gate.sh` before handoff or completion:
 
 See [quality-standards.md](agents-docs/quality-standards.md) for complete standards and gates.
 
-Quick rules: 500-line limit, atomic commits, skill evals, URL preservation.
+Quick rules: 500-line limit, atomic commits, URL preservation.
 ```
 
 ### New File (agents-docs/quality-standards.md)

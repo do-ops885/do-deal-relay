@@ -25,14 +25,10 @@ For research tasks, follow this cascade to minimize token usage:
 **Tool Selection**:
 | Task | Recommended Tool | Why |
 |------|------------------|-----|
-| API docs, specs | `web-doc-resolver` | llms.txt often available |
-| GitHub repos | `web-doc-resolver` | Direct fetch works well |
 | Deep research | `web-search-researcher` | Multi-source aggregation |
 
 **Usage**:
 ```bash
-# Cost-effective resolution (free sources first)
-skill web-doc-resolver
 
 # Deep research (when free sources insufficient)
 skill web-search-researcher
@@ -149,7 +145,6 @@ Each source has circuit breaker protection:
 
 ## See Also
 
-- [web-doc-resolver skill](../../.agents/skills/web-doc-resolver/) - Cost-effective research
 - [URL Handling](../url-handling.md) - URL preservation rules
 - [API Documentation](../../docs/API.md) - Full API reference
 - [CLI Documentation](../../temp/analysis-cli.md) - CLI usage guide

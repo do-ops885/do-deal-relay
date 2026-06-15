@@ -1,7 +1,7 @@
 ---
 name: self-learning-feedback
 description: Continuous verification, scoring, and improvement of AI outputs. Implements the 3-persona ANALYSIS SWARM pattern (RYAN-deep analysis, FLASH-speed, SOCRATES-questioning) for self-correcting documentation and code.
-version: 0.1.1
+version: 0.1.6
 author: analysis-swarm-team
 tags: [verification, scoring, self-learning, feedback, analysis-swarm, quality]
 ---
