@@ -149,3 +149,17 @@ grep -rn "(error as Error)\.message" src/
 grep -rn "message:.*error\.message" src/routes/
 grep -rn "message:.*err\.message" src/routes/
 ```
+
+## Rationalizations
+
+- **Type safety**: `(error as Error)` is an unsafe type assertion that crashes on non-Error throws (e.g., `string`, `null`, plain objects). `toError()` handles all types safely.
+- **Information leakage**: Exposing `error.message` or `error.stack` in HTTP responses leaks internal implementation details to attackers.
+- **Consistency**: A single `toError()` utility ensures every catch block handles unknown error types the same way.
+- **Defense in depth**: Sanitizing at the response boundary (not just the logging boundary) prevents accidental leakage through future code changes.
+
+## Red Flags
+
+- Using `(error as Error)` anywhere — always use `toError(error)` instead.
+- Including `error.message` or `err.message` in HTTP response JSON bodies.
+- Exposing `error.stack` or `err.stack` in client-facing responses.
+- Skipping the `sanitizeErrorForClient()` helper for route handlers — every catch block in a route must sanitize.

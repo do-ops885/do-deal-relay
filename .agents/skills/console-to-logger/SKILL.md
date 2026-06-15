@@ -139,3 +139,17 @@ Use lowercase kebab-case matching the module/directory name:
 - `worker/lib/rate-limit.ts` → `component: "rate-limit"`
 - `worker/routes/api/deals.ts` → `component: "deals-api"`
 - `worker/pipeline/discover.ts` → `component: "pipeline"`
+
+## Rationalizations
+
+- **Structured over unstructured**: `console.*` produces unstructured text that is hard to filter, query, or alert on. Structured logging with key-value pairs enables efficient production debugging.
+- **Component field required**: Every log entry includes a `component` field so operators can filter logs by module without grep gymnastics.
+- **Preserve error context**: Using `error instanceof Error ? error.message : String(error)` ensures logs always contain actionable error text regardless of thrown type.
+- **Two-step procedure**: Identify-then-replace reduces risk of regressions; verification grep confirms completeness.
+
+## Red Flags
+
+- Modifying `structured.ts` or `global-logger.ts` — these ARE the logger infrastructure.
+- Dropping the `component` field — makes logs unfilterable in production.
+- Using `console.*` inside new code — all new code must use `logger` from the start.
+- Logging sensitive data (tokens, passwords, PII) in log values.
