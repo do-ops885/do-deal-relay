@@ -1,7 +1,7 @@
 @AGENTS.md
 
 # Jules Overrides
-**Version**: 1.0.0
+**Version: 0.1.6
 
 ## Behavioral Contract
 Extends [AGENTS.md](AGENTS.md). Jules MUST adhere to all Core Constraints and Infrastructure Contracts defined there.

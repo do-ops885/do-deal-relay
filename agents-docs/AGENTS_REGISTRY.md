@@ -14,9 +14,7 @@ Centralized registry of all sub-agents and skills.
 | [`skill-creator`](../.agents/skills/skill-creator/) | `.agents/skills/` | Create new skills with proper structure |
 | [`jules-usage`](../.agents/skills/jules-usage/) | `.agents/skills/` | Use the Jules CLI for repo validation, long-running tasks, and GitHub feedback coordination |
 | [`task-decomposition`](../.agents/skills/task-decomposition/) | `.agents/skills/` | Break complex tasks into manageable steps |
-| [`web-doc-resolver`](../.agents/skills/web-doc-resolver/) | `.agents/skills/` | Cost-effective web research (free sources first) |
 | [`web-search-researcher`](../.agents/skills/web-search-researcher/) | `.agents/skills/` | Deep web search when needed |
-| [`evals`](../.agents/skills/evals/) | `.agents/skills/` | Skill evaluation framework |
 | [`skill-evaluator`](../.agents/skills/skill-evaluator/) | `.agents/skills/` | Reusable skill evaluation |
 
 ## Skills (External)
@@ -26,8 +24,6 @@ Centralized registry of all sub-agents and skills.
 | `cloudflare` | Cloudflare | Workers, KV, D1, R2, Workers AI |
 | `agents-sdk` | Cloudflare | Agents SDK for stateful agents |
 | `durable-objects` | Cloudflare | Durable Objects patterns |
-| `wrangler` | Cloudflare | Wrangler CLI usage |
-| `workers-best-practices` | Cloudflare | Production Workers patterns |
 | `building-mcp-server-on-cloudflare` | Cloudflare | MCP server implementation |
 
 ## Pipeline Agents
@@ -61,4 +57,3 @@ See individual files in `agents-docs/agents/` for full specs.
 | Real Web Research | ✅ Complete | real-research-agent | Research agent APIs |
 | Expiration Automation | ✅ Complete | expiration-automation-agent | Scheduled validation |
 | Full-Text Search | ✅ Complete | d1-integration-agent | FTS5 via D1 |
-| Web Research (Cost-Effective) | ✅ Available | web-doc-resolver skill | Free sources first |

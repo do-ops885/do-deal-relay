@@ -12,7 +12,6 @@ Successfully implemented all major missing features identified in the feature ga
 - ✅ **D1 Database** - SQLite-based with FTS5 full-text search
 - ✅ **Real Web Research** - Live API integrations (ProductHunt, GitHub, HN, Reddit)
 - ✅ **Expiration Automation** - Scheduled validation and auto-deactivation
-- ✅ **Cost-Effective Research** - web-doc-resolver skill for token-efficient research
 
 ## Implementation Approach
 
@@ -120,7 +119,6 @@ Updated all relevant documentation files to reflect new capabilities.
 - `POST /api/deals/{code}/validate` - Deal validation
 
 ### 5. Cost-Effective Research Skill
-**Location**: `.agents/skills/web-doc-resolver/`
 
 **Cascade Strategy** (free sources first):
 1. llms.txt (free, structured)
@@ -177,7 +175,6 @@ Note: 13 worker runtime errors are pre-existing infrastructure issues (see LESSO
 
 | File | Changes |
 |------|---------|
-| `AGENTS.md` | Added MCP/D1 endpoints, web-doc-resolver skill, infrastructure note |
 | `agents-docs/AGENTS_REGISTRY.md` | Added new feature agents and skills |
 | `agents-docs/features/web-research.md` | Updated with real API integrations |
 | `reports/IMPLEMENTATION_SUMMARY_2026-04-03.md` | This document |
@@ -190,7 +187,6 @@ Note: 13 worker runtime errors are pre-existing infrastructure issues (see LESSO
 
 **Issue**: Direct use of `web-search-researcher` uses paid APIs by default, consuming tokens unnecessarily
 
-**Solution**: Always use `web-doc-resolver` skill first - it has a cost-effective cascade:
 1. llms.txt (free)
 2. Direct fetch (free)
 3. Jina AI (free tier)

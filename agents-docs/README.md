@@ -103,7 +103,6 @@ Check latest handoff in `/agents-docs/coordination/handoff-log.jsonl`
 
 - `skill cloudflare` - Load Cloudflare platform knowledge
 - `skill agents-sdk` - Agent SDK patterns
-- `skill wrangler` - Deployment guidance
 
 **Coordination Skills** (project-local):
 

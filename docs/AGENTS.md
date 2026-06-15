@@ -84,7 +84,7 @@ See [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md) for full 
 
 **Local** (in `.agents/skills/`): `agent-coordination`, `goap-agent`, `task-decomposition`, `parallel-execution`
 
-**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`, `wrangler`, `workers-best-practices`
+**External** (Cloudflare): `cloudflare`, `agents-sdk`, `durable-objects`
 
 Use: `skill <name>` to load guidance.
 
