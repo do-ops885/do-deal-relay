@@ -31,7 +31,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "validate": "bash scripts/validate-codes.sh",
-    "verify": "bash scripts/quality_gate.sh"
+    "verify": "bash scripts/quality_gate.sh",
+    "lint:e2e": "bash scripts/lint-e2e-transitions.sh"
   },
   "dependencies": {
     "@rolldown/binding-linux-x64-gnu": "^1.1.1",
@@ -56,14 +57,13 @@
     "wrangler": "4.100.0"
   },
   "overrides": {
-    "esbuild": "0.28.1",
+    "esbuild": ">=0.28.1",
     "joi": "^18.2.1",
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.6.3",
     "uuid": "14.0.0",
     "@playwright/test": "^1.60.0",
-    "esbuild": ">=0.28.1",
     "ws": "8.20.1",
     "engine.io-client": "6.6.5"
   },
