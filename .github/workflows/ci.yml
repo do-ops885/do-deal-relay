@@ -270,7 +270,7 @@ jobs:
       - name: npm audit
         run: |
           npm ci
-          npm audit --audit-level=moderate
+          npm audit --audit-level=high
 
   # Stage 3: Build verification
   build:

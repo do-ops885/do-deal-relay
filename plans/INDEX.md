@@ -11,14 +11,15 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 
 ## Active Plans
 
-- [GOAP: Missing Implementations & CI Failures (2026-06-11)](GOAP-missing-implementation-2026-06-11.md) — 15 missing implementations + 3 CI failures. 4-phase remediation.
-- [ADR-013: Missing Implementations Remediation](ADR-013-missing-implementations-remediation.md) — Decision record for remediation strategy.
-- [Sprint v0.1.5](sprint-v0.1.5.md) — CI/CD stability fixes (quality gate, TruffleHog, CodeQL).
-- [ADR-005: Scheduled Performance Benchmarks](ADR-005-scheduled-benchmarks.md) — Performance regression detection in CI.
-
-## Planned Plans
-
 - [GitHub Automation](github-automation-plan.md) — Enhancing PR and issue automation.
+
+## Completed Plans (Recent)
+
+- [ADR-013: Missing Implementations Remediation](ADR-013-missing-implementations-remediation.md) — All 15 M items addressed. M-1 through M-4, M-7, M-9, M-13 verified already implemented. M-5, M-8, M-11 implemented in this session. M-14 (auth routes) wired. PRs #485, #487.
+- [GOAP: Missing Implementations & CI Failures (2026-06-11)](GOAP-missing-implementation-2026-06-11.md) — 4-phase remediation complete. Embedding cron (M-5), Discord types (M-8), cache prefix (M-11), auth routes (M-14). CI-2 audit level updated.
+- [Sprint v0.1.6](sprint-v0.1.6.md) — All items completed, released.
+- [Sprint v0.1.5](sprint-v0.1.5.md) — CI/CD stability fixes completed, released.
+- [ADR-005: Scheduled Benchmarks](ADR-005-scheduled-benchmarks.md) — benchmarks.yml workflow exists, passing.
 
 ## Completed Plans (Recent)
 

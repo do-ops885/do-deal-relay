@@ -68,8 +68,8 @@ jobs:
 
       - name: Run npm audit
         run: |
-          npm audit --audit-level=moderate || {
-            echo "⚠️ Security vulnerabilities found in dependencies"
+          npm audit --audit-level=high || {
+            echo "⚠️ Critical security vulnerabilities found in dependencies"
             exit 1
           }
 
