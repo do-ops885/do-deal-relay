@@ -19,6 +19,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      testDir: "./tests/e2e",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium-browser",
+      testDir: "./tests/browser",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

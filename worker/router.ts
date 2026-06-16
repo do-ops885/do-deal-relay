@@ -49,6 +49,14 @@ import {
 } from "./routes/admin/keys";
 import { withAuth } from "./lib/auth";
 import { createRateLimitMiddleware } from "./lib/rate-limit";
+import {
+  handleRegister,
+  handleLogin,
+  handleRefreshToken,
+  handleGetCurrentUser,
+  handleUpdateProfile,
+  handleListUsers,
+} from "./routes/auth";
 import { handleD1Request } from "./routes/d1";
 import { handleNLQRequest } from "./routes/nlq/index";
 import { handleWebhookRoutes } from "./routes/webhooks/index";
@@ -76,6 +84,42 @@ export async function handleRequest(
     if (path === "/health") return handleHealth(env, request);
     if (path === "/health/ready") return handleReady(env, request);
     if (path === "/health/live") return handleLive(env, request);
+
+    // Auth & User Management
+    if (path === "/api/auth/register" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 5 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return handleRegister(request, env);
+    }
+    if (path === "/api/auth/login" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 5 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return handleLogin(request, env);
+    }
+    if (path === "/api/auth/refresh" && request.method === "POST") {
+      const bodyTooLarge = checkBodySize(request, 5 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return handleRefreshToken(request, env);
+    }
+    if (path === "/api/auth/me" && request.method === "GET") {
+      return withAuth(request, env, undefined, (auth) =>
+        handleGetCurrentUser(auth, request, env),
+      );
+    }
+    if (path === "/api/auth/me" && request.method === "PUT") {
+      const bodyTooLarge = checkBodySize(request, 5 * 1024);
+      if (bodyTooLarge) return bodyTooLarge;
+      return withAuth(request, env, "user", (auth) =>
+        handleUpdateProfile(auth, request, env),
+      );
+    }
+
+    // Admin: User management
+    if (path === "/api/admin/users" && request.method === "GET") {
+      return withAuth(request, env, "admin", (auth) =>
+        handleListUsers(auth, request, env),
+      );
+    }
 
     // Metrics
     if (path === "/metrics") {
