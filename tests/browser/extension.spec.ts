@@ -308,4 +308,58 @@ test.describe("Extension API Integration Tests", () => {
       await page.waitForTimeout(200);
     }
   });
+
+  test("manual entry input cleans text in real-time", async ({ page }) => {
+    await page.goto(`file://${process.cwd()}/extension/popup.html`);
+    await page.waitForTimeout(300);
+
+    const manualInput = page.locator("#manual-code");
+
+    // Test auto-uppercasing
+    await manualInput.fill("abc123");
+    await expect(manualInput).toHaveValue("ABC123");
+
+    // Test stripping non-alphanumeric
+    await manualInput.fill("code!@#123");
+    await expect(manualInput).toHaveValue("CODE123");
+
+    // Test 20-char limit
+    await manualInput.fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    const value = await manualInput.inputValue();
+    expect(value.length).toBeLessThanOrEqual(20);
+
+    // Test that valid code enables the manual button
+    const manualBtn = page.locator("#manual-btn");
+    await manualInput.fill("VALIDCODE");
+    await expect(manualBtn).toBeEnabled();
+
+    // Test that invalid (empty) code disables the button
+    await manualInput.fill("");
+    await expect(manualBtn).toBeDisabled();
+  });
+
+  test("manual entry shows validation error for invalid codes", async ({
+    page,
+  }) => {
+    await page.goto(`file://${process.cwd()}/extension/popup.html`);
+    await page.waitForTimeout(300);
+
+    const manualInput = page.locator("#manual-code");
+    const manualCodeError = page.locator("#manual-code-error");
+
+    // Error should be hidden when empty
+    await expect(manualCodeError).toHaveClass(/hidden/);
+
+    // Error should show for too-short code (after cleaning removes special chars)
+    await manualInput.fill("ab");
+    await expect(manualCodeError).not.toHaveClass(/hidden/);
+
+    // Error should hide for valid code
+    await manualInput.fill("VALID123");
+    await expect(manualCodeError).toHaveClass(/hidden/);
+
+    // Error should show when cleared
+    await manualInput.fill("");
+    await expect(manualCodeError).toHaveClass(/hidden/);
+  });
 });

@@ -194,7 +194,7 @@ export class KVCache {
    */
   async clear(): Promise<void> {
     try {
-      const list = await this.kv.list({ prefix: `${this.namespace}:` });
+      const list = await this.kv.list({ prefix: `cache:${this.namespace}:` });
 
       // Optimization: Parallel batch delete instead of sequential loop
       // This reduces latency from O(N) to O(N/batchSize)

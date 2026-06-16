@@ -14,15 +14,11 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 - [GOAP: Missing Implementations & CI Failures (2026-06-11)](GOAP-missing-implementation-2026-06-11.md) — 15 missing implementations + 3 CI failures. 4-phase remediation.
 - [ADR-013: Missing Implementations Remediation](ADR-013-missing-implementations-remediation.md) — Decision record for remediation strategy.
 - [Sprint v0.1.5](sprint-v0.1.5.md) — CI/CD stability fixes (quality gate, TruffleHog, CodeQL).
-- [ADR-004: Observability Enablement](ADR-004-observability-enablement.md) — Enable traces, document WAF/edge security.
 - [ADR-005: Scheduled Performance Benchmarks](ADR-005-scheduled-benchmarks.md) — Performance regression detection in CI.
 
 ## Planned Plans
 
-- [GOAP Improvements (2026-05-11)](GOAP_IMPROVEMENTS_2026-05-11.md) — CI/CD hardening, governance alignment, explainability API.
 - [GitHub Automation](github-automation-plan.md) — Enhancing PR and issue automation.
-- [Manual Entry UX Enhancements (ADR-002)](manual-entry-ux-implementation.md) — Browser extension UX improvements.
-  - [ADR-002: Manual Entry UX Enhancements](ADR-002-manual-entry-ux-enhancements.md) — Decision record.
 
 ## Completed Plans (Recent)
 
@@ -58,6 +54,10 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 - [Swarm Execution Plan](swarm-execution-plan.md) — PR stabilization swarm completed.
 - [Swarm Status Report](swarm-status-report.md) — Full PR stabilization status report with compatibility matrix.
 - [PR #225 Stabilization](pr-225-stabilization.md) — Dependabot validation PR stabilized and merged.
+- [ADR-004: Observability Enablement](ADR-004-observability-enablement.md) — Traces enabled, WAF/edge security documented in DEPLOYMENT.md §12.
+- [GOAP Improvements (2026-05-11)](GOAP_IMPROVEMENTS_2026-05-11.md) — Gate count verified correct (9 validation gates), plans index maintained.
+- [Manual Entry UX Enhancements (ADR-002)](manual-entry-ux-implementation.md) — Real-time input cleaning implemented (uppercase, strip non-alphanumeric, 20-char limit).
+  - [ADR-002: Manual Entry UX Enhancements](ADR-002-manual-entry-ux-enhancements.md) — Decision record.
 
 ## Archived Plans
 
