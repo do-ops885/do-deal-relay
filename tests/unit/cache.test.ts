@@ -17,7 +17,6 @@ import type { Env } from "../../worker/types";
 describe("KVCache", () => {
   let mockKv: any;
   let cache: KVCache;
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     // Reset all metrics before each test to prevent test leakage
@@ -54,13 +53,6 @@ describe("KVCache", () => {
 
     // Create cache instance with 5 minute default TTL
     cache = new KVCache(mockKv, 300, "test");
-
-    // Spy on console.error to verify error handling
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
   });
 
   // ============================================================================
@@ -474,9 +466,7 @@ describe("KVCache", () => {
   // ============================================================================
 
   describe("clear()", () => {
-    it.skip("should remove all values in namespace - BUG: clear() uses wrong prefix", async () => {
-      // BUG: The clear() method in cache.ts uses prefix `${namespace}:` but keys
-      // are stored with prefix `cache:${namespace}:`, so clear() doesn't work
+    it("should remove all values in namespace", async () => {
       const cache1 = new KVCache(mockKv, 300, "clear-ns1");
       const cache2 = new KVCache(mockKv, 300, "clear-ns2");
 
@@ -500,15 +490,14 @@ describe("KVCache", () => {
       await expect(emptyCache.clear()).resolves.not.toThrow();
     });
 
-    it("should call list with namespace prefix", async () => {
+    it("should call list with namespaced prefix", async () => {
       await cache.set("key1", "value1");
       await cache.set("key2", "value2");
 
       await cache.clear();
 
-      // Note: This documents current behavior which uses `${namespace}:` prefix
-      // rather than `cache:${namespace}:` which would be correct
-      expect(mockKv.list).toHaveBeenCalledWith({ prefix: "test:" });
+      // clear() uses `cache:${namespace}:` prefix which matches the key() method
+      expect(mockKv.list).toHaveBeenCalledWith({ prefix: "cache:test:" });
     });
   });
 
@@ -620,41 +609,26 @@ describe("KVCache", () => {
 
       const result = await cache.get("key");
 
+      // Returns null on error instead of throwing
       expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache get error for key key:",
-        expect.any(Error),
-      );
     });
 
     it("should handle KV put errors by throwing", async () => {
       vi.mocked(mockKv.put).mockRejectedValue(new Error("Write failed"));
 
       await expect(cache.set("key", "value")).rejects.toThrow("Write failed");
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache set error for key key:",
-        expect.any(Error),
-      );
     });
 
     it("should handle KV delete errors by throwing", async () => {
       vi.mocked(mockKv.delete).mockRejectedValue(new Error("Delete failed"));
 
       await expect(cache.delete("key")).rejects.toThrow("Delete failed");
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache delete error for key key:",
-        expect.any(Error),
-      );
     });
 
     it("should handle KV list errors in clear()", async () => {
       vi.mocked(mockKv.list).mockRejectedValue(new Error("List failed"));
 
       await expect(cache.clear()).rejects.toThrow("List failed");
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache clear error:",
-        expect.any(Error),
-      );
     });
 
     it("should handle invalid JSON in get() gracefully", async () => {

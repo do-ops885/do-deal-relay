@@ -80,6 +80,38 @@ export async function handleScheduled(
         });
       }
 
+      // Regenerate embeddings for active deals on weekly cron
+      // Uses production snapshot to get full Deal[] objects required by embedding pipeline
+      if (env.DEAL_EMBEDDINGS && env.AI) {
+        logger.info("Regenerating embeddings for active deals", {
+          component: "scheduled",
+        });
+        try {
+          const { getProductionSnapshot } = await import("./lib/storage");
+          const { generateDealEmbeddings } =
+            await import("./lib/search/embedding-pipeline");
+          const snapshot = await getProductionSnapshot(env);
+          if (snapshot && snapshot.deals.length > 0) {
+            const embedResult = await generateDealEmbeddings(
+              env,
+              snapshot.deals,
+            );
+            logger.info("Embedding regeneration completed", {
+              component: "scheduled",
+              total: embedResult.total,
+              successful: embedResult.successful,
+              failed: embedResult.failed,
+              duration_ms: embedResult.duration_ms,
+            });
+          }
+        } catch (error) {
+          logger.warn("Embedding regeneration failed (non-critical)", {
+            component: "scheduled",
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
       return;
     }
 

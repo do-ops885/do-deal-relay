@@ -4,10 +4,13 @@
  * Slash command definitions for the Discord bot.
  */
 
-import { SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import {
+  SlashCommandBuilder,
+  type SlashCommandStringOption,
+  type SlashCommandOptionsOnlyBuilder,
+} from "discord.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildSlashCommands(): any[] {
+export function buildSlashCommands(): SlashCommandOptionsOnlyBuilder[] {
   return [
     new SlashCommandBuilder()
       .setName("start")

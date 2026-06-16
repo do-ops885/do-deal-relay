@@ -491,7 +491,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Manual entry
     elements.manualBtn.addEventListener("click", captureManual);
     elements.manualCode.addEventListener("input", (e) => {
-      validateManualCode(e.target.value.trim());
+      // Real-time cleaning: uppercase, strip non-alphanumeric, limit to 20 chars
+      const raw = e.target.value;
+      const cleaned = raw
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 20);
+      // Only overwrite if cleaning transformed the value — avoids unnecessary re-render
+      if (cleaned !== raw) {
+        e.target.value = cleaned;
+      }
+      validateManualCode(cleaned);
     });
     elements.manualCode.addEventListener("keypress", (e) => {
       if (e.key === "Enter") captureManual();
