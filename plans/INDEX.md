@@ -11,7 +11,7 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 
 ## Active Plans
 
-- [GitHub Automation](github-automation-plan.md) — Enhancing PR and issue automation.
+- [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs created (`.github/workflows/auto-merge.yml`). CI fixes (TruffleHog pin, codecov v4, npm install) already applied in prior PRs.
 
 ## Completed Plans (Recent)
 
@@ -39,8 +39,8 @@ This index tracks all implementation plans, roadmaps, and design documents in th
 ## Follow-Up Plans (Tracked)
 
 - [FOLLOWUP: Vectorize Binding Config](FOLLOWUP-vectorize-binding-config.md) — Add `vectorize` binding to `wrangler.jsonc` for semantic search runtime. **RESOLVED** in this PR.
-- [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) — E2E test local environment setup.
-- [FOLLOWUP: Pre-Existing Issues Scan](FOLLOWUP-pre-existing-issues-scan.md) — Pre-existing warnings/issues in repository.
+- [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) — **PARTIALLY RESOLVED** in PR #488: .dev.vars docs added to CONTRIBUTING.md/QUICKSTART.md, pre-flight env check in playwright.config.ts. Remaining: auth token setup in E2E tests.
+- [FOLLOWUP: Pre-Existing Issues Scan](FOLLOWUP-pre-existing-issues-scan.md) — **RESOLVED**. Dead modules already deleted, jsonResponse callers already using 4-arg signature.
 - [FOLLOWUP: Deployment Fix](FOLLOWUP-deployment-fix.md) — Deployment pipeline hardening.
 - [FOLLOWUP: P3 Features](FOLLOWUP-p3-features.md) — P3 feature follow-up.
 - [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) — Historical tracking of issues outside this resolution.
