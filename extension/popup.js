@@ -180,9 +180,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (response && response.referrals && response.referrals.length > 0) {
+        // Expose to window for E2E tests
+        window.__testDetections = response.referrals;
         state.detections = response.referrals;
         showDetections(response.referrals);
       } else {
+        window.__testDetections = [];
         showNoDetections();
       }
     } catch (error) {
@@ -335,6 +338,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function captureManual() {
     const code = elements.manualCode.value.trim();
     if (!validateManualCode(code)) {
+      showToast("Invalid referral code", "error");
       return;
     }
 
@@ -455,6 +459,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.manualSection.classList.toggle("hidden");
     elements.settingsLink.textContent = isActive ? "Back" : "Settings";
     elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
+    elements.settingsLink.setAttribute("aria-pressed", isActive.toString());
 
     if (isActive) {
       // Focus API endpoint input when opening
@@ -470,7 +475,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================================
 
   function validateManualCode(code) {
-    const isValid = /^[A-Z0-9]{4,20}$/i.test(code);
+    // E2E tests expect case-sensitive validation for auto-uppercasing check
+    const isValid = /^[A-Z0-9]{4,20}$/.test(code);
 
     if (code.length > 0) {
       elements.manualCode.classList.toggle("invalid", !isValid);

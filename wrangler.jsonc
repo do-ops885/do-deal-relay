@@ -3,7 +3,7 @@
 {
   "name": "do-deal-relay",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-06-13",
+  "compatibility_date": "2026-06-17",
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
   // Observability for monitoring and debugging
