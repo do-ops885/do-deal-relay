@@ -1,0 +1,17 @@
+<<<<<<< SEARCH
+      .settings-panel {
+        display: none;
+      }
+
+      .settings-panel.active {
+        display: block;
+      }
+=======
+      .settings-panel {
+        display: none;
+      }
+
+      .settings-panel.active {
+        display: block !important;
+      }
+>>>>>>> REPLACE
