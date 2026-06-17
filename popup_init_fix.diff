@@ -1,0 +1,10 @@
+<<<<<<< SEARCH
+  function setupEventListeners() {
+    // Capture button
+=======
+  function setupEventListeners() {
+    // Initial validation check
+    validateManualCode(elements.manualCode.value);
+
+    // Capture button
+>>>>>>> REPLACE

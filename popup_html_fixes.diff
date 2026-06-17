@@ -1,0 +1,95 @@
+<<<<<<< SEARCH
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 10000;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+=======
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 10000;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .toast.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+      /* Focus accessibility */
+      :focus {
+        outline: none;
+      }
+
+      :focus-visible {
+        outline: none !important;
+        box-shadow:
+          0 0 0 2px #fff,
+          0 0 0 4px #4f46e5 !important;
+        border-radius: 4px;
+      }
+=======
+      /* Focus accessibility */
+      :focus {
+        outline: none;
+      }
+
+      /* Use a more specific selector to ensure it applies in E2E tests */
+      input:focus-visible,
+      button:focus-visible,
+      a:focus-visible {
+        outline: none !important;
+        box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #4f46e5 !important;
+        border-radius: 4px;
+      }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="manual-btn"
+          disabled
+        >
+          Add Code Manually
+        </button>
+=======
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="manual-btn"
+        >
+          Add Code Manually
+        </button>
+>>>>>>> REPLACE

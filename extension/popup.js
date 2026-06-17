@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
   };
 
+  // Initialize for E2E tests
+  window.__testDetections = [];
+
   // ============================================================================
   // DOM Element References
   // ============================================================================
@@ -180,11 +183,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (response && response.referrals && response.referrals.length > 0) {
-        // Expose to window for E2E tests
-        window.__testDetections = response.referrals;
         state.detections = response.referrals;
+        // Expose to window for E2E tests
+        window.__testDetections = state.detections;
         showDetections(response.referrals);
       } else {
+        state.detections = [];
         window.__testDetections = [];
         showNoDetections();
       }
@@ -379,6 +383,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================================
 
   async function submitReferral(data) {
+    if (!data.url) {
+      throw new Error("Missing tab URL");
+    }
+
     // Build the API payload
     // CRITICAL: url field must contain COMPLETE FULL URL
     const payload = {
@@ -491,6 +499,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function setupEventListeners() {
+    // Initial validation check
+    validateManualCode(elements.manualCode.value);
+
     // Capture button
     elements.captureBtn.addEventListener("click", captureSelected);
 
