@@ -47,7 +47,9 @@ while IFS= read -r -d '' file; do
       # If line is a comment (// ... or * ... inside /* */ block), skip.
       if (line ~ /^[ \t]*(\/\/|\*)/) next
       # If line contains a literal `getComputedStyle(`, that is a real call.
-      if (line ~ /getComputedStyle\(/) print FILENAME ":" NR ":" $0
+      # Also flag bracket-string lookups e.g. `window['getComputedStyle']`
+      # or `window["getComputedStyle"]` -- same flakiness profile.
+      if (line ~ /(getComputedStyle\(|\[[\"'\'']getComputedStyle[\"'\'']\])/) print FILENAME ":" NR ":" $0
     }
   ' "$file")
   if [ -n "$hits" ]; then
