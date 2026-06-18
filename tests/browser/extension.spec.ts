@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+import { installMockChrome } from "./helpers/mockChrome";
+
 /**
  * Browser-based UI Tests for Deal Discovery Browser Extension
  *
@@ -7,63 +9,13 @@ import { test, expect } from "@playwright/test";
  * These tests validate the user interface and interaction patterns.
  */
 
-// File-level: inject the chrome mock as an init script for every test in this
-// file. CRITICAL: the chrome mock MUST be defined *inside* this addInitScript
-// callback. Passing the mock as the second `arg` triggers Playwright's
-// Node→browser serialization, which silently strips functions — every async
-// mock method like `tabs.query` becomes `undefined`, popup.js's init() chain
-// throws on `await chrome.tabs.query(...)`, the `.catch` swallows it,
-// `updatePageInfo()` never runs, and DOM assertions like
-// `expect(#page-title).toHaveText("Test Page...")` time out at 5s because the
-// title is still the initial "Loading..." placeholder. Defining the object
-// inline inside the callback keeps the arrow functions as actual functions.
+// File-level: install the chrome API mock once for every test in this file.
+// See tests/browser/helpers/mockChrome.ts for the full rationale on why the
+// mock MUST be defined inline inside the underlying addInitScript callback
+// (Playwright's Node->browser arg serialization silently strips functions,
+// leaving popup.js's init() chain without working async mock methods).
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    (window as any).chrome = {
-      tabs: {
-        query: async () => [
-          {
-            id: 1,
-            title: "Test Page - Referral Program",
-            url: "https://example.com/referral/TEST123",
-            favIconUrl: "https://example.com/favicon.ico",
-          },
-        ],
-        // popup.js#requestDetections() awaits this for action: "getDetections".
-        // Return shape must match what `showDetections(referrals)` reads.
-        sendMessage: async () => ({
-          referrals: [
-            {
-              code: "TEST123",
-              source: "url",
-              confidence: 0.95,
-            },
-          ],
-        }),
-      },
-      storage: {
-        sync: {
-          get: async () => ({ apiEndpoint: "http://localhost:8787" }),
-          set: async () => {},
-        },
-        // loadStats() / incrementStat() read+write these counters.
-        local: {
-          get: async () => ({ captured: 0, submitted: 0, success: 0 }),
-          set: async () => {},
-        },
-      },
-      // requestDetections() calls chrome.scripting.executeScript twice; this
-      // mock returns "detector loaded" so the second injection path is skipped.
-      scripting: {
-        executeScript: async () => [{ result: true }],
-      },
-      runtime: {
-        // popup.js#submitReferral() awaits this for action: "submitToAPI".
-        // The check is `if (!response.success) throw new Error(...)`.
-        sendMessage: async () => ({ success: true }),
-      },
-    };
-  });
+  await installMockChrome(page);
 });
 
 test.describe("Extension Popup UI Tests", () => {

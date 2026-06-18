@@ -4,57 +4,15 @@ import { test, expect } from "@playwright/test";
  * Accessibility and Keyboard Navigation Tests for Deal Discovery Browser Extension
  */
 
-// CRITICAL: chrome mock is defined inline inside each `addInitScript`
-// callback below (not via the `arg` parameter — see the comment there about
-// JSON serialization stripping functions). The inline definition keeps
-// arrow functions as actual functions so popup.js's init() chain reaches
-// `updatePageInfo` / `showDetections` / `setupEventListeners` and the DOM
-// ends up hydrated for the assertions below.
+import { installMockChrome } from "./helpers/mockChrome";
 
 test.describe("Extension Popup Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Chromium-headless quirk + Playwright JSON serialization gotcha:
-    // `addInitScript(fn, arg)` would JSON-serialize `arg`, silently stripping
-    // every function — leaving popup.js's init() with no working `chrome.*`
-    // async mocks. Defining the object literal INSIDE the callback keeps the
-    // functions intact because no Node→browser serialization is involved.
-    await page.addInitScript(() => {
-      (window as any).chrome = {
-        tabs: {
-          query: async () => [
-            {
-              id: 1,
-              title: "Test Page",
-              url: "https://example.com/referral/TEST123",
-              favIconUrl: "https://example.com/favicon.ico",
-            },
-          ],
-          sendMessage: async () => ({
-            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
-          }),
-        },
-        storage: {
-          sync: {
-            get: async () => ({ apiEndpoint: "http://localhost:8787" }),
-            set: async () => {},
-          },
-          local: {
-            get: async () => ({ captured: 0, submitted: 0, success: 0 }),
-            set: async () => {},
-          },
-        },
-        runtime: {
-          sendMessage: async () => ({ success: true }),
-        },
-        scripting: {
-          executeScript: async () => [{ result: true }],
-        },
-      };
-    });
-
-    // Load the extension popup
+    // Install the chrome API mock, navigate to popup.html, then wait for
+    // popup.js's async init() chain to settle (loadSettings -> tabs.query ->
+    // requestDetections -> loadStats -> setupEventListeners).
+    await installMockChrome(page);
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    // Wait for async init in popup.js
     await page.waitForTimeout(500);
   });
 
