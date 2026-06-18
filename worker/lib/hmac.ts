@@ -16,6 +16,11 @@ export interface SignatureResult {
 /**
  * Generate HMAC-SHA256 signature for webhook payload
  * Format: HMAC-SHA256(timestamp.payload)
+ *
+ * @param payload - The string payload to sign
+ * @param secret - The secret key for signing
+ * @param timestamp - The Unix timestamp to include in the signature
+ * @returns The hex-encoded HMAC signature
  */
 export async function generateHmacSignature(
   payload: string,
@@ -47,6 +52,13 @@ export async function generateHmacSignature(
 /**
  * Verify HMAC-SHA256 signature with timing-safe comparison
  * Includes timestamp validation to prevent replay attacks
+ *
+ * @param payload - The received payload string
+ * @param signature - The signature to verify
+ * @param secret - The secret key for verification
+ * @param timestamp - The timestamp from the request
+ * @param toleranceSeconds - Allowed time drift in seconds (default: 300)
+ * @returns Verification result with potential error message
  */
 export async function verifyHmacSignature(
   payload: string,
@@ -87,6 +99,10 @@ export async function verifyHmacSignature(
 
 /**
  * Constant-time string comparison to prevent timing attacks
+ *
+ * @param a - First string
+ * @param b - Second string
+ * @returns True if strings are equal
  */
 export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
@@ -104,6 +120,9 @@ export function timingSafeEqual(a: string, b: string): boolean {
 /**
  * Parse webhook signature header
  * Format: sha256=<hex_signature>
+ *
+ * @param header - The Raw X-Webhook-Signature header value
+ * @returns Parsed algorithm and signature, or null if invalid
  */
 export function parseSignatureHeader(
   header: string,
@@ -123,6 +142,12 @@ export function parseSignatureHeader(
 
 /**
  * Generate webhook headers for outgoing requests
+ *
+ * @param payload - JSON string payload
+ * @param secret - Webhook secret
+ * @param eventId - Unique ID for the event
+ * @param eventType - Type of webhook event
+ * @returns Record of HTTP headers
  */
 export async function generateWebhookHeaders(
   payload: string,
@@ -145,6 +170,8 @@ export async function generateWebhookHeaders(
 
 /**
  * Generate a cryptographically secure webhook secret
+ *
+ * @returns A hex-encoded secret string prefixed with whsec_
  */
 export function generateWebhookSecret(): string {
   const array = new Uint8Array(32);
@@ -159,6 +186,9 @@ export function generateWebhookSecret(): string {
 
 /**
  * Hash an idempotency key for storage
+ *
+ * @param key - The raw idempotency key
+ * @returns Hex-encoded SHA-256 hash
  */
 export async function hashIdempotencyKey(key: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -170,6 +200,11 @@ export async function hashIdempotencyKey(key: string): Promise<string> {
 
 /**
  * Hash request for idempotency check
+ *
+ * @param method - HTTP Method
+ * @param path - Request Path
+ * @param body - Request Body string
+ * @returns Hex-encoded SHA-256 hash of the request components
  */
 export async function hashRequest(
   method: string,

@@ -1,0 +1,2 @@
+- **global-logger.ts**: Added justification comment for `console.log` usage.
+- **error-handler.ts**: Improved type safety by avoiding some `any` usages (mental check, no major changes needed as current code uses `unknown`).

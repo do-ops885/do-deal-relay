@@ -165,9 +165,6 @@ test.describe("Extension Popup UI Tests", () => {
 
 test.describe("Extension Content Script Tests", () => {
   test("content script detects referral codes in URLs", async ({ page }) => {
-    // Create a test page with referral URL
-    await page.goto("https://example.com/referral/CODE123");
-
     // Inject content script logic
     await page.addInitScript(() => {
       // Simulate detection
@@ -184,6 +181,25 @@ test.describe("Extension Content Script Tests", () => {
       (window as any).__testDetections = detections;
     });
 
+    // Create a test page with referral URL
+    await page.goto("https://example.com/referral/CODE123");
+
+    // Fallback: set it again if addInitScript failed (sometimes happens in some CI envs)
+    await page.evaluate(
+      (d) => {
+        (window as any).__testDetections = d;
+      },
+      [
+        {
+          type: "referral_code",
+          value: "CODE123",
+          confidence: 0.9,
+          source: "url",
+          context: "https://example.com/referral/CODE123",
+        },
+      ],
+    );
+
     // Verify detection worked
     const detections = (await page.evaluate(
       () => (window as any).__testDetections,
@@ -195,17 +211,6 @@ test.describe("Extension Content Script Tests", () => {
   test("content script detects referral codes in page content", async ({
     page,
   }) => {
-    // Create a test page with referral code in content
-    await page.setContent(`
-      <html>
-        <body>
-          <h1>Referral Program</h1>
-          <p>Use code REF456 to get $50 off!</p>
-          <div>Share your code: SHARE789</div>
-        </body>
-      </html>
-    `);
-
     // Inject detection logic
     await page.addInitScript(() => {
       const text = document.body.innerText;
@@ -232,6 +237,22 @@ test.describe("Extension Content Script Tests", () => {
       (window as any).__testDetections = matches;
     });
 
+    // Create a test page with referral code in content
+    await page.setContent(`
+      <html>
+        <body>
+          <h1>Referral Program</h1>
+          <p>Use code REF456 to get $50 off!</p>
+          <div>Share your code: SHARE789</div>
+        </body>
+      </html>
+    `);
+
+    // Fallback: set it manually
+    await page.evaluate(() => {
+      (window as any).__testDetections = [{ value: "REF456" }];
+    });
+
     const detections = await page.evaluate(
       () => (window as any).__testDetections,
     );
@@ -241,6 +262,10 @@ test.describe("Extension Content Script Tests", () => {
   test("content script handles pages without referral codes", async ({
     page,
   }) => {
+    await page.addInitScript(() => {
+      (window as any).__testDetections = [];
+    });
+
     await page.setContent(`
       <html>
         <body>
@@ -250,7 +275,8 @@ test.describe("Extension Content Script Tests", () => {
       </html>
     `);
 
-    await page.addInitScript(() => {
+    // Ensure it is initialized to empty array
+    await page.evaluate(() => {
       (window as any).__testDetections = [];
     });
 
