@@ -68,16 +68,22 @@ test.describe("Extension Popup UI Tests", () => {
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
+    // Wait for popup.js#init() async chain (chrome.tabs.query -> updatePageInfo)
+    // to complete before assertions read the DOM; otherwise #page-title is
+    // still the initial "Loading..." placeholder.
+    await page.waitForTimeout(500);
   });
 
   test("popup displays page title correctly", async ({ page }) => {
-    const pageTitle = await page.locator("#page-title").textContent();
-    expect(pageTitle).toBe("Test Page - Referral Program");
+    // Auto-retrying assertion (toHaveText) tolerates async init() delay;
+    // raw textContent() captured the pre-init placeholder and failed.
+    await expect(page.locator("#page-title")).toHaveText(
+      "Test Page - Referral Program",
+    );
   });
 
   test("popup displays page URL correctly", async ({ page }) => {
-    const pageUrl = await page.locator("#page-url").textContent();
-    expect(pageUrl).toContain("example.com");
+    await expect(page.locator("#page-url")).toContainText("example.com");
   });
 
   test("scan status is visible", async ({ page }) => {
