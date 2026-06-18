@@ -361,22 +361,28 @@ test.describe("Extension API Integration Tests", () => {
 
     const manualInput = page.locator("#manual-code");
 
+    // Use pressSequentially (not fill) for inputs that self-mutate: fill() can
+    // race against popup.js's `input` handler which writes back the uppercase /
+    // stripped / truncated value via `e.target.value = cleaned`. Pressing
+    // each key fires sequential `input` events that let the handler's
+    // mutation land before Playwright snapshots .inputValue().
+    const manualBtn = page.locator("#manual-btn");
+
     // Test auto-uppercasing
-    await manualInput.fill("abc123");
+    await manualInput.pressSequentially("abc123");
     await expect(manualInput).toHaveValue("ABC123");
 
     // Test stripping non-alphanumeric
-    await manualInput.fill("code!@#123");
+    await manualInput.pressSequentially("code!@#123");
     await expect(manualInput).toHaveValue("CODE123");
 
     // Test 20-char limit
-    await manualInput.fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    await manualInput.pressSequentially("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     const value = await manualInput.inputValue();
     expect(value.length).toBeLessThanOrEqual(20);
 
     // Test that valid code enables the manual button
-    const manualBtn = page.locator("#manual-btn");
-    await manualInput.fill("VALIDCODE");
+    await manualInput.pressSequentially("VALIDCODE");
     await expect(manualBtn).toBeEnabled();
 
     // Test that invalid (empty) code disables the button
@@ -397,11 +403,13 @@ test.describe("Extension API Integration Tests", () => {
     await expect(manualCodeError).toHaveClass(/hidden/);
 
     // Error should show for too-short code (after cleaning removes special chars)
-    await manualInput.fill("ab");
+    // pressSequentially fires sequential input events so popup.js's handler
+    // mutates the value (strips `!@#`, uppercases, then validates length < 4).
+    await manualInput.pressSequentially("ab");
     await expect(manualCodeError).not.toHaveClass(/hidden/);
 
     // Error should hide for valid code
-    await manualInput.fill("VALID123");
+    await manualInput.pressSequentially("VALID123");
     await expect(manualCodeError).toHaveClass(/hidden/);
 
     // Error should show when cleared
