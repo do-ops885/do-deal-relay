@@ -125,7 +125,13 @@ export async function score(
 }
 
 /**
- * Calculate source diversity score
+ * Calculate source diversity score based on the number of unique domains.
+ *
+ * Provides a higher score when deals are discovered from multiple sources,
+ * rewarding architectural robustness and reducing single-source dependency.
+ *
+ * @param deals - Array of deals to analyze
+ * @returns Diversity score between 0.0 and 1.0
  */
 export function calculateSourceDiversity(deals: Deal[]): number {
   if (deals.length === 0) return 0;
@@ -145,7 +151,14 @@ export function calculateSourceDiversity(deals: Deal[]): number {
 }
 
 /**
- * Calculate uniqueness score
+ * Calculate uniqueness score based on duplicate density.
+ *
+ * High uniqueness indicates a discovery run that found mostly new,
+ * non-overlapping content across the target sources.
+ *
+ * @param duplicates - Number of duplicate deals filtered during deduplication
+ * @param totalCandidates - Total number of candidate deals processed
+ * @returns Uniqueness score between 0.0 and 1.0
  */
 export function calculateUniquenessScore(
   duplicates: number,

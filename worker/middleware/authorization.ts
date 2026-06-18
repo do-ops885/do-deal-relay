@@ -11,12 +11,31 @@ const ROLE_HIERARCHY: Record<string, number> = {
   api_consumer: 1,
 };
 
+/**
+ * Check if a user role has the required permission level.
+ *
+ * Implements a hierarchical permission model where higher roles
+ * automatically inherit permissions of lower roles.
+ *
+ * @param userRole - The role assigned to the user
+ * @param requiredRole - The minimum role required for the action
+ * @returns True if the user has sufficient permissions
+ */
 export function hasPermission(userRole: string, requiredRole: string): boolean {
   const userLevel = ROLE_HIERARCHY[userRole] ?? 0;
   const requiredLevel = ROLE_HIERARCHY[requiredRole] ?? 0;
   return userLevel >= requiredLevel;
 }
 
+/**
+ * Middleware factory for role-based access control.
+ *
+ * Returns a middleware function that verifies the requester's role
+ * against the required role level.
+ *
+ * @param requiredRole - The minimum role required to access the route
+ * @returns Middleware function that returns 403 if unauthorized
+ */
 export function authorize(requiredRole: Role) {
   return (auth: AuthResult): Response | null => {
     if (!auth.authenticated) {

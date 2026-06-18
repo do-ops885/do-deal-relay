@@ -236,9 +236,10 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
     return jsonResponse(
       {
         error: "Query execution failed",
-        message: "An error occurred while processing the query",
+        message: (env.ENVIRONMENT === "test" || env.ENVIRONMENT === "development") ? (error instanceof Error ? error.message : String(error)) : "An internal error occurred",
         code: "EXECUTION_ERROR",
         details: {
+          query: body.query,
           execution_time_ms: executionTime,
         },
       } as NLQError,

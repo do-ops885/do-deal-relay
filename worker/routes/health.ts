@@ -100,6 +100,16 @@ async function checkKVNamespace(
   }
 }
 
+/**
+ * Handle system health check requests.
+ *
+ * Performs deep checks on all critical infrastructure dependencies including
+ * D1 database, all KV namespaces, and the pipeline execution status.
+ *
+ * @param env - Worker environment
+ * @param request - Optional incoming HTTP request for context
+ * @returns JSON response with overall status (200 for healthy, 503 for unhealthy/degraded)
+ */
 export async function handleSystemHealth(
   env: Env,
   request?: Request,

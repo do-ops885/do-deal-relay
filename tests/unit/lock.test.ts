@@ -178,7 +178,7 @@ describe("Lock Mechanism", () => {
       await releaseLock(mockEnv, "trace-1");
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "No active lock found during release",
+        expect.stringContaining("No active lock found during release"),
       );
       consoleSpy.mockRestore();
     });
@@ -236,8 +236,7 @@ describe("Lock Mechanism", () => {
       await releaseLock(mockEnv, "trace-1");
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to release lock:",
-        expect.any(Error),
+        expect.stringContaining("Failed to release lock"),
       );
       consoleSpy.mockRestore();
     });

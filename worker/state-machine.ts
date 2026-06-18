@@ -106,7 +106,7 @@ export async function executePipeline(env: Env): Promise<{
       try {
         // Extend lock for long operations
         if (["discover", "validate", "publish"].includes(currentPhase)) {
-          await extendLock(env, trace_id, 300);
+          await extendLock(env, trace_id, CONFIG.LOCK_TTL_SECONDS);
         }
 
         // Execute phase and instrument duration (discovery, validation, publish etc)
@@ -188,7 +188,7 @@ export async function executePipeline(env: Env): Promise<{
           ctx.retry_count++;
           if (ctx.metrics) recordRetry(ctx.metrics);
           // Retry same phase with backoff
-          await new Promise((r) => setTimeout(r, 1000 * ctx.retry_count));
+          await new Promise((r) => setTimeout(r, CONFIG.RETRY_DELAY_MS * ctx.retry_count));
           continue;
         }
 

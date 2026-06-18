@@ -1,14 +1,21 @@
 import { describe, it, expect, vi } from "vitest";
-import { score, calculateSourceDiversity } from "../../worker/pipeline/score";
+import {
+  score,
+  calculateSourceDiversity,
+  calculateUniquenessScore,
+} from "../../worker/pipeline/score";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
   source: {
-    url: "https://example.com/invite",
-    domain: "example.com",
-    discovered_at: "2024-03-31T00:00:00Z",
-    trust_score: overrides.source?.trust_score || 0.7,
+    url: overrides.source?.url || "https://example.com/invite",
+    domain: overrides.source?.domain || "example.com",
+    discovered_at: overrides.source?.discovered_at || "2024-03-31T00:00:00Z",
+    trust_score:
+      overrides.source?.trust_score !== undefined
+        ? overrides.source.trust_score
+        : 0.7,
   },
   title: "Test Deal",
   description: "Test description",
@@ -94,5 +101,58 @@ describe("Scoring Pipeline", () => {
     expect(result.stats.avg_confidence).toBeGreaterThan(0);
     expect(result.stats.min_confidence).toBeGreaterThanOrEqual(0);
     expect(result.stats.max_confidence).toBeGreaterThan(0);
+  });
+
+  describe("calculateSourceDiversity", () => {
+    it("should return 0 for empty deals", () => {
+      expect(calculateSourceDiversity([])).toBe(0);
+    });
+
+    it("should calculate diversity ratio correctly", () => {
+      const deals = [
+        createMockDeal("1", {
+          source: { domain: "a.com", trust_score: 0.7 } as any,
+        }),
+        createMockDeal("2", {
+          source: { domain: "b.com", trust_score: 0.7 } as any,
+        }),
+      ];
+      expect(calculateSourceDiversity(deals)).toBeCloseTo(0.4);
+    });
+
+    it("should cap diversity at 1.0", () => {
+      const deals = [
+        createMockDeal("1", {
+          source: { domain: "a.com", trust_score: 0.7 } as any,
+        }),
+        createMockDeal("2", {
+          source: { domain: "b.com", trust_score: 0.7 } as any,
+        }),
+        createMockDeal("3", {
+          source: { domain: "c.com", trust_score: 0.7 } as any,
+        }),
+        createMockDeal("4", {
+          source: { domain: "d.com", trust_score: 0.7 } as any,
+        }),
+        createMockDeal("5", {
+          source: { domain: "e.com", trust_score: 0.7 } as any,
+        }),
+      ];
+      expect(calculateSourceDiversity(deals)).toBeCloseTo(1.0);
+    });
+  });
+
+  describe("calculateUniquenessScore", () => {
+    it("should return 1.0 for zero candidates", () => {
+      expect(calculateUniquenessScore(0, 0)).toBe(1.0);
+    });
+
+    it("should calculate uniqueness ratio correctly", () => {
+      expect(calculateUniquenessScore(2, 10)).toBe(0.8);
+    });
+
+    it("should return 0.0 when all are duplicates", () => {
+      expect(calculateUniquenessScore(10, 10)).toBe(0);
+    });
   });
 });

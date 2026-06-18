@@ -1,12 +1,7 @@
 # Track B - Code Quality
 
-- **File Length Limits**:
-  - `worker/pipeline/discover.ts` (561 lines) exceeds 500-line limit.
-  - `worker/routes/validation.ts` (552 lines) exceeds 500-line limit.
-- **Untyped Any**:
-  - `worker/lib/github/core.ts:249`: `author: any` needs typing.
-- **TODOs**:
-  - `tests/unit/d1-queries.test.ts:726`: Fix getDealStats tests.
-- **Deprecated Code**:
-  - `worker/routes/webhooks.ts`: Thin wrapper, use `worker/routes/webhooks/index.ts`.
+- **Magic Numbers**: Identified magic numbers in `worker/state-machine.ts`
+  - Line 109: `300` -> Replace with `CONFIG.LOCK_TTL_SECONDS`
+  - Line 191: `1000` -> Replace with `CONFIG.RETRY_DELAY_MS`
+- **Console Logs**: Identified console.log in `worker/lib/global-logger.ts` and `worker/lib/logger/structured.ts`. These are intentional as they are part of the logging system implementation.
 
