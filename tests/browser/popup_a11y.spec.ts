@@ -4,45 +4,45 @@ import { test, expect } from "@playwright/test";
  * Accessibility and Keyboard Navigation Tests for Deal Discovery Browser Extension
  */
 
-// Mock chrome API for testing
-const mockChromeAPI = {
-  tabs: {
-    query: async () => [
-      {
-        id: 1,
-        title: "Test Page",
-        url: "https://example.com/referral/TEST123",
-        favIconUrl: "https://example.com/favicon.ico",
-      },
-    ],
-    sendMessage: async () => ({
-      referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
-    }),
-  },
-  storage: {
-    sync: {
-      get: async () => ({ apiEndpoint: "http://localhost:8787" }),
-      set: async () => {},
-    },
-    local: {
-      get: async () => ({ captured: 0, submitted: 0, success: 0 }),
-      set: async () => {},
-    },
-  },
-  runtime: {
-    sendMessage: async () => ({ success: true }),
-  },
-  scripting: {
-    executeScript: async () => [{ result: true }],
-  },
-};
-
 test.describe("Extension Popup Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject mock chrome API before loading the popup
-    await page.addInitScript((mock) => {
-      (window as any).chrome = mock;
-    }, mockChromeAPI);
+    // CRITICAL: chrome mock is defined inline inside the addInitScript
+    // callback. Passing it as the script `arg` would trigger Playwright's
+    // Node→browser serialization that strips functions silently, leaving
+    // popup.js's init() chain without working async mock methods.
+    await page.addInitScript(() => {
+      (window as any).chrome = {
+        tabs: {
+          query: async () => [
+            {
+              id: 1,
+              title: "Test Page",
+              url: "https://example.com/referral/TEST123",
+              favIconUrl: "https://example.com/favicon.ico",
+            },
+          ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
+        },
+        storage: {
+          sync: {
+            get: async () => ({ apiEndpoint: "http://localhost:8787" }),
+            set: async () => {},
+          },
+          local: {
+            get: async () => ({ captured: 0, submitted: 0, success: 0 }),
+            set: async () => {},
+          },
+        },
+        runtime: {
+          sendMessage: async () => ({ success: true }),
+        },
+        scripting: {
+          executeScript: async () => [{ result: true }],
+        },
+      };
+    });
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
