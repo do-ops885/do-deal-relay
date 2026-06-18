@@ -4,12 +4,20 @@ import { test, expect } from "@playwright/test";
  * Accessibility and Keyboard Navigation Tests for Deal Discovery Browser Extension
  */
 
+// CRITICAL: chrome mock is defined inline inside each `addInitScript`
+// callback below (not via the `arg` parameter — see the comment there about
+// JSON serialization stripping functions). The inline definition keeps
+// arrow functions as actual functions so popup.js's init() chain reaches
+// `updatePageInfo` / `showDetections` / `setupEventListeners` and the DOM
+// ends up hydrated for the assertions below.
+
 test.describe("Extension Popup Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // CRITICAL: chrome mock is defined inline inside the addInitScript
-    // callback. Passing it as the script `arg` would trigger Playwright's
-    // Node→browser serialization that strips functions silently, leaving
-    // popup.js's init() chain without working async mock methods.
+    // Chromium-headless quirk + Playwright JSON serialization gotcha:
+    // `addInitScript(fn, arg)` would JSON-serialize `arg`, silently stripping
+    // every function — leaving popup.js's init() with no working `chrome.*`
+    // async mocks. Defining the object literal INSIDE the callback keeps the
+    // functions intact because no Node→browser serialization is involved.
     await page.addInitScript(() => {
       (window as any).chrome = {
         tabs: {
@@ -54,8 +62,10 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // Start at the top
     await page.keyboard.press("Tab");
 
-    // First element should be manual input (since detections are hidden initially or loaded later)
-    // Actually, depending on how it loads, let's just check if we can focus key elements
+    // First element should be manual input (since detections are hidden
+    // initially or loaded later); focus it manually since popup.js#init()
+    // focuses #capture-btn programmatically (so the natural first Tab from
+    // document body would NOT land on #manual-code in this test setup).
 
     const manualInput = page.locator("#manual-code");
     await manualInput.focus();
@@ -76,10 +86,20 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
   test("focus-visible styles are applied", async ({ page }) => {
     const manualBtn = page.locator("#manual-btn");
+    const captureBtn = page.locator("#capture-btn");
 
-    // :focus-visible requires keyboard navigation; programmatic .focus() does
-    // NOT trigger the pseudo-class (browser heuristic for input modality).
-    // Tab through the page until manual-btn is the active element.
+    // Anchor keyboard modality at #capture-btn. popup.js#init() calls
+    // elements.captureBtn.focus() programmatically; if Playwright runs the
+    // test before that completes, the Tab loop starts from <body> and
+    // tab-order traversal becomes non-deterministic. Asserting the anchor
+    // catches silent focus failures from Playwright (locator.focus() returns
+    // void and would otherwise swallow them).
+    await captureBtn.focus();
+    await expect(captureBtn).toBeFocused();
+
+    // Tab forward until #manual-btn is focused. CSS in popup.html applies
+    // the box-shadow ring on `:focus` (not just `:focus-visible`) as a
+    // fallback for headless chromium — see popup.html for the rationale.
     await page.keyboard.press("Tab");
     let isFocused = await manualBtn.evaluate(
       (el) => document.activeElement === el,
@@ -94,7 +114,6 @@ test.describe("Extension Popup Accessibility Tests", () => {
     }
     await expect(manualBtn).toBeFocused();
 
-    // Check for focus-visible ring (always with keyboard modality)
     const boxReference = await manualBtn.evaluate((el) => {
       return window.getComputedStyle(el).boxShadow;
     });
@@ -113,7 +132,10 @@ test.describe("Extension Popup Accessibility Tests", () => {
   test("detection items are reachable and show focus ring", async ({
     page,
   }) => {
-    // Ensure detections section is visible + add a deterministic detection item.
+    // Force-show detections section + append a deterministic mock item.
+    // popup.js#showDetections() will also auto-populate ONE real item from
+    // the chrome.tabs.sendMessage mock, so we end up with 2 children in
+    // #detection-list: [real(TEST123), mock(MOCKCODE)].
     await page.evaluate(() => {
       const detSection = document.getElementById("detections-section");
       if (detSection) detSection.style.display = "block";
@@ -129,14 +151,16 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
     const detectionItem = page.locator(".detection-item").first();
 
-    // Force keyboard modality so :focus-visible applies (programmatic .focus()
-    // bypasses the heuristic and CSS box-shadow stays rgba(0,0,0,0)).
-    // Shift+Tab from #capture-btn walks BACK to the first .detection-item,
-    // which is in DOM order before #capture-btn inside #detection-list. A
-    // forward Tab from capture-btn would skip past detection-items to
-    // #manual-code, so the test must traverse backward to land on one.
-    await page.locator("#capture-btn").focus();
-    await page.keyboard.press("Shift+Tab");
+    // "reachable" intent: belt-and-suspenders DOM presence assertion.
+    // Forward Tab from #capture-btn (which lives AFTER the detection-list
+    // in DOM order inside #detections-section) skips past detection-items
+    // entirely to #manual-code. Shift+Tab from capture-btn walks BACK to
+    // the LAST detection-item in DOM (the appended mock, NOT `.first()`).
+    // Programmatic .focus() on `.first()` is the deterministic choice and
+    // the CSS focus ring rule applies on plain `:focus` too — see
+    // popup.html for the `:focus, :focus-visible` selector pair.
+    await expect(detectionItem).toBeAttached();
+    await detectionItem.focus();
     await expect(detectionItem).toBeFocused();
 
     const boxShadow = await detectionItem.evaluate((el) => {
