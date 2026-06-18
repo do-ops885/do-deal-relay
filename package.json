@@ -64,7 +64,7 @@
     "protobufjs": "8.6.3",
     "uuid": "14.0.0",
     "@playwright/test": "^1.60.0",
-    "ws": "8.21.0",
+    "ws": "8.20.1",
     "engine.io-client": "6.6.5"
   },
   "engines": {
