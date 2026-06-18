@@ -36,7 +36,18 @@ import { cleanupExpiredConversations } from "../conversations";
 import { DiscordBotConfig } from "./types";
 import { buildSlashCommands } from "./commands";
 import { handleSlashCommand, handleButtonInteraction } from "./handlers";
-import { logger } from "../../worker/lib/global-logger";
+import { logger } from "../lib/logger";
+
+/**
+ * Normalize any thrown value into a structured context for the logger.
+ * Preserves error class name and stack trace instead of collapsing to message.
+ */
+function toErrCtx(err: unknown): Record<string, unknown> {
+  if (err instanceof Error) {
+    return { name: err.name, message: err.message, stack: err.stack };
+  }
+  return { value: String(err) };
+}
 
 // ============================================================================
 // Command Registration
@@ -69,7 +80,7 @@ export async function registerSlashCommands(
       logger.info("Global commands registered", { component: "discord-bot" });
     }
   } catch (error) {
-    logger.error("Failed to register commands", { component: "discord-bot", error: error instanceof Error ? error.message : String(error) });
+    logger.error("Failed to register commands", { component: "discord-bot", error: toErrCtx(error) });
     throw error;
   }
 }
@@ -108,7 +119,7 @@ export function createDiscordBot(config: DiscordBotConfig): Client {
         await handleButtonInteraction(interaction, config);
       }
     } catch (error) {
-      logger.error("Interaction error", { component: "discord-bot", error: error instanceof Error ? error.message : String(error) });
+      logger.error("Interaction error", { component: "discord-bot", error: toErrCtx(error) });
       if (interaction.isRepliable()) {
         await interaction
           .reply({
@@ -175,7 +186,7 @@ export async function handleDiscordWebhook(
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    logger.error("Discord webhook error", { component: "discord-bot", error: error instanceof Error ? error.message : String(error) });
+    logger.error("Discord webhook error", { component: "discord-bot", error: toErrCtx(error) });
     return new Response("Error", { status: 500 });
   }
 }
