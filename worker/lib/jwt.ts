@@ -70,7 +70,7 @@ export async function verifyToken(
     const payloadStr = new TextDecoder().decode(payloadBytes);
     const payload = JSON.parse(payloadStr) as Record<string, unknown>;
 
-    // 2026-06-21: JWT Standard Expiration Validation
+    // 2026-06-18: JWT Standard Expiration Validation
     if (payload.exp && typeof payload.exp === "number") {
       const nowSeconds = Math.floor(Date.now() / 1000);
       if (nowSeconds >= payload.exp) {
