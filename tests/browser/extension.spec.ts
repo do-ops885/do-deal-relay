@@ -18,30 +18,44 @@ const mockChromeAPI = {
         favIconUrl: "https://example.com/favicon.ico",
       },
     ],
+    // popup.js#requestDetections() awaits this for action: "getDetections".
+    // Return shape must match what `showDetections(referrals)` reads — only
+    // { code, source, confidence } (do NOT add fields it does not consume).
+    sendMessage: async () => ({
+      referrals: [
+        {
+          code: "TEST123",
+          source: "url",
+          confidence: 0.95,
+        },
+      ],
+    }),
   },
   storage: {
     sync: {
       get: async () => ({ apiEndpoint: "http://localhost:8787" }),
       set: async () => {},
     },
+    // loadStats() / incrementStat() read+write these counters; missing the
+    // local namespace previously caused chrome.storage.local.get to throw.
+    local: {
+      get: async () => ({ captured: 0, submitted: 0, success: 0 }),
+      set: async () => {},
+    },
+  },
+  // requestDetections() calls chrome.scripting.executeScript twice; without
+  // this mock the call hit `undefined()` and threw the TypeError seen in
+  // the E2E .md logs ("Cannot read properties of undefined").
+  scripting: {
+    executeScript: async () => [{ result: true }],
   },
   runtime: {
-    sendMessage: async () => ({
-      detections: [
-        {
-          type: "referral_code",
-          value: "TEST123",
-          confidence: 0.95,
-          source: "url",
-          context: "https://example.com/referral/TEST123",
-        },
-      ],
-      pageInfo: {
-        url: "https://example.com/referral/TEST123",
-        title: "Test Page - Referral Program",
-        timestamp: Date.now(),
-      },
-    }),
+    // popup.js#submitReferral() awaits this for action: "submitToAPI".
+    // The check is `if (!response.success) throw new Error(...)`, so this
+    // must return { success: true } — the legacy `detections`/`pageInfo`
+    // payload was leftover from an earlier schema and would throw on any
+    // future Capture-asserting test.
+    sendMessage: async () => ({ success: true }),
   },
 };
 
