@@ -131,17 +131,12 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
     // Force keyboard modality so :focus-visible applies (programmatic .focus()
     // bypasses the heuristic and CSS box-shadow stays rgba(0,0,0,0)).
-    // Tab from a stable prior focus target (capture button at top of popup).
+    // Shift+Tab from #capture-btn walks BACK to the first .detection-item,
+    // which is in DOM order before #capture-btn inside #detection-list. A
+    // forward Tab from capture-btn would skip past detection-items to
+    // #manual-code, so the test must traverse backward to land on one.
     await page.locator("#capture-btn").focus();
-    await page.keyboard.press("Tab"); // -> first detection-item if list is in tab order
-    // Fallback: if Tab didn't land there, Tab more.
-    for (let i = 0; i < 4; i++) {
-      const isFocused = await detectionItem.evaluate(
-        (el) => document.activeElement === el,
-      );
-      if (isFocused) break;
-      await page.keyboard.press("Tab");
-    }
+    await page.keyboard.press("Shift+Tab");
     await expect(detectionItem).toBeFocused();
 
     const boxShadow = await detectionItem.evaluate((el) => {

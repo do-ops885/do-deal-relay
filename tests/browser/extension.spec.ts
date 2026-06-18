@@ -59,12 +59,23 @@ const mockChromeAPI = {
   },
 };
 
+// File-level: inject the chrome mock as an init script for every test in this
+// file. `addInitScript` runs before all page navigations within a test's page
+// lifetime, so it covers tests in describe blocks like "Extension API
+// Integration Tests" (which previously did `page.goto(popup.html)` inline
+// without injecting the mock — init() would then throw on
+// `chrome.tabs.query()`, the `.catch` swallows it, `setupEventListeners()`
+// never runs, and the input/click handlers the tests rely on never attach).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((mock) => {
+    (window as any).chrome = mock;
+  }, mockChromeAPI);
+});
+
 test.describe("Extension Popup UI Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject mock chrome API before loading the popup
-    await page.addInitScript((mock) => {
-      (window as any).chrome = mock;
-    }, mockChromeAPI);
+    // chrome mock is injected via the file-level test.beforeEach above; this
+    // describe-level hook only handles navigation + init() settle wait.
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
@@ -397,9 +408,12 @@ test.describe("Extension API Integration Tests", () => {
     await dispatchInput("VALIDCODE");
     await expect(manualBtn).toBeEnabled();
 
-    // Test that invalid (empty) code disables the button
+    // Empty input does NOT disable the add button — popup.js intentionally
+    // keeps the button focusable for keyboard accessibility (see the
+    // "Don't disable button to maintain keyboard focusability for A11y
+    // tests" comment in `validateManualCode`). Verify that contract.
     await manualInput.fill("");
-    await expect(manualBtn).toBeDisabled();
+    await expect(manualBtn).toBeEnabled();
   });
 
   test("manual entry shows validation error for invalid codes", async ({
