@@ -1,10 +1,31 @@
-// ============================================================================
-// Global Structured Logger
-// ============================================================================
+/**
+ * Factory for per-tier structured loggers at the Worker tier.
+ *
+ * Mirrors `bot/lib/logger.ts`: replaces the prior module-singleton mutable
+ * state (`let minLevel` + `let globalContext` at module scope) with a
+ * per-instance factory `createLogger(options)` so each consumer owns an
+ * independent Logger with its own level and context. This eliminates the
+ * module-level mutable state concern surfaced by reviewers — `setMinLevel`
+ * / `setContext` calls in one consumer no longer leak into another within
+ * the same Node / Worker isolate.
+ *
+ * Public API:
+ *   - `createLogger(options)` returns a Logger (factory, no shared state)
+ *   - `logger` is a default-instance Logger with `component: "worker-global"`
+ *     for backward compatibility with the 80+ `import { logger }` callers
+ *     across `worker/**` and `tests/**`
+ *
+ * Logger interface (per instance):
+ *   - debug / info / warn / error(message, context?)
+ *   - setMinLevel(level) / setContext(ctx) / clearContext()
+ *
+ * Output goes to stdout / stderr via `console.*` underneath, so
+ * Cloudflare Workers logs and Node process logs both pick it up unchanged.
+ */
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
-interface LogContext {
+export interface LogContext {
   component?: string;
   run_id?: string;
   trace_id?: string;
@@ -18,98 +39,145 @@ interface LogEntry {
   context?: LogContext;
 }
 
-const LOGGER_CONSTANTS = {
-  PRIORITY_DEBUG: 0,
-  PRIORITY_INFO: 1,
-  PRIORITY_WARN: 2,
-  PRIORITY_ERROR: 3,
-} as const;
-
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
-  debug: LOGGER_CONSTANTS.PRIORITY_DEBUG,
-  info: LOGGER_CONSTANTS.PRIORITY_INFO,
-  warn: LOGGER_CONSTANTS.PRIORITY_WARN,
-  error: LOGGER_CONSTANTS.PRIORITY_ERROR,
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
 };
 
-let minLevel: LogLevel = "info";
-let globalContext: LogContext = {};
-
-/**
- * Sets the minimum log level for the global logger.
- * Only messages with a priority equal to or higher than the specified level will be logged.
- *
- * @param level - The minimum log level to set ("debug", "info", "warn", "error").
- */
-export function setLogLevel(level: LogLevel): void {
-  minLevel = level;
+export interface Logger {
+  debug(message: string, context?: LogContext): void;
+  info(message: string, context?: LogContext): void;
+  warn(message: string, context?: LogContext): void;
+  error(message: string, context?: LogContext): void;
+  setMinLevel(level: LogLevel): void;
+  setContext(context: LogContext): void;
+  clearContext(): void;
 }
 
 /**
- * Sets the global context that will be attached to all subsequent log entries.
- * This context is merged with the existing global context and any local context provided during logging.
- *
- * @param context - The context object containing additional metadata to include in logs.
+ * Logger construction options. Extends LogContext so callers can pass
+ * `component` (and other context fields) directly on the options object
+ * — the most ergonomic shape for the common case. Use `context` for a
+ * bundled sub-object; it takes precedence over fields set at the top level.
  */
-export function setLogContext(context: LogContext): void {
-  globalContext = { ...globalContext, ...context };
+export interface LoggerOptions extends LogContext {
+  /** Initial log level. Defaults to "info". */
+  minLevel?: LogLevel;
+  /**
+   * Optional explicit context that takes precedence over fields set
+   * directly on the options object.
+   */
+  context?: LogContext;
 }
 
 /**
- * Clears all previously set global context.
- * Subsequent logs will only contain local context if provided.
+ * Create a new logger instance with encapsulated state. Each call returns
+ * an independent Logger — there is no shared module-level state.
  */
-export function clearLogContext(): void {
-  globalContext = {};
-}
+export function createLogger(options: LoggerOptions = {}): Logger {
+  const { context, ...topLevel } = options;
+  let minLevel: LogLevel = options.minLevel ?? "info";
+  let globalContext: LogContext = { ...topLevel, ...context };
 
-function shouldLog(level: LogLevel): boolean {
-  return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[minLevel];
-}
-
-function formatEntry(entry: LogEntry): string {
-  if (entry.context && Object.keys(entry.context).length > 0) {
-    return JSON.stringify(entry);
+  function shouldLog(level: LogLevel): boolean {
+    return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[minLevel];
   }
-  return `[${entry.timestamp}] ${entry.level.toUpperCase()} ${entry.message}`;
-}
 
-function log(level: LogLevel, message: string, context?: LogContext): void {
-  if (!shouldLog(level)) return;
+  function log(level: LogLevel, message: string, context?: LogContext): void {
+    if (!shouldLog(level)) return;
 
-  const merged = { ...globalContext, ...context };
-  const entry: LogEntry = {
-    level,
-    message,
-    timestamp: new Date().toISOString(),
-    context: Object.keys(merged).length > 0 ? merged : undefined,
+    const merged = { ...globalContext, ...context };
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      context: Object.keys(merged).length > 0 ? merged : undefined,
+    };
+
+    const hasContext =
+      entry.context !== undefined && Object.keys(entry.context).length > 0;
+    const output = hasContext
+      ? JSON.stringify(entry)
+      : `[${entry.timestamp}] ${entry.level.toUpperCase()} ${entry.message}`;
+
+    switch (level) {
+      case "error":
+        console.error(output);
+        break;
+      case "warn":
+        console.warn(output);
+        break;
+      default:
+        console.log(output);
+    }
+  }
+
+  return {
+    debug(message: string, context?: LogContext): void {
+      log("debug", message, context);
+    },
+    info(message: string, context?: LogContext): void {
+      log("info", message, context);
+    },
+    warn(message: string, context?: LogContext): void {
+      log("warn", message, context);
+    },
+    error(message: string, context?: LogContext): void {
+      log("error", message, context);
+    },
+    setMinLevel(level: LogLevel): void {
+      minLevel = level;
+    },
+    setContext(context: LogContext): void {
+      globalContext = { ...globalContext, ...context };
+    },
+    clearContext(): void {
+      globalContext = {};
+    },
   };
-
-  const output = formatEntry(entry);
-
-  switch (level) {
-    case "error":
-      console.error(output);
-      break;
-    case "warn":
-      console.warn(output);
-      break;
-    default:
-      console.log(output);
-  }
 }
 
-export const logger = {
-  debug(message: string, context?: LogContext): void {
-    log("debug", message, context);
+/**
+ * Internal default-instance logger. Owns one well-defined piece of global
+ * state (the `"worker-global"` component) so JSON-tagged entries
+ * distinguish worker-tier logs from bot-tier logs without further context
+ * plumbing. Consumers must not mutate this directly; use
+ * `createLogger({ ... })` for tunable per-instance loggers.
+ */
+const _defaultLogger = createLogger({ component: "worker-global" });
+
+/**
+ * Default logger instance for backward compatibility with the 80+ existing
+ * `import { logger }` callers. The exposed surface keeps the full `Logger`
+ * type so future helper functions can accept it as a parameter
+ * polymorphically; however, the three runtime-tuning methods
+ * (`setMinLevel`, `setContext`, `clearContext`) throw deliberately if
+ * called on the default instance. This closes the module-singleton
+ * mutable-state leak that motivated the factory rewrite for the underlying
+ * instance — callers wanting tunable state must use `createLogger({...})`.
+ * The returned object is `Object.freeze`d so attempts to extend the
+ * surface at runtime throw in strict mode.
+ */
+export const logger: Logger = Object.freeze({
+  debug: _defaultLogger.debug,
+  info: _defaultLogger.info,
+  warn: _defaultLogger.warn,
+  error: _defaultLogger.error,
+  setMinLevel(_level: LogLevel): void {
+    throw new Error(
+      "default logger is read-only; use createLogger({ ... }) for tunables",
+    );
   },
-  info(message: string, context?: LogContext): void {
-    log("info", message, context);
+  setContext(_context: LogContext): void {
+    throw new Error(
+      "default logger is read-only; use createLogger({ ... }) for tunables",
+    );
   },
-  warn(message: string, context?: LogContext): void {
-    log("warn", message, context);
+  clearContext(): void {
+    throw new Error(
+      "default logger is read-only; use createLogger({ ... }) for tunables",
+    );
   },
-  error(message: string, context?: LogContext): void {
-    log("error", message, context);
-  },
-};
+});
