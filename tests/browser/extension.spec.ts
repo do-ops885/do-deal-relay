@@ -133,8 +133,13 @@ test.describe("Extension Popup UI Tests", () => {
   });
 
   test("API endpoint can be updated", async ({ page }) => {
-    // Open settings
+    // Open settings and explicitly wait for the panel to become visible before
+    // touching descendant inputs; popup.js#toggleSettings() toggles the
+    // `.hidden` class + `style.display` synchronously on the click handler, but
+    // Playwright's actionability check otherwise times out at 30s for nested
+    // inputs inside a hidden ancestor.
     await page.locator("#settings-link").click();
+    await expect(page.locator("#settings-panel")).toBeVisible();
 
     const apiEndpointInput = page.locator("#api-endpoint");
     await apiEndpointInput.fill("http://new-endpoint:8787");
@@ -361,28 +366,35 @@ test.describe("Extension API Integration Tests", () => {
 
     const manualInput = page.locator("#manual-code");
 
-    // Use pressSequentially (not fill) for inputs that self-mutate: fill() can
-    // race against popup.js's `input` handler which writes back the uppercase /
-    // stripped / truncated value via `e.target.value = cleaned`. Pressing
-    // each key fires sequential `input` events that let the handler's
-    // mutation land before Playwright snapshots .inputValue().
+    // Use page.evaluate to set + dispatch input events deterministically.
+    // Playwright's pressSequentially and fill both race against popup.js's
+    // input handler which writes back via `e.target.value = cleaned`; the
+    // synchronous evaluate path runs the handler to completion within the
+    // evaluate() call, so the DOM value is settled by the time we assert.
     const manualBtn = page.locator("#manual-btn");
 
+    const dispatchInput = (raw: string) =>
+      manualInput.evaluate((el, v) => {
+        const input = el as HTMLInputElement;
+        input.value = v;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }, raw);
+
     // Test auto-uppercasing
-    await manualInput.pressSequentially("abc123");
+    await dispatchInput("abc123");
     await expect(manualInput).toHaveValue("ABC123");
 
     // Test stripping non-alphanumeric
-    await manualInput.pressSequentially("code!@#123");
+    await dispatchInput("code!@#123");
     await expect(manualInput).toHaveValue("CODE123");
 
     // Test 20-char limit
-    await manualInput.pressSequentially("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    await dispatchInput("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     const value = await manualInput.inputValue();
     expect(value.length).toBeLessThanOrEqual(20);
 
     // Test that valid code enables the manual button
-    await manualInput.pressSequentially("VALIDCODE");
+    await dispatchInput("VALIDCODE");
     await expect(manualBtn).toBeEnabled();
 
     // Test that invalid (empty) code disables the button
@@ -399,20 +411,26 @@ test.describe("Extension API Integration Tests", () => {
     const manualInput = page.locator("#manual-code");
     const manualCodeError = page.locator("#manual-code-error");
 
-    // Error should be hidden when empty
+    const dispatchInput = (raw: string) =>
+      manualInput.evaluate((el, v) => {
+        const input = el as HTMLInputElement;
+        input.value = v;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }, raw);
+
+    // Error should be hidden when empty (default state)
     await expect(manualCodeError).toHaveClass(/hidden/);
 
-    // Error should show for too-short code (after cleaning removes special chars)
-    // pressSequentially fires sequential input events so popup.js's handler
-    // mutates the value (strips `!@#`, uppercases, then validates length < 4).
-    await manualInput.pressSequentially("ab");
+    // Error should show for too-short code (popup.js uppercases "ab" -> "AB",
+    // then validation fails for length 2 < 4)
+    await dispatchInput("ab");
     await expect(manualCodeError).not.toHaveClass(/hidden/);
 
     // Error should hide for valid code
-    await manualInput.pressSequentially("VALID123");
+    await dispatchInput("VALID123");
     await expect(manualCodeError).toHaveClass(/hidden/);
 
-    // Error should show when cleared
+    // Error should re-show when cleared (handler's else-branch re-adds hidden)
     await manualInput.fill("");
     await expect(manualCodeError).toHaveClass(/hidden/);
   });

@@ -77,8 +77,10 @@ test.describe("Extension Popup Accessibility Tests", () => {
   test("focus-visible styles are applied", async ({ page }) => {
     const manualBtn = page.locator("#manual-btn");
 
-    // We need to trigger :focus-visible, which usually requires keyboard interaction
-    await page.keyboard.press("Tab"); // Tab until focused
+    // :focus-visible requires keyboard navigation; programmatic .focus() does
+    // NOT trigger the pseudo-class (browser heuristic for input modality).
+    // Tab through the page until manual-btn is the active element.
+    await page.keyboard.press("Tab");
     let isFocused = await manualBtn.evaluate(
       (el) => document.activeElement === el,
     );
@@ -90,14 +92,12 @@ test.describe("Extension Popup Accessibility Tests", () => {
       );
       attempts++;
     }
+    await expect(manualBtn).toBeFocused();
 
-    // Check for focus-visible ring
+    // Check for focus-visible ring (always with keyboard modality)
     const boxReference = await manualBtn.evaluate((el) => {
       return window.getComputedStyle(el).boxShadow;
     });
-
-    // The focus-visible ring should be present (4f46e5)
-    // Note: Playwright sometimes reports computed colors as rgb or rgba
     expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
   });
 
@@ -113,7 +113,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
   test("detection items are reachable and show focus ring", async ({
     page,
   }) => {
-    // Ensure detections section is visible
+    // Ensure detections section is visible + add a deterministic detection item.
     await page.evaluate(() => {
       const detSection = document.getElementById("detections-section");
       if (detSection) detSection.style.display = "block";
@@ -128,7 +128,20 @@ test.describe("Extension Popup Accessibility Tests", () => {
     });
 
     const detectionItem = page.locator(".detection-item").first();
-    await detectionItem.focus();
+
+    // Force keyboard modality so :focus-visible applies (programmatic .focus()
+    // bypasses the heuristic and CSS box-shadow stays rgba(0,0,0,0)).
+    // Tab from a stable prior focus target (capture button at top of popup).
+    await page.locator("#capture-btn").focus();
+    await page.keyboard.press("Tab"); // -> first detection-item if list is in tab order
+    // Fallback: if Tab didn't land there, Tab more.
+    for (let i = 0; i < 4; i++) {
+      const isFocused = await detectionItem.evaluate(
+        (el) => document.activeElement === el,
+      );
+      if (isFocused) break;
+      await page.keyboard.press("Tab");
+    }
     await expect(detectionItem).toBeFocused();
 
     const boxShadow = await detectionItem.evaluate((el) => {
