@@ -37,3 +37,8 @@ privately to the maintainers.
 This policy covers the source code, workflows, scripts, and configuration files
 in this repository. It does not cover vulnerabilities in third-party
 dependencies or external services — please report those upstream.
+
+Active CVEs and pending remediations are tracked in
+[`docs/SECURITY_ADVISORY.md`](docs/SECURITY_ADVISORY.md) — see the
+"Pending Remediations" section for the current open list and the
+Linux-env regen recipe.

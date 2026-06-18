@@ -1,11 +1,42 @@
 # Security Advisory
 
-**Date**: 2026-05-11
-**Status**: Clean
+**Date**: 2026-06-18
+**Status**: 1 open dep-CVE followup
 
 ## Dependency Audit
 
-As of May 11, 2026, `npm audit` reports **0 vulnerabilities**.
+As of 2026-06-18, the audit toolchain flags 1 outstanding CVE-grade finding
+on a transitive runtime dependency (see Pending Remediations below). The
+project's own code is clean.
+
+## Pending Remediations
+
+The following upstream-dep CVEs are tracked here. The fix direction is to
+upgrade the patched package via lockfile regen in a Linux-native environment
+— local `npm install --package-lock-only` on win32 fails with `EBADPLATFORM`
+(`@rolldown/binding-linux-x64-gnu` is an os:linux-tagged optional native
+binding that `npm` cannot skip during lockfile resolution on Windows).
+
+### Remediation recipe
+
+Run on a Linux box (GitHub Codespace, WSL, admin box, or self-hosted runner):
+
+  1. Edit `package.json#overrides.*` to the patched version pinned below.
+  2. `npm ci`
+  3. `npm install --package-lock-only --os=linux`
+  4. Commit both `package.json` and `package-lock.json` as an isolated PR
+     titled `security/bump-<pkg>-<newversion>` straight to `main`.
+  5. **Move the entry from this Pending Remediations section into the
+     Recent Remediations section below in the SAME PR** so the audit
+     log stays the source of truth.
+
+### Open
+
+- **ws CVE-2026-48779** (HIGH, memory-exhaustion DoS via tiny fragments).
+  Current pin: `package.json#overrides.ws = "8.20.1"`.
+  Patch: `8.21.0`.
+  Reachable at runtime via `engine.io-client` 6.6.5.
+  Tracked since: 2026-06-18.
 
 ## Recent Remediations
 
