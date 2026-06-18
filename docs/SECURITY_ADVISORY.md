@@ -1,7 +1,7 @@
 # Security Advisory
 
 **Date**: 2026-06-18
-**Status**: 1 open dep-CVE followup
+**Status**: 1 dep-CVE pending
 
 ## Dependency Audit
 
@@ -42,6 +42,15 @@ Run on a Linux box (GitHub Codespace, WSL, admin box, or self-hosted runner):
 
 - Previous vulnerabilities in `fast-xml-parser` and `uuid` were resolved via package overrides in `package.json`.
 - Environment-level security is maintained via `security.yml` (TruffleHog for secret detection).
+
+## Changelog
+
+Closed CVEs. Each entry corresponds to a Pending Remediations bullet moved
+here via the loop-closure convention on the recipe (step 5). Entry format:
+
+- `YYYY-MM-DD -- <CVE-ID> -- <package> -- <patched-version> -- <PR-link>`
+
+No entries yet.
 
 ## Known Residual Risks
 
