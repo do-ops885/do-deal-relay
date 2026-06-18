@@ -91,14 +91,13 @@ test.describe("Extension Popup Accessibility Tests", () => {
       attempts++;
     }
 
-    // Check for focus-visible ring
-    const boxReference = await manualBtn.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-
-    // The focus-visible ring should be present (4f46e5)
-    // Note: Playwright sometimes reports computed colors as rgb or rgba
-    expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    // Use Playwright's auto-retrying `toHaveCSS` so this assertion polls
+    // through `.btn`'s `transition: all 0.2s` (synchronous getComputedStyle
+    // races mid-transition). Carved out of PR #494 commit 1b323e9.
+    await expect(manualBtn).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229\)/,
+    );
   });
 
   test("settings button is a semantic button", async ({ page }) => {
@@ -131,9 +130,9 @@ test.describe("Extension Popup Accessibility Tests", () => {
     await detectionItem.focus();
     await expect(detectionItem).toBeFocused();
 
-    const boxShadow = await detectionItem.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-    expect(boxShadow).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    await expect(detectionItem).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229\)/,
+    );
   });
 });
