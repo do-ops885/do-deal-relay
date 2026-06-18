@@ -100,6 +100,18 @@ async function checkKVNamespace(
   }
 }
 
+/**
+ * Handle system health check requests.
+ *
+ * Performs a comprehensive check of all system dependencies, including
+ * D1 database connectivity, all KV namespaces, and the production snapshot.
+ * Returns a 200 OK if all critical dependencies are healthy, or 503 Service
+ * Unavailable if any are unhealthy or degraded.
+ *
+ * @param env - Worker environment containing database and KV bindings
+ * @param request - Optional HTTP request object
+ * @returns JSON response with overall status and detailed dependency health
+ */
 export async function handleSystemHealth(
   env: Env,
   request?: Request,

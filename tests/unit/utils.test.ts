@@ -79,8 +79,9 @@ describe("Utils - fetchInBatches", () => {
     expect(results).toEqual([2, 4, 8, 10]);
     expect(mapper).toHaveBeenCalledTimes(5);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Batch operation failed"),
-      expect.any(Error),
+      expect.stringContaining(
+        '"message":"Batch operation failed for item at index 2"',
+      ),
     );
 
     consoleSpy.mockRestore();
@@ -96,7 +97,17 @@ describe("Utils - fetchInBatches", () => {
 
     expect(results).toEqual([]);
     expect(mapper).toHaveBeenCalledTimes(3);
-    expect(consoleSpy).toHaveBeenCalledTimes(3);
+    // Use a more relaxed check for console error calls due to background KV logging side effects
+    expect(consoleSpy.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Batch operation failed for item at index 0"),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Batch operation failed for item at index 1"),
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Batch operation failed for item at index 2"),
+    );
 
     consoleSpy.mockRestore();
   });

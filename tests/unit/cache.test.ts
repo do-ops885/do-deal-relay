@@ -622,8 +622,7 @@ describe("KVCache", () => {
 
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache get error for key key:",
-        expect.any(Error),
+        expect.stringContaining('"message":"Cache get error for key key"'),
       );
     });
 
@@ -632,8 +631,7 @@ describe("KVCache", () => {
 
       await expect(cache.set("key", "value")).rejects.toThrow("Write failed");
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache set error for key key:",
-        expect.any(Error),
+        expect.stringContaining('"message":"Cache set error for key key"'),
       );
     });
 
@@ -642,8 +640,7 @@ describe("KVCache", () => {
 
       await expect(cache.delete("key")).rejects.toThrow("Delete failed");
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache delete error for key key:",
-        expect.any(Error),
+        expect.stringContaining('"message":"Cache delete error for key key"'),
       );
     });
 
@@ -652,8 +649,7 @@ describe("KVCache", () => {
 
       await expect(cache.clear()).rejects.toThrow("List failed");
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Cache clear error:",
-        expect.any(Error),
+        expect.stringContaining('"message":"Cache clear error"'),
       );
     });
 

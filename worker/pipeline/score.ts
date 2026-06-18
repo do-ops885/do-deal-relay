@@ -127,6 +127,12 @@ export async function score(
 /**
  * Calculate source diversity score
  */
+/**
+ * Calculate source diversity score based on the ratio of unique domains to total deals.
+ *
+ * @param deals - Array of deals to analyze
+ * @returns A diversity score between 0.0 and 1.0
+ */
 export function calculateSourceDiversity(deals: Deal[]): number {
   if (deals.length === 0) return 0;
 
@@ -146,6 +152,13 @@ export function calculateSourceDiversity(deals: Deal[]): number {
 
 /**
  * Calculate uniqueness score
+ */
+/**
+ * Calculate uniqueness score based on the number of duplicates found in the discovery phase.
+ *
+ * @param duplicates - Number of duplicate deals identified
+ * @param totalCandidates - Total number of candidate deals discovered
+ * @returns A uniqueness score between 0.0 and 1.0
  */
 export function calculateUniquenessScore(
   duplicates: number,

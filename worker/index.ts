@@ -35,7 +35,7 @@ export default {
         component: "worker",
         error_message: err.message,
       });
-      return jsonResponse({ error: "Configuration error" }, 503, request);
+      return jsonResponse({ error: "Configuration error", message: err.message }, 503, request);
     }
 
     if (env.GITHUB_TOKEN) {

@@ -114,6 +114,8 @@
       ];
 
       this.detectedReferrals = this.deduplicateDetections(detections);
+      window.__testDetections = this.detectedReferrals;
+      window.__testDetections = this.detectedReferrals;
 
       // Update badge with count
       this.updateBadge();

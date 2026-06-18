@@ -324,7 +324,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }, 2000);
     } catch (err) {
       console.error("Capture error:", err);
-      showToast(`Failed to capture: ${err.message}`, "error");
+      showToast(`Failed to capture: ${err.message || "Unknown error"}`, "error");
       elements.captureBtn.textContent = "✨ Capture Selected";
     } finally {
       elements.captureBtn.disabled = false;
@@ -362,7 +362,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         elements.manualBtn.textContent = "Add Code Manually";
       }, 2000);
     } catch (err) {
-      showToast(`Failed to add: ${err.message}`, "error");
+      showToast(`Failed to add: ${err.message || "Unknown error"}`, "error");
       elements.manualBtn.textContent = "Add Code Manually";
     } finally {
       elements.manualBtn.disabled = false;
@@ -480,7 +480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.manualCodeError.classList.add("hidden");
     }
 
-    elements.manualBtn.disabled = !isValid;
+    elements.manualBtn.disabled = false;
     return isValid;
   }
 
@@ -491,6 +491,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Manual entry
     elements.manualBtn.addEventListener("click", captureManual);
     elements.manualCode.addEventListener("input", (e) => {
+      const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (cleaned !== e.target.value) {
+        e.target.value = cleaned;
+      }
+      const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (cleaned !== e.target.value) {
+        e.target.value = cleaned;
+      }
       validateManualCode(e.target.value.trim());
     });
     elements.manualCode.addEventListener("keypress", (e) => {

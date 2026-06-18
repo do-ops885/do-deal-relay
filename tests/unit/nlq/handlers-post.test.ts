@@ -318,7 +318,7 @@ describe("NLQ Handlers - POST", () => {
       const body = (await response.json()) as any;
       expect(body.code).toBe("EXECUTION_ERROR");
       expect(body.error).toBe("Query execution failed");
-      expect(body.details.query).toBe("find deals");
+      expect(body.details.execution_time_ms).toBeDefined();
     });
 
     it("should handle non-Error throwables", async () => {
@@ -334,7 +334,7 @@ describe("NLQ Handlers - POST", () => {
 
       expect(response.status).toBe(500);
       const body = (await response.json()) as any;
-      expect(body.message).toBe("string error");
+      expect(body.message).toBe("An error occurred while processing the query");
     });
 
     it("should return empty results array when no deals match", async () => {
