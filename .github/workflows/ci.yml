@@ -80,6 +80,20 @@ jobs:
       - run: npm ci
       - run: npm run validate
 
+  lint-e2e:
+    name: E2E Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version-file: ".nvmrc"
+      - run: npm ci
+      - run: npm run lint:e2e
+
   # Stage 2: Tests (run after lint passes)
   test:
     name: Unit Tests
@@ -125,7 +139,7 @@ jobs:
 
   test-e2e:
     name: E2E Tests
-    needs: [lint]
+    needs: [lint, lint-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -301,6 +315,7 @@ jobs:
     needs:
       [
         lint,
+        lint-e2e,
         format,
         docs,
         validate-codes,
@@ -319,6 +334,7 @@ jobs:
             echo "| Job | Status |"
             echo "|-----|--------|"
             echo "| Type Check | ${{ needs.lint.result }} |"
+            echo "| E2E Lint | ${{ needs.lint-e2e.result }} |"
             echo "| Format Check | ${{ needs.format.result }} |"
             echo "| Docs Validation | ${{ needs.docs.result }} |"
             echo "| Validation Gates | ${{ needs.validate-codes.result }} |"
@@ -333,6 +349,7 @@ jobs:
           FAILED=0
           for result in \
             "${{ needs.lint.result }}" \
+            "${{ needs.lint-e2e.result }}" \
             "${{ needs.format.result }}" \
             "${{ needs.validate-codes.result }}" \
             "${{ needs.test.result }}" \

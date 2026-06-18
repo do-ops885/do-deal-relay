@@ -30,7 +30,7 @@
     "test:smoke": "vitest run tests/smoke/endpoints.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run lint:e2e && bash scripts/validate-codes.sh",
+    "validate": "bash scripts/validate-codes.sh",
     "verify": "bash scripts/quality_gate.sh",
     "lint:e2e": "bash scripts/lint-e2e-transitions.sh"
   },
