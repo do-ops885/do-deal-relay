@@ -1,8 +1,25 @@
-docs(ci): polish E2E Lint impl pointer per reviewer micro-suggestion
+test(e2e): use toHaveCSS for box-shadow focus ring assertions
 
-Tightens the trailing `# Implementation: ...` line in the WHY-comment
-above `lint-e2e:` to also surface the npm entrypoint, so a maintainer
-reading ci.yml alone knows both WHERE the script lives AND how the
-job invokes it (without grepping package.json scripts).
+Replaces the two `getComputedStyle().boxShadow` reads followed by
+`expect(string).toMatch(...)` in tests/browser/popup_a11y.spec.ts with
+Playwright's auto-retrying `await expect(locator).toHaveCSS("box-shadow",
+regex)`.
 
-No code change, just discoverability.
+Why: `.btn` and `.detection-item` in extension/popup.html declare
+`transition: all 0.2s`. The synchronous read in `getComputedStyle` (called
+via `locator.evaluate`) captures the box-shadow MID-TRANSITION — often
+`rgba(0,0,0,0)` — and the regex race-fails the test in headless Chromium.
+Playwright's `toHaveCSS` polls through the 0.2s transition and is the
+idiomatic Playwright replacement.
+
+Deliberately carved out of PR #494 / commit 1b323e9 to keep that PR
+atomic on the `mockChromeAPI` fix. Applied on chore/lint-e2e-transitions
+so the dedicated E2E Lint job on this branch can trip clean post-merge;
+the same commit is also opened as a standalone followup PR (#497) carrying
+only this rewrite, in keeping with PR #494's atomicity choice.
+
+Touched in two places:
+  1. focus-visible styles are applied:  manualBtn toHaveCSS
+  2. detection items are reachable:       detectionItem toHaveCSS
+
+Refs: PR #494 commit 1b323e9 (mockChromeAPI); PR #496 (chore E2E Lint).

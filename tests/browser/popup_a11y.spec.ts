@@ -91,14 +91,17 @@ test.describe("Extension Popup Accessibility Tests", () => {
       attempts++;
     }
 
-    // Check for focus-visible ring
-    const boxReference = await manualBtn.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-
-    // The focus-visible ring should be present (4f46e5)
-    // Note: Playwright sometimes reports computed colors as rgb or rgba
-    expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    // Check for focus-visible ring. Use Playwright's auto-retrying
+    // `toHaveCSS` instead of synchronous `getComputedStyle().toMatch()` so
+    // the box-shadow read polls through `.btn`'s `transition: all 0.2s`
+    // (otherwise headless Chromium captures rgba(0,0,0,0) mid-transition
+    // and the regex races to fail). Was carved out of PR #494 commit
+    // 1b323e9 for atomicity; applied here to clear the chore branch's
+    // E2E Lint job and as a standalone followup PR.
+    await expect(manualBtn).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229\)/,
+    );
   });
 
   test("settings button is a semantic button", async ({ page }) => {
@@ -131,9 +134,9 @@ test.describe("Extension Popup Accessibility Tests", () => {
     await detectionItem.focus();
     await expect(detectionItem).toBeFocused();
 
-    const boxShadow = await detectionItem.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-    expect(boxShadow).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    await expect(detectionItem).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229\)/,
+    );
   });
 });
