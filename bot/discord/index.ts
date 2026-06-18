@@ -36,8 +36,10 @@ import { cleanupExpiredConversations } from "../conversations";
 import { DiscordBotConfig } from "./types";
 import { buildSlashCommands } from "./commands";
 import { handleSlashCommand, handleButtonInteraction } from "./handlers";
-import { logger } from "../lib/logger";
+import { createLogger } from "../lib/logger";
 import { toErrCtx } from "../lib/errors";
+
+const logger = createLogger({ component: "discord-bot" });
 
 // ============================================================================
 // Command Registration

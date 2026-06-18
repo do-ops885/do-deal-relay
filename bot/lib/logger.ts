@@ -1,15 +1,16 @@
 /**
- * Lightweight structured logger for bot modules.
+ * Factory for per-bot structured loggers.
  *
- * Mirrors `worker/lib/global-logger.ts` API surface so that existing
- * `logger.info / .warn / .error / .debug` call sites in bot modules work
- * unchanged. Kept in the bot tier so bots do not pull Cloudflare-only
- * worker code; if `worker/lib/global-logger.ts` ever grows a Cloudflare
- * binding import, this shim keeps the bot layer insulated.
+ * Mirrors `worker/lib/global-logger.ts` API surface (debug / info / warn /
+ * error) but uses a factory pattern so each bot module owns an
+ * independent logger with its own `minLevel` and `context`. This
+ * eliminates the module-level mutable state concern surfaced by
+ * reviewers — `setMinLevel` / `setContext` calls in one bot no longer
+ * leak into another.
  *
- * Pure Node runtime (no `console` shimming, no KV/Env). Output goes to
- * stdout/stderr via `console.*` underneath so Cloudflare Workers logs
- * and Node process logs both pick it up unchanged.
+ * Pure Node runtime (no `console` shimming, no KV / Env). Output goes to
+ * stdout / stderr via `console.*` underneath, so Cloudflare Workers
+ * logs and Node process logs both pick it up unchanged.
  */
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -33,64 +34,95 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 };
 
-let minLevel: LogLevel = "info";
-let globalContext: LogContext = {};
-
-export function setLogLevel(level: LogLevel): void {
-  minLevel = level;
+export interface Logger {
+  debug(message: string, context?: LogContext): void;
+  info(message: string, context?: LogContext): void;
+  warn(message: string, context?: LogContext): void;
+  error(message: string, context?: LogContext): void;
+  setMinLevel(level: LogLevel): void;
+  setContext(context: LogContext): void;
+  clearContext(): void;
 }
 
-export function setLogContext(context: LogContext): void {
-  globalContext = { ...globalContext, ...context };
+/**
+ * Logger construction options. Extends LogContext so callers can pass
+ * `component` (and other context fields) directly on the options object
+ * — the most ergonomic shape for the common case. Use `context` for a
+ * bundled sub-object; it takes precedence over fields set at the top.
+ */
+export interface LoggerOptions extends LogContext {
+  /** Initial log level. Defaults to "info". */
+  minLevel?: LogLevel;
+  /**
+   * Optional explicit context that takes precedence over fields set
+   * directly on the options object.
+   */
+  context?: LogContext;
 }
 
-export function clearLogContext(): void {
-  globalContext = {};
-}
+/**
+ * Create a new logger instance with encapsulated state. Each call returns
+ * an independent Logger — there is no shared module-level state.
+ */
+export function createLogger(options: LoggerOptions = {}): Logger {
+  const { context, ...topLevel } = options;
+  let minLevel: LogLevel = options.minLevel ?? "info";
+  let globalContext: LogContext = { ...topLevel, ...context };
 
-function shouldLog(level: LogLevel): boolean {
-  return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[minLevel];
-}
-
-function log(level: LogLevel, message: string, context?: LogContext): void {
-  if (!shouldLog(level)) return;
-
-  const merged = { ...globalContext, ...context };
-  const entry: LogEntry = {
-    level,
-    message,
-    timestamp: new Date().toISOString(),
-    context: Object.keys(merged).length > 0 ? merged : undefined,
-  };
-
-  const output =
-    Object.keys(merged).length > 0
-      ? JSON.stringify(entry)
-      : `[${entry.timestamp}] ${level.toUpperCase()} ${message}`;
-
-  switch (level) {
-    case "error":
-      console.error(output);
-      break;
-    case "warn":
-      console.warn(output);
-      break;
-    default:
-      console.log(output);
+  function shouldLog(level: LogLevel): boolean {
+    return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[minLevel];
   }
-}
 
-export const logger = {
-  debug(message: string, context?: LogContext): void {
-    log("debug", message, context);
-  },
-  info(message: string, context?: LogContext): void {
-    log("info", message, context);
-  },
-  warn(message: string, context?: LogContext): void {
-    log("warn", message, context);
-  },
-  error(message: string, context?: LogContext): void {
-    log("error", message, context);
-  },
-};
+  function log(level: LogLevel, message: string, context?: LogContext): void {
+    if (!shouldLog(level)) return;
+
+    const merged = { ...globalContext, ...context };
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      context: Object.keys(merged).length > 0 ? merged : undefined,
+    };
+
+    const hasContext =
+      entry.context !== undefined && Object.keys(entry.context).length > 0;
+    const output = hasContext
+      ? JSON.stringify(entry)
+      : `[${entry.timestamp}] ${entry.level.toUpperCase()} ${entry.message}`;
+
+    switch (level) {
+      case "error":
+        console.error(output);
+        break;
+      case "warn":
+        console.warn(output);
+        break;
+      default:
+        console.log(output);
+    }
+  }
+
+  return {
+    debug(message: string, context?: LogContext): void {
+      log("debug", message, context);
+    },
+    info(message: string, context?: LogContext): void {
+      log("info", message, context);
+    },
+    warn(message: string, context?: LogContext): void {
+      log("warn", message, context);
+    },
+    error(message: string, context?: LogContext): void {
+      log("error", message, context);
+    },
+    setMinLevel(level: LogLevel): void {
+      minLevel = level;
+    },
+    setContext(context: LogContext): void {
+      globalContext = { ...globalContext, ...context };
+    },
+    clearContext(): void {
+      globalContext = {};
+    },
+  };
+}

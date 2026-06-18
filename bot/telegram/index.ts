@@ -25,8 +25,10 @@ import {
   conversations,
   cleanupExpiredConversations,
 } from "../conversations";
-import { logger } from "../lib/logger";
+import { createLogger } from "../lib/logger";
 import { toErrCtx } from "../lib/errors";
+
+const logger = createLogger({ component: "telegram-bot" });
 
 // ============================================================================
 // Configuration Types
