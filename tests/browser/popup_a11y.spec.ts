@@ -72,10 +72,15 @@ test.describe("Extension Popup Accessibility Tests", () => {
     }
     await expect(manualBtn).toBeFocused();
 
-    const boxReference = await manualBtn.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-    expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    // Use Playwright's `toHaveCSS` instead of `getComputedStyle().toMatch`:
+    // `.btn` has `transition: all 0.2s` so the synthetic `box-shadow` only
+    // reaches indigo once the transition settles. `toHaveCSS` polls through
+    // the transition; a raw `expect(string).toMatch(...)` reads the shadow
+    // synchronously and can capture `rgba(0,0,0,0)` mid-transition.
+    await expect(manualBtn).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
+    );
   });
 
   test("settings button is a semantic button", async ({ page }) => {
@@ -121,9 +126,12 @@ test.describe("Extension Popup Accessibility Tests", () => {
     await detectionItem.focus();
     await expect(detectionItem).toBeFocused();
 
-    const boxShadow = await detectionItem.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
-    expect(boxShadow).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
+    // Same CSS-transition concern as the focus-visible test above:
+    // `.detection-item` has a 0.2s transition; `toHaveCSS` polls through
+    // it. A raw `getComputedStyle().toMatch` can race against the transition.
+    await expect(detectionItem).toHaveCSS(
+      "box-shadow",
+      /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
+    );
   });
 });
