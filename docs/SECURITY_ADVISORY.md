@@ -27,8 +27,9 @@ Run on a Linux box (GitHub Codespace, WSL, admin box, or self-hosted runner):
   4. Commit both `package.json` and `package-lock.json` as an isolated PR
      titled `security/bump-<pkg>-<newversion>` straight to `main`.
   5. **Move the entry from this Pending Remediations section into the
-     Recent Remediations section below in the SAME PR** so the audit
-     log stays the source of truth.
+     Changelog section below in the SAME PR**. Recent Remediations
+     remains the broader security-experiences log; CVE closures should
+     land in Changelog for structured auditability.
 
 ### Open
 
