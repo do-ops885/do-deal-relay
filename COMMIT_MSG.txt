@@ -1,17 +1,8 @@
-chore(e2e-lint): WHY-comment + bracket-string regex + impl pointer
+docs(ci): polish E2E Lint impl pointer per reviewer micro-suggestion
 
-Three improvements to the E2E Lint guard on chore/lint-e2e-transitions:
+Tightens the trailing `# Implementation: ...` line in the WHY-comment
+above `lint-e2e:` to also surface the npm entrypoint, so a maintainer
+reading ci.yml alone knows both WHERE the script lives AND how the
+job invokes it (without grepping package.json scripts).
 
-1. ci.yml: 7-line WHY-comment above the `lint-e2e:` job explaining the
-   PR #494 / popup.html CSS-transition flakiness it guards, with a
-   trailing pointer at the bash implementation script so maintainers
-   can find it without grepping. Future maintainers unfamiliar with
-   that regression now have inline context.
-
-2. scripts/lint-e2e-transitions.sh: extends the awk regex to also
-   flag bracket-string lookups such as window['getComputedStyle']
-   alongside the existing paren-call form getComputedStyle().
-   The flakiness profile is identical — both invoke getComputedStyle
-   synchronously during the 0.2s transition window — so they belong
-   in the same guard. Comment-only lines remain correctly skipped
-   via the existing prefix-strip pass.
+No code change, just discoverability.

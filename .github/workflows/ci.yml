@@ -89,7 +89,7 @@ jobs:
   # through the transition. Kept as its own Stage-1 job (not folded into
   # `validate`) so the violation trip-wires BEFORE playwright burns its
   # 20-min budget on the same category of regression. Hard-gates `test-e2e`.
-  # Implementation: scripts/lint-e2e-transitions.sh
+  # Implementation: scripts/lint-e2e-transitions.sh (invoked via `npm run lint:e2e`)
   lint-e2e:
     name: E2E Lint
     runs-on: ubuntu-latest
