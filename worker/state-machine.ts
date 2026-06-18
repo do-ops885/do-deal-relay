@@ -188,7 +188,9 @@ export async function executePipeline(env: Env): Promise<{
           ctx.retry_count++;
           if (ctx.metrics) recordRetry(ctx.metrics);
           // Retry same phase with backoff
-          await new Promise((r) => setTimeout(r, CONFIG.RETRY_DELAY_MS * ctx.retry_count));
+          await new Promise((r) =>
+            setTimeout(r, CONFIG.RETRY_DELAY_MS * ctx.retry_count),
+          );
           continue;
         }
 

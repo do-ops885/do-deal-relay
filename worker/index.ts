@@ -36,7 +36,13 @@ export default {
         error_message: err.message,
       });
       return jsonResponse(
-        { error: "Configuration error", message: (env.ENVIRONMENT === "test" || env.ENVIRONMENT === "development") ? err.message : "Contact administrator for details" },
+        {
+          error: "Configuration error",
+          message:
+            env.ENVIRONMENT === "test" || env.ENVIRONMENT === "development"
+              ? err.message
+              : "Contact administrator for details",
+        },
         503,
         request,
       );
