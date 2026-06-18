@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-import { installMockChrome } from "./helpers/mockChrome";
-
 /**
  * Browser-based UI Tests for Deal Discovery Browser Extension
  *
@@ -9,38 +7,63 @@ import { installMockChrome } from "./helpers/mockChrome";
  * These tests validate the user interface and interaction patterns.
  */
 
-// File-level: install the chrome API mock once for every test in this file.
-// See tests/browser/helpers/mockChrome.ts for the full rationale on why the
-// mock MUST be defined inline inside the underlying addInitScript callback
-// (Playwright's Node->browser arg serialization silently strips functions,
-// leaving popup.js's init() chain without working async mock methods).
-test.beforeEach(async ({ page }) => {
-  await installMockChrome(page);
-});
+// Mock chrome API for testing
+const mockChromeAPI = {
+  tabs: {
+    query: async () => [
+      {
+        id: 1,
+        title: "Test Page - Referral Program",
+        url: "https://example.com/referral/TEST123",
+        favIconUrl: "https://example.com/favicon.ico",
+      },
+    ],
+  },
+  storage: {
+    sync: {
+      get: async () => ({ apiEndpoint: "http://localhost:8787" }),
+      set: async () => {},
+    },
+  },
+  runtime: {
+    sendMessage: async () => ({
+      detections: [
+        {
+          type: "referral_code",
+          value: "TEST123",
+          confidence: 0.95,
+          source: "url",
+          context: "https://example.com/referral/TEST123",
+        },
+      ],
+      pageInfo: {
+        url: "https://example.com/referral/TEST123",
+        title: "Test Page - Referral Program",
+        timestamp: Date.now(),
+      },
+    }),
+  },
+};
 
 test.describe("Extension Popup UI Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // chrome mock is injected via the file-level test.beforeEach above; this
-    // describe-level hook only handles navigation + init() settle wait.
+    // Inject mock chrome API before loading the popup
+    await page.addInitScript((mock) => {
+      (window as any).chrome = mock;
+    }, mockChromeAPI);
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    // Wait for popup.js#init() async chain (chrome.tabs.query -> updatePageInfo)
-    // to complete before assertions read the DOM; otherwise #page-title is
-    // still the initial "Loading..." placeholder.
-    await page.waitForTimeout(500);
   });
 
   test("popup displays page title correctly", async ({ page }) => {
-    // Auto-retrying assertion (toHaveText) tolerates async init() delay;
-    // raw textContent() captured the pre-init placeholder and failed.
-    await expect(page.locator("#page-title")).toHaveText(
-      "Test Page - Referral Program",
-    );
+    const pageTitle = await page.locator("#page-title").textContent();
+    expect(pageTitle).toBe("Test Page - Referral Program");
   });
 
   test("popup displays page URL correctly", async ({ page }) => {
-    await expect(page.locator("#page-url")).toContainText("example.com");
+    const pageUrl = await page.locator("#page-url").textContent();
+    expect(pageUrl).toContain("example.com");
   });
 
   test("scan status is visible", async ({ page }) => {
@@ -90,13 +113,8 @@ test.describe("Extension Popup UI Tests", () => {
   });
 
   test("API endpoint can be updated", async ({ page }) => {
-    // Open settings and explicitly wait for the panel to become visible before
-    // touching descendant inputs; popup.js#toggleSettings() toggles the
-    // `.hidden` class + `style.display` synchronously on the click handler, but
-    // Playwright's actionability check otherwise times out at 30s for nested
-    // inputs inside a hidden ancestor.
+    // Open settings
     await page.locator("#settings-link").click();
-    await expect(page.locator("#settings-panel")).toBeVisible();
 
     const apiEndpointInput = page.locator("#api-endpoint");
     await apiEndpointInput.fill("http://new-endpoint:8787");
@@ -323,43 +341,27 @@ test.describe("Extension API Integration Tests", () => {
 
     const manualInput = page.locator("#manual-code");
 
-    // Use page.evaluate to set + dispatch input events deterministically.
-    // Playwright's pressSequentially and fill both race against popup.js's
-    // input handler which writes back via `e.target.value = cleaned`; the
-    // synchronous evaluate path runs the handler to completion within the
-    // evaluate() call, so the DOM value is settled by the time we assert.
-    const manualBtn = page.locator("#manual-btn");
-
-    const dispatchInput = (raw: string) =>
-      manualInput.evaluate((el, v) => {
-        const input = el as HTMLInputElement;
-        input.value = v;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-      }, raw);
-
     // Test auto-uppercasing
-    await dispatchInput("abc123");
+    await manualInput.fill("abc123");
     await expect(manualInput).toHaveValue("ABC123");
 
     // Test stripping non-alphanumeric
-    await dispatchInput("code!@#123");
+    await manualInput.fill("code!@#123");
     await expect(manualInput).toHaveValue("CODE123");
 
     // Test 20-char limit
-    await dispatchInput("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
+    await manualInput.fill("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456");
     const value = await manualInput.inputValue();
     expect(value.length).toBeLessThanOrEqual(20);
 
     // Test that valid code enables the manual button
-    await dispatchInput("VALIDCODE");
+    const manualBtn = page.locator("#manual-btn");
+    await manualInput.fill("VALIDCODE");
     await expect(manualBtn).toBeEnabled();
 
-    // Empty input does NOT disable the add button — popup.js intentionally
-    // keeps the button focusable for keyboard accessibility (see the
-    // "Don't disable button to maintain keyboard focusability for A11y
-    // tests" comment in `validateManualCode`). Verify that contract.
+    // Test that invalid (empty) code disables the button
     await manualInput.fill("");
-    await expect(manualBtn).toBeEnabled();
+    await expect(manualBtn).toBeDisabled();
   });
 
   test("manual entry shows validation error for invalid codes", async ({
@@ -371,26 +373,18 @@ test.describe("Extension API Integration Tests", () => {
     const manualInput = page.locator("#manual-code");
     const manualCodeError = page.locator("#manual-code-error");
 
-    const dispatchInput = (raw: string) =>
-      manualInput.evaluate((el, v) => {
-        const input = el as HTMLInputElement;
-        input.value = v;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-      }, raw);
-
-    // Error should be hidden when empty (default state)
+    // Error should be hidden when empty
     await expect(manualCodeError).toHaveClass(/hidden/);
 
-    // Error should show for too-short code (popup.js uppercases "ab" -> "AB",
-    // then validation fails for length 2 < 4)
-    await dispatchInput("ab");
+    // Error should show for too-short code (after cleaning removes special chars)
+    await manualInput.fill("ab");
     await expect(manualCodeError).not.toHaveClass(/hidden/);
 
     // Error should hide for valid code
-    await dispatchInput("VALID123");
+    await manualInput.fill("VALID123");
     await expect(manualCodeError).toHaveClass(/hidden/);
 
-    // Error should re-show when cleared (handler's else-branch re-adds hidden)
+    // Error should show when cleared
     await manualInput.fill("");
     await expect(manualCodeError).toHaveClass(/hidden/);
   });

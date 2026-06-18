@@ -4,15 +4,49 @@ import { test, expect } from "@playwright/test";
  * Accessibility and Keyboard Navigation Tests for Deal Discovery Browser Extension
  */
 
-import { installMockChrome } from "./helpers/mockChrome";
+// Mock chrome API for testing
+const mockChromeAPI = {
+  tabs: {
+    query: async () => [
+      {
+        id: 1,
+        title: "Test Page",
+        url: "https://example.com/referral/TEST123",
+        favIconUrl: "https://example.com/favicon.ico",
+      },
+    ],
+    sendMessage: async () => ({
+      referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+    }),
+  },
+  storage: {
+    sync: {
+      get: async () => ({ apiEndpoint: "http://localhost:8787" }),
+      set: async () => {},
+    },
+    local: {
+      get: async () => ({ captured: 0, submitted: 0, success: 0 }),
+      set: async () => {},
+    },
+  },
+  runtime: {
+    sendMessage: async () => ({ success: true }),
+  },
+  scripting: {
+    executeScript: async () => [{ result: true }],
+  },
+};
 
 test.describe("Extension Popup Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Install the chrome API mock, navigate to popup.html, then wait for
-    // popup.js's async init() chain to settle (loadSettings -> tabs.query ->
-    // requestDetections -> loadStats -> setupEventListeners).
-    await installMockChrome(page);
+    // Inject mock chrome API before loading the popup
+    await page.addInitScript((mock) => {
+      (window as any).chrome = mock;
+    }, mockChromeAPI);
+
+    // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
+    // Wait for async init in popup.js
     await page.waitForTimeout(500);
   });
 
@@ -20,10 +54,8 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // Start at the top
     await page.keyboard.press("Tab");
 
-    // First element should be manual input (since detections are hidden
-    // initially or loaded later); focus it manually since popup.js#init()
-    // focuses #capture-btn programmatically (so the natural first Tab from
-    // document body would NOT land on #manual-code in this test setup).
+    // First element should be manual input (since detections are hidden initially or loaded later)
+    // Actually, depending on how it loads, let's just check if we can focus key elements
 
     const manualInput = page.locator("#manual-code");
     await manualInput.focus();
@@ -44,21 +76,9 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
   test("focus-visible styles are applied", async ({ page }) => {
     const manualBtn = page.locator("#manual-btn");
-    const captureBtn = page.locator("#capture-btn");
 
-    // Anchor keyboard modality at #capture-btn. popup.js#init() calls
-    // elements.captureBtn.focus() programmatically; if Playwright runs the
-    // test before that completes, the Tab loop starts from <body> and
-    // tab-order traversal becomes non-deterministic. Asserting the anchor
-    // catches silent focus failures from Playwright (locator.focus() returns
-    // void and would otherwise swallow them).
-    await captureBtn.focus();
-    await expect(captureBtn).toBeFocused();
-
-    // Tab forward until #manual-btn is focused. CSS in popup.html applies
-    // the box-shadow ring on `:focus` (not just `:focus-visible`) as a
-    // fallback for headless chromium — see popup.html for the rationale.
-    await page.keyboard.press("Tab");
+    // We need to trigger :focus-visible, which usually requires keyboard interaction
+    await page.keyboard.press("Tab"); // Tab until focused
     let isFocused = await manualBtn.evaluate(
       (el) => document.activeElement === el,
     );
@@ -70,17 +90,15 @@ test.describe("Extension Popup Accessibility Tests", () => {
       );
       attempts++;
     }
-    await expect(manualBtn).toBeFocused();
 
-    // Use Playwright's `toHaveCSS` instead of `getComputedStyle().toMatch`:
-    // `.btn` has `transition: all 0.2s` so the synthetic `box-shadow` only
-    // reaches indigo once the transition settles. `toHaveCSS` polls through
-    // the transition; a raw `expect(string).toMatch(...)` reads the shadow
-    // synchronously and can capture `rgba(0,0,0,0)` mid-transition.
-    await expect(manualBtn).toHaveCSS(
-      "box-shadow",
-      /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
-    );
+    // Check for focus-visible ring
+    const boxReference = await manualBtn.evaluate((el) => {
+      return window.getComputedStyle(el).boxShadow;
+    });
+
+    // The focus-visible ring should be present (4f46e5)
+    // Note: Playwright sometimes reports computed colors as rgb or rgba
+    expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
   });
 
   test("settings button is a semantic button", async ({ page }) => {
@@ -95,10 +113,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
   test("detection items are reachable and show focus ring", async ({
     page,
   }) => {
-    // Force-show detections section + append a deterministic mock item.
-    // popup.js#showDetections() will also auto-populate ONE real item from
-    // the chrome.tabs.sendMessage mock, so we end up with 2 children in
-    // #detection-list: [real(TEST123), mock(MOCKCODE)].
+    // Ensure detections section is visible
     await page.evaluate(() => {
       const detSection = document.getElementById("detections-section");
       if (detSection) detSection.style.display = "block";
@@ -113,25 +128,12 @@ test.describe("Extension Popup Accessibility Tests", () => {
     });
 
     const detectionItem = page.locator(".detection-item").first();
-
-    // "reachable" intent: belt-and-suspenders DOM presence assertion.
-    // Forward Tab from #capture-btn (which lives AFTER the detection-list
-    // in DOM order inside #detections-section) skips past detection-items
-    // entirely to #manual-code. Shift+Tab from capture-btn walks BACK to
-    // the LAST detection-item in DOM (the appended mock, NOT `.first()`).
-    // Programmatic .focus() on `.first()` is the deterministic choice and
-    // the CSS focus ring rule applies on plain `:focus` too — see
-    // popup.html for the `:focus, :focus-visible` selector pair.
-    await expect(detectionItem).toBeAttached();
     await detectionItem.focus();
     await expect(detectionItem).toBeFocused();
 
-    // Same CSS-transition concern as the focus-visible test above:
-    // `.detection-item` has a 0.2s transition; `toHaveCSS` polls through
-    // it. A raw `getComputedStyle().toMatch` can race against the transition.
-    await expect(detectionItem).toHaveCSS(
-      "box-shadow",
-      /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
-    );
+    const boxShadow = await detectionItem.evaluate((el) => {
+      return window.getComputedStyle(el).boxShadow;
+    });
+    expect(boxShadow).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
   });
 });

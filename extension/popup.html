@@ -468,19 +468,10 @@
         outline: none;
       }
 
-      /* `:focus` mirrors the `:focus-visible` ring as a fallback for headless
-         chromium under Playwright (well-documented quirk: the :focus-visible
-         heuristic does not always fire on Tab key events without a real
-         keyboard). `:focus-visible` keeps the cleaner "no ring on mouse click"
-         UX for real users; both selectors combined guarantee the focus ring
-         shows up whenever ANY focus event lands on the element, satisfying
-         WCAG 2.4.7 in headless test environments and real browsers alike. */
+      /* Use specific selectors for focus-visible to ensure reliable E2E checks */
       button:focus-visible,
-      button:focus,
       input:focus-visible,
-      input:focus,
-      a:focus-visible,
-      a:focus {
+      a:focus-visible {
         outline: none !important;
         box-shadow:
           0 0 0 2px #ffffff,
@@ -488,8 +479,7 @@
         border-radius: 4px;
       }
 
-      .detection-item:focus-visible,
-      .detection-item:focus {
+      .detection-item:focus-visible {
         border-color: #4f46e5;
       }
 
