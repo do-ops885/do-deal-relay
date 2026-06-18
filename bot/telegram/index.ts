@@ -26,17 +26,7 @@ import {
   cleanupExpiredConversations,
 } from "../conversations";
 import { logger } from "../lib/logger";
-
-/**
- * Normalize any thrown value into a structured context for the logger.
- * Preserves error class name and stack trace instead of collapsing to message.
- */
-function toErrCtx(err: unknown): Record<string, unknown> {
-  if (err instanceof Error) {
-    return { name: err.name, message: err.message, stack: err.stack };
-  }
-  return { value: String(err) };
-}
+import { toErrCtx } from "../lib/errors";
 
 // ============================================================================
 // Configuration Types
