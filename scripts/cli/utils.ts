@@ -5,6 +5,7 @@
 
 import { ParsedArgs, ParsedReferralUrl } from "./types.js";
 import { config } from "./config.js";
+import { toErrMessage } from "../../worker/lib/errors";
 
 /**
  * Parse command line arguments
@@ -131,7 +132,7 @@ export async function apiRequest(
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error(`Network error: ${String(error)}`);
+    throw new Error(`Network error: ${toErrMessage(error)}`);
   }
 }
 

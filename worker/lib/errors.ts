@@ -2,17 +2,16 @@
  * Helpers for normalizing thrown values into a structured context shape.
  *
  * Shared across the Worker tier (`worker/**`). Mirrors
- * `bot/lib/errors.ts` so both tiers use the same `toErrCtx` semantics for
- * shaping caught values into a logger-friendly `ErrContext`. This keeps
- * the cross-tier parity established for the structured logger (see
- * `worker/lib/global-logger.ts` and `bot/lib/logger.ts`).
+ * `bot/lib/errors.ts` so both tiers use the same `toErrCtx` and
+ * `toErrMessage` semantics for shaping caught values.
  *
  * Note: `worker/lib/sanitize-error.ts` provides `toError` (wraps a
  * thrown value as an `Error` instance for catch-block narrowing) — a
  * different concern from `toErrCtx` (returns a context shape for the
- * structured logger). Both helpers coexist; migration of inline
- * `error instanceof Error ? error.message : String(error)` patterns to
- * `toErrCtx` is tracked as a follow-up.
+ * structured logger) and `toErrMessage` (returns a single-string
+ * flattening matching legacy `error instanceof Error ? error.message :
+ * String(error)` patterns). The three helpers coexist; pick by output
+ * shape needed.
  */
 
 /**
@@ -36,4 +35,21 @@ export function toErrCtx(err: unknown): ErrContext {
     return { name: err.name, message: err.message, stack: err.stack };
   }
   return { value: String(err) };
+}
+
+/**
+ * Flatten any thrown value to a single-string error message.
+ *
+ * Equivalent to `error instanceof Error ? error.message : String(error)`
+ * — preserves the visual contract of legacy `console.error` and throw-list
+ * templates such as `` `Network error: ${String(error)}` ``. For structured
+ * contexts (the structured logger) prefer `toErrCtx` which preserves
+ * `name` + `stack`. For Error-instance normalization (e.g. catch-block
+ * narrowing) use `toError` from `worker/lib/sanitize-error`.
+ */
+export function toErrMessage(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return String(err);
 }

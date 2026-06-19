@@ -1,16 +1,12 @@
 import { describe, it, expect } from "vitest";
-import {
-  toErrCtx,
-  toErrMessage,
-  type ErrContext,
-} from "../../../worker/lib/errors";
+import { toErrCtx, toErrMessage, type ErrContext } from "../../../bot/lib/errors";
 
 /**
- * Tests for toErrCtx helper in worker/lib/errors.ts.
+ * Tests for toErrCtx + toErrMessage helpers in bot/lib/errors.ts.
  *
- * Mirrors `tests/unit/bot/lib-errors.test.ts`. The helper is identical
- * across the bot and worker tiers; if these tests diverge, the helpers
- * have drifted.
+ * Mirrors `tests/unit/worker/lib-errors.test.ts`. The helpers are
+ * identical across the bot and worker tiers; if these tests diverge,
+ * the helpers have drifted.
  */
 
 describe("toErrCtx", () => {
@@ -53,8 +49,6 @@ describe("toErrCtx", () => {
       // The helper intentionally keeps the `stack` key on the returned
       // object even when the underlying Error.stack is undefined — the
       // structural contract is "string | undefined", not "key absent".
-      // Future maintainers should not "tighten" this by switching to
-      // conditional spread without first re-checking all consumers.
       const err = new Error("no-stack");
       err.stack = undefined;
       const ctx = toErrCtx(err);
@@ -62,8 +56,6 @@ describe("toErrCtx", () => {
         name: "Error",
         message: "no-stack",
       });
-      // Narrow the discriminated union so TypeScript can see the
-      // Error-branch `stack?: string` property.
       if ("name" in ctx) {
         expect(ctx.stack).toBeUndefined();
       } else {
@@ -108,7 +100,6 @@ describe("toErrCtx", () => {
       if ("name" in ctx) {
         expect(typeof ctx.name).toBe("string");
         expect(typeof ctx.message).toBe("string");
-        // stack is optional: either string or absent.
         if ("stack" in ctx) expect(typeof ctx.stack).toBe("string");
       } else {
         throw new Error("expected Error branch");
@@ -140,8 +131,6 @@ describe("toErrCtx", () => {
 
   describe("Symbol throws", () => {
     it("returns { value } for a thrown Symbol", () => {
-      // Symbol.toString() yields "Symbol(description)" in modern JS.
-      // The helper relies on String() coercion which is safe for sym.
       const ctx = toErrCtx(Symbol("nope"));
       expect(ctx).toEqual({ value: "Symbol(nope)" });
     });
@@ -178,9 +167,6 @@ describe("toErrMessage", () => {
   });
 
   it("preserves parity with legacy error pattern output", () => {
-    // The whole point of toErrMessage is to be a drop-in replacement for
-    // `error instanceof Error ? error.message : String(error)` — a
-    // property test ensures no future regression in either direction.
     const samples = [
       new Error("a"),
       "b",
