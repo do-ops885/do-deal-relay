@@ -429,12 +429,12 @@ export function createTelegramBot(config: TelegramBotConfig): Telegraf {
     });
     ctx
       .reply("❌ An error occurred. Please try again later.")
-      .catch((replyErr) =>
+      .catch((replyErr) => {
         logger.error("telegram reply failed", {
           component: "telegram-bot",
           error: toErrCtx(replyErr),
-        }),
-      );
+        });
+      });
   });
 
   // Periodic cleanup of expired conversations
