@@ -126,30 +126,23 @@ scan_file() {
   local file="$1"
   for pattern in "${DENY_REGEXES[@]}"; do
     local hits
-    # Two-stage filter via sed + grep:
-    #   Stage 1 (sed): strip trailing inline comments per line:
-    #     - `// ...` line comments
-    #     - single-line `/* ... */` block comments
-    #   Stage 2 (grep -nE): test the deny regex against the stripped text.
-    # The stripping prevents inline-comment text (e.g.,
-    # `const x = 1; // legacy: error instanceof Error ? x.message : String(x)`)
-    # from triggering a false-positive on the comment text.
+    # Single-process `grep -nE` invocation. Earlier revisions used a
+    # two-process `sed | grep` pipeline with inline-comment stripping,
+    # but that pipeline hung indefinitely when the gate was invoked
+    # under `output=$( eval "$cmd" 2>&1 )` in scripts/quality_gate.sh's
+    # `run_check` (Quality Gate job would time out at the 15-min CI cap).
+    # Subprocess pipelines under command substitution have well-known
+    # pipe-closure / FD-inheritance races in bash; collapsing to a
+    # single-process `grep` invocation is the canonical mitigation.
     #
-    # Preserves original file line numbers (sed does not delete lines).
-    #
-    # Documented limitations:
-    #   - Multi-line `/* ... ... */` block-comment middle lines cannot
-    #     be safely filtered (sed is line-by-line). These rare cases may
-    #     still trigger; if so, the developer should split the comment
-    #     into multiple single-line `//` comments.
-    #   - String literals containing the deny pattern literally (e.g.,
-    #     `const msg = "error instanceof Error ? x.message : String(x)"`)
-    #     still trigger. Textual search cannot distinguish string content
-    #     from real code. Policy: do not embed the deny patterns in
-    #     string literals — use a placeholder or semantic refactor instead.
-    hits="$(sed -E 's|//.*$||; s|/\*.*\*/||g' "$file" \
-            | grep -nE "$pattern" 2>/dev/null \
-            || true)"
+    # Trade-off: docstring / comment text that contains the deny
+    # pattern literally (e.g., `// legacy: error instanceof Error ? ...`)
+    # will again trigger as a real violation. Migration is already 100%
+    # applied across `worker/lib/*`, `worker/routes/*`, `scripts/`, and
+    # `bot/` (per commits a9e5a18 + 8e888a6 + 5eb1ec5), so any future
+    # match is intentional regression -- which is exactly what the gate
+    # is meant to catch. The `// round-trip` false positive accepted.
+    hits="$(grep -nE "$pattern" "$file" 2>/dev/null || true)"
     if [ -n "$hits" ]; then
       while IFS= read -r hit; do
         echo "VIOLATION: $file:$hit  -- use toErrMessage/toErrCtx/toError helper from worker/lib/errors.ts"

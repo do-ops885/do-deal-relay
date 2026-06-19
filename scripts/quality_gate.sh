@@ -218,24 +218,12 @@ if [ $loc_violations -gt 0 ]; then
     ERRORS+=("Fix files exceeding ${LOC_FAIL_THRESHOLD} lines or increase MAX_LINES_PER_SOURCE_FILE in AGENTS.md")
 fi
 
-# Check 16.5: Error-shaping helpers gate (TEMPORARILY DISABLED — see commit msg)
+# Check 16.5: Error-shaping helpers gate
 # Enforces use of `toErrMessage`, `toErrCtx`, and `toError` helpers from
 # worker/lib/errors.ts and worker/lib/sanitize-error.ts over inline
 # `instanceof Error ? X.message : String(X)` patterns. Closes the
 # migration loop from commits a9e5a18 + 8e888a6.
-#
-# Disabled in this commit: scripts/check-err-helpers.sh is hanging
-# indefinitely in CI's run_check context (Quality Gate fails at 15-min
-# timeout). Diagnosis traced to a stdin-handoff issue in sed that did
-# not fully resolve with the `< "$file"` redirect. The gate script is
-# preserved on disk for future root-cause investigation; this commit
-# only unblocks PR #498 by commenting out the failing run_check call.
-# Re-enable after the gate script finishes correctly under run_check.
-#
-# WARNING: do NOT uncomment until scripts/check-err-helpers.sh has been
-# validated in run_check context -- see commit history (49aedd2,
-# d7584e9, gate_hangfix, gate_disable).
-# run_check "Error-shaping helpers gate" "${SCRIPT_DIR}/check-err-helpers.sh"
+run_check "Error-shaping helpers gate" "${SCRIPT_DIR}/check-err-helpers.sh"
 
 # Check 17: Context efficiency (agent documentation size)
 # Warn if AGENTS.md or SKILL.md files are oversized
