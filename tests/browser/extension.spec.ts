@@ -195,8 +195,19 @@ test.describe("Extension Content Script Tests", () => {
   test("content script detects referral codes in page content", async ({
     page,
   }) => {
-    // addInitScript must come before setContent
-    await page.addInitScript(() => {
+    // Create test page first
+    await page.setContent(`
+      <html>
+        <body>
+          <h1>Referral Program</h1>
+          <p>Use code REF456 to get $50 off!</p>
+          <div>Share your code: SHARE789</div>
+        </body>
+      </html>
+    `);
+
+    // Run detection logic via page.evaluate (DOM is guaranteed ready)
+    const detections = await page.evaluate(() => {
       const text = document.body.innerText;
       const codeRegex = /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi;
       const matches: {
@@ -218,34 +229,16 @@ test.describe("Extension Content Script Tests", () => {
         });
       }
 
-      (window as any).__testDetections = matches;
+      return matches;
     });
 
-    // Create test page AFTER addInitScript
-    await page.setContent(`
-      <html>
-        <body>
-          <h1>Referral Program</h1>
-          <p>Use code REF456 to get $50 off!</p>
-          <div>Share your code: SHARE789</div>
-        </body>
-      </html>
-    `);
-
-    const detections = await page.evaluate(
-      () => (window as any).__testDetections,
-    );
     expect(detections.length).toBeGreaterThanOrEqual(1);
   });
 
   test("content script handles pages without referral codes", async ({
     page,
   }) => {
-    // addInitScript before setContent
-    await page.addInitScript(() => {
-      (window as any).__testDetections = [];
-    });
-
+    // Create test page first
     await page.setContent(`
       <html>
         <body>
@@ -255,9 +248,13 @@ test.describe("Extension Content Script Tests", () => {
       </html>
     `);
 
-    const detections = await page.evaluate(
-      () => (window as any).__testDetections,
-    );
+    // Run detection via page.evaluate (DOM is guaranteed ready)
+    const detections = await page.evaluate(() => {
+      const text = document.body.innerText;
+      const codeRegex = /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi;
+      return [...text.matchAll(codeRegex)];
+    });
+
     expect(detections).toHaveLength(0);
   });
 });

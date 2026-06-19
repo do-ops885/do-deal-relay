@@ -2,47 +2,50 @@ import { test, expect } from "@playwright/test";
 
 /**
  * Accessibility and Keyboard Navigation Tests for Deal Discovery Browser Extension
+ *
+ * IMPORTANT: The chrome.* API mock MUST be defined inline inside
+ * addInitScript. Playwright serializes arguments passed to addInitScript,
+ * which strips all function definitions. Inlining the mock ensures the
+ * functions survive serialization.
  */
-
-// Mock chrome API for testing
-const mockChromeAPI = {
-  tabs: {
-    query: async () => [
-      {
-        id: 1,
-        title: "Test Page",
-        url: "https://example.com/referral/TEST123",
-        favIconUrl: "https://example.com/favicon.ico",
-      },
-    ],
-    sendMessage: async () => ({
-      referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
-    }),
-  },
-  storage: {
-    sync: {
-      get: async () => ({ apiEndpoint: "http://localhost:8787" }),
-      set: async () => {},
-    },
-    local: {
-      get: async () => ({ captured: 0, submitted: 0, success: 0 }),
-      set: async () => {},
-    },
-  },
-  runtime: {
-    sendMessage: async () => ({ success: true }),
-  },
-  scripting: {
-    executeScript: async () => [{ result: true }],
-  },
-};
 
 test.describe("Extension Popup Accessibility Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject mock chrome API before loading the popup
-    await page.addInitScript((mock) => {
-      (window as any).chrome = mock;
-    }, mockChromeAPI);
+    // Inject mock chrome API inline (Playwright serialization strips functions
+    // when passed as an argument, so the mock must be defined inside the callback)
+    await page.addInitScript(() => {
+      (window as any).chrome = {
+        tabs: {
+          query: async () => [
+            {
+              id: 1,
+              title: "Test Page",
+              url: "https://example.com/referral/TEST123",
+              favIconUrl: "https://example.com/favicon.ico",
+            },
+          ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
+        },
+        storage: {
+          sync: {
+            get: async () => ({ apiEndpoint: "http://localhost:8787" }),
+            set: async () => {},
+          },
+          local: {
+            get: async () => ({ captured: 0, submitted: 0, success: 0 }),
+            set: async () => {},
+          },
+        },
+        runtime: {
+          sendMessage: async () => ({ success: true }),
+        },
+        scripting: {
+          executeScript: async () => [{ result: true }],
+        },
+      };
+    });
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
