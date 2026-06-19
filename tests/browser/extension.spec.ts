@@ -369,7 +369,9 @@ test.describe("Extension API Integration Tests", () => {
     await page.addInitScript(() => {
       (window as any).chrome = {
         tabs: {
-          query: async () => [{ id: 1, title: "Test", url: "https://example.com" }],
+          query: async () => [
+            { id: 1, title: "Test", url: "https://example.com" },
+          ],
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
@@ -402,7 +404,9 @@ test.describe("Extension API Integration Tests", () => {
     await page.addInitScript(() => {
       (window as any).chrome = {
         tabs: {
-          query: async () => [{ id: 1, title: "Test", url: "https://example.com" }],
+          query: async () => [
+            { id: 1, title: "Test", url: "https://example.com" },
+          ],
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
@@ -439,7 +443,9 @@ test.describe("Extension API Integration Tests", () => {
     await page.addInitScript(() => {
       (window as any).chrome = {
         tabs: {
-          query: async () => [{ id: 1, title: "Test", url: "https://example.com" }],
+          query: async () => [
+            { id: 1, title: "Test", url: "https://example.com" },
+          ],
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
