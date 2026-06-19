@@ -218,7 +218,14 @@ if [ $loc_violations -gt 0 ]; then
     ERRORS+=("Fix files exceeding ${LOC_FAIL_THRESHOLD} lines or increase MAX_LINES_PER_SOURCE_FILE in AGENTS.md")
 fi
 
-# Check 16: Context efficiency (agent documentation size)
+# Check 16.5: Error-shaping helpers gate
+# Enforces use of `toErrMessage`, `toErrCtx`, and `toError` helpers from
+# worker/lib/errors.ts and worker/lib/sanitize-error.ts over inline
+# `instanceof Error ? X.message : String(X)` patterns. Closes the
+# migration loop from commits a9e5a18 + 8e888a6.
+run_check "Error-shaping helpers gate" "${SCRIPT_DIR}/check-err-helpers.sh"
+
+# Check 17: Context efficiency (agent documentation size)
 # Warn if AGENTS.md or SKILL.md files are oversized
 AGENTS_MD_WARNING=200
 SKILL_MD_WARNING=250
