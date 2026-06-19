@@ -58,31 +58,25 @@ test.describe("Extension Popup Accessibility Tests", () => {
   });
 
   test("interactive elements are reachable via keyboard", async ({ page }) => {
-    // #manual-btn is rendered with `disabled` until a valid code is typed
-    // (see popup.js -> validateManualCode() -> elements.manualBtn.disabled
-    // = !isValid). Disabled controls are skipped by the browser's Tab order,
-    // so the test must enable the button first by filling a valid code.
+    // #manual-btn starts disabled until a valid code is typed. Pressing
+    // Tab from #manual-code moves focus forward to #manual-btn (if
+    // enabled), not back to the input.
     const manualInput = page.locator("#manual-code");
     await manualInput.focus();
     await manualInput.fill("VALID1234");
     await expect(manualInput).toHaveValue("VALID1234");
 
-    // Start at the top
-    await page.keyboard.press("Tab");
-
-    // First element should be manual input (since detections are hidden initially or loaded later)
-    // Actually, depending on how it loads, let's just check if we can focus key elements
-
-    await expect(manualInput).toBeFocused();
-
+    // Tab from #manual-code moves to #manual-btn (next in DOM order)
     await page.keyboard.press("Tab");
     const manualBtn = page.locator("#manual-btn");
     await expect(manualBtn).toBeFocused();
 
+    // Tab from #manual-btn moves to #settings-link
     await page.keyboard.press("Tab");
     const settingsBtn = page.locator("#settings-link");
     await expect(settingsBtn).toBeFocused();
 
+    // Tab from #settings-link moves to #refresh-btn
     await page.keyboard.press("Tab");
     const refreshBtn = page.locator("#refresh-btn");
     await expect(refreshBtn).toBeFocused();

@@ -278,6 +278,9 @@ test.describe("Extension API Integration Tests", () => {
               favIconUrl: "https://example.com/favicon.ico",
             },
           ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
         },
         storage: {
           sync: {
@@ -302,7 +305,9 @@ test.describe("Extension API Integration Tests", () => {
     });
 
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    await page.waitForTimeout(500);
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
 
     // The page should have loaded without errors
     const pageTitle = await page.locator("#page-title").textContent();
@@ -318,7 +323,9 @@ test.describe("Extension API Integration Tests", () => {
       });
     });
 
-    // Inject chrome mock inline (with fetch-based routing for API)
+    // Inject chrome mock inline (with fetch-based routing for API).
+    // Use absolute URL because relative fetch() from file:// resolves to
+    // file:///api/submit which bypasses Playwright's page.route interception.
     await page.addInitScript(() => {
       (window as any).chrome = {
         tabs: {
@@ -329,6 +336,9 @@ test.describe("Extension API Integration Tests", () => {
               url: "https://example.com",
             },
           ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
         },
         storage: {
           sync: {
@@ -343,7 +353,7 @@ test.describe("Extension API Integration Tests", () => {
         runtime: {
           sendMessage: async (req: any) => {
             if (req?.action === "submitToAPI") {
-              const res = await fetch("/api/submit", {
+              const res = await fetch("http://localhost/api/submit", {
                 method: "POST",
                 body: JSON.stringify(req.data),
               });
@@ -359,7 +369,9 @@ test.describe("Extension API Integration Tests", () => {
     });
 
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    await page.waitForTimeout(500);
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
 
     // Page should have loaded (even if API errors occur)
     const pageTitle = await page.locator("#page-title").textContent();
@@ -374,6 +386,9 @@ test.describe("Extension API Integration Tests", () => {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },
           ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
@@ -385,7 +400,9 @@ test.describe("Extension API Integration Tests", () => {
     });
 
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    await page.waitForTimeout(500);
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
 
     // Try to submit empty code
     const manualInput = page.locator("#manual-code");
@@ -409,6 +426,9 @@ test.describe("Extension API Integration Tests", () => {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },
           ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
@@ -420,7 +440,9 @@ test.describe("Extension API Integration Tests", () => {
     });
 
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    await page.waitForTimeout(500);
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
 
     const manualInput = page.locator("#manual-code");
 
@@ -448,6 +470,9 @@ test.describe("Extension API Integration Tests", () => {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },
           ],
+          sendMessage: async () => ({
+            referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+          }),
         },
         storage: {
           sync: { get: async () => ({}), set: async () => {} },
@@ -459,7 +484,9 @@ test.describe("Extension API Integration Tests", () => {
     });
 
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    await page.waitForTimeout(500);
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
 
     const manualInput = page.locator("#manual-code");
     const manualCodeError = page.locator("#manual-code-error");
