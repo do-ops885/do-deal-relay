@@ -62,7 +62,7 @@ jobs:
       - run: npm run build
       - name: Validate markdown
         run: |
-          npx markdownlint-cli --config markdownlint.toml \
+          npx markdownlint-cli --config .markdownlint.json \
             "docs/**/*.md" "README.md" "AGENTS.md" \
             "CONTRIBUTING.md" "SECURITY.md" || true
 
@@ -271,7 +271,9 @@ jobs:
         continue-on-error: true
         run: |
           npm ci
-          npm audit --audit-level=high
+          # --omit=dev per Cloudflare Workers best practice: devDependencies
+          # (wrangler, miniflare) are local tooling, never in production bundle.
+          npm audit --omit=dev --audit-level=high
 
   # Stage 3: Build verification
   build:

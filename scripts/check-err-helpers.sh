@@ -122,67 +122,58 @@ should_skip() {
   return 1
 }
 
-scan_file() {
-  local file="$1"
-  for pattern in "${DENY_REGEXES[@]}"; do
-    local hits
-    # Single-process `grep -nE` invocation. Earlier revisions used a
-    # two-process `sed | grep` pipeline with inline-comment stripping,
-    # but that pipeline hung indefinitely when the gate was invoked
-    # under `output=$( eval "$cmd" 2>&1 )` in scripts/quality_gate.sh's
-    # `run_check` (Quality Gate job would time out at the 15-min CI cap).
-    # Subprocess pipelines under command substitution have well-known
-    # pipe-closure / FD-inheritance races in bash; collapsing to a
-    # single-process `grep` invocation is the canonical mitigation.
-    #
-    # Trade-off: docstring / comment text that contains the deny
-    # pattern literally (e.g., `// legacy: error instanceof Error ? ...`)
-    # will again trigger as a real violation. Migration is already 100%
-    # applied across `worker/lib/*`, `worker/routes/*`, `scripts/`, and
-    # `bot/` (per commits a9e5a18 + 8e888a6 + 5eb1ec5), so any future
-    # match is intentional regression -- which is exactly what the gate
-    # is meant to catch. The `// round-trip` false positive accepted.
-    hits="$(grep -nE "$pattern" "$file" 2>/dev/null || true)"
-    if [ -n "$hits" ]; then
-      while IFS= read -r hit; do
-        echo "VIOLATION: $file:$hit  -- use toErrMessage/toErrCtx/toError helper from worker/lib/errors.ts"
-        violations=$((violations + 1))
-      done <<< "$hits"
-    fi
-  done
-}
 
-# Spawn scans in parallel via xargs for speed.
-collect_files() {
-  local subdir="$1"
-  [ -d "$subdir" ] || return 0
-  find "$subdir" -type f \
-    \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \) \
-    -print0 2>/dev/null
-}
+# Temp-file-based scanning to avoid ALL process substitution and here-string
+# constructs that hang under quality_gate.sh's output=$(eval "$cmd" 2>&1).
+# The only safe constructs under command substitution are direct file
+# redirection (>, >>, <) and single-process commands. No < <(...), no <<<,
+# no pipelines with while-read-on-right-side.
+
+TMP_FILES=$(mktemp)
+TMP_HITS=$(mktemp)
+trap 'rm -f "$TMP_FILES" "$TMP_HITS"' EXIT
 
 total_files=0
+violations=0
 processed=0
-files_to_scan=()
+
+# 1. Collect files to temp file (single-process find per subdir, NO process sub)
 for subdir in "${SCAN_PATHS[@]}"; do
-  while IFS= read -r -d $'\0' file; do
-    files_to_scan+=("$file")
-    total_files=$((total_files + 1))
-  done < <(collect_files "$subdir")
+  [ -d "$subdir" ] || continue
+  find "$subdir" -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \) 2>/dev/null >> "$TMP_FILES" || true
 done
+
+total_files=$(wc -l < "$TMP_FILES")
+total_files=$((total_files + 0))  # strip whitespace from wc -l
 
 if [ "$total_files" -eq 0 ]; then
   echo "ERROR: no files found under SCAN_PATHS=${SCAN_PATHS[*]}" >&2
   exit 2
 fi
 
-for file in "${files_to_scan[@]}"; do
+# 2. Scan each file using standard file redirection (safe under command sub)
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+
   if should_skip "$file"; then
     continue
   fi
-  scan_file "$file"
+
+  # 3. Grep direct-to-file per pattern (no here-strings, no pipelines)
+  for pattern in "${DENY_REGEXES[@]}"; do
+    > "$TMP_HITS"  # truncate cleanly
+    grep -nE "$pattern" "$file" > "$TMP_HITS" 2>/dev/null || true
+
+    if [ -s "$TMP_HITS" ]; then
+      while IFS= read -r hit; do
+        echo "VIOLATION: $file:$hit  -- use toErrMessage/toErrCtx/toError helper from worker/lib/errors.ts"
+        violations=$((violations + 1))
+      done < "$TMP_HITS"
+    fi
+  done
+
   processed=$((processed + 1))
-done
+done < "$TMP_FILES"
 
 echo ""
 echo "Scanned: $processed / $total_files files (exempt filtered out)."

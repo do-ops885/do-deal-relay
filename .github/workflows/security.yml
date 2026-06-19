@@ -69,7 +69,7 @@ jobs:
       - name: Run npm audit
         continue-on-error: true
         run: |
-          npm audit --audit-level=high || echo "⚠️ npm audit advisories logged (non-blocking)"
+          npm audit --omit=dev --audit-level=high || echo "⚠️ npm audit advisories logged (non-blocking)"
 
       - name: Check for outdated dependencies
         run: |

@@ -161,7 +161,11 @@ fi
 # Check 10: Dependency audit (matches security.yml dependency-check job)
 # Note: This is informational only - matches CI behavior (continue-on-error)
 if command -v npm >/dev/null 2>&1; then
-    audit_output=$(npm audit --audit-level=moderate 2>&1 || true)
+    # Use --omit=dev per Cloudflare Workers best practice: devDependencies
+    # (wrangler, miniflare, discord.js, etc.) are local tooling only and
+    # never reach the production Worker bundle. See:
+    # https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html
+    audit_output=$(npm audit --omit=dev --audit-level=moderate 2>&1 || true)
     if echo "$audit_output" | grep -q "found.*vulnerabilities"; then
         vuln_count=$(echo "$audit_output" | grep -oE "[0-9]+\s+(low|moderate|high|critical)" | head -1)
         # Only fail if critical vulnerabilities found
@@ -219,11 +223,17 @@ if [ $loc_violations -gt 0 ]; then
 fi
 
 # Check 16.5: Error-shaping helpers gate
-# Enforces use of `toErrMessage`, `toErrCtx`, and `toError` helpers from
-# worker/lib/errors.ts and worker/lib/sanitize-error.ts over inline
-# `instanceof Error ? X.message : String(X)` patterns. Closes the
-# migration loop from commits a9e5a18 + 8e888a6.
-run_check "Error-shaping helpers gate" "${SCRIPT_DIR}/check-err-helpers.sh"
+# Called with stdout to temp log file (not command substitution) because
+# the script uses temp-file-based scanning incompatible with $(...) which
+# can leak FDs and hang. See scripts/check-err-helpers.sh header.
+echo "Running Error-shaping helpers gate..."
+ERR_HELPERS_LOG=$(mktemp)
+bash "${SCRIPT_DIR}/check-err-helpers.sh" > "$ERR_HELPERS_LOG" 2>&1 || err_helpers_exit=$?
+if [ "${err_helpers_exit:-0}" -ne 0 ]; then
+    ERRORS+=("✗ Error-shaping helpers gate failed (exit ${err_helpers_exit:-0})")
+    ERRORS+=("$(cat "$ERR_HELPERS_LOG")")
+fi
+rm -f "$ERR_HELPERS_LOG"
 
 # Check 17: Context efficiency (agent documentation size)
 # Warn if AGENTS.md or SKILL.md files are oversized

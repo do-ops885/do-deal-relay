@@ -33,7 +33,10 @@ const mockChromeAPI = {
     },
   },
   runtime: {
-    sendMessage: async () => ({ success: true, referral: { status: "active" } }),
+    sendMessage: async () => ({
+      success: true,
+      referral: { status: "active" },
+    }),
   },
   scripting: {
     executeScript: async () => [{ result: true }],
