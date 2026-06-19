@@ -15,6 +15,7 @@ import type { Env } from "../types";
 import type { AuthResult, ApiKeyConfig } from "./auth";
 import { hashApiKey } from "./auth";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Configuration
@@ -176,7 +177,7 @@ export async function checkRateLimit(
     // If KV fails, allow the request (fail open)
     logger.error("Rate limit check failed", {
       component: "rate-limit",
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrMessage(error),
     });
     return {
       allowed: true,

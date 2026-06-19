@@ -13,6 +13,7 @@ import type { Env } from "../types";
 import { hashRefreshToken, generateTokenFamily } from "./jwt";
 import { generateUUID } from "./crypto";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Types
@@ -273,7 +274,7 @@ async function cleanupOldFamilies(env: Env, userId: string): Promise<void> {
     // Non-critical: log and continue
     logger.warn("Failed to cleanup old token families", {
       userId,
-      error: String(error),
+      error: toErrMessage(error),
     });
   }
 }
