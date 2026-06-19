@@ -367,7 +367,7 @@ export async function getProfile(
       return errorResponse("User not found", 404, undefined, request, env);
     return jsonResponse(getUserResponse(toPublicUser(user)), 200, request, env);
   } catch (error) {
-    logger.error("Failed to get profile", { error: String(error) });
+    logger.error("Failed to get profile", toErrCtx(error));
     return errorResponse("Failed to get profile", 500, undefined, request, env);
   }
 }
