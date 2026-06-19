@@ -65,7 +65,9 @@
     "@playwright/test": "^1.60.0",
     "esbuild": ">=0.28.1",
     "ws": "8.21.0",
-    "engine.io-client": "6.6.5"
+    "engine.io-client": "6.6.5",
+    "form-data": "4.0.6",
+    "undici": "7.16.0"
   },
   "engines": {
     "node": ">=22.0.0"
