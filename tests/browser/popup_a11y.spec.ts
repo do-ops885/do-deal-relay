@@ -51,14 +51,21 @@ test.describe("Extension Popup Accessibility Tests", () => {
   });
 
   test("interactive elements are reachable via keyboard", async ({ page }) => {
+    // #manual-btn is rendered with `disabled` until a valid code is typed
+    // (see popup.js -> validateManualCode() -> elements.manualBtn.disabled
+    // = !isValid). Disabled controls are skipped by the browser's Tab order,
+    // so the test must enable the button first by filling a valid code.
+    const manualInput = page.locator("#manual-code");
+    await manualInput.focus();
+    await manualInput.fill("VALID1234");
+    await expect(manualInput).toHaveValue("VALID1234");
+
     // Start at the top
     await page.keyboard.press("Tab");
 
     // First element should be manual input (since detections are hidden initially or loaded later)
     // Actually, depending on how it loads, let's just check if we can focus key elements
 
-    const manualInput = page.locator("#manual-code");
-    await manualInput.focus();
     await expect(manualInput).toBeFocused();
 
     await page.keyboard.press("Tab");
@@ -76,28 +83,28 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
   test("focus-visible styles are applied", async ({ page }) => {
     const manualBtn = page.locator("#manual-btn");
+    const manualInput = page.locator("#manual-code");
 
-    // We need to trigger :focus-visible, which usually requires keyboard interaction
-    await page.keyboard.press("Tab"); // Tab until focused
-    let isFocused = await manualBtn.evaluate(
-      (el) => document.activeElement === el,
-    );
-    let attempts = 0;
-    while (!isFocused && attempts < 10) {
-      await page.keyboard.press("Tab");
-      isFocused = await manualBtn.evaluate(
-        (el) => document.activeElement === el,
-      );
-      attempts++;
-    }
+    // Pre-condition: #manual-btn starts disabled, so Tab skips it. Fill
+    // a valid manual code first to enable it (popup.js input handler
+    // uppercases + strips non-alphanumerics via the `input` event).
+    await manualInput.focus();
+    await manualInput.fill("VALID1234");
+    await expect(manualBtn).toBeEnabled();
 
-    // Check for focus-visible ring
+    // Tab until #manual-btn is keyboard-focused. Only keyboard-induced
+    // focus triggers :focus-visible (programmatic .focus() does NOT,
+    // per CSS Selectors Level 4 / browser spec).
+    await page.keyboard.press("Tab");
+    await expect(manualBtn).toBeFocused();
+
+    // The global :focus-visible rule applies
+    // box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4f46e5. Browsers serialize
+    // #4f46e5 as rgb(79, 70, 229) (or rgba(79, 70, 229, 1)).
     const boxReference = await manualBtn.evaluate((el) => {
       return window.getComputedStyle(el).boxShadow;
     });
 
-    // The focus-visible ring should be present (4f46e5)
-    // Note: Playwright sometimes reports computed colors as rgb or rgba
     expect(boxReference).toMatch(/rgb\(79, 70, 229\)|rgba\(79, 70, 229/);
   });
 
@@ -113,7 +120,9 @@ test.describe("Extension Popup Accessibility Tests", () => {
   test("detection items are reachable and show focus ring", async ({
     page,
   }) => {
-    // Ensure detections section is visible
+    // Ensure detections section is visible + inject a mock detection item.
+    // The element is a <button> with class .detection-item, placed in the
+    // DOM inside #detections-section.
     await page.evaluate(() => {
       const detSection = document.getElementById("detections-section");
       if (detSection) detSection.style.display = "block";
@@ -121,6 +130,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
       const detList = document.getElementById("detection-list");
       if (detList) {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "detection-item";
         btn.textContent = "MOCKCODE";
         detList.appendChild(btn);
@@ -128,8 +138,19 @@ test.describe("Extension Popup Accessibility Tests", () => {
     });
 
     const detectionItem = page.locator(".detection-item").first();
-    await detectionItem.focus();
-    await expect(detectionItem).toBeFocused();
+
+    // Programmatic .focus() does NOT trigger :focus-visible (only keyboard
+    // focus does). Walk Tab forward a few times until the detection item is
+    // keyboard-focused (its position in tab order is at end-of-document,
+    // after #refresh-btn).
+    let isFocused = false;
+    for (let i = 0; i < 10 && !isFocused; i++) {
+      await page.keyboard.press("Tab");
+      isFocused = await detectionItem.evaluate(
+        (el) => document.activeElement === el,
+      );
+    }
+    expect(isFocused).toBe(true);
 
     const boxShadow = await detectionItem.evaluate((el) => {
       return window.getComputedStyle(el).boxShadow;
