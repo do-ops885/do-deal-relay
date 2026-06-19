@@ -18,30 +18,25 @@ const mockChromeAPI = {
         favIconUrl: "https://example.com/favicon.ico",
       },
     ],
+    sendMessage: async () => ({
+      referrals: [{ code: "TEST123", source: "url", confidence: 0.95 }],
+    }),
   },
   storage: {
     sync: {
       get: async () => ({ apiEndpoint: "http://localhost:8787" }),
       set: async () => {},
     },
+    local: {
+      get: async () => ({ captured: 0, submitted: 0, success: 0 }),
+      set: async () => {},
+    },
   },
   runtime: {
-    sendMessage: async () => ({
-      detections: [
-        {
-          type: "referral_code",
-          value: "TEST123",
-          confidence: 0.95,
-          source: "url",
-          context: "https://example.com/referral/TEST123",
-        },
-      ],
-      pageInfo: {
-        url: "https://example.com/referral/TEST123",
-        title: "Test Page - Referral Program",
-        timestamp: Date.now(),
-      },
-    }),
+    sendMessage: async () => ({ success: true, referral: { status: "active" } }),
+  },
+  scripting: {
+    executeScript: async () => [{ result: true }],
   },
 };
 
@@ -54,6 +49,10 @@ test.describe("Extension Popup UI Tests", () => {
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
+
+    // Wait for popup.js async init() to complete (loadSettings, tab query,
+    // detection request, stats load)
+    await page.waitForTimeout(500);
   });
 
   test("popup displays page title correctly", async ({ page }) => {
