@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { toErrCtx, toErrMessage, type ErrContext } from "../../../bot/lib/errors";
+import {
+  toErrCtx,
+  toErrMessage,
+  type ErrContext,
+} from "../../../bot/lib/errors";
 
 /**
  * Tests for toErrCtx + toErrMessage helpers in bot/lib/errors.ts.

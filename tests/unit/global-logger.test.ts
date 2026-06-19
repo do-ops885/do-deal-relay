@@ -42,7 +42,9 @@ describe("createLogger (worker tier)", () => {
       logger.debug("debug-suppressed");
       logger.info("info-emitted");
       expect(infoSpy).toHaveBeenCalledTimes(1);
-      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("info-emitted"));
+      expect(infoSpy).toHaveBeenCalledWith(
+        expect.stringContaining("info-emitted"),
+      );
       infoSpy.mockRestore();
     });
 
