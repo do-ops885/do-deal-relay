@@ -2,6 +2,7 @@ import type { KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../types";
 import { executeInBatches } from "./utils";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Cache Entry Types
@@ -95,7 +96,7 @@ export class KVCache {
       logger.error(`Cache get error for key ${key}`, {
         component: "cache",
         key,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
       this.recordMiss();
       return null;
@@ -122,7 +123,7 @@ export class KVCache {
       logger.error(`Cache set error for key ${key}`, {
         component: "cache",
         key,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
       throw error;
     }
@@ -138,7 +139,7 @@ export class KVCache {
       logger.error(`Cache delete error for key ${key}`, {
         component: "cache",
         key,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
       throw error;
     }
@@ -204,7 +205,7 @@ export class KVCache {
     } catch (error) {
       logger.error("Cache clear error", {
         component: "cache",
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
       throw error;
     }

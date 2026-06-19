@@ -36,6 +36,10 @@ import { cleanupExpiredConversations } from "../conversations";
 import { DiscordBotConfig } from "./types";
 import { buildSlashCommands } from "./commands";
 import { handleSlashCommand, handleButtonInteraction } from "./handlers";
+import { createLogger } from "../lib/logger";
+import { toErrCtx } from "../lib/errors";
+
+const logger = createLogger({ component: "discord-bot" });
 
 // ============================================================================
 // Command Registration
@@ -51,7 +55,9 @@ export async function registerSlashCommands(
   );
 
   try {
-    console.log("🔄 Refreshing Discord slash commands...");
+    logger.info("Refreshing Discord slash commands", {
+      component: "discord-bot",
+    });
 
     if (config.guildId) {
       // Guild-specific commands (faster for testing)
@@ -59,16 +65,22 @@ export async function registerSlashCommands(
         Routes.applicationGuildCommands(config.clientId, config.guildId),
         { body: commands },
       );
-      console.log(`✅ Guild commands registered for ${config.guildId}`);
+      logger.info("Guild commands registered", {
+        component: "discord-bot",
+        guildId: config.guildId,
+      });
     } else {
       // Global commands (takes up to 1 hour to propagate)
       await rest.put(Routes.applicationCommands(config.clientId), {
         body: commands,
       });
-      console.log("✅ Global commands registered");
+      logger.info("Global commands registered", { component: "discord-bot" });
     }
   } catch (error) {
-    console.error("❌ Failed to register commands:", error);
+    logger.error("Failed to register commands", {
+      component: "discord-bot",
+      error: toErrCtx(error),
+    });
     throw error;
   }
 }
@@ -95,7 +107,10 @@ export function createDiscordBot(config: DiscordBotConfig): Client {
 
   // Ready event
   client.once("ready", () => {
-    console.log(`🤖 Discord bot logged in as ${client.user?.tag}`);
+    logger.info("Discord bot logged in", {
+      component: "discord-bot",
+      tag: client.user?.tag,
+    });
   });
 
   // Interaction handler
@@ -107,7 +122,10 @@ export function createDiscordBot(config: DiscordBotConfig): Client {
         await handleButtonInteraction(interaction, config);
       }
     } catch (error) {
-      console.error("Interaction error:", error);
+      logger.error("Interaction error", {
+        component: "discord-bot",
+        error: toErrCtx(error),
+      });
       if (interaction.isRepliable()) {
         await interaction
           .reply({
@@ -174,7 +192,10 @@ export async function handleDiscordWebhook(
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Discord webhook error:", error);
+    logger.error("Discord webhook error", {
+      component: "discord-bot",
+      error: toErrCtx(error),
+    });
     return new Response("Error", { status: 500 });
   }
 }

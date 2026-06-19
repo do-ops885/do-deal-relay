@@ -25,6 +25,10 @@ import {
   conversations,
   cleanupExpiredConversations,
 } from "../conversations";
+import { createLogger } from "../lib/logger";
+import { toErrCtx } from "../lib/errors";
+
+const logger = createLogger({ component: "telegram-bot" });
 
 // ============================================================================
 // Configuration Types
@@ -258,7 +262,10 @@ async function handleBotCommand(
       ...(keyboard ? keyboard : {}),
     });
   } catch (error) {
-    console.error("Command execution error:", error);
+    logger.error("Command execution error", {
+      component: "telegram-bot",
+      error: toErrCtx(error),
+    });
     await ctx.reply(
       `❌ An error occurred while processing your command. Please try again later.`,
     );
@@ -416,10 +423,18 @@ export function createTelegramBot(config: TelegramBotConfig): Telegraf {
 
   // Error handling
   bot.catch((err, ctx) => {
-    console.error("Telegram bot error:", err);
+    logger.error("Telegram bot error", {
+      component: "telegram-bot",
+      error: toErrCtx(err),
+    });
     ctx
       .reply("❌ An error occurred. Please try again later.")
-      .catch(console.error);
+      .catch((replyErr) => {
+        logger.error("telegram reply failed", {
+          component: "telegram-bot",
+          error: toErrCtx(replyErr),
+        });
+      });
   });
 
   // Periodic cleanup of expired conversations
@@ -445,7 +460,7 @@ export async function launchTelegramBot(
 
   // Launch bot
   await bot.launch();
-  console.log("🤖 Telegram bot started");
+  logger.info("Telegram bot started", { component: "telegram-bot" });
 }
 
 // ============================================================================
@@ -463,7 +478,10 @@ export async function handleTelegramWebhook(
     await bot.handleUpdate(update);
     return new Response("OK", { status: 200 });
   } catch (error) {
-    console.error("Webhook error:", error);
+    logger.error("Telegram webhook error", {
+      component: "telegram-bot",
+      error: toErrCtx(error),
+    });
     return new Response("Error", { status: 500 });
   }
 }

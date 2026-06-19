@@ -13,6 +13,7 @@
 import type { Env } from "../types";
 import type { AuthRole } from "./auth";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Types
@@ -117,7 +118,7 @@ async function getRolePermissions(
   } catch (error) {
     logger.error("Failed to fetch role permissions", {
       role,
-      error: String(error),
+      error: toErrMessage(error),
     });
     // Fallback to hardcoded defaults if D1 query fails
     return getDefaultPermissions(role);

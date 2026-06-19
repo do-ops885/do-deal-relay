@@ -60,3 +60,8 @@ agents-docs/coordination/handoff-log.jsonl
 
 # Claude skill symlinks (broken symlinks cause parse errors)
 .claude/
+
+# Scratch / staging artifacts directory (commit messages, gh query dumps,
+# fixture files; may contain malformed JSON from failed API calls).
+# Not formatted or analyzed -- ephemeral by design.
+.audit/

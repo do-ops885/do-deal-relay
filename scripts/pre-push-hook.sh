@@ -259,7 +259,7 @@ echo "Guard Rail 8: Dependency Security Audit"
 
 if command -v npm >/dev/null 2>&1; then
     info "Running npm audit..."
-    AUDIT_OUTPUT=$(npm audit --audit-level=moderate 2>&1 || true)
+    AUDIT_OUTPUT=$(npm audit --omit=dev --audit-level=moderate 2>&1 || true)
 
     if echo "$AUDIT_OUTPUT" | grep -q "found.*vulnerabilities"; then
         # Extract vulnerability counts

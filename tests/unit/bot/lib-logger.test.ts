@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createLogger } from "../../worker/lib/global-logger";
+import { createLogger } from "../../../bot/lib/logger";
 
 /**
- * Tests for the createLogger factory pattern in worker/lib/global-logger.ts.
+ * Tests for the createLogger factory pattern in bot/lib/logger.ts.
  *
- * Mirrors `tests/unit/bot/lib-logger.test.ts`. Covers: API surface, level
- * filtering, JSON-vs-text formatting, context merge precedence, and
- * per-instance state isolation. The factory was introduced to eliminate
- * the module-singleton mutable state leak between consumer modules within
- * the same Worker isolate; the isolation tests are the regression guard.
+ * Covers: API surface, level filtering, JSON-vs-text formatting, context
+ * merge precedence (top-level vs explicit), and per-instance state
+ * isolation. The factory pattern was introduced to eliminate the
+ * module-singleton mutable state leak between bot/discord and bot/telegram;
+ * the isolation tests are the regression guard for that contract.
  */
 
-describe("createLogger (worker tier)", () => {
+describe("createLogger", () => {
   beforeEach(() => {
     // Reset any console.* spies left over from a prior test so each test
     // starts with a clean mock surface and an empty call log.
@@ -140,8 +140,12 @@ describe("createLogger (worker tier)", () => {
       l1.setMinLevel("warn");
       // Emit from l1 both BELOW (info) and AT (warn) the threshold; then from
       // l2 at its own (info) threshold. The three orthogonal branches cover
-      // the four regression modes: silent threshold ignore, leak-down,
-      // leak-up, and correct (only l1.warn + l2.info emit).
+      // the four regression modes:
+      //   - l1.threshold silently ignored (and l2 unaffected): all three emit
+      //   - l1.threshold leaks DOWN to l2: l2.info would also be suppressed
+      //   - l1.threshold leaks UP to l2: l2.info still emits, but the
+      //     below-threshold l1.info would too
+      //   - correct behavior: only l1.warn + l2.info emit
       l1.info("l1-info-MUST-BE-SUPPRESSED-BY-L1-WARN-THRESHOLD");
       l1.warn("l1-warn-MUST-EMIT-AT-WARN-LEVEL");
       l2.info("l2-info-MUST-EMIT-AT-DEFAULT-INFO-LEVEL");

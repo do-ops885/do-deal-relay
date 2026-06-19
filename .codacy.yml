@@ -17,3 +17,6 @@ exclude_paths:
   - "**/*.test.sh"
   - "**/*.spec.ts"
   - "**/*.spec.js"
+  # Scratch / staging artifacts directory (commit messages, gh query dumps,
+  # fixture files; may contain malformed middle-of-edit docs).
+  - ".audit/**"

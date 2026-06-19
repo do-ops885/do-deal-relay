@@ -10,6 +10,7 @@
 
 import type { Env } from "../types";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Configuration
@@ -214,7 +215,7 @@ export async function checkRateLimitKV(
     logger.error("Rate limit KV check failed", {
       component: "rate-limit-kv",
       clientId,
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrMessage(error),
     });
     return {
       allowed: true,
@@ -308,7 +309,7 @@ export async function getAllRateLimitStates(
   } catch (error) {
     logger.error("Failed to list rate limit states", {
       component: "rate-limit-kv",
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrMessage(error),
     });
   }
 

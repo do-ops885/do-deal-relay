@@ -10,6 +10,7 @@ import { logger } from "../lib/global-logger";
 import { jsonResponse, errorResponse } from "./utils";
 import { generateUUID } from "../lib/crypto";
 import { createToken, hashPassword, verifyPassword } from "../lib/jwt";
+import { toErrCtx } from "../lib/errors";
 import type { AuthResult } from "../lib/auth";
 
 function getJwtSecret(env: Env): string {
@@ -131,7 +132,7 @@ export async function handleGetCurrentUser(
       return errorResponse("User not found", 404, undefined, request, env);
     return jsonResponse(getUserResponse(toPublicUser(user)), 200, request, env);
   } catch (error) {
-    logger.error("Failed to get profile", { error: String(error) });
+    logger.error("Failed to get profile", toErrCtx(error));
     return errorResponse("Failed to get profile", 500, undefined, request, env);
   }
 }
@@ -173,7 +174,7 @@ export async function handleListUsers(
     }));
     return jsonResponse({ users }, 200, request, env);
   } catch (error) {
-    logger.error("Failed to list users", { error: String(error) });
+    logger.error("Failed to list users", toErrCtx(error));
     return errorResponse("Failed to list users", 500, undefined, request, env);
   }
 }
@@ -233,7 +234,7 @@ export async function registerUser(
       );
     return jsonResponse(getUserResponse(toPublicUser(user)), 201, request, env);
   } catch (error) {
-    logger.error("Failed to register user", { error: String(error) });
+    logger.error("Failed to register user", toErrCtx(error));
     return errorResponse(
       "Failed to register user",
       500,
@@ -285,7 +286,7 @@ export async function loginUser(
       env,
     );
   } catch (error) {
-    logger.error("Failed to login user", { error: String(error) });
+    logger.error("Failed to login user", toErrCtx(error));
     return errorResponse("Failed to login user", 500, undefined, request, env);
   }
 }
@@ -344,7 +345,7 @@ export async function refreshAccessToken(
       env,
     );
   } catch (error) {
-    logger.error("Failed to refresh token", { error: String(error) });
+    logger.error("Failed to refresh token", toErrCtx(error));
     return errorResponse(
       "Failed to refresh token",
       500,
@@ -366,7 +367,7 @@ export async function getProfile(
       return errorResponse("User not found", 404, undefined, request, env);
     return jsonResponse(getUserResponse(toPublicUser(user)), 200, request, env);
   } catch (error) {
-    logger.error("Failed to get profile", { error: String(error) });
+    logger.error("Failed to get profile", toErrCtx(error));
     return errorResponse("Failed to get profile", 500, undefined, request, env);
   }
 }
@@ -413,7 +414,7 @@ export async function updateProfile(
       env,
     );
   } catch (error) {
-    logger.error("Failed to update profile", { error: String(error) });
+    logger.error("Failed to update profile", toErrCtx(error));
     return errorResponse(
       "Failed to update profile",
       500,

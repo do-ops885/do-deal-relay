@@ -1,5 +1,6 @@
 import type { Env } from "../types";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Circuit Breaker Pattern for External Service Calls
@@ -140,7 +141,7 @@ export class CircuitBreaker {
       logger.error(`[CircuitBreaker:${this.name}] Failed to load state`, {
         component: "circuit-breaker",
         name: this.name,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
     }
 
@@ -163,7 +164,7 @@ export class CircuitBreaker {
       logger.error(`[CircuitBreaker:${this.name}] Failed to save state`, {
         component: "circuit-breaker",
         name: this.name,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrMessage(error),
       });
     }
   }

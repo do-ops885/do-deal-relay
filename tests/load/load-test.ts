@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
+import { toError } from "../../worker/lib/sanitize-error";
 
 // ============================================================================
 // Configuration
@@ -100,7 +101,7 @@ async function executeConcurrent<T>(
         results.push(result);
       })
       .catch((error) => {
-        errors.push(error instanceof Error ? error : new Error(String(error)));
+        errors.push(toError(error));
       });
 
     executing.push(promise);

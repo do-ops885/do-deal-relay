@@ -34,7 +34,6 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "@rolldown/binding-linux-x64-gnu": "^1.1.1",
     "@types/node": "25.9.3",
     "discord.js": "^14.26.4",
     "js-yaml": "^4.2.0",
@@ -64,8 +63,9 @@
     "uuid": "14.0.0",
     "@playwright/test": "^1.60.0",
     "esbuild": ">=0.28.1",
-    "ws": "8.20.1",
-    "engine.io-client": "6.6.5"
+    "ws": "8.21.0",
+    "engine.io-client": "6.6.5",
+    "form-data": "4.0.6"
   },
   "engines": {
     "node": ">=22.0.0"

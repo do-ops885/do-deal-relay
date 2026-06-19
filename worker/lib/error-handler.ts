@@ -5,6 +5,8 @@
 import { logger } from "./global-logger";
 import { PipelineError } from "../types";
 import type { ErrorClass, PipelinePhase } from "../types";
+import { toErrMessage } from "./errors";
+import { toError } from "./sanitize-error";
 
 interface ErrorContext {
   component?: string;
@@ -38,7 +40,7 @@ export function classifyError(
     };
   }
 
-  const err = error instanceof Error ? error : new Error(String(error));
+  const err = toError(error);
 
   return {
     message: err.message,
@@ -97,6 +99,6 @@ export function toPipelineError(
   phase: PipelinePhase,
   retryable = false,
 ): PipelineError {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = toErrMessage(error);
   return new PipelineError(errorClass, message, phase, retryable);
 }

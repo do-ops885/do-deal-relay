@@ -11,6 +11,7 @@
 import { getPlatformProxy } from "wrangler";
 import type { Fetcher } from "@cloudflare/workers-types";
 import type { ReferralInput } from "../worker/types";
+import { toErrMessage } from "../worker/lib/errors";
 
 const TEST_URL = "https://picnic.app/de/freunde-rabatt/DOMI6869";
 const TEST_CODE = "DOMI6869";
@@ -221,7 +222,7 @@ async function validateUrlPreservation(): Promise<void> {
     console.log(`Domain: ${TEST_DOMAIN}`);
   } catch (error) {
     console.error("\n❌ VALIDATION FAILED");
-    console.error(error instanceof Error ? error.message : String(error));
+    console.error(toErrMessage(error));
     process.exit(1);
   } finally {
     await proxy.dispose();

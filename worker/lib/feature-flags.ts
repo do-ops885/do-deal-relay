@@ -10,6 +10,7 @@
 
 import type { Env } from "../types";
 import { logger } from "./global-logger";
+import { toErrMessage } from "./errors";
 
 // ============================================================================
 // Configuration
@@ -242,7 +243,7 @@ export async function getAllFeatureFlags(
   } catch (error) {
     logger.error("Failed to list feature flags", {
       component: "feature-flags",
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrMessage(error),
     });
   }
 
@@ -290,7 +291,7 @@ export async function initializeDefaultFlags(env: Env): Promise<void> {
   } catch (error) {
     logger.error("Failed to initialize default flags", {
       component: "feature-flags",
-      error: error instanceof Error ? error.message : String(error),
+      error: toErrMessage(error),
     });
   }
 }
