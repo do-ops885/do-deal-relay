@@ -65,8 +65,13 @@ test.describe("Extension Popup UI Tests", () => {
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
 
     // Wait for popup.js async init() to complete (loadSettings, tab query,
-    // detection request, stats load)
-    await page.waitForTimeout(500);
+    // detection request, stats load, setupEventListeners).
+    // Deterministic: scan-status indicator stops having 'scanning' class
+    // when requestDetections() finishes, which runs just before
+    // setupEventListeners() in init().
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
   });
 
   test("popup displays page title correctly", async ({ page }) => {
@@ -208,7 +213,7 @@ test.describe("Extension Content Script Tests", () => {
 
     // Run detection logic via page.evaluate (DOM is guaranteed ready)
     const detections = await page.evaluate(() => {
-      const text = document.body.innerText;
+      const text = document.body.textContent || "";
       const codeRegex = /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi;
       const matches: {
         type: string;
@@ -250,7 +255,7 @@ test.describe("Extension Content Script Tests", () => {
 
     // Run detection via page.evaluate (DOM is guaranteed ready)
     const detections = await page.evaluate(() => {
-      const text = document.body.innerText;
+      const text = document.body.textContent || "";
       const codeRegex = /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi;
       return [...text.matchAll(codeRegex)];
     });

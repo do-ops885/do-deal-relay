@@ -49,8 +49,12 @@ test.describe("Extension Popup Accessibility Tests", () => {
 
     // Load the extension popup
     await page.goto(`file://${process.cwd()}/extension/popup.html`);
-    // Wait for async init in popup.js
-    await page.waitForTimeout(500);
+    // Wait for init() to complete deterministically: scan-status stops
+    // showing 'scanning' when requestDetections() finishes, which runs
+    // right before setupEventListeners() in popup.js init().
+    await expect(
+      page.locator("#scan-status .status-indicator"),
+    ).not.toHaveClass(/scanning/, { timeout: 5000 });
   });
 
   test("interactive elements are reachable via keyboard", async ({ page }) => {
