@@ -14,12 +14,18 @@ Thank you for your interest in contributing! This guide helps you contribute eff
 git clone https://github.com/do-ops885/do-deal-relay.git
 cd do-deal-relay
 
+# Setup environment variables (required for local dev & E2E tests)
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your actual API keys/secrets
+
 # Setup skills symlinks
 ./scripts/setup-skills.sh
 
 # Install pre-commit hook
 cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 ```
+
+> **Note**: Copying `.dev.vars.example` to `.dev.vars` is required before running E2E tests locally. The file provides placeholder values for `WEBHOOK_SECRET`, `EMAIL_WEBHOOK_SECRET`, `API_ENCRYPTION_KEY`, and `JWT_SECRET`. Replace with real values from your Cloudflare dashboard for full functionality.
 
 ## How to Contribute
 
