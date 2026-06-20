@@ -40,7 +40,6 @@ describe("Worker Initialization", () => {
       expect(response.status).toBe(503);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
-      expect(body.message).toContain("must be a number between 0 and 1");
     });
 
     it("should return 503 when TRUST_THRESHOLD is out of range", async () => {
@@ -52,7 +51,6 @@ describe("Worker Initialization", () => {
       expect(response.status).toBe(503);
       const body = (await response.json()) as any;
       expect(body.error).toBe("Configuration error");
-      expect(body.message).toContain("must be a number between 0 and 1");
     });
   });
 

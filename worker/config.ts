@@ -16,7 +16,7 @@ import { VERSION } from "./version";
 export const CONFIG = {
   // System
   VERSION,
-  SCHEMA_VERSION: "0.1.7",
+  SCHEMA_VERSION: "0.1.8",
 
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes

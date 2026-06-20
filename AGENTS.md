@@ -1,19 +1,43 @@
 # Agent Coordination Hub - do-deal-relay
-**Version**: 0.1.7
+**Version**: 0.1.8
 
 ## Core Constraints
 ```bash
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_AGENTS_MD=200
+readonly MAX_COMMIT_SUBJECT_LENGTH=72
 readonly TRUST_THRESHOLD=0.3
+readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
 See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 
 ## Development Phases
-1. **ANALYZE**: Deeply analyze repo before asking questions. Minimize low-value clarification requests. Check CI status (`plans/GOAP_STATE.md` or `./scripts/check-ci-status.sh`).
-2. **DECOMPOSE**: Enter Deep Planning Mode. Confirm assumptions with user. Break into atomic tasks in `plans/`.
-3. **EXECUTE**: Implement with atomic commits. Run `./scripts/quality_gate.sh` after each.
-4. **SYNTHESIZE**: Update docs, extract learnings to `progress/LEARNINGS.md`.
+We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectural Decision Records (ADRs) and TRIZ for structured development.
+
+1. **ANALYZE & STRATEGIZE (Phase 1)**
+   - **Deep Analysis**: Analyze repo structure and existing infrastructure deeply before asking questions.
+   - **TRIZ/ADR**: Use TRIZ-based analysis for complex deal-discovery logic. Write an ADR in `plans/`.
+   - **CI Status**: Check CI status via `./scripts/check-ci-status.sh`. If not passing, "Always-Fix" protocol applies.
+
+2. **DECOMPOSE & PLAN (Phase 2)**
+   - **Deep Planning Mode**: Enter Deep Planning Mode at start. Interaction required to confirm assumptions.
+   - **GOAP**: Break into atomic tasks in `plans/GOAP_STATE.md`.
+
+3. **EXECUTE & COORDINATE (Phase 3)**
+   - **Atomic commits**: Execute tasks systematically with atomic commits.
+   - **Always-Fix Pre-Existing Issues**: Agents MUST fix any existing CI check, lint warning, or quality-gate finding found in the current context as part of the task. Zero tolerance for regressive or inherited failures.
+   - **Quality Gate**: Run `./scripts/quality_gate.sh` after every change.
+
+4. **SYNTHESIZE (Phase 4)**
+   - **Documentation**: Update `README.md`, `docs/`, and `agents-docs/`.
+   - **Extract learnings**: Append discoveries to `agents-docs/LEARNINGS.md` or nearest `AGENTS.md`.
+
+## Behavioral Rules
+1. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`.
+2. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
+3. **Context Hygiene**: Swallow passing output; surface failures only. Follow `agents-docs/CONTEXT.md`.
+4. **Direct Action**: Proceed immediately when intent is clear; minimize unnecessary clarification requests. Infer from existing patterns first.
+5. **Operational Safety**: Coordinate modifications to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`).
 
 ## Infrastructure Contracts
 ### KV Namespaces
@@ -28,11 +52,18 @@ See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 - **`0 9 * * *`**: Expirations and experience aggregation.
 - **`0 0 * * SUN`**: Weekly full validation sweep.
 
-## Behavioral Rules
-1. **Validation-First**: All deals MUST pass 9 gates. See [SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md).
-2. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
-3. **Context Hygiene**: Swallow passing output. See [agents-docs/CONTEXT.md](agents-docs/CONTEXT.md).
-4. **Tooling**: Use `./scripts/bootstrap.sh` for setup and `./scripts/doctor.sh` for diagnostics.
+## PR & Commit Instructions
+- **MANDATORY**: PR titles and Commit headers MUST follow `type(scope): subject`.
+- **Commit Type Mapping**:
+  - `fix(security)`: Security patch / hardening.
+  - `feat(security)`: New security feature/control.
+  - `ci(security)`: Security-related CI/tooling.
+- **Formatting**: Subject line max 72 chars, lowercase. Wrap body at 100 chars. footer max 1000 chars.
+
+## Maintenance & Verification
+- **ADR Compliance**: Verify ADR registration and pattern adherence in `plans/`.
+- **Plan Management**: Archive plans in `plans/` older than 60 days to `plans/archive/`.
+- **Yamllint Safeguard**: New `.github/workflows/*.yml` files must include `# yamllint disable-line rule:truthy` on the `on:` line.
 
 ## Delegation Routing
 - **Self-Execute**: 1 trivial isolated edit.
@@ -52,4 +83,4 @@ See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 
 ## Post-Task Protocol
 Append JSON entry to `.agents/metrics.jsonl`:
-`{"timestamp": "ISO-8601", "agent": "id", "task": "desc", "skill_used": "skill|null", "status": "completed|failed", "tokens_used": int, "duration_seconds": int, "notes": "text"}`
+`{"timestamp": "YYYY-MM-DDTHH:MM:SSZ", "agent": "id", "task": "desc", "skill_used": "skill|null", "status": "completed|failed", "tokens_used": int, "duration_seconds": int, "notes": "text"}`
