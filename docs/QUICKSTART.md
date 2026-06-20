@@ -39,6 +39,10 @@ cd your-project
 ## Step 2: Setup (2 minutes)
 
 ```bash
+# Setup environment variables (required for local dev & E2E tests)
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your actual API keys/secrets
+
 # Create skill symlinks for all CLI tools
 ./scripts/setup-skills.sh
 
@@ -48,6 +52,8 @@ cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-c
 # Validate setup
 ./scripts/validate-skills.sh
 ```
+
+> **Note**: Copying `.dev.vars.example` → `.dev.vars` is required before running E2E tests or the dev server. Without it, the worker's config validation will fail with errors about missing `WEBHOOK_SECRET`, `EMAIL_WEBHOOK_SECRET`, or `API_ENCRYPTION_KEY`.
 
 Expected output:
 ```

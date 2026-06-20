@@ -3,7 +3,55 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Playwright configuration for browser-based API testing
  * Tests the Deal Discovery System endpoints
+ *
+ * Required env vars for local E2E:
+ *   - Copy .dev.vars.example → .dev.vars for worker config validation
+ *   - Or set WEBHOOK_SECRET, EMAIL_WEBHOOK_SECRET, API_ENCRYPTION_KEY
  */
+
+// Allowlist of required env var NAMES (values are never inspected or logged).
+// See .dev.vars.example for what each one is.
+const REQUIRED_ENV_VARS = [
+  "WEBHOOK_SECRET",
+  "EMAIL_WEBHOOK_SECRET",
+  "API_ENCRYPTION_KEY",
+] as const;
+
+// Presence-only check; values are never compared, returned, or logged.
+function getMissingEnvVars(): readonly string[] {
+  const missing: string[] = [];
+  if (
+    process.env.WEBHOOK_SECRET === undefined ||
+    process.env.WEBHOOK_SECRET.trim() === ""
+  )
+    missing.push("WEBHOOK_SECRET");
+  if (
+    process.env.EMAIL_WEBHOOK_SECRET === undefined ||
+    process.env.EMAIL_WEBHOOK_SECRET.trim() === ""
+  )
+    missing.push("EMAIL_WEBHOOK_SECRET");
+  if (
+    process.env.API_ENCRYPTION_KEY === undefined ||
+    process.env.API_ENCRYPTION_KEY.trim() === ""
+  )
+    missing.push("API_ENCRYPTION_KEY");
+  return missing;
+}
+
+const missing = getMissingEnvVars();
+if (missing.length > 0) {
+  const names = missing.join(", ");
+  console.error(
+    `\n  ❌ Missing required environment variables:\n` +
+      `     ${missing.map((n) => `- ${n}`).join("\n     ")}\n` +
+      `  → Copy .dev.vars.example to .dev.vars and populate them.\n`,
+  );
+  if (process.env.CI !== undefined) {
+    // Fail fast in CI: missing env vars is a configuration error.
+    throw new Error(`Missing required env vars: ${names}`);
+  }
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
