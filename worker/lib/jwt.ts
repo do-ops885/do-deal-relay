@@ -68,7 +68,17 @@ export async function verifyToken(
     if (!isValid) return null;
     const payloadBytes = base64urlDecode(encodedPayload);
     const payloadStr = new TextDecoder().decode(payloadBytes);
-    return JSON.parse(payloadStr) as Record<string, unknown>;
+    const payload = JSON.parse(payloadStr) as Record<string, unknown>;
+
+    // 2026-06-18: JWT Standard Expiration Validation
+    if (payload.exp && typeof payload.exp === "number") {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      if (nowSeconds >= payload.exp) {
+        return null;
+      }
+    }
+
+    return payload;
   } catch {
     return null;
   }
@@ -84,18 +94,19 @@ function base64urlDecode(str: string): Uint8Array {
 }
 
 function calculateExpiry(expiresIn: string | number): number {
-  if (typeof expiresIn === "number") return Date.now() + expiresIn * 1000;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (typeof expiresIn === "number") return nowSeconds + expiresIn;
   const match = expiresIn.match(/^(\d+)([smhd])$/);
   if (!match) throw new Error("Invalid expiresIn format: " + expiresIn);
   const value = parseInt(match[1]!, 10);
   const unit = match[2]!;
   const multipliers: Record<string, number> = {
-    s: 1000,
-    m: 60 * 1000,
-    h: 60 * 60 * 1000,
-    d: 24 * 60 * 60 * 1000,
+    s: 1,
+    m: 60,
+    h: 3600,
+    d: 86400,
   };
-  return Date.now() + value * multipliers[unit]!;
+  return nowSeconds + value * multipliers[unit]!;
 }
 
 /**
