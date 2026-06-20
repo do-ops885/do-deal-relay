@@ -193,19 +193,24 @@ export function calculateStringSimilarity(a: string, b: string): number {
 }
 
 /**
- * Encode a string or Uint8Array to base64url format
+ * Encode a string or Uint8Array to base64url format.
+ * Uses a chunked approach to convert bytes to a binary string to avoid
+ * the O(N^2) overhead of repeated string concatenation while remaining
+ * compatible with the standard btoa() function which expects 0-255 range.
  */
 export function base64urlEncode(input: string | Uint8Array): string {
-  let bytes: Uint8Array;
-  if (typeof input === "string") {
-    bytes = ENCODER.encode(input);
-  } else {
-    bytes = input;
-  }
+  const bytes = typeof input === "string" ? ENCODER.encode(input) : input;
+
+  // Use a chunked approach to build the binary string efficiently.
+  // String.fromCharCode(...chunk) is much faster than byte-by-byte concatenation.
+  const CHUNK_SIZE = 8192;
   let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    // @ts-expect-error - apply is fine with Uint8Array
+    binary += String.fromCharCode.apply(null, chunk);
   }
+
   return btoa(binary)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
