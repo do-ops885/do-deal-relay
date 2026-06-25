@@ -10,7 +10,7 @@ describe("Security Utils - validatedFetch hardening", () => {
   it("should allow safe HTTPS URLs", async () => {
     // Mock fetch to handle both DNS resolution and the target request
     (global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes("cloudflare-dns.com")) {
+      if (url.startsWith("https://cloudflare-dns.com/")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -61,7 +61,7 @@ describe("Security Utils - validatedFetch hardening", () => {
   it("should block domains resolving to private IPs", async () => {
     // Mock DNS resolution to return a private IP
     (global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes("cloudflare-dns.com")) {
+      if (url.startsWith("https://cloudflare-dns.com/")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
