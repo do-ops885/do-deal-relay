@@ -154,6 +154,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
     });
 
     const detectionItem = page.locator(".detection-item").first();
+    await expect(detectionItem).toBeVisible();
 
     // Programmatic .focus() does NOT trigger :focus-visible (only keyboard
     // focus does). Walk Tab forward a few times until the detection item is
