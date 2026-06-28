@@ -16,7 +16,7 @@ import { generateWebhookHeaders } from "../hmac";
 import { toError } from "../sanitize-error";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
-import { validateFetchUrl } from "../security";
+import { validateFetchUrl, validatedFetch } from "../security";
 
 // ============================================================================
 // Outgoing Webhooks
@@ -136,7 +136,7 @@ async function sendWebhookToSubscription(
         event.type,
       );
 
-      const response = await fetch(subscription.url, {
+      const response = await validatedFetch(subscription.url, {
         method: "POST",
         headers,
         body: payload,

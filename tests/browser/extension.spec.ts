@@ -248,7 +248,7 @@ test.describe("Extension Content Script Tests", () => {
       <html>
         <body>
           <h1>Regular Page</h1>
-          <p>No referral codes here.</p>
+          <p>This is a plain page with generic content and no rewards or special identifiers.</p>
         </body>
       </html>
     `);
