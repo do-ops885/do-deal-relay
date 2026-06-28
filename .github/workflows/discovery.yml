@@ -59,7 +59,7 @@ jobs:
             exit 1
           fi
 
-          HOST="$(bash scripts/worker-host.sh "production")"
+          HOST="$(bash scripts/worker-host.sh production)"
           echo "Resolved production host: ${HOST}"
           echo "host=${HOST}" >> "$GITHUB_OUTPUT"
 
@@ -84,7 +84,7 @@ jobs:
           if [ -n "${SMOKE_TEST_API_KEY}" ]; then
             DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
           fi
-          RESPONSE=$(curl -sf -X POST "${DISCOVER_AUTH}" "${PROD_URL}/api/discover" 2>&1) || {
+          RESPONSE=$(curl -sf -X POST ${DISCOVER_AUTH} "${PROD_URL}/api/discover" 2>&1) || {
             echo "Discovery trigger failed: ${RESPONSE}"
             exit 1
           }
@@ -106,7 +106,7 @@ jobs:
           if [ -n "${SMOKE_TEST_API_KEY}" ]; then
             STATUS_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
           fi
-          STATUS=$(curl -sf "${STATUS_AUTH}" "${PROD_URL}/api/status" 2>/dev/null || echo '{}')
+          STATUS=$(curl -sf ${STATUS_AUTH} "${PROD_URL}/api/status" 2>/dev/null || echo '{}')
           echo "Status: ${STATUS}"
 
       - name: Report to logs
@@ -148,7 +148,7 @@ jobs:
 
           echo "Triggering discovery on staging..."
 
-          STAGING_HOST="$(bash scripts/worker-host.sh "staging")"
+          STAGING_HOST="$(bash scripts/worker-host.sh staging)"
           if [ -z "${STAGING_HOST}" ]; then
             echo "❌ Could not resolve staging host"
             echo "   Set WORKER_HOST on the GitHub Environment for this job:" >&2
@@ -169,7 +169,7 @@ jobs:
           if [ -n "${SMOKE_TEST_API_KEY}" ]; then
             DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
           fi
-          curl -sf -X POST "${DISCOVER_AUTH}" "${STAGING_URL}/api/discover" || {
+          curl -sf -X POST ${DISCOVER_AUTH} "${STAGING_URL}/api/discover" || {
             echo "❌ Discovery trigger failed"
             exit 1
           }

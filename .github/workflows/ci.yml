@@ -139,13 +139,6 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Prepare Local Environment
         run: |
-          # Export required secrets for Playwright and dev server
-          {
-            echo "WEBHOOK_SECRET=whsec_ci_test_secret"
-            echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long"
-            echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret"
-          } >> "$GITHUB_ENV"
-
           # Generate a stable test key for this job
           KEY="ddr_ci_test_key_$(date +%s)"
           echo "TEST_API_KEY=$KEY" >> "$GITHUB_ENV"
@@ -170,12 +163,12 @@ jobs:
       - name: Start dev server
         run: |
           # Pass required secrets for startup validation
-          {
-            echo "WEBHOOK_SECRET=whsec_ci_test_secret"
-            echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long"
-            echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret"
-          } > .dev.vars
-
+          export WEBHOOK_SECRET="whsec_ci_test_secret"
+          export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
+          export EMAIL_WEBHOOK_SECRET="ci_email_webhook_test_secret"
+          echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
+          echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
+          echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
           npx wrangler dev --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
             --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
@@ -202,6 +195,9 @@ jobs:
         run: npm run test:e2e
         env:
           SKIP_DEV_SERVER: 1
+          WEBHOOK_SECRET: "whsec_ci_test_secret"
+          API_ENCRYPTION_KEY: "ci_test_encryption_key_32_chars_long"
+          EMAIL_WEBHOOK_SECRET: "ci_email_webhook_test_secret"
 
       - name: Stop dev server
         if: always()
@@ -235,12 +231,12 @@ jobs:
       - name: Run smoke tests
         run: |
           # Pass required secrets for startup validation
-          {
-            echo "WEBHOOK_SECRET=whsec_ci_test_secret"
-            echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long"
-            echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret"
-          } > .dev.vars
-
+          export WEBHOOK_SECRET="whsec_ci_test_secret"
+          export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
+          export EMAIL_WEBHOOK_SECRET="ci_email_webhook_test_secret"
+          echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
+          echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
+          echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
           npx wrangler dev --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
             --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \

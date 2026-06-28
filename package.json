@@ -1,6 +1,6 @@
 {
   "name": "do-deal-relay",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Autonomous AI-agent deal discovery system on Cloudflare Workers",
   "type": "module",
   "scripts": {
@@ -55,20 +55,19 @@
     "wrangler": "4.101.0"
   },
   "overrides": {
-    "esbuild": "0.28.1",
+    "esbuild": ">=0.28.1",
     "joi": "^18.2.1",
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.6.4",
+    "undici": "6.27.0",
     "uuid": "14.0.0",
     "@playwright/test": "^1.61.0",
-    "esbuild": ">=0.28.1",
     "ws": "8.21.0",
     "js-yaml": "4.2.0",
     "engine.io-client": "6.6.5",
     "form-data": "4.0.6",
-    "@opentelemetry/core": "2.8.0",
-    "undici": "6.27.0"
+    "@opentelemetry/core": "2.8.0"
   },
   "engines": {
     "node": ">=22.0.0"

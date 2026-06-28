@@ -75,9 +75,9 @@ jobs:
             exit 0
           fi
 
-          STAGING_HOST="$(bash scripts/worker-host.sh "staging" || true)"
+          STAGING_HOST="$(bash scripts/worker-host.sh staging || true)"
           if [ -z "${STAGING_HOST}" ]; then
-            echo "❌ Could not resolve staging host from WORKER_HOST=\"${WORKER_HOST}\""
+            echo "❌ Could not resolve staging host from WORKER_HOST=${WORKER_HOST}"
             exit 1
           fi
 
@@ -134,7 +134,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping deployment verification"
@@ -167,7 +167,7 @@ jobs:
           WORKER_HOST: ${{ vars.WORKER_HOST }}
           SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping KV seeding"
@@ -187,7 +187,7 @@ jobs:
             if [ -n "${SMOKE_TEST_API_KEY}" ]; then
               DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
             fi
-            curl -sf -X POST "${DISCOVER_AUTH}" "${PROD_URL}/api/discover" || true
+            curl -sf -X POST ${DISCOVER_AUTH} "${PROD_URL}/api/discover" || true
             # Wait for discovery to complete
             sleep 5
             echo "KV seeded successfully"
@@ -244,7 +244,7 @@ jobs:
           WORKER_HOST: ${{ vars.WORKER_HOST }}
           SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
 
           if [ -z "${PROD_HOST}" ]; then
             echo "⚠️  Could not resolve production host, skipping smoke tests"
@@ -303,14 +303,14 @@ jobs:
           WORKER_HOST: ${{ vars.WORKER_HOST }}
           SMOKE_TEST_API_KEY: ${{ secrets.SMOKE_TEST_API_KEY }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
           if [ -n "${PROD_HOST}" ]; then
             echo "Triggering discovery pipeline..."
             DISCOVER_AUTH=""
             if [ -n "${SMOKE_TEST_API_KEY}" ]; then
               DISCOVER_AUTH="-H X-API-Key:${SMOKE_TEST_API_KEY}"
             fi
-            curl -sf -X POST "${DISCOVER_AUTH}" \
+            curl -sf -X POST ${DISCOVER_AUTH} \
               "https://${PROD_HOST}/api/discover" || true
           else
             echo "⚠️  Could not resolve production host, skipping discovery trigger"
@@ -321,7 +321,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_HOST: ${{ vars.WORKER_HOST }}
         run: |
-          PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+          PROD_HOST="$(bash scripts/worker-host.sh production || true)"
           REF_NAME="${{ github.ref_name }}"
           SHA="${{ github.sha }}"
           ACTOR="${{ github.actor }}"
@@ -434,7 +434,7 @@ jobs:
             sleep 15
 
             # Verify rollback health
-            PROD_HOST="$(bash scripts/worker-host.sh "production" || true)"
+            PROD_HOST="$(bash scripts/worker-host.sh production || true)"
             if [ -z "${PROD_HOST}" ]; then
               echo "⚠️  Could not resolve production host for rollback verification"
               exit 0
