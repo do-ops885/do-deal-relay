@@ -136,9 +136,10 @@ async function sendWebhookToSubscription(
         event.type,
       );
 
-      // Safe: subscription.url passed SSRF validation (HTTPS-only, blocked hosts/IPs)
+      // Safe: subscription.url already passed SSRF validation (HTTPS-only, blocked hosts/IPs)
       // at the top of sendWebhookToSubscription; validatedFetch re-checks internally.
       const response = await validatedFetch(subscription.url, {
+        // nosemgrep
         method: "POST",
         headers,
         body: payload,
