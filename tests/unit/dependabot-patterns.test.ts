@@ -3,11 +3,11 @@ import { execSync } from "child_process";
 import { minimatch } from "minimatch";
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
+import { load as yamlLoad, JSON_SCHEMA } from "js-yaml";
 
 describe("Dependabot Patterns and Wildcards", () => {
   const content = fs.readFileSync(".github/dependabot.yml", "utf8");
-  const config = yaml.load(content, { schema: yaml.JSON_SCHEMA }) as any;
+  const config = yamlLoad(content, { schema: JSON_SCHEMA }) as any;
 
   const npmUpdate = config.updates.find(
     (u: any) => u["package-ecosystem"] === "npm",
