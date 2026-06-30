@@ -7,18 +7,22 @@ This document tracks the remaining P3 features that need to be implemented in fu
 
 ### 1. Semantic Search (#294-#297)
 **Priority**: P3 (Low)
-**Status**: Partially implemented (types defined in `worker/lib/search/types.ts`)
+**Status**: Complete — all components implemented
 
 #### Sub-issues:
-- [ ] #294 — Integrate vector embeddings for deals and referrals
-- [ ] #295 — Implement semantic search API endpoint
-- [ ] #296 — Add embedding generation and update pipeline
+- [x] #294 — Integrate vector embeddings for deals and referrals
+- [x] #295 — Implement semantic search API endpoint
+- [x] #296 — Add embedding generation and update pipeline
 
 #### Implementation Notes:
-- Types are already defined in `worker/lib/search/types.ts`
-- Need to integrate with Cloudflare Vectorize
-- Need embedding model (e.g., `@cf/baai/bge-base-en-v1.5`)
-- Need to implement embedding pipeline with Worker Cron Triggers
+- Types defined in `worker/lib/search/types.ts`
+- Vectorize client in `worker/lib/search/client.ts`
+- Embedding pipeline in `worker/lib/search/embedding-pipeline.ts`
+- HTTP route in `worker/routes/semantic-search.ts`
+- Integrated in `worker/router.ts` (line 259)
+- Vectorize binding configured in `wrangler.jsonc`
+- Auto-embed on pipeline publish via `worker/lib/state-machine.ts`
+- Weekly re-indexing cron in `worker/lib/scheduled.ts`
 
 #### Dependencies:
 - Cloudflare Vectorize access
@@ -29,7 +33,7 @@ This document tracks the remaining P3 features that need to be implemented in fu
 
 ### 2. Web UI Dashboard (#298-#302)
 **Priority**: P3 (Low)
-**Status**: Not started
+**Status**: Not started — recommended as a separate project/sprint
 
 #### Sub-issues:
 - [ ] #298 — Design dashboard layout and component architecture
@@ -54,7 +58,7 @@ This document tracks the remaining P3 features that need to be implemented in fu
 ## Recommendations
 
 1. **Semantic Search**: Can be implemented incrementally since types are already defined
-2. **Web UI Dashboard**: Should be a dedicated project/sprint due to complexity
+2. **Web UI Dashboard**: Should be a dedicated project/sprint due to complexity (recommended as a separate project)
 3. **Both features**: Should be implemented after deployment issues are resolved
 
 ## Priority Order
