@@ -120,9 +120,7 @@ export async function handleSlashCommand(
     const domain = interaction.options.getString("domain");
     const depth =
       (interaction.options.getString("depth") as
-        | "quick"
-        | "thorough"
-        | "deep") || "thorough";
+        "quick" | "thorough" | "deep") || "thorough";
 
     if (!domain) {
       await startConversationFlow(interaction, "RESEARCH_FLOW");

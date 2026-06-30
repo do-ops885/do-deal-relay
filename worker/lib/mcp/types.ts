@@ -167,11 +167,7 @@ export interface EmbeddedResource {
  * Union type for all content blocks
  */
 export type ContentBlock =
-  | TextContent
-  | ImageContent
-  | AudioContent
-  | ResourceLink
-  | EmbeddedResource;
+  TextContent | ImageContent | AudioContent | ResourceLink | EmbeddedResource;
 
 // ============================================================================
 // Tool Types

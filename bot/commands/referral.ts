@@ -272,11 +272,8 @@ export const deactivateCommand: CommandHandler = {
     const code = args[0] || "";
     const reason =
       (args[1] as
-        | "expired"
-        | "invalid"
-        | "violation"
-        | "replaced"
-        | "user_request") || "user_request";
+        "expired" | "invalid" | "violation" | "replaced" | "user_request") ||
+      "user_request";
 
     const notes = args.length > 2 ? args.slice(2).join(" ") : undefined;
 

@@ -223,8 +223,7 @@ export async function deactivateInvalidDeals(env: Env): Promise<{
           deals: deactivated.map((id) => {
             const deal = updatedDeals.find((d: Deal) => d.id === id);
             const metadata = deal?.metadata as
-              | { deactivated_reason?: string }
-              | undefined;
+              { deactivated_reason?: string } | undefined;
             return {
               id,
               code: deal?.code,

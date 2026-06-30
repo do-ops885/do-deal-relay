@@ -62,10 +62,7 @@ export async function handleSubmit(
   const metadata = (body.metadata || {}) as Record<string, unknown>;
   const reward = (metadata.reward || {}) as Record<string, unknown>;
   const rewardType = ((reward.type as string) || "cash") as
-    | "cash"
-    | "credit"
-    | "percent"
-    | "item";
+    "cash" | "credit" | "percent" | "item";
 
   const dealId = await generateDealId(
     body.source || "manual",
@@ -93,10 +90,7 @@ export async function handleSubmit(
     url: body.url,
     reward: {
       type: ((reward.type as string) || "cash") as
-        | "cash"
-        | "credit"
-        | "percent"
-        | "item",
+        "cash" | "credit" | "percent" | "item",
       value: (reward.value as number) || 0,
       currency: (reward.currency as string) || "USD",
       description: reward.description as string | undefined,
@@ -106,9 +100,7 @@ export async function handleSubmit(
       date: expiry.date as string | undefined,
       confidence: (expiry.confidence as number) || 0.5,
       type: ((expiry.type as string) || "unknown") as
-        | "hard"
-        | "soft"
-        | "unknown",
+        "hard" | "soft" | "unknown",
     },
     metadata: {
       category: (metadata.category as string[]) || ["general"],

@@ -167,12 +167,7 @@ export interface NLQError {
 export interface Token {
   value: string;
   type:
-    | "word"
-    | "number"
-    | "currency"
-    | "operator"
-    | "punctuation"
-    | "stopword";
+    "word" | "number" | "currency" | "operator" | "punctuation" | "stopword";
   position: number;
   normalized: string;
 }
