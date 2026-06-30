@@ -93,8 +93,10 @@ These are automated rollback/deployment failure issues. They require investigati
 | #295 | Semantic search API endpoint | Medium | 1 day |
 | #296 | Embedding generation pipeline | High | 2-3 days |
 
+**Status**: Complete — all components implemented (Vectorize client, embedding pipeline, HTTP route, cron re-indexing)
+
 **Dependencies**: Cloudflare Vectorize, Embedding API
-**Recommendation**: Implement in v0.3.0 release
+**Recommendation**: ~~Implement in v0.3.0 release~~ Fully implemented
 
 ##### Web UI Dashboard (#302)
 | Issue | Feature | Complexity | Estimated Effort |
@@ -105,7 +107,7 @@ These are automated rollback/deployment failure issues. They require investigati
 | #301 | Referral tracking interface | Medium | 2-3 days |
 
 **Dependencies**: React/Vue, Tailwind CSS, Chart library
-**Recommendation**: Create separate frontend repository
+**Recommendation**: Should be a separate project/sprint due to complexity
 
 ---
 
@@ -126,7 +128,7 @@ These are automated rollback/deployment failure issues. They require investigati
 | P1 | Real Web Research (#289) | Plan implementation | v0.1.7 |
 | P1 | User Management (#284) | Plan implementation | v0.1.7 |
 | P2 | MCP Pagination (#293) | Plan implementation | v0.2.0 |
-| P3 | Semantic Search (#297) | Defer to v0.3.0 | v0.3.0 |
+| P3 | Semantic Search (#297) | **Complete** | Done |
 | P3 | Web UI Dashboard (#302) | Separate project | v0.3.0 |
 
 ---

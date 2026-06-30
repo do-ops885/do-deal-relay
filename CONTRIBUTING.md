@@ -7,6 +7,35 @@
 
 Thank you for your interest in contributing! This guide helps you contribute effectively to this AI agent template.
 
+## Local Development Setup
+
+### Prerequisites
+- Node.js >= 22.0.0
+- npm
+
+### Environment Variables
+The worker requires certain environment variables to validate configuration on startup. Create a `.dev.vars` file in the project root:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+Edit `.dev.vars` and set secure values for:
+- `WEBHOOK_SECRET` - Used for webhook signature verification
+- `EMAIL_WEBHOOK_SECRET` - Used for email webhook verification
+- `API_ENCRYPTION_KEY` - Used for API encryption (must be 32+ characters)
+
+**Never commit `.dev.vars` to version control** - it's in `.gitignore` by default.
+
+### Running Tests
+```bash
+# Unit tests
+npm run test
+
+# E2E tests (requires .dev.vars)
+npm run test:e2e
+```
+
 ## Quick Start
 
 ```bash

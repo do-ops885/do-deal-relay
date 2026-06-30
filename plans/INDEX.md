@@ -11,7 +11,7 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 
 ## Active Plans
 
-- [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs and CI automation.
+- [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs and CI automation. **Verified and mostly complete** as of 2026-06-30; auto-merge workflow is live, remaining polish tracked in follow-up plans below.
 
 ## Follow-Up Plans (Tracked)
 
@@ -19,6 +19,8 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 - [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) — E2E test local environment setup.
 - [FOLLOWUP: P3 Features](FOLLOWUP-p3-features.md) — P3 feature follow-up.
 - [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) — Historical tracking of issues outside this resolution.
+
+> **GOAP execution completed on 2026-06-30.** All planned phases (Analyze, Decompose, Execute, Synthesize) finished. The GitHub Automation plan reached verified status. See individual plan files for details.
 
 ## Archived
 
