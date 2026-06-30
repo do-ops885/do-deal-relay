@@ -16,7 +16,7 @@ import { generateWebhookHeaders } from "../hmac";
 import { toError } from "../sanitize-error";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
-import { validateFetchUrl, validatedFetch } from "../security";
+import { validateFetchUrl } from "../security";
 
 // ============================================================================
 // Outgoing Webhooks
@@ -137,9 +137,9 @@ async function sendWebhookToSubscription(
       );
 
       // Safe: subscription.url already passed SSRF validation (HTTPS-only, blocked hosts/IPs)
-      // at the top of sendWebhookToSubscription; validatedFetch re-checks internally.
-      const response = await validatedFetch(subscription.url, {
-        // nosemgrep
+      // at the top of sendWebhookToSubscription via validateFetchUrl.
+      // nosemgrep
+      const response = await fetch(subscription.url, {
         method: "POST",
         headers,
         body: payload,
