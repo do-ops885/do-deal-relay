@@ -172,18 +172,22 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // Verify focus indication when :focus-visible heuristic fires.
     // Headless CI may not trigger :focus-visible; only assert styles
     // when the heuristic actually matched.
-    const focusStyle = await detectionItem.evaluate((el) => {
-      const style = window.getComputedStyle(el);
-      return {
-        boxShadow: style.boxShadow,
-        isFocusVisible: el.matches(":focus-visible"),
-      };
-    });
+    // Use expect.toPass() to retry because getComputedStyle may return
+    // the browser's default UA ring before the custom CSS settles.
+    await expect(async () => {
+      const focusStyle = await detectionItem.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return {
+          boxShadow: style.boxShadow,
+          isFocusVisible: el.matches(":focus-visible"),
+        };
+      });
 
-    if (focusStyle.isFocusVisible) {
-      expect(focusStyle.boxShadow).toMatch(
-        /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
-      );
-    }
+      if (focusStyle.isFocusVisible) {
+        expect(focusStyle.boxShadow).toMatch(
+          /rgb\(79, 70, 229\)|rgba\(79, 70, 229/,
+        );
+      }
+    }).toPass({ timeout: 3000 });
   });
 });
