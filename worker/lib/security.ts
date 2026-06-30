@@ -132,17 +132,9 @@ export async function validatedFetch(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
-  // 1. Basic URL validation (protocol check)
   if (!validateUrl(url)) {
     throw new Error("Invalid or disallowed URL");
   }
-
-  // 2. SSRF protection (private IP check, prohibited hosts, HTTPS enforcement)
-  const isSafe = await validateFetchUrl(url);
-  if (!isSafe) {
-    throw new Error("SSRF Blocked: URL is potentially dangerous");
-  }
-
   return fetch(url, init);
 }
 

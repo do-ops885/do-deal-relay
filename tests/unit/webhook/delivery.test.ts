@@ -12,7 +12,6 @@ import type {
 
 vi.mock("../../../worker/lib/security", () => ({
   validateFetchUrl: vi.fn().mockResolvedValue(true),
-  validatedFetch: vi.fn((url, init) => fetch(url, init)),
 }));
 
 // ============================================================================

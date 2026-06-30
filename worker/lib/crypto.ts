@@ -70,29 +70,14 @@ export function generateUUID(): string {
 }
 
 /**
- * Efficiently check if a character code is alphanumeric
+ * Combined check, lowercase, and index calculation for alphanumeric characters (0-35).
+ * a-z: 0-25, 0-9: 26-35. Returns -1 if not alphanumeric.
+ * Optimization: reduces branching and range checks in hot loops.
  */
-function isAlphanumeric(code: number): boolean {
-  return (
-    (code >= 48 && code <= 57) || // 0-9
-    (code >= 65 && code <= 90) || // A-Z
-    (code >= 97 && code <= 122) // a-z
-  );
-}
-
-/**
- * Efficiently lowercase a character code if it's uppercase
- */
-function toLowerCode(code: number): number {
-  return code >= 65 && code <= 90 ? code + 32 : code;
-}
-
-/**
- * Get index for alphanumeric character (0-35) for bitset mapping
- */
-function getCharIndex(code: number): number {
-  if (code >= 97 && code <= 122) return code - 97; // a-z: 0-25
-  if (code >= 48 && code <= 57) return code - 48 + 26; // 0-9: 26-35
+function getAlphanumericIndex(code: number): number {
+  if (code >= 97 && code <= 122) return code - 97; // a-z
+  if (code >= 48 && code <= 57) return code - 48 + 26; // 0-9
+  if (code >= 65 && code <= 90) return code - 65; // A-Z (map to 0-25)
   return -1;
 }
 
@@ -113,16 +98,25 @@ export function normalizedEquals(a: string, b: string): boolean {
   let j = 0;
 
   while (i < a.length || j < b.length) {
-    // Find next alphanumeric in A
-    while (i < a.length && !isAlphanumeric(a.charCodeAt(i))) i++;
-    // Find next alphanumeric in B
-    while (j < b.length && !isAlphanumeric(b.charCodeAt(j))) j++;
+    let idxA = -1;
+    while (i < a.length) {
+      idxA = getAlphanumericIndex(a.charCodeAt(i));
+      if (idxA !== -1) break;
+      i++;
+    }
+
+    let idxB = -1;
+    while (j < b.length) {
+      idxB = getAlphanumericIndex(b.charCodeAt(j));
+      if (idxB !== -1) break;
+      j++;
+    }
 
     if (i === a.length || j === b.length) {
       return i === a.length && j === b.length;
     }
 
-    if (toLowerCode(a.charCodeAt(i)) !== toLowerCode(b.charCodeAt(j))) {
+    if (idxA !== idxB) {
       return false;
     }
 
@@ -144,15 +138,14 @@ function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
   let count = 0;
 
   for (let i = 0; i < s.length; i++) {
-    const rawCode = s.charCodeAt(i);
-    if (isAlphanumeric(rawCode)) {
-      const idx = getCharIndex(toLowerCode(rawCode));
+    const idx = getAlphanumericIndex(s.charCodeAt(i));
+    if (idx !== -1) {
       if (prevIdx !== -1) {
         const bitIdx = prevIdx * 36 + idx;
         const word = bitIdx >>> 5;
         const bit = 1 << (bitIdx & 31);
-        const currentWord = bits[word];
-        if (currentWord !== undefined && !(currentWord & bit)) {
+        const currentWord = bits[word]!; // Uint32Array index access is safe here
+        if (!(currentWord & bit)) {
           bits[word] = currentWord | bit;
           count++;
         }
@@ -179,10 +172,7 @@ export function calculateStringSimilarity(a: string, b: string): number {
 
   let intersectionSize = 0;
   for (let i = 0; i < 41; i++) {
-    const aVal = resA.bits[i];
-    const bVal = resB.bits[i];
-    if (aVal === undefined || bVal === undefined) continue;
-    const common = aVal & bVal;
+    const common = resA.bits[i]! & resB.bits[i]!;
     if (common) {
       intersectionSize += popcount(common);
     }
@@ -240,9 +230,10 @@ export function calculateUrlSimilarity(
     );
 
     // Compare query parameters (if present)
-    // Optimization: use raw search string instead of re-serializing params
-    const paramsA = parsedA.search ? parsedA.search.slice(1) : "";
-    const paramsB = parsedB.search ? parsedB.search.slice(1) : "";
+    // Optimization: use raw search string instead of re-serializing params.
+    // Skip slice(1) as leading '?' is ignored by similarity normalization.
+    const paramsA = parsedA.search;
+    const paramsB = parsedB.search;
     const paramsSim =
       paramsA || paramsB ? calculateStringSimilarity(paramsA, paramsB) : 1.0;
 

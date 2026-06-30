@@ -243,12 +243,13 @@ test.describe("Extension Content Script Tests", () => {
   test("content script handles pages without referral codes", async ({
     page,
   }) => {
-    // Create test page first
+    // Create test page first.
+    // Use distinct text to avoid matching the regex /(?:code|referral|invite)[\s:]*([A-Z0-9]{3,})/gi
     await page.setContent(`
       <html>
         <body>
           <h1>Regular Page</h1>
-          <p>This is a plain page with generic content and no rewards or special identifiers.</p>
+          <p>Nothing here.</p>
         </body>
       </html>
     `);
