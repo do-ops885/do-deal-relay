@@ -112,10 +112,7 @@ export async function storeReferralDual(
         reward: {
           type:
             (referral.metadata?.reward_type as
-              | "cash"
-              | "credit"
-              | "percent"
-              | "item") || "cash",
+              "cash" | "credit" | "percent" | "item") || "cash",
           value:
             typeof referral.metadata?.reward_value === "number"
               ? referral.metadata.reward_value

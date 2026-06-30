@@ -20,8 +20,7 @@
  * structural contract rather than an open bag of properties.
  */
 export type ErrContext =
-  | { name: string; message: string; stack?: string }
-  | { value: string };
+  { name: string; message: string; stack?: string } | { value: string };
 
 /**
  * Normalize any thrown value into a structured logger context.

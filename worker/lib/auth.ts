@@ -20,11 +20,7 @@ export { getAllowedOrigin };
 // ============================================================================
 
 export type AuthRole =
-  | "admin"
-  | "user"
-  | "readonly"
-  | "viewer"
-  | "api_consumer";
+  "admin" | "user" | "readonly" | "viewer" | "api_consumer";
 
 export interface AuthResult {
   authenticated: boolean;

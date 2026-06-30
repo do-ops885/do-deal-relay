@@ -25,9 +25,7 @@ export function parseCommand(email: {
   if (recipient.includes("digest@")) {
     const frequencyMatch = subject.match(/daily|weekly|monthly/);
     const frequency = (frequencyMatch ? frequencyMatch[0] : "weekly") as
-      | "daily"
-      | "weekly"
-      | "monthly";
+      "daily" | "weekly" | "monthly";
     return { type: "DIGEST", frequency };
   }
 
@@ -52,9 +50,7 @@ export function parseCommand(email: {
   if (subject.startsWith("digest") || subject.includes("summary")) {
     const frequencyMatch = subject.match(/daily|weekly|monthly/);
     const frequency = (frequencyMatch ? frequencyMatch[0] : "weekly") as
-      | "daily"
-      | "weekly"
-      | "monthly";
+      "daily" | "weekly" | "monthly";
     return { type: "DIGEST", frequency };
   }
 

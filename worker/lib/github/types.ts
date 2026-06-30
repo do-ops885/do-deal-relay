@@ -19,12 +19,7 @@ export interface WorkflowRun {
   head_sha: string;
   status: "queued" | "in_progress" | "completed";
   conclusion:
-    | "success"
-    | "failure"
-    | "cancelled"
-    | "skipped"
-    | "timed_out"
-    | null;
+    "success" | "failure" | "cancelled" | "skipped" | "timed_out" | null;
   html_url: string;
   created_at: string;
   updated_at: string;

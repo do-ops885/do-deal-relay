@@ -76,9 +76,7 @@ export async function handleCodes(args: ParsedArgs): Promise<void> {
           description: args.flags.description as string | undefined,
           reward_type: (args.flags["reward-type"] as string) || "unknown",
           reward_value: args.flags["reward-value"] as
-            | string
-            | number
-            | undefined,
+            string | number | undefined,
           currency: args.flags.currency as string | undefined,
           category: args.flags.category
             ? (args.flags.category as string).split(",")
@@ -122,9 +120,7 @@ export async function handleCodes(args: ParsedArgs): Promise<void> {
           description: args.flags.description as string | undefined,
           reward_type: (args.flags["reward-type"] as string) || "unknown",
           reward_value: args.flags["reward-value"] as
-            | string
-            | number
-            | undefined,
+            string | number | undefined,
           currency: args.flags.currency as string | undefined,
           category: args.flags.category
             ? (args.flags.category as string).split(",")

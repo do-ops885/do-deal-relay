@@ -1,9 +1,6 @@
 // worker/types/validation-cache.ts
 export type ValidationCacheStatus =
-  | "accepted"
-  | "duplicate"
-  | "rejected"
-  | "transient_error";
+  "accepted" | "duplicate" | "rejected" | "transient_error";
 
 export interface ValidationCacheEntry {
   status: ValidationCacheStatus;
