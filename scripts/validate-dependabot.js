@@ -1,5 +1,5 @@
 import fs from "fs";
-import yaml from "js-yaml";
+import { load as yamlLoad, JSON_SCHEMA } from "js-yaml";
 
 // Accept an optional file path as CLI argument, default to .github/dependabot.yml
 const DEPENDABOT_PATH = process.argv[2] || ".github/dependabot.yml";
@@ -11,7 +11,7 @@ try {
   }
 
   const content = fs.readFileSync(DEPENDABOT_PATH, "utf8");
-  const config = yaml.load(content, { schema: yaml.JSON_SCHEMA });
+  const config = yamlLoad(content, { schema: JSON_SCHEMA });
 
   if (!config || config.version !== 2) {
     console.error("Error: dependabot.yml must have version: 2");
