@@ -34,7 +34,7 @@
     "verify": "bash scripts/quality_gate.sh"
   },
   "dependencies": {
-    "@types/node": "25.9.3",
+    "@types/node": "26.0.1",
     "discord.js": "^14.26.4",
     "js-yaml": "4.2.0",
     "protobufjs": "8.6.4",
