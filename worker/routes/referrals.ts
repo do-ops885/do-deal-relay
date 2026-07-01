@@ -130,7 +130,7 @@ export async function handleCreateReferral(
     }
 
     // Validate referral URL against domain (Security Hardening)
-    if (!(await validateReferralUrl(url, domain))) {
+    if (!validateReferralUrl(url, domain)) {
       return jsonResponse(
         {
           error: "Invalid referral URL",
