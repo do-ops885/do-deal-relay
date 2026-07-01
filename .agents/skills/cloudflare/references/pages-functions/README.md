@@ -5,6 +5,7 @@ Serverless functions on Cloudflare Pages using Workers runtime. Full-stack dev w
 ## Quick Navigation
 
 **Need to...**
+
 | Task | Go to |
 |------|-------|
 | Set up TypeScript types | [configuration.md](./configuration.md) - TypeScript Setup |

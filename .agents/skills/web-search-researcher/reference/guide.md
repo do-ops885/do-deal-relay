@@ -684,6 +684,7 @@ Recognize these signals that you have sufficient information:
 - Look for recent updates or newer alternatives
 
 **Freshness Guidelines**:
+
 | Tech Type | Acceptable Age | Priority |
 |-----------|----------------|----------|
 | Fast-moving (AI, frameworks) | <12 months | Current year only |

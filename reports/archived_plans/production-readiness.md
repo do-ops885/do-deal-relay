@@ -287,15 +287,15 @@ These permissions are inherited by all jobs including `rollback-on-failure`. The
 
 ### Short Term (Next 2 Weeks)
 
-4. [ ] Complete remaining security audit items
-5. [ ] Implement load testing suite
-6. [ ] Update to Node.js 24 (before June 2026)
+1. [ ] Complete remaining security audit items
+2. [ ] Implement load testing suite
+3. [ ] Update to Node.js 24 (before June 2026)
 
 ### Long Term (Next Month)
 
-7. [ ] Performance optimization based on load testing results
-8. [ ] Security penetration testing
-9. [ ] Documentation review and updates
+1. [ ] Performance optimization based on load testing results
+2. [ ] Security penetration testing
+3. [ ] Documentation review and updates
 
 ---
 

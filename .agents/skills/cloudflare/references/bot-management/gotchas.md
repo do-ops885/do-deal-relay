@@ -30,7 +30,7 @@
 ### "Yandex Bot Blocked During IP Update"
 
 **Cause:** Yandex updates bot IPs; new IPs unrecognized for 48h during propagation  
-**Solution:** 
+**Solution:**
 1. Check Security Events for specific WAF rule ID blocking Yandex
 2. Create WAF exception:
    ```txt

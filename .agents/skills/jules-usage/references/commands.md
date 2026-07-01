@@ -26,6 +26,7 @@ The following commands are examples for checking repo context, validating reposi
 ### API Resources
 
 #### Sessions
+
 | Endpoint | Description | Example |
 |----------|-------------|---------|
 | `GET /sessions` | List sessions | `curl -H "x-goog-api-key: $JULES_API_KEY" https://jules.googleapis.com/v1alpha/sessions` |
@@ -37,6 +38,7 @@ Response: `{"sessions": [{...}], "nextPageToken": "..."}`
 Session fields: `name`, `id`, `state` (IN_PROGRESS/COMPLETED/FAILED), `title`, `prompt`, `sourceContext`, `url`, `createTime`, `updateTime`, `outputs`
 
 #### Activities
+
 | Endpoint | Description |
 |----------|-------------|
 | `GET /sessions/{id}/activities` | List activities for a session |
@@ -45,6 +47,7 @@ Session fields: `name`, `id`, `state` (IN_PROGRESS/COMPLETED/FAILED), `title`, `
 Activity fields: `name`, `id`, `createTime`, `originator` (agent/user), `planGenerated`, `planApproved`, `progressUpdated`, `artifacts[changeSet[{gitPatch}]]`
 
 #### Sources
+
 | Endpoint | Description | Example |
 |----------|-------------|---------|
 | `GET /sources` | List connected repos | `curl -H "x-goog-api-key: $JULES_API_KEY" https://jules.googleapis.com/v1alpha/sources` |

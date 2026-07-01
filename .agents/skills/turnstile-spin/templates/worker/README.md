@@ -40,9 +40,9 @@ JSON body:
 
 ```json
 {
-	"token": "TURNSTILE_TOKEN_FROM_WIDGET",
-	"remoteip": "1.2.3.4",
-	"idempotency_key": "optional-uuid"
+ "token": "TURNSTILE_TOKEN_FROM_WIDGET",
+ "remoteip": "1.2.3.4",
+ "idempotency_key": "optional-uuid"
 }
 ```
 
@@ -58,15 +58,15 @@ token=...&remoteip=1.2.3.4
 
 ```json
 {
-	"success": true,
-	"challenge_ts": "2026-05-29T12:00:00Z",
-	"hostname": "example.com",
-	"action": "turnstile-spin-v1",
-	"error-codes": [],
-	"_worker": {
-		"duration_ms": 87,
-		"worker_version": "1.0.0"
-	}
+ "success": true,
+ "challenge_ts": "2026-05-29T12:00:00Z",
+ "hostname": "example.com",
+ "action": "turnstile-spin-v1",
+ "error-codes": [],
+ "_worker": {
+  "duration_ms": 87,
+  "worker_version": "1.0.0"
+ }
 }
 ```
 
@@ -105,19 +105,19 @@ The minimum HTML that works against this Worker:
 
 ```html
 <script
-	src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-	async
-	defer
+ src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+ async
+ defer
 ></script>
 
 <form action="https://YOUR_WORKER_URL/" method="POST">
-	<input name="email" type="email" required />
-	<div
-		class="cf-turnstile"
-		data-sitekey="YOUR_SITEKEY"
-		data-action="turnstile-spin-v1"
-	></div>
-	<button type="submit">Submit</button>
+ <input name="email" type="email" required />
+ <div
+  class="cf-turnstile"
+  data-sitekey="YOUR_SITEKEY"
+  data-action="turnstile-spin-v1"
+ ></div>
+ <button type="submit">Submit</button>
 </form>
 ```
 

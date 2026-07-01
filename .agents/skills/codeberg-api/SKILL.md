@@ -52,6 +52,7 @@ Set `FORGEJO_TOKEN` (or `CODEBERG_TOKEN`) in your environment or `.env` file.
 Generate at: **Forgejo/Codeberg → Settings → Applications → Generate Token**.
 
 Required scopes per operation:
+
 | Operation | Scope needed |
 |-----------|-------------|
 | Read public repos | (none, token optional) |

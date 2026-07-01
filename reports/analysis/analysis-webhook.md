@@ -210,6 +210,7 @@ Content-Security-Policy: default-src 'none'
 **Purpose**: Receive referral code updates from partner systems
 
 **Request Headers**:
+
 | Header | Required | Description |
 |--------|----------|-------------|
 | `Content-Type` | Yes | Must be `application/json` |
@@ -264,6 +265,7 @@ type IncomingWebhookEvent =
 ```
 
 **Response Codes**:
+
 | Code | Meaning | Action |
 |------|---------|--------|
 | 200 | Success | Event processed, no retry |

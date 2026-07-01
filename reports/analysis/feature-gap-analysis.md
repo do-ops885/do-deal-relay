@@ -465,11 +465,11 @@ async function validateDealURLs(env: Env) {
 2. ✅ D1 Database Integration (Feature #2)
 
 ### Phase 2: User Features (Weeks 4-6)
-3. ✅ User Management & Auth (Feature #3)
-4. ✅ Deal Expiration Automation (Feature #5)
+1. ✅ User Management & Auth (Feature #3)
+2. ✅ Deal Expiration Automation (Feature #5)
 
 ### Phase 3: AI Integration (Week 7)
-5. ✅ MCP Server Implementation (Feature #4)
+1. ✅ MCP Server Implementation (Feature #4)
 
 ### Phase 4: Enhancement (Weeks 8-10)
 - Vector Search integration

@@ -338,7 +338,7 @@ For each pattern in the baseline results, sorted by issue count (highest first),
    - Python security patterns in a JavaScript-only project
    - Apex patterns from PMD7 in a Java-only project
    - Semgrep rules for languages not in the repo
-   
+
    Remove these patterns from the config.
 5. **Noise floor → disable.** Apply the decisions from 4a. If the noise floor says CodeStyle/Documentation at Minor severity should go, remove those patterns.
 6. **Convention mismatch → disable.** If a pattern flags something that >80% of the codebase does consistently, the pattern contradicts the project's established conventions. Examples:
@@ -349,7 +349,7 @@ For each pattern in the baseline results, sorted by issue count (highest first),
    - Lizard complexity thresholds — raise to match the codebase's actual complexity profile
    - Line length limits — set to the project's observed maximum
    - Other threshold-based rules — adjust to reduce false hits while keeping the rule active
-   
+
    Tuning preserves coverage while reducing noise.
 9. **File exclusion over disabling.** When a pattern is valid but fires on files where it doesn't apply, exclude the files rather than disabling the pattern. The pattern stays active for real source code.
 
@@ -544,8 +544,8 @@ engines:
       - "assets/vendor/**"
 ```
 
-4. Store the full content of the generated `.codacy.yaml` as a string in the `codacyYaml` field of the summary JSON
-5. Present to the user: note that file exclusions cannot be imported to Codacy Cloud via API, the `.codacy.yaml` file has been created/updated, and the user should commit and push it.
+1. Store the full content of the generated `.codacy.yaml` as a string in the `codacyYaml` field of the summary JSON
+2. Present to the user: note that file exclusions cannot be imported to Codacy Cloud via API, the `.codacy.yaml` file has been created/updated, and the user should commit and push it.
 
 If no new file exclusions were added, skip this step and leave `codacyYaml` as `null`.
 

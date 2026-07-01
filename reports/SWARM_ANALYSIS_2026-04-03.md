@@ -271,10 +271,10 @@
 
 ### Short Term (Next 2 Weeks)
 
-2. Fix invalid eval structures
-3. Create CHANGELOG.md, CONTRIBUTING.md, TROUBLESHOOTING.md
-4. Update docs/API.md with missing endpoints
-5. Add unit tests for critical uncovered modules
+1. Fix invalid eval structures
+2. Create CHANGELOG.md, CONTRIBUTING.md, TROUBLESHOOTING.md
+3. Update docs/API.md with missing endpoints
+4. Add unit tests for critical uncovered modules
 
 ### Long Term (Next Month)
 

@@ -25,6 +25,7 @@
 - **Format**: Passing ✅
 
 ### Open Issues (50+)
+
 | Category | Count | Status |
 |----------|-------|--------|
 | ROLLBACK REQUIRED/FAILED/AUTOMATED (#328-#387) | ~30 | Operational incidents — NOT code issues |
@@ -36,6 +37,7 @@
 | **Total implementable** | ~20 | **~15 implemented, ~5 pending** |
 
 ### Open PRs (14)
+
 | PR | Title | Status | Action |
 |----|-------|--------|--------|
 | #395 | Bump wrangler-action 3.15→4.0 | Tests FAIL | Rebase + fix |

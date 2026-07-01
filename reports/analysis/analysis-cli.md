@@ -266,7 +266,7 @@ $ refcli search by-domain coinbase.com
 
 #### `refcli search by-category`
 ```bash
-$ refcli search by-category crypto --status active
+refcli search by-category crypto --status active
 ```
 
 #### `refcli search advanced`
@@ -324,7 +324,7 @@ domain,code,url,reward_type,reward_value,currency,categories,tags,expiry,source,
 
 #### `refcli import json`
 ```bash
-$ refcli import json codes.json --dry-run
+refcli import json codes.json --dry-run
 ```
 
 **JSON Format**:
@@ -747,7 +747,7 @@ export REFCLI_ENDPOINT="https://api.example.com"
 
 **Command line** (not recommended for production):
 ```bash
-$ refcli codes list --api-key ref_xxxxxxxxxxxxxxxxxxxx
+refcli codes list --api-key ref_xxxxxxxxxxxxxxxxxxxx
 ```
 
 ### 7.2 Security Considerations

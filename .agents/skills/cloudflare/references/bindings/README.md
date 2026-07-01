@@ -85,12 +85,12 @@ Bindings are how Workers access Cloudflare resources (storage, compute, services
 }
 ```
 
-2. **Generate types:**
+1. **Generate types:**
 ```bash
 npx wrangler types
 ```
 
-3. **Access in Worker:**
+1. **Access in Worker:**
 ```typescript
 export default {
   async fetch(request, env, ctx) {

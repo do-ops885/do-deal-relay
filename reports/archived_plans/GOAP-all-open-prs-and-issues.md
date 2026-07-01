@@ -15,6 +15,7 @@
 ## Phase 1: Dependency Updates (COMPLETED)
 
 ### Dependabot PRs Merged (7 PRs)
+
 | PR | Update | Status |
 |----|--------|--------|
 | #395 | cloudflare/wrangler-action 3.15→4.0 | ✅ Merged |
@@ -39,6 +40,7 @@
 ## Phase 2: Operational Issues (IN PROGRESS)
 
 ### Deployment Rollback Issues (27 issues)
+
 | Issue Range | Type | Status |
 |-------------|------|--------|
 | #328-#387 | ROLLBACK REQUIRED/FAILED | Monitoring |
@@ -54,6 +56,7 @@
 ### P1 - High Priority
 
 #### Real Web Research with AI Extraction (#289)
+
 | Issue | Feature | Status |
 |-------|---------|--------|
 | #285 | Real web fetching | Planned for v0.1.7 |
@@ -62,6 +65,7 @@
 | #288 | Rate limiting/caching | Planned for v0.1.7 |
 
 #### User Management & Authentication (#284)
+
 | Issue | Feature | Status |
 |-------|---------|--------|
 | #284 | User management API | Planned for v0.1.7 |
@@ -69,6 +73,7 @@
 ### P2 - Medium Priority
 
 #### MCP Pagination & Progress Notifications (#293)
+
 | Issue | Feature | Status |
 |-------|---------|--------|
 | #290 | Cursor-based pagination | Planned for v0.2.0 |
@@ -78,6 +83,7 @@
 ### P3 - Lower Priority
 
 #### Semantic Search (#297)
+
 | Issue | Feature | Status |
 |-------|---------|--------|
 | #294 | Vector embeddings | Planned for v0.3.0 |
@@ -85,6 +91,7 @@
 | #296 | Embedding pipeline | Planned for v0.3.0 |
 
 #### Web UI Dashboard (#302)
+
 | Issue | Feature | Status |
 |-------|---------|--------|
 | #298 | Dashboard architecture | Planned for v0.3.0 |

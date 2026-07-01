@@ -72,28 +72,28 @@
 
 ### P1: CI/CD Reliability
 
-4. **CI KV seeding** ✅ (implemented in v0.1.5 deploy-production.yml)
+1. **CI KV seeding** ✅ (implemented in v0.1.5 deploy-production.yml)
    - E2E test API keys auto-seeded on every production deploy ✅
    - Prevents auth test failures on fresh deployments ✅
 
-5. **Benchmark CI integration** ✅
+2. **Benchmark CI integration** ✅
    - Add benchmark step to release workflow ✅
    - Auto-fail if throughput drops below 5,000 deals/sec ✅
    - Compare against previous run via artifact ✅
 
 ### P2: Developer Experience
 
-6. **Local dev KV seeding script** ✅
+1. **Local dev KV seeding script** ✅
    - Create `scripts/seed-local-kv.sh` that runs all KV seeding at once ✅
    - Include E2E test keys, initial data, and configuration ✅
    - Document in QUICKSTART.md ✅
 
-7. **Update setup-auth.sh** for remote seeding ✅
+2. **Update setup-auth.sh** for remote seeding ✅
    - Add `--remote` flag variant alongside `--local` for production seeding ✅
 
 ### P3: Monitoring & Observability
 
-8. **Benchmark trend tracking** ✅
+1. **Benchmark trend tracking** ✅
    - Store benchmark reports in `reports/` with version naming ✅
    - Track deals/sec trend across versions ✅
    - Add performance regression alerting ✅

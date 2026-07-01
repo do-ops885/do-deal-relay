@@ -71,10 +71,10 @@ Using `conclusion` correctly reflects that `continue-on-error: true` means the f
 
 ### P3: Production & E2E (Added v0.1.5)
 
-12. **Production deploy** ✅ — Deployed to https://do-deal-relay.do-it-119.workers.dev
-13. **Playwright E2E 26/26 passing** ✅ — Seeded remote KV with `--remote` flag for auth keys
-14. **Auth KV seeding** ✅ — Root cause: `wrangler kv key put` defaults to local. Used `--remote` to seed production KV.
-15. **Version bump 0.1.5** ✅ — Consistent across package.json, VERSION, worker/version.ts
+1. **Production deploy** ✅ — Deployed to https://do-deal-relay.do-it-119.workers.dev
+2. **Playwright E2E 26/26 passing** ✅ — Seeded remote KV with `--remote` flag for auth keys
+3. **Auth KV seeding** ✅ — Root cause: `wrangler kv key put` defaults to local. Used `--remote` to seed production KV.
+4. **Version bump 0.1.5** ✅ — Consistent across package.json, VERSION, worker/version.ts
 
 ## Execution Strategy
 

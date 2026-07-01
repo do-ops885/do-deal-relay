@@ -130,7 +130,7 @@ console.log('Params:', params);
 
 **Problem**: Local dev with `--remote` altered production database/KV  
 **Cause**: Remote bindings connect directly to production resources; writes are real  
-**Solution**: 
+**Solution**:
 - Use `--remote` only for read-heavy debugging
 - Create separate preview environments for testing
 - Never use `--remote` for write operations during development
@@ -139,7 +139,7 @@ console.log('Params:', params);
 
 **Problem**: `npx wrangler pages dev --remote` fails with "Unauthorized" or auth error  
 **Cause**: Not logged in, session expired, or insufficient account permissions  
-**Solution**: 
+**Solution**:
 1. Run `npx wrangler login` to re-authenticate
 2. Verify account has access to project and bindings
 3. Check binding IDs match production configuration

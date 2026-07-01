@@ -158,17 +158,17 @@ weighted_score = (
 
 ### Secondary Metrics
 
-4. **Time to Complete** (seconds)
+1. **Time to Complete** (seconds)
 
    - Efficiency measure
    - Compare against baseline
 
-5. **Token Usage** (tokens)
+2. **Token Usage** (tokens)
 
    - Cost efficiency
    - Track across test runs
 
-6. **Error Types** (categorized)
+3. **Error Types** (categorized)
    - Understanding errors
    - Execution errors
    - Tool selection errors

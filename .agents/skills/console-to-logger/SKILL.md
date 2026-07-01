@@ -52,7 +52,7 @@ import { logger } from "../lib/global-logger";
 // Adjust relative path based on file location
 ```
 
-2. **Replace console.* calls**:
+1. **Replace console.* calls**:
 ```typescript
 // BEFORE:
 console.error("Operation failed:", error);
@@ -64,7 +64,7 @@ logger.error("Operation failed", {
 });
 ```
 
-3. **Add component field** to help with debugging:
+1. **Add component field** to help with debugging:
 ```typescript
 logger.error("Cache get error", { component: "cache", key, error: err.message });
 logger.warn("No active lock found", { component: "lock" });

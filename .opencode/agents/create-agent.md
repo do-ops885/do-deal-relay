@@ -658,10 +658,10 @@ This agent launches:
 ## Project-Specific Considerations
 
 **Domain-Specific Agents**:
-- Testing specialists 
-- Code quality enforcers 
-- Feature implementers 
-- Performance analyzers 
+- Testing specialists
+- Code quality enforcers
+- Feature implementers
+- Performance analyzers
 
 **Integration Requirements**:
 - Reference AGENTS.md standards in system prompts

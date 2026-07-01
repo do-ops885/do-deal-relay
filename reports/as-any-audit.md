@@ -97,7 +97,7 @@ const rankingResult = rankDeals(deals as any, {
 
 **Why it's used**: Multiple type mismatches — the deals array shape, sort options enum, and order direction.
 
-**Fix**: 
+**Fix**:
 - For `deals as any`: Cast to the proper Deal type that `rankDeals` expects
 - For sort options: Define a shared enum type between the MCP handler and rankDeals
 - For order: Use the same `'asc' | 'desc'` union type

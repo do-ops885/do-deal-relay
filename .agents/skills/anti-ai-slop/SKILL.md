@@ -176,6 +176,7 @@ This is error message theater. It performs care without providing help.
 **Fix:** Explain what happened, why, and exactly what to do next.
 
 #### Product Copy Sins (Landing Pages)
+
 | Sin | Example | Fix |
 |---|---|---|
 | Features listed as verbs | "Collaborate, Create, Ship" | What does it actually DO? |
@@ -185,6 +186,7 @@ This is error message theater. It performs care without providing help.
 | Future-tense promises | "Will change the way you think about X" | Show it changing it. Now. |
 
 #### UX Writing Sins
+
 | Sin | Example | Fix |
 |---|---|---|
 | Error: blame the user | "Invalid input" | "Email addresses need an @ sign" |
