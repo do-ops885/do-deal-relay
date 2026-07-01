@@ -178,13 +178,17 @@ export class D1Client {
    * Execute a raw SQL statement without parameters
    */
   async raw(sql: string): Promise<{ success: boolean; error?: string }> {
+    const cleanSql = stripSqlComments(sql);
+    if (cleanSql.trim().length === 0) {
+      return { success: true };
+    }
     const result = await this.executeWithRetry<{ success: boolean }>(
       async () => {
         // Use direct db for exec (not available on session)
-        await (this.db as D1Database).exec(sql);
+        await (this.db as D1Database).exec(cleanSql);
         return { success: true };
       },
-      sql,
+      cleanSql,
     );
 
     return result;
@@ -479,6 +483,25 @@ export class D1Client {
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+// ============================================================================
+// SQL Helpers
+// ============================================================================
+
+/**
+ * Strip SQL single-line comment lines (-- ...) and blank lines from a SQL string.
+ * Preserves inline comments (e.g. `SELECT 1 -- test` remains `SELECT 1`).
+ * Preserves block comments (/* ... *​/).
+ */
+function stripSqlComments(sql: string): string {
+  return sql
+    .split("\n")
+    .filter((line) => {
+      const trimmed = line.trim();
+      return trimmed.length > 0 && !trimmed.startsWith("--");
+    })
+    .join("\n");
 }
 
 // ============================================================================
