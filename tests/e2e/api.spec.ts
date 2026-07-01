@@ -9,6 +9,28 @@ import { test, expect } from "@playwright/test";
 const API_KEY = "ddr_admin_test_key_0000000000000000";
 // biome-ignore-end lint/security/noSecrets
 
+/**
+ * Returns the E2E JWT access token obtained during global setup.
+ * Returns undefined if the token was not obtained (e.g. setup failed).
+ */
+function getJwtToken(): string | undefined {
+  return process.env.E2E_JWT_TOKEN || undefined;
+}
+
+/**
+ * Creates auth headers using a Bearer JWT token.
+ * Throws if the token is not available.
+ */
+function jwtAuthHeaders(): Record<string, string> {
+  const token = getJwtToken();
+  if (!token) {
+    throw new Error(
+      "E2E_JWT_TOKEN not set – JWT auth tests require a valid token from global setup",
+    );
+  }
+  return { Authorization: `Bearer ${token}` };
+}
+
 test.describe("Health Endpoints", () => {
   test("GET /health returns healthy status", async ({ request }) => {
     const response = await request.get("/health");
@@ -222,5 +244,108 @@ test.describe("CORS Headers", () => {
     expect(headers["access-control-allow-origin"]).toBe(
       "http://localhost:8787",
     );
+  });
+});
+
+// ============================================================================
+// JWT Bearer Token Authentication Tests
+// These tests verify that endpoints accept Authorization: Bearer <jwt> headers
+// in addition to the X-API-Key header used by other tests.
+// ============================================================================
+
+test.describe("JWT Auth – Deals API", () => {
+  // Skip entire suite if JWT token was not obtained during setup
+  test.skip(() => !getJwtToken(), "E2E_JWT_TOKEN not available");
+
+  test("GET /deals with JWT Bearer token", async ({ request }) => {
+    const response = await request.get("/deals", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(Array.isArray(body)).toBe(true);
+  });
+
+  test("GET /deals.json with JWT Bearer token", async ({ request }) => {
+    const response = await request.get("/deals.json", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+
+    const contentType = response.headers()["content-type"];
+    expect(contentType).toContain("application/json");
+
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("deals");
+    expect(Array.isArray(body.deals)).toBe(true);
+  });
+
+  test("GET /deals/ranked with JWT Bearer token", async ({ request }) => {
+    const response = await request.get("/deals/ranked", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("deals");
+    expect(body).toHaveProperty("meta");
+    expect(Array.isArray(body.deals)).toBe(true);
+  });
+
+  test("GET /api/analytics with JWT Bearer token", async ({ request }) => {
+    const response = await request.get("/api/analytics", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("qualityMetrics");
+  });
+
+  test("GET /api/status with JWT Bearer token", async ({ request }) => {
+    const response = await request.get("/api/status", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("locked");
+  });
+
+  test("GET /api/auth/me with JWT Bearer token returns current user", async ({
+    request,
+  }) => {
+    const response = await request.get("/api/auth/me", {
+      headers: jwtAuthHeaders(),
+    });
+
+    expect(response.status()).toBe(200);
+
+    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
+    const body = (await response.json()) as any;
+    expect(body).toHaveProperty("email", "e2e-test@example.com");
+    expect(body).toHaveProperty("name", "E2E Test User");
+    expect(body).toHaveProperty("role", "user");
+  });
+});
+
+test.describe("JWT Auth – No Token", () => {
+  test("GET /deals without auth returns 401", async ({ request }) => {
+    const response = await request.get("/deals");
+    expect(response.status()).toBe(401);
+  });
+
+  test("GET /api/analytics without auth returns 401", async ({ request }) => {
+    const response = await request.get("/api/analytics");
+    expect(response.status()).toBe(401);
   });
 });
