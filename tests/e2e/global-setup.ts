@@ -1,10 +1,12 @@
 import { execSync } from "node:child_process";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+
+const JWT_TOKEN_PATH = resolve(__dirname, ".jwt-token");
 
 /**
  * Playwright global setup
- * Seeds local KV with test API keys before E2E tests run.
+ * Seeds local KV with test API keys and obtains a JWT token before E2E tests run.
  */
 export default async function globalSetup() {
   const root = resolve(__dirname, "../..");
@@ -13,13 +15,28 @@ export default async function globalSetup() {
   if (!existsSync(resolve(root, ".dev.vars"))) {
     console.log("Creating .dev.vars from .dev.vars.example...");
     const example = existsSync(resolve(root, ".dev.vars.example"))
-      ? "WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod\nEMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod\nAPI_ENCRYPTION_KEY=e2e-test-encryption-key-32-chars-ok\n"
+      ? "WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod\nEMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod\nAPI_ENCRYPTION_KEY=e2e-test-encryption-key-32-chars-ok\nJWT_SECRET=e2e-test-jwt-secret-do-not-use-in-prod\n"
       : "";
     writeFileSync(resolve(root, ".dev.vars"), example);
   }
 
-  // Seed KV with test API keys
-  console.log("Seeding E2E test API keys...");
+  // Seed KV with test API keys and obtain JWT token
+  console.log("Seeding E2E test API keys and obtaining JWT token...");
   execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
+
+  // Read JWT token from file and expose as environment variable for tests
+  if (existsSync(JWT_TOKEN_PATH)) {
+    const token = readFileSync(JWT_TOKEN_PATH, "utf-8").trim();
+    process.env.E2E_JWT_TOKEN = token;
+    console.log("✓ E2E JWT token loaded into environment");
+    // Clean up token file to prevent secrets from lingering on disk
+    unlinkSync(JWT_TOKEN_PATH);
+    console.log("✓ Cleaned up JWT token file");
+  } else {
+    console.warn(
+      "⚠ No JWT token file found at tests/e2e/.jwt-token – JWT-based tests will be skipped",
+    );
+  }
+
   console.log("✓ E2E global setup complete");
 }

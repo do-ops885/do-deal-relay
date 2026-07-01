@@ -24,6 +24,7 @@ coverage/
 .nyc_output/
 test-results/
 playwright-report/
+tests/e2e/.jwt-token
 
 # Wrangler
 .wrangler/

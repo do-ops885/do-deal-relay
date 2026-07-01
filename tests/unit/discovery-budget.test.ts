@@ -89,4 +89,120 @@ describe("discovery-budget", () => {
     const budget = calculateAdaptiveBudget(eliteSource, 100, 50);
     expect(budget).toBe(220);
   });
+
+  // ========================================================================
+  // Edge Case Tests
+  // ========================================================================
+
+  it("should NOT add trust bonus at exactly 0.7 (boundary)", () => {
+    // HIGH_TRUST_THRESHOLD is 0.7; the check is strict greater-than (> 0.7)
+    const boundarySource = { ...baseSource, trust_initial: 0.7 };
+    const budget = calculateAdaptiveBudget(boundarySource, 100, 50);
+    // 0.7 > 0.7 is false → no trust bonus
+    // Base only: 100
+    expect(budget).toBe(100);
+  });
+
+  it("should add trust bonus just above 0.7 threshold", () => {
+    const justAboveSource = { ...baseSource, trust_initial: 0.71 };
+    const budget = calculateAdaptiveBudget(justAboveSource, 100, 50);
+    // 0.71 > 0.7 is true → +50
+    expect(budget).toBe(150);
+  });
+
+  it("should return only highTrustBonus when perSourceBase is 0", () => {
+    const anySource = {
+      ...baseSource,
+      trust_initial: 0.9,
+      validation_success_count: 100,
+      validation_failure_count: 0,
+      discovery_count: 20,
+    };
+    // perSourceBase = 0 → base budget is 0
+    // Trust: 0.9 > 0.7 → budget += 50 → 50 (trust bonus is flat, not scaled)
+    // Validation: successRate = 1.0 >= 0.8 → round(0 * 0.5) = 0
+    // Maturity: discovery_count 20 >= 10 → round(0 * 0.2) = 0
+    const budget = calculateAdaptiveBudget(anySource, 0, 50);
+    expect(budget).toBe(50);
+  });
+
+  it("should not add trust bonus when highTrustBonus is 0", () => {
+    const highTrustSource = { ...baseSource, trust_initial: 0.9 };
+    // highTrustBonus = 0 → trust check passes but adds nothing
+    const budget = calculateAdaptiveBudget(highTrustSource, 100, 0);
+    expect(budget).toBe(100);
+  });
+
+  it("should add 10% maturity bonus at MEDIUM threshold (count=5)", () => {
+    const mediumMaturity = { ...baseSource, discovery_count: 5 };
+    // MATURITY_THRESHOLD_MEDIUM = 5, BONUS_MATURITY_MEDIUM = 0.1
+    // 5 >= 5 → +round(100 * 0.1) = +10
+    const budget = calculateAdaptiveBudget(mediumMaturity, 100, 50);
+    expect(budget).toBe(110);
+  });
+
+  it("should still add 10% bonus between MEDIUM and HIGH (count=8)", () => {
+    const midMaturity = { ...baseSource, discovery_count: 8 };
+    // 8 >= 5 (MEDIUM) but 8 < 10 (not HIGH)
+    // +round(100 * 0.1) = +10
+    const budget = calculateAdaptiveBudget(midMaturity, 100, 50);
+    expect(budget).toBe(110);
+  });
+
+  it("should combine high trust bonus with low validation penalty", () => {
+    const mixedSource = {
+      ...baseSource,
+      trust_initial: 0.9,
+      validation_success_count: 20,
+      validation_failure_count: 80,
+    };
+    // Base: 100
+    // Trust: 0.9 > 0.7 → +50 → 150
+    // Validation: successRate = 20/100 = 0.2 < 0.5 → penalty: round(150 * 0.75) = 113
+    const budget = calculateAdaptiveBudget(mixedSource, 100, 50);
+    expect(budget).toBe(113);
+  });
+
+  it("should return base budget for all-zeros source", () => {
+    const zeroSource = {
+      ...baseSource,
+      trust_initial: 0,
+      validation_success_count: 0,
+      validation_failure_count: 0,
+      discovery_count: 0,
+    };
+    // No trust bonus (0 > 0.7 is false)
+    // No validation branch (totalValidations = 0)
+    // No maturity bonus (0 >= 5 is false)
+    // Budget = 100
+    const budget = calculateAdaptiveBudget(zeroSource, 100, 50);
+    expect(budget).toBe(100);
+  });
+
+  it("should NOT apply penalty when all validations are failures (successRate=0)", () => {
+    const totalFailSource = {
+      ...baseSource,
+      validation_success_count: 0,
+      validation_failure_count: 10,
+    };
+    // totalValidations = 10 > 0 → enters validation branch
+    // successRate = 0/10 = 0
+    // 0 < 0.5 but 0 > 0 is false → penalty guard blocks penalty
+    // Budget stays at base: 100
+    const budget = calculateAdaptiveBudget(totalFailSource, 100, 50);
+    expect(budget).toBe(100);
+  });
+
+  it("should add high bonus for single validation success (successRate=1.0)", () => {
+    const singleSuccess = {
+      ...baseSource,
+      validation_success_count: 1,
+      validation_failure_count: 0,
+    };
+    // totalValidations = 1 > 0 → enters validation branch
+    // successRate = 1/1 = 1.0 >= 0.8 (HIGH)
+    // +round(100 * 0.5) = +50
+    const budget = calculateAdaptiveBudget(singleSuccess, 100, 50);
+    expect(budget).toBe(150);
+  });
 });
