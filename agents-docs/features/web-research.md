@@ -23,6 +23,7 @@ For research tasks, follow this cascade to minimize token usage:
 ```
 
 **Tool Selection**:
+
 | Task | Recommended Tool | Why |
 |------|------------------|-----|
 | Deep research | `web-search-researcher` | Multi-source aggregation |

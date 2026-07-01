@@ -76,7 +76,7 @@ For local DOs in same Worker, `script_name` is optional.
 ### "Workers Assets 404 errors"
 
 **Cause:** Asset path mismatch or incorrect `html_handling`
-**Solution:** 
+**Solution:**
 - Check `assets.directory` points to correct build output
 - Set `html_handling: "auto-trailing-slash"` for SPAs
 - Use `not_found_handling: "single-page-application"` to serve index.html for 404s

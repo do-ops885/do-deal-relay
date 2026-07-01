@@ -45,14 +45,14 @@ Schedule crons during low-carbon periods for carbon-aware execution:
 - Maximum delay: 24 hours from scheduled time
 - Ideal for batch jobs with flexible timing requirements
 
-**Use cases:** 
+**Use cases:**
 - Nightly data processing and ETL pipelines
 - Weekly/monthly report generation
 - Database backups and maintenance
 - Analytics aggregation
 - ML model training
 
-**Not suitable for:** 
+**Not suitable for:**
 - Time-sensitive operations (SLA requirements)
 - User-facing features requiring immediate execution
 - Real-time monitoring and alerting

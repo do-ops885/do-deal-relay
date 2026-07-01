@@ -213,7 +213,7 @@ PR #4 contains **significant unique value** that is NOT in main. The skills (.ag
 
 ### Priority 2: Configuration & Tooling
 
-4. **Ignore Files** (16bb0fb, fad1ebf)
+1. **Ignore Files** (16bb0fb, fad1ebf)
    ```bash
    git cherry-pick fad1ebf --no-commit
    git cherry-pick 16bb0fb --no-commit
@@ -221,8 +221,8 @@ PR #4 contains **significant unique value** that is NOT in main. The skills (.ag
 
 ### Priority 3: Documentation
 
-5. **PROGRESS.md** (extract manually)
-6. **Multi-agent patterns** from da45b5c (selective cherry-pick)
+1. **PROGRESS.md** (extract manually)
+2. **Multi-agent patterns** from da45b5c (selective cherry-pick)
 
 ---
 

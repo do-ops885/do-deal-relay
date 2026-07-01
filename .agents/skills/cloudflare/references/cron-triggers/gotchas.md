@@ -47,12 +47,12 @@ export default {
 };
 ```
 
-2. Start dev server:
+1. Start dev server:
 ```bash
 npx wrangler dev
 ```
 
-3. Use correct endpoint format (URL-encode spaces as `+`):
+1. Use correct endpoint format (URL-encode spaces as `+`):
 ```bash
 # Correct
 curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"
@@ -61,7 +61,7 @@ curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"
 curl "http://localhost:8787/__scheduled?cron=*/5 * * * *"
 ```
 
-4. Update Wrangler if outdated:
+1. Update Wrangler if outdated:
 ```bash
 npm install -g wrangler@latest
 ```

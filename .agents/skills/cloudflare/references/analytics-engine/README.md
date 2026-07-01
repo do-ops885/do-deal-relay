@@ -61,7 +61,7 @@ Alternative scenarios:
 }
 ```
 
-2. Write data points (fire-and-forget, no await):
+1. Write data points (fire-and-forget, no await):
 ```typescript
 env.ANALYTICS.writeDataPoint({
   blobs: ["/api/users", "GET", "200"],
@@ -70,7 +70,7 @@ env.ANALYTICS.writeDataPoint({
 });
 ```
 
-3. Query via SQL API (HTTP):
+1. Query via SQL API (HTTP):
 ```sql
 SELECT blob1, SUM(double2) AS total_requests
 FROM my_events

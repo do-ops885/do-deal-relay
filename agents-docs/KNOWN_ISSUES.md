@@ -112,8 +112,8 @@ Caused by: Error: Worker exited unexpectedly
 
 **Mitigation Strategies**:
 1. **Fork Pool Mode**: Switched to Node.js fork pool instead of Cloudflare pool
-3. **Dependency Updates**: Updated miniflare to v4.x to resolve undici vulnerabilities
-4. **Wait for Upstream**: Monitor @cloudflare/vitest-pool-workers releases
+2. **Dependency Updates**: Updated miniflare to v4.x to resolve undici vulnerabilities
+3. **Wait for Upstream**: Monitor @cloudflare/vitest-pool-workers releases
 
 **Workarounds Implemented**:
 - `vitest.config.ts` uses `pool: "forks"` configuration

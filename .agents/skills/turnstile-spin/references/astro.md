@@ -9,24 +9,24 @@ const SITEKEY = import.meta.env.PUBLIC_TURNSTILE_SITEKEY;
 ---
 
 <html>
-	<head>
-		<script
-			src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-			async
-			defer
-		></script>
-	</head>
-	<body>
-		<form action={`${WORKER_URL}/`} method="POST">
-			<input name="email" type="email" required />
-			<div
-				class="cf-turnstile"
-				data-sitekey={SITEKEY}
-				data-action="turnstile-spin-v1"
-			/>
-			<button type="submit">Sign up</button>
-		</form>
-	</body>
+ <head>
+  <script
+   src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+   async
+   defer
+  ></script>
+ </head>
+ <body>
+  <form action={`${WORKER_URL}/`} method="POST">
+   <input name="email" type="email" required />
+   <div
+    class="cf-turnstile"
+    data-sitekey={SITEKEY}
+    data-action="turnstile-spin-v1"
+   />
+   <button type="submit">Sign up</button>
+  </form>
+ </body>
 </html>
 ```
 
@@ -45,23 +45,23 @@ If you do not use env vars, inline directly:
 
 ```astro title="src/pages/signup.astro"
 <html>
-	<head>
-		<script
-			src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-			async
-			defer
-		></script>
-	</head>
-	<body>
-		<form action="https://YOUR_WORKER_URL/" method="POST">
-			<div
-				class="cf-turnstile"
-				data-sitekey="YOUR_SITEKEY"
-				data-action="turnstile-spin-v1"
-			/>
-			<button type="submit">Sign up</button>
-		</form>
-	</body>
+ <head>
+  <script
+   src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+   async
+   defer
+  ></script>
+ </head>
+ <body>
+  <form action="https://YOUR_WORKER_URL/" method="POST">
+   <div
+    class="cf-turnstile"
+    data-sitekey="YOUR_SITEKEY"
+    data-action="turnstile-spin-v1"
+   />
+   <button type="submit">Sign up</button>
+  </form>
+ </body>
 </html>
 ```
 
@@ -74,23 +74,23 @@ import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 
 export const server = {
-	signup: defineAction({
-		accept: "form",
-		input: z.object({
-			email: z.string().email(),
-			"cf-turnstile-response": z.string(),
-		}),
-		handler: async (input) => {
-			const verify = await fetch("https://YOUR_WORKER_URL/", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ token: input["cf-turnstile-response"] }),
-			});
-			const data = await verify.json();
-			if (!data.success) throw new Error("Verification failed");
-			// process signup
-		},
-	}),
+ signup: defineAction({
+  accept: "form",
+  input: z.object({
+   email: z.string().email(),
+   "cf-turnstile-response": z.string(),
+  }),
+  handler: async (input) => {
+   const verify = await fetch("https://YOUR_WORKER_URL/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: input["cf-turnstile-response"] }),
+   });
+   const data = await verify.json();
+   if (!data.success) throw new Error("Verification failed");
+   // process signup
+  },
+ }),
 };
 ```
 

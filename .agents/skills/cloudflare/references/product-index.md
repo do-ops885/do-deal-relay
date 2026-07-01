@@ -1,11 +1,13 @@
 # Cloudflare Product Index
 
 ### Feature Flags
+
 | Product | Reference |
 |---------|-----------|
 | Flagship | `references/flagship/` |
 
 ### Compute & Runtime
+
 | Product | Reference |
 |---------|-----------|
 | Workers | `references/workers/` |
@@ -21,6 +23,7 @@
 | Smart Placement | `references/smart-placement/` |
 
 ### Storage & Data
+
 | Product | Reference |
 |---------|-----------|
 | KV | `references/kv/` |
@@ -36,6 +39,7 @@
 | R2 SQL | `references/r2-sql/` |
 
 ### AI & Machine Learning
+
 | Product | Reference |
 |---------|-----------|
 | Workers AI | `references/workers-ai/` |
@@ -45,6 +49,7 @@
 | AI Search | `references/ai-search/` |
 
 ### Networking & Connectivity
+
 | Product | Reference |
 |---------|-----------|
 | Tunnel | `references/tunnel/` |
@@ -55,6 +60,7 @@
 | Workers VPC | `references/workers-vpc/` |
 
 ### Security
+
 | Product | Reference |
 |---------|-----------|
 | WAF | `references/waf/` |
@@ -64,6 +70,7 @@
 | Turnstile | `references/turnstile/` |
 
 ### Media & Content
+
 | Product | Reference |
 |---------|-----------|
 | Images | `references/images/` |
@@ -72,12 +79,14 @@
 | Zaraz | `references/zaraz/` |
 
 ### Real-Time Communication
+
 | Product | Reference |
 |---------|-----------|
 | RealtimeKit | `references/realtimekit/` |
 | Realtime SFU | `references/realtime-sfu/` |
 
 ### Developer Tools
+
 | Product | Reference |
 |---------|-----------|
 | Wrangler | `references/wrangler/` |
@@ -92,6 +101,7 @@
 | Workers Playground | `references/workers-playground/` |
 
 ### Infrastructure as Code
+
 | Product | Reference |
 |---------|-----------|
 | Pulumi | `references/pulumi/` |
@@ -99,6 +109,7 @@
 | API | `references/api/` |
 
 ### Other Services
+
 | Product | Reference |
 |---------|-----------|
 | Email Routing | `references/email-routing/` |

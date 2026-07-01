@@ -40,6 +40,7 @@ if (path === "/api/submit" && request.method === "POST") {
 ```
 
 **Vulnerable Endpoints:**
+
 | Endpoint | Method | Risk |
 |----------|--------|------|
 | `/api/discover` | POST | Resource exhaustion, DoS |
@@ -369,7 +370,7 @@ if (!timingSafeEqual(expectedSignature, signature.toLowerCase())) {
 ```
 While signatures are hex, this could be stricter.
 
-2. **No key rotation mechanism:**
+1. **No key rotation mechanism:**
 ```typescript
 export function generateWebhookSecret(): string {
   // Generates secret but no rotation support
@@ -482,12 +483,12 @@ if (path === "/api/discover" && request.method === "POST") {
 }
 ```
 
-2. **Different rate limiting for same resource:**
+1. **Different rate limiting for same resource:**
 - API uses `DEALS_LOCK` KV namespace
 - Webhooks use `DEALS_SOURCES` KV namespace
 - Email uses `DEALS_SOURCES` with different logic
 
-3. **Fails open on KV errors:**
+1. **Fails open on KV errors:**
 ```typescript
 try {
   // ... rate limit check ...
@@ -746,7 +747,7 @@ export async function commitSnapshot(
 return { valid: true };  // Should be configurable
 ```
 
-2. **Blacklist pattern could be bypassed:**
+1. **Blacklist pattern could be bypassed:**
 ```typescript
 const BLACKLISTED_PATTERNS = [
   /spam/i,
@@ -1013,27 +1014,27 @@ if (path === "/metrics") {
 
 ### Short-term (High - Fix This Week)
 
-6. **Move API key storage to secure location** (not plaintext config)
-7. **Enforce HTTPS on CLI**
-8. **Add SSRF protection to web research**
-9. **Implement proper error message sanitization**
-10. **Add request ID logging for debugging**
+1. **Move API key storage to secure location** (not plaintext config)
+2. **Enforce HTTPS on CLI**
+3. **Add SSRF protection to web research**
+4. **Implement proper error message sanitization**
+5. **Add request ID logging for debugging**
 
 ### Medium-term (Medium - Fix This Month)
 
-11. **Add encryption at rest for sensitive KV data**
-12. **Implement key rotation for webhook secrets**
-13. **Add GitHub token scope validation**
-14. **Review and strengthen DKIM/SPF enforcement**
-15. **Add Unicode normalization for spam detection**
+1. **Add encryption at rest for sensitive KV data**
+2. **Implement key rotation for webhook secrets**
+3. **Add GitHub token scope validation**
+4. **Review and strengthen DKIM/SPF enforcement**
+5. **Add Unicode normalization for spam detection**
 
 ### Long-term (Low - Ongoing)
 
-16. **Implement structured security logging**
-17. **Add automated security scanning to CI/CD**
-18. **Regular penetration testing**
-19. **Security incident response plan**
-20. **Compliance audit (GDPR, SOC2, etc.)**
+1. **Implement structured security logging**
+2. **Add automated security scanning to CI/CD**
+3. **Regular penetration testing**
+4. **Security incident response plan**
+5. **Compliance audit (GDPR, SOC2, etc.)**
 
 ---
 

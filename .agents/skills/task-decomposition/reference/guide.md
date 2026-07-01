@@ -598,25 +598,25 @@ Estimated time: 1-2 days
 ### Common Pitfalls
 
 ✗ Tasks too large or vague
-  - Fix: Break down further until atomic
+- Fix: Break down further until atomic
 
 ✗ Missing dependencies
-  - Fix: Review each task for hidden dependencies
+- Fix: Review each task for hidden dependencies
 
 ✗ Unclear success criteria
-  - Fix: Define specific, measurable outcomes
+- Fix: Define specific, measurable outcomes
 
 ✗ Over-decomposition (too granular)
-  - Fix: Combine micro-tasks into meaningful units
+- Fix: Combine micro-tasks into meaningful units
 
 ✗ Missing quality/testing tasks
-  - Fix: Add explicit testing and validation tasks
+- Fix: Add explicit testing and validation tasks
 
 ✗ No consideration for error handling
-  - Fix: Include error handling in each task
+- Fix: Include error handling in each task
 
 ✗ Forgetting documentation tasks
-  - Fix: Add documentation as explicit tasks
+- Fix: Add documentation as explicit tasks
 
 ## Tips for Effective Decomposition
 

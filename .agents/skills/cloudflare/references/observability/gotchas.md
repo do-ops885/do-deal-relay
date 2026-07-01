@@ -3,7 +3,7 @@
 ### "Logs not appearing"
 
 **Cause:** Observability disabled, Worker not redeployed, no traffic, low sampling rate, or log size exceeds 256 KB
-**Solution:** 
+**Solution:**
 ```bash
 # Verify config
 cat wrangler.jsonc | jq '.observability'

@@ -18,14 +18,14 @@ The project has accumulated technical debt and open work items that must be addr
    - Codacy blocked: v7.0.1 flagged as non-existent version for this action
 
 ### Open Issues
-3. **#193**: Remove `--legacy-peer-deps` from all 17+ CI workflows by resolving peer dependency conflicts
-4. **#186**: Reduce metadata churn in scoring/ranking hot loops
-5. **#187**: Strengthen dedupe pre-partitioning to reduce semantic comparison volume
-6. **#190**: Add adaptive per-source budgets based on funnel yield
-7. **#188**: Add phase-level and gate-level benchmark reporting
+1. **#193**: Remove `--legacy-peer-deps` from all 17+ CI workflows by resolving peer dependency conflicts
+2. **#186**: Reduce metadata churn in scoring/ranking hot loops
+3. **#187**: Strengthen dedupe pre-partitioning to reduce semantic comparison volume
+4. **#190**: Add adaptive per-source budgets based on funnel yield
+5. **#188**: Add phase-level and gate-level benchmark reporting
 
 ### CI Failures
-8. TypeScript compilation and Prettier format failures observed in recent CI runs
+1. TypeScript compilation and Prettier format failures observed in recent CI runs
 
 ## Decision
 

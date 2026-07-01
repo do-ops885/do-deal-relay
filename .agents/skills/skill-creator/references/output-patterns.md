@@ -168,14 +168,14 @@ Found 3 matches:
    ```
 ````
 
-2. `src/utils/helper.js:42`
+1. `src/utils/helper.js:42`
 
    ```javascript
    // TODO: Optimize this loop
    for (let i = 0; i < items.length; i++) {
    ```
 
-3. `tests/main.test.js:8`
+2. `tests/main.test.js:8`
    ```javascript
    // TODO: Add more test cases
    test('basic functionality', () => {
@@ -295,20 +295,20 @@ Found 3 matches:
    ```
 ````
 
-2. **Install dependencies**
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-3. **Set up environment**
+2. **Set up environment**
 
    ```bash
    cp .env.example .env
    # Edit .env with your values
    ```
 
-4. **Run development server**
+3. **Run development server**
    ```bash
    npm run dev
    ```

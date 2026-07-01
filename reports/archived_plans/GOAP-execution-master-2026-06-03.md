@@ -19,6 +19,7 @@
 ## Issue Registry
 
 ### Already Implemented (Verify & Close)
+
 | Issues | Feature | GOAP Plan |
 |---|---|---|
 | #280-#284 | User Management & Auth | GOAP-user-management-implementation.md |
@@ -26,6 +27,7 @@
 | #294-#296 | Semantic Search | GOAP-semantic-search-implementation.md |
 
 ### To Implement
+
 | Issues | Feature | Priority | Phase |
 |---|---|---|---|
 | #328-#403 | Rollback issues (batch close) | P0 | 1 |

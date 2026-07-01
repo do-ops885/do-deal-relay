@@ -31,7 +31,7 @@ codacy repo --output json
 
 If this fails (not on Codacy, no auth), stop. Tell the user to add the repo to Codacy first (e.g. `codacy repo --add`) — this skill does not set up a new repository.
 
-2. **The repository has at least one finished analysis.** Inspect the `codacy repo --output json` output for a completed/last-analysis indicator, and confirm the issue overview returns data:
+1. **The repository has at least one finished analysis.** Inspect the `codacy repo --output json` output for a completed/last-analysis indicator, and confirm the issue overview returns data:
 
 ```bash
 codacy issues -O -o json 2>/dev/null | jq '.'
@@ -79,7 +79,7 @@ Configuration Progress:
 mkdir -p .codacy/tmp
 ```
 
-2. **Capture the baseline overview (the BEFORE reference):**
+1. **Capture the baseline overview (the BEFORE reference):**
 
 ```bash
 codacy issues -O -o json 2>/dev/null > .codacy/tmp/overview-before.json
@@ -96,7 +96,7 @@ This overview is the source for the BEFORE `issues` total, the `issuesByCategory
 
 If a given CLI version also surfaces **suggested actions** (patterns accounting for 10%+ of all issues or 3x the average per-pattern count, with ready-to-run disable commands), use them — but do not depend on the field being present; the per-pattern counts above are the reliable signal.
 
-3. **Import the current cloud configuration to a file:**
+1. **Import the current cloud configuration to a file:**
 
 ```bash
 rm -f .codacy/remote.config.json
@@ -105,7 +105,7 @@ codacy-analysis init --remote <provider> <org> <repo> --config-file .codacy/remo
 
 (`init --remote` refuses to overwrite an existing target file, hence the `rm -f`.) This captures the cloud config for tools the Analysis CLI supports.
 
-4. **Split tools into supported vs cloud-only:**
+1. **Split tools into supported vs cloud-only:**
 
 ```bash
 # Tools the Analysis CLI can configure via import
@@ -117,7 +117,7 @@ codacy tools -o json 2>/dev/null | jq '[.[] | select(.settings.isEnabled == true
 
 Any cloud-enabled tool **not** in the `codacy-analysis info` list is **cloud-only** — record it; its patterns must be changed with the Cloud CLI, never via import.
 
-5. **Detect coding-standard lock-in early.** Check which coding standards the repo follows:
+1. **Detect coding-standard lock-in early.** Check which coding standards the repo follows:
 
 ```bash
 codacy repo -o json 2>/dev/null | jq '.repository.repository.standards'
@@ -131,7 +131,7 @@ codacy pattern <toolName> <patternId> -o json 2>/dev/null | jq '.enabledBy' # []
 
 Classify standard-enforced tools/patterns into `conflicts[]` **upfront** rather than discovering them through rejected calls — it avoids wasted trial-and-error and makes the whole noise plan honest about what is actually achievable. Never unlink the standard and never use `--force`.
 
-6. **Record BEFORE counts:**
+1. **Record BEFORE counts:**
 
 ```bash
 # Enabled tools
@@ -154,7 +154,7 @@ codacy-analysis init --auto "AllSecurity,ErrorProne,Performance,BestPractice,Com
 
 This filter is deliberately tighter than the local variant's broad set — it favors security, error-prone, and high-severity findings and avoids flooding the cloud with low-value style noise.
 
-2. **Merge the current cloud config into the auto config (union, remote → auto):**
+1. **Merge the current cloud config into the auto config (union, remote → auto):**
 
 ```bash
 codacy-analysis config --merge --source .codacy/remote.config.json --dest .codacy/auto.config.json
@@ -162,14 +162,14 @@ codacy-analysis config --merge --source .codacy/remote.config.json --dest .codac
 
 `--dest` is overwritten with the union, so `.codacy/auto.config.json` now holds **both** the patterns already enabled on the cloud (for supported tools) **and** the newly suggested patterns. This is the working config for the import path.
 
-3. **First noise evaluation** against `.codacy/tmp/overview-before.json`. Work through patterns by issue count (highest first), applying the noise-evaluation guidance:
+1. **First noise evaluation** against `.codacy/tmp/overview-before.json`. Work through patterns by issue count (highest first), applying the noise-evaluation guidance:
 
 - Start from the overview's suggested actions, per-pattern counts, and false-positive ratios.
 - If a noisy pattern is **tunable** via parameters (complexity thresholds like Lizard CCN/NLOC, line-length limits), **raise the parameter** instead of disabling.
 - Otherwise, if it is noisy and irrelevant, **disable** it.
 - To inspect concrete examples for a pattern before deciding: `codacy issues -p <patternId> -o json 2>/dev/null | jq '.'`.
 
-4. **Apply the changes (dual mechanism):**
+1. **Apply the changes (dual mechanism):**
 
 - **Supported tools** — edit `.codacy/auto.config.json` (remove patterns to disable; edit `parameters` to tune; remove a tool entry to disable the tool), then import:
 
@@ -188,7 +188,7 @@ codacy tool <provider> <org> <repo> <tool> --disable
 
 - If any change is rejected with a **409 conflict** — the pattern/tool is enforced by a Coding Standard, or the tool uses its own Configuration File — **record it in `conflicts[]` and move on**. Never unlink standards and never use `--force`.
 
-5. **Reanalyze and wait:**
+1. **Reanalyze and wait:**
 
 ```bash
 codacy repo --reanalyze-and-wait -o json 2>/dev/null > .codacy/tmp/delta-pass1.json
@@ -206,15 +206,15 @@ codacy issues -O -o json 2>/dev/null > .codacy/tmp/overview-pass1.json
 
 Read `delta-pass1.json` and compare `overview-pass1.json` against `overview-before.json` to see what the first pass actually changed per pattern, category, and severity.
 
-2. **Second noise evaluation — sharpen the signal:**
+1. **Second noise evaluation — sharpen the signal:**
 
 - **Reduce remaining noisy patterns** that survived the first pass.
 - **Judge the newly enabled patterns:** did they surface *relevant* issues, or noise? Disable patterns that turned out irrelevant for this codebase or that only produced false positives (apply the same caution to Security patterns described in the guidance below).
 - **Net-issue guardrail:** one goal of this skill is *fewer, more relevant* results. If the total issue count rose markedly versus the baseline, decide what to cut from the newly enabled set — a final count above the baseline is a red flag **unless** one of these holds: (a) the repo started from a very minimal configuration (some growth is expected and healthy), or (b) the dominant baseline noise is **enforced by a coding standard** and therefore could not be cut from the repo. In case (b), a flat or higher total is an expected outcome, **not** a failure — record the locked patterns/tools in `conflicts[]` with a recommendation to edit the standard, and do **not** over-cut genuinely useful new findings (especially Security) just to force the headline number down. Be smart: keep the high-value new findings, trim the rest.
 
-3. **Apply the changes again** with the same dual mechanism (edit `.codacy/auto.config.json` + `codacy tools --import .codacy/auto.config.json` for supported tools; `codacy pattern`/`patterns`/`tool` for cloud-only). Record any new 409 conflicts in `conflicts[]`.
+1. **Apply the changes again** with the same dual mechanism (edit `.codacy/auto.config.json` + `codacy tools --import .codacy/auto.config.json` for supported tools; `codacy pattern`/`patterns`/`tool` for cloud-only). Record any new 409 conflicts in `conflicts[]`.
 
-4. **Reanalyze and wait:**
+2. **Reanalyze and wait:**
 
 ```bash
 codacy repo --reanalyze-and-wait -o json 2>/dev/null > .codacy/tmp/delta-pass2.json
@@ -228,17 +228,17 @@ codacy repo --reanalyze-and-wait -o json 2>/dev/null > .codacy/tmp/delta-pass2.j
 codacy issues -O -o json 2>/dev/null > .codacy/tmp/overview-after.json
 ```
 
-2. **Record AFTER counts:** enabled tools from `codacy tools -o json` (enabled count); enabled patterns as the sum of supported-tool patterns in `.codacy/auto.config.json` plus cloud-only enabled patterns (per-tool `codacy patterns <tool> --enabled` count — capped at 100, see the pagination caveat); issue total and the category/severity breakdowns from `overview-after.json`. For a tool you could not change (e.g. a standard-enforced tool), carry its BEFORE count forward unchanged rather than re-counting it from the capped patterns list.
+1. **Record AFTER counts:** enabled tools from `codacy tools -o json` (enabled count); enabled patterns as the sum of supported-tool patterns in `.codacy/auto.config.json` plus cloud-only enabled patterns (per-tool `codacy patterns <tool> --enabled` count — capped at 100, see the pagination caveat); issue total and the category/severity breakdowns from `overview-after.json`. For a tool you could not change (e.g. a standard-enforced tool), carry its BEFORE count forward unchanged rather than re-counting it from the capped patterns list.
 
-3. **Evaluate the results.** If needed, inspect specific tools or patterns to confirm (`codacy patterns <tool> --enabled -o json`, `codacy tool <tool> -o json`). Identify:
+2. **Evaluate the results.** If needed, inspect specific tools or patterns to confirm (`codacy patterns <tool> --enabled -o json`, `codacy tool <tool> -o json`). Identify:
 
 - **What went well** — noise reduction, and new *relevant* detections (especially Security).
 - **What did not go well** — noisy patterns that could **not** be disabled because the tool uses its own Configuration File, or because they are enforced by a Coding Standard. These go in `conflicts[]`.
 - **Recommendations outside patterns** — files or paths that are generating disproportionate or future noise and could be ignored. These go in `recommendedPathsToIgnore[]` as recommendations only. (Cloud file exclusions are applied via a `.codacy.yaml` committed to the default branch — mention this to the user, but do not create or modify any file.)
 
-4. **Write the summary** to `.codacy/configure-codacy-cloud-summary.json` (schema below) and present a concise before/after summary to the user: metrics table (patterns, tools, issues, by category, by severity), key improvements, conflicts that blocked changes, and recommended paths to ignore.
+1. **Write the summary** to `.codacy/configure-codacy-cloud-summary.json` (schema below) and present a concise before/after summary to the user: metrics table (patterns, tools, issues, by category, by severity), key improvements, conflicts that blocked changes, and recommended paths to ignore.
 
-5. **Clean up:**
+2. **Clean up:**
 
 ```bash
 rm -rf .codacy/tmp .codacy/remote.config.json .codacy/auto.config.json

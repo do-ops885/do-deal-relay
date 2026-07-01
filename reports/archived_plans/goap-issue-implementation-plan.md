@@ -21,17 +21,17 @@
 5. **#281** - JWT/session-based authentication middleware
 
 ### P2: Code Changes Required
-6. **#282** - RBAC authorization middleware
-7. **#283** - User management API endpoints
-8. **#287** - AI-powered content summarization
-9. **#288** - Rate limiting, caching, request management for web fetching
-10. **#290** - Cursor-based pagination for MCP tool results
-11. **#291** - MCP progress notification support
-12. **#292** - Result streaming for long-running MCP operations
+1. **#282** - RBAC authorization middleware
+2. **#283** - User management API endpoints
+3. **#287** - AI-powered content summarization
+4. **#288** - Rate limiting, caching, request management for web fetching
+5. **#290** - Cursor-based pagination for MCP tool results
+6. **#291** - MCP progress notification support
+7. **#292** - Result streaming for long-running MCP operations
 
 ### P3: Code Changes Required
-13. **#298-#302** - Web UI Dashboard (layout + basic views)
-14. **#294-#296** - Semantic Search (embeddings + search API)
+1. **#298-#302** - Web UI Dashboard (layout + basic views)
+2. **#294-#296** - Semantic Search (embeddings + search API)
 
 ### Rollback Issues (#337,#335,#334,#333,#332,#329,#328)
 - Root cause: Cloudflare API token missing/invalid (#242)

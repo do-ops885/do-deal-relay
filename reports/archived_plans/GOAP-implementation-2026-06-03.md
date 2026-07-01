@@ -13,23 +13,24 @@
 2. **Deployment Failures** - Staging health check failing, blocking production
 
 ### P1 - High Priority (Implement)
-3. **Real Web Research with AI Extraction** (#286-#289)
+1. **Real Web Research with AI Extraction** (#286-#289)
    - CSS selector-based content extraction with cheerio
    - AI-powered content summarization
    - Rate limiting, caching, request management
 
 ### P2 - Medium Priority (Implement)
-4. **MCP Pagination & Progress Notifications** (#290-#293)
+1. **MCP Pagination & Progress Notifications** (#290-#293)
    - Cursor-based pagination for MCP tool results
    - Progress notification support
 
 ### P3 - Low Priority (Follow-up)
-5. **Semantic Search** (#294-#297)
-6. **Web UI Dashboard** (#298-#302)
+1. **Semantic Search** (#294-#297)
+2. **Web UI Dashboard** (#298-#302)
 
 ## Task Decomposition
 
 ### Phase 1: Fix Critical Issues (P0)
+
 | Task | Priority | Dependencies | Complexity | Status |
 |------|----------|--------------|------------|--------|
 | Fix AuthRole type in auth.ts | P0 | None | Low | ✅ Done |
@@ -42,6 +43,7 @@
 **Deployment Issue Root Cause**: The staging environment health check fails because the staging worker isn't deployed or healthy. This requires infrastructure changes (Cloudflare dashboard) and cannot be fixed in code. Created follow-up plan.
 
 ### Phase 2: Implement P1 Features
+
 | Task | Priority | Dependencies | Complexity |
 |------|----------|--------------|------------|
 | Add cheerio dependency | P1 | Phase 1 | Low |
@@ -51,6 +53,7 @@
 | Add AI summarization endpoint | P1 | Phase 1 | High |
 
 ### Phase 3: Implement P2 Features
+
 | Task | Priority | Dependencies | Complexity |
 |------|----------|--------------|------------|
 | Implement cursor encoding/decoding | P2 | Phase 1 | Low |
@@ -58,6 +61,7 @@
 | Add progress notification support | P2 | Phase 1 | Medium |
 
 ### Phase 4: Quality & PR
+
 | Task | Priority | Dependencies | Complexity |
 |------|----------|--------------|------------|
 | Run TypeScript typecheck | P0 | All | Low |
@@ -130,6 +134,7 @@ Phase 4 (Quality)
 ## Execution Summary
 
 ### Phase 1: Fix Critical Issues (P0) ✅ Completed
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Fix AuthRole type in auth.ts | ✅ Done | Added "viewer" and "api_consumer" roles |
@@ -140,6 +145,7 @@ Phase 4 (Quality)
 | Fix deployment workflow staging check | ⚠️ Follow-up | Created follow-up plan (requires infrastructure) |
 
 ### Phase 2: P1 Features ✅ Completed
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Cheerio dependency | ✅ Done | Added to package.json |
@@ -149,6 +155,7 @@ Phase 4 (Quality)
 | AI summarization | ✅ Already implemented | Exists in research-agent |
 
 ### Phase 3: P2 Features ✅ Completed
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Cursor encoding/decoding | ✅ Done | Implemented in mcp/utils.ts |
@@ -156,6 +163,7 @@ Phase 4 (Quality)
 | Progress notifications | ✅ Done | Implemented in mcp/utils.ts |
 
 ### Phase 4: Quality & PR 🔄 In Progress
+
 | Task | Status | Notes |
 |------|--------|-------|
 | TypeScript typecheck | ✅ Passes | 0 errors |

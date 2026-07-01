@@ -36,6 +36,7 @@
 - `VERSION`, `NOTICE`, `LICENSE`
 
 ### Folder Ownership
+
 | Directory | Purpose | Retention |
 | :--- | :--- | :--- |
 | `worker/` | Production source code | Permanent |

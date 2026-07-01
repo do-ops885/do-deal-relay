@@ -99,13 +99,13 @@ echo "your-email-secret" | npx wrangler secret put EMAIL_WEBHOOK_SECRET --env pr
 echo "your-encryption-key" | npx wrangler secret put API_ENCRYPTION_KEY --env production
 ```
 
-2. Verify secrets are set:
+1. Verify secrets are set:
 ```bash
 npx wrangler secret list --env staging
 npx wrangler secret list --env production
 ```
 
-3. Fix API token permissions:
+1. Fix API token permissions:
    - Go to Cloudflare Dashboard → My Profile → API Tokens
    - Edit the token used for deployments
    - Ensure it has: `Workers Scripts: Edit` permission

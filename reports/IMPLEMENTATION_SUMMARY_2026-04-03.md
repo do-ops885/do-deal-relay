@@ -83,6 +83,7 @@ Updated all relevant documentation files to reflect new capabilities.
 **Location**: `worker/lib/research-agent/`
 
 **API Integrations**:
+
 | Source | API | Auth | Rate Limit |
 |--------|-----|------|------------|
 | ProductHunt | GraphQL | Bearer Token | Fair use |

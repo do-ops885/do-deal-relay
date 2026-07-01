@@ -50,6 +50,7 @@ if (path.match(/^\/api\/referrals\/([^/]+)(?:\/deactivate)?$/)) {
 **Location**: `worker/routes/webhooks/index.ts` handlers exist but `worker/index.ts` never calls `handleWebhookRoutes()`
 
 **Unregistered Endpoints**:
+
 | Method | Endpoint | Priority |
 |--------|----------|----------|
 | POST | `/webhooks/incoming/:partnerId` | HIGH |

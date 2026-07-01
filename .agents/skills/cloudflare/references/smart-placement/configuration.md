@@ -74,7 +74,7 @@
 Smart Placement is fundamentally limited to Workers with default `fetch` handlers. This is a key architectural constraint.
 
 - ✅ **Affects:** `fetch` event handlers ONLY (the default export's fetch method)
-- ❌ **Does NOT affect:** 
+- ❌ **Does NOT affect:**
   - RPC methods (Service Bindings with `WorkerEntrypoint` - see example below)
   - Named entrypoints (exports other than `default`)
   - Workers without `fetch` handlers

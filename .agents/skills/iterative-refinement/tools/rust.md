@@ -331,23 +331,23 @@ Create a `Makefile` for easy validation:
 .PHONY: check test lint format validate
 
 check:
-	cargo check --all-targets
+ cargo check --all-targets
 
 test:
-	cargo test
+ cargo test
 
 lint:
-	cargo clippy --all-targets -- -D warnings
+ cargo clippy --all-targets -- -D warnings
 
 format:
-	cargo fmt -- --check
+ cargo fmt -- --check
 
 validate: check test lint format
-	@echo "All validations passed!"
+ @echo "All validations passed!"
 
 fix:
-	cargo fmt
-	cargo clippy --fix --allow-dirty
+ cargo fmt
+ cargo clippy --fix --allow-dirty
 ```
 
 Then run: `make validate`

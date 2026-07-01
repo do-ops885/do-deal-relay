@@ -33,6 +33,7 @@ Throughput:           14 req/sec average
 ```
 
 **Endpoint Breakdown**:
+
 | Endpoint | Requests | p95 Latency | Status |
 |----------|----------|-------------|--------|
 | /health | 4,472 | 100.5ms | ✅ |

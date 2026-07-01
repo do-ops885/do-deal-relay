@@ -73,8 +73,8 @@ ingress:
   - service: http_status:404  # Required catch-all
 ```
 
-4. **Run tunnel**: `cloudflared tunnel run my-private-network`
-5. **Connect from Worker**:
+1. **Run tunnel**: `cloudflared tunnel run my-private-network`
+2. **Connect from Worker**:
 
 ```typescript
 const socket = connect(

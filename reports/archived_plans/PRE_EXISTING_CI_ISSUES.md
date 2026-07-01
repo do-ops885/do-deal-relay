@@ -106,7 +106,7 @@ by default starting June 2nd, 2026.
 **Affected Actions**:
 - `actions/setup-node@v4` (using Node.js 20)
 
-**Solution**: 
+**Solution**:
 - Update to `actions/setup-node@v5` with Node.js 24
 - Or set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`
 
@@ -125,7 +125,7 @@ Failed to get production snapshot: SyntaxError: Unexpected token 'i', "invalid j
 
 **Root Cause**: Mock returns invalid JSON string as test data, error is caught and handled correctly but still logged
 
-**Solution**: 
+**Solution**:
 - Suppress console.error in test
 - Or use valid JSON that fails for a different reason
 

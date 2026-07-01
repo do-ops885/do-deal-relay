@@ -13,9 +13,9 @@ Implement a comprehensive API key-based authentication and authorization system 
 
 ### Authorization Model
 - Three roles will be supported:
-    - `admin`: Full access to all endpoints, including API key management and system metrics.
-    - `user`: Access to submission, research, and standard referral operations.
-    - `readonly`: Access to list and view data, but no modification rights.
+  - `admin`: Full access to all endpoints, including API key management and system metrics.
+  - `user`: Access to submission, research, and standard referral operations.
+  - `readonly`: Access to list and view data, but no modification rights.
 
 ### Storage
 - API key metadata will be stored in the `DEALS_SOURCES` KV namespace (or `WEBHOOK_API_KEYS` if available).
@@ -27,9 +27,9 @@ Implement a comprehensive API key-based authentication and authorization system 
 
 ### API Key Management
 - New admin-only endpoints will be created for managing API keys:
-    - `POST /api/admin/keys`: Create a new key.
-    - `GET /api/admin/keys`: List all active keys.
-    - `DELETE /api/admin/keys/:hash`: Revoke a key.
+  - `POST /api/admin/keys`: Create a new key.
+  - `GET /api/admin/keys`: List all active keys.
+  - `DELETE /api/admin/keys/:hash`: Revoke a key.
 
 ## Consequences
 - All API clients must now provide a valid API key.

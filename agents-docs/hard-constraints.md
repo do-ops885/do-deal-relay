@@ -78,6 +78,7 @@ Only essential configuration files belong in root. All other files MUST use appr
 - Versioning and License files (`VERSION`, `LICENSE`, `CHANGELOG.md`)
 
 **Required Subfolders:**
+
 | File Type      | Destination               |
 | -------------- | ------------------------- |
 | Documentation  | `docs/` or `agents-docs/` |

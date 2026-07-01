@@ -4,19 +4,19 @@ For Hugo static sites. Use a partial for the widget so it can be referenced from
 
 ```html title="layouts/partials/turnstile.html"
 <script
-	src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-	async
-	defer
+ src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+ async
+ defer
 ></script>
 
 <form action="{{ .Site.Params.turnstileWorkerUrl }}/" method="POST">
-	<input name="email" type="email" required />
-	<div
-		class="cf-turnstile"
-		data-sitekey="{{ .Site.Params.turnstileSitekey }}"
-		data-action="turnstile-spin-v1"
-	></div>
-	<button type="submit">Subscribe</button>
+ <input name="email" type="email" required />
+ <div
+  class="cf-turnstile"
+  data-sitekey="{{ .Site.Params.turnstileSitekey }}"
+  data-action="turnstile-spin-v1"
+ ></div>
+ <button type="submit">Subscribe</button>
 </form>
 ```
 

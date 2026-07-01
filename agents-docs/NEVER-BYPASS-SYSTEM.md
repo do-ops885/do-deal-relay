@@ -215,7 +215,7 @@ All functions available to hooks via `source`
 
 **Guard Rails:**
 
-1. Blocked file patterns (_.pem, _.key, .env)
+1. Blocked file patterns (_.pem,_.key, .env)
 2. Secret detection (ghp\_, sk-, AKIA)
 3. File size limits (500 LOC max)
 4. Root directory organization

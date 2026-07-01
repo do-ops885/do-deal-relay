@@ -7,9 +7,9 @@ Initial attempts to implement real-time cleaning and character counting revealed
 
 ## Decision
 We will implement real-time input cleaning (automatic uppercase conversion, alphanumeric stripping) and a character counter as a separate, isolated phase. This allows for:
-1.  **UX Improvement**: Immediate feedback for the user.
-2.  **Architectural Stability**: Decoupling visual/interaction logic from the core capture functionality.
-3.  **Test Hardening**: Updating the test suite to use more robust event-driven assertions (e.g., `dispatchEvent('input')`) to accommodate real-time logic.
+1. **UX Improvement**: Immediate feedback for the user.
+2. **Architectural Stability**: Decoupling visual/interaction logic from the core capture functionality.
+3. **Test Hardening**: Updating the test suite to use more robust event-driven assertions (e.g., `dispatchEvent('input')`) to accommodate real-time logic.
 
 ## Consequences
 - **Positive**: Reduced API error rates, better user awareness of constraints, and improved UI polish.

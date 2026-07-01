@@ -164,7 +164,7 @@ export default {
 }
 ```
 
-**When this helps:** 
+**When this helps:**
 - Worker's `fetch` handler runs closer to DO regions, reducing network latency for multiple DO calls
 - Most beneficial when DOs are geographically concentrated or in specific jurisdictions
 - Helps when coordinator makes many sequential or parallel DO calls

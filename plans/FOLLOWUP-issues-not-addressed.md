@@ -40,7 +40,7 @@ These are automated rollback/deployment failure issues. They require investigati
 - The wrangler-action v4.0 upgrade should help stabilize deployments
 - Need to verify that CI/CD pipeline works with new action versions
 
-**Recommendation**: 
+**Recommendation**:
 1. After this PR merges, monitor production deployment
 2. If still failing, create a dedicated issue to investigate the deployment pipeline
 3. Consider adding deployment health checks and rollback automation
@@ -52,6 +52,7 @@ These are automated rollback/deployment failure issues. They require investigati
 #### P1 - High Priority
 
 ##### Real Web Research with AI Extraction (#289)
+
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #285 | Switch research agent to real web fetching | Medium | 2-3 days |
@@ -63,6 +64,7 @@ These are automated rollback/deployment failure issues. They require investigati
 **Recommendation**: Implement in v0.1.7 release
 
 ##### User Management & Authentication (#284)
+
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #284 | User management API endpoints | High | 3-5 days |
@@ -75,6 +77,7 @@ These are automated rollback/deployment failure issues. They require investigati
 #### P2 - Medium Priority
 
 ##### MCP Pagination & Progress Notifications (#293)
+
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #290 | Cursor-based pagination | Medium | 2-3 days |
@@ -87,6 +90,7 @@ These are automated rollback/deployment failure issues. They require investigati
 #### P3 - Lower Priority
 
 ##### Semantic Search (#297)
+
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #294 | Vector embeddings integration | High | 2-3 days |
@@ -99,6 +103,7 @@ These are automated rollback/deployment failure issues. They require investigati
 **Recommendation**: ~~Implement in v0.3.0 release~~ Fully implemented
 
 ##### Web UI Dashboard (#302)
+
 | Issue | Feature | Complexity | Estimated Effort |
 |-------|---------|------------|------------------|
 | #298 | Dashboard layout and architecture | Medium | 3-5 days |

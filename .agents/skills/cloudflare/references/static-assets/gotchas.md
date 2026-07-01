@@ -86,7 +86,7 @@ interface Env {
 ### "Assets not updating after deployment"
 
 **Cause:** Browser or CDN cache serving old assets  
-**Solution:** 
+**Solution:**
 - Hard refresh browser (Cmd+Shift+R / Ctrl+F5)
 - Use cache-busting (hashed filenames)
 - Verify deployment completed: `wrangler tail`

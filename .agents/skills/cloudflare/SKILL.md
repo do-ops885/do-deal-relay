@@ -22,11 +22,11 @@ Your knowledge of Cloudflare APIs, types, limits, and pricing may be outdated. *
 
 ## Quick Start
 
-1.  **Identify the need** (Compute, Storage, AI, etc.) using the [Quick Decision Trees](#quick-decision-trees).
-2.  **Locate the product** in the [Product Index](references/product-index.md).
-3.  **Fetch the latest docs** using the `cloudflare-docs` search tool or visiting `https://developers.cloudflare.com/`.
-4.  **Check the relevant reference** in `references/` for specific implementation patterns and gotchas.
-5.  **Validate against types** by checking `node_modules/@cloudflare/workers-types`.
+1. **Identify the need** (Compute, Storage, AI, etc.) using the [Quick Decision Trees](#quick-decision-trees).
+2. **Locate the product** in the [Product Index](references/product-index.md).
+3. **Fetch the latest docs** using the `cloudflare-docs` search tool or visiting `https://developers.cloudflare.com/`.
+4. **Check the relevant reference** in `references/` for specific implementation patterns and gotchas.
+5. **Validate against types** by checking `node_modules/@cloudflare/workers-types`.
 
 ## Retrieval Sources
 

@@ -8,6 +8,7 @@ Candidate deals are staged, validated through 9 gates, then promoted to producti
 3. **Rollback**: Revert `DEALS_PROD` to previous snapshot.
 
 ## Validation Gates (Mandatory 9-Gate Pipeline)
+
 | Gate | Pass Condition | Fail Condition / Error |
 | :--- | :--- | :--- |
 | `schema_validation` | Object matches `DealSchema`. | `SchemaError`: Missing fields or type mismatch. |
@@ -22,6 +23,7 @@ Candidate deals are staged, validated through 9 gates, then promoted to producti
 
 ## Infrastructure
 ### KV Namespaces
+
 | Binding | Role | Access Pattern |
 | :--- | :--- | :--- |
 | `DEALS_PROD` | Production snapshots | Read (Public), Write (Finalization) |
