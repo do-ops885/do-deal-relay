@@ -1,7 +1,9 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const JWT_TOKEN_PATH = resolve(__dirname, ".jwt-token");
 
 /**
