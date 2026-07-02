@@ -50,8 +50,9 @@ export async function handleScheduled(
       return;
     }
 
-    // Weekly cron job - full validation sweep
-    if (cron === "0 0 * * 0") {
+    // Weekly cron job - full validation sweep (Sunday midnight)
+    // Matches wrangler.jsonc cron: "0 0 * * SUN"
+    if (cron === "0 0 * * SUN") {
       logger.info("Running weekly full validation sweep", {
         component: "scheduled",
       });
