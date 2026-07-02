@@ -13,6 +13,10 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 
 - [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs and CI automation. **Verified and mostly complete** as of 2026-06-30; auto-merge workflow is live, remaining polish tracked in follow-up plans below.
 
+## Closed PRs (merged)
+
+- ~~GOAP Missing Tasks Swarm v2~~ — Swarm 1 (JWT/cheerio/budget tests) closed via **PR #524**; Swarm 2 (70 new tests for `worker/lib/metrics/stats.ts` + `worker/lib/d1/client.ts`) shipped in **PR #527**. Plan archived as `reports/archived_plans/GOAP-missing-tasks-swarm-2026-07-01.md`. Branch `feat/goap-missing-tasks-swarm-v2` is no longer active.
+
 ## Follow-Up Plans (Tracked)
 
 - [FOLLOWUP: Deployment Fix](FOLLOWUP-deployment-fix.md) — Deployment pipeline hardening.
@@ -21,6 +25,8 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 - [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) — Historical tracking of issues outside this resolution.
 
 > **GOAP execution completed on 2026-06-30.** All planned phases (Analyze, Decompose, Execute, Synthesize) finished. The GitHub Automation plan reached verified status. See individual plan files for details.
+>
+> **Swarm v2 closed on 2026-07-01:** Original 3 swarm tasks re-verified as already complete via PR #524. Swarm 2 (test coverage) shipped in PR #527 (CI: 22+/23 PASS including Unit Tests, Build, E2E, Codacy, Security, Quality Gate). Plan archived to `reports/archived_plans/`.
 
 ## Archived
 
