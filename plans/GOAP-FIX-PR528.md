@@ -11,6 +11,7 @@
 **Complexity**: Simple (single formatting fix, no code changes).
 
 ### Failing Checks (3 total)
+
 | Check | Cause |
 |-------|-------|
 | Type Check | `npm run lint` = `tsc --noEmit && prettier --check .` → prettier fails |

@@ -206,6 +206,7 @@ This document catalogs ALL known missing implementations, broken functionality, 
 
 #### P2-14: No Tests for Critical Components
 **Source**: Swarm Analysis | **Status**: ❌ Open
+
 | Component | Lines | Risk |
 |:---|:---|:---|
 | `worker/lib/d1/queries.ts` | 820 | Database layer |
@@ -328,40 +329,47 @@ This document catalogs ALL known missing implementations, broken functionality, 
 5. P0-5: Expand source registry
 
 ### Sprint 2: Security Hardening (P1)
-6. P1-1: Add D1 endpoint authentication
-7. P1-2: Apply rate limiting to all API endpoints
-8. P1-3: Add research endpoint rate limiting
-9. P1-6: Mitigate lock race condition (P1 → P1 priority)
+
+1. P1-1: Add D1 endpoint authentication
+2. P1-2: Apply rate limiting to all API endpoints
+3. P1-3: Add research endpoint rate limiting
+4. P1-6: Mitigate lock race condition (P1 → P1 priority)
 
 ### Sprint 3: Real Research Agent (P1)
-10. P1-4: Implement real scrapers for all sources
-11. Enable `use_real_fetching`
+
+1. P1-4: Implement real scrapers for all sources
+2. Enable `use_real_fetching`
 
 ### Sprint 4: Feature Completion (P1-P2)
-12. P1-5: User management & auth system (P1)
-13. P2-1 through P2-5: Fix misleading/broken implementations
-14. Register webhook routes (Partial → Complete)
+
+1. P1-5: User management & auth system (P1)
+2. P2-1 through P2-5: Fix misleading/broken implementations
+3. Register webhook routes (Partial → Complete)
 
 ### Sprint 5: Code Quality (P2)
-15. P2-6 through P2-10: Split files exceeding 500 lines
-16. P2-11 through P2-14: Add test coverage
+
+1. P2-6 through P2-10: Split files exceeding 500 lines
+2. P2-11 through P2-14: Add test coverage
 
 ### Sprint 6: Documentation & Polish (P2-P3)
-17. P2-15 through P2-17: Documentation gaps
-18. P3-10 through P3-12: Code quality polish
+
+1. P2-15 through P2-17: Documentation gaps
+2. P3-10 through P3-12: Code quality polish
 
 ### Backlog: Architecture Modernization (P3)
-19. P3-6: Durable Objects for locking
-20. P3-7: Durable Execution for pipelines
-21. P3-8: Agent Memory for bots
-22. P3-9: AI Gateway integration
+
+1. P3-6: Durable Objects for locking
+2. P3-7: Durable Execution for pipelines
+3. P3-8: Agent Memory for bots
+4. P3-9: AI Gateway integration
 
 ### Future: Major Features (P3)
-23. P3-1: Web UI Dashboard
-24. P3-2: Deal comparison
-25. P3-3: Social sharing
-26. P3-4: User ratings
-27. P3-5: Browser extension enhancement
+
+1. P3-1: Web UI Dashboard
+2. P3-2: Deal comparison
+3. P3-3: Social sharing
+4. P3-4: User ratings
+5. P3-5: Browser extension enhancement
 
 ---
 

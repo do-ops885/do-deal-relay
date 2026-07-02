@@ -212,19 +212,22 @@ The April audit identified **50 issues** (4 critical, 8 high, 20 medium, 18 low)
 4. **SWARM-CRITICAL-1 (DEACTIVATE ROUTE)**: Fix regex for deactivate route
 
 #### High (P1) — Security & Stability
-5. **H-3 (D1 AUTH)**: Add authentication to D1 endpoints
-6. **M-8 (RATE LIMITING)**: Apply rate limiting to all API endpoints
-7. **C-4 (LOCK RACE)**: Mitigate KV lock race condition
-8. **H-6 (TRUST EVOLUTION)**: Implement `evolveSourceTrust` function
-9. **M-11 (SNAPSHOT HASH)**: Make Gate 9 meaningful
+
+1. **H-3 (D1 AUTH)**: Add authentication to D1 endpoints
+2. **M-8 (RATE LIMITING)**: Apply rate limiting to all API endpoints
+3. **C-4 (LOCK RACE)**: Mitigate KV lock race condition
+4. **H-6 (TRUST EVOLUTION)**: Implement `evolveSourceTrust` function
+5. **M-11 (SNAPSHOT HASH)**: Make Gate 9 meaningful
 
 #### Medium (P2) — Code Quality & Coverage
-10. **M-1 through M-6 (FILE SIZE)**: Split files exceeding 500-line limit
-11. **M-13 through M-15 (TESTS)**: Add tests for referral storage, D1 routes, and email
-12. **M-7 (SUBMIT AUTH)**: Add auth to `/api/submit`
+
+1. **M-1 through M-6 (FILE SIZE)**: Split files exceeding 500-line limit
+2. **M-13 through M-15 (TESTS)**: Add tests for referral storage, D1 routes, and email
+3. **M-7 (SUBMIT AUTH)**: Add auth to `/api/submit`
 
 #### Low (P3) — Polish
-13. Remaining low-priority items from the audit
+
+1. Remaining low-priority items from the audit
 
 ### Integration Gaps (from Feature Gap Analysis)
 

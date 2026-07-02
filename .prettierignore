@@ -65,3 +65,6 @@ agents-docs/coordination/handoff-log.jsonl
 # fixture files; may contain malformed JSON from failed API calls).
 # Not formatted or analyzed -- ephemeral by design.
 .audit/
+
+# Convex local dev server generated files
+.convex/

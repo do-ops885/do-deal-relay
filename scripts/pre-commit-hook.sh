@@ -273,6 +273,27 @@ echo ""
 # ============================================
 echo "Guard Rail 6: Code Quality"
 
+# Markdown lint check on staged files
+MD_FILES=$(echo "$STAGED_FILES" | grep -E '\.md$' || true)
+if [ -n "$MD_FILES" ]; then
+    info "Checking markdown lint on staged files..."
+    if command -v npx >/dev/null 2>&1; then
+        MD_ERRORS=0
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                if ! npx markdownlint-cli --config .markdownlint.json "$file" 2>/dev/null; then
+                    error "Markdown lint issue in: $file"
+                    error "  ↳ Run: npx markdownlint-cli --fix --config .markdownlint.json $file"
+                    MD_ERRORS=1
+                fi
+            fi
+        done <<< "$MD_FILES"
+        if [ $MD_ERRORS -eq 0 ]; then
+            success "All staged markdown files pass lint"
+        fi
+    fi
+fi
+
 # Prettier formatting check on staged files
 PRETTIER_FILES=$(echo "$STAGED_FILES" | grep -E '\.(ts|js|json|yaml|yml|md)$' || true)
 if [ -n "$PRETTIER_FILES" ]; then
