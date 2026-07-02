@@ -12,6 +12,7 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 ## Active Plans
 
 - [GOAP State](GOAP_STATE.md) — **Comprehensive inventory of ALL missing tasks, implementations, features, and gaps** (61 items across P0-P3). Single source of truth for all planned work. Generated 2026-07-02 from codebase audit, swarm analysis, and 2026 web research.
+- [Progress 2026-07-02](PROGRESS-2026-07-02.md) — Re-verification of the 5 P0 critical bugs from the April audit against current code: all confirmed closed. New focus shifts to P1/P2 items.
 - [ADR-015: Harness & Cloudflare 2026 Best Practices](ADR-015-harness-cloudflare-2026-best-practices.md) — Architecture Decision Record mapping 2026 Harness CI/CD and Cloudflare Agentic Cloud patterns to our codebase. Includes migration roadmap for Durable Objects, Durable Execution, Agent Memory, and AI Gateway. **Proposed** as of 2026-07-02.
 - [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs and CI automation. **Verified and mostly complete** as of 2026-06-30; auto-merge workflow is live, remaining polish tracked in follow-up plans below.
 
