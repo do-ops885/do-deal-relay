@@ -6,11 +6,7 @@
 
 import { fetchRedditDeals } from "../reddit-fetcher";
 import type { FetchResult } from "../types";
-import {
-  type Scraper,
-  type ScraperEnv,
-  type SourceName,
-} from "./base";
+import { type Scraper, type ScraperEnv, type SourceName } from "./base";
 
 export class RedditScraper implements Scraper {
   readonly name: SourceName = "reddit";

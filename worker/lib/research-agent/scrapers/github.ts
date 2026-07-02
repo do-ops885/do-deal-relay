@@ -6,11 +6,7 @@
 
 import { fetchGitHubTrending } from "../api-fetchers";
 import type { FetchResult } from "../types";
-import {
-  type Scraper,
-  type ScraperEnv,
-  type SourceName,
-} from "./base";
+import { type Scraper, type ScraperEnv, type SourceName } from "./base";
 
 export class GitHubScraper implements Scraper {
   readonly name: SourceName = "github";

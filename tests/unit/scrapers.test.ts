@@ -125,10 +125,7 @@ describe("AIExtractorScraper — parsing", () => {
 
   it("returns empty array JSON for empty input", async () => {
     const ai = { run: vi.fn() };
-    const r = await new AIExtractorScraper().scrape(
-      { AI: ai as never },
-      "   ",
-    );
+    const r = await new AIExtractorScraper().scrape({ AI: ai as never }, "   ");
     expect(r.success).toBe(true);
     expect(r.content).toBe("[]");
     expect(ai.run).not.toHaveBeenCalled();
@@ -152,7 +149,7 @@ describe("AIExtractorScraper — parsing", () => {
 
   it("strips markdown ```json fences before parsing", async () => {
     const { ai, s } = makeAI(
-      "```json\n[{\"code\":\"XYZ\",\"url\":\"https://x.com/i/XYZ\",\"confidence\":0.7}]\n```",
+      '```json\n[{"code":"XYZ","url":"https://x.com/i/XYZ","confidence":0.7}]\n```',
     );
     const r = await s.scrape({ AI: ai as never }, "xyz");
     expect(r.success).toBe(true);

@@ -27,10 +27,7 @@ import { getSourceRateLimit } from "../sources";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
 import { isFeatureEnabled } from "../../feature-flags";
-import {
-  createDefaultScraperRegistry,
-  createAIExtractor,
-} from "../scrapers";
+import { createDefaultScraperRegistry, createAIExtractor } from "../scrapers";
 
 function getApiKeys(env: Env) {
   return {
@@ -59,10 +56,7 @@ async function shouldUseRealFetching(
   if (request.options?.use_real_fetching !== undefined) {
     return request.options.use_real_fetching;
   }
-  const rolloutEnabled = await isFeatureEnabled(
-    "real_research_fetching",
-    env,
-  );
+  const rolloutEnabled = await isFeatureEnabled("real_research_fetching", env);
   if (rolloutEnabled) {
     return true;
   }
