@@ -27,7 +27,6 @@ import { getSourceRateLimit } from "../sources";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
 import { isFeatureEnabled } from "../../feature-flags";
-import { createDefaultScraperRegistry, createAIExtractor } from "../scrapers";
 
 function getApiKeys(env: Env) {
   return {
@@ -84,9 +83,6 @@ export async function executeReferralResearch(
   );
   // useRealFetching now resolves through the feature flag for gradual rollout.
   const useRealFetching = await shouldUseRealFetching(env, request, hasApiKeys);
-
-  // Initialize the scraper registry once per request.
-  const scraperRegistry = createDefaultScraperRegistry();
 
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
   const sourcesChecked: string[] = [];

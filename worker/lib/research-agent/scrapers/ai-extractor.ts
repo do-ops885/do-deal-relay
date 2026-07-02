@@ -13,7 +13,6 @@ import { logger } from "../../global-logger";
 import {
   buildFetchError,
   buildFetchSuccess,
-  type Ai,
   type Scraper,
   type ScraperEnv,
   type SourceName,
