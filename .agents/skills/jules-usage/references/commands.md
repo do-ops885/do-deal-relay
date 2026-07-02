@@ -100,4 +100,4 @@ Confirm the exact endpoint and payload via `https://jules.google/docs/api/`.
 ## GitHub issue / PR creation examples
 
 - `gh issue create --title "Jules e2e validation" --body "Task: verify repository with Jules. Attach relevant logs and environment details." --label jules`
-- `gh pr create --title "Add Jules validation guidance" --body "This PR adds Jules usage documentation and error-handling guidance for repo checks." --base main`
+- `gh pr create --title "Add Jules validation guidance" --body "This PR adds Jules usage documentation and error-handling guidance for repo checks." --base develop`
