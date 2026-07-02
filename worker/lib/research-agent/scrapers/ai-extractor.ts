@@ -58,12 +58,16 @@ export class AIExtractorScraper implements Scraper {
     const startTime = Date.now();
 
     if (!env.AI) {
-      return buildFetchError(503, "Workers AI binding (env.AI) unavailable", startTime);
+      return buildFetchError(
+        503,
+        "Workers AI binding (env.AI) unavailable",
+        startTime,
+      );
     }
 
     const truncated = rawText.slice(0, this.options.maxTextChars ?? 8000);
     if (!truncated.trim()) {
-      return buildFetchSuccess('[]', "application/json", startTime);
+      return buildFetchSuccess("[]", "application/json", startTime);
     }
 
     try {
