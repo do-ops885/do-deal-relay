@@ -63,8 +63,8 @@ jobs:
       - name: Validate markdown
         run: |
           npx markdownlint-cli --config .markdownlint.json \
-            "docs/**/*.md" "README.md" "AGENTS.md" \
-            "CONTRIBUTING.md" "SECURITY.md" || true
+            "docs/**/*.md" "plans/**/*.md" "agents-docs/**/*.md" \
+            "README.md" "AGENTS.md" "CONTRIBUTING.md" "SECURITY.md"
 
   validate-codes:
     name: Validation Gates

@@ -73,6 +73,18 @@ if ! npx prettier --check .github/workflows/ worker/ tests/ scripts/ docs/ agent
     ERRORS+=("Run: npx prettier --write .github/workflows/ worker/ tests/ scripts/ docs/ agents-docs/")
 fi
 
+# Check 6.5: Markdown lint (matches CI docs-validation job)
+if command -v npx >/dev/null 2>&1; then
+    md_lint_output=$(npx markdownlint-cli --config .markdownlint.json \
+        "docs/**/*.md" "plans/**/*.md" "agents-docs/**/*.md" \
+        "README.md" "AGENTS.md" "CONTRIBUTING.md" "SECURITY.md" 2>&1) || md_lint_exit=$?
+    if [ "${md_lint_exit:-0}" -ne 0 ]; then
+        ERRORS+=("✗ Markdown lint check failed")
+        ERRORS+=("$md_lint_output")
+        ERRORS+=("Run: npx markdownlint-cli --fix --config .markdownlint.json 'docs/**/*.md' 'plans/**/*.md' 'agents-docs/**/*.md' 'README.md' 'AGENTS.md'")
+    fi
+fi
+
 # Check 7: YAML syntax validation (matches yaml-lint job)
 # Check if yamllint is available
 if command -v yamllint >/dev/null 2>&1; then
