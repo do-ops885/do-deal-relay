@@ -26,6 +26,11 @@ import {
 import { getSourceRateLimit } from "../sources";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
+import { isFeatureEnabled } from "../../feature-flags";
+import {
+  createDefaultScraperRegistry,
+  createAIExtractor,
+} from "../scrapers";
 
 function getApiKeys(env: Env) {
   return {
@@ -36,6 +41,38 @@ function getApiKeys(env: Env) {
     redditClientSecret: (env as { REDDIT_CLIENT_SECRET?: string })
       .REDDIT_CLIENT_SECRET,
   };
+}
+
+/**
+ * Resolve whether the research agent should perform REAL fetching.
+ * Order of precedence (all checks return true to enable real fetching):
+ *   1. Request level: request.options?.use_real_fetching
+ *   2. Feature flag: real_research_fetching (supports rolloutPercentage)
+ *   3. Environment allowlist: production OR explicit RESEARCH_USE_REAL_FETCHING=true
+ *   4. Fallback: any API key configured (legacy heuristic)
+ */
+async function shouldUseRealFetching(
+  env: Env,
+  request: WebResearchRequest,
+  hasApiKeys: boolean,
+): Promise<boolean> {
+  if (request.options?.use_real_fetching !== undefined) {
+    return request.options.use_real_fetching;
+  }
+  const rolloutEnabled = await isFeatureEnabled(
+    "real_research_fetching",
+    env,
+  );
+  if (rolloutEnabled) {
+    return true;
+  }
+  const envAllowsRealFetching =
+    env.ENVIRONMENT === "production" ||
+    env.RESEARCH_USE_REAL_FETCHING === "true";
+  if (envAllowsRealFetching) {
+    return true;
+  }
+  return hasApiKeys;
 }
 
 export async function executeReferralResearch(
@@ -51,11 +88,11 @@ export async function executeReferralResearch(
   const hasApiKeys = Boolean(
     apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
   );
-  const envAllowsRealFetching =
-    env.ENVIRONMENT === "production" ||
-    env.RESEARCH_USE_REAL_FETCHING === "true";
-  const useRealFetching =
-    request.options?.use_real_fetching ?? envAllowsRealFetching ?? hasApiKeys;
+  // useRealFetching now resolves through the feature flag for gradual rollout.
+  const useRealFetching = await shouldUseRealFetching(env, request, hasApiKeys);
+
+  // Initialize the scraper registry once per request.
+  const scraperRegistry = createDefaultScraperRegistry();
 
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
   const sourcesChecked: string[] = [];
