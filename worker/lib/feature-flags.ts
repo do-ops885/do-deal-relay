@@ -46,6 +46,20 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
     enabled: true,
     description: "Enable webhook endpoints",
   },
+  {
+    name: "real_research_fetching",
+    enabled: true,
+    rolloutPercentage: 100,
+    description:
+      "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
+  },
+  {
+    name: "ai_extractor_scraper",
+    enabled: false,
+    rolloutPercentage: 0,
+    description:
+      "Workers AI-based referral code extractor (gradual rollout via setFeatureFlag)",
+  },
 ];
 
 // ============================================================================
