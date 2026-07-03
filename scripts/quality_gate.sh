@@ -298,9 +298,9 @@ if [ ${#WARNINGS[@]} -gt 0 ]; then
     done
 fi
 
-# CI status update hint (main branch only)
+# CI status update hint (main or develop branch only)
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
-if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ] || [ "$CURRENT_BRANCH" = "develop" ]; then
     echo ""
     echo "Run \`./scripts/update-ci-status.sh\` to update CI status artifacts."
 fi

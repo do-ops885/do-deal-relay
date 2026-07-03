@@ -101,7 +101,7 @@ gh issue edit <NUMBER> --add-label jules
 
   `@jules address and analyze feedback for impact the codebase, if has impact change, git commit, git push all changes back to the branch`
 
-- If the PR itself needs to be opened manually, use `gh pr create --title "..." --body "..." --base main` from the repo root.
+- If the PR itself needs to be opened manually, use `gh pr create --title "..." --body "..." --base develop` from the repo root.
 - Ensure the comment includes sufficient context about the PR, the requested changes, and any existing reviewer feedback.
 
 ## Edge cases

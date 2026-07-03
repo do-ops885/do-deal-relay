@@ -74,7 +74,7 @@ export function getGitHubConfig() {
 export async function getFileContent(
   repo: string,
   path: string,
-  branch: string = "main",
+  branch: string = "develop",
 ): Promise<GitHubContent | null> {
   const cacheKey = `file_content:${repo}:${path}:${branch}`;
   if (githubCache) {
@@ -118,7 +118,7 @@ export async function commitFile(
   path: string,
   content: string,
   message: string,
-  branch: string = "main",
+  branch: string = "develop",
   sha?: string,
 ): Promise<string> {
   const { baseUrl, headers } = getGitHubConfig();

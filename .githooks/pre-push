@@ -119,46 +119,47 @@ echo ""
 
 # GUARD RAIL 5: Check Branch Name
 REMOTE_REF="${4:-}"
-PUSH_TO_MAIN=false
+PUSH_TO_PROTECTED=false
 if [ -n "$REMOTE_REF" ]; then
     REMOTE_BRANCH=$(echo "$REMOTE_REF" | sed 's|refs/heads/||')
-    if [[ "$REMOTE_BRANCH" == "main" ]] || [[ "$REMOTE_BRANCH" == "master" ]]; then
-        PUSH_TO_MAIN=true
+    if [[ "$REMOTE_BRANCH" == "main" ]] || [[ "$REMOTE_BRANCH" == "master" ]] || [[ "$REMOTE_BRANCH" == "develop" ]]; then
+        PUSH_TO_PROTECTED=true
     fi
 fi
 
 echo "Guard Rail 5: Branch Name"
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "unknown")
+PROTECTED_BRANCH="${REMOTE_BRANCH:-$BRANCH}"
 
 AUDIT_LOG="temp/main-push-audit.log"
 mkdir -p temp
 
-if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]]; then
+if [[ $PUSH_TO_PROTECTED == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]] || [[ $BRANCH == "develop" ]]; then
     echo ""
-    echo -e "${YELLOW}⚠️  Direct push to main branch detected${NC}"
+    echo -e "${YELLOW}⚠️  Direct push to protected branch ($PROTECTED_BRANCH) detected${NC}"
     echo ""
 
     if [ ! -t 0 ]; then
-        echo "Non-interactive environment detected - proceeding with main push"
-        echo "[$(date -Iseconds)] AUTO-AUTHORIZED main push (non-interactive) by $(git config user.email || echo 'unknown')" >> "$AUDIT_LOG"
+        echo "Non-interactive environment detected - proceeding with push to $PROTECTED_BRANCH"
+        echo "[$(date -Iseconds)] AUTO-AUTHORIZED $PROTECTED_BRANCH push (non-interactive) by $(git config user.email || echo 'unknown')" >> "$AUDIT_LOG"
     else
-        echo -e "${YELLOW}Recommended workflow: Use feature branches for changes${NC}"
+        echo -e "${YELLOW}Recommended workflow: Feature branches → PR to develop → merge to main${NC}"
         echo ""
         echo "Options:"
         echo "  1. Cancel and use: git checkout -b feature/xxx && git push -u origin feature/xxx"
-        echo "  2. Type 'I understand pushing to main' to continue with main push"
+        echo "  2. Type 'I understand pushing to $PROTECTED_BRANCH' to continue"
         echo "  3. Use --no-verify to bypass all checks (not recommended)"
         echo ""
 
         printf "Enter your choice (or type the confirmation phrase): "
         read -r USER_INPUT
 
-        if [[ "$USER_INPUT" == "I understand pushing to main" ]]; then
-            echo "[$(date -Iseconds)] AUTHORIZED main push by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF" >> "$AUDIT_LOG"
-            success "Main push authorized and logged"
+        if [[ "$USER_INPUT" == "I understand pushing to $PROTECTED_BRANCH" ]]; then
+            echo "[$(date -Iseconds)] AUTHORIZED $PROTECTED_BRANCH push by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF" >> "$AUDIT_LOG"
+            success "Push to $PROTECTED_BRANCH authorized and logged"
         else
-            echo "[$(date -Iseconds)] BLOCKED main push attempt by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF, input: '$USER_INPUT'" >> "$AUDIT_LOG"
-            error "Main push blocked - confirmation phrase not entered correctly"
+            echo "[$(date -Iseconds)] BLOCKED $PROTECTED_BRANCH push attempt by $(git config user.email || echo 'unknown') from branch: $BRANCH, remote: $REMOTE_REF, input: '$USER_INPUT'" >> "$AUDIT_LOG"
+            error "Push to $PROTECTED_BRANCH blocked - confirmation phrase not entered correctly"
             echo "   Push has been logged. To force push, use: git push --no-verify"
             exit 1
         fi
@@ -167,6 +168,8 @@ fi
 
 if [[ $BRANCH =~ ^(feature|fix|hotfix|release|chore|docs|refactor|test|style|perf|ci|build)/[a-z0-9-]+$ ]]; then
     success "Branch name follows convention: $BRANCH"
+elif [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]] || [[ $BRANCH == "develop" ]]; then
+    info "On protected branch ($BRANCH)"
 else
     warning "Branch name doesn't follow convention: $BRANCH"
     echo "   Recommended: feature/description, fix/bug-name, hotfix/critical-fix, chore/task-name, docs/update-name"
