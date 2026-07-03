@@ -469,10 +469,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Event Listeners
   // ============================================================================
 
-  function validateManualCode(code) {
+  function validateManualCode(code, forceShow = false) {
     const isValid = /^[A-Z0-9]{4,20}$/i.test(code);
 
-    if (code.length > 0) {
+    // UX: Only show error message if forceShow is true (on blur)
+    // or if the user has already entered 4+ characters.
+    const shouldShowError = code.length > 0 && (forceShow || code.length >= 4);
+
+    if (shouldShowError) {
       elements.manualCode.classList.toggle("invalid", !isValid);
       elements.manualCodeError.classList.toggle("hidden", isValid);
     } else {
@@ -501,7 +505,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (cleaned !== raw) {
         e.target.value = cleaned;
       }
-      validateManualCode(cleaned);
+      validateManualCode(cleaned, false);
+    });
+
+    elements.manualCode.addEventListener("blur", (e) => {
+      validateManualCode(e.target.value, true);
     });
     elements.manualCode.addEventListener("keypress", (e) => {
       if (e.key === "Enter") captureManual();
