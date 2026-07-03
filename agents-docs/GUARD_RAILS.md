@@ -75,11 +75,11 @@ node_modules/, coverage/, dist/, build/
 
 ### Main Branch Protection
 
-The pre-push hook includes special protection for the `main` branch:
-- Detects direct pushes to `main`
-- Requires confirmation phrase: "I understand pushing to main"
-- Logs all main push attempts to `temp/main-push-audit.log`
-- Recommends feature branch workflow
+The pre-push hook includes special protection for the `main` and `develop` branches:
+- Detects direct pushes to `main` or `develop`
+- Requires confirmation phrase: "I understand pushing to main/develop"
+- Logs all protected branch push attempts to `temp/main-push-audit.log`
+- Recommends feature branch workflow (PR to develop, merge to main for production)
 
 ### Branch Naming Convention
 

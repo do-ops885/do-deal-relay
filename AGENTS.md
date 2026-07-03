@@ -69,6 +69,10 @@ Agents SHOULD use the unified toolkit for common operations:
 
 ## PR & Commit Instructions
 - **MANDATORY**: PR titles and Commit headers MUST follow `type(scope): subject`.
+- **Branching Workflow**: `develop` → `main` (production).
+  - `develop`: Active development. All PRs target `develop`.
+  - `main`: Production. Only merged from `develop` after CI passes.
+  - Feature branches: `feat/*`, `fix/*`, `chore/*` — branched from `develop`, PR to `develop`.
 - **Commit Type Mapping**:
   - `fix(security)`: Security patch / hardening.
   - `feat(security)`: New security feature/control.

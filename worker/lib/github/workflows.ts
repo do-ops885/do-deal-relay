@@ -8,7 +8,7 @@ import type { WorkflowRun, WorkflowStatus } from "./types";
 
 export async function getWorkflowRuns(
   repo: string,
-  branch: string = "main",
+  branch: string = "develop",
   perPage: number = 10,
 ): Promise<WorkflowRun[]> {
   const { baseUrl, headers } = getGitHubConfig();
@@ -48,7 +48,7 @@ export async function getWorkflowRuns(
 
 export async function getWorkflowStatusSummary(
   repo: string,
-  branch: string = "main",
+  branch: string = "develop",
 ): Promise<WorkflowStatus> {
   const runs = await getWorkflowRuns(repo, branch, 10);
   return {
@@ -67,7 +67,7 @@ export async function getWorkflowStatusSummary(
 
 export async function waitForWorkflowsComplete(
   repo: string,
-  branch: string = "main",
+  branch: string = "develop",
   options: {
     maxAttempts?: number;
     pollIntervalMs?: number;

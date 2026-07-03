@@ -160,7 +160,7 @@ PR_URL=$(gh pr create \
 $(git diff --stat HEAD~1 | tail -1)
 
 Ready for review and merge." \
-    --base main \
+    --base develop \
     --head "$BRANCH_NAME")
 
 echo "✓ Created PR: $PR_URL"
@@ -176,8 +176,11 @@ echo "=== Release $NEW_VERSION PR Created ==="
 echo ""
 echo "Next steps:"
 echo "1. PR will automerge when CI checks pass"
-echo "2. After merge, create release tag:"
+echo "2. After merge to develop, promote to main for production:"
 echo "   git checkout main && git pull"
+echo "   git merge develop"
+echo "   git push origin main"
+echo "3. Create release tag:"
 echo "   git tag -a v$NEW_VERSION -m \"Release v$NEW_VERSION\""
 echo "   git push origin v$NEW_VERSION"
 echo "   gh release create v$NEW_VERSION --title \"v$NEW_VERSION\" --generate-notes"

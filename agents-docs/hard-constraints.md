@@ -133,4 +133,4 @@ Mandatory gates enforced in `worker/validation/pipeline.ts`:
 - **TypeScript Compilation**: Ensures code compiles.
 - **Test Suite**: Runs tests.
 - **Secret Detection**: Scans for secrets.
-- **Main Branch Protection**: Requires explicit confirmation to push to `main`.
+- **Main/Develop Branch Protection**: Requires explicit confirmation to push to `main` or `develop`.
