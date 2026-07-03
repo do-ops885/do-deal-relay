@@ -149,9 +149,11 @@ export function sortDeals(
         comparison = a.metadata.confidence_score - b.metadata.confidence_score;
         break;
       case "recency":
-        comparison =
-          new Date(a.source.discovered_at).getTime() -
-          new Date(b.source.discovered_at).getTime();
+        // Performance optimization: ISO 8601 strings are lexicographically
+        // sortable. Using direct comparison operators is faster than localeCompare.
+        const dateA = a.source.discovered_at;
+        const dateB = b.source.discovered_at;
+        comparison = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
         break;
       case "value":
         comparison = getNumericValue(a.reward) - getNumericValue(b.reward);
@@ -195,7 +197,9 @@ function compareExpiry(a: string | undefined, b: string | undefined): number {
   if (!a) return 1; // No expiry = "later" (for sorting)
   if (!b) return -1;
 
-  return new Date(a).getTime() - new Date(b).getTime();
+  // Performance optimization: ISO 8601 strings are lexicographically
+  // sortable. Using direct comparison operators is faster than localeCompare.
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /**
