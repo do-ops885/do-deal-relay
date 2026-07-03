@@ -149,11 +149,13 @@ export function sortDeals(
         comparison = a.metadata.confidence_score - b.metadata.confidence_score;
         break;
       case "recency":
-        // Performance optimization: ISO 8601 strings are lexicographically
-        // sortable. Using direct comparison operators is faster than localeCompare.
-        const dateA = a.source.discovered_at;
-        const dateB = b.source.discovered_at;
-        comparison = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+        // Use Date.parse for correctness with mixed timestamp formats.
+        // (Codacy: lexicographic string compare was flagged as ErrorProne —
+        //  silently mis-orders inputs whose separators or timezone offsets
+        //  differ, e.g. "YYYY-MM-DD HH:MM:SS" vs "YYYY-MM-DDTHH:MM:SSZ".)
+        comparison =
+          Date.parse(a.source.discovered_at) -
+          Date.parse(b.source.discovered_at);
         break;
       case "value":
         comparison = getNumericValue(a.reward) - getNumericValue(b.reward);
@@ -197,9 +199,11 @@ function compareExpiry(a: string | undefined, b: string | undefined): number {
   if (!a) return 1; // No expiry = "later" (for sorting)
   if (!b) return -1;
 
-  // Performance optimization: ISO 8601 strings are lexicographically
-  // sortable. Using direct comparison operators is faster than localeCompare.
-  return a < b ? -1 : a > b ? 1 : 0;
+  // Use Date.parse for correctness with mixed timestamp formats.
+  // (Codacy: lexicographic string compare was flagged as ErrorProne —
+  //  silently mis-orders inputs whose separators or timezone offsets
+  //  differ.)
+  return Date.parse(a) - Date.parse(b);
 }
 
 /**
