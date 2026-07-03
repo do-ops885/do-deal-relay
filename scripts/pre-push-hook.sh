@@ -172,28 +172,29 @@ echo "Guard Rail 6: Branch Name"
 
 # Get remote ref from pre-push arguments (local_ref local_sha remote_ref remote_sha)
 REMOTE_REF="${4:-}"
-PUSH_TO_MAIN=false
+PUSH_TO_PROTECTED=false
 
 if [ -n "$REMOTE_REF" ]; then
     # Extract branch name from remote ref (e.g., refs/heads/main -> main)
     REMOTE_BRANCH=$(echo "$REMOTE_REF" | sed 's|refs/heads/||')
-    if [[ "$REMOTE_BRANCH" == "main" ]] || [[ "$REMOTE_BRANCH" == "master" ]]; then
-        PUSH_TO_MAIN=true
+    if [[ "$REMOTE_BRANCH" == "main" ]] || [[ "$REMOTE_BRANCH" == "master" ]] || [[ "$REMOTE_BRANCH" == "develop" ]]; then
+        PUSH_TO_PROTECTED=true
     fi
 fi
 
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "unknown")
 
-# Main branch push protection
-if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]]; then
+# Protected branch push protection (main, master, develop)
+if [[ $PUSH_TO_PROTECTED == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]] || [[ $BRANCH == "develop" ]]; then
+    PROTECTED_BRANCH="${REMOTE_BRANCH:-$BRANCH}"
     echo ""
-    echo -e "${YELLOW}⚠️  Direct push to main branch detected${NC}"
+    echo -e "${YELLOW}⚠️  Direct push to protected branch ($PROTECTED_BRANCH) detected${NC}"
     echo ""
-    echo -e "${YELLOW}Recommended workflow: Use feature branches${NC}"
+    echo -e "${YELLOW}Recommended workflow: Use feature branches → PR to develop → merge to main${NC}"
     echo ""
     echo "Options:"
     echo "  1. Cancel and use: git checkout -b feature/xxx && git push -u origin feature/xxx"
-    echo "  2. Type 'I understand pushing to main' to continue"
+    echo "  2. Type 'I understand pushing to $PROTECTED_BRANCH' to continue"
     echo "  3. Use --no-verify to bypass (not recommended)"
     echo ""
 
@@ -206,26 +207,26 @@ if [[ $PUSH_TO_MAIN == true ]] || [[ $BRANCH == "main" ]] || [[ $BRANCH == "mast
         AUDIT_LOG="temp/main-push-audit.log"
         mkdir -p temp
 
-        if [[ "$USER_INPUT" == "I understand pushing to main" ]]; then
-            echo "[$(date -Iseconds)] AUTHORIZED main push by $(git config user.email || echo 'unknown') from branch: $BRANCH" >> "$AUDIT_LOG"
-            success "Main push authorized and logged"
+        if [[ "$USER_INPUT" == "I understand pushing to $PROTECTED_BRANCH" ]]; then
+            echo "[$(date -Iseconds)] AUTHORIZED $PROTECTED_BRANCH push by $(git config user.email || echo 'unknown') from branch: $BRANCH" >> "$AUDIT_LOG"
+            success "Push to $PROTECTED_BRANCH authorized and logged"
         else
-            echo "[$(date -Iseconds)] BLOCKED main push attempt by $(git config user.email || echo 'unknown') from branch: $BRANCH" >> "$AUDIT_LOG"
-            error "Main push blocked - confirmation phrase not entered correctly"
+            echo "[$(date -Iseconds)] BLOCKED $PROTECTED_BRANCH push attempt by $(git config user.email || echo 'unknown') from branch: $BRANCH" >> "$AUDIT_LOG"
+            error "Push to $PROTECTED_BRANCH blocked - confirmation phrase not entered correctly"
             echo "   To force push, use: git push --no-verify"
         fi
     else
-        warning "Non-interactive environment detected - proceeding with main push"
+        warning "Non-interactive environment detected - proceeding with push to $PROTECTED_BRANCH"
         warning "This will be logged for audit purposes"
-        echo "[$(date -Iseconds)] AUTO main push in non-interactive mode by $(git config user.email || echo 'unknown')" >> "temp/main-push-audit.log" 2>/dev/null || true
+        echo "[$(date -Iseconds)] AUTO $PROTECTED_BRANCH push in non-interactive mode by $(git config user.email || echo 'unknown')" >> "temp/main-push-audit.log" 2>/dev/null || true
     fi
 fi
 
 # Branch naming convention
 if [[ $BRANCH =~ ^(feature|fix|hotfix|release|chore|docs|refactor|test|style|perf|ci|build)/[a-z0-9-]+$ ]]; then
     success "Branch name follows convention: $BRANCH"
-elif [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]]; then
-    info "On main branch (protected)"
+elif [[ $BRANCH == "main" ]] || [[ $BRANCH == "master" ]] || [[ $BRANCH == "develop" ]]; then
+    info "On protected branch ($BRANCH)"
 else
     warning "Branch name doesn't follow convention: $BRANCH"
     echo "   Recommended: feature/description, fix/bug-name, chore/task-name"

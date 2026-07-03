@@ -138,14 +138,14 @@ System warns after **3+ bypasses per day**:
 
 The following errors **CANNOT** be bypassed under any circumstances:
 
-### 1. Direct Push to Main/Master
+### 1. Direct Push to Main/Master/Develop
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║  CRITICAL ERROR: Direct push to main is FORBIDDEN              ║
+║  CRITICAL ERROR: Direct push to main/develop is FORBIDDEN     ║
 ╚════════════════════════════════════════════════════════════════╝
 
-Pushing directly to main can:
+Pushing directly to main or develop can:
   • Break production systems
   • Bypass all code review
   • Introduce untested code
@@ -154,9 +154,10 @@ Required workflow:
   1. Create a feature branch: git checkout -b feature/your-feature
   2. Make your changes and commit
   3. Push the feature branch: git push origin feature/your-feature
-  4. Create a Pull Request on GitHub
+  4. Create a Pull Request targeting develop
   5. Get code review and approval
   6. Merge via GitHub (which runs all checks)
+  7. Promote develop → main for production releases
 
 THIS GUARD RAIL CANNOT BE BYPASSED
 ```
