@@ -158,7 +158,7 @@ SKIP_TESTS=true ./scripts/quality_gate.sh
 5. Wait for review and address feedback
 
 **PR Checklist:**
-- [ ] Branch is up to date with main
+- [ ] Branch is up to date with develop
 - [ ] Quality gate passes
 - [ ] Commit messages follow conventions
 - [ ] Tests added/updated (if applicable)
