@@ -15,9 +15,9 @@ See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectural Decision Records (ADRs) and TRIZ for structured development.
 
 1. **ANALYZE & STRATEGIZE (Phase 1)**
-   - **Deep Analysis**: Analyze repo structure and existing infrastructure deeply before asking questions.
+   - **Analyze-First**: Analyze repo structure and existing infrastructure deeply before asking ANY clarification questions. Infer from existing patterns.
    - **TRIZ/ADR**: Use TRIZ-based analysis for complex deal-discovery logic. Write an ADR in `plans/`.
-   - **CI Status**: Check CI status via `./scripts/check-ci-status.sh`. If not passing, "Always-Fix" protocol applies.
+   - **CI Status**: Check CI status via `./scripts/agent-toolkit.sh doctor`. If not passing, "Always-Fix" protocol applies.
 
 2. **DECOMPOSE & PLAN (Phase 2)**
    - **Deep Planning Mode**: Enter Deep Planning Mode at start. Interaction required to confirm assumptions.
@@ -25,19 +25,34 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 
 3. **EXECUTE & COORDINATE (Phase 3)**
    - **Atomic commits**: Execute tasks systematically with atomic commits.
-   - **Always-Fix Pre-Existing Issues**: Agents MUST fix any existing CI check, lint warning, or quality-gate finding found in the current context as part of the task. Zero tolerance for regressive or inherited failures.
-   - **Quality Gate**: Run `./scripts/quality_gate.sh` after every change.
+   - **Always-Fix Pre-Existing Issues**: Agents MUST fix any existing CI check, lint warning, or quality-gate finding found in the current context. Zero tolerance for regressive or inherited failures.
+   - **Triage protocol for unfixable issues**: If a failure cannot be fixed (e.g., external dependency broken, requires human credential):
+     1. Create an ADR in `plans/` documenting root cause and why it's out of scope.
+     2. Create a GOAP task in `plans/GOAP_STATE.md` with status `blocked` and ADR link.
+     3. Ensure the branch is otherwise green.
+   - **Quality Gate**: Run `./scripts/agent-toolkit.sh quality` after every change.
 
 4. **SYNTHESIZE (Phase 4)**
    - **Documentation**: Update `README.md`, `docs/`, and `agents-docs/`.
    - **Extract learnings**: Append discoveries to `agents-docs/LEARNINGS.md` or nearest `AGENTS.md`.
 
 ## Behavioral Rules
-1. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`.
-2. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
-3. **Context Hygiene**: Swallow passing output; surface failures only. Follow `agents-docs/CONTEXT.md`.
-4. **Direct Action**: Proceed immediately when intent is clear; minimize unnecessary clarification requests. Infer from existing patterns first.
-5. **Operational Safety**: Coordinate modifications to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`).
+1. **Analyze-First**: Exhaustive repository analysis before asking questions. Minimize unnecessary clarification requests.
+2. **Always-Fix**: Fix pre-existing issues in the current context immediately. No discussion, no deferral.
+3. **Agentic Abstention**: If environmental infeasibility makes further tool calls wasteful, agents MUST abstain per `.agents/skills/agentic-abstention/SKILL.md`.
+4. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`.
+5. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
+6. **Context Hygiene**: Swallow passing output; surface failures only. Follow `agents-docs/CONTEXT.md`.
+7. **Operational Safety**: Coordinate modifications to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`).
+
+## Operational Tools
+Agents SHOULD use the unified toolkit for common operations:
+```bash
+./scripts/agent-toolkit.sh setup    # Environment setup
+./scripts/agent-toolkit.sh doctor   # Health check
+./scripts/agent-toolkit.sh quality  # Run quality gate
+./scripts/agent-toolkit.sh docs     # Documentation sync
+```
 
 ## Infrastructure Contracts
 ### KV Namespaces
@@ -82,5 +97,14 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 - Run `./scripts/setup-skills.sh` to refresh symlinks.
 
 ## Post-Task Protocol
-Append JSON entry to `.agents/metrics.jsonl`:
-`{"timestamp": "YYYY-MM-DDTHH:MM:SSZ", "agent": "id", "task": "desc", "skill_used": "skill|null", "status": "completed|failed", "tokens_used": int, "duration_seconds": int, "notes": "text"}`
+Append JSON entry to `.agents/metrics.jsonl` after every task.
+
+**If task completed normally:**
+```json
+{"timestamp": "ISO8601", "agent": "name", "task": "description", "status": "completed"}
+```
+
+**If task ended with ABSTAIN:**
+```json
+{"timestamp": "ISO8601", "agent": "name", "task": "desc", "abstained": true, "abstention_reason": "code", "stopped_at_step": N, "resume_hint": "hint"}
+```
