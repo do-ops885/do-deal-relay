@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   calculateDealScore,
   calculateDetailedScore,
@@ -39,6 +39,15 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 describe("Ranking Logic", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should calculate consistent scores between simple and detailed functions", () => {
     const deal = createMockDeal("1");
     const simpleScore = calculateDealScore(deal);
