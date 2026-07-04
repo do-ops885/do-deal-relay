@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-07-02
+
+### Added
+- **Real web research agent**: Implemented scraper interface, real fetchers wrappers, and AI extractor via Workers AI behind the `real_research_fetching` and `ai_extractor_scraper` flags
+- **Expanded discovery sources**: Configured 10 active referral program sources (Revolut, Wise, Robinhood, Webull, etc.) enabling autonomous discovery
+- **Architectural documentation**: Added comprehensive 61-item `GOAP_STATE.md` inventory and `ADR-015` detailing 2026 Harness & Cloudflare best practices
+
+### Fixed
+- **Cron schedule mismatch**: Aligned `wrangler.jsonc` schedule defaults with `worker/scheduled.ts` to ensure deal expiration sweeps and weekly validations execute
+- **Success notification error**: Corrected pipeline completion event type in `state-machine.ts` from `system_error` to `pipeline_complete`
+- **Deactivate referral route**: Updated index routing regex to accurately match and process `/deactivate` and `/reactivate` path suffixes
+- **Discovery URL patterns**: Replaced invalid trailing glob patterns (`/invite/*`) in discovery sources with strictly resolvable endpoint paths
+
 ## [0.1.7] - 2026-06-15
 
 ### Added
@@ -193,7 +206,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality gate exits with code 2 to surface errors to agent
 - Progressive disclosure for skills (load on demand)
 
-[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.6...v0.1.7
 [0.2.0]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.0...v0.2.0
 [0.1.6]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.5...v0.1.6
