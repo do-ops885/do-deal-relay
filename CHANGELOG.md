@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-07-03
+
+### Added
+- **Authentication & User Management API documentation** (PR #532): Documented `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `GET /api/auth/me`, `PUT /api/auth/me`, and `GET /api/admin/users` in `docs/API.md`.
+- **JWT Authentication support documentation**: Added documentation for JWT Bearer token authentication in the API reference.
+
+### Changed
+- **Extension UX Enhancements** (PR #530): Implemented a deferred validation pattern for manual referral code input in the browser extension. Errors are now shown only after 4+ characters or when the input loses focus (`blur`).
+- **Documentation synchronization**: Synchronized version references to 0.1.8 across `README.md` and `docs/API.md`.
+
 ## [0.1.7] - 2026-06-15
 
 ### Added
@@ -193,7 +203,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quality gate exits with code 2 to surface errors to agent
 - Progressive disclosure for skills (load on demand)
 
-[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.6...v0.1.7
 [0.2.0]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.0...v0.2.0
 [0.1.6]: https://github.com/do-ops885/do-deal-relay/compare/v0.1.5...v0.1.6
