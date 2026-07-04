@@ -11,6 +11,8 @@ Extends [AGENTS.md](AGENTS.md). Claude must adhere to all Core Constraints and I
 - **Grep**: Use `Glob` before `Grep` for efficiency.
 - **MCP**: Primary interface for system interaction. See [SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) for typed tool signatures.
 - **Batching**: Group independent `Bash` calls to minimize round-trips.
+- **Unified Toolkit**: Use `./scripts/agent-toolkit.sh` for setup, doctor, quality, and docs tasks.
+- **Triage Protocol**: Follow the ADR-based triage protocol in [AGENTS.md](AGENTS.md) for unfixable issues.
 
 ## Specific Constraints
 - **AGENTS.md**: Strict 200-line limit for AGENTS.md.

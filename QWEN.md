@@ -9,7 +9,9 @@ Extends [AGENTS.md](AGENTS.md). Qwen must adhere to all Core Constraints and Inf
 ## Operational Focus
 - **Precision**: Follow typed tool signatures in [SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) exactly.
 - **Strict Compliance**: Adhere strictly to the shared agent contract in [AGENTS.md](AGENTS.md).
-- **Verification**: Run `./scripts/quality_gate.sh` frequently to ensure zero-regression documentation updates.
+- **Verification**: Run `./scripts/agent-toolkit.sh quality` frequently to ensure zero-regression documentation updates.
+- **Unified Toolkit**: Use `./scripts/agent-toolkit.sh` for setup, doctor, quality, and docs tasks.
+- **Triage Protocol**: Follow the ADR-based triage protocol in [AGENTS.md](AGENTS.md) for unfixable issues.
 
 ## Constraints
 - **Sub-Agents**: Use OpenCode sub-agents (see `agents-docs/SUB-AGENTS.md`) if complex delegation is required.

@@ -7,7 +7,20 @@ Production: `https://your-worker.workers.dev`
 ## Authentication
 
 No authentication required for public endpoints.
-For admin endpoints (future), API key via header: `X-API-Key: your-key`
+
+### API Key Authentication
+
+For programmatic access, use an API key in the `X-API-Key` header:
+
+`X-API-Key: your-key`
+
+### JWT Authentication
+
+For user-based authentication (e.g., in the web dashboard), use a Bearer token in the `Authorization` header:
+
+`Authorization: Bearer <your_access_token>`
+
+Access tokens can be obtained via the `/api/auth/login` endpoint and refreshed via `/api/auth/refresh`.
 
 ## Rate Limiting
 
@@ -42,7 +55,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -63,7 +76,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": true,
   "status": "healthy",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "checks": {
     "kv_connection": true,
     "last_run_success": true,
@@ -96,7 +109,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": false,
   "status": "degraded",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "checks": {
     "kv_connection": false,
     "last_run_success": false,
@@ -338,7 +351,7 @@ Get full snapshot with metadata.
 
 ```json
 {
-  "version": "0.1.7",
+  "version": "0.1.8",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",
@@ -491,6 +504,189 @@ Submit a new deal for validation.
 - 202: Submitted for review
 - 400: Invalid request
 - 409: Deal already exists
+
+---
+
+## Authentication & User Management API
+
+Endpoints for user registration, authentication, and profile management.
+
+### POST /api/auth/register
+
+Register a new user account.
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "name": "Jane Doe"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": "user-uuid",
+  "email": "user@example.com",
+  "name": "Jane Doe",
+  "role": "user",
+  "isActive": true,
+  "createdAt": "2024-03-31T12:00:00Z",
+  "updatedAt": "2024-03-31T12:00:00Z"
+}
+```
+
+---
+
+### POST /api/auth/login
+
+Authenticate a user and receive access and refresh tokens.
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "role": "user",
+    "isActive": true,
+    "createdAt": "2024-03-31T12:00:00Z",
+    "updatedAt": "2024-03-31T12:00:00Z"
+  },
+  "accessToken": "jwt-access-token",
+  "refreshToken": "jwt-refresh-token",
+  "expiresIn": 86400
+}
+```
+
+---
+
+### POST /api/auth/refresh
+
+Refresh an expired access token using a refresh token.
+
+**Request Body:**
+
+```json
+{
+  "refreshToken": "your-refresh-token"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "accessToken": "new-jwt-access-token",
+  "refreshToken": "new-jwt-refresh-token",
+  "expiresIn": 86400
+}
+```
+
+---
+
+### GET /api/auth/me
+
+Get the currently authenticated user's profile.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "user-uuid",
+  "email": "user@example.com",
+  "name": "Jane Doe",
+  "role": "user",
+  "isActive": true,
+  "createdAt": "2024-03-31T12:00:00Z",
+  "updatedAt": "2024-03-31T12:00:00Z"
+}
+```
+
+---
+
+### PUT /api/auth/me
+
+Update the currently authenticated user's profile.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "user-uuid",
+  "email": "jane.smith@example.com",
+  "name": "Jane Smith",
+  "role": "user",
+  "isActive": true,
+  "createdAt": "2024-03-31T12:00:00Z",
+  "updatedAt": "2024-03-31T12:15:00Z"
+}
+```
+
+---
+
+### GET /api/admin/users
+
+List all registered users (Admin only).
+
+**Headers:**
+- `Authorization: Bearer <admin_access_token>`
+
+**Response (200 OK):**
+
+```json
+{
+  "users": [
+    {
+      "id": "user-uuid-1",
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-uuid-2",
+      "email": "user@example.com",
+      "name": "Jane Smith",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-03-31T12:00:00Z",
+      "updatedAt": "2024-03-31T12:15:00Z"
+    }
+  ]
+}
+```
 
 ---
 

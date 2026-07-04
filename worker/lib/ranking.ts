@@ -149,9 +149,13 @@ export function sortDeals(
         comparison = a.metadata.confidence_score - b.metadata.confidence_score;
         break;
       case "recency":
+        // Use Date.parse for correctness with mixed timestamp formats.
+        // (Codacy: lexicographic string compare was flagged as ErrorProne —
+        //  silently mis-orders inputs whose separators or timezone offsets
+        //  differ, e.g. "YYYY-MM-DD HH:MM:SS" vs "YYYY-MM-DDTHH:MM:SSZ".)
         comparison =
-          new Date(a.source.discovered_at).getTime() -
-          new Date(b.source.discovered_at).getTime();
+          Date.parse(a.source.discovered_at) -
+          Date.parse(b.source.discovered_at);
         break;
       case "value":
         comparison = getNumericValue(a.reward) - getNumericValue(b.reward);
@@ -195,7 +199,11 @@ function compareExpiry(a: string | undefined, b: string | undefined): number {
   if (!a) return 1; // No expiry = "later" (for sorting)
   if (!b) return -1;
 
-  return new Date(a).getTime() - new Date(b).getTime();
+  // Use Date.parse for correctness with mixed timestamp formats.
+  // (Codacy: lexicographic string compare was flagged as ErrorProne —
+  //  silently mis-orders inputs whose separators or timezone offsets
+  //  differ.)
+  return Date.parse(a) - Date.parse(b);
 }
 
 /**
