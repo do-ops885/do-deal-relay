@@ -49,6 +49,7 @@ skill-name/
 - Keep under **250 lines**
 - Use progressive disclosure: move detailed content to `references/`
 - Include step-by-step instructions, examples, and common edge cases
+- **Mandatory Sections**: Every `SKILL.md` MUST include `## Rationalizations` and `## Red Flags`.
 
 ---
 
