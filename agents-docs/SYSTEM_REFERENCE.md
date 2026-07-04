@@ -1,5 +1,5 @@
 # System Reference
-**Version**: 0.1.6 | **Status**: Production
+**Version**: 0.1.8 | **Status**: Production
 
 ## Architecture: Two-Phase Publishing
 Candidate deals are staged, validated through 9 gates, then promoted to production.
