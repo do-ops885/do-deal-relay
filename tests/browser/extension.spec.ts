@@ -495,8 +495,10 @@ test.describe("Extension API Integration Tests", () => {
     // Error should be hidden when empty
     await expect(manualCodeError).toHaveClass(/hidden/);
 
-    // Error should show for too-short code
+    // Error should show for too-short code on blur (deferred validation)
     await manualInput.fill("ab");
+    await expect(manualCodeError).toHaveClass(/hidden/);
+    await manualInput.blur();
     await expect(manualCodeError).not.toHaveClass(/hidden/);
 
     // Error should hide for valid code
