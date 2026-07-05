@@ -51,6 +51,14 @@ const SECURITY_CONSTANTS = {
   ] as const,
 } as const;
 
+/**
+ * Basic URL validation.
+ * Checks for valid protocol (http/https) and optional domain whitelist.
+ *
+ * @param url - The URL string to validate
+ * @param allowedDomains - Optional list of allowed hostnames
+ * @returns true if valid and allowed
+ */
 export function validateUrl(
   url: string,
   allowedDomains?: readonly string[],
@@ -73,6 +81,14 @@ export function validateUrl(
   }
 }
 
+/**
+ * Hardened SSRF validation for outgoing fetch requests.
+ * Blocks non-HTTPS protocols, prohibited hosts (metadata services),
+ * and private/loopback IP ranges (including DNS resolution check).
+ *
+ * @param url - The URL string to validate
+ * @returns true if safe to fetch
+ */
 export async function validateFetchUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
@@ -128,6 +144,14 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
   }
 }
 
+/**
+ * Secure wrapper for fetch that enforces protocol and domain validation.
+ *
+ * @param url - The URL string to fetch
+ * @param init - Standard RequestInit options
+ * @returns Promise resolving to the Response
+ * @throws Error if URL validation fails
+ */
 export async function validatedFetch(
   url: string,
   init?: RequestInit,
