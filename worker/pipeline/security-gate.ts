@@ -45,8 +45,8 @@ const SSRF_CHECK = {
   name: "ssrf_protection",
   description: "No URLs pointing to internal/private networks",
   validate: (deal: Deal): SecurityFinding => {
-    const blockedHosts = CONFIG.BLOCKED_HOSTS;
-    const blockedRanges = CONFIG.BLOCKED_IP_RANGES;
+    const blockedHosts = [...CONFIG.BLOCKED_HOSTS];
+    const blockedRanges = [...CONFIG.BLOCKED_IP_RANGES];
     const issues: string[] = [];
 
     const urls = [deal.url, deal.source.url];
