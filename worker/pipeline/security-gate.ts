@@ -56,7 +56,7 @@ const SSRF_CHECK = {
         const hostname = parsed.hostname;
 
         // Check blocked hosts
-        if (blockedHosts.includes(hostname)) {
+        if (blockedHosts.includes(hostname as (typeof blockedHosts)[number])) {
           issues.push(`Blocked host: ${hostname}`);
         }
 
