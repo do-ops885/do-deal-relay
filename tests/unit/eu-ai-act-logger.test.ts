@@ -531,7 +531,7 @@ describe("EUAIActLogger", () => {
     it("should append startDate filter", async () => {
       await logger.queryLogs({ startDate: "2024-01-01" });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("timestamp >= ?");
       expect(mockBind).toHaveBeenCalledWith("2024-01-01");
     });
@@ -539,14 +539,14 @@ describe("EUAIActLogger", () => {
     it("should append endDate filter", async () => {
       await logger.queryLogs({ endDate: "2024-12-31" });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("timestamp <= ?");
     });
 
     it("should append operation filter", async () => {
       await logger.queryLogs({ operation: "deal_scoring" });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("operation = ?");
       expect(mockBind).toHaveBeenCalledWith("deal_scoring");
     });
@@ -554,7 +554,7 @@ describe("EUAIActLogger", () => {
     it("should append systemId filter", async () => {
       await logger.queryLogs({ systemId: "sys-1" });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("system_id = ?");
       expect(mockBind).toHaveBeenCalledWith("sys-1");
     });
@@ -562,21 +562,21 @@ describe("EUAIActLogger", () => {
     it("should append hasHumanOversight filter", async () => {
       await logger.queryLogs({ hasHumanOversight: true });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("oversight_decision IS NOT NULL");
     });
 
     it("should append hasRiskFlags filter", async () => {
       await logger.queryLogs({ hasRiskFlags: true });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("risk_flags IS NOT NULL");
     });
 
     it("should append LIMIT clause", async () => {
       await logger.queryLogs({ limit: 10 });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("LIMIT ?");
       const bindings = mockBind.mock.calls[0] as unknown[];
       expect(bindings).toContain(10);
@@ -585,7 +585,7 @@ describe("EUAIActLogger", () => {
     it("should order by timestamp DESC", async () => {
       await logger.queryLogs({});
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("ORDER BY timestamp DESC");
     });
 
@@ -598,7 +598,7 @@ describe("EUAIActLogger", () => {
         limit: 5,
       });
 
-      const sql = mockPrepare.mock.calls[0][0] as string;
+      const sql = mockPrepare.mock.calls[0]![0] as string;
       expect(sql).toContain("timestamp >= ?");
       expect(sql).toContain("timestamp <= ?");
       expect(sql).toContain("operation = ?");
