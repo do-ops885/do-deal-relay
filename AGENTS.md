@@ -11,6 +11,18 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
 See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 
+## PEV Loop (Plan-Execute-Verify)
+Core workflow for all non-trivial tasks. See `plans/PEV_LOOP.md` for full spec.
+
+```
+PLAN → EXECUTE → VERIFY → [pass: PR] / [fail: re-plan]
+```
+
+- **Plan**: Produce structured spec with `approach`, `non_goals`, `acceptance_criteria`. Use `plans/SPEC_TEMPLATE.md`.
+- **Execute**: Implement in isolated context. Agent never self-certifies.
+- **Verify**: Run `./scripts/pev-gates.sh` — independent checks the author cannot bypass.
+- **Human boundaries**: Plan approval (highest ROI), verify escalation, merge decision.
+
 ## Development Phases
 We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectural Decision Records (ADRs) and TRIZ for structured development.
 
@@ -30,7 +42,7 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
      1. Create an ADR in `plans/` documenting root cause and why it's out of scope.
      2. Create a GOAP task in `plans/GOAP_STATE.md` with status `blocked` and ADR link.
      3. Ensure the branch is otherwise green.
-   - **Quality Gate**: Run `./scripts/agent-toolkit.sh quality` after every change.
+   - **Quality Gate**: Run `./scripts/pev-gates.sh` after every change.
 
 4. **SYNTHESIZE (Phase 4)**
    - **Documentation**: Update `README.md`, `docs/`, and `agents-docs/`.
@@ -52,6 +64,7 @@ Agents SHOULD use the unified toolkit for common operations:
 ./scripts/agent-toolkit.sh doctor   # Health check
 ./scripts/agent-toolkit.sh quality  # Run quality gate
 ./scripts/agent-toolkit.sh docs     # Documentation sync
+./scripts/pev-gates.sh              # PEV verification gates
 ```
 
 ## Infrastructure Contracts
