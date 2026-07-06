@@ -108,7 +108,10 @@ const CREDENTIAL_LEAKAGE_CHECK = {
       { pattern: /secret\s*[:=]\s*["']?[^"'\s]+/gi, name: "secret" },
       { pattern: /api[_-]?key\s*[:=]\s*["']?[^"'\s]+/gi, name: "api_key" },
       { pattern: /token\s*[:=]\s*["']?[^"'\s]+/gi, name: "token" },
-      { pattern: /private[_-]?key\s*[:=]\s*["']?[^"'\s]+/gi, name: "private_key" },
+      {
+        pattern: /private[_-]?key\s*[:=]\s*["']?[^"'\s]+/gi,
+        name: "private_key",
+      },
       {
         pattern: /bearer\s+[a-zA-Z0-9._-]{20,}/gi,
         name: "bearer_token",
@@ -122,7 +125,9 @@ const CREDENTIAL_LEAKAGE_CHECK = {
     for (const { pattern, name } of credentialPatterns) {
       const matches = text.match(pattern);
       if (matches && matches.length > 0) {
-        issues.push(`Potential ${name} detected: ${matches[0].substring(0, 30)}...`);
+        issues.push(
+          `Potential ${name} detected: ${matches[0].substring(0, 30)}...`,
+        );
       }
     }
 
@@ -155,7 +160,10 @@ const INJECTION_CHECK = {
     const text = JSON.stringify(deal);
 
     const injectionPatterns = [
-      { pattern: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION)\b)/gi, name: "SQL" },
+      {
+        pattern: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION)\b)/gi,
+        name: "SQL",
+      },
       { pattern: /(\$\{.*\}|\$where|\$regex)/gi, name: "NoSQL" },
       { pattern: /<script[\s>]/gi, name: "XSS" },
       { pattern: /(javascript|data):/gi, name: "javascript_uri" },
@@ -253,9 +261,18 @@ const CONTENT_SAFETY_CHECK = {
 
     // Basic content safety patterns
     const safetyPatterns = [
-      { pattern: /\b(scam|phishing|malware|virus|hack)\b/gi, name: "malicious" },
-      { pattern: /\b(get rich quick|guaranteed returns|risk.?free)\b/gi, name: "fraud" },
-      { pattern: /\b(earn \$\d+ per (day|week|month|hour))\b/gi, name: "pyramid" },
+      {
+        pattern: /\b(scam|phishing|malware|virus|hack)\b/gi,
+        name: "malicious",
+      },
+      {
+        pattern: /\b(get rich quick|guaranteed returns|risk.?free)\b/gi,
+        name: "fraud",
+      },
+      {
+        pattern: /\b(earn \$\d+ per (day|week|month|hour))\b/gi,
+        name: "pyramid",
+      },
     ];
 
     for (const { pattern, name } of safetyPatterns) {
@@ -401,8 +418,7 @@ export function summarizeSecurityFindings(report: SecurityReport): string {
     `Critical: ${report.critical_count} | High: ${report.high_count} | Medium: ${report.medium_count} | Low: ${report.low_count}`,
     "",
     ...failed.map(
-      (f) =>
-        `- [${f.severity.toUpperCase()}] ${f.check}: ${f.message}`,
+      (f) => `- [${f.severity.toUpperCase()}] ${f.check}: ${f.message}`,
     ),
     "",
     "Security findings must be resolved before merge.",
