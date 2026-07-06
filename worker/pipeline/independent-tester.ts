@@ -55,7 +55,9 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
         deal.description.length < 1 ||
         deal.description.length > 1000
       ) {
-        issues.push(`Invalid description length: ${deal.description?.length ?? 0}`);
+        issues.push(
+          `Invalid description length: ${deal.description?.length ?? 0}`,
+        );
       }
       if (!deal.code || deal.code.length > 50) {
         issues.push(`Invalid code length: ${deal.code?.length ?? 0}`);
@@ -99,7 +101,10 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
       const issues: string[] = [];
       const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
 
-      if (deal.reward.type === "cash" && typeof deal.reward.value === "number") {
+      if (
+        deal.reward.type === "cash" &&
+        typeof deal.reward.value === "number"
+      ) {
         if (deal.reward.value < 0) {
           issues.push("Negative cash reward");
         }
@@ -115,7 +120,9 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
         typeof deal.reward.value === "number"
       ) {
         if (deal.reward.value < 0 || deal.reward.value > 100) {
-          issues.push(`Percent reward ${deal.reward.value} out of range [0, 100]`);
+          issues.push(
+            `Percent reward ${deal.reward.value} out of range [0, 100]`,
+          );
         }
       }
 
@@ -147,7 +154,9 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
       }
 
       if (deal.expiry.confidence < 0 || deal.expiry.confidence > 1) {
-        issues.push(`Expiry confidence ${deal.expiry.confidence} out of bounds`);
+        issues.push(
+          `Expiry confidence ${deal.expiry.confidence} out of bounds`,
+        );
       }
 
       return {

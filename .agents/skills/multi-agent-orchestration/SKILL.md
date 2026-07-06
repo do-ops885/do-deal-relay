@@ -133,3 +133,18 @@ For multi-step orchestrations:
 - `.agents/skills/goap-agent/SKILL.md` — GOAP decomposition
 - `.agents/skills/parallel-execution/SKILL.md` — Parallel patterns
 - `.opencode/agents/` — Available agent definitions
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|------------------|
+| "Single agent is faster for small tasks." | Separation of roles catches bugs that self-review misses. The overhead pays for itself in production. |
+| "We don't need a planner for this." | Even simple tasks benefit from explicit acceptance criteria. Planning prevents rework. |
+| "Verification slows us down." | Skipping verification moves latency to production incidents. |
+
+## Red Flags
+
+- [ ] Author also writing acceptance tests for their own code.
+- [ ] Skipping security gate for "obviously safe" changes.
+- [ ] Reviewer rubber-stamping under volume pressure.
+- [ ] Shared context between roles causing blind spots.
