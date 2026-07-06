@@ -109,7 +109,9 @@ describe("EUAIActLogger", () => {
       const id = await logger.logOperation(baseEntry);
 
       expect(id).toBe("test-uuid-1234");
-      expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO ai_act_logs"));
+      expect(mockPrepare).toHaveBeenCalledWith(
+        expect.stringContaining("INSERT INTO ai_act_logs"),
+      );
       expect(mockRun).toHaveBeenCalled();
     });
 
@@ -378,9 +380,7 @@ describe("EUAIActLogger", () => {
       });
 
       const bindings = mockBind.mock.calls[0] as unknown[];
-      expect(bindings[23]).toBe(
-        '["Minor drift detected","op-1","op-2"]',
-      );
+      expect(bindings[23]).toBe('["Minor drift detected","op-1","op-2"]');
     });
 
     it("should produce anomalies array with only description when no affectedOperations", async () => {

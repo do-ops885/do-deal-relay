@@ -1,7 +1,7 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Updated**: 2026-07-06 (swarm execution: 3 tasks resolved, 12 test gaps verified closed, 8 stale items verified, 9 P3 items verified resolved, P1 fully resolved)
+**Updated**: 2026-07-06 (CI fix: 4 Prettier formatting failures resolved via swarm; P1 fully resolved)
 **Version**: 0.4.0
 **Status**: Active — cross-referenced from 4 audit sources + live verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
@@ -101,6 +101,12 @@
 | P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` defined in both `score.ts` and `dedupe.ts` | Audit | L-5 | ✅ CLOSED | Functions exist only in `worker/pipeline/score.ts`. Duplication removed. Verified 2026-07-06. |
 | P2-25 | **Duplicated function**: `verifyCommit` in both `publish.ts` and `github.ts` | Audit | L-6 | ✅ CLOSED | `verifyCommit` exists only in `worker/lib/github/core.ts`. `publish.ts` imports from canonical location. Verified 2026-07-06. |
 | P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` in runtime deps | Audit | M-19, M-20 | ✅ CLOSED | `discord.js`/`telegraf` moved to `devDependencies` (used by `bot/` only, not worker). `agent-browser` already absent. Verified 2026-07-06. |
+
+### CI Fixes
+
+| ID | Item | Source | Audit Ref | Effort |
+|:---|:---|:---|:---|:---|
+| P2-27 | **Prettier formatting failures** — 4 files failing `format` gate in CI | CI | PEV-gates | ✅ CLOSED | Applied `prettier --write` to `migrations.test.ts`, `eu-ai-act-logger.test.ts`, `pipeline-executor.ts`, `router.ts`. Verified 2026-07-06. |
 
 ---
 

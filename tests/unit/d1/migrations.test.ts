@@ -86,10 +86,18 @@ describe("schema", () => {
     expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_deals_domain");
     expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_deals_status");
     expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_deals_category");
-    expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_referral_codes_code");
-    expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_referral_codes_deal_id");
-    expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_referral_codes_user_id");
-    expect(v2!.up).toContain("CREATE INDEX IF NOT EXISTS idx_referral_codes_status");
+    expect(v2!.up).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_referral_codes_code",
+    );
+    expect(v2!.up).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_referral_codes_deal_id",
+    );
+    expect(v2!.up).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_referral_codes_user_id",
+    );
+    expect(v2!.up).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_referral_codes_status",
+    );
   });
 
   it("version 3 adds FTS5 virtual table and triggers", () => {
@@ -100,7 +108,9 @@ describe("schema", () => {
     expect(v3!.up).toContain("CREATE TRIGGER IF NOT EXISTS deals_fts_update");
     expect(v3!.up).toContain("CREATE TRIGGER IF NOT EXISTS deals_fts_delete");
     expect(v3!.up).toContain("CREATE TRIGGER IF NOT EXISTS deals_updated_at");
-    expect(v3!.up).toContain("CREATE TRIGGER IF NOT EXISTS referral_codes_updated_at");
+    expect(v3!.up).toContain(
+      "CREATE TRIGGER IF NOT EXISTS referral_codes_updated_at",
+    );
   });
 
   it("version 4 creates analytics tables", () => {
@@ -124,7 +134,9 @@ describe("schema", () => {
     const v6 = MIGRATIONS[5];
     expect(v6!.name).toBe("add_experience_feedback_tables");
     expect(v6!.up).toContain("CREATE TABLE IF NOT EXISTS experience_events");
-    expect(v6!.up).toContain("CREATE TABLE IF NOT EXISTS experience_aggregates");
+    expect(v6!.up).toContain(
+      "CREATE TABLE IF NOT EXISTS experience_aggregates",
+    );
   });
 
   it("version 7 adds auth tables", () => {
@@ -262,7 +274,11 @@ describe("MigrationRunner getStatus", () => {
         { version: 3, name: "add_fts", applied_at: 3000 },
         { version: 4, name: "add_analytics_tables", applied_at: 4000 },
         { version: 5, name: "add_views", applied_at: 5000 },
-        { version: 6, name: "add_experience_feedback_tables", applied_at: 6000 },
+        {
+          version: 6,
+          name: "add_experience_feedback_tables",
+          applied_at: 6000,
+        },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
       ],
     });
@@ -354,7 +370,11 @@ describe("MigrationRunner migrate", () => {
         { version: 3, name: "add_fts", applied_at: 3000 },
         { version: 4, name: "add_analytics_tables", applied_at: 4000 },
         { version: 5, name: "add_views", applied_at: 5000 },
-        { version: 6, name: "add_experience_feedback_tables", applied_at: 6000 },
+        {
+          version: 6,
+          name: "add_experience_feedback_tables",
+          applied_at: 6000,
+        },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
       ],
     });
@@ -510,7 +530,10 @@ describe("MigrationRunner migrate", () => {
     mockQuery.mockResolvedValue({ success: true, data: [] });
     const appliedVersions: number[] = [];
     mockExecute.mockImplementation(async (sql: string, params: unknown[]) => {
-      if (typeof sql === "string" && sql.includes("INSERT INTO schema_migrations")) {
+      if (
+        typeof sql === "string" &&
+        sql.includes("INSERT INTO schema_migrations")
+      ) {
         appliedVersions.push(params[0] as number);
       }
       return { success: true };
@@ -913,7 +936,11 @@ describe("factory functions", () => {
         { version: 3, name: "add_fts", applied_at: 3000 },
         { version: 4, name: "add_analytics_tables", applied_at: 4000 },
         { version: 5, name: "add_views", applied_at: 5000 },
-        { version: 6, name: "add_experience_feedback_tables", applied_at: 6000 },
+        {
+          version: 6,
+          name: "add_experience_feedback_tables",
+          applied_at: 6000,
+        },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
       ],
     });
@@ -948,7 +975,11 @@ describe("factory functions", () => {
         { version: 3, name: "add_fts", applied_at: 3000 },
         { version: 4, name: "add_analytics_tables", applied_at: 4000 },
         { version: 5, name: "add_views", applied_at: 5000 },
-        { version: 6, name: "add_experience_feedback_tables", applied_at: 6000 },
+        {
+          version: 6,
+          name: "add_experience_feedback_tables",
+          applied_at: 6000,
+        },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
       ],
     });
@@ -1115,7 +1146,11 @@ describe("edge cases", () => {
             { version: 3, name: "add_fts", applied_at: 3000 },
             { version: 4, name: "add_analytics_tables", applied_at: 4000 },
             { version: 5, name: "add_views", applied_at: 5000 },
-            { version: 6, name: "add_experience_feedback_tables", applied_at: 6000 },
+            {
+              version: 6,
+              name: "add_experience_feedback_tables",
+              applied_at: 6000,
+            },
             { version: 7, name: "add_auth_tables", applied_at: 7000 },
           ],
         };
@@ -1140,8 +1175,7 @@ describe("edge cases", () => {
 
   it("migration down SQL contains expected DROP statements", () => {
     for (const m of MIGRATIONS) {
-      const hasDropOrDropIndex =
-        m.down.includes("DROP");
+      const hasDropOrDropIndex = m.down.includes("DROP");
       expect(hasDropOrDropIndex).toBe(true);
     }
   });

@@ -1,8 +1,4 @@
-import {
-  PipelinePhase,
-  PipelineContext,
-  FailurePath,
-} from "./types";
+import { PipelinePhase, PipelineContext, FailurePath } from "./types";
 import { createLogBuilder, appendLog } from "./lib/logger";
 import { logger } from "./lib/global-logger";
 import { discover } from "./pipeline/discover";

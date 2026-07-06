@@ -358,9 +358,7 @@ export async function handleRequest(
     if (path.startsWith("/api/nlq")) {
       return withAuth(request, env, "user", (auth) => {
         const rateLimiter = createRateLimitMiddleware(env, "/api/nlq", auth);
-        return rateLimiter(request, () =>
-          handleNLQRequest(request, url, env),
-        );
+        return rateLimiter(request, () => handleNLQRequest(request, url, env));
       });
     }
 
@@ -381,9 +379,7 @@ export async function handleRequest(
           "/api/experience",
           auth,
         );
-        return rateLimiter(request, () =>
-          handleSubmitExperience(request, env),
-        );
+        return rateLimiter(request, () => handleSubmitExperience(request, env));
       });
     }
 
