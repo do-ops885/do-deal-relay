@@ -1,7 +1,7 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Updated**: 2026-07-06 (Swarm re-verification: P3-1 improved with actual KV read, P3-18 marked resolved; P1 fully resolved)
+**Updated**: 2026-07-06 (P3-17 OTLP Phase 1 implemented; 4 open items remain: P3-12, P3-13, P3-16, ⬜-1 through ⬜-7)
 **Version**: 0.5.0
 **Status**: Active — cross-referenced from 4 audit sources + live verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
@@ -142,7 +142,7 @@
 | P3-14 | MCP pagination — cursor parameters defined but logic not implemented | Swarm | ✅ CLOSED | `paginate()` with cursor support in tools/list and resources/list. Verified 2026-07-06. |
 | P3-15 | MCP progress notifications — `_meta.progressToken` defined but unused | Swarm | ✅ CLOSED | `_meta.progressToken` handled in `handleToolCall` (tools.ts:64-79). Verified 2026-07-06. |
 | P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | ⬜ DEFERRED | Requires environment setup, not a code fix. |
-| P3-17 | No OpenTelemetry / distributed tracing | Audit | L-16 | ⬜ DEFERRED | Requires external dependency integration. |
+| P3-17 | No OpenTelemetry / distributed tracing | Audit | L-16 | ✅ CLOSED | Phase 1 complete: OTLP export config in `wrangler.jsonc`, setup guide at `docs/opentelemetry-setup.md`. Config-only, no npm deps. Verified 2026-07-06. |
 | P3-18 | `bot/` and `extension/` directories need documentation review | Audit | L-8 | ✅ CLOSED | Both have comprehensive READMEs (bot/ 216 lines, extension/ 245 lines). Verified 2026-07-06. |
 
 ---
@@ -190,7 +190,7 @@ P2 File Splits (P2-1 through P2-6) ── ✅ RESOLVED ────────�
                                                                                              │
 P1-6 (Lock Race) depends on ⬜-1 (DO migration) ── BLOCKED ────────────────────────────────┤
                                                                                              │
-P3 (P3-1 through P3-15) ── ✅ MOSTLY RESOLVED (P3-12, P3-13, P3-16, P3-17 deferred) ┤
+P3 (P3-1 through P3-15) ── ✅ MOSTLY RESOLVED (P3-12, P3-13, P3-16 deferred) ┤
                                                                                              │
 ⬜ ADR-015 Proposals ─── independent epics ──────────────────────────────────────────────────┘
 ```
@@ -228,7 +228,7 @@ P3 (P3-1 through P3-15) ── ✅ MOSTLY RESOLVED (P3-12, P3-13, P3-16, P3-17 d
 
 ### Phase 6: Polish & Future (Week 7+) — Partially Complete
 18. **P3-1 through P3-9**: Minor correctness — P3-1 ✅, P3-2 ✅, P3-3 ✅, P3-4 ✅, P3-5 ✅, P3-6 ✅, P3-7 ✅, P3-8 ✅, P3-9 ✅ (all resolved)
-19. **P3-14 through P3-18**: Features & integration — P3-14 ✅, P3-15 ✅, P3-16 ⬜, P3-17 ⬜, P3-18 ✅
+19. **P3-14 through P3-18**: Features & integration — P3-14 ✅, P3-15 ✅, P3-16 ⬜, P3-17 ✅, P3-18 ✅
 20. **⬜-1 through ⬜-7**: ADR-015 proposals (as dedicated sprints)
 
 ---

@@ -15,7 +15,53 @@
     },
     "traces": {
       "enabled": true,
+      // head_sampling_rate: fraction of traces to export (0.0–1.0).
+      // 1.0 = export everything (development/debugging).
+      // 0.1 = export 10% of traces (recommended for production).
       "head_sampling_rate": 1,
+      // OTLP export destinations — add one entry per backend.
+      // Each destination requires a URL and an Authorization header with
+      // the vendor-specific API key stored as a Cloudflare secret.
+      //
+      // Example: Honeycomb
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://api.honeycomb.io/v1/traces",
+      //   "headers": {
+      //     "x-honeycomb-team": "${HONEYCOMB_API_KEY}",
+      //     "x-honeycomb-dataset": "do-deal-relay"
+      //   }
+      // }
+      //
+      // Example: Grafana Cloud
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://otlp-gateway-<zone>.grafana.net/otlp",
+      //   "headers": {
+      //     "Authorization": "${GRAFANA_CLOUD_API_KEY}"
+      //   }
+      // }
+      //
+      // Example: Axiom
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://api.axiom.co/v1/traces",
+      //   "headers": {
+      //     "Authorization": "Bearer ${AXIOM_API_KEY}",
+      //     "X-Axiom-Dataset": "do-deal-relay"
+      //   }
+      // }
+      //
+      // Example: SigNoz (self-hosted or cloud)
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://ingest.<region>.signoz.cloud/v1/traces",
+      //   "headers": {
+      //     "Authorization": "Bearer ${SIGNOZ_API_KEY}"
+      //   }
+      // }
+      //
+      // See: docs/opentelemetry-setup.md for full setup guide.
     },
   },
   // Scheduled triggers: Discovery every 6h, expiry check at 9am, weekly validation Sunday midnight
