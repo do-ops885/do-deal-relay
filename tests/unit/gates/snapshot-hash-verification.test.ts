@@ -18,10 +18,7 @@ describe("snapshot-hash-verification gate", () => {
 
   it("should fail if critical fields are missing", async () => {
     const ctx = {} as PipelineContext;
-    const result = await verifySnapshotHash(
-      { ...deal, id: "" } as Deal,
-      ctx,
-    );
+    const result = await verifySnapshotHash({ ...deal, id: "" } as Deal, ctx);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("missing critical fields");
   });
@@ -35,9 +32,7 @@ describe("snapshot-hash-verification gate", () => {
   });
 
   it("should pass if stored hash matches computed hash", async () => {
-    const { generateSnapshotHash } = await import(
-      "../../../worker/lib/crypto"
-    );
+    const { generateSnapshotHash } = await import("../../../worker/lib/crypto");
     const currentHash = await generateSnapshotHash([
       {
         id: deal.id,
@@ -48,9 +43,7 @@ describe("snapshot-hash-verification gate", () => {
       },
     ]);
     const ctx = {} as PipelineContext;
-    const { setContextHash } = await import(
-      "../../../worker/validation/types"
-    );
+    const { setContextHash } = await import("../../../worker/validation/types");
     setContextHash(ctx, deal.id, currentHash);
 
     const result = await verifySnapshotHash(deal, ctx);
@@ -59,9 +52,7 @@ describe("snapshot-hash-verification gate", () => {
 
   it("should fail if stored hash does not match (tampered)", async () => {
     const ctx = {} as PipelineContext;
-    const { setContextHash } = await import(
-      "../../../worker/validation/types"
-    );
+    const { setContextHash } = await import("../../../worker/validation/types");
     setContextHash(ctx, deal.id, "different-hash");
 
     const result = await verifySnapshotHash(deal, ctx);
