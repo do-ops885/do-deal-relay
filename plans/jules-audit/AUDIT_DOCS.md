@@ -1,8 +1,17 @@
-# Track D - Documentation
+# Documentation Audit - 2026-07-06
 
-- **Missing JSDoc**:
-  - `worker/lib/storage.ts`: Checked, but most functions have documentation.
-  - `worker/pipeline/score.ts`: Checked, but functions have documentation.
-- **Action**:
-  - I will perform a deeper dive to find truly undocumented public APIs in the next step if I find any.
-  - Actually, looking at the previous grep, `worker/routes/webhooks.ts` is marked as DEPRECATED but lacks a JSDoc `@deprecated` tag. I will add it.
+## Summary
+- **Identified Gaps**: Several public functions in `worker/lib/security.ts` and `worker/lib/crypto.ts` have minimal or missing JSDoc.
+- **Actionable Findings**: Add full JSDoc to 3 target functions.
+
+## Documentation Gaps
+| Module | Function | Status |
+|--------|----------|--------|
+| worker/lib/security.ts | `validateUrl` | Minimal/Missing JSDoc. |
+| worker/lib/crypto.ts | `generateRunId` | Minimal JSDoc. |
+| worker/lib/crypto.ts | `generateUUID` | Minimal JSDoc. |
+
+## Planned Documentation Improvements
+1. **`worker/lib/security.ts:validateUrl`**: Add @param, @returns, and @throws describing SSRF and protocol validation.
+2. **`worker/lib/crypto.ts:generateRunId`**: Add @param and @returns describing the YYYYMMDD-HHMMSS format.
+3. **`worker/lib/crypto.ts:generateUUID`**: Add @returns describing the UUID v4 format.

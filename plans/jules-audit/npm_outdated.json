@@ -1,10 +1,59 @@
 {
+  "@cloudflare/vitest-pool-workers": {
+    "current": "0.17.0",
+    "wanted": "0.17.0",
+    "latest": "0.18.0",
+    "dependent": "app",
+    "location": "/app/node_modules/@cloudflare/vitest-pool-workers"
+  },
   "@cloudflare/workers-types": {
-    "current": "4.20260516.1",
-    "wanted": "4.20260517.1",
-    "latest": "4.20260517.1",
+    "current": "4.20260630.1",
+    "wanted": "4.20260630.1",
+    "latest": "5.20260706.1",
     "dependent": "app",
     "location": "/app/node_modules/@cloudflare/workers-types"
+  },
+  "@playwright/test": {
+    "current": "1.61.0",
+    "wanted": "1.61.1",
+    "latest": "1.61.1",
+    "dependent": "app",
+    "location": "/app/node_modules/@playwright/test"
+  },
+  "@types/node": {
+    "current": "26.0.1",
+    "wanted": "26.0.1",
+    "latest": "26.1.0",
+    "dependent": "app",
+    "location": "/app/node_modules/@types/node"
+  },
+  "js-yaml": {
+    "current": "5.2.0",
+    "wanted": "5.2.0",
+    "latest": "5.2.1",
+    "dependent": "app",
+    "location": "/app/node_modules/js-yaml"
+  },
+  "miniflare": {
+    "current": "4.20260630.0",
+    "wanted": "4.20260630.0",
+    "latest": "4.20260701.0",
+    "dependent": "app",
+    "location": "/app/node_modules/miniflare"
+  },
+  "protobufjs": {
+    "current": "8.6.5",
+    "wanted": "8.6.5",
+    "latest": "8.6.6",
+    "dependent": "app",
+    "location": "/app/node_modules/protobufjs"
+  },
+  "wrangler": {
+    "current": "4.106.0",
+    "wanted": "4.106.0",
+    "latest": "4.107.0",
+    "dependent": "app",
+    "location": "/app/node_modules/wrangler"
   },
   "zod": {
     "current": "3.25.76",
