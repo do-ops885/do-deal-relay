@@ -120,3 +120,18 @@ Every PEV run should emit:
 - `scripts/pev-gates.sh` — Executable verification gates
 - `worker/pipeline/independent-tester.ts` — Independent verification
 - `worker/pipeline/security-gate.ts` — Security scanning
+
+## Rationalizations
+
+| Concern | Counter-Argument |
+|---------|------------------|
+| "The plan is obvious, skip it." | Obvious plans have obvious blind spots. A 30-second review catches expensive mistakes. |
+| "Tests passed locally, skip verify." | Local ≠ CI. The verify gate catches environment-specific failures. |
+| "We've done this before." | Past success doesn't guarantee future correctness. Systems evolve, assumptions rot. |
+
+## Red Flags
+
+- [ ] Executing without an approved plan.
+- [ ] Author grading their own work.
+- [ ] Security scan marked as optional.
+- [ ] More than 3 iterations without resolution — escalate to human.
