@@ -15,6 +15,7 @@ import {
   handleSimilarDeals,
   handleExplainDeal,
   handleAnalytics,
+  handleDORAMetrics,
 } from "./routes/core";
 import {
   handleGetReferrals,
@@ -180,6 +181,13 @@ export async function handleRequest(
     if (path === "/api/analytics") {
       return withAuth(request, env, "admin", () =>
         handleAnalytics(url, env, request),
+      );
+    }
+
+    // DORA Metrics
+    if (path === "/api/dora-metrics" && request.method === "GET") {
+      return withAuth(request, env, "admin", () =>
+        handleDORAMetrics(url, env, request),
       );
     }
 
