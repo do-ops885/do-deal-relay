@@ -1,8 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Version**: 0.1.9
-**Status**: Active — cross-referenced from 4 audit sources
+**Updated**: 2026-07-06 (swarm execution: 3 tasks resolved, 8 stale items verified)
+**Version**: 0.2.0
+**Status**: Active — cross-referenced from 4 audit sources + live verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -32,7 +33,7 @@
 
 ---
 
-## P1 — High Priority (7 Open)
+## P1 — High Priority (4 Open — 3 Resolved 2026-07-06)
 
 ### Security & Auth
 
@@ -41,19 +42,19 @@
 | P1-1 | **D1 endpoints lack authentication** | Audit | H-3 | ADR-016 middleware | 2-3 days |
 | P1-2 | **Rate limiting not applied to API endpoints** | Audit | M-8, H-4 | ADR-016 middleware | 2-3 days |
 | P1-3 | **No auth on `/api/submit`** | Audit | M-7 | ADR-016 middleware | 1-2 days |
-| P1-4 | **10 webhook endpoints not registered in `index.ts`** | Swarm | SWARM-C-2 | None (standalone) | 1 day |
-| P1-5 | **`/api/referrals/:code/reactivate` handler not routed** | Swarm | SWARM-H-1 | None (standalone) | < 1 day |
+| P1-4 | **10 webhook endpoints not registered in `index.ts`** | Swarm | SWARM-C-2 | None (standalone) | ✅ CLOSED | All 12 webhook endpoints routed via `handleWebhookRoutes` in `router.ts:357-364`. Verified 2026-07-06. |
+| P1-5 | **`/api/referrals/:code/reactivate` handler not routed** | Swarm | SWARM-H-1 | None (standalone) | ✅ CLOSED | Regex fixed in `router.ts:191`, handler imported and routed. Verified 2026-07-06. |
 
 ### Correctness & Reliability
 
 | ID | Item | Source | Audit Ref | Dependencies | Effort |
 |:---|:---|:---|:---|:---|:---|
 | P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | 3-5 days |
-| P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | None (implement logic using `updateSourceTrust`) | 1-2 days |
+| P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | None (implement logic using `updateSourceTrust`) | ✅ CLOSED | Wired into `state-machine.ts:326` after score phase. Calls `evolveSourceTrust(env, ctx.scored, true)`. Verified 2026-07-06. |
 
 ---
 
-## P2 — Medium Priority (15 Open)
+## P2 — Medium Priority (7 Open — 8 Resolved 2026-07-06)
 
 ### File Size Violations (>500 lines)
 
@@ -70,11 +71,11 @@
 
 | ID | Item | Source | Audit Ref | Effort |
 |:---|:---|:---|:---|:---|
-| P2-7 | **Gate 9 (snapshot hash verification) is a no-op** — `ctx.snapshot` always undefined at validation time | Audit | M-11 | 1-2 days |
-| P2-8 | **`generateSnapshotHash` has incorrect sort logic** — sorts array indices, not deal objects | Audit | M-12 | < 1 day |
-| P2-9 | **`handleSubmit` hardcodes `"cash"` reward type** — causes ID collisions | Audit | M-16 | < 1 day |
-| P2-10 | **MCP version negotiation always returns server version** — no actual negotiation | Audit | H-5 | < 1 day |
-| P2-11 | **Notification deduplication has no TTL cleanup** — `meta:notifications` grows unbounded | Audit | C-3 | 1-2 days |
+| P2-7 | **Gate 9 (snapshot hash verification) is a no-op** — `ctx.snapshot` always undefined at validation time | Audit | M-11 | ✅ CLOSED | Rewritten as field-integrity/tamper-detection gate. Uses `getContextHash`/`setContextHash` to detect mutation. Tests updated. Verified 2026-07-06. |
+| P2-8 | **`generateSnapshotHash` has incorrect sort logic** — sorts array indices, not deal objects | Audit | M-12 | ✅ CLOSED | Sort now compares deal `.id` properties via `localeCompare`. Verified 2026-07-06. |
+| P2-9 | **`handleSubmit` hardcodes `"cash"` reward type** — causes ID collisions | Audit | M-16 | ✅ CLOSED | Reward type extracted from `body.metadata.reward.type` with `"cash"` fallback. Verified 2026-07-06. |
+| P2-10 | **MCP version negotiation always returns server version** — no actual negotiation | Audit | H-5 | ✅ CLOSED | Now rejects incompatible versions with error. Optional: implement fallback via `MCP_PROTOCOL_VERSION_FALLBACK`. Verified 2026-07-06. |
+| P2-11 | **Notification deduplication has no TTL cleanup** — `meta:notifications` grows unbounded | Audit | C-3 | ✅ CLOSED | TTL cleanup on read (filter stale entries), 100-entry cap on write. `notify.ts:109-118,157-158`. Verified 2026-07-06. |
 
 ### Test Coverage Gaps (Critical Untested Components)
 
@@ -97,9 +98,9 @@
 
 | ID | Item | Source | Audit Ref | Effort |
 |:---|:---|:---|:---|:---|
-| P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` defined in both `score.ts` and `dedupe.ts` | Audit | L-5 | < 1 day |
-| P2-25 | **Duplicated function**: `verifyCommit` in both `publish.ts` and `github.ts` | Audit | L-6 | < 1 day |
-| P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` in runtime deps | Audit | M-19, M-20 | < 1 day |
+| P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` defined in both `score.ts` and `dedupe.ts` | Audit | L-5 | ✅ CLOSED | Functions exist only in `worker/pipeline/score.ts`. Duplication removed. Verified 2026-07-06. |
+| P2-25 | **Duplicated function**: `verifyCommit` in both `publish.ts` and `github.ts` | Audit | L-6 | ✅ CLOSED | `verifyCommit` exists only in `worker/lib/github/core.ts`. `publish.ts` imports from canonical location. Verified 2026-07-06. |
+| P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` in runtime deps | Audit | M-19, M-20 | ✅ CLOSED | `discord.js`/`telegraf` moved to `devDependencies` (used by `bot/` only, not worker). `agent-browser` already absent. Verified 2026-07-06. |
 
 ---
 
@@ -173,9 +174,9 @@ ADR-016 (Middleware Layer) ─────────────────�
     ├── P1-2 (API Rate Limits) ─────────────────┤
     └── P1-3 (Submit Auth) ─────────────────────┤
                                                  │
-P1-4 (Webhook Routes) ─── independent ──────────┤
-P1-5 (Reactivate Route) ── independent ─────────┤
-P1-7 (evolveSourceTrust) ─ independent ─────────┤
+P1-4 (Webhook Routes) ─── ✅ RESOLVED ──────────┤
+P1-5 (Reactivate Route) ── ✅ RESOLVED ─────────┤
+P1-7 (evolveSourceTrust) ─ ✅ RESOLVED ─────────┤
                                                  │
 P2 File Splits (P2-1 through P2-6) ─────────────┤
     │                                            │
@@ -190,13 +191,13 @@ P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
 
 ## Merge Order (Recommended Execution Sequence)
 
-### Phase 1: Quick Wins (Week 1)
-1. **P1-5**: Register reactivate route (< 1 day)
-2. **P1-4**: Register 10 webhook endpoints (1 day)
-3. **P2-24, P2-25**: Deduplicate shared functions (< 1 day)
-4. **P2-26**: Remove unused dependencies (< 1 day)
-5. **P2-8**: Fix `generateSnapshotHash` sort logic (< 1 day)
-6. **P2-9**: Fix hardcoded reward type in `handleSubmit` (< 1 day)
+### Phase 1: Quick Wins (Week 1) — ✅ COMPLETE 2026-07-06
+1. **P1-5**: Register reactivate route ✅
+2. **P1-4**: Register 10 webhook endpoints ✅
+3. **P2-24, P2-25**: Deduplicate shared functions ✅
+4. **P2-26**: Remove unused dependencies ✅
+5. **P2-8**: Fix `generateSnapshotHash` sort logic ✅
+6. **P2-9**: Fix hardcoded reward type in `handleSubmit` ✅
 
 ### Phase 2: Security Hardening (Weeks 1-2)
 7. **ADR-016**: Design and implement unified middleware layer
@@ -204,11 +205,11 @@ P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
 9. **P1-2**: Apply rate limiting to all API endpoints (depends on ADR-016)
 10. **P1-3**: Add auth to `/api/submit` (depends on ADR-016)
 
-### Phase 3: Correctness (Weeks 2-3)
-11. **P1-7**: Implement `evolveSourceTrust` logic
-12. **P2-7**: Make Gate 9 (snapshot hash) meaningful
-13. **P2-10**: Implement proper MCP version negotiation
-14. **P2-11**: Add TTL cleanup for notification deduplication
+### Phase 3: Correctness (Weeks 2-3) — ✅ COMPLETE 2026-07-06
+11. **P1-7**: Implement `evolveSourceTrust` logic ✅
+12. **P2-7**: Make Gate 9 (snapshot hash) meaningful ✅
+13. **P2-10**: Implement proper MCP version negotiation ✅
+14. **P2-11**: Add TTL cleanup for notification deduplication ✅
 
 ### Phase 4: Code Quality (Weeks 3-4)
 15. **P2-1 through P2-6**: Split oversized files

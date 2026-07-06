@@ -2,11 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 import { verifySnapshotHash } from "../../../worker/validation/gates/snapshot-hash-verification";
 import { Deal, PipelineContext } from "../../../worker/types";
 
-// Mock crypto module
 vi.mock("../../../worker/lib/crypto", () => ({
   generateSnapshotHash: vi.fn(async (items) => {
-    // Return a stable mock hash based on the input
-    return `hash-${JSON.stringify(items[0].id || items[0])}`;
+    return `hash-${JSON.stringify(items[0])}`;
   }),
 }));
 
@@ -18,34 +16,56 @@ describe("snapshot-hash-verification gate", () => {
     reward: { type: "cash", value: 10 },
   } as any;
 
-  it("should pass if no expected hash in context", async () => {
-    const ctx: PipelineContext = {
-      snapshot: undefined,
-    } as any;
-    const result = await verifySnapshotHash(deal, ctx);
-    expect(result.passed).toBe(true);
-    expect(result.reason).toBe("No expected hash configured for verification");
+  it("should fail if critical fields are missing", async () => {
+    const ctx = {} as PipelineContext;
+    const result = await verifySnapshotHash(
+      { ...deal, id: "" } as Deal,
+      ctx,
+    );
+    expect(result.passed).toBe(false);
+    expect(result.reason).toContain("missing critical fields");
   });
 
-  it("should pass if hashes match", async () => {
-    // Both will generate "hash-test-id" (simplified mock)
-    const ctx: PipelineContext = {
-      snapshot: { snapshot_hash: "hash-test-id" },
-    } as any;
+  it("should pass and store hash when no prior hash exists", async () => {
+    const ctx = {} as PipelineContext;
+    const result = await verifySnapshotHash(deal, ctx);
+    expect(result.passed).toBe(true);
+    const { getContextHash } = await import("../../../worker/validation/types");
+    expect(getContextHash(ctx, "test-id")).toBeDefined();
+  });
+
+  it("should pass if stored hash matches computed hash", async () => {
+    const { generateSnapshotHash } = await import(
+      "../../../worker/lib/crypto"
+    );
+    const currentHash = await generateSnapshotHash([
+      {
+        id: deal.id,
+        domain: deal.source.domain,
+        code: deal.code,
+        rewardType: deal.reward.type,
+        rewardValue: deal.reward.value,
+      },
+    ]);
+    const ctx = {} as PipelineContext;
+    const { setContextHash } = await import(
+      "../../../worker/validation/types"
+    );
+    setContextHash(ctx, deal.id, currentHash);
+
     const result = await verifySnapshotHash(deal, ctx);
     expect(result.passed).toBe(true);
   });
 
-  it("should fail if data tampered with (hash mismatch)", async () => {
-    // Snapshot hash doesn't match current deal hash
-    const ctx: PipelineContext = {
-      snapshot: { snapshot_hash: "mismatch" },
-      // Store a different hash for this deal in context
-      "deal_hash_test-id": "stored-hash",
-    } as any;
+  it("should fail if stored hash does not match (tampered)", async () => {
+    const ctx = {} as PipelineContext;
+    const { setContextHash } = await import(
+      "../../../worker/validation/types"
+    );
+    setContextHash(ctx, deal.id, "different-hash");
 
     const result = await verifySnapshotHash(deal, ctx);
     expect(result.passed).toBe(false);
-    expect(result.reason).toContain("Hash verification failed");
+    expect(result.reason).toContain("mutated since creation");
   });
 });

@@ -14,7 +14,7 @@ import { discover } from "./pipeline/discover";
 import { normalize } from "./pipeline/normalize";
 import { deduplicate } from "./pipeline/dedupe";
 import { validate } from "./validation/pipeline";
-import { score } from "./pipeline/score";
+import { score, evolveSourceTrust } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
 import { publishSnapshot } from "./publish";
 import { notify } from "./notify";
@@ -322,6 +322,8 @@ async function executePhase(
           })
           .build(),
       );
+
+      await evolveSourceTrust(env, ctx.scored, true);
 
       return "stage";
 
