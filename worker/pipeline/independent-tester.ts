@@ -189,10 +189,10 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
     validate: (deal: Deal): TestResult => {
       const issues: string[] = [];
 
-      if (!deal.metadata.category) {
+      if (deal.metadata.category.length === 0) {
         issues.push("Missing category tags");
       }
-      if (!deal.metadata.tags) {
+      if (deal.metadata.tags.length === 0) {
         issues.push("Missing metadata tags");
       }
       if (!deal.metadata.normalized_at) {
