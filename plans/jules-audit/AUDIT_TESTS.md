@@ -5,6 +5,7 @@
 - **Actionable Findings**: 3 new tests planned for `sanitize-error.ts` and `createTimeoutSignal`.
 
 ## Coverage Gaps
+
 | Module | Function | Status |
 |--------|----------|--------|
 | worker/lib/sanitize-error.ts | `toError` | No tests found. |

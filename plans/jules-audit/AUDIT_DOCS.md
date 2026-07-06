@@ -5,6 +5,7 @@
 - **Actionable Findings**: Add full JSDoc to 3 target functions.
 
 ## Documentation Gaps
+
 | Module | Function | Status |
 |--------|----------|--------|
 | worker/lib/security.ts | `validateUrl` | Minimal/Missing JSDoc. |

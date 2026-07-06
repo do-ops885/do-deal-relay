@@ -52,7 +52,10 @@ export async function discover(
     env.CANDIDATE_BUDGET_GLOBAL || String(CONFIG.MAX_DEALS_PER_RUN),
     10,
   );
-  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
+  const perSourceBase = parseInt(
+    env.CANDIDATE_BUDGET_PER_SOURCE || "100",
+    10,
+  ); /* TODO: Move to CONFIG */
   const highTrustBonus = parseInt(
     env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
     10,

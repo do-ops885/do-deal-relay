@@ -25,7 +25,7 @@ export function validatePriceSanity(deal: Deal): GateResult {
 
   // Check percent is reasonable
   if (reward.type === "percent" && typeof reward.value === "number") {
-    if (reward.value > 100) {
+    if (reward.value > CONFIG.PLAUSIBILITY_THRESHOLDS.CASH_MEDIUM) {
       return {
         passed: false,
         reason: `Percent reward ${reward.value}% exceeds 100%`,
