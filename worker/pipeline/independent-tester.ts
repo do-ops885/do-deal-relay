@@ -48,19 +48,17 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
         issues.push("Missing deal ID");
       }
       if (!deal.title || deal.title.length < 1 || deal.title.length > 200) {
-        issues.push(`Invalid title length: ${deal.title?.length ?? 0}`);
+        issues.push(`Invalid title length: ${deal.title.length}`);
       }
       if (
         !deal.description ||
         deal.description.length < 1 ||
         deal.description.length > 1000
       ) {
-        issues.push(
-          `Invalid description length: ${deal.description?.length ?? 0}`,
-        );
+        issues.push(`Invalid description length: ${deal.description.length}`);
       }
       if (!deal.code || deal.code.length > 50) {
-        issues.push(`Invalid code length: ${deal.code?.length ?? 0}`);
+        issues.push(`Invalid code length: ${deal.code.length}`);
       }
       if (!deal.url || !isValidUrl(deal.url)) {
         issues.push(`Invalid URL: ${deal.url}`);
@@ -99,7 +97,6 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
     description: "Reward value is plausible and within bounds",
     validate: (deal: Deal): TestResult => {
       const issues: string[] = [];
-      const t = CONFIG.PLAUSIBILITY_THRESHOLDS;
 
       if (
         deal.reward.type === "cash" &&
@@ -192,20 +189,17 @@ const ACCEPTANCE_CRITERIA_VALIDATORS = [
     validate: (deal: Deal): TestResult => {
       const issues: string[] = [];
 
-      if (!deal.metadata.category || deal.metadata.category.length === 0) {
+      if (!deal.metadata.category) {
         issues.push("Missing category tags");
       }
-      if (!deal.metadata.tags || deal.metadata.tags.length === 0) {
+      if (!deal.metadata.tags) {
         issues.push("Missing metadata tags");
       }
       if (!deal.metadata.normalized_at) {
         issues.push("Missing normalized_at timestamp");
       }
-      if (
-        deal.metadata.confidence_score < 0 ||
-        deal.metadata.confidence_score === undefined
-      ) {
-        issues.push("Missing or invalid confidence_score");
+      if (deal.metadata.confidence_score < 0) {
+        issues.push("Invalid confidence_score");
       }
       if (
         !["active", "quarantined", "rejected"].includes(deal.metadata.status)
