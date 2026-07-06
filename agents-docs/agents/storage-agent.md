@@ -1,7 +1,7 @@
 # Storage Agent
 
 **Agent ID**: `storage-agent`
-**Status**: ⚪ Pending
+**Status**: ✅ Active
 **Scope**: KV storage layer, locking, logging, storage abstraction
 **Previous Agent**: Bootstrap Agent
 **Next Agent**: Discovery Agent

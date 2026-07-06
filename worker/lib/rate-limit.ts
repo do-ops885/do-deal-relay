@@ -78,6 +78,36 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
     windowSeconds: 60,
     keyPrefix: "ratelimit:semantic",
   },
+  "/api/auth/register": {
+    maxRequests: 5,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:auth-register",
+  },
+  "/api/auth/login": {
+    maxRequests: 10,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:auth-login",
+  },
+  "/api/auth/refresh": {
+    maxRequests: 20,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:auth-refresh",
+  },
+  "/api/nlq": {
+    maxRequests: 10,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:nlq",
+  },
+  "/api/experience": {
+    maxRequests: 20,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:experience",
+  },
+  "/deals": {
+    maxRequests: 60,
+    windowSeconds: 60,
+    keyPrefix: "ratelimit:deals",
+  },
   "/webhooks/incoming": {
     maxRequests: 50,
     windowSeconds: 60,
