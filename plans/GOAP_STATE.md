@@ -1,8 +1,8 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Updated**: 2026-07-06 (swarm execution: 3 tasks resolved, 8 stale items verified)
-**Version**: 0.2.0
+**Updated**: 2026-07-06 (swarm execution: 3 tasks resolved, 12 test gaps verified closed, 8 stale items verified)
+**Version**: 0.3.0
 **Status**: Active — cross-referenced from 4 audit sources + live verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
@@ -54,18 +54,18 @@
 
 ---
 
-## P2 — Medium Priority (7 Open — 8 Resolved 2026-07-06)
+## P2 — Medium Priority (0 Open — 20 Resolved 2026-07-06)
 
-### File Size Violations (>500 lines)
+### File Size Violations (>500 lines) — ✅ ALL RESOLVED
 
 | ID | Item | File | Current Lines | Audit Ref | Effort |
 |:---|:---|:---|:---|:---|:---|
-| P2-1 | Split `core.ts` | `worker/routes/core.ts` | ~603 | M-1 | 2 days |
-| P2-2 | Split `github.ts` | `worker/lib/github.ts` | ~688 | M-2 | 2 days |
-| P2-3 | Split `dual-write.ts` | `worker/lib/referral-storage/dual-write.ts` | ~651 | M-3 | 2 days |
-| P2-4 | Split `mcp/index.ts` | `worker/routes/mcp/index.ts` | ~669 | M-4 | 2 days |
-| P2-5 | Split `types.ts` | `worker/types.ts` | ~512 | M-6 | 1 day |
-| P2-6 | Split `state-machine.ts` | `worker/state-machine.ts` | ~518 | Latest audit | 2 days |
+| P2-1 | Split `core.ts` | `worker/routes/core.ts` | ~603 | M-1 | ✅ CLOSED | Split into `routes/core/` (6 files). Verified 2026-07-06. |
+| P2-2 | Split `github.ts` | `worker/lib/github.ts` | ~688 | M-2 | ✅ CLOSED | Split into `lib/github/` (4 files). Verified 2026-07-06. |
+| P2-3 | Split `dual-write.ts` | `worker/lib/referral-storage/dual-write.ts` | ~651 | M-3 | ✅ CLOSED | File now 413 lines (<500). Verified 2026-07-06. |
+| P2-4 | Split `mcp/index.ts` | `worker/routes/mcp/index.ts` | ~669 | M-4 | ✅ CLOSED | File now 393 lines (<500). Verified 2026-07-06. |
+| P2-5 | Split `types.ts` | `worker/types.ts` | ~512 | M-6 | ✅ CLOSED | File now 6 lines (barrel export). Verified 2026-07-06. |
+| P2-6 | Split `state-machine.ts` | `worker/state-machine.ts` | ~518 | Latest audit | ✅ CLOSED | Split into `state-machine.ts` (243 lines) + `pipeline-executor.ts` (269 lines). Verified 2026-07-06. |
 
 ### Misleading / Broken Implementations
 
@@ -77,22 +77,22 @@
 | P2-10 | **MCP version negotiation always returns server version** — no actual negotiation | Audit | H-5 | ✅ CLOSED | Now rejects incompatible versions with error. Optional: implement fallback via `MCP_PROTOCOL_VERSION_FALLBACK`. Verified 2026-07-06. |
 | P2-11 | **Notification deduplication has no TTL cleanup** — `meta:notifications` grows unbounded | Audit | C-3 | ✅ CLOSED | TTL cleanup on read (filter stale entries), 100-entry cap on write. `notify.ts:109-118,157-158`. Verified 2026-07-06. |
 
-### Test Coverage Gaps (Critical Untested Components)
+### Test Coverage Gaps (Critical Untested Components) — ✅ ALL RESOLVED 2026-07-06
 
 | ID | Item | Lines | Priority | Effort |
 |:---|:---|:---|:---|:---|
-| P2-12 | `worker/lib/d1/queries.ts` — database query layer | ~820 | HIGH | 2-3 days |
-| P2-13 | `worker/lib/d1/migrations.ts` — schema integrity | ~605 | HIGH | 1-2 days |
-| P2-14 | `worker/lib/mcp/tools.ts` — 8 MCP tools | ~1100+ | HIGH | 2-3 days |
-| P2-15 | `worker/lib/circuit-breaker.ts` — API resilience | ~412 | HIGH | 1-2 days |
-| P2-16 | `worker/lib/auth.ts` — security | ~259 | HIGH | 1 day |
-| P2-17 | `worker/lib/cache.ts` — KV caching layer | ~353 | MEDIUM | 1 day |
-| P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | HIGH | 1-2 days |
-| P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | MEDIUM | 1 day |
-| P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | HIGH | 2 days |
-| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | MEDIUM | 2 days |
-| P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | HIGH | 1 day |
-| P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | MEDIUM | 1 day |
+| P2-12 | `worker/lib/d1/queries.ts` — database query layer | ~820 | HIGH | ✅ CLOSED | `tests/unit/d1-queries.test.ts` (1265 lines). Verified 2026-07-06. |
+| P2-13 | `worker/lib/d1/migrations.ts` — schema integrity | ~605 | HIGH | ✅ CLOSED | `tests/unit/d1/migrations.test.ts` (1148 lines, 75 tests). Verified 2026-07-06. |
+| P2-14 | `worker/lib/mcp/tools.ts` — 8 MCP tools | ~1100+ | HIGH | ✅ CLOSED | `tests/unit/mcp-tools.test.ts` (779 lines). Verified 2026-07-06. |
+| P2-15 | `worker/lib/circuit-breaker.ts` — API resilience | ~412 | HIGH | ✅ CLOSED | `tests/unit/circuit-breaker.test.ts` (1382 lines). Verified 2026-07-06. |
+| P2-16 | `worker/lib/auth.ts` — security | ~259 | HIGH | ✅ CLOSED | `tests/unit/auth.test.ts` (1200 lines). Verified 2026-07-06. |
+| P2-17 | `worker/lib/cache.ts` — KV caching layer | ~353 | MEDIUM | ✅ CLOSED | `tests/unit/cache.test.ts` (982 lines). Verified 2026-07-06. |
+| P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | HIGH | ✅ CLOSED | `tests/unit/d1/client.test.ts` (743 lines). Verified 2026-07-06. |
+| P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | MEDIUM | ✅ CLOSED | `tests/unit/mcp-resources.test.ts` (484 lines). Verified 2026-07-06. |
+| P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | HIGH | ✅ CLOSED | `tests/unit/webhook/` (7 test files). Verified 2026-07-06. |
+| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | MEDIUM | ✅ CLOSED | `tests/unit/nlq/query-builder/` (3 test files). Verified 2026-07-06. |
+| P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | HIGH | ✅ CLOSED | `tests/unit/referral-storage/dual-write.test.ts` (1413 lines). Verified 2026-07-06. |
+| P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | MEDIUM | ✅ CLOSED | `tests/unit/eu-ai-act-logger.test.ts` (854 lines, 57 tests). Verified 2026-07-06. |
 
 ### Code Hygiene
 
