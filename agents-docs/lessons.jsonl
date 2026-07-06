@@ -15,3 +15,54 @@
   "tags": ["version_mismatch"],
   "confidence": "HIGH"
 }
+{
+  "lesson_id": "LESSON-GOAP-V3-001",
+  "timestamp": "2026-07-06T12:00:00Z",
+  "error_type": "stale_deferrals",
+  "severity": "MEDIUM",
+  "context": "GOAP_STATE.md had 8 items marked 'deferred' but 5 were already resolvable without code changes",
+  "evidence": {
+    "description": "P3-12/13: NO-FIX after 15-min config audit. P3-17: config-only OTEL setup. ⬜-5/6: implementable with existing infrastructure."
+  },
+  "fix_applied": "Executed GOAP Swarm V3: 4 research agents → 3 implementation agents → all items resolved",
+  "prevention": {
+    "immediate": "Add re-verification protocol: investigate before deferring, 30-day auto-flag",
+    "long_term": "Bi-weekly lightweight re-verification sweep of deferred items"
+  },
+  "tags": ["goap", "stale_deferrals", "re-verification"],
+  "confidence": "HIGH"
+}
+{
+  "lesson_id": "LESSON-GOAP-V3-002",
+  "timestamp": "2026-07-06T12:00:00Z",
+  "error_type": "validation_timeout",
+  "severity": "MEDIUM",
+  "context": "pev-gates.sh and vitest timed out (300s) during GOAP swarm post-implementation validation",
+  "evidence": {
+    "description": "Full test suite too heavy for post-swarm validation. Should validate only changed files."
+  },
+  "fix_applied": "Documented incremental validation protocol in AGENTS.md",
+  "prevention": {
+    "immediate": "Run typecheck + changed-dir tests after swarm, full suite only before PR merge",
+    "long_term": "Add --changed flag to pev-gates.sh for incremental validation"
+  },
+  "tags": ["goap", "validation", "timeout", "incremental"],
+  "confidence": "HIGH"
+}
+{
+  "lesson_id": "LESSON-GOAP-V3-003",
+  "timestamp": "2026-07-06T12:00:00Z",
+  "error_type": "research_first",
+  "severity": "LOW",
+  "context": "Research-first pattern identified quick wins invisible to initial audit",
+  "evidence": {
+    "description": "4 parallel research agents found: OTEL config-only, DO migration feasible, DORA implementable with existing KV, config items were NO-FIX."
+  },
+  "fix_applied": "Added Research→Implement pattern to AGENTS.md GOAP Swarm Protocols",
+  "prevention": {
+    "immediate": "Always launch research agents before implementation in GOAP swarms",
+    "long_term": "Make research phase mandatory in GOAP execution strategy selection"
+  },
+  "tags": ["goap", "research", "pattern"],
+  "confidence": "HIGH"
+}
