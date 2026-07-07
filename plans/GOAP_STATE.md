@@ -112,6 +112,15 @@
 
 ---
 
+## Blocked — External Dependencies
+
+| ID | Item | Source | Blocker | ADR |
+|:---|:---|:---|:---|:---|
+| BLOCKED-1 | **Workers Builds: do-deal-relay** — Cloudflare dashboard auto-deploy fails on every push | CI | Cloudflare dashboard integration misconfigured (not managed via code) | [ADR-018](ADR-018-cloudflare-workers-builds-failure.md) |
+| BLOCKED-2 | **Deploy timeout too low** — Pre-Deploy Validation cancelled (15m timeout, tests take 11m+) | CI | OAuth token lacks `workflow` scope to push workflow file changes | [ADR-019](ADR-019-deploy-timeout-too-low.md) |
+
+---
+
 ## P3 — Low Priority (18 Open — Polish & Future)
 
 ### Minor Correctness
