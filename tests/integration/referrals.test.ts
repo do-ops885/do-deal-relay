@@ -233,7 +233,11 @@ describe("Referral Deactivation", () => {
       { id: "round-trip-123", reason: "Testing round-trip" },
     );
 
-    const deactivateResponse = await worker.fetch(deactivateRequest, mockEnv, mockCtx);
+    const deactivateResponse = await worker.fetch(
+      deactivateRequest,
+      mockEnv,
+      mockCtx,
+    );
     expect(deactivateResponse.status).toBe(200);
 
     const getRequest1 = new Request(
@@ -251,7 +255,11 @@ describe("Referral Deactivation", () => {
       "/api/referrals/ROUND_TRIP/reactivate",
     );
 
-    const reactivateResponse = await worker.fetch(reactivateRequest, mockEnv, mockCtx);
+    const reactivateResponse = await worker.fetch(
+      reactivateRequest,
+      mockEnv,
+      mockCtx,
+    );
     expect(reactivateResponse.status).toBe(200);
 
     const getRequest2 = new Request(

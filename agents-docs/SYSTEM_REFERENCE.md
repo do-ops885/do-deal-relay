@@ -45,16 +45,19 @@ Runs on weekly cron (`0 0 * * SUN`) to verify published deals remain valid.
 | `DEALS_SOURCES` | Source registry | Read (Trust), Write (Admin) |
 
 ### D1 Database
+
 | Binding | Role | Access Pattern |
 | :--- | :--- | :--- |
 | `DEALS_DB` | Advanced queries, full-text search | Read/Write (NLQ, Analytics) |
 
 ### Durable Objects
+
 | Binding | Class | Role |
 | :--- | :--- | :--- |
 | `PIPELINE_LOCK` | `PipelineLock` | Atomic concurrency control via SQLite (replaces KV lock race condition) |
 
 ### Vectorize
+
 | Binding | Index | Role |
 | :--- | :--- | :--- |
 | `DEAL_EMBEDDINGS` | `deal-embeddings` | Semantic search over deals and referrals |

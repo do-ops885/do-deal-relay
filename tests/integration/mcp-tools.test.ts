@@ -373,7 +373,11 @@ describe("MCP Protocol E2E", () => {
         }),
       });
 
-      const searchResponse = await worker.fetch(searchRequest, mockEnv, mockCtx);
+      const searchResponse = await worker.fetch(
+        searchRequest,
+        mockEnv,
+        mockCtx,
+      );
       expect(searchResponse.status).toBe(200);
 
       const body = (await searchResponse.json()) as any;
