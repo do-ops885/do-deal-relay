@@ -1,137 +1,39 @@
----
-name: pev-loop
-description: Plan-Execute-Verify loop for non-trivial tasks. Use when implementing features, fixing bugs, or making architectural changes. Produces structured specs, executes in isolation, and verifies through independent gates the author cannot bypass.
----
+# PEV Loop Skill — Plan-Execute-Verify
 
-# PEV Loop Skill
+## Purpose
+Implement the Plan-Execute-Verify loop for all non-trivial tasks in the do-deal-relay codebase. Supports both agent-driven and human-supervised execution.
 
-Plan-Execute-Verify discipline for reliable, auditable code changes. Replaces "prompt and hope" with structured engineering.
+Reference: `plans/PEV_LOOP.md`
 
-## When to Use
+## Phase 1: PLAN
+1. Read `plans/GOAP_STATE.md` for current inventory
+2. Read relevant ADRs in `plans/ADR-*.md`
+3. Write a structured spec using `plans/SPEC_TEMPLATE.md`
+4. Define `approach`, `non_goals`, and `acceptance_criteria`
+5. Get human approval before execution
 
-- Any task touching 2+ files
-- Bug fixes requiring root cause analysis
-- Feature additions with acceptance criteria
-- Architectural changes requiring ADRs
-- Security-sensitive modifications
+## Phase 2: EXECUTE
+1. Create a feature branch from develop
+2. Implement changes in isolated context
+3. Use atomic commits (one per logical change)
+4. Never self-certify — verification is separate
 
-## Core Loop
-
-```
-PLAN → EXECUTE → VERIFY → [pass: PR] / [fail: re-plan]
-```
-
-### 1. PLAN Phase
-
-Produce a structured spec BEFORE writing any code.
-
-**Use template**: `plans/SPEC_TEMPLATE.md`
-
-Required fields:
-- `goal`: One sentence describing what we're building
-- `approach`: One sentence describing how (human sanity-checks this)
-- `non_goals`: Explicit list of what we are NOT doing
-- `acceptance_criteria`: Concrete, testable statements
-- `open_questions`: Surface ambiguity instead of guessing
-
-**Rules**:
-- Decompose into smallest steps that each leave the repo green
-- If uncertain, populate `open_questions` — do not guess
-- Human reviews plan before execution begins
-
-### 2. EXECUTE Phase
-
-Implement the approved spec in isolated context.
-
-**Rules**:
-- Work in isolated context (git worktree or fresh branch)
-- Every tool call executes within the worktree
-- Write files only within the worktree boundary
-- Progress logged to `plans/PROGRESS.json`
-- Atomic commits with `type(scope): subject` format
-
-### 3. VERIFY Phase
-
-Run independent checks the author cannot bypass.
-
-```bash
-./scripts/pev-gates.sh
-```
-
-**Gate pipeline** (each is blocking):
-1. `format` — Code formatting
-2. `typecheck` — Type checking
-3. `lint` — Linting rules
-4. `tests:unit` — Unit tests with coverage floor
-5. `security` — Security scanner
-6. `deps` — Dependency audit
-7. `schema` — Deal schema validation
-8. `trust` — Trust score validation
-9. `dedupe` — Deduplication check
-
-**Failure flow**:
-- Extract specific failing tests/findings
-- Feed structured failure back to PLAN phase
-- Re-plan with failure as new context
-- Max 3 iterations before escalating to human
+## Phase 3: VERIFY
+Run `./scripts/pev-gates.sh` which checks:
+1. Format — Prettier
+2. Typecheck — `tsc --noEmit`
+3. Lint — TypeScript + Markdown
+4. Tests — Unit tests
+5. Schema — Deal validation
+6. Security — Secret detection
+7. Dependencies — npm audit
 
 ## Human Boundaries
+1. **Plan Approval**: Human reviews approach before execution
+2. **Verify Escalation**: Human resolves gate failures the agent cannot fix
+3. **Merge Decision**: Human approves the final PR merge
 
-Humans sit at three boundaries (not in the inner loop):
-
-1. **Plan Approval** (highest ROI): Review approach + non_goals + acceptance_criteria — 30 seconds catches expensive mistakes
-2. **Verify Escalation**: When loop exhausts attempts — receive structured failure, not raw logs
-3. **Merge Decision**: Passing gate produces a PR, never auto-merge
-
-## Integration with Existing Patterns
-
-- **GOAP**: Plan phase uses GOAP decomposition for task breakdown
-- **ADRs**: Complex architectural decisions produce ADRs in `plans/`
-- **Validation Gates**: Verify phase runs the existing 9-gate validation
-- **Trust Model**: Security gate uses existing trust scoring
-- **Skills**: Reference `multi-agent-orchestration` for role separation
-
-## Audit Trail
-
-Every PEV run should emit:
-```json
-{
-  "run_id": "uuid",
-  "task": "description",
-  "plan": { "approach": "...", "steps": [...], "non_goals": [...] },
-  "gate_results": { "tests": "pass", "security": "pass", ... },
-  "merge_decision": "pending",
-  "timestamp": "ISO8601"
-}
-```
-
-## Anti-Patterns to Avoid
-
-- **Self-graded work**: Author and tester must be different agents/roles
-- **Optional security**: Security scanning is blocking, not optional
-- **Skipping plan**: Never execute without approved spec
-- **Guessing in plan**: Surface ambiguity as `open_questions`
-- **Human in inner loop**: Humans at boundaries, not reviewing every diff
-
-## References
-
-- `plans/PEV_LOOP.md` — Full PEV loop specification
-- `plans/SPEC_TEMPLATE.md` — Structured spec template
-- `scripts/pev-gates.sh` — Executable verification gates
-- `worker/pipeline/independent-tester.ts` — Independent verification
-- `worker/pipeline/security-gate.ts` — Security scanning
-
-## Rationalizations
-
-| Concern | Counter-Argument |
-|---------|------------------|
-| "The plan is obvious, skip it." | Obvious plans have obvious blind spots. A 30-second review catches expensive mistakes. |
-| "Tests passed locally, skip verify." | Local ≠ CI. The verify gate catches environment-specific failures. |
-| "We've done this before." | Past success doesn't guarantee future correctness. Systems evolve, assumptions rot. |
-
-## Red Flags
-
-- [ ] Executing without an approved plan.
-- [ ] Author grading their own work.
-- [ ] Security scan marked as optional.
-- [ ] More than 3 iterations without resolution — escalate to human.
+## Loop Control
+- Stop on: all gates pass
+- Retry on: transient failures (network, timeouts)
+- Escalate on: unrecoverable failures (type errors requiring design changes)
