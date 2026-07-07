@@ -39,7 +39,7 @@
     "@types/node": "26.1.0",
     "cheerio": "^1.2.0",
     "discord.js": "^14.26.4",
-    "js-yaml": "5.2.1",
+    "js-yaml": "^4.1.0",
     "protobufjs": "8.6.6",
     "telegraf": "^4.16.3",
     "zod": "^3.22.4"
@@ -68,7 +68,6 @@
     "uuid": "14.0.0",
     "@playwright/test": "^1.61.1",
     "ws": "8.21.0",
-    "js-yaml": "5.2.1",
     "engine.io-client": "6.6.5",
     "form-data": "4.0.6",
     "@opentelemetry/core": "2.8.0"

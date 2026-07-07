@@ -22,7 +22,74 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - name: Prepare Local Environment
+        run: |
+          # Generate a stable test key for this job
+          KEY="ddr_ci_test_key_$(date +%s)"
+          echo "TEST_API_KEY=$KEY" >> "$GITHUB_ENV"
+
+          # Hash the test key (SHA-256)
+          HASH=$(echo -n "$KEY" | openssl dgst -sha256 | sed 's/.*= //')
+
+          # Seed KV with API Key and mock snapshot
+          npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$HASH" \
+            '{
+              "userId":"ci-user","role":"admin",
+              "createdAt":"2026-01-01T00:00:00Z",
+              "rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}
+            }'
+
+          npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" \
+            '{"stats":{"active":1,"expired":0,"validated":1},"generated_at":"2026-01-01T00:00:00Z","deals":[]}'
+
+          npx wrangler kv key put --binding DEALS_PROD --local "meta:last_run" \
+            '{"run_id":"ci-run","timestamp":"2026-01-01T00:00:00Z","duration_ms":100,"deals_count":1}'
+
+      - name: Start dev server
+        run: |
+          # Pass required secrets for startup validation
+          export WEBHOOK_SECRET="whsec_ci_test_secret"
+          export API_ENCRYPTION_KEY="ci_test_encryption_key_32_chars_long"
+          export EMAIL_WEBHOOK_SECRET="ci_email_webhook_test_secret"
+          echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
+          echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
+          echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
+          npx wrangler dev --port 8787 \
+            --var WEBHOOK_SECRET:whsec_ci_test_secret \
+            --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
+            --var EMAIL_WEBHOOK_SECRET:ci_email_webhook_test_secret > wrangler.log 2>&1 &
+          WRANGLER_PID=$!
+          echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
+
+          # Wait for health check to pass
+          for _i in {1..30}; do
+            if curl -s http://localhost:8787/health | grep -q '"status":\s*"healthy"'; then
+              SUCCESS=1; break
+            fi
+            sleep 2
+          done
+
+          if [ "${SUCCESS:-0}" != "1" ]; then
+            echo "Timeout waiting for healthy dev server"
+            cat wrangler.log
+            kill "$WRANGLER_PID"
+            exit 1
+          fi
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          SKIP_DEV_SERVER: 1
+          WEBHOOK_SECRET: "whsec_ci_test_secret"
+          API_ENCRYPTION_KEY: "ci_test_encryption_key_32_chars_long"
+          EMAIL_WEBHOOK_SECRET: "ci_email_webhook_test_secret"
+
+      - name: Stop dev server
+        if: always()
+        run: |
+          if [ -n "$WRANGLER_PID" ]; then
+            kill "$WRANGLER_PID" 2>/dev/null || true
+          fi
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
