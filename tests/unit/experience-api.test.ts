@@ -51,6 +51,11 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
 
 const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
 
+const mockCtx = {
+  waitUntil: vi.fn(),
+  passThroughOnException: vi.fn(),
+} as unknown as ExecutionContext;
+
 describe("Experience API Endpoints", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -68,7 +73,7 @@ describe("Experience API Endpoints", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deal_code: "DEAL123", event_type: "click" }),
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(503);
     });
 
@@ -82,7 +87,7 @@ describe("Experience API Endpoints", () => {
         },
         body: "not json",
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(415);
     });
   });
@@ -93,7 +98,7 @@ describe("Experience API Endpoints", () => {
       const request = new Request("http://localhost/api/experience/DEAL123", {
         headers: { ...authHeader },
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(200);
     });
   });

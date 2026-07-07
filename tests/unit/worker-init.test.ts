@@ -30,12 +30,17 @@ describe("Worker Initialization", () => {
     vi.clearAllMocks();
   });
 
+  const mockCtx = {
+    waitUntil: vi.fn(),
+    passThroughOnException: vi.fn(),
+  } as unknown as ExecutionContext;
+
   describe("fetch handler", () => {
     it("should return 503 when TRUST_THRESHOLD is invalid", async () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "invalid" };
       const request = new Request("https://example.com/health");
 
-      const response = await worker.fetch(request, env);
+      const response = await worker.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(503);
       const body = (await response.json()) as any;
@@ -46,7 +51,7 @@ describe("Worker Initialization", () => {
       const env = { ...mockEnv, TRUST_THRESHOLD: "1.5" };
       const request = new Request("https://example.com/health");
 
-      const response = await worker.fetch(request, env);
+      const response = await worker.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(503);
       const body = (await response.json()) as any;

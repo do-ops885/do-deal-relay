@@ -1,11 +1,19 @@
 # System Reference
-**Version**: 0.1.8 | **Status**: Production
+**Version**: 0.2.0 | **Status**: Production
 
 ## Architecture: Two-Phase Publishing
 Candidate deals are staged, validated through 9 gates, then promoted to production.
 1. **Stage**: Write to `DEALS_STAGING`.
 2. **Publish**: Promoted to `DEALS_PROD` KV + GitHub commit.
 3. **Rollback**: Revert `DEALS_PROD` to previous snapshot.
+
+## Middleware Pipeline (ADR-016)
+All API routes go through a centralized middleware pipeline in `worker/lib/middleware/pipeline.ts`:
+- **Auth**: JWT/API key verification with role-based access (`user`, `admin`, `internal`)
+- **Rate Limiting**: Config-driven per-route rate limits via `createRateLimitMiddleware`
+- **Body Size**: Maximum request body validation via `checkBodySize`
+
+Route registration follows the pattern: `withAuth → createRateLimitMiddleware → handler`.
 
 ## Validation Gates (Mandatory 9-Gate Pipeline)
 
@@ -21,6 +29,10 @@ Candidate deals are staged, validated through 9 gates, then promoted to producti
 | `idempotency_check` | Deal ID not in `DEALS_PROD` snapshot. | `IdempotencyError`: Deal already published. |
 | `snapshot_hash_verification` | Data hash matches pipeline context hash. | `IntegrityError`: Data tampered/corrupted in pipeline. |
 
+### 10th Gate: Continuous Verification
+Post-publication health monitoring via `worker/validation/gates/continuous-verification.ts`.
+Runs on weekly cron (`0 0 * * SUN`) to verify published deals remain valid.
+
 ## Infrastructure
 ### KV Namespaces
 
@@ -29,13 +41,33 @@ Candidate deals are staged, validated through 9 gates, then promoted to producti
 | `DEALS_PROD` | Production snapshots | Read (Public), Write (Finalization) |
 | `DEALS_STAGING` | Candidate deals | Read/Write (Validation) |
 | `DEALS_LOG` | Run history & metrics | Write (Logger), Read (Admin) |
-| `DEALS_LOCK` | Concurrency mutex | Read/Write (`init` stage) |
+| `DEALS_LOCK` | Concurrency mutex (legacy) | Read/Write (`init` stage) |
 | `DEALS_SOURCES` | Source registry | Read (Trust), Write (Admin) |
+
+### D1 Database
+| Binding | Role | Access Pattern |
+| :--- | :--- | :--- |
+| `DEALS_DB` | Advanced queries, full-text search | Read/Write (NLQ, Analytics) |
+
+### Durable Objects
+| Binding | Class | Role |
+| :--- | :--- | :--- |
+| `PIPELINE_LOCK` | `PipelineLock` | Atomic concurrency control via SQLite (replaces KV lock race condition) |
+
+### Vectorize
+| Binding | Index | Role |
+| :--- | :--- | :--- |
+| `DEAL_EMBEDDINGS` | `deal-embeddings` | Semantic search over deals and referrals |
 
 ### Scheduled Triggers
 - **`0 */6 * * *`**: Discovery pipeline.
 - **`0 9 * * *`**: Expirations & experience aggregation.
-- **`0 0 * * SUN`**: Weekly full validation sweep.
+- **`0 0 * * SUN`**: Weekly full validation sweep + continuous verification.
+
+### Observability
+- **Cloudflare Traces**: Enabled via `wrangler.jsonc` observability config
+- **OTLP Export**: Configurable destinations (Honeycomb, Grafana, Axiom, SigNoz)
+- **DORA Metrics**: `/api/dora-metrics` endpoint for deployment/lead time/CFR/MTTR tracking
 
 ## MCP Toolset (Tool Signatures)
 
@@ -71,3 +103,6 @@ Candidate deals are staged, validated through 9 gates, then promoted to producti
 ## Operational Safety
 - **Idempotency**: Blocked by `DEALS_LOCK`. `run_id` required for all writes.
 - **Quarantine**: Auto-triggers if trust < 0.5 or reward > $500.
+- **Circuit Breakers**: API resilience via `worker/lib/circuit-breaker.ts`.
+- **D1 CAS Lock**: Atomic lock acquisition via `PipelineLock` Durable Object.
+- **Async Pipeline**: `/api/discover` returns 202 immediately; pipeline runs via `ctx.waitUntil()`.

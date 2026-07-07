@@ -6,6 +6,10 @@ describe("Referral Deactivation", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
+  const mockCtx = {
+    waitUntil: vi.fn(),
+    passThroughOnException: vi.fn(),
+  } as unknown as ExecutionContext;
 
   function mockKvFactory(prefix: string) {
     return {
@@ -92,7 +96,7 @@ describe("Referral Deactivation", () => {
       },
     );
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as any;
 
     if (response.status !== 200) {
@@ -117,7 +121,7 @@ describe("Referral Deactivation", () => {
       },
     );
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     expect(response.status).toBe(404);
   });
 
@@ -146,7 +150,7 @@ describe("Referral Deactivation", () => {
       },
     );
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as any;
 
     expect(response.status).toBe(200);
@@ -198,7 +202,7 @@ describe("Referral Deactivation", () => {
       "/api/referrals/ALREADY_ACTIVE/reactivate",
     );
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(409);
@@ -210,7 +214,7 @@ describe("Referral Deactivation", () => {
       "/api/referrals/MISSING_CODE/reactivate",
     );
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(404);
@@ -229,7 +233,7 @@ describe("Referral Deactivation", () => {
       { id: "round-trip-123", reason: "Testing round-trip" },
     );
 
-    const deactivateResponse = await worker.fetch(deactivateRequest, mockEnv);
+    const deactivateResponse = await worker.fetch(deactivateRequest, mockEnv, mockCtx);
     expect(deactivateResponse.status).toBe(200);
 
     const getRequest1 = new Request(
@@ -239,7 +243,7 @@ describe("Referral Deactivation", () => {
         headers: authHeader,
       },
     );
-    const getResponse1 = await worker.fetch(getRequest1, mockEnv);
+    const getResponse1 = await worker.fetch(getRequest1, mockEnv, mockCtx);
     const body1 = (await getResponse1.json()) as Record<string, unknown>;
     expect((body1.referral as Record<string, unknown>).status).toBe("inactive");
 
@@ -247,7 +251,7 @@ describe("Referral Deactivation", () => {
       "/api/referrals/ROUND_TRIP/reactivate",
     );
 
-    const reactivateResponse = await worker.fetch(reactivateRequest, mockEnv);
+    const reactivateResponse = await worker.fetch(reactivateRequest, mockEnv, mockCtx);
     expect(reactivateResponse.status).toBe(200);
 
     const getRequest2 = new Request(
@@ -257,7 +261,7 @@ describe("Referral Deactivation", () => {
         headers: authHeader,
       },
     );
-    const getResponse2 = await worker.fetch(getRequest2, mockEnv);
+    const getResponse2 = await worker.fetch(getRequest2, mockEnv, mockCtx);
     const body2 = (await getResponse2.json()) as Record<string, unknown>;
     expect((body2.referral as Record<string, unknown>).status).toBe("active");
   });
@@ -281,7 +285,7 @@ describe("Referral Deactivation", () => {
       headers: authHeader,
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as any;
 
     expect(response.status).toBe(200);

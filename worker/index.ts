@@ -30,7 +30,11 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 export { PipelineLock };
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     try {
       await ensureConfigValidated(env);
     } catch (error) {
@@ -47,7 +51,7 @@ export default {
       initGitHubCircuitBreaker(env as unknown as { DEALS_PROD: KVNamespace });
     }
 
-    return handleRequest(request, env);
+    return handleRequest(request, env, ctx);
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
