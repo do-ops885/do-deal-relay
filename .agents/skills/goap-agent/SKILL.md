@@ -1,160 +1,71 @@
----
-name: goap-agent
-description: Invoke for complex multi-step tasks requiring intelligent planning and multi-agent coordination. Use when tasks need decomposition, dependency mapping, parallel/sequential/swarm/iterative execution strategies, or coordination of multiple specialized agents with quality gates.
----
+# GOAP Agent Skill — Goal-Oriented Action Planning
 
-# GOAP Agent Skill: Goal-Oriented Action Planning
+## Purpose
+Orchestrate swarm-based execution of complex multi-step programming tasks using Goal-Oriented Action Planning. Decompose large tasks into atomic, independently verifiable units and coordinate parallel agent execution.
 
-Enable intelligent planning and execution of complex multi-step tasks through systematic decomposition, dependency mapping, and coordinated multi-agent execution.
+## When to Use
+- Multi-step feature implementation (5+ independent tasks)
+- Batch code quality fixes (lint errors, type fixes, file splits)
+- CI pipeline fixes requiring multiple file changes
+- Swarm execution per GOAP Swarm Protocols in AGENTS.md
 
-Always use the plans/ folder for all files.
+## Workflow
 
-## Quick Reference
+### Phase 1: Analyze
+1. Read `plans/GOAP_STATE.md` to understand current inventory
+2. Read relevant ADRs in `plans/ADR-*.md`
+3. Run `./scripts/pev-gates.sh` to assess current state
+4. Identify all actionable items that are:
+   - Not marked DEFERRED or BLOCKED
+   - Not marked NO-FIX
+   - Have clear acceptance criteria
 
-- **[Execution Strategies](execution-strategies.md)** - Detailed guide on execution patterns
-- **[Reference Guide](reference/guide.md)** - Complete examples, templates, and advanced topics
+### Phase 2: Decompose
+1. Break findings into atomic tasks
+2. Classify by priority (P0 > P1 > P2 > P3)
+3. Group independent tasks for parallel execution
+4. Sequence dependent tasks
+5. Write task spec using `plans/SPEC_TEMPLATE.md`
 
-## When to Use This Skill
+### Phase 3: Execute (Swarm)
+1. Dispatch parallel agents for independent tasks
+2. Each agent: read → edit → verify → report
+3. Use atomic commits per task
+4. Run validation after each task
+5. Respect the MAX_LINES_PER_SOURCE_FILE=500 constraint
 
-Use this skill when facing:
-- **Complex Multi-Step Tasks**: Tasks requiring 5+ distinct steps
-- **Cross-Domain Problems**: Issues spanning multiple areas
-- **Optimization Opportunities**: Tasks benefiting from parallel execution
-- **Quality-Critical Work**: Projects requiring validation checkpoints
+### Phase 4: Verify
+1. Run `./scripts/pev-gates.sh` after all changes
+2. Typecheck: `npx tsc --noEmit`
+3. Unit tests: `npm run test:unit`
+4. Format: `npm run fmt:check`
+5. Markdown lint: `npm run lint:md`
 
-## Core GOAP Methodology
+### Phase 5: Synthesize
+1. Update `plans/GOAP_STATE.md` with completed items
+2. Update `plans/PROGRESS-*.md` with timestamp
+3. Append to `agents-docs/LEARNINGS.md` if new patterns discovered
+4. Append metrics to `.agents/metrics.jsonl`
 
-### The GOAP Planning Cycle
+## Agent Swarm Configuration
 
-```
-1. ANALYZE → 2. DECOMPOSE → 3. STRATEGIZE → 4. COORDINATE → 5. EXECUTE → 6. SYNTHESIZE
-```
+| Task Type | Agent Skill | Verification |
+|-----------|------------|-------------|
+| Code fix | typescript-coding-standards | typecheck + tests |
+| PR review | codacy-code-review | lint |
+| Test writing | validation-gates | test runner |
+| Refactoring | pev-loop | typecheck + tests + format |
+| Security fix | guard-rails | security scan |
 
-## Phase 1: Task Analysis
+## Quality Requirements
+- Every commit must pass `./scripts/pev-gates.sh`
+- No file exceeds 500 lines
+- No `as any` casts (use proper types)
+- Atomic commits with conventional commit messages
+- All tests pass before merge
 
-```markdown
-## Task Analysis
-
-**Primary Goal**: [Clear statement of what success looks like]
-**Constraints**: [Time, Resources]
-**Complexity**: Simple/Medium/Complex
-```
-
-Context: Use Explore agent, check past patterns, identify available agents.
-
-## Phase 2: Task Decomposition
-
-Use **task-decomposition** skill:
-
-```markdown
-### Sub-Goals
-1. [Component 1] - Priority: P0, Deps: none
-2. [Component 2] - Priority: P1, Deps: Component 1
-```
-
-Principles: Atomic, Testable, Independent, Assigned
-
-## Phase 3: Strategy Selection
-
-| Strategy | When | Speed |
-|----------|------|-------|
-| Parallel | Independent tasks | Nx |
-| Sequential | Dependent tasks | 1x |
-| Swarm | Many similar tasks | ~Nx |
-| Hybrid | Mixed requirements | 2-4x |
-
-See **[execution-strategies.md](execution-strategies.md)** for details.
-
-## Phase 4: Agent Assignment
-
-| Agent | Best For |
-|-------|----------|
-| feature-implementer | New functionality |
-| debugger | Bug fixes |
-| test-runner | Test validation |
-| refactorer | Code improvements |
-| code-reviewer | Quality assurance |
-
-## Phase 5: Execution Planning
-
-```markdown
-## Execution Plan
-
-- Strategy: [Type]
-- Quality Gates: [N checkpoints]
-
-### Phase 1
-- Tasks: [List]
-- Quality Gate: [Criteria]
-```
-
-## Phase 6: Coordinated Execution
-
-**Parallel**: Single message, multiple Task tool calls
-**Sequential**: Phases with quality gates between
-**Monitor**: Track progress, validate results
-
-## Phase 7: Result Synthesis
-
-```markdown
-## Summary
-
-✓ Completed: [Tasks]
-📦 Deliverables: [List]
-✅ Quality: [Status]
-```
-
-## Common Patterns
-
-- **Research → Implement → Validate**
-- **Investigate → Diagnose → Fix → Verify**
-- **Audit → Improve → Validate**
-
-## Error Handling
-
-- **Agent Failure**: Retry, Reassign, Modify, or Escalate
-- **Quality Gate Failure**: Re-run with fixes
-- **Blocked**: Re-order or work on independent tasks
-
-## Best Practices
-
-### DO:
-✓ Break tasks into atomic units
-✓ Define clear quality gates
-✓ Match agents to requirements
-✓ Monitor and validate incrementally
-
-### DON'T:
-✗ Create monolithic tasks
-✗ Skip quality gates
-✗ Assume independence without verification
-
-## Integration
-
-- **task-decomposition**: Phase 2
-- **parallel-execution**: Strategy implementation
-
-## Summary
-
-GOAP enables systematic planning through: Analysis, Decomposition, Strategy, Quality Assurance, and Coordinated Agents.
-
-## Reference Files
-
-- **[reference/guide.md](reference/guide.md)** - Complete templates, detailed examples, extended patterns, error handling, optimization
-- **[execution-strategies.md](execution-strategies.md)** - Execution pattern details
-
-## Rationalizations
-
-| Concern | Counter-Argument |
-|---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
-## Red Flags
-
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+## Reference
+- `AGENTS.md` — Coordination hub
+- `plans/PEV_LOOP.md` — Plan-Execute-Verify spec
+- `plans/GOAP_STATE.md` — Task inventory
+- `agents-docs/hard-constraints.md` — Hard limits

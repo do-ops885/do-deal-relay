@@ -2,9 +2,33 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-07
-**Version**: 0.5.0
-**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification + PR Resolver
+**Version**: 0.6.0
+**Status**: Active — Swarm V7: Skills Infrastructure Complete
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## GOAP Swarm V7 — Skills Infrastructure — 2026-07-07
+
+### Completed
+- ✅ **Skills Directory**: Created `.agents/skills/` with 6 skills (goap-agent, typescript-coding-standards, pev-loop, validation-gates, pr-resolver, agentic-abstention)
+- ✅ **Setup Script**: `scripts/setup-skills.sh` — creates symlinks for Claude Code, Gemini CLI, Qwen Code
+- ✅ **Metrics Tracking**: `.agents/metrics.jsonl` — post-task metrics logging
+- ✅ **Symlinks**: Created `.claude/skills/`, `.gemini/skills/`, `.qwen/skills/` symlinks
+
+### Verified
+- ✅ `author: any` in `worker/lib/github/core.ts` already resolved (properly typed inline interface)
+- ✅ `webhooks.ts` thin wrapper already removed
+- ✅ `validation.ts` already removed
+- ✅ Jules audit: remaining quality findings are false positives (HACKERNEWS variable name, stale line refs)
+
+### Remaining
+- ⬜ File size violations in `quality_long_files.txt` (14 files >500 lines) — tracked as P2, requires dedicated refactoring sprint
+- ⬜ E2E local env setup (P3-16) — requires runtime auth token configuration
+- ⬜ OTEL SDK integration (P3-17) — Cloudflare observability enabled; SDK integration deferred
+
+### Plan
+See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
 
 ---
 

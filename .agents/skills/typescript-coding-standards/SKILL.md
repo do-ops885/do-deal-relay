@@ -1,56 +1,47 @@
----
-name: typescript-coding-standards
-description: Repo-specific TypeScript workflow rules, CI-safety guidelines, and hot-file coordination for do-deal-relay. Use when modifying configuration, endpoints, or frequently contested core files.
-license: MIT
----
+# TypeScript Coding Standards Skill
 
-# TypeScript Coding Standards
+## Purpose
+Enforce TypeScript coding standards for the do-deal-relay codebase. Ensure type safety, code quality, and consistency across all source files.
 
-Ensure TypeScript changes in `do-deal-relay` remain CI-safe, test-consistent, and compatible with existing validation / deployment workflows.
+## Standards
 
-## Rules
+### Type Safety
+- **No `as any` casts**: Always use proper types or `unknown` with type guards
+- **No implicit any**: All function parameters and return types must be explicit
+- **Use strict null checks**: Handle null/undefined explicitly
+- **Prefer type guards over type assertions**: `typeof x === "string"` over `x as string`
 
-### 1. `validateConfig()` Contract Changes
-When adding a required environment variable to `validateConfig()`:
-- Update all GitHub Action workflows that invoke `wrangler dev` (e.g., E2E and smoke test jobs).
-- Update staging and production deployment workflows if they rely on the same configuration path.
-- Verify local development, E2E, and smoke test assumptions before pushing.
+### Code Quality
+- **MAX_LINES_PER_SOURCE_FILE = 500**: Split files exceeding this limit
+- **Single responsibility**: Each file should have one clear purpose
+- **Naming conventions**:
+  - Functions: camelCase, descriptive verbs (getX, handleY, createZ)
+  - Types/Interfaces: PascalCase
+  - Constants: UPPER_SNAKE_CASE for module-level, camelCase for local
+  - Files: kebab-case matching export name
 
-### 2. Endpoint Response Format Changes
-When changing the format or content type for endpoints (e.g., `/metrics`):
-- Update all associated test files: unit, integration, E2E, and smoke tests.
-- Explicitly verify content-type assertions and body-shape assertions in the test suite.
+### Imports
+- Group imports: vendor → shared → local
+- Use relative imports for same-directory, `../../` for cross-module
+- No circular imports
 
-### 3. Shared Hot Files Protocol
-The following files are frequently modified and require explicit coordination to avoid merge conflicts and regressions:
+### Error Handling
+- Use typed errors with meaningful messages
+- Handle promise rejections with try/catch or `.catch()`
+- Log errors with context via `createStructuredLogger`
 
-| File | Why it's hot |
-|------|-------------|
-| `worker/config.ts` | Required env vars, validateConfig contract — touched by every env change |
-| `worker/index.ts` | Route registration — all new endpoints modify this |
-| `worker/lib/security.ts` | Auth/RBAC — parallel changes cause hard-to-debug regressions |
-| `worker/routes/referrals.ts` | High PR conflict history (see LEARNINGS.md 2026-05-20) |
-| `worker/lib/research-agent/fetcher.ts` | AI Gateway integration — config + fetch strategy coupled |
+### Testing Requirements
+- Test files in `tests/unit/` mirroring `worker/` structure
+- Test name: `{functionName} should {expected behavior}`
+- Coverage target: >80% for new code
 
-**Protocol:**
-- Inspect recent history for the file before editing.
-- Check open PRs for overlapping changes.
-- Avoid parallel edits where file ownership overlaps.
+### Commit Messages
+- Format: `type(scope): subject` (max 72 chars)
+- Types: feat, fix, docs, chore, refactor, test, ci, security
+- Body wraps at 100 chars, footer at 1000 chars
 
-### 4. Minimal Change Principle
-- Prefer incremental edits over large refactors.
-- Avoid speculative rewrites.
-- Preserve existing gate architecture unless the task explicitly mandates changes.
-
-## Rationalizations
-
-| Concern | Counter-Argument |
-|---------|-----------------|
-| "Strict protocol slows down development." | Coordination on hot files prevents costly merge conflict resolution and CI failures. |
-| "Minimal changes limit modernization." | Incremental improvements are safer and easier to verify in a complex pipeline. |
-
-## Red Flags
-
-- [ ] Modifying `worker/config.ts` without checking CI workflow impacts.
-- [ ] Changing endpoint output without updating E2E expectations.
-- [ ] Starting parallel work on security-critical files without coordination.
+## Quality Gates
+1. `npx tsc --noEmit` — typecheck
+2. `npx prettier --check .` — formatting
+3. `npm run lint:md` — markdown lint
+4. `npm run test:unit` — unit tests

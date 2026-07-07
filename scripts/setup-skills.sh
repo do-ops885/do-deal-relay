@@ -1,84 +1,64 @@
 #!/usr/bin/env bash
-# Setup script to create skill symlinks for multi-agent support
-# Run once after cloning: ./scripts/setup-skills.sh
+# scripts/setup-skills.sh — Create symlinks for AI CLI tools
+# Canonical skills in .agents/skills/ symlinked to .<tool>/skills/
+# Supports: Claude Code (.claude/), Gemini CLI (.gemini/), Qwen Code (.qwen/)
+# OpenCode reads directly from .agents/skills/
+
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$REPO_ROOT"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SKILLS_DIR="${ROOT_DIR}/.agents/skills"
 
-echo "Setting up skill symlinks for multi-agent support..."
-echo ""
-
-# Create .claude/skills/ directory with symlinks
-if [ -d ".claude" ]; then
-    echo "Setting up Claude Code skills..."
-    mkdir -p .claude/skills
-
-    for skill in .agents/skills/*/; do
-        skill_name=$(basename "$skill")
-        target="../../.agents/skills/$skill_name"
-        link=".claude/skills/$skill_name"
-
-        if [ -e "$link" ] || [ -L "$link" ]; then
-            echo "  ✓ $skill_name (already exists)"
-        else
-            ln -s "$target" "$link"
-            echo "  ✓ $skill_name (created)"
-        fi
-    done
-    echo ""
+if [ ! -d "$SKILLS_DIR" ]; then
+    echo "Error: .agents/skills/ directory not found at $SKILLS_DIR"
+    echo "Run: mkdir -p .agents/skills/"
+    exit 1
 fi
 
-# Create .gemini/skills/ directory with symlinks
-if [ ! -d ".gemini" ]; then
-    echo "Creating Gemini CLI directory..."
-    mkdir -p .gemini
-fi
+echo "Setting up skill symlinks..."
 
-echo "Setting up Gemini CLI skills..."
-mkdir -p .gemini/skills
-
-for skill in .agents/skills/*/; do
-    skill_name=$(basename "$skill")
-    target="../../.agents/skills/$skill_name"
-    link=".gemini/skills/$skill_name"
-
-    if [ -e "$link" ] || [ -L "$link" ]; then
-        echo "  ✓ $skill_name (already exists)"
-    else
-        ln -s "$target" "$link"
-        echo "  ✓ $skill_name (created)"
+# Claude Code
+CLAUDE_SKILLS="${ROOT_DIR}/.claude/skills"
+mkdir -p "$CLAUDE_SKILLS"
+for skill_dir in "$SKILLS_DIR"/*/; do
+    skill_name=$(basename "$skill_dir")
+    target="${CLAUDE_SKILLS}/${skill_name}"
+    if [ -L "$target" ]; then
+        rm "$target"
     fi
+    ln -sf "../../.agents/skills/${skill_name}" "$target"
+    echo "  .claude/skills/${skill_name}"
 done
-echo ""
 
-# Create .qwen/skills/ directory with symlinks
-if [ ! -d ".qwen" ]; then
-    echo "Creating Qwen Code directory..."
-    mkdir -p .qwen
-fi
-
-echo "Setting up Qwen Code skills..."
-mkdir -p .qwen/skills
-
-for skill in .agents/skills/*/; do
-    skill_name=$(basename "$skill")
-    target="../../.agents/skills/$skill_name"
-    link=".qwen/skills/$skill_name"
-
-    if [ -e "$link" ] || [ -L "$link" ]; then
-        echo "  ✓ $skill_name (already exists)"
-    else
-        ln -s "$target" "$link"
-        echo "  ✓ $skill_name (created)"
+# Gemini CLI
+GEMINI_SKILLS="${ROOT_DIR}/.gemini/skills"
+mkdir -p "$GEMINI_SKILLS"
+for skill_dir in "$SKILLS_DIR"/*/; do
+    skill_name=$(basename "$skill_dir")
+    target="${GEMINI_SKILLS}/${skill_name}"
+    if [ -L "$target" ]; then
+        rm "$target"
     fi
+    ln -sf "../../.agents/skills/${skill_name}" "$target"
+    echo "  .gemini/skills/${skill_name}"
 done
-echo ""
 
-echo "✅ Skill symlinks setup complete!"
+# Qwen Code
+QWEN_SKILLS="${ROOT_DIR}/.qwen/skills"
+mkdir -p "$QWEN_SKILLS"
+for skill_dir in "$SKILLS_DIR"/*/; do
+    skill_name=$(basename "$skill_dir")
+    target="${QWEN_SKILLS}/${skill_name}"
+    if [ -L "$target" ]; then
+        rm "$target"
+    fi
+    ln -sf "../../.agents/skills/${skill_name}" "$target"
+    echo "  .qwen/skills/${skill_name}"
+done
+
 echo ""
-echo "Usage:"
-echo "  Claude Code: skill <name>   (e.g., skill agent-coordination)"
-echo "  Gemini CLI:  skill <name>   (e.g., skill goap-agent)"
-echo "  Qwen Code:   skill <name>   (e.g., skill task-decomposition)"
-echo "  OpenCode:    Reads directly from .agents/skills/ (no setup needed)"
+echo "Skills setup complete."
+echo "Canonical skills: .agents/skills/"
+echo "Symlinks created for: Claude Code, Gemini CLI, Qwen Code"
+echo "OpenCode reads directly from .agents/skills/"
