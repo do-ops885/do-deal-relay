@@ -22,8 +22,6 @@ updates:
           - "minor"
           - "patch"
 
-
-
   # npm Ecosystem
   - package-ecosystem: "npm"
     directory: "/"
