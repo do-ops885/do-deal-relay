@@ -142,9 +142,12 @@ export class MigrationRunner {
       rolledBack: rolledBackVersions,
       currentVersion:
         rolledBackVersions.length > 0
-          ? Math.max(
-              ...status.applied.filter((v) => !rolledBackVersions.includes(v)),
-            )
+          ? (() => {
+              const remaining = status.applied.filter(
+                (v) => !rolledBackVersions.includes(v),
+              );
+              return remaining.length > 0 ? Math.max(...remaining) : 0;
+            })()
           : status.currentVersion,
     };
   }

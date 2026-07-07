@@ -31,6 +31,8 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 > **GOAP execution completed on 2026-06-30.** All planned phases (Analyze, Decompose, Execute, Synthesize) finished. The GitHub Automation plan reached verified status. See individual plan files for details.
 >
 > **Swarm v2 closed on 2026-07-01:** Original 3 swarm tasks re-verified as already complete via PR #524. Swarm 2 (test coverage) shipped in PR #527 (CI: 22+/23 PASS including Unit Tests, Build, E2E, Codacy, Security, Quality Gate). Plan archived to `reports/archived_plans/`.
+>
+> **Swarm V3 closed on 2026-07-06:** All 8 deferred items from GOAP_STATE.md resolved. P3-12/P3-13 closed as NO-FIX. P3-17 OTEL config implemented. ⬜-5 Continuous Verification gate (10th gate) implemented. ⬜-6 DORA metrics endpoint implemented. ⬜-1/⬜-2 DO/DE research complete with migration plans. Commits: `feat(dora)` + `docs(observability)` pushed to `develop`.
 
 ## Archived
 

@@ -5,6 +5,7 @@ import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
 import { logger } from "./lib/global-logger";
 import { runAggregation } from "./lib/d1/experience";
 import { toError } from "./lib/sanitize-error";
+import { runContinuousVerification } from "./validation/gates/continuous-verification";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -142,6 +143,27 @@ export async function handleScheduled(
       logger.info("Pipeline execution completed successfully", {
         component: "scheduled",
         phase: result.phase,
+      });
+    }
+
+    // Run continuous verification on recently published deals
+    logger.info("Running continuous verification", {
+      component: "scheduled",
+    });
+
+    try {
+      const cvSummary = await runContinuousVerification(env);
+      logger.info("Continuous verification completed", {
+        component: "scheduled",
+        totalChecked: cvSummary.totalChecked,
+        healthy: cvSummary.healthy,
+        unhealthy: cvSummary.unhealthy,
+      });
+    } catch (error) {
+      const cvErr = toError(error);
+      logger.error("Continuous verification failed", {
+        component: "scheduled",
+        error_message: cvErr.message,
       });
     }
   } catch (error) {

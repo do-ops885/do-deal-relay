@@ -1,7 +1,7 @@
 # Discovery Agent
 
 **Agent ID**: `discovery-agent`
-**Status**: ⚪ Pending
+**Status**: ✅ Active
 **Scope**: Web discovery engine, scrapers, fetchers
 **Previous Agent**: Storage Agent
 **Next Agent**: Validation Agent

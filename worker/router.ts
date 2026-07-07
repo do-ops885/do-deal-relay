@@ -15,6 +15,7 @@ import {
   handleSimilarDeals,
   handleExplainDeal,
   handleAnalytics,
+  handleDORAMetrics,
 } from "./routes/core";
 import {
   handleGetReferrals,
@@ -89,17 +90,20 @@ export async function handleRequest(
     if (path === "/api/auth/register" && request.method === "POST") {
       const bodyTooLarge = checkBodySize(request, 5 * 1024);
       if (bodyTooLarge) return bodyTooLarge;
-      return handleRegister(request, env);
+      const rateLimiter = createRateLimitMiddleware(env, "/api/auth/register");
+      return rateLimiter(request, () => handleRegister(request, env));
     }
     if (path === "/api/auth/login" && request.method === "POST") {
       const bodyTooLarge = checkBodySize(request, 5 * 1024);
       if (bodyTooLarge) return bodyTooLarge;
-      return handleLogin(request, env);
+      const rateLimiter = createRateLimitMiddleware(env, "/api/auth/login");
+      return rateLimiter(request, () => handleLogin(request, env));
     }
     if (path === "/api/auth/refresh" && request.method === "POST") {
       const bodyTooLarge = checkBodySize(request, 5 * 1024);
       if (bodyTooLarge) return bodyTooLarge;
-      return handleRefreshToken(request, env);
+      const rateLimiter = createRateLimitMiddleware(env, "/api/auth/refresh");
+      return rateLimiter(request, () => handleRefreshToken(request, env));
     }
     if (path === "/api/auth/me" && request.method === "GET") {
       return withAuth(request, env, undefined, (auth) =>
@@ -131,24 +135,28 @@ export async function handleRequest(
 
     // Deals
     if (path === "/deals" || path === "/deals.json") {
-      return withAuth(request, env, undefined, () =>
-        handleGetDeals(url, env, request),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(env, "/deals", auth);
+        return rateLimiter(request, () => handleGetDeals(url, env, request));
+      });
     }
     if (path === "/deals/ranked") {
-      return withAuth(request, env, undefined, () =>
-        handleRankedDeals(url, env),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(env, "/deals", auth);
+        return rateLimiter(request, () => handleRankedDeals(url, env));
+      });
     }
     if (path === "/deals/highlights") {
-      return withAuth(request, env, undefined, () =>
-        handleDealHighlights(url, env),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(env, "/deals", auth);
+        return rateLimiter(request, () => handleDealHighlights(url, env));
+      });
     }
     if (path === "/deals/similar") {
-      return withAuth(request, env, undefined, () =>
-        handleSimilarDeals(url, env),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(env, "/deals", auth);
+        return rateLimiter(request, () => handleSimilarDeals(url, env));
+      });
     }
 
     // Pipeline API
@@ -173,6 +181,13 @@ export async function handleRequest(
     if (path === "/api/analytics") {
       return withAuth(request, env, "admin", () =>
         handleAnalytics(url, env, request),
+      );
+    }
+
+    // DORA Metrics
+    if (path === "/api/dora-metrics" && request.method === "GET") {
+      return withAuth(request, env, "admin", () =>
+        handleDORAMetrics(url, env, request),
       );
     }
 
@@ -349,9 +364,10 @@ export async function handleRequest(
 
     // NLQ (Natural Language Query) API endpoints
     if (path.startsWith("/api/nlq")) {
-      return withAuth(request, env, "user", () =>
-        handleNLQRequest(request, url, env),
-      );
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(env, "/api/nlq", auth);
+        return rateLimiter(request, () => handleNLQRequest(request, url, env));
+      });
     }
 
     // Webhook routes
@@ -365,9 +381,14 @@ export async function handleRequest(
 
     // Experience Feedback API
     if (path === "/api/experience" && request.method === "POST") {
-      return withAuth(request, env, "user", () =>
-        handleSubmitExperience(request, env),
-      );
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/experience",
+          auth,
+        );
+        return rateLimiter(request, () => handleSubmitExperience(request, env));
+      });
     }
 
     const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);

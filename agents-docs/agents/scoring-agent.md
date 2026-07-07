@@ -1,7 +1,7 @@
 # Scoring Agent
 
 **Agent ID**: `scoring-agent`
-**Status**: ⚪ Pending
+**Status**: ✅ Active
 **Scope**: Confidence scoring, trust scoring, deal ranking
 **Previous Agent**: Validation Agent
 **Next Agent**: Publish Agent

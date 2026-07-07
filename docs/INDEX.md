@@ -46,6 +46,7 @@ See `../agents-docs/` directory for:
 1. Follow [DEPLOYMENT.md](DEPLOYMENT.md)
 2. Use `../scripts/validate-codes.sh` for validation
 3. Monitor via `/health` and `/metrics` endpoints
+4. Configure trace export via [opentelemetry-setup.md](opentelemetry-setup.md)
 
 ## Document Structure
 
@@ -54,6 +55,8 @@ docs/
 ├── API.md                 # API documentation
 ├── DEPLOYMENT.md          # Deployment guide
 ├── LEGAL_COMPLIANCE.md    # Legal requirements
+├── monitoring-setup.md    # Health, metrics, alerting
+├── opentelemetry-setup.md # OTLP trace export config
 └── INDEX.md              # This file
 
 agents-docs/
@@ -83,12 +86,14 @@ agents-docs/
 
 ## Document Status
 
-| Document            | Status      | Last Updated    |
-| ------------------- | ----------- | --------------- |
-| API.md              | ✅ Complete | See git history |
-| DEPLOYMENT.md       | ✅ Complete | See git history |
-| LEGAL_COMPLIANCE.md | ✅ Complete | See git history |
-| AGENTS.md           | ✅ Complete | See git history |
+| Document                | Status      | Last Updated    |
+| ----------------------- | ----------- | --------------- |
+| API.md                  | ✅ Complete | See git history |
+| DEPLOYMENT.md           | ✅ Complete | See git history |
+| LEGAL_COMPLIANCE.md     | ✅ Complete | See git history |
+| AGENTS.md               | ✅ Complete | See git history |
+| monitoring-setup.md     | ✅ Complete | See git history |
+| opentelemetry-setup.md  | ✅ Complete | 2026-07-06      |
 
 ## Contributing
 

@@ -108,6 +108,28 @@ Agents SHOULD use the unified toolkit for common operations:
 3. Integration tests (behavior)
 4. Lint / format (style)
 
+## GOAP Swarm Protocols
+
+### Re-Verification Protocol (Prevents Stale Deferrals)
+Before executing any GOAP plan with deferred items:
+1. Launch a lightweight re-verification agent per deferred item
+2. Agent checks: "Is the original deferral rationale still valid?"
+3. Items with no code change since deferral → investigate (15 min) before re-deferring
+4. Items older than 30 days without re-verification → auto-flag for review
+
+### Incremental Validation (Post-Swarm)
+After swarm execution, validate incrementally (not full suite):
+1. Typecheck on changed files only (`npx tsc --noEmit`)
+2. Tests in changed directories only (`npx vitest run <dir>`)
+3. Format on new/modified files only (`npx prettier --check <files>`)
+4. Full suite runs only before PR merge
+
+### Research→Implement Pattern
+For complex GOAP tasks, always launch research agents before implementation:
+- Research phase: identify quick wins, feasibility, migration plans
+- Implementation phase: only act on research findings
+- Prevents "implement then discover it was wrong" cycles
+
 ## Skills
 - Canonical skills in `.agents/skills/`.
 - Claude/Qwen/Gemini: symlinks in `.<tool>/skills/`.

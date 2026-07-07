@@ -37,7 +37,34 @@ export async function handleLive(
   env: Env,
   request: Request,
 ): Promise<Response> {
-  return jsonResponse({ alive: true }, 200, request, env);
+  try {
+    const ns = env.DEALS_PROD as unknown;
+    const bound = !!(
+      ns &&
+      typeof ns === "object" &&
+      "get" in (ns as Record<string, unknown>)
+    );
+    if (!bound) {
+      return jsonResponse(
+        { alive: false, reason: "Primary KV binding missing" },
+        503,
+        request,
+        env,
+      );
+    }
+
+    // Perform an actual KV read to verify runtime connectivity
+    await (env.DEALS_PROD as KVNamespace).get("__health_probe__");
+
+    return jsonResponse({ alive: true }, 200, request, env);
+  } catch {
+    return jsonResponse(
+      { alive: false, reason: "Primary KV unreachable" },
+      503,
+      request,
+      env,
+    );
+  }
 }
 
 export async function handleMetrics(

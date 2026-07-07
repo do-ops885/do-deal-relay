@@ -15,3 +15,4 @@ export {
 export { handleDiscover, handleStatus, handleGetLogs } from "./pipeline";
 export { handleSubmit } from "./submit";
 export { handleAnalytics } from "./analytics";
+export { handleDORAMetrics } from "./dora-metrics";

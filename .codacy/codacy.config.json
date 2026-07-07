@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "metadata": {
+    "source": "local",
+    "provider": null,
+    "organization": null,
+    "repositoryId": null,
+    "repositoryName": null,
+    "createdAt": "2026-07-06T14:34:43.504Z",
+    "updatedAt": "2026-07-06T14:34:43.504Z",
+    "languages": [
+      "CSS",
+      "HTML",
+      "JSON",
+      "Javascript",
+      "Markdown",
+      "Python",
+      "SQL",
+      "Shell",
+      "TypeScript",
+      "YAML"
+    ]
+  },
+  "tools": [
+    {
+      "toolId": "markdownlint",
+      "localConfigurationFile": "/home/daytona/codebase/.markdownlint.json",
+      "useLocalConfigurationFile": true,
+      "patterns": []
+    }
+  ],
+  "exclude": [
+    ".agents/skills/**/templates/**",
+    ".agents/skills/**/references/templates/**",
+    "coverage/**",
+    "node_modules/**",
+    "dist/**",
+    ".wrangler/**",
+    "**/*.test.ts",
+    "**/*.test.js",
+    "**/*.test.sh",
+    "**/*.spec.ts",
+    "**/*.spec.js",
+    ".audit/**"
+  ]
+}
