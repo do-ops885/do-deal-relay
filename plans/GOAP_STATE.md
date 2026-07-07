@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-07
-**Version**: 0.2.0
-**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V4 verification
+**Version**: 0.3.0
+**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -33,14 +33,14 @@
 
 ---
 
-## P1 — High Priority (2 Open — 5 Resolved)
+## P1 — High Priority (0 Open — 7 Resolved)
 
 ### Security & Auth
 
 | ID | Item | Source | Audit Ref | Status | Resolution |
 |:---|:---|:---|:---|:---|:---|
-| P1-1 | **D1 endpoints lack authentication** | Audit | H-3 | 🔴 OPEN | ADR-016 middleware pending |
-| P1-2 | **Rate limiting not applied to API endpoints** | Audit | M-8, H-4 | 🔴 OPEN | ADR-016 middleware pending |
+| P1-1 | **D1 endpoints lack authentication** | Audit | H-3 | ✅ CLOSED | Centralized middleware pipeline with `auth: "internal"` tier in `worker/lib/middleware/pipeline.ts`. D1 routes registered via `initPipelineRoutes()` in `router.ts`. |
+| P1-2 | **Rate limiting not applied to API endpoints** | Audit | M-8, H-4 | ✅ CLOSED | Config-driven rate limiting in `worker/lib/middleware/rate-limit.ts`. All routes get automatic rate limiting via middleware pipeline. |
 | P1-3 | **No auth on `/api/submit`** | Audit | M-7 | ✅ CLOSED | Auth added via `withAuth` in router.ts |
 | P1-4 | **10 webhook endpoints not registered in `index.ts`** | Swarm | SWARM-C-2 | ✅ CLOSED | All 12 webhook routes registered in `routes/webhooks/index.ts`, routed via `handleWebhookRoutes` in `router.ts:374-380` |
 | P1-5 | **`/api/referrals/:code/reactivate` handler not routed** | Swarm | SWARM-H-1 | ✅ CLOSED | Route registered at `router.ts` via regex match |
@@ -90,7 +90,7 @@
 | P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | ✅ CLOSED | File no longer exists at specified path |
 | P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | ✅ CLOSED | 30 tests in `tests/unit/mcp-resources.test.ts` |
 | P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | ✅ CLOSED | 22 tests in `tests/unit/webhook/delivery.test.ts` |
-| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | 🟡 OPEN | Executor lacks dedicated unit tests |
+| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | ✅ CLOSED | 37 tests in `tests/unit/nlq/query-builder/executor.test.ts` (sql.ts already had 540 lines of tests) |
 | P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | ✅ CLOSED | 67 tests in `tests/unit/referral-storage/dual-write.test.ts` |
 | P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | ✅ CLOSED | 57 tests in `tests/unit/eu-ai-act-logger.test.ts` |
 
@@ -220,13 +220,13 @@ P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
 9. ~~**P2-7 through P2-11**: Fix misleading implementations~~ ✅
 10. ~~**P2-1 through P2-6**: Split oversized files~~ ✅
 
-### Phase 2: Security Hardening (Weeks 1-2)
-11. **ADR-016**: Design and implement unified middleware layer
-12. **P1-1**: Add D1 endpoint auth (depends on ADR-016)
-13. **P1-2**: Apply rate limiting to all API endpoints (depends on ADR-016)
+### Phase 2: Security Hardening — ✅ COMPLETED (2026-07-07)
+11. ~~**ADR-016**: Design and implement unified middleware layer~~ ✅ `worker/lib/middleware/` (4 files)
+12. ~~**P1-1**: Add D1 endpoint auth~~ ✅ via middleware pipeline with `auth: "internal"`
+13. ~~**P1-2**: Apply rate limiting to all API endpoints~~ ✅ via config-driven rate limit middleware
 
-### Phase 3: Test Coverage (Weeks 2-3)
-14. **P2-21**: Write tests for NLQ executor
+### Phase 3: Test Coverage — ✅ COMPLETED (2026-07-07)
+14. ~~**P2-21**: Write tests for NLQ executor~~ ✅ 37 tests in `tests/unit/nlq/query-builder/executor.test.ts`
 
 ---
 
