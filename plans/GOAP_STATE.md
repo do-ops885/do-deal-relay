@@ -11,6 +11,7 @@
 ## PR Resolver Status — 2026-07-07
 
 ### Resolution Summary
+
 | PR | Title | Status | Fix Applied |
 |----|-------|--------|-------------|
 | #559 | feat(security): P3 rate limiting, async pipeline, XSS fixes, docs update | **MERGED** | Error-shaping gate violation (`toErrCtx`), markdown lint, quality gate exclusion |
