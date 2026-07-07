@@ -59,7 +59,7 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -191,10 +191,10 @@ describe("types", () => {
       currentVersion: 3,
       pending: [4, 5],
       applied: [1, 2, 3],
-      latestVersion: 7,
+      latestVersion: 8,
     };
     expect(status.pending).toEqual([4, 5]);
-    expect(status.latestVersion).toBe(7);
+    expect(status.latestVersion).toBe(8);
   });
 });
 
@@ -221,7 +221,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(7);
+    expect(MIGRATIONS.length).toBe(8);
   });
 });
 
@@ -244,8 +244,8 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.currentVersion).toBe(0);
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(status.latestVersion).toBe(7);
+    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(status.latestVersion).toBe(8);
   });
 
   it("returns correct status when some migrations applied", async () => {
@@ -261,8 +261,8 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.currentVersion).toBe(2);
     expect(status.applied).toEqual([1, 2]);
-    expect(status.pending).toEqual([3, 4, 5, 6, 7]);
-    expect(status.latestVersion).toBe(7);
+    expect(status.pending).toEqual([3, 4, 5, 6, 7, 8]);
+    expect(status.latestVersion).toBe(8);
   });
 
   it("returns correct status when all migrations applied", async () => {
@@ -280,15 +280,16 @@ describe("MigrationRunner getStatus", () => {
           applied_at: 6000,
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
+        { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
       ],
     });
     const runner = new MigrationRunner(mockDb);
     const status = await runner.getStatus();
 
-    expect(status.currentVersion).toBe(7);
-    expect(status.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(status.currentVersion).toBe(8);
+    expect(status.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(status.pending).toEqual([]);
-    expect(status.latestVersion).toBe(7);
+    expect(status.latestVersion).toBe(8);
   });
 
   it("calls ensureMigrationsTable before querying", async () => {
@@ -309,7 +310,7 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.applied).toEqual([]);
     expect(status.currentVersion).toBe(0);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("returns empty applied when query data is null", async () => {
@@ -318,7 +319,7 @@ describe("MigrationRunner getStatus", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
 
@@ -341,9 +342,9 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(result.rolledBack).toEqual([]);
-    expect(result.currentVersion).toBe(7);
+    expect(result.currentVersion).toBe(8);
     expect(result.error).toBeUndefined();
   });
 
@@ -357,8 +358,8 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([2, 3, 4, 5, 6, 7]);
-    expect(result.currentVersion).toBe(7);
+    expect(result.applied).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    expect(result.currentVersion).toBe(8);
   });
 
   it("applies nothing when already at latest version", async () => {
@@ -376,6 +377,7 @@ describe("MigrationRunner migrate", () => {
           applied_at: 6000,
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
+        { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
       ],
     });
     const runner = new MigrationRunner(mockDb);
@@ -384,7 +386,7 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(7);
+    expect(result.currentVersion).toBe(8);
   });
 
   it("respects targetVersion and only applies up to that version", async () => {
@@ -870,8 +872,8 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(result.currentVersion).toBe(7);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(result.currentVersion).toBe(8);
   });
 
   it("returns reset failure without attempting migrate", async () => {
@@ -897,7 +899,7 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
 
@@ -924,7 +926,7 @@ describe("factory functions", () => {
     const result = await initDatabase(mockDb);
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("initDatabase returns already-migrated result when DB is up to date", async () => {
@@ -942,6 +944,7 @@ describe("factory functions", () => {
           applied_at: 6000,
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
+        { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
       ],
     });
 
@@ -949,7 +952,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(7);
+    expect(result.currentVersion).toBe(8);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -962,8 +965,8 @@ describe("factory functions", () => {
 
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
-    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7]);
-    expect(status.latestVersion).toBe(7);
+    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    expect(status.latestVersion).toBe(8);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -981,13 +984,14 @@ describe("factory functions", () => {
           applied_at: 6000,
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
+        { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(7);
+    expect(status.currentVersion).toBe(8);
   });
 });
 
@@ -1010,7 +1014,7 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("handles query returning null data", async () => {
@@ -1020,7 +1024,7 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("migrate with targetVersion=0 applies nothing", async () => {
@@ -1061,7 +1065,7 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([1, 3, 7]);
-    expect(status.pending).toEqual([2, 4, 5, 6]);
+    expect(status.pending).toEqual([2, 4, 5, 6, 8]);
     expect(status.currentVersion).toBe(7);
   });
 
@@ -1152,6 +1156,7 @@ describe("edge cases", () => {
               applied_at: 6000,
             },
             { version: 7, name: "add_auth_tables", applied_at: 7000 },
+            { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
           ],
         };
       }
@@ -1162,7 +1167,7 @@ describe("edge cases", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("migration up SQL contains expected DDL keywords", () => {
