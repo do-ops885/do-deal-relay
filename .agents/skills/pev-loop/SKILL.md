@@ -1,3 +1,8 @@
+---
+name: pev-loop
+description: Implement the Plan-Execute-Verify loop for non-trivial tasks with atomic commits and independent verification.
+---
+
 # PEV Loop Skill — Plan-Execute-Verify
 
 ## Purpose
@@ -37,3 +42,17 @@ Run `./scripts/pev-gates.sh` which checks:
 - Stop on: all gates pass
 - Retry on: transient failures (network, timeouts)
 - Escalate on: unrecoverable failures (type errors requiring design changes)
+
+## Rationalizations
+- "Plan is overkill — I already know the change" — without `approach`, `non_goals`, `acceptance_criteria`, the verifier has no contract to check against.
+- "I'll verify my own changes" — self-certification defeats the purpose; `./scripts/pev-gates.sh` must be independent of the executor.
+- "Atomic commits slow me down" — non-atomic commits make bisect, revert, and code review materially harder.
+- "Tests aren't needed for a docs/config change" — all changes run through the full gate suite; TypeScript and ShellCheck catches apply even to config files.
+- "The branch is short-lived, skip the plan approval" — human approval is the highest-ROI check; required for any non-trivial work.
+
+## Red Flags
+- Executing before a plan exists in `plans/` referencing `plans/SPEC_TEMPLATE.md`.
+- Batching `./scripts/pev-gates.sh` in the same commit as the implementation that it is supposed to verify.
+- Multiple unrelated logical changes in a single commit (signals the commit should have been split).
+- Re-running flaky tests until they pass instead of fixing root cause.
+- Hidden merge of develop into main without CI green, or force-pushing past pre-commit hooks.

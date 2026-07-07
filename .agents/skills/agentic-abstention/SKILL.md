@@ -1,3 +1,8 @@
+---
+name: agentic-abstention
+description: Define the abstention protocol when environmental infeasibility makes further tool calls wasteful.
+---
+
 # Agentic Abstention Skill
 
 ## Purpose
@@ -52,3 +57,17 @@ Do NOT abstain for:
 - File size violations (can be split)
 
 Only abstain when the issue is fundamentally unfixable without external intervention.
+
+## Rationalizations
+- "I'll just try one more time" — repeated retries produce the same error and consume credits without progress. Detect and document the infeasibility instead.
+- "The CI must just be flaky, ignore it" — flakiness is a known condition; abstain only when the infeasibility is fundamental, not transient.
+- "I can ask the user for the missing secret" — secrets must come via the project's own secret-management channel, not via prompt-injected values.
+- "The wrapper script could work around this" — workarounds re-introduce the failure under load; an ADR is required when abstaining on a wrapper-bypassable issue.
+- "We can pick this back up later, no need to document" — without an ADR and the abstention JSON entry, the next agent picks up a task with no resume hint.
+
+## Red Flags
+- An agent loops >5 times on the same error without producing new diagnostic information.
+- Tool results are ignored (no log, no follow-up reasoning) after a hard failure.
+- An abstention is reported with `stopped_at_step: 0` — this usually means the agent never even started; investigate the task spec.
+- An `abstention_reason` of `"unknown"` — be specific: `"missing-secret"`, `"external-service-down"`, `"circular-dependency"`, etc.
+- The same task is re-spawned within the same session without addressing the prior abstention's `resume_hint`.
