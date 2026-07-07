@@ -120,6 +120,21 @@
       "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
     },
   ],
+  // Durable Objects for atomic concurrency control and stateful coordination
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PIPELINE_LOCK",
+        "class_name": "PipelineLock",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PipelineLock"],
+    },
+  ],
   // Vectorize index for semantic search over deals and referrals
   // Index name must match SEMANTIC_SEARCH_CONFIG.INDEX_NAME in worker/lib/search/types.ts
   // Free tier limits: 100 indexes, 1000 namespaces, 1000 vectors/upsert, topK=50

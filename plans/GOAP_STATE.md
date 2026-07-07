@@ -1,7 +1,7 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Updated**: 2026-07-07 (GOAP Swarm V4: P1-6 D1 CAS lock implemented; ⬜-1/⬜-2 ADR-017/018 written)
+**Updated**: 2026-07-07 (GOAP Swarm V4: P1-6 D1 CAS lock committed; ⬜-1 Phase 1 PipelineLock DO implemented)
 **Version**: 0.7.0
 **Status**: Active — cross-referenced from 4 audit sources + live verification + GOAP Swarm V3/V4
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
@@ -49,7 +49,7 @@
 
 | ID | Item | Source | Audit Ref | Dependencies | Effort |
 |:---|:---|:---|:---|:---|:---|
-| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | ✅ CLOSED | **Implemented D1 CAS workaround**: `lock.ts` rewritten to use D1 `batch()` for atomic compare-and-swap. Migration v8 (`pipeline_locks` table) added. KV race condition eliminated via D1 strong consistency. Verified 2026-07-07. |
+| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | ✅ CLOSED | **Implemented D1 CAS workaround**: `lock.ts` rewritten to use D1 `batch()` for atomic compare-and-swap. Migration v8 (`pipeline_locks` table) added. KV race condition eliminated via D1 strong consistency. Verified 2026-07-07. **PipelineLock DO implemented**: `worker/durable-objects/pipeline-lock.ts` (196 lines) with 47 unit tests. Ready for Phase 2 migration. |
 | P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | None (implement logic using `updateSourceTrust`) | ✅ CLOSED | Wired into `state-machine.ts:326` after score phase. Calls `evolveSourceTrust(env, ctx.scored, true)`. Verified 2026-07-06. |
 
 ---
@@ -151,7 +151,7 @@
 
 | ID | Proposal | Effort | Risk | Status |
 |:---|:---|:---|:---|:---|
-| ⬜-1 | **C-1: Durable Objects for core state** — eliminates KV race conditions | 1-2 weeks | Cold start latency | ✅ CLOSED (P1-6 quick win) + ADR-017 written | Quick win implemented: D1 CAS lock eliminates race condition. Full DO migration spec in `plans/ADR-017-durable-objects-migration.md`. 3-sprint plan: PipelineLock DO → DealRegistry DO → SourceRegistry DO. |
+| ⬜-1 | **C-1: Durable Objects for core state** — eliminates KV race conditions | 1-2 weeks | Cold start latency | ✅ CLOSED (P1-6 quick win) + ADR-017 written | Quick win implemented: D1 CAS lock eliminates race condition. Full DO migration spec in `plans/ADR-017-durable-objects-migration.md`. 3-sprint plan: PipelineLock DO → DealRegistry DO → SourceRegistry DO. **Phase 1 Complete**: `worker/durable-objects/pipeline-lock.ts` (196 lines) with 47 unit tests. Wrangler config updated with DO binding. Ready for Phase 2 (DealRegistry DO). |
 | ⬜-2 | **C-2: Durable Execution for long pipelines** — enables >30s pipelines | 1-2 weeks | API stability | ✅ CLOSED (research) + ADR-018 written | Full migration spec in `plans/ADR-018-durable-execution-migration.md`. Recommends `runFiber()` over Workflows. 5-step migration plan over 5-6 days. |
 | ⬜-3 | **C-3: Agent Memory for conversational state** — bot conversation persistence | 1 week | Service availability | ⬜ DEFERRED |
 | ⬜-4 | **C-4: AI Gateway integration** — unified LLM observability | 1 week | Not yet needed | ⬜ DEFERRED |
