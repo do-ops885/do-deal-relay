@@ -73,6 +73,76 @@ import {
   handleEmailHelp,
 } from "./routes/email";
 
+// ============================================================================
+// Centralized Middleware Pipeline (ADR-016)
+// ============================================================================
+import {
+  registerRoutes,
+  handlePipelineRequest,
+} from "./lib/middleware/pipeline";
+import type { RouteConfig } from "./lib/middleware/types";
+
+/**
+ * Initialize pipeline-registered routes.
+ * These routes go through the centralized middleware stack:
+ *   cors → logging → rate-limit → auth → handler
+ *
+ * Health routes are migrated first as proof of concept.
+ * D1 routes get auth (previously unprotected).
+ * Rate limiting is added to routes that lacked it.
+ */
+function initPipelineRoutes(): void {
+  registerRoutes([
+    // -----------------------------------------------------------------------
+    // Health checks (public, no rate limit)
+    // -----------------------------------------------------------------------
+    {
+      method: "GET",
+      path: "/health",
+      handler: (_req, env) => handleHealth(env, _req),
+      auth: "public",
+      description: "Health check",
+    },
+    {
+      method: "GET",
+      path: "/health/ready",
+      handler: (_req, env) => handleReady(env, _req),
+      auth: "public",
+      description: "Readiness probe",
+    },
+    {
+      method: "GET",
+      path: "/health/live",
+      handler: (_req, env) => handleLive(env, _req),
+      auth: "public",
+      description: "Liveness probe",
+    },
+
+    // -----------------------------------------------------------------------
+    // D1 Database API — admin-only with rate limiting (P1-1 fix)
+    // Previously had no auth beyond the legacy catch-all.
+    // -----------------------------------------------------------------------
+    {
+      method: ["GET", "POST", "PUT", "DELETE"],
+      path: "/api/d1",
+      handler: (req, env) => {
+        const url = new URL(req.url);
+        return handleD1Request(req, url, env);
+      },
+      auth: "internal",
+      rateLimit: {
+        windowSeconds: 60,
+        maxRequests: 30,
+        keyPrefix: "ratelimit:d1",
+      },
+      description: "D1 database operations (admin only)",
+    },
+  ]);
+}
+
+// Initialize routes on module load
+initPipelineRoutes();
+
 export async function handleRequest(
   request: Request,
   env: Env,
@@ -81,7 +151,15 @@ export async function handleRequest(
   const path = url.pathname;
 
   try {
-    // Health checks
+    // ── Centralized Pipeline (ADR-016) ──────────────────────────────────
+    // Try the pipeline first. If a route matches, the pipeline handles it
+    // with the full middleware stack. If no match, fall through to legacy.
+    const pipelineResponse = await handlePipelineRequest(request, env);
+    if (pipelineResponse) return pipelineResponse;
+
+    // ── Legacy Routes (pre-pipeline) ────────────────────────────────────
+    // These routes will be migrated to the pipeline incrementally.
+    // Health checks (kept as fallback; primary routes now in pipeline)
     if (path === "/health") return handleHealth(env, request);
     if (path === "/health/ready") return handleReady(env, request);
     if (path === "/health/live") return handleLive(env, request);
