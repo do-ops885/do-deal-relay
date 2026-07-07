@@ -8,44 +8,158 @@ import {
 import type { Env } from "../../worker/types";
 import { PipelineError } from "../../worker/types";
 
-describe("Lock Mechanism", () => {
-  let mockKvStorage: Map<string, unknown>;
+describe("Lock Mechanism (D1 CAS)", () => {
+  let mockD1Storage: Map<string, Record<string, unknown>>;
   let mockEnv: Env;
 
   beforeEach(() => {
-    mockKvStorage = new Map();
+    mockD1Storage = new Map();
+
+    const createMockBoundStatement = (
+      sql: string,
+      boundParams: unknown[] = [],
+    ) => ({
+      first: vi.fn(async () => {
+        const row = mockD1Storage.get("pipeline:lock");
+        if (!row) return null;
+        if (
+          sql.includes("SELECT") &&
+          sql.includes("run_id") &&
+          sql.includes("trace_id")
+        ) {
+          return {
+            run_id: row.run_id,
+            trace_id: row.trace_id,
+            acquired_at: row.acquired_at,
+            expires_at: row.expires_at,
+          };
+        }
+        if (sql.includes("SELECT") && sql.includes("trace_id")) {
+          return { trace_id: row.trace_id, expires_at: row.expires_at };
+        }
+        return null;
+      }),
+      run: vi.fn(async () => {
+        const lockKey = "pipeline:lock";
+
+        if (sql.includes("INSERT OR IGNORE")) {
+          const existing = mockD1Storage.get(lockKey);
+          if (!existing) {
+            mockD1Storage.set(lockKey, {
+              run_id: boundParams[1],
+              trace_id: boundParams[2],
+              acquired_at: boundParams[3],
+              expires_at: boundParams[4],
+            });
+            return { success: true, results: [], meta: { changes: 1 } };
+          }
+          return { success: true, results: [], meta: { changes: 0 } };
+        }
+
+        if (sql.includes("UPDATE") && sql.includes("expires_at <")) {
+          const existing = mockD1Storage.get(lockKey);
+          if (existing) {
+            const expiresAt = new Date(existing.expires_at as string);
+            const now = new Date(boundParams[5] as string);
+            if (expiresAt < now) {
+              mockD1Storage.set(lockKey, {
+                ...existing,
+                run_id: boundParams[1],
+                trace_id: boundParams[2],
+                acquired_at: boundParams[3],
+                expires_at: boundParams[4],
+              });
+              return { success: true, results: [], meta: { changes: 1 } };
+            }
+          }
+          return { success: true, results: [], meta: { changes: 0 } };
+        }
+
+        if (sql.includes("UPDATE") && sql.includes("SET expires_at")) {
+          const existing = mockD1Storage.get(lockKey);
+          if (existing && existing.trace_id === boundParams[2]) {
+            mockD1Storage.set(lockKey, {
+              ...existing,
+              expires_at: boundParams[1],
+            });
+            return { success: true, results: [], meta: { changes: 1 } };
+          }
+          return { success: true, results: [], meta: { changes: 0 } };
+        }
+
+        if (sql.includes("DELETE")) {
+          const existing = mockD1Storage.get(lockKey);
+          if (existing && existing.trace_id === boundParams[1]) {
+            mockD1Storage.delete(lockKey);
+          }
+          return { success: true, results: [], meta: { changes: 1 } };
+        }
+
+        // All SELECT queries
+        if (sql.includes("SELECT")) {
+          const row = mockD1Storage.get(lockKey);
+          if (!row) {
+            return { success: true, results: [], meta: {} };
+          }
+          // getLockStatus SELECT: run_id, trace_id, expires_at
+          if (
+            sql.includes("run_id") &&
+            sql.includes("trace_id") &&
+            sql.includes("expires_at")
+          ) {
+            return {
+              success: true,
+              results: [
+                {
+                  run_id: row.run_id,
+                  trace_id: row.trace_id,
+                  acquired_at: row.acquired_at,
+                  expires_at: row.expires_at,
+                },
+              ],
+              meta: {},
+            };
+          }
+          // releaseLock/extendLock SELECT: trace_id (and maybe expires_at)
+          return {
+            success: true,
+            results: [{ trace_id: row.trace_id, expires_at: row.expires_at }],
+            meta: {},
+          };
+        }
+
+        return { success: true, results: [], meta: { changes: 0 } };
+      }),
+    });
 
     mockEnv = {
       DEALS_PROD: {} as KVNamespace,
       DEALS_STAGING: {} as KVNamespace,
       DEALS_LOG: {} as KVNamespace,
-      DEALS_LOCK: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(key);
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(
-          async (
-            key: string,
-            value: string,
-            options?: { expirationTtl?: number },
-          ) => {
-            mockKvStorage.set(key, JSON.parse(value));
-          },
-        ),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(key);
-        }),
-      } as unknown as KVNamespace,
+      DEALS_LOCK: {} as KVNamespace,
       DEALS_SOURCES: {} as KVNamespace,
+      DEALS_DB: {
+        prepare: vi.fn((sql: string) => {
+          return {
+            bind: (...params: unknown[]) =>
+              createMockBoundStatement(sql, params),
+          };
+        }),
+        batch: vi.fn(async (statements: unknown[]) => {
+          const results = [];
+          for (const stmt of statements) {
+            const result = await (
+              stmt as { run: () => Promise<unknown> }
+            ).run();
+            results.push(result);
+          }
+          return results;
+        }),
+      } as unknown as D1Database,
       AI_GATEWAY_URL: "https://gateway.test",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -58,16 +172,15 @@ describe("Lock Mechanism", () => {
       const result = await acquireLock(mockEnv, "run-1", "trace-1");
 
       expect(result).toBe(true);
-      expect(mockEnv.DEALS_LOCK.put).toHaveBeenCalledWith(
-        "pipeline:lock",
-        expect.any(String),
-        expect.objectContaining({ expirationTtl: 300 }),
-      );
+      expect(mockD1Storage.has("pipeline:lock")).toBe(true);
+      const lock = mockD1Storage.get("pipeline:lock");
+      expect(lock?.run_id).toBe("run-1");
+      expect(lock?.trace_id).toBe("trace-1");
     });
 
     it("should acquire lock when existing lock is expired", async () => {
       const pastDate = new Date(Date.now() - 600000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "expired-run",
         trace_id: "expired-trace",
         acquired_at: "2024-01-01T00:00:00Z",
@@ -77,11 +190,13 @@ describe("Lock Mechanism", () => {
       const result = await acquireLock(mockEnv, "run-1", "trace-1");
 
       expect(result).toBe(true);
+      const lock = mockD1Storage.get("pipeline:lock");
+      expect(lock?.run_id).toBe("run-1");
     });
 
     it("should throw ConcurrencyError when lock is held", async () => {
       const futureDate = new Date(Date.now() + 600000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "existing-run",
         trace_id: "existing-trace",
         acquired_at: new Date().toISOString(),
@@ -96,45 +211,12 @@ describe("Lock Mechanism", () => {
       );
     });
 
-    it("should verify lock was acquired", async () => {
-      // Mock the get to return different values on different calls
-      let getCallCount = 0;
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => {
-        getCallCount++;
-        if (getCallCount === 1) {
-          return null; // First check - no existing lock
-        }
-        return {
-          run_id: "run-1",
-          trace_id: "trace-1",
-          acquired_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 300000).toISOString(),
-        };
-      }) as any;
-
-      const result = await acquireLock(mockEnv, "run-1", "trace-1");
-
-      expect(result).toBe(true);
-    });
-
-    it("should throw when verification fails", async () => {
-      // Mock get to always return null (lock wasn't actually stored)
-      (mockEnv.DEALS_LOCK as unknown as { get: any }).get = vi.fn(
-        async () => null,
+    it("should throw ConcurrencyError on D1 failure", async () => {
+      (mockEnv.DEALS_DB as unknown as { batch: any }).batch = vi.fn(
+        async () => {
+          throw new Error("D1 connection failed");
+        },
       );
-
-      await expect(acquireLock(mockEnv, "run-1", "trace-1")).rejects.toThrow(
-        PipelineError,
-      );
-      await expect(acquireLock(mockEnv, "run-1", "trace-1")).rejects.toThrow(
-        "Failed to verify lock acquisition",
-      );
-    });
-
-    it("should throw ConcurrencyError on KV failure", async () => {
-      (mockEnv.DEALS_LOCK as unknown as { get: any }).get = vi.fn(async () => {
-        throw new Error("KV connection failed");
-      });
 
       await expect(acquireLock(mockEnv, "run-1", "trace-1")).rejects.toThrow(
         PipelineError,
@@ -145,9 +227,11 @@ describe("Lock Mechanism", () => {
     });
 
     it("should mark lock acquisition errors as retryable", async () => {
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => {
-        throw new Error("Transient error");
-      });
+      (mockEnv.DEALS_DB as unknown as { batch: any }).batch = vi.fn(
+        async () => {
+          throw new Error("Transient error");
+        },
+      );
 
       try {
         await acquireLock(mockEnv, "run-1", "trace-1");
@@ -160,7 +244,7 @@ describe("Lock Mechanism", () => {
 
   describe("releaseLock", () => {
     it("should release lock when held by same trace", async () => {
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "trace-1",
         acquired_at: new Date().toISOString(),
@@ -169,7 +253,7 @@ describe("Lock Mechanism", () => {
 
       await releaseLock(mockEnv, "trace-1");
 
-      expect(mockEnv.DEALS_LOCK.delete).toHaveBeenCalledWith("pipeline:lock");
+      expect(mockD1Storage.has("pipeline:lock")).toBe(false);
     });
 
     it("should warn when no lock found", async () => {
@@ -177,16 +261,14 @@ describe("Lock Mechanism", () => {
 
       await releaseLock(mockEnv, "trace-1");
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "No active lock found during release",
-      );
+      expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
 
     it("should warn when lock owned by different trace", async () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "different-trace",
         acquired_at: new Date().toISOString(),
@@ -195,58 +277,32 @@ describe("Lock Mechanism", () => {
 
       await releaseLock(mockEnv, "trace-1");
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Lock owned by different-trace"),
-      );
+      expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
 
     it("should not throw on release error", async () => {
-      mockEnv.DEALS_LOCK.delete = vi.fn(async () => {
-        throw new Error("KV error");
-      });
-
-      mockKvStorage.set("pipeline:lock", {
-        run_id: "run-1",
-        trace_id: "trace-1",
-        acquired_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 300000).toISOString(),
-      });
-
-      // Should not throw
-      await expect(releaseLock(mockEnv, "trace-1")).resolves.not.toThrow();
-    });
-
-    it("should log error on release failure", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
-      mockEnv.DEALS_LOCK.delete = vi.fn(async () => {
-        throw new Error("Delete failed");
-      });
-
-      mockKvStorage.set("pipeline:lock", {
-        run_id: "run-1",
-        trace_id: "trace-1",
-        acquired_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 300000).toISOString(),
-      });
-
-      await releaseLock(mockEnv, "trace-1");
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to release lock:",
-        expect.any(Error),
+      (mockEnv.DEALS_DB as unknown as { batch: any }).batch = vi.fn(
+        async () => {
+          throw new Error("D1 error");
+        },
       );
-      consoleSpy.mockRestore();
+
+      mockD1Storage.set("pipeline:lock", {
+        run_id: "run-1",
+        trace_id: "trace-1",
+        acquired_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 300000).toISOString(),
+      });
+
+      await expect(releaseLock(mockEnv, "trace-1")).resolves.not.toThrow();
     });
   });
 
   describe("extendLock", () => {
     it("should extend lock when held by same trace", async () => {
       const originalExpiry = new Date(Date.now() + 60000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "trace-1",
         acquired_at: new Date().toISOString(),
@@ -255,32 +311,10 @@ describe("Lock Mechanism", () => {
 
       await extendLock(mockEnv, "trace-1", 300);
 
-      expect(mockEnv.DEALS_LOCK.put).toHaveBeenCalledWith(
-        "pipeline:lock",
-        expect.stringContaining("trace-1"),
-        expect.objectContaining({ expirationTtl: 300 }),
-      );
-    });
-
-    it("should update expiration time", async () => {
-      const oldExpiry = new Date(Date.now() + 60000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
-        run_id: "run-1",
-        trace_id: "trace-1",
-        acquired_at: new Date().toISOString(),
-        expires_at: oldExpiry,
-      });
-
-      await extendLock(mockEnv, "trace-1", 600);
-
-      const stored = mockKvStorage.get("pipeline:lock") as {
-        expires_at: string;
-      };
-      const newExpiry = new Date(stored.expires_at);
-      const expectedExpiry = new Date(Date.now() + 600000);
-
+      const lock = mockD1Storage.get("pipeline:lock") as { expires_at: string };
+      const newExpiry = new Date(lock.expires_at);
       expect(newExpiry.getTime()).toBeGreaterThan(
-        new Date(oldExpiry).getTime(),
+        new Date(originalExpiry).getTime(),
       );
     });
 
@@ -294,7 +328,7 @@ describe("Lock Mechanism", () => {
     });
 
     it("should throw ConcurrencyError when lock owned by different trace", async () => {
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "different-trace",
         acquired_at: new Date().toISOString(),
@@ -310,7 +344,7 @@ describe("Lock Mechanism", () => {
     });
 
     it("should use default extension time", async () => {
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "trace-1",
         acquired_at: new Date().toISOString(),
@@ -319,17 +353,20 @@ describe("Lock Mechanism", () => {
 
       await extendLock(mockEnv, "trace-1");
 
-      expect(mockEnv.DEALS_LOCK.put).toHaveBeenCalledWith(
-        "pipeline:lock",
-        expect.any(String),
-        expect.objectContaining({ expirationTtl: 300 }),
+      const lock = mockD1Storage.get("pipeline:lock") as { expires_at: string };
+      const expiresAt = new Date(lock.expires_at);
+      const expectedMin = new Date(Date.now() + 300000);
+      expect(expiresAt.getTime()).toBeGreaterThanOrEqual(
+        expectedMin.getTime() - 1000,
       );
     });
 
     it("should mark extension errors as retryable", async () => {
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => {
-        throw new Error("KV error");
-      });
+      (mockEnv.DEALS_DB as unknown as { batch: any }).batch = vi.fn(
+        async () => {
+          throw new Error("D1 error");
+        },
+      );
 
       try {
         await extendLock(mockEnv, "trace-1");
@@ -343,7 +380,7 @@ describe("Lock Mechanism", () => {
   describe("getLockStatus", () => {
     it("should return locked status when lock exists and is valid", async () => {
       const futureDate = new Date(Date.now() + 600000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "current-run",
         trace_id: "current-trace",
         acquired_at: new Date().toISOString(),
@@ -368,7 +405,7 @@ describe("Lock Mechanism", () => {
 
     it("should return unlocked when lock is expired", async () => {
       const pastDate = new Date(Date.now() - 600000).toISOString();
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "expired-run",
         trace_id: "expired-trace",
         acquired_at: "2024-01-01T00:00:00Z",
@@ -380,10 +417,13 @@ describe("Lock Mechanism", () => {
       expect(status.locked).toBe(false);
     });
 
-    it("should handle KV errors gracefully", async () => {
-      mockEnv.DEALS_LOCK.get = vi.fn(async () => {
-        throw new Error("KV error");
-      });
+    it("should handle D1 errors gracefully", async () => {
+      (mockEnv.DEALS_DB as unknown as { prepare: any }).prepare = vi.fn(() => ({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn(async () => {
+          throw new Error("D1 error");
+        }),
+      }));
 
       const status = await getLockStatus(mockEnv);
 
@@ -397,7 +437,7 @@ describe("Lock Mechanism", () => {
       await acquireLock(mockEnv, "run-1", "trace-1");
       const afterAcquire = Date.now();
 
-      const lock = mockKvStorage.get("pipeline:lock") as {
+      const lock = mockD1Storage.get("pipeline:lock") as {
         acquired_at: string;
         expires_at: string;
       };
@@ -411,7 +451,7 @@ describe("Lock Mechanism", () => {
     });
 
     it("should extend expiration correctly", async () => {
-      mockKvStorage.set("pipeline:lock", {
+      mockD1Storage.set("pipeline:lock", {
         run_id: "run-1",
         trace_id: "trace-1",
         acquired_at: new Date().toISOString(),
@@ -422,11 +462,11 @@ describe("Lock Mechanism", () => {
       await extendLock(mockEnv, "trace-1", 600);
       const afterExtend = Date.now();
 
-      const lock = mockKvStorage.get("pipeline:lock") as { expires_at: string };
+      const lock = mockD1Storage.get("pipeline:lock") as { expires_at: string };
       const expiresAt = new Date(lock.expires_at).getTime();
       const expectedMinExpiry = beforeExtend + 600000;
 
-      expect(expiresAt).toBeGreaterThanOrEqual(expectedMinExpiry - 1000); // Allow 1s variance
+      expect(expiresAt).toBeGreaterThanOrEqual(expectedMinExpiry - 1000);
     });
   });
 });

@@ -520,4 +520,24 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 8,
+    name: "add_pipeline_locks",
+    up: `
+      -- Pipeline distributed lock table (replaces KV-based lock for strong consistency)
+      CREATE TABLE IF NOT EXISTS pipeline_locks (
+          lock_name TEXT PRIMARY KEY,
+          run_id TEXT NOT NULL,
+          trace_id TEXT NOT NULL,
+          acquired_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL
+      ) WITHOUT ROWID;
+
+      CREATE INDEX IF NOT EXISTS idx_pipeline_locks_expires ON pipeline_locks(expires_at);
+    `,
+    down: `
+      DROP INDEX IF EXISTS idx_pipeline_locks_expires;
+      DROP TABLE IF EXISTS pipeline_locks;
+    `,
+  },
 ];

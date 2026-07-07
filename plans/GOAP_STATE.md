@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Updated**: 2026-07-06 (GOAP Swarm V3: 8 deferred items resolved/researched — P3-12, P3-13 closed as NO-FIX; P3-17 OTEL config; ⬜-5 CV gate; ⬜-6 DORA metrics; ⬜-1/2 DO/DE research)
-**Version**: 0.6.0
-**Status**: Active — cross-referenced from 4 audit sources + live verification + GOAP Swarm V3
+**Updated**: 2026-07-07 (GOAP Swarm V4: P1-6 D1 CAS lock implemented; ⬜-1/⬜-2 ADR-017/018 written)
+**Version**: 0.7.0
+**Status**: Active — cross-referenced from 4 audit sources + live verification + GOAP Swarm V3/V4
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -49,7 +49,7 @@
 
 | ID | Item | Source | Audit Ref | Dependencies | Effort |
 |:---|:---|:---|:---|:---|:---|
-| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | 3-5 days |
+| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | ✅ CLOSED | **Implemented D1 CAS workaround**: `lock.ts` rewritten to use D1 `batch()` for atomic compare-and-swap. Migration v8 (`pipeline_locks` table) added. KV race condition eliminated via D1 strong consistency. Verified 2026-07-07. |
 | P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | None (implement logic using `updateSourceTrust`) | ✅ CLOSED | Wired into `state-machine.ts:326` after score phase. Calls `evolveSourceTrust(env, ctx.scored, true)`. Verified 2026-07-06. |
 
 ---
@@ -151,8 +151,8 @@
 
 | ID | Proposal | Effort | Risk | Status |
 |:---|:---|:---|:---|:---|
-| ⬜-1 | **C-1: Durable Objects for core state** — eliminates KV race conditions | 1-2 weeks | Cold start latency | ⬜ RESEARCHED — Migration plan created. DO SQLite (GA) replaces KV. Recommended: start with PipelineLock DO for P1-6 fix, then DealRegistry/SourceRegistry. Quick win: KV CAS workaround (1-2 days). Full migration: 3 sprints. |
-| ⬜-2 | **C-2: Durable Execution for long pipelines** — enables >30s pipelines | 1-2 weeks | API stability | ⬜ RESEARCHED — Two options: (A) Agents SDK `runFiber()` (simpler, DO-native), (B) Cloudflare Workflows (more durable). Recommended: Option A. Quick win: pipeline timeout handling (1 day). Full implementation: 2 sprints. |
+| ⬜-1 | **C-1: Durable Objects for core state** — eliminates KV race conditions | 1-2 weeks | Cold start latency | ✅ CLOSED (P1-6 quick win) + ADR-017 written | Quick win implemented: D1 CAS lock eliminates race condition. Full DO migration spec in `plans/ADR-017-durable-objects-migration.md`. 3-sprint plan: PipelineLock DO → DealRegistry DO → SourceRegistry DO. |
+| ⬜-2 | **C-2: Durable Execution for long pipelines** — enables >30s pipelines | 1-2 weeks | API stability | ✅ CLOSED (research) + ADR-018 written | Full migration spec in `plans/ADR-018-durable-execution-migration.md`. Recommends `runFiber()` over Workflows. 5-step migration plan over 5-6 days. |
 | ⬜-3 | **C-3: Agent Memory for conversational state** — bot conversation persistence | 1 week | Service availability | ⬜ DEFERRED |
 | ⬜-4 | **C-4: AI Gateway integration** — unified LLM observability | 1 week | Not yet needed | ⬜ DEFERRED |
 | ⬜-5 | **H-1: Continuous Verification (10th gate)** — post-publication health monitoring | 1-2 weeks | Metric stability | ✅ CLOSED — `worker/validation/gates/continuous-verification.ts` (265 lines) + integrated into `scheduled.ts` 6h cron. Checks link liveness, reward accuracy, domain health. Stores state in DEALS_LOG KV with 7-day TTL. Notifications on failures. Verified 2026-07-06. |
@@ -188,7 +188,7 @@ P2 File Splits (P2-1 through P2-6) ── ✅ RESOLVED ────────�
     │                                                                                         │
     └── P2 Test Coverage (P2-12 through P2-23) ── ✅ RESOLVED ───────────────────────────────┤
                                                                                              │
-P1-6 (Lock Race) depends on ⬜-1 (DO migration) ── ⬜ RESEARCHED (migration plan ready) ─────┤
+P1-6 (Lock Race) depends on ⬜-1 (DO migration) ── ✅ RESOLVED (D1 CAS lock, migration v8) ─────┤
     └── Quick win: KV CAS workaround ──可行 (1-2 days) ─────────────────────────────────────┤
                                                                                               │
 P3 (P3-1 through P3-18) ── ✅ MOSTLY RESOLVED (P3-16 deferred, env setup not code fix) ─────┤
@@ -218,6 +218,7 @@ P3 (P3-1 through P3-18) ── ✅ MOSTLY RESOLVED (P3-16 deferred, env setup no
 8. **P1-1**: D1 endpoints auth — already implemented (withAuth)
 9. **P1-2**: Rate limiting for all API endpoints ✅ (9 endpoints added)
 10. **P1-3**: `/api/submit` auth — already implemented (withAuth)
+11. **P1-6**: KV lock race condition ✅ (D1 CAS lock, migration v8)
 
 ### Phase 3: Correctness (Weeks 2-3) — ✅ COMPLETE 2026-07-06
 11. **P1-7**: Implement `evolveSourceTrust` logic ✅
@@ -237,7 +238,7 @@ P3 (P3-1 through P3-18) ── ✅ MOSTLY RESOLVED (P3-16 deferred, env setup no
 19. **P3-14 through P3-18**: Features & integration — P3-14 ✅, P3-15 ✅, P3-16 ⬜ (env setup, not code), P3-17 ✅, P3-18 ✅
 20. **⬜-5**: Continuous Verification (10th gate) ✅ IMPLEMENTED
 21. **⬜-6**: DORA metrics dashboard ✅ IMPLEMENTED
-22. **⬜-1, ⬜-2**: DO/DE research ✅ COMPLETE (migration plans ready, require dedicated sprints)
+22. **⬜-1, ⬜-2**: DO/DE research ✅ COMPLETE (migration plans ready, ADR-017/018 written)
 23. **⬜-3, ⬜-4, ⬜-7**: Remaining ADR-015 proposals — ⬜ DEFERRED (require dedicated sprints)
 
 ---

@@ -5,10 +5,10 @@ import { toError } from "./sanitize-error";
 import { logger } from "./global-logger";
 
 // ============================================================================
-// Distributed Lock Implementation
+// Distributed Lock Implementation (D1 CAS)
 // ============================================================================
 
-const LOCK_KEY = "pipeline:lock";
+const LOCK_NAME = "pipeline:lock";
 
 interface LockData {
   run_id: string;
@@ -18,142 +18,154 @@ interface LockData {
 }
 
 /**
- * Acquire distributed lock for pipeline execution
- * Uses KV with TTL for automatic expiration
- * Includes retry logic to handle race conditions on KV put/get
+ * Acquire distributed lock for pipeline execution.
+ * Uses D1 compare-and-swap (atomic INSERT OR REPLACE with expiry check)
+ * to eliminate the race condition present in the previous KV implementation.
+ *
+ * D1 provides strong consistency, so the CAS operation is truly atomic:
+ * - If no lock exists: INSERT succeeds (changes=1)
+ * - If lock expired: UPDATE succeeds (changes=1)
+ * - If lock held: UPDATE is no-op (changes=0) → ConcurrencyError
  */
 export async function acquireLock(
   env: Env,
   run_id: string,
   trace_id: string,
 ): Promise<boolean> {
-  const maxRetries = 3;
-  const retryDelayMs = 100;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + CONFIG.LOCK_TTL_SECONDS * 1000);
+  const nowIso = now.toISOString();
+  const expiresIso = expiresAt.toISOString();
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + CONFIG.LOCK_TTL_SECONDS * 1000);
+  try {
+    // Atomic CAS: try to acquire lock in a single D1 batch.
+    // Step 1: INSERT OR IGNORE — if lock doesn't exist, create it.
+    // Step 2: UPDATE with expiry check — if lock exists but expired, take over.
+    // Step 3: SELECT — verify acquisition.
+    const batchResults = await env.DEALS_DB.batch([
+      env.DEALS_DB.prepare(
+        `INSERT OR IGNORE INTO pipeline_locks (lock_name, run_id, trace_id, acquired_at, expires_at)
+         VALUES (?1, ?2, ?3, ?4, ?5)`,
+      ).bind(LOCK_NAME, run_id, trace_id, nowIso, expiresIso),
+      env.DEALS_DB.prepare(
+        `UPDATE pipeline_locks
+         SET run_id = ?2, trace_id = ?3, acquired_at = ?4, expires_at = ?5
+         WHERE lock_name = ?1 AND expires_at < ?6`,
+      ).bind(LOCK_NAME, run_id, trace_id, nowIso, expiresIso, nowIso),
+      env.DEALS_DB.prepare(
+        `SELECT run_id, trace_id, acquired_at, expires_at
+         FROM pipeline_locks WHERE lock_name = ?1`,
+      ).bind(LOCK_NAME),
+    ]);
 
-    const lockData: LockData = {
-      run_id,
-      trace_id,
-      acquired_at: now.toISOString(),
-      expires_at: expiresAt.toISOString(),
-    };
+    // Check if INSERT was applied (new lock created) or UPDATE was applied (expired lock taken over)
+    const insertMeta = batchResults[0]?.meta;
+    const updateMeta = batchResults[1]?.meta;
+    const selectResult = batchResults[2]?.results?.[0] as LockData | undefined;
 
-    try {
-      // Check existing lock
-      const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+    const insertedNew = (insertMeta?.changes ?? 0) > 0;
+    const tookOverExpired = (updateMeta?.changes ?? 0) > 0;
 
-      if (existing) {
-        const expiresAtExisting = new Date(existing.expires_at);
-        const nowCheck = new Date();
-
-        // Lock is still valid
-        if (expiresAtExisting > nowCheck) {
-          throw new PipelineError(
-            "ConcurrencyError",
-            `Lock held by run ${existing.run_id} until ${existing.expires_at}`,
-            "init",
-            false,
-          );
-        }
-
-        // Lock expired, we can take over (log warning)
-        logger.warn(
-          `Lock expired for run ${existing.run_id}, taking over with ${run_id}`,
-          {
-            component: "lock",
-            existing_run_id: existing.run_id,
-            new_run_id: run_id,
-          },
-        );
+    if (insertedNew || tookOverExpired) {
+      // Lock was acquired — verify we own it
+      if (selectResult && selectResult.trace_id === trace_id) {
+        logger.info(`Lock acquired for run ${run_id}`, {
+          component: "lock",
+          run_id,
+          trace_id,
+          method: insertedNew ? "insert" : "takeover",
+        });
+        return true;
       }
+    }
 
-      // Acquire new lock
-      await env.DEALS_LOCK.put(LOCK_KEY, JSON.stringify(lockData), {
-        expirationTtl: CONFIG.LOCK_TTL_SECONDS,
-      });
-
-      // Verify lock was acquired (retry if race condition detected)
-      const verify = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
-      if (!verify || verify.trace_id !== trace_id) {
-        if (attempt < maxRetries - 1) {
-          // Race condition detected, retry with backoff
-          await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
-          continue;
-        }
+    // Lock is held by another run and not expired
+    if (selectResult && selectResult.trace_id !== trace_id) {
+      const expiresAtExisting = new Date(selectResult.expires_at);
+      if (expiresAtExisting > now) {
         throw new PipelineError(
           "ConcurrencyError",
-          "Failed to verify lock acquisition after retries",
+          `Lock held by run ${selectResult.run_id} until ${selectResult.expires_at}`,
           "init",
           false,
         );
       }
-
-      return true;
-    } catch (error) {
-      if (error instanceof PipelineError) {
-        throw error;
-      }
-      if (attempt < maxRetries - 1) {
-        await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
-        continue;
-      }
-      throw new PipelineError(
-        "ConcurrencyError",
-        `Lock acquisition failed: ${toError(error).message}`,
-        "init",
-        true,
-      );
     }
-  }
 
-  throw new PipelineError(
-    "ConcurrencyError",
-    "Lock acquisition failed after max retries",
-    "init",
-    true,
-  );
+    // Should not reach here, but handle gracefully
+    throw new PipelineError(
+      "ConcurrencyError",
+      "Lock acquisition failed — unexpected state",
+      "init",
+      false,
+    );
+  } catch (error) {
+    if (error instanceof PipelineError) {
+      throw error;
+    }
+    throw new PipelineError(
+      "ConcurrencyError",
+      `Lock acquisition failed: ${toError(error).message}`,
+      "init",
+      true,
+    );
+  }
 }
 
 /**
- * Release distributed lock
+ * Release distributed lock.
+ * Only releases if the lock is owned by the given trace_id.
+ * Uses D1 batch for atomic read-then-delete.
  */
 export async function releaseLock(env: Env, trace_id: string): Promise<void> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+    const batchResults = await env.DEALS_DB.batch([
+      env.DEALS_DB.prepare(
+        `SELECT trace_id FROM pipeline_locks WHERE lock_name = ?1`,
+      ).bind(LOCK_NAME),
+      env.DEALS_DB.prepare(
+        `DELETE FROM pipeline_locks WHERE lock_name = ?1 AND trace_id = ?2`,
+      ).bind(LOCK_NAME, trace_id),
+    ]);
 
-    if (!existing) {
-      logger.warn("No active lock found during release", { component: "lock" });
+    const selectResult = batchResults[0]?.results?.[0] as
+      { trace_id: string } | undefined;
+
+    if (!selectResult) {
+      logger.warn("No active lock found during release", {
+        component: "lock",
+      });
       return;
     }
 
-    // Verify we're releasing our own lock
-    if (existing.trace_id !== trace_id) {
+    if (selectResult.trace_id !== trace_id) {
       logger.warn(
-        `Lock owned by ${existing.trace_id}, cannot release with ${trace_id}`,
+        `Lock owned by ${selectResult.trace_id}, cannot release with ${trace_id}`,
         {
           component: "lock",
-          owned_by: existing.trace_id,
+          owned_by: selectResult.trace_id,
           requested_by: trace_id,
         },
       );
       return;
     }
 
-    await env.DEALS_LOCK.delete(LOCK_KEY);
+    logger.info(`Lock released for trace ${trace_id}`, {
+      component: "lock",
+      trace_id,
+    });
   } catch (error) {
     logger.error("Failed to release lock", {
       component: "lock",
       error: error instanceof Error ? error.message : String(error),
     });
-    // Don't throw - lock will expire naturally
+    // Don't throw — lock will be treated as expired
   }
 }
 
 /**
- * Extend lock TTL during long operations
+ * Extend lock TTL during long operations.
+ * Only the lock owner can extend. Uses D1 for atomic check-and-update.
  */
 export async function extendLock(
   env: Env,
@@ -161,9 +173,24 @@ export async function extendLock(
   additionalSeconds: number = 300,
 ): Promise<void> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+    const now = new Date();
+    const newExpiresAt = new Date(now.getTime() + additionalSeconds * 1000);
 
-    if (!existing || existing.trace_id !== trace_id) {
+    const batchResults = await env.DEALS_DB.batch([
+      env.DEALS_DB.prepare(
+        `SELECT trace_id, expires_at FROM pipeline_locks WHERE lock_name = ?1`,
+      ).bind(LOCK_NAME),
+      env.DEALS_DB.prepare(
+        `UPDATE pipeline_locks
+         SET expires_at = ?2
+         WHERE lock_name = ?1 AND trace_id = ?3`,
+      ).bind(LOCK_NAME, newExpiresAt.toISOString(), trace_id),
+    ]);
+
+    const selectResult = batchResults[0]?.results?.[0] as
+      { trace_id: string; expires_at: string } | undefined;
+
+    if (!selectResult || selectResult.trace_id !== trace_id) {
       throw new PipelineError(
         "ConcurrencyError",
         "Cannot extend lock - not owned by current trace",
@@ -172,17 +199,15 @@ export async function extendLock(
       );
     }
 
-    const now = new Date();
-    const newExpiresAt = new Date(now.getTime() + additionalSeconds * 1000);
-
-    const lockData: LockData = {
-      ...existing,
-      expires_at: newExpiresAt.toISOString(),
-    };
-
-    await env.DEALS_LOCK.put(LOCK_KEY, JSON.stringify(lockData), {
-      expirationTtl: additionalSeconds,
-    });
+    const updateMeta = batchResults[1]?.meta;
+    if ((updateMeta?.changes ?? 0) === 0) {
+      throw new PipelineError(
+        "ConcurrencyError",
+        "Cannot extend lock - update failed",
+        "init",
+        false,
+      );
+    }
   } catch (error) {
     if (error instanceof PipelineError) {
       throw error;
@@ -206,13 +231,21 @@ export async function getLockStatus(env: Env): Promise<{
   expires_at?: string;
 }> {
   try {
-    const existing = await env.DEALS_LOCK.get<LockData>(LOCK_KEY, "json");
+    const result = await env.DEALS_DB.prepare(
+      `SELECT run_id, trace_id, expires_at FROM pipeline_locks WHERE lock_name = ?1`,
+    )
+      .bind(LOCK_NAME)
+      .first<{
+        run_id: string;
+        trace_id: string;
+        expires_at: string;
+      }>();
 
-    if (!existing) {
+    if (!result) {
       return { locked: false };
     }
 
-    const expiresAt = new Date(existing.expires_at);
+    const expiresAt = new Date(result.expires_at);
     const now = new Date();
 
     if (expiresAt <= now) {
@@ -221,9 +254,9 @@ export async function getLockStatus(env: Env): Promise<{
 
     return {
       locked: true,
-      run_id: existing.run_id,
-      trace_id: existing.trace_id,
-      expires_at: existing.expires_at,
+      run_id: result.run_id,
+      trace_id: result.trace_id,
+      expires_at: result.expires_at,
     };
   } catch {
     return { locked: false };
