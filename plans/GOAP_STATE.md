@@ -104,6 +104,14 @@
 
 ---
 
+## Blocked — External Dependencies
+
+| ID | Item | Source | Blocker | ADR |
+|:---|:---|:---|:---|:---|
+| BLOCKED-1 | **Workers Builds: do-deal-relay** — Cloudflare dashboard auto-deploy fails on every push | CI | Cloudflare dashboard integration misconfigured (not managed via code) | [ADR-018](ADR-018-cloudflare-workers-builds-failure.md) |
+
+---
+
 ## P3 — Low Priority (18 Open — Polish & Future)
 
 ### Minor Correctness
