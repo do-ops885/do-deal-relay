@@ -73,7 +73,6 @@ export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse;
  * MCP Protocol Version (current: 2025-11-25)
  */
 export const MCP_PROTOCOL_VERSION = "2025-11-25";
-export const MCP_PROTOCOL_VERSION_FALLBACK = "2025-03-26";
 
 /**
  * MCP Request method types
