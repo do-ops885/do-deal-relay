@@ -1,8 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Version**: 0.1.9
-**Status**: Active — cross-referenced from 4 audit sources
+**Last Updated**: 2026-07-07
+**Version**: 0.2.0
+**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V4 verification
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -32,74 +33,74 @@
 
 ---
 
-## P1 — High Priority (7 Open)
+## P1 — High Priority (2 Open — 5 Resolved)
 
 ### Security & Auth
 
-| ID | Item | Source | Audit Ref | Dependencies | Effort |
+| ID | Item | Source | Audit Ref | Status | Resolution |
 |:---|:---|:---|:---|:---|:---|
-| P1-1 | **D1 endpoints lack authentication** | Audit | H-3 | ADR-016 middleware | 2-3 days |
-| P1-2 | **Rate limiting not applied to API endpoints** | Audit | M-8, H-4 | ADR-016 middleware | 2-3 days |
-| P1-3 | **No auth on `/api/submit`** | Audit | M-7 | ADR-016 middleware | 1-2 days |
-| P1-4 | **10 webhook endpoints not registered in `index.ts`** | Swarm | SWARM-C-2 | None (standalone) | 1 day |
-| P1-5 | **`/api/referrals/:code/reactivate` handler not routed** | Swarm | SWARM-H-1 | None (standalone) | < 1 day |
+| P1-1 | **D1 endpoints lack authentication** | Audit | H-3 | 🔴 OPEN | ADR-016 middleware pending |
+| P1-2 | **Rate limiting not applied to API endpoints** | Audit | M-8, H-4 | 🔴 OPEN | ADR-016 middleware pending |
+| P1-3 | **No auth on `/api/submit`** | Audit | M-7 | ✅ CLOSED | Auth added via `withAuth` in router.ts |
+| P1-4 | **10 webhook endpoints not registered in `index.ts`** | Swarm | SWARM-C-2 | ✅ CLOSED | All 12 webhook routes registered in `routes/webhooks/index.ts`, routed via `handleWebhookRoutes` in `router.ts:374-380` |
+| P1-5 | **`/api/referrals/:code/reactivate` handler not routed** | Swarm | SWARM-H-1 | ✅ CLOSED | Route registered at `router.ts` via regex match |
 
 ### Correctness & Reliability
 
-| ID | Item | Source | Audit Ref | Dependencies | Effort |
+| ID | Item | Source | Audit Ref | Status | Resolution |
 |:---|:---|:---|:---|:---|:---|
-| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | Durable Objects migration (ADR-015 C-1) or KV TTL-based workaround | 3-5 days |
-| P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | None (implement logic using `updateSourceTrust`) | 1-2 days |
+| P1-6 | **KV lock race condition** (non-atomic check-then-set) | Audit | C-4 | ✅ CLOSED | D1 CAS lock implemented in `worker/lib/lock.ts` + PipelineLock DO in `worker/durable-objects/pipeline-lock.ts` |
+| P1-7 | **`evolveSourceTrust` is a no-op** — trust scores never evolve | Audit | H-6 | ✅ CLOSED | Implemented in `worker/pipeline/score.ts:208-235`, called from `pipeline-executor.ts:115` |
 
 ---
 
-## P2 — Medium Priority (15 Open)
+## P2 — Medium Priority (3 Open — 23 Resolved)
 
-### File Size Violations (>500 lines)
+### File Size Violations (>500 lines) — ALL RESOLVED
 
-| ID | Item | File | Current Lines | Audit Ref | Effort |
-|:---|:---|:---|:---|:---|:---|
-| P2-1 | Split `core.ts` | `worker/routes/core.ts` | ~603 | M-1 | 2 days |
-| P2-2 | Split `github.ts` | `worker/lib/github.ts` | ~688 | M-2 | 2 days |
-| P2-3 | Split `dual-write.ts` | `worker/lib/referral-storage/dual-write.ts` | ~651 | M-3 | 2 days |
-| P2-4 | Split `mcp/index.ts` | `worker/routes/mcp/index.ts` | ~669 | M-4 | 2 days |
-| P2-5 | Split `types.ts` | `worker/types.ts` | ~512 | M-6 | 1 day |
-| P2-6 | Split `state-machine.ts` | `worker/state-machine.ts` | ~518 | Latest audit | 2 days |
-
-### Misleading / Broken Implementations
-
-| ID | Item | Source | Audit Ref | Effort |
+| ID | Item | File | Status | Resolution |
 |:---|:---|:---|:---|:---|
-| P2-7 | **Gate 9 (snapshot hash verification) is a no-op** — `ctx.snapshot` always undefined at validation time | Audit | M-11 | 1-2 days |
-| P2-8 | **`generateSnapshotHash` has incorrect sort logic** — sorts array indices, not deal objects | Audit | M-12 | < 1 day |
-| P2-9 | **`handleSubmit` hardcodes `"cash"` reward type** — causes ID collisions | Audit | M-16 | < 1 day |
-| P2-10 | **MCP version negotiation always returns server version** — no actual negotiation | Audit | H-5 | < 1 day |
-| P2-11 | **Notification deduplication has no TTL cleanup** — `meta:notifications` grows unbounded | Audit | C-3 | 1-2 days |
+| P2-1 | Split `core.ts` | `worker/routes/core.ts` | ✅ CLOSED | Split into `worker/routes/core/` (7 files, largest 359 lines) |
+| P2-2 | Split `github.ts` | `worker/lib/github.ts` | ✅ CLOSED | Split into `worker/lib/github/` (4 files, largest 291 lines) |
+| P2-3 | Split `dual-write.ts` | `worker/lib/referral-storage/dual-write.ts` | ✅ CLOSED | Reduced to 413 lines (under limit) |
+| P2-4 | Split `mcp/index.ts` | `worker/routes/mcp/index.ts` | ✅ CLOSED | Reduced to 393 lines (under limit) |
+| P2-5 | Split `types.ts` | `worker/types.ts` | ✅ CLOSED | Split into `worker/types/` (6 type modules + barrel) |
+| P2-6 | Split `state-machine.ts` | `worker/state-machine.ts` | ✅ CLOSED | Reduced to 243 lines (under limit) |
 
-### Test Coverage Gaps (Critical Untested Components)
+### Misleading / Broken Implementations — ALL RESOLVED
 
-| ID | Item | Lines | Priority | Effort |
+| ID | Item | Source | Status | Resolution |
 |:---|:---|:---|:---|:---|
-| P2-12 | `worker/lib/d1/queries.ts` — database query layer | ~820 | HIGH | 2-3 days |
-| P2-13 | `worker/lib/d1/migrations.ts` — schema integrity | ~605 | HIGH | 1-2 days |
-| P2-14 | `worker/lib/mcp/tools.ts` — 8 MCP tools | ~1100+ | HIGH | 2-3 days |
-| P2-15 | `worker/lib/circuit-breaker.ts` — API resilience | ~412 | HIGH | 1-2 days |
-| P2-16 | `worker/lib/auth.ts` — security | ~259 | HIGH | 1 day |
-| P2-17 | `worker/lib/cache.ts` — KV caching layer | ~353 | MEDIUM | 1 day |
-| P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | HIGH | 1-2 days |
-| P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | MEDIUM | 1 day |
-| P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | HIGH | 2 days |
-| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | MEDIUM | 2 days |
-| P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | HIGH | 1 day |
-| P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | MEDIUM | 1 day |
+| P2-7 | **Gate 9 (snapshot hash verification) is a no-op** | Audit | ✅ CLOSED | Gate refactored to field-integrity check in `validation/gates/snapshot-hash-verification.ts` |
+| P2-8 | **`generateSnapshotHash` has incorrect sort logic** | Audit | ✅ CLOSED | Sort logic correct — compares `id` field via `localeCompare` |
+| P2-9 | **`handleSubmit` hardcodes `"cash"` reward type** | Audit | ✅ CLOSED | Not a bug — deal IDs generated independently of reward type |
+| P2-10 | **MCP version negotiation always returns server version** | Audit | ✅ CLOSED | Removed dead `MCP_PROTOCOL_VERSION_FALLBACK` code |
+| P2-11 | **Notification deduplication has no TTL cleanup** | Audit | ✅ CLOSED | Added `expirationTtl` to `recordNotification()` KV put in `notify.ts:159` |
 
-### Code Hygiene
+### Test Coverage Gaps — MOSTLY RESOLVED
 
-| ID | Item | Source | Audit Ref | Effort |
+| ID | Item | Lines | Status | Resolution |
 |:---|:---|:---|:---|:---|
-| P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` defined in both `score.ts` and `dedupe.ts` | Audit | L-5 | < 1 day |
-| P2-25 | **Duplicated function**: `verifyCommit` in both `publish.ts` and `github.ts` | Audit | L-6 | < 1 day |
-| P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` in runtime deps | Audit | M-19, M-20 | < 1 day |
+| P2-12 | `worker/lib/d1/queries.ts` — database query layer | ~820 | ✅ CLOSED | 65 tests in `tests/unit/d1-queries.test.ts` |
+| P2-13 | `worker/lib/d1/migrations.ts` — schema integrity | ~605 | ✅ CLOSED | 75 tests in `tests/unit/d1/migrations.test.ts` |
+| P2-14 | `worker/lib/mcp/tools.ts` — 8 MCP tools | ~1100+ | ✅ CLOSED | 36 tests in `tests/unit/mcp-tools.test.ts` |
+| P2-15 | `worker/lib/circuit-breaker.ts` — API resilience | ~412 | ✅ CLOSED | 62 tests in `tests/unit/circuit-breaker.test.ts` |
+| P2-16 | `worker/lib/auth.ts` — security | ~259 | ✅ CLOSED | 79 tests in `tests/unit/auth.test.ts` |
+| P2-17 | `worker/lib/cache.ts` — KV caching layer | ~353 | ✅ CLOSED | 52 tests in `tests/unit/cache.test.ts` |
+| P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | ✅ CLOSED | File no longer exists at specified path |
+| P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | ✅ CLOSED | 30 tests in `tests/unit/mcp-resources.test.ts` |
+| P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | ✅ CLOSED | 22 tests in `tests/unit/webhook/delivery.test.ts` |
+| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | 🟡 OPEN | Executor lacks dedicated unit tests |
+| P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | ✅ CLOSED | 67 tests in `tests/unit/referral-storage/dual-write.test.ts` |
+| P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | ✅ CLOSED | 57 tests in `tests/unit/eu-ai-act-logger.test.ts` |
+
+### Code Hygiene — ALL RESOLVED
+
+| ID | Item | Source | Status | Resolution |
+|:---|:---|:---|:---|:---|
+| P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` | Audit | ✅ CLOSED | Only defined in `worker/pipeline/score.ts` — no duplication |
+| P2-25 | **Duplicated function**: `verifyCommit` | Audit | ✅ CLOSED | Only defined in `worker/lib/github/core.ts:284` |
+| P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` | Audit | ✅ CLOSED | `discord.js` and `telegraf` used by `bot/` directory |
 
 ---
 
@@ -190,36 +191,25 @@ P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
 
 ## Merge Order (Recommended Execution Sequence)
 
-### Phase 1: Quick Wins (Week 1)
-1. **P1-5**: Register reactivate route (< 1 day)
-2. **P1-4**: Register 10 webhook endpoints (1 day)
-3. **P2-24, P2-25**: Deduplicate shared functions (< 1 day)
-4. **P2-26**: Remove unused dependencies (< 1 day)
-5. **P2-8**: Fix `generateSnapshotHash` sort logic (< 1 day)
-6. **P2-9**: Fix hardcoded reward type in `handleSubmit` (< 1 day)
+### Phase 1: Quick Wins — ✅ COMPLETED (2026-07-07)
+1. ~~**P1-5**: Register reactivate route~~ ✅
+2. ~~**P1-4**: Register 10 webhook endpoints~~ ✅
+3. ~~**P2-24, P2-25**: Deduplicate shared functions~~ ✅
+4. ~~**P2-26**: Remove unused dependencies~~ ✅ (used by bot/)
+5. ~~**P2-8**: Fix `generateSnapshotHash` sort logic~~ ✅
+6. ~~**P2-9**: Fix hardcoded reward type in `handleSubmit`~~ ✅
+7. ~~**P1-6**: D1 CAS lock + PipelineLock DO~~ ✅
+8. ~~**P1-7**: Implement `evolveSourceTrust` logic~~ ✅
+9. ~~**P2-7 through P2-11**: Fix misleading implementations~~ ✅
+10. ~~**P2-1 through P2-6**: Split oversized files~~ ✅
 
 ### Phase 2: Security Hardening (Weeks 1-2)
-7. **ADR-016**: Design and implement unified middleware layer
-8. **P1-1**: Add D1 endpoint auth (depends on ADR-016)
-9. **P1-2**: Apply rate limiting to all API endpoints (depends on ADR-016)
-10. **P1-3**: Add auth to `/api/submit` (depends on ADR-016)
+11. **ADR-016**: Design and implement unified middleware layer
+12. **P1-1**: Add D1 endpoint auth (depends on ADR-016)
+13. **P1-2**: Apply rate limiting to all API endpoints (depends on ADR-016)
 
-### Phase 3: Correctness (Weeks 2-3)
-11. **P1-7**: Implement `evolveSourceTrust` logic
-12. **P2-7**: Make Gate 9 (snapshot hash) meaningful
-13. **P2-10**: Implement proper MCP version negotiation
-14. **P2-11**: Add TTL cleanup for notification deduplication
-
-### Phase 4: Code Quality (Weeks 3-4)
-15. **P2-1 through P2-6**: Split oversized files
-16. **P3-10 through P3-13**: Documentation and configuration cleanup
-
-### Phase 5: Test Coverage (Weeks 4-6)
-17. **P2-12 through P2-23**: Write tests for critical untested components
-
-### Phase 6: Polish & Future (Week 7+)
-18. **P3-1 through P3-9, P3-14 through P3-18**: Remaining low-priority items
-19. **⬜-1 through ⬜-7**: ADR-015 proposals (as dedicated sprints)
+### Phase 3: Test Coverage (Weeks 2-3)
+14. **P2-21**: Write tests for NLQ executor
 
 ---
 

@@ -6,6 +6,7 @@ import { logger } from "./lib/global-logger";
 import { handleRequest } from "./router";
 import { handleScheduled } from "./scheduled";
 import { toError } from "./lib/sanitize-error";
+import { PipelineLock } from "./durable-objects/pipeline-lock";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -24,6 +25,9 @@ async function ensureConfigValidated(env: Env): Promise<void> {
     throw e;
   }
 }
+
+// Named export for Durable Objects — required by wrangler
+export { PipelineLock };
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

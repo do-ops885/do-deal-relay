@@ -156,7 +156,9 @@ async function recordNotification(
 
     // Keep only last 100 entries
     const trimmed = history.slice(-100);
-    await env.DEALS_PROD.put(NOTIFICATION_KEY, JSON.stringify(trimmed));
+    await env.DEALS_PROD.put(NOTIFICATION_KEY, JSON.stringify(trimmed), {
+      expirationTtl: NOTIFICATION_COOLDOWN_MS / 1000,
+    });
   } catch (error) {
     const logger = getNotifyLogger(env);
     logger.error(
