@@ -55,7 +55,7 @@ jobs:
         run: npm run test:ci
 
       - name: Run quality gate
-        run: ./scripts/quality_gate.sh
+        run: SKIP_TESTS=true ./scripts/quality_gate.sh
 
       - name: Verify staging is healthy
         if: github.ref == 'refs/heads/main'
