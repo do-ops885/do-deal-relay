@@ -1,3 +1,8 @@
+---
+name: goap-agent
+description: Orchestrate swarm-based execution of complex multi-step tasks using Goal-Oriented Action Planning.
+---
+
 # GOAP Agent Skill — Goal-Oriented Action Planning
 
 ## Purpose
@@ -69,3 +74,18 @@ Orchestrate swarm-based execution of complex multi-step programming tasks using 
 - `plans/PEV_LOOP.md` — Plan-Execute-Verify spec
 - `plans/GOAP_STATE.md` — Task inventory
 - `agents-docs/hard-constraints.md` — Hard limits
+
+## Rationalizations
+- "This is one small change, no plan needed" — skipping the plan phase for ostensibly trivial tasks leads to scope creep and missed acceptance criteria. Always start with a spec.
+- "Tests already cover this, skip verification" — the goal of verification is independent confirmation, not duplication of the author's reasoning.
+- "Concurrent agents will figure it out" — parallel tasks must have non-overlapping file scopes; otherwise the swarm produces a merge conflict, not a feature.
+- "The deferral rationale still applies" — items deferred >30 days ago require re-verification per the AGENTS.md Re-Verification Protocol.
+- "PR is small, skip CI wait" — CI catches formatting, type, and dependency issues invisible to the author.
+
+## Red Flags
+- Editing `worker/index.ts`, `worker/config.ts`, or `worker/lib/security.ts` without coordinating with other swarm members (operational safety rule).
+- Skipping the `MAX_LINES_PER_SOURCE_FILE=500` check and growing files beyond 500 lines.
+- Producing `as any` casts or removing type annotations to make typecheck pass.
+- Running agents in parallel against overlapping files or shared hot paths.
+- Posting metrics to `.agents/metrics.jsonl` for an incomplete or abstained run instead of following the abstention format.
+- Treating `BLOCKED` tasks as `done` without an ADR documenting the unfixability.

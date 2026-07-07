@@ -1,3 +1,8 @@
+---
+name: typescript-coding-standards
+description: Enforce TypeScript coding standards including type safety, file size limits, and naming conventions.
+---
+
 # TypeScript Coding Standards Skill
 
 ## Purpose
@@ -45,3 +50,17 @@ Enforce TypeScript coding standards for the do-deal-relay codebase. Ensure type 
 2. `npx prettier --check .` — formatting
 3. `npm run lint:md` — markdown lint
 4. `npm run test:unit` — unit tests
+
+## Rationalizations
+- "`as any` is fine for this stub" — `any` defeats type safety; use a typed alternative or `unknown` with a type guard. Per AGENTS.md: "Only when the value can truly be any type."
+- "Implicit any is short-term cost, long-term gain" — implicit any silently bypasses the contract; declare the type or use `unknown`.
+- "This single file is too large but it works" — `MAX_LINES_PER_SOURCE_FILE=500` is a hard constraint; split the file rather than waive the limit.
+- "Function names are too long, abbreviate" — descriptive verbs (`getX`, `handleY`, `createZ`) make call sites self-documenting; avoid `do`, `process`, `handleData`.
+- "Skip the test for a config change" — all changes must be covered by the gate suite, including TypeScript tests for new behaviour.
+
+## Red Flags
+- A PR introduces one or more new `as any` casts not previously present in the file.
+- A test is removed or skipped (`it.skip`, `xit`, `describe.skip`) without a linked ADR explaining why.
+- A file's `wc -l` exceeds 500 and is not being split in the same PR.
+- An export is renamed without updating all import references (caught by `tsc --noEmit` only if imports are typed same; otherwise by code review).
+- A new external dependency is added without checking that `package.json` is updated and `package-lock.json` is committed.
