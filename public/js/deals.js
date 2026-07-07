@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 import { createDealCard } from "./components/deal-card.js";
 import { showDealDetail } from "./components/deal-detail.js";
+import { escapeHtml } from "./utils/html.js";
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 250;
@@ -29,21 +30,6 @@ const STATUS_OPTIONS = [
   { value: "expired", label: "Expired" },
   { value: "pending", label: "Pending" },
 ];
-
-// biome-ignore-start lint/security/noSecrets: HTML entity map, not secrets
-const HTML_ENTITIES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-// biome-ignore-end lint/security/noSecrets
-
-function escapeHtml(value) {
-  if (value == null) return "";
-  return String(value).replace(/[&<>"']/g, (ch) => HTML_ENTITIES[ch] || ch);
-}
 
 function formatTimestamp(value) {
   if (!value) return 0;

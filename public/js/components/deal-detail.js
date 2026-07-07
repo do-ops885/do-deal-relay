@@ -1,17 +1,5 @@
 import { api } from "../api.js";
-
-const HTML_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-function escapeHtml(value) {
-  if (value == null) return "";
-  return String(value).replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch] || ch);
-}
+import { escapeHtml } from "../utils/html.js";
 
 function formatDate(value) {
   if (!value) return null;
