@@ -7,8 +7,19 @@
  * @module worker/lib/mcp/types
  */
 
-import { z } from "zod";
 import type { Env } from "../../types";
+import type { ZodType } from "zod";
+
+// Zod schemas extracted to schemas.ts to stay under 500-line limit.
+// Re-export for backward compatibility.
+export {
+  JSONRPCRequestSchema,
+  InitializeParamsSchema,
+  ToolsListParamsSchema,
+  ToolCallParamsSchema,
+  ResourcesListParamsSchema,
+  ResourceReadParamsSchema,
+} from "./schemas";
 
 // ============================================================================
 // JSON-RPC 2.0 Base Types
@@ -189,8 +200,8 @@ export interface Tool {
   name: string;
   title?: string;
   description?: string;
-  inputSchema: z.ZodType | object;
-  outputSchema?: z.ZodType | object;
+  inputSchema: ZodType | object;
+  outputSchema?: ZodType | object;
   annotations?: ToolAnnotations;
 }
 
@@ -395,67 +406,6 @@ export interface InitializeResult {
   serverInfo: ServerInfo;
   instructions?: string;
 }
-
-// ============================================================================
-// Zod Schemas for Validation
-// ============================================================================
-
-/**
- * JSON-RPC Request schema
- */
-export const JSONRPCRequestSchema = z.object({
-  jsonrpc: z.literal("2.0"),
-  id: z.union([z.string(), z.number()]),
-  method: z.string(),
-  params: z.record(z.unknown()).optional(),
-});
-
-/**
- * Initialize request params schema
- */
-export const InitializeParamsSchema = z.object({
-  protocolVersion: z.string(),
-  capabilities: z.object({
-    roots: z.object({ listChanged: z.boolean().optional() }).optional(),
-    sampling: z.object({}).optional(),
-  }),
-  clientInfo: z.object({
-    name: z.string(),
-    version: z.string(),
-  }),
-});
-
-/**
- * Tools list params schema
- */
-export const ToolsListParamsSchema = z.object({
-  cursor: z.string().optional(),
-});
-
-/**
- * Tool call params schema
- */
-export const ToolCallParamsSchema = z.object({
-  name: z.string(),
-  arguments: z.record(z.unknown()).optional(),
-  _meta: z
-    .object({ progressToken: z.union([z.string(), z.number()]).optional() })
-    .optional(),
-});
-
-/**
- * Resources list params schema
- */
-export const ResourcesListParamsSchema = z.object({
-  cursor: z.string().optional(),
-});
-
-/**
- * Resource read params schema
- */
-export const ResourceReadParamsSchema = z.object({
-  uri: z.string(),
-});
 
 // ============================================================================
 // Error Codes (JSON-RPC 2.0 + MCP specific)
