@@ -1,21 +1,10 @@
+import { escapeHtml } from "../utils/html.js";
+
 const STATUS_LABELS = {
   active: "Active",
   expired: "Expired",
   pending: "Pending",
 };
-
-const HTML_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-function escapeHtml(value) {
-  if (value == null) return "";
-  return String(value).replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch] || ch);
-}
 
 function formatPrice(deal) {
   if (deal.price && String(deal.price).trim()) return escapeHtml(deal.price);
@@ -77,7 +66,7 @@ export function createDealCard(deal, { onSelect } = {}) {
   article.dataset.dealId = String(deal.id || "");
   article.setAttribute(
     "aria-label",
-    `View deal: ${deal.title || "Untitled"} from ${deal.source || "unknown source"}`,
+    `View deal: ${escapeHtml(deal.title || "Untitled")} from ${escapeHtml(deal.source || "unknown source")}`,
   );
 
   const title = escapeHtml(deal.title || "Untitled deal");

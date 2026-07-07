@@ -2,9 +2,40 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-07
-**Version**: 0.3.0
-**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification
+**Version**: 0.5.0
+**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification + PR Resolver
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## PR Resolver Status — 2026-07-07
+
+### Created
+- **Command**: `.opencode/commands/pr-resolver.md` — `/pr-resolver` command for automated PR lifecycle management
+- **Skill**: `.agents/skills/pr-resolver/SKILL.md` — GOAP swarm orchestrator for PR analysis, CI fix, conflict resolution, comment addressing, and merge
+
+### Usage
+```bash
+/pr-resolver [repo] [--dry-run] [--max-prs N]
+```
+
+### Workflow
+1. DISCOVER: Fetch all open PRs via `gh pr list`
+2. ANALYZE: Classify PRs into READY / FIXABLE / BLOCKED
+3. FIX: GOAP swarm dispatches parallel agents per PR issue
+4. VERIFY: Run `pev-gates.sh` after each fix
+5. MERGE: Merge PRs passing all gates
+6. LOOP: Repeat until main CI green
+
+### Agent Swarm
+
+| Task | Agent | Skills |
+|------|-------|--------|
+| Fix failing CI | code-crafter | typescript-coding-standards |
+| Resolve merge conflicts | code-crafter | pev-loop |
+| Address PR comments | code-reviewer | codacy-code-review |
+| Run tests | test-runner | validation-gates |
+| Review changes | code-reviewer | guard-rails |
 
 ---
 
@@ -121,40 +152,40 @@
 
 ---
 
-## P3 — Low Priority (18 Open — Polish & Future)
+## P3 — Low Priority (8 Open — 10 Resolved)
 
 ### Minor Correctness
 
-| ID | Item | Source | Audit Ref |
-|:---|:---|:---|:---|
-| P3-1 | `handleLive` health check is trivial — doesn't verify KV or DB connectivity | Audit | L-1 |
-| P3-2 | `handleReady` re-parses JSON from `handleHealth` — inefficient | Audit | L-2 |
-| P3-3 | Metrics endpoint counts `publish` phase instead of `finalize` for successes | Audit | L-3 |
-| P3-4 | `normalizeText` strips all non-ASCII characters — breaks international content | Audit | L-4 |
-| P3-5 | `handleAnalytics` has no rate limiting or pagination | Audit | L-7 |
-| P3-6 | `handleMCPCall` legacy endpoint has no rate limiting | Audit | L-17 |
-| P3-7 | `handleDiscover` triggers pipeline synchronously — timeout risk | Audit | M-10 |
-| P3-8 | `research@example.com` in User-Agent header | Audit | L-15 |
-| P3-9 | `handleGetResearchResults` defined but possibly unregistered | Audit | H-2 |
+| ID | Item | Source | Audit Ref | Status | Resolution |
+|:---|:---|:---|:---|:---|:---|
+| P3-1 | `handleLive` health check is trivial — doesn't verify KV or DB connectivity | Audit | L-1 | ✅ CLOSED | KV connectivity verified with real read; DB checked by `handleHealth` |
+| P3-2 | `handleReady` re-parses JSON from `handleHealth` — inefficient | Audit | L-2 | ✅ CLOSED | `handleReady` is independent, does not re-parse handleHealth output |
+| P3-3 | Metrics endpoint counts `publish` phase instead of `finalize` for successes | Audit | L-3 | ✅ CLOSED | `deals_processed.published` is the correct success metric |
+| P3-4 | `normalizeText` strips all non-ASCII characters — breaks international content | Audit | L-4 | ✅ CLOSED | Regex only removes control chars; international text preserved |
+| P3-5 | `handleAnalytics` has no rate limiting or pagination | Audit | L-7 | ✅ CLOSED | Rate limiting added via `createRateLimitMiddleware` in router.ts |
+| P3-6 | `handleMCPCall` legacy endpoint has no rate limiting | Audit | L-17 | ✅ CLOSED | Rate limiting added to legacy `/mcp/v1/tools/call` route |
+| P3-7 | `handleDiscover` triggers pipeline synchronously — timeout risk | Audit | M-10 | ✅ CLOSED | Pipeline executes async via `ctx.waitUntil()`, returns 202 immediately |
+| P3-8 | `research@example.com` in User-Agent header | Audit | L-15 | ✅ CLOSED | Placeholder email removed; CONFIG.USER_AGENT uses proper string |
+| P3-9 | `handleGetResearchResults` defined but possibly unregistered | Audit | H-2 | ✅ CLOSED | Route registered at `router.ts:344-349` with `withAuth` |
 
 ### Documentation & Configuration
 
-| ID | Item | Source | Audit Ref |
-|:---|:---|:---|:---|
-| P3-10 | System reference doc lists agents as "pending" — contradicts AGENTS.md | Audit | H-7 |
-| P3-11 | `wrangler.toml` and `wrangler.jsonc` coexist — confusing | Audit | M-17 |
-| P3-12 | `rootDir: "."` in tsconfig — should be `"./worker"` | Audit | M-18 |
-| P3-13 | Multiple root config files violate directory policy | Audit | L-10, L-11, L-12, L-13, L-14 |
+| ID | Item | Source | Audit Ref | Status | Resolution |
+|:---|:---|:---|:---|:---|:---|
+| P3-10 | System reference doc lists agents as "pending" — contradicts AGENTS.md | Audit | H-7 | ✅ CLOSED | SYSTEM_REFERENCE.md v0.2.0 — added middleware, D1, DO, continuous verification, DORA metrics |
+| P3-11 | `wrangler.toml` and `wrangler.jsonc` coexist — confusing | Audit | M-17 | ✅ CLOSED | Only `wrangler.jsonc` exists; `wrangler.toml` removed |
+| P3-12 | `rootDir: "."` in tsconfig — should be `"./worker"` | Audit | M-18 | ⬜ NO-FIX | Correct as-is for monorepo-style project (includes bot/, tests/, scripts/) |
+| P3-13 | Multiple root config files violate directory policy | Audit | L-10-L-14 | ⬜ NO-FIX | Standard config files for JS/TS project; no policy violation |
 
 ### Features & Integration
 
-| ID | Item | Source | Status |
-|:---|:---|:---|:---|
-| P3-14 | MCP pagination — cursor parameters defined but logic not implemented | Swarm | Incomplete |
-| P3-15 | MCP progress notifications — `_meta.progressToken` defined but unused | Swarm | Incomplete |
-| P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | Partial |
-| P3-17 | No OpenTelemetry / distributed tracing | Audit | L-16 |
-| P3-18 | `bot/` and `extension/` directories need documentation review | Audit | L-8 |
+| ID | Item | Source | Status | Resolution |
+|:---|:---|:---|:---|:---|
+| P3-14 | MCP pagination — cursor parameters defined but logic not implemented | Swarm | ✅ CLOSED | Cursor-based pagination in tools/list and resources/list |
+| P3-15 | MCP progress notifications — `_meta.progressToken` defined but unused | Swarm | ✅ CLOSED | Progress embedded in response `_meta` per MCP spec |
+| P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | ⬜ DEFERRED | Auth setup infrastructure exists; runtime env config needed |
+| P3-17 | No OpenTelemetry / distributed tracing | Audit | ⬜ DEFERRED | Cloudflare observability enabled; OTEL SDK integration deferred |
+| P3-18 | `bot/` and `extension/` directories need documentation review | Audit | ✅ CLOSED | Comprehensive READMEs exist in both directories |
 
 ---
 
@@ -227,6 +258,12 @@ P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
 
 ### Phase 3: Test Coverage — ✅ COMPLETED (2026-07-07)
 14. ~~**P2-21**: Write tests for NLQ executor~~ ✅ 37 tests in `tests/unit/nlq/query-builder/executor.test.ts`
+
+### Phase 4: P3 Quick Fixes — ✅ COMPLETED (2026-07-07)
+15. ~~**P3-5**: Add rate limiting to handleAnalytics~~ ✅ `createRateLimitMiddleware` in router.ts
+16. ~~**P3-6**: Add rate limiting to legacy handleMCPCall~~ ✅ `createRateLimitMiddleware` in router.ts
+17. ~~**P3-7**: Make handleDiscover async~~ ✅ `ctx.waitUntil()` + 202 response
+18. ~~**P3-10**: Update SYSTEM_REFERENCE.md~~ ✅ v0.2.0 with middleware, D1, DO, OTEL, DORA
 
 ---
 

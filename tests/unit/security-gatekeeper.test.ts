@@ -28,6 +28,11 @@ describe("Security Gatekeeper", () => {
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 
+  const mockCtx = {
+    waitUntil: vi.fn(),
+    passThroughOnException: vi.fn(),
+  } as unknown as ExecutionContext;
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -51,7 +56,7 @@ describe("Security Gatekeeper", () => {
         body: method === "POST" ? JSON.stringify({}) : null,
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(401);
       const body = (await response.json()) as { error: string };
       expect(body.error).toBe("Missing API key");
@@ -67,7 +72,7 @@ describe("Security Gatekeeper", () => {
         body: method === "POST" ? JSON.stringify({}) : null,
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(401);
       const body = (await response.json()) as { error: string };
       expect(body.error).toBe("Invalid API key format");
@@ -90,7 +95,7 @@ describe("Security Gatekeeper", () => {
       body: JSON.stringify({}),
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     expect(response.status).toBe(403);
     const body = (await response.json()) as { error: string };
     expect(body.error).toContain("Required role: admin");

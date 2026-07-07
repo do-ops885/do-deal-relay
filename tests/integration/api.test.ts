@@ -56,6 +56,10 @@ describe("API Endpoints", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
+  const mockCtx = {
+    waitUntil: vi.fn(),
+    passThroughOnException: vi.fn(),
+  } as unknown as ExecutionContext;
 
   function mockKvFactory(prefix: string) {
     return {
@@ -136,7 +140,7 @@ describe("API Endpoints", () => {
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
       const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -148,7 +152,7 @@ describe("API Endpoints", () => {
 
     it("should return 503 or 200 when snapshot is missing", async () => {
       const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
       const body = (await response.json()) as any;
@@ -161,7 +165,7 @@ describe("API Endpoints", () => {
       mockKvStorage.set("prod:snapshot:prod", snapshot);
 
       const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(
         response.headers.get("Access-Control-Allow-Origin"),
@@ -188,7 +192,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/metrics?format=json", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -211,7 +215,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/metrics", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       const contentType = response.headers.get("Content-Type") || "";
@@ -225,7 +229,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/metrics?format=json", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -264,7 +268,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -277,7 +281,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(404);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -313,7 +317,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals?category=referral", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -352,7 +356,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals?min_reward=50", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -382,7 +386,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals?limit=5", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -397,7 +401,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals?limit=invalid", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -415,7 +419,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/deals.json", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -456,7 +460,7 @@ describe("API Endpoints", () => {
         "http://localhost/deals.json?category=referral",
         { headers: authHeader },
       );
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -491,7 +495,7 @@ describe("API Endpoints", () => {
         method: "POST",
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       // Pipeline may return success or failure depending on pipeline state
       expect(response.status).toBeGreaterThanOrEqual(200);
@@ -519,7 +523,7 @@ describe("API Endpoints", () => {
         method: "POST",
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       // Should return error response
       expect(response.status).toBeGreaterThanOrEqual(200);
@@ -534,7 +538,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/api/status", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -554,7 +558,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/api/status", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -577,7 +581,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/api/log?count=10", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -599,7 +603,7 @@ describe("API Endpoints", () => {
         "http://localhost/api/log?run_id=specific-run",
         { headers: authHeader },
       );
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -619,7 +623,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/api/log?format=jsonl", {
         headers: authHeader,
       });
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("application/x-ndjson");
@@ -646,7 +650,7 @@ describe("API Endpoints", () => {
         }),
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(201);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -664,7 +668,7 @@ describe("API Endpoints", () => {
         body: "not json",
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(415);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -678,7 +682,7 @@ describe("API Endpoints", () => {
         body: JSON.stringify({ url: "not-a-url" }), // missing required fields
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -701,7 +705,7 @@ describe("API Endpoints", () => {
         }),
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(409);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -720,7 +724,7 @@ describe("API Endpoints", () => {
         body: JSON.stringify({ url: "https://example.com", code: "TEST" }),
       });
 
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(413);
     });
@@ -729,7 +733,7 @@ describe("API Endpoints", () => {
   describe("Error handling", () => {
     it("should return 404 for unknown paths", async () => {
       const request = new Request("http://localhost/unknown");
-      const response = await worker.fetch(request, mockEnv);
+      const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(404);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -753,7 +757,7 @@ describe("API Endpoints", () => {
       } as unknown as Env;
 
       const request = new Request("http://localhost/health");
-      const response = await worker.fetch(request, brokenEnv);
+      const response = await worker.fetch(request, brokenEnv, mockCtx);
 
       expect([200, 503]).toContain(response.status);
       // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing

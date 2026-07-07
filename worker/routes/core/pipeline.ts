@@ -6,13 +6,33 @@
 
 import { executePipeline, getPipelineStatus } from "../../state-machine";
 import { getRunLogs, getRecentLogs, exportLogsAsJSONL } from "../../lib/logger";
+import { logger } from "../../lib/global-logger";
 import type { Env } from "../../types";
 import { jsonResponse, getAllowedOrigin, SECURITY_HEADERS } from "../utils";
+import { toErrCtx } from "../../lib/errors";
 
 export async function handleDiscover(
   env: Env,
   request?: Request,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
+  if (ctx) {
+    ctx.waitUntil(
+      executePipeline(env).catch((err) => {
+        logger.error("Background pipeline error", toErrCtx(err));
+      }),
+    );
+    return jsonResponse(
+      {
+        success: true,
+        message: "Discovery pipeline triggered (running async)",
+      },
+      202,
+      request,
+      env,
+    );
+  }
+  // Fallback: synchronous execution for scheduled/cron triggers
   const result = await executePipeline(env);
   if (result.success) {
     return jsonResponse(

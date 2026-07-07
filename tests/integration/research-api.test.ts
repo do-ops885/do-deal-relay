@@ -6,6 +6,10 @@ describe("Research API Integration", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
+  const mockCtx = {
+    waitUntil: vi.fn(),
+    passThroughOnException: vi.fn(),
+  } as unknown as ExecutionContext;
 
   function mockKvFactory(prefix: string) {
     return {
@@ -76,7 +80,7 @@ describe("Research API Integration", () => {
       }),
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as {
       research_metadata: {
         used_real_fetching: boolean;
@@ -107,7 +111,7 @@ describe("Research API Integration", () => {
       }),
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as {
       research_metadata: {
         used_real_fetching: boolean;
@@ -136,7 +140,7 @@ describe("Research API Integration", () => {
       }),
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as {
       research_metadata: {
         used_real_fetching: boolean;
@@ -166,7 +170,7 @@ describe("Research API Integration", () => {
     // Mock fetch for real fetching attempt
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as {
       research_metadata: {
         used_real_fetching: boolean;
@@ -204,7 +208,7 @@ describe("Research API Integration", () => {
       }),
     });
 
-    const response = await worker.fetch(request, mockEnv);
+    const response = await worker.fetch(request, mockEnv, mockCtx);
     const body = (await response.json()) as {
       research_metadata: {
         used_real_fetching: boolean;

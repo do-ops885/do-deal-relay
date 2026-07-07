@@ -146,6 +146,7 @@ initPipelineRoutes();
 export async function handleRequest(
   request: Request,
   env: Env,
+  ctx: ExecutionContext,
 ): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -245,7 +246,7 @@ export async function handleRequest(
           "/api/discover",
           auth,
         );
-        return rateLimiter(request, () => handleDiscover(env, request));
+        return rateLimiter(request, () => handleDiscover(env, request, ctx));
       });
     }
     if (path === "/api/status") {
@@ -257,9 +258,14 @@ export async function handleRequest(
       );
     }
     if (path === "/api/analytics") {
-      return withAuth(request, env, "admin", () =>
-        handleAnalytics(url, env, request),
-      );
+      return withAuth(request, env, "admin", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/analytics",
+          auth,
+        );
+        return rateLimiter(request, () => handleAnalytics(url, env, request));
+      });
     }
 
     // DORA Metrics
@@ -427,7 +433,14 @@ export async function handleRequest(
     if (path === "/mcp/v1/tools/call" && request.method === "POST") {
       const bodyTooLarge = checkBodySize(request, 10 * 1024);
       if (bodyTooLarge) return bodyTooLarge;
-      return withAuth(request, env, "user", () => handleMCPCall(request, env));
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/mcp/v1/tools/call",
+          auth,
+        );
+        return rateLimiter(request, () => handleMCPCall(request, env));
+      });
     }
     if (path === "/mcp/v1/info") {
       return withAuth(request, env, "user", () => handleMCPInfo(env, request));
