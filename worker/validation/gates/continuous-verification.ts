@@ -111,10 +111,7 @@ async function getStoredCVStatus(
   return env.DEALS_LOG.get<CVStoredStatus>(cvKey(dealId), "json");
 }
 
-async function storeCVStatus(
-  env: Env,
-  status: CVStoredStatus,
-): Promise<void> {
+async function storeCVStatus(env: Env, status: CVStoredStatus): Promise<void> {
   await env.DEALS_LOG.put(cvKey(status.dealId), JSON.stringify(status), {
     expirationTtl: CV_TTL_SECONDS,
   });
@@ -174,9 +171,7 @@ export async function verifyDealHealth(
   return result;
 }
 
-export async function runContinuousVerification(
-  env: Env,
-): Promise<CVSummary> {
+export async function runContinuousVerification(env: Env): Promise<CVSummary> {
   logger.info("Starting continuous verification", {
     component: "continuous-verification",
   });
