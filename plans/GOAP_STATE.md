@@ -2,9 +2,40 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-07
-**Version**: 0.4.0
-**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification
+**Version**: 0.5.0
+**Status**: Active — cross-referenced from 4 audit sources + GOAP Swarm V5 verification + PR Resolver
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## PR Resolver Status — 2026-07-07
+
+### Created
+- **Command**: `.opencode/commands/pr-resolver.md` — `/pr-resolver` command for automated PR lifecycle management
+- **Skill**: `.agents/skills/pr-resolver/SKILL.md` — GOAP swarm orchestrator for PR analysis, CI fix, conflict resolution, comment addressing, and merge
+
+### Usage
+```bash
+/pr-resolver [repo] [--dry-run] [--max-prs N]
+```
+
+### Workflow
+1. DISCOVER: Fetch all open PRs via `gh pr list`
+2. ANALYZE: Classify PRs into READY / FIXABLE / BLOCKED
+3. FIX: GOAP swarm dispatches parallel agents per PR issue
+4. VERIFY: Run `pev-gates.sh` after each fix
+5. MERGE: Merge PRs passing all gates
+6. LOOP: Repeat until main CI green
+
+### Agent Swarm
+
+| Task | Agent | Skills |
+|------|-------|--------|
+| Fix failing CI | code-crafter | typescript-coding-standards |
+| Resolve merge conflicts | code-crafter | pev-loop |
+| Address PR comments | code-reviewer | codacy-code-review |
+| Run tests | test-runner | validation-gates |
+| Review changes | code-reviewer | guard-rails |
 
 ---
 

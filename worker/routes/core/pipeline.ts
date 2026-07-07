@@ -9,6 +9,7 @@ import { getRunLogs, getRecentLogs, exportLogsAsJSONL } from "../../lib/logger";
 import { logger } from "../../lib/global-logger";
 import type { Env } from "../../types";
 import { jsonResponse, getAllowedOrigin, SECURITY_HEADERS } from "../utils";
+import { toErrCtx } from "../../lib/errors";
 
 export async function handleDiscover(
   env: Env,
@@ -18,7 +19,7 @@ export async function handleDiscover(
   if (ctx) {
     ctx.waitUntil(
       executePipeline(env).catch((err) => {
-        logger.error("Background pipeline error", { error: String(err) });
+        logger.error("Background pipeline error", toErrCtx(err));
       }),
     );
     return jsonResponse(
