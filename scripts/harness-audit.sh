@@ -399,21 +399,77 @@ for note in "${MAINTAINABILITY_NOTES[@]}"; do
   warn "  $note"
 done
 
-# Architecture Fitness (partial)
-ARCH_SCORE=60
-ARCH_NOTES=()
-if [ ! -f "$PROJECT_ROOT/.github/workflows/ci.yml" ]; then ARCH_SCORE=$((ARCH_SCORE - 15)); ARCH_NOTES+=("ci.yml missing"); fi
-if [ ! -f "$PROJECT_ROOT/scripts/validate-codes.sh" ]; then ARCH_SCORE=$((ARCH_SCORE - 10)); ARCH_NOTES+=("validate-codes.sh missing"); fi
-if [ ! -d "$PROJECT_ROOT/tests/e2e" ]; then ARCH_SCORE=$((ARCH_SCORE - 10)); ARCH_NOTES+=("e2e tests missing"); fi
-# Check DORA metrics endpoint
-if ! grep -q 'dora-metrics\|DORA' "$PROJECT_ROOT/worker/index.ts" 2>/dev/null; then
-  ARCH_SCORE=$((ARCH_SCORE - 5))
-  ARCH_NOTES+=("DORA metrics endpoint not found in worker/index.ts")
+# Architecture Fitness (100-pt balanced rubric — positive credits + bounded deductions)
+ARCH_SCORE=0
+ARCH_CEILING=100
+ARCH_CREDITS=()
+ARCH_DEDUCTIONS=()
+
+# ── POSITIVE CREDITS (presence-based, capped at ARCH_CEILING) ──
+if [ -f "$PROJECT_ROOT/.github/workflows/ci.yml" ]; then ARCH_SCORE=$((ARCH_SCORE + 15)); ARCH_CREDITS+=("ci.yml (+15)"); fi
+if [ -f "$PROJECT_ROOT/scripts/validate-codes.sh" ]; then ARCH_SCORE=$((ARCH_SCORE + 15)); ARCH_CREDITS+=("validate-codes.sh 9-gate pipeline (+15)"); fi
+if [ -d "$PROJECT_ROOT/tests/e2e" ] && find "$PROJECT_ROOT/tests/e2e" -maxdepth 3 \( -name '*.spec.ts' -o -name '*.test.ts' \) 2>/dev/null | grep -q .; then
+  ARCH_SCORE=$((ARCH_SCORE + 15)); ARCH_CREDITS+=("tests/e2e with spec files (+15)")
 fi
-echo "  Architecture Fitness: ${YELLOW}$ARCH_SCORE%${NC}"
-for note in "${ARCH_NOTES[@]}"; do
-  warn "  $note"
-done
+if grep -q 'dora-metrics\|DORA' "$PROJECT_ROOT/worker/index.ts" 2>/dev/null; then
+  ARCH_SCORE=$((ARCH_SCORE + 10)); ARCH_CREDITS+=("DORA metrics endpoint registered (+10)")
+fi
+if [ -f "$PROJECT_ROOT/agents-docs/SKILLS.md" ]; then ARCH_SCORE=$((ARCH_SCORE + 10)); ARCH_CREDITS+=("agents-docs/SKILLS.md (+10)"); fi
+if [ -f "$PROJECT_ROOT/agents-docs/accuracy-guardrails.md" ]; then ARCH_SCORE=$((ARCH_SCORE + 10)); ARCH_CREDITS+=("agents-docs/accuracy-guardrails.md (+10)"); fi
+PEV_GATE_COUNT=$(grep -cE '^# Gate [0-9]' "$PROJECT_ROOT/scripts/pev-gates.sh" 2>/dev/null || echo 0)
+if [ "$PEV_GATE_COUNT" -ge 10 ]; then ARCH_SCORE=$((ARCH_SCORE + 10)); ARCH_CREDITS+=("pev-gates.sh has ${PEV_GATE_COUNT} gates (+10)"); fi
+if [ -f "$PROJECT_ROOT/docs/INDEX.md" ]; then ARCH_SCORE=$((ARCH_SCORE + 5)); ARCH_CREDITS+=("docs/INDEX.md (+5)"); fi
+if [ -f "$PROJECT_ROOT/plans/SPEC_TEMPLATE.md" ]; then ARCH_SCORE=$((ARCH_SCORE + 5)); ARCH_CREDITS+=("plans/SPEC_TEMPLATE.md (+5)"); fi
+if [ -f "$PROJECT_ROOT/scripts/harness-audit.sh" ]; then ARCH_SCORE=$((ARCH_SCORE + 5)); ARCH_CREDITS+=("harness-audit.sh self-monitoring (+5)"); fi
+
+# ── DEDUCTIONS (bounded, with explicit per-item caps) ──
+# Per-file non-null assertion (`x!`) penalty: -1 per occurrence, capped at -10.
+# Pattern: identifier chars then `!` then a non-`=` terminator (excludes `!==`/`!=`).
+if [ -d "$PROJECT_ROOT/worker" ]; then
+  NULL_ASSERT_COUNT=$(grep -rE '[a-zA-Z0-9_.]+![^=]' "$PROJECT_ROOT/worker" --include='*.ts' 2>/dev/null | wc -l | tr -d ' \n' || echo 0)
+  NULL_PENALTY=$(( NULL_ASSERT_COUNT > 10 ? 10 : NULL_ASSERT_COUNT ))
+  if [ "$NULL_PENALTY" -gt 0 ]; then
+    ARCH_SCORE=$((ARCH_SCORE - NULL_PENALTY))
+    ARCH_DEDUCTIONS+=("worker non-null assertions x${NULL_ASSERT_COUNT} (-${NULL_PENALTY})")
+  fi
+fi
+# Source files >500 lines (excluding deps and generated): -5 per file, capped at -10.
+LONG_FILE_COUNT=$(find "$PROJECT_ROOT" -name '*.ts' \
+  -not -path '*/node_modules/*' -not -path '*/.opencode/*' -not -path '*/_generated/*' -not -path '*/.git/*' \
+  2>/dev/null | xargs wc -l 2>/dev/null | awk '$1 > 500 {n++} END {print n+0}')
+LONG_PENALTY=$(( LONG_FILE_COUNT > 2 ? 10 : LONG_FILE_COUNT * 5 ))
+if [ "$LONG_PENALTY" -gt 0 ]; then
+  ARCH_SCORE=$((ARCH_SCORE - LONG_PENALTY))
+  ARCH_DEDUCTIONS+=("source files >500 lines x${LONG_FILE_COUNT} (-${LONG_PENALTY})")
+fi
+
+# Clamp to [0, ARCH_CEILING]
+[ "$ARCH_SCORE" -lt 0 ] && ARCH_SCORE=0
+[ "$ARCH_SCORE" -gt "$ARCH_CEILING" ] && ARCH_SCORE=$ARCH_CEILING
+
+echo "  Architecture Fitness: ${YELLOW}${ARCH_SCORE}%${NC} (ceiling ${ARCH_CEILING})"
+for note in "${ARCH_CREDITS[@]}"; do info "  credit:  $note"; done
+for note in "${ARCH_DEDUCTIONS[@]}"; do warn "  deduct:  $note"; done
+
+# Pre-build JSON array strings for transparency
+ARCH_CREDITS_JSON="[]"
+if [ ${#ARCH_CREDITS[@]} -gt 0 ]; then
+  ARCH_CREDITS_JSON="["
+  for i in "${!ARCH_CREDITS[@]}"; do
+    [ "$i" -gt 0 ] && ARCH_CREDITS_JSON+=","
+    ARCH_CREDITS_JSON+="\"${ARCH_CREDITS[$i]}\""
+  done
+  ARCH_CREDITS_JSON+="]"
+fi
+ARCH_DEDUCTIONS_JSON="[]"
+if [ ${#ARCH_DEDUCTIONS[@]} -gt 0 ]; then
+  ARCH_DEDUCTIONS_JSON="["
+  for i in "${!ARCH_DEDUCTIONS[@]}"; do
+    [ "$i" -gt 0 ] && ARCH_DEDUCTIONS_JSON+=","
+    ARCH_DEDUCTIONS_JSON+="\"${ARCH_DEDUCTIONS[$i]}\""
+  done
+  ARCH_DEDUCTIONS_JSON+="]"
+fi
 
 # Behaviour (weakest)
 BEHAVIOUR_SCORE=40
@@ -555,7 +611,12 @@ if $JSON; then
   echo "  \"failures\": $FAILS,"
   echo "  \"regulation_coverage\": {"
   echo "    \"maintainability\": $MAINTAINABILITY_SCORE,"
-  echo "    \"architecture_fitness\": $ARCH_SCORE,"
+  echo "    \"architecture_fitness\": {"
+  echo "      \"score\": $ARCH_SCORE,"
+  echo "      \"ceiling\": $ARCH_CEILING,"
+  echo "      \"credits\": $ARCH_CREDITS_JSON,"
+  echo "      \"deductions\": $ARCH_DEDUCTIONS_JSON"
+  echo "    },"
   echo "    \"behaviour\": $BEHAVIOUR_SCORE"
   echo "  },"
   echo "  \"gaps\": ["
