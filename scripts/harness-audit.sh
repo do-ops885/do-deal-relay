@@ -151,6 +151,8 @@ SCRIPT_SENSORS=(
   "scripts/validate-skills.sh:Skill symlink integrity"
   "scripts/setup-skills.sh:Skill symlink setup"
   "scripts/guard-rail-audit.sh:Never-bypass audit system"
+  "scripts/skill-eval-check.sh:Skill eval coverage (SKILLS.md computational sensor)"
+  "scripts/ci-workflow-validator.sh:Config contract drift detection (accuracy-guardrails sensor)"
   "scripts/worker-host.sh:Worker host resolution"
 )
 
@@ -190,6 +192,7 @@ PAIRS=(
   "hard-constraints.md:root directory policy|quality_gate.sh:root-dir gate|Files in wrong directories caught|maintainability"
   "quality-standards.md:atomic commits|pre-commit-hook.sh|Atomicity enforced via commit standards|maintainability"
   "SKILLS.md:skills as guides|validate-skills.sh|Skill integrity verified by symlink check|maintainability"
+  "SKILLS.md:SKILL.md standards|scripts/skill-eval-check.sh|Computational validation of skill structure and ≤250-line size|maintainability"
   "CONTEXT.md:token budgets|hooks:stop-hook|Back-pressure via context-efficient output|maintainability"
   "NEVER-BYPASS-SYSTEM.md:audit|guard-rail-audit.sh|Bypasses logged and audited|maintainability"
   "SYSTEM_REFERENCE.md:validation gates|validate-codes.sh|9-gate pipeline enforced|architecture_fitness"
@@ -303,8 +306,21 @@ else
   # Pattern: skill evals missing
   EVAL_COUNT=$(grep -c 'missing evals\|evals.*missing\|eval.*coverage' "$LEARNINGS_FILE" 2>/dev/null || echo "0")
   if [ "$EVAL_COUNT" -ge 1 ]; then
-    gap "Skills missing evals ($EVAL_COUNT occurrences) — no automated eval-coverage sensor"
-    add_gap "Skill eval coverage" "SKILLS.md" "skill-eval-check.sh (NOT YET CREATED)"
+    SENSOR_WIRED=false
+    if [ -x "$PROJECT_ROOT/scripts/skill-eval-check.sh" ]; then
+      if grep -lq 'skill-eval-check' \
+           "$PROJECT_ROOT/scripts/pev-gates.sh" \
+           "$PROJECT_ROOT/scripts/pre-push-hook.sh" \
+           "$PROJECT_ROOT/scripts/pre-commit-hook.sh" 2>/dev/null; then
+        SENSOR_WIRED=true
+      fi
+    fi
+    if $SENSOR_WIRED; then
+      pass "Skill eval coverage ($EVAL_COUNT occurrences) — sensor wired into harness"
+    else
+      gap "Skills missing evals ($EVAL_COUNT occurrences) — no automated eval-coverage sensor"
+      add_gap "Skill eval coverage" "SKILLS.md" "skill-eval-check.sh (NOT YET CREATED OR UNWIRED)"
+    fi
   else
     pass "Skill eval coverage ($EVAL_COUNT occurrences — below threshold)"
   fi

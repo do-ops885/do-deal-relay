@@ -89,6 +89,9 @@ run_gate "secrets" "grep -r 'password\|secret\|api_key\|token' --include='*.ts' 
 # Gate 9: Dependency audit
 run_gate "deps" "npm audit --audit-level=high 2>&1 | head -10 || true" || true
 
+# Gate 10: Skill eval coverage (enforces SKILLS.md standards)
+run_gate "skill-eval-check" "bash '${SCRIPT_DIR}/skill-eval-check.sh' --check" || true
+
 # Summary
 echo ""
 echo "╔══════════════════════════════════════════════╗"

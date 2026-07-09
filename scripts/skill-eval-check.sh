@@ -44,7 +44,10 @@ NC='\033[0m'
 PASSES=0
 WARNINGS=0
 FAILURES=0
+# OFFENDER_PATHS stores file paths so JSON output can look up line counts;
+# OFFENDERS stores human message strings for text output.
 OFFENDERS=()
+OFFENDER_PATHS=()
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -78,6 +81,8 @@ info() {
 ok()   { : $((PASSES++));  $QUIET || $JSON || echo -e "${GREEN}✓${NC} $1"; }
 warn() { : $((WARNINGS++)); $QUIET || $JSON || echo -e "${YELLOW}!${NC} $1"; }
 fail() { : $((FAILURES++)); OFFENDERS+=("$1"); $QUIET || $JSON || echo -e "${RED}✗${NC} $1"; }
+# Internal helper to also record the path alongside a failure message.
+record_offender_path() { OFFENDER_PATHS+=("$1"); }
 
 # ── Phase 1: Discover skills ─────────────────────────────────────────
 mapfile -t SKILL_FILES < <(find "${SKILLS_ROOT}" -name 'SKILL.md' -type f 2>/dev/null | sort)
@@ -132,6 +137,7 @@ for sf in "${SKILL_FILES[@]}"; do
   if (( line_count > MAX_LINES )); then
     over=$((line_count - MAX_LINES))
     fail "${rel} — ${line_count} lines (limit ${MAX_LINES}, over by ${over})"
+    record_offender_path "$sf"
   else
     ok "${rel} — ${line_count} lines (within ${MAX_LINES})"
   fi
@@ -226,10 +232,7 @@ emit_split_plan() {
 }
 
 # Emit split plans only for offenders that exceeded the line limit
-for sf in "${OFFENDERS[@]}"; do
-  # Skip non-length offenders (warn-only structural issues)
-  issue=$(grep -E "^${sf#${ROOT_DIR}/} — [0-9]+ lines" <<< "" 2>/dev/null || true)
-  # Reliably match by line-count pattern using precomputed value
+for sf in "${OFFENDER_PATHS[@]}"; do
   lc="${FILE_LINE_COUNT[$sf]:-0}"
   if (( lc > MAX_LINES )); then
     $CHECK_ONLY || emit_split_plan "$sf" "$lc"
@@ -249,7 +252,7 @@ if $JSON; then
   printf '  "totals": { "passes": %d, "warnings": %d, "failures": %d },\n' "${PASSES}" "${WARNINGS}" "${FAILURES}"
   printf '  "offenders": [\n'
   first=true
-  for sf in "${OFFENDERS[@]}"; do
+  for sf in "${OFFENDER_PATHS[@]}"; do
     lc="${FILE_LINE_COUNT[$sf]:-0}"
     $first || printf ',\n'
     first=false

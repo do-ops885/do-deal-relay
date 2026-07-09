@@ -15,52 +15,6 @@ This skill tunes the Codacy configuration of a repository **directly on Codacy C
 
 For the local-first variant that discovers a stack from scratch and runs `codacy-analysis analyze` locally, use the `configure-codacy` skill instead. This skill is for repositories **already on Codacy with a finished analysis** where you want to tune the cloud config in place.
 
-## Prerequisites and requirements
-
-- **Codacy Cloud CLI** (`codacy`) — drives all cloud reads, updates, and reanalysis. See `codacy-cloud-cli` for setup.
-- **Codacy Analysis CLI** (`codacy-analysis`) — used **only** for config-file operations (`init --remote`, `init --auto`, `config --merge`). See `codacy-analysis-cli` for setup.
-- Both CLIs share credentials at `~/.codacy/credentials`, so a single login covers both.
-
-This skill has **two hard requirements**. Verify both before doing anything else and stop with clear guidance if either fails:
-
-1. **The repository is already on Codacy.** Confirm with:
-
-```bash
-codacy repo --output json
-```
-
-If this fails (not on Codacy, no auth), stop. Tell the user to add the repo to Codacy first (e.g. `codacy repo --add`) — this skill does not set up a new repository.
-
-1. **The repository has at least one finished analysis.** Inspect the `codacy repo --output json` output for a completed/last-analysis indicator, and confirm the issue overview returns data:
-
-```bash
-codacy issues -O -o json 2>/dev/null | jq '.'
-```
-
-If the repo was never analyzed, or analysis is still running, stop. Tell the user to wait for the first analysis to finish — the whole flow depends on cloud issue data as the baseline.
-
-The Cloud CLI auto-detects `provider`, `organization`, and `repository` from the git remote when run inside the repo, so the explicit `<provider> <org> <repo>` arguments shown below are optional in practice.
-
-**CLI output caveat:** both CLIs print progress lines to stderr before their JSON output. When piping to `jq`, redirect stderr: `codacy ... -o json 2>/dev/null | jq '...'`.
-
-**`codacy patterns` pagination caveat:** `codacy patterns <tool> [--enabled]` currently returns only the **first 100 patterns** and has **no `--limit` flag** (one is planned — until then, assume the list is truncated at 100). Never use the length of its output as a pattern count: for a tool whose enabled set exceeds 100 you will silently see only 100, which reads as a phantom "reduction" (e.g. a tool that actually has 232 enabled patterns appears to have "100"). To check or test a **specific** pattern, filter by id with `--search <patternId>` or query the single pattern with `codacy pattern <tool> <patternId> -o json`. For accurate enabled-pattern **counts**, derive them from the config file (`jq '[.tools[].patterns|length]|add' .codacy/auto.config.json`) rather than the patterns list.
-
-**Local config is untouched.** This skill works through custom `--config-file` paths (`.codacy/remote.config.json`, `.codacy/auto.config.json`) and **never creates or modifies `.codacy/codacy.config.json`**. Any existing local config is left intact.
-
-## How this skill works
-
-The key principle is the same as the local variant: **start from a higher-signal set, then cut noise using data** — but every measurement and every change happens on Codacy Cloud.
-
-Tools fall into two groups, and changes are applied through **two different mechanisms**:
-
-- **Tools supported by the Analysis CLI** (those listed by `codacy-analysis info`, see [supported-tools.md](../codacy-analysis-cli/references/supported-tools.md)) are configured by editing the `.codacy/auto.config.json` file and importing it: `codacy tools --import .codacy/auto.config.json`. The import **reconciles supported tools to the file's contents**: a supported tool present in the file has its patterns replaced by the file's, and a supported tool **absent** from the file is **disabled** by the import (you will see `N tool will be disabled: ...` in the import plan). **Cloud-only tools** — those outside the Analysis CLI's scope — are never in the file and keep their state.
-
-- **Cloud-only tools** (enabled in Codacy but not runnable by the Analysis CLI, e.g. SonarSharp, Codacy ScalaMeta Pro) cannot be configured via the import. Change them directly with the Cloud CLI: `codacy tool`, `codacy pattern`, `codacy patterns`.
-
-**Cloud tool name vs config `toolId`.** The Cloud CLI commands (`codacy tool`, `codacy pattern`, `codacy patterns`) address tools by their **cloud name** as shown by `codacy tools` — which for some tools **differs** from the Analysis CLI config `toolId`. The clearest case: the config `toolId` is `Semgrep`, but the cloud tool is named `Opengrep`, so `codacy patterns Semgrep` fails with `Tool "Semgrep" not found` while `codacy patterns Opengrep` works. When a Cloud CLI command reports a tool as not found, check the name in `codacy tools -o json` and use that. (The import path, which keys by `toolId`, is unaffected.)
-
-Read [the config format reference](../codacy-analysis-cli/references/config-format.md) before editing `auto.config.json`. Its shape: a top-level `tools[]` array where each entry is keyed by **`toolId`** (e.g. `"Biome"`, `"Semgrep"`, `"ESLint9"`) and holds a `patterns[]` array whose entries are keyed by **`patternId`** with an optional **`parameters`** object — there is **no** `uuid`, `name`, or `enabled` key on these entries, so filter and edit by `toolId` / `patternId`. To disable a pattern, remove it from the `patterns` array; to tune one, edit its `parameters`; to disable a tool, remove the whole tool entry.
-
 ## Workflow
 
 ```
@@ -244,94 +198,6 @@ codacy issues -O -o json 2>/dev/null > .codacy/tmp/overview-after.json
 rm -rf .codacy/tmp .codacy/remote.config.json .codacy/auto.config.json
 ```
 
-## Summary JSON
-
-Write `.codacy/configure-codacy-cloud-summary.json`. `before` values come from the startup baseline; `after` values come from the final overview.
-
-```json
-{
-  "summary": {
-    "enabledPatterns": { "before": 1000, "after": 300 },
-    "enabledTools": { "before": 34, "after": 15 },
-    "issues": { "before": 7000, "after": 550 },
-    "issuesByCategory": {
-      "Security": { "before": 56, "after": 89 },
-      "ErrorProne": { "before": 140, "after": 123 },
-      "CodeStyle": { "before": 3000, "after": 230 }
-    },
-    "issuesBySeverity": {
-      "Critical": { "before": 56, "after": 89 },
-      "High": { "before": 140, "after": 123 },
-      "Medium": { "before": 900, "after": 210 },
-      "Minor": { "before": 5904, "after": 128 }
-    }
-  },
-  "toolChanges": [
-    {
-      "toolName": "Biome",
-      "action": "disabled",
-      "reason": "Project uses ESLint9 with local config; Biome is redundant and produced 16K false positives in TypeScript",
-      "patternsAffected": 232
-    }
-  ],
-  "patternChanges": [
-    {
-      "patternId": "Semgrep_python.lang.security.audit.xss.template-injection",
-      "toolName": "Semgrep",
-      "action": "disabled",
-      "reason": "Wrong stack — pattern for Python; project is JavaScript-only",
-      "deltaIssues": -45,
-      "parameters": []
-    }
-  ],
-  "recommendedPathsToIgnore": [
-    {
-      "path": "src/generated/**",
-      "reason": "Generated code. Recommended to be ignored to avoid uncontrolled issues."
-    }
-  ],
-  "keyImprovements": [
-    "Lizard complexity thresholds tuned to match a mature React SPA — 576 fewer noise issues while keeping genuinely complex functions flagged"
-  ],
-  "conflicts": [
-    {
-      "toolName": "Biome",
-      "conflict": "EnforcedByCodingStandard",
-      "codingStandardName": "Default Security Rules",
-      "reason": "Whole-tool conflict. Biome is redundant with the project's ESLint9 yet produces most of the noise; disabling the tool was rejected with 409 because a coding standard enforces it."
-    }
-  ]
-}
-```
-
-**Field reference**
-
-- **`summary`** — before/after counts. `enabledPatterns`/`enabledTools` count everything enabled on Codacy (supported + cloud-only). `issuesByCategory`/`issuesBySeverity` come from the issue overview's breakdowns (apply the `Error→Critical` / `High→High` / `Warning→Medium` / `Info→Minor` level mapping).
-- **`toolName`** (used in `toolChanges`, `patternChanges`, `conflicts`) — the tool's **name as shown by `codacy tools`** (the cloud-side identifier you actually store and act on). Note this can differ from the Analysis CLI config `toolId`.
-- **`toolChanges`** — one entry per whole tool enabled or disabled. `action`: `"enabled"` or `"disabled"`. `patternsAffected`: number of patterns in that tool.
-- **`patternChanges`** — one entry per individual pattern change within a tool that stays enabled. `action`: `"enabled"`, `"disabled"`, or `"updated"`. `deltaIssues`: change in this pattern's issue count, baseline vs final. `parameters`: array of `{id, before, after}` for tuned parameters, `[]` otherwise. Do not list patterns that were added/removed as part of a whole-tool change — those are covered by `toolChanges`.
-- **`recommendedPathsToIgnore`** — array of `{path, reason}`. Recommendations only; nothing is written to the repo.
-- **`keyImprovements`** — 3–6 human-readable sentences summarizing the most impactful changes, suitable to present to the user.
-- **`conflicts`** — array of changes that were attempted but blocked. `patternId` is **optional**: **omit it for whole-tool conflicts** (e.g. a tool that can't be disabled because a standard enforces it), and **include it for pattern-level conflicts**. `conflict`: `"EnforcedByCodingStandard"` (include `codingStandardName`) or `"ConfigurationFile"`. `reason`: what it reports and the recommended action (edit the coding standard / edit the tool's own config file).
-
-## Noise-evaluation guidance
-
-Apply judgment proportional to relevance — be more demanding before disabling important patterns, more relaxed about low-relevance noise.
-
-- **Security patterns get extra caution.** It *is* fine to disable a Security pattern that is irrelevant to this codebase (wrong stack or framework) or that only produces false positives — but be thorough and think twice before disabling any security pattern. When in doubt, inspect real examples first (`codacy issues -p <patternId> -o json`) and prefer parameter tuning or a path-ignore recommendation over disabling.
-- **Never lightly disable Critical or High severity patterns.** Disable them only when clearly wrong-stack or confirmed false positives.
-- **Be lenient on low-relevance categories** — CodeStyle, Documentation, Comprehensibility, and Minor-severity issues are the first to cut when they are noisy or mismatched to the project's conventions.
-- **Prefer parameter tuning over disabling** wherever a threshold exists (Lizard complexity, line length, parameter counts) — it reduces noise while keeping the rule active.
-- **Wrong stack → disable.** Patterns for languages or frameworks not present in the repository are pure noise.
-- **Deduplicate overlap.** When two tools flag the same concern, keep the more precise tool's pattern and disable the redundant one — the concern stays covered.
-- **Inspect before deciding.** For any borderline pattern, list its issues (`codacy issues -p <patternId>`) and look at real examples before disabling.
-
-## Per-tool tuning tips
-
-- **Semgrep** — ships patterns for 30+ languages; disabling patterns for languages not in the repo is usually the single biggest noise reduction. Cross-reference the pattern ID prefix (e.g. `python.`, `javascript.`, `java.`).
-- **Lizard (complexity)** — has CCN, NLOC, and parameter-count rules with configurable `threshold` parameters. For mature codebases, raise the medium thresholds to match the project's profile rather than disabling, to preserve visibility into genuinely complex code.
-- **ESLint9 / Stylelint** — if the repo has its own config file and uses it on Codacy, the tool runs in Configuration File mode; its patterns cannot be changed from Codacy (these show up as `ConfigurationFile` conflicts). Note this to the user — noise must be reduced in the project's own config.
-- **markdownlint** — rules like MD033 (inline HTML), MD034 (bare URLs), MD024 (duplicate headings) fire heavily on changelogs and generated docs. These are stylistic; recommend ignoring the noisy paths rather than keeping the noise.
 
 ## Rationalizations
 
@@ -339,9 +205,18 @@ Apply judgment proportional to relevance — be more demanding before disabling 
 - Cross-skill references use relative paths to shared glossary
 - All tools documented with CLI flags and JSON output for agent workflows
 
+
 ## Red Flags
 
 - Requires Codacy API token for Cloud operations
 - Local analysis may differ from Cloud analysis results
 - Tool availability depends on machine dependencies (Docker, language runtimes)
 
+
+## Reference
+
+- [Prerequisites and requirements](reference/01-prerequisites-and-requirements.md)
+- [How this skill works](reference/02-how-this-skill-works.md)
+- [Summary JSON](reference/03-summary-json.md)
+- [Noise-evaluation guidance](reference/04-noise-evaluation-guidance.md)
+- [Per-tool tuning tips](reference/05-per-tool-tuning-tips.md)
