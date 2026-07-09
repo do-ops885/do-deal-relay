@@ -19,23 +19,8 @@ Don't use for single-pass tasks, purely parallel work, or simple linear workflow
 
 ## Pre-Usage Research (Optional)
 
-Before starting iterations, consider researching:
-- Current best practices for your validation tools (search "[tool] best practices 2025")
-- Known issues with your tech stack (search "[language] [tool] common issues")
-- Optimal configuration for your validators (search "[tool] configuration production")
-- Recent improvements or alternatives (search "[tool] vs alternatives 2025")
 
-Benefits:
-- Better validators from the start
-- Avoid known issues
-- Use current best practices
-- Save iteration cycles
 
-When to research first:
-- Unfamiliar validation tools
-- New tech stack
-- Complex quality criteria
-- High-stakes optimization
 
 ## Core Loop Pattern
 

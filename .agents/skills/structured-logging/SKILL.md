@@ -5,7 +5,6 @@ description: Correlation ID logging for distributed tracing. Use for request tra
 
 # Structured Logging
 
-Trace requests across services with correlation IDs and structured log entries.
 
 ## Quick Start
 
