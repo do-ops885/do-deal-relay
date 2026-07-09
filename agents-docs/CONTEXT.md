@@ -1,5 +1,7 @@
 # Context Management and Back-Pressure
 
+> **Harness role: Dual-purpose (Guide + Sensor).** Context management acts as a **feedforward guide** (token budgets, file-size strategies, progressive disclosure) and a **feedback sensor** (context overflow monitoring, emergency reduction). See `agents-docs/HARNESS.md` for the full framework.
+
 **Reference doc** - loaded on demand, not by default.
 
 > Systematically managing what enters the context window to maximize reliability and minimize cost.
@@ -427,6 +429,6 @@ function emergencyReduce(files: File[]): File[] {
 
 ## Related Documentation
 
-- [HARNESS.md](./HARNESS.md) - System overview
+- [HARNESS.md](./HARNESS.md) - Harness engineering framework
 - [SUB-AGENTS.md](./SUB-AGENTS.md) - Context isolation patterns
 - `agents-docs/coordination/handoff-log.jsonl` - Usage tracking

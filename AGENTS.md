@@ -11,6 +11,9 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
 See: [agents-docs/hard-constraints.md](agents-docs/hard-constraints.md)
 
+## Harness Philosophy
+Agent = Model + Harness. Our harness combines **guides** (feedforward controls that steer before action) and **sensors** (feedback controls that detect and self-correct after action). When issues recur, we escalate through the steering loop: event log → skill update → hard constraint → guard rail → CI gate. See [agents-docs/HARNESS.md](agents-docs/HARNESS.md) for the full framework.
+
 ## PEV Loop (Plan-Execute-Verify)
 Core workflow for all non-trivial tasks. See `plans/PEV_LOOP.md` for full spec.
 
@@ -68,39 +71,21 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 | `x!` (non-null assertion) | Bypasses null checks, forbidden | Use type guard or restructure |
 
 ### Regex Match Groups
-When `path.match(/regex/)` succeeds, capture groups `[1]`, `[2]`, etc. have different types based on tsconfig:
+When `path.match(/regex/)` succeeds, capture groups `[1]`, `[2]`, etc. have different types based on tsconfig.
 
 **With `noUncheckedIndexedAccess: true`** (our config):
 ```typescript
-const match = path.match(/^\/api\/([^/]+)$/);
-if (match) {
-  const id = match[1] ?? ""; // string | undefined → string (use ?? fallback)
-  // OR
-  const id = match[1]; // string | undefined (handle in type system)
-}
+const id = match[1] ?? ""; // string | undefined → string (use ?? fallback)
 ```
 
 **Without `noUncheckedIndexedAccess`**:
 ```typescript
-const match = path.match(/^\/api\/([^/]+)$/);
-if (match) {
-  const id = match[1]; // string (safe, no ?? needed)
-}
+const id = match[1]; // string (safe, no ?? needed)
 ```
 
-**Correct patterns:**
+**Incorrect (avoid):**
 ```typescript
-// With noUncheckedIndexedAccess (our config)
-const id = match[1] ?? "";           // Safe fallback
-const id = match[1] ?? "default";    // Custom fallback
-
-// Without noUncheckedIndexedAccess
-const id = match[1];                 // Already string
-```
-
-**Incorrect patterns (avoid):**
-```typescript
-if (match[1] !== undefined) { ... } // Redundant with noUncheckedIndexedAccess
+if (match[1] !== undefined) { ... } // Redundant
 handleRequest(match[1]!, env);      // Forbidden non-null assertion
 ```
 

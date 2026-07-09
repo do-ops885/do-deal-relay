@@ -1,5 +1,7 @@
 # Hooks - Verification and Automation
 
+> **Harness role: Computational feedback sensors.** Hooks are the primary mechanism for running sensors after every agent action. They provide deterministic, fast feedback — the backbone of our maintainability harness. See `agents-docs/HARNESS.md` for the full framework.
+
 > Reference doc - not loaded by default.
 
 Hooks are agent lifecycle commands that enforce deterministic control flow.
@@ -13,11 +15,11 @@ Supported by: Claude Code, OpenCode.
 
 ## Common Use Cases
 
-| Hook type | Purpose |
-|---|---|
-| Stop hook | Typecheck + lint + format after every agent action |
-| Pre-tool hook | Approve/deny specific tool calls (e.g. block destructive ops) |
-| Post-tool hook | Send notification, create PR, set up preview env |
+| Hook type | Purpose | Harness category |
+|---|---|---|
+| Stop hook | Typecheck + lint + format after every agent action | Maintainability |
+| Pre-tool hook | Approve/deny specific tool calls (e.g. block destructive ops) | Maintainability |
+| Post-tool hook | Send notification, create PR, set up preview env | Architecture fitness |
 
 ## Stop Hook Template
 

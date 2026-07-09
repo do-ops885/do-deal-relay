@@ -1,5 +1,7 @@
 # Quality Standards
 
+> **Harness role: Computational feedforward guides + sensor criteria.** Quality standards define what "good" looks like — they are the feedforward guides that steer agents toward maintainable code. The quality gates are the sensors that verify compliance. See `agents-docs/HARNESS.md` for the full framework.
+
 **Purpose**: Define code quality standards and quality gates for all agents working on this project.
 
 ---
@@ -88,13 +90,13 @@ Always run the quality gate script before handoff or task completion:
 
 ### Quality Gate Steps
 
-| Step                           | Description                                   | Command                         |
-| ------------------------------ | --------------------------------------------- | ------------------------------- |
-| 1. TypeScript Compilation      | Ensure all TypeScript compiles without errors | `npx tsc --noEmit`              |
-| 2. Unit Tests                  | Run test suite with >80% coverage             | `npm run test:ci`               |
-| 3. Validation Gates            | Run 10-gate validation pipeline               | `./scripts/validation_gates.sh` |
-| 4. Security Checks             | Scan for secrets, vulnerabilities             | `./scripts/security_check.sh`   |
-| 5. Root Directory Organization | Verify files are in proper subfolders         | `./scripts/check_root_dir.sh`   |
+| Step                           | Description                                   | Harness type |
+| ------------------------------ | --------------------------------------------- | ------------ |
+| 1. TypeScript Compilation      | Ensure all TypeScript compiles without errors | Computational sensor |
+| 2. Unit Tests                  | Run test suite with >80% coverage             | Computational sensor |
+| 3. Validation Gates            | Run 10-gate validation pipeline               | Computational sensor |
+| 4. Security Checks             | Scan for secrets, vulnerabilities             | Computational sensor |
+| 5. Root Directory Organization | Verify files are in proper subfolders         | Computational sensor |
 
 ### Example Quality Gate Run
 
@@ -138,3 +140,4 @@ Before completing any task:
 | Validation Gates    | `.agents/skills/validation-gates/` |
 | Security Guidelines | `SECURITY.md`                      |
 | Guard Rails         | `agents-docs/hard-constraints.md`       |
+| Harness Engineering | `agents-docs/HARNESS.md`           |

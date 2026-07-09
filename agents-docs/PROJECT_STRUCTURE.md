@@ -1,5 +1,7 @@
 # Project Structure
 
+> **Harness role: Harnessability foundation.** The directory structure and root policy are the "ambient affordances" that make the codebase legible and tractable to agents. A well-defined structure reduces the variety space the harness must regulate. See `agents-docs/HARNESS.md` for the full framework.
+
 **Reference**: Comprehensive directory structure for the deal discovery system
 **Version**: 0.1.3
 
@@ -37,16 +39,17 @@
 
 ### Folder Ownership
 
-| Directory | Purpose | Retention |
-| :--- | :--- | :--- |
-| `worker/` | Production source code | Permanent |
-| `agents-docs/` | Behavioral contracts | Permanent |
-| `docs/` | External documentation | Permanent |
-| `reports/` | Investigation outputs | Permanent |
-| `scripts/` | Tooling & Hooks | Permanent |
-| `temp/` | Transient session data | Session-only |
+| Directory | Purpose | Retention | Harness role |
+| :--- | :--- | :--- | :--- |
+| `worker/` | Production source code | Permanent | Subject of harness |
+| `agents-docs/` | Behavioral contracts | Permanent | Guides + sensors |
+| `docs/` | External documentation | Permanent | Guides |
+| `reports/` | Investigation outputs | Permanent | Steering loop input |
+| `scripts/` | Tooling & Hooks | Permanent | Computational sensors |
+| `temp/` | Transient session data | Session-only | Transient |
 
 ## Related Documentation
 - [AGENTS.md](../AGENTS.md) - Master coordination hub
+- [HARNESS.md](./HARNESS.md) - Harness engineering framework
 - [SYSTEM_REFERENCE.md](./SYSTEM_REFERENCE.md) - Technical specs
 - [GUARD_RAILS.md](./GUARD_RAILS.md) - File & security constraints
