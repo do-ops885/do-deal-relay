@@ -1,7 +1,7 @@
 @AGENTS.md
 
 # Gemini CLI Overrides
-**Version**: 1.1.0
+**Version**: 0.1.8
 
 ## Behavioral Contract
 Extends [AGENTS.md](AGENTS.md). Gemini must adhere to all Core Constraints and Infrastructure Contracts defined there.
@@ -16,6 +16,7 @@ Extends [AGENTS.md](AGENTS.md). Gemini must adhere to all Core Constraints and I
 - **Verbose Output**: Leverage large context for detailed test failure and gate rejection analysis.
 - **Verification**: Explicitly document the "reasoning" behind configuration changes in PR descriptions.
 - **Unified Toolkit**: Use `./scripts/agent-toolkit.sh` for setup, doctor, quality, and docs tasks.
+- **Always-Fix Policy**: Fix pre-existing issues in the current context immediately per [AGENTS.md](AGENTS.md).
 - **Triage Protocol**: Follow the ADR-based triage protocol in [AGENTS.md](AGENTS.md) for unfixable issues.
 
 ## Reference

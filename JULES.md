@@ -1,7 +1,7 @@
 @AGENTS.md
 
 # Jules Overrides
-**Version: 0.1.6
+**Version**: 0.1.8
 
 ## Behavioral Contract
 Extends [AGENTS.md](AGENTS.md). Jules MUST adhere to all Core Constraints and Infrastructure Contracts defined there.
@@ -17,6 +17,7 @@ Extends [AGENTS.md](AGENTS.md). Jules MUST adhere to all Core Constraints and In
 
 ## Operational Reliability
 - **Quality Gates**: Always run `./scripts/agent-toolkit.sh quality` before submission.
+- **Performance**: Adhere to 'Zero Slop' directive in [AGENTS.md](AGENTS.md) for all commits.
 - **Hot Files**: Coordinate changes to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`) as per established protocol.
 - **Sub-Agents**: If a task is high-cost (≥ 12 in `hard-constraints.md`), delegate or swarm as appropriate.
 
