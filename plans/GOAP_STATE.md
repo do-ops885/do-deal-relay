@@ -1,10 +1,33 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-07
-**Version**: 0.6.0
-**Status**: Active — Swarm V7: Skills Infrastructure Complete
+**Last Updated**: 2026-07-09
+**Version**: 0.7.0
+**Status**: Active — File Splits + Anti-Pattern Fixes Complete
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## File Splits + Anti-Pattern Fixes — 2026-07-09
+
+### Completed
+- ✅ **File Splits**: All files now under 500-line limit (largest: 498 lines in `client.ts`)
+  - `worker/router.ts` → `worker/router/legacy-routes.ts` (464 lines)
+  - `worker/lib/d1/migrations/schema.ts` → 4 part files (96–185 lines each)
+  - `worker/lib/mcp/schemas.ts` extracted (65 lines)
+  - `worker/lib/d1/factory.ts` extracted (69 lines)
+- ✅ **TypeScript Anti-Patterns**: Fixed 5 Codacy warnings in `legacy-routes.ts`
+  - Removed unused `jsonResponse` import
+  - Removed unnecessary `??` operators on regex match groups
+  - Removed unnecessary conditional on regex match
+  - Replaced forbidden non-null assertion with safe access
+- ✅ **Guard Rails Skill**: `.agents/skills/guard-rails/SKILL.md` — TypeScript anti-pattern prevention
+- ✅ **Anti-Pattern Rules in AGENTS.md**: Banned patterns table, regex match group docs, correct/incorrect code examples
+- ✅ **Pre-commit Hook**: Updated with anti-pattern detection
+
+### Status
+- All P2 file size violations (P2-1 through P2-6) now fully resolved
+- Zero files exceed 500-line limit
 
 ---
 
@@ -23,7 +46,6 @@
 - ✅ Jules audit: remaining quality findings are false positives (HACKERNEWS variable name, stale line refs)
 
 ### Remaining
-- ⬜ File size violations in `quality_long_files.txt` (14 files >500 lines) — tracked as P2, requires dedicated refactoring sprint
 - ⬜ E2E local env setup (P3-16) — requires runtime auth token configuration
 - ⬜ OTEL SDK integration (P3-17) — Cloudflare observability enabled; SDK integration deferred
 
@@ -115,7 +137,7 @@ See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
 
 ---
 
-## P2 — Medium Priority (3 Open — 23 Resolved)
+## P2 — Medium Priority (0 Open — 26 Resolved)
 
 ### File Size Violations (>500 lines) — ALL RESOLVED
 
@@ -182,7 +204,7 @@ See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
 
 ---
 
-## P3 — Low Priority (8 Open — 10 Resolved)
+## P3 — Low Priority (4 Open — 14 Resolved)
 
 ### Minor Correctness
 
