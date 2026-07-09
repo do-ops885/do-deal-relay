@@ -29,6 +29,46 @@ Enforce TypeScript coding standards for the do-deal-relay codebase. Ensure type 
 - Group imports: vendor → shared → local
 - Use relative imports for same-directory, `../../` for cross-module
 - No circular imports
+- **No unused imports**: Remove imports not referenced in the file (Codacy enforced)
+
+### Regex Match Groups
+When `path.match(/regex/)` succeeds, capture groups have different types based on tsconfig:
+
+**With `noUncheckedIndexedAccess: true`** (our config):
+```typescript
+const match = path.match(/^\/api\/([^/]+)$/);
+if (match) {
+  const id = match[1] ?? ""; // Use ?? fallback for string | undefined
+}
+```
+
+**Without `noUncheckedIndexedAccess`**:
+```typescript
+const match = path.match(/^\/api\/([^/]+)$/);
+if (match) {
+  const id = match[1]; // Already string, no ?? needed
+}
+```
+
+**Banned after regex match (with noUncheckedIndexedAccess):**
+- `match[1] !== undefined` — use `??` instead
+- `match[1]!` — non-null assertion forbidden
+
+### Non-null Assertions
+- **Forbidden**: `x!` operator bypasses null checks
+- **Alternative**: Use type guard, optional chaining, or `??` fallback
+```typescript
+// Bad
+const value = obj.prop!;
+
+// Good (with noUncheckedIndexedAccess)
+const value = obj.prop ?? defaultValue;
+
+// Good (without noUncheckedIndexedAccess)
+if (obj.prop !== undefined) {
+  const value = obj.prop;
+}
+```
 
 ### Error Handling
 - Use typed errors with meaningful messages

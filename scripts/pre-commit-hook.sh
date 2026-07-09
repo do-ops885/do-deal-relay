@@ -347,9 +347,45 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 7: JSON/YAML Syntax Validation
+# GUARD RAIL 7: TypeScript Anti-Patterns
 # ============================================
-echo "Guard Rail 7: Syntax Validation"
+echo "Guard Rail 7: TypeScript Anti-Patterns"
+
+TS_FILES=$(echo "$STAGED_FILES" | grep -E '\.ts$' || true)
+ANTI_PATTERN_FOUND=0
+
+if [ -n "$TS_FILES" ]; then
+    while IFS= read -r file; do
+        if [ -f "$file" ]; then
+            # Check for non-null assertions (!)
+            if grep -qE '\w+![^=!]' "$file" 2>/dev/null; then
+                # Filter out legitimate uses (e.g., !== , !=, import paths)
+                if grep -qE '\w+![/=)]' "$file" 2>/dev/null; then
+                    warning "Non-null assertion (!) found in: $file"
+                    warning "  ↳ Use type guard, optional chaining, or ?? fallback instead"
+                    ANTI_PATTERN_FOUND=1
+                fi
+            fi
+
+            # Check for unnecessary undefined checks (informational only)
+            if grep -qE '\[(\d+)\]\s*!==\s*undefined' "$file" 2>/dev/null; then
+                info "Consider using ?? operator instead of !== undefined in: $file"
+            fi
+        fi
+    done <<< "$TS_FILES"
+
+    if [ $ANTI_PATTERN_FOUND -eq 0 ]; then
+        success "No TypeScript anti-patterns detected"
+    fi
+else
+    success "No TypeScript files to check"
+fi
+echo ""
+
+# ============================================
+# GUARD RAIL 8: JSON/YAML Syntax Validation
+# ============================================
+echo "Guard Rail 8: Syntax Validation"
 
 JSON_ERRORS=0
 YAML_ERRORS=0
@@ -380,9 +416,9 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 8: Root Directory File Organization
+# GUARD RAIL 9: Root Directory File Organization
 # ============================================
-echo "Guard Rail 8: Root Directory File Organization"
+echo "Guard Rail 9: Root Directory File Organization"
 
 ALLOWED_ROOT_FILES=(
     "AGENTS.md"
@@ -440,9 +476,9 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 9: Directory Organization
+# GUARD RAIL 10: Directory Organization
 # ============================================
-echo "Guard Rail 9: Directory Organization"
+echo "Guard Rail 10: Directory Organization"
 
 # Check for misplaced files
 MISPLACED=0
@@ -471,9 +507,9 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 10: Skill Eval Freshness
+# GUARD RAIL 11: Skill Eval Freshness
 # ============================================
-echo "Guard Rail 10: Skill Eval Freshness"
+echo "Guard Rail 11: Skill Eval Freshness"
 
 # Auto-regenerate evals.json when skill content changes
 SKILL_EVALS_REGEN=0
@@ -514,9 +550,9 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 11: GitHub Actions Workflow Validation
+# GUARD RAIL 12: GitHub Actions Workflow Validation
 # ============================================
-echo "Guard Rail 11: GitHub Actions Workflow Validation"
+echo "Guard Rail 12: GitHub Actions Workflow Validation"
 
 if echo "$STAGED_FILES" | grep -q ".github/workflows"; then
     info "Workflow files changed - validating..."
