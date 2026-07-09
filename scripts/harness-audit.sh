@@ -22,6 +22,13 @@ for arg in "$@"; do
   esac
 done
 
+# When JSON mode is active, redirect human output (echo/printf) to stderr so
+# only valid JSON ends up on stdout. Original stdout is preserved on FD 3.
+if $JSON; then
+  exec 3>&1
+  exec 1>&2
+fi
+
 # ── Colour helpers ──────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
@@ -39,34 +46,39 @@ MISSING_FILES=(); MISSING_SCRIPTS=()
 UNESCALATED_ISSUES=()
 
 # ── Helpers ─────────────────────────────────────────────────────
+# Note: `((VAR++))` evaluates to 0 on first call (pre-increment value is 0),
+# which returns exit code 1 and aborts the script under `set -e`. Use `: $((VAR++))`
+# (colon-prefixed no-op) or safe POST-increment patterns. `set -e` is intentionally
+# retained so genuine errors elsewhere abort cleanly.
+
 check_file() {
   local path="$1"; local label="${2:-$1}"
   if [ -f "$PROJECT_ROOT/$path" ]; then
-    pass "$label exists"; ((PASSES++)); return 0
+    pass "$label exists"; : $((PASSES++)); return 0
   else
-    fail "$label MISSING"; ((FAILS++)); MISSING_FILES+=("$path"); return 1
+    fail "$label MISSING"; : $((FAILS++)); MISSING_FILES+=("$path"); return 0
   fi
 }
 
 check_dir() {
   local path="$1"; local label="${2:-$1}"
   if [ -d "$PROJECT_ROOT/$path" ]; then
-    pass "$label exists"; ((PASSES++)); return 0
+    pass "$label exists"; : $((PASSES++)); return 0
   else
-    fail "$label MISSING"; ((FAILS++)); MISSING_FILES+=("$path"); return 1
+    fail "$label MISSING"; : $((FAILS++)); MISSING_FILES+=("$path"); return 0
   fi
 }
 
 check_script() {
   local path="$1"; local label="${2:-$1}"
   if [ -x "$PROJECT_ROOT/$path" ]; then
-    pass "$label executable"; ((PASSES++)); return 0
+    pass "$label executable"; : $((PASSES++)); return 0
   elif [ -f "$PROJECT_ROOT/$path" ]; then
-    warn "$label exists but NOT executable"; ((WARNS++))
+    warn "$label exists but NOT executable"; : $((WARNS++))
     MISSING_SCRIPTS+=("$path (not executable)"); return 0
   else
-    gap "$label MISSING — should exist per documentation"; ((FAILS++))
-    MISSING_SCRIPTS+=("$path"); return 1
+    gap "$label MISSING — should exist per documentation"; : $((FAILS++))
+    MISSING_SCRIPTS+=("$path"); return 0
   fi
 }
 
@@ -222,17 +234,17 @@ for pair in "${PAIRS[@]}"; do
 
   if $guide_ok && $sensor_ok; then
     pass "$desc"
-    ((PASSES++))
+    : $((PASSES++))
   elif $guide_ok && ! $sensor_ok; then
     gap "$desc — GUIDE exists but SENSOR ($sensor_file) MISSING"
-    ((FAILS++))
+    : $((FAILS++))
     add_gap "$desc" "$guide_file" "$sensor_file"
   elif ! $guide_ok && $sensor_ok; then
     warn "$desc — SENSOR exists but GUIDE ($guide_file) MISSING"
-    ((WARNS++))
+    : $((WARNS++))
   else
     fail "$desc — BOTH guide and sensor MISSING"
-    ((FAILS++))
+    : $((FAILS++))
   fi
 
 done
@@ -385,7 +397,7 @@ echo -e "${BOLD}[Phase 8] Coherence: Guide↔Sensor Consistency${NC}"
 
 # Check: "never use x!" guide in AGENTS.md — is there a lint rule catching it?
 if grep -q "x!.*non-null assertion.*forbidden" "$PROJECT_ROOT/AGENTS.md" 2>/dev/null; then
-  if grep -q "no-non-null-assertion\|non-null-assertion" "$PROJECT_ROOT/.eslintrc*" "$PROJECT_ROOT/eslint.config*" "$PROJECT_ROOT/tsconfig.json" 2>/dev/null; then
+  if cat "$PROJECT_ROOT"/.eslintrc* "$PROJECT_ROOT"/eslint.config* "$PROJECT_ROOT"/tsconfig.json 2>/dev/null | grep -q "no-non-null-assertion\|non-null-assertion"; then
     pass "Non-null assertion guide has matching lint sensor"
   else
     warn "Non-null assertion guide exists but no lint rule found — may only be caught by code review"
@@ -404,7 +416,7 @@ fi
 
 # Check: "Fix-Forward" guide — is there a sensor enforcing it?
 if grep -q "Fix-Forward" "$PROJECT_ROOT/agents-docs/accuracy-guardrails.md" 2>/dev/null; then
-  warn "Fix-Forward rule is inferential — no computational sensor exists (by design)"
+  $VERBOSE && info "Fix-Forward rule is inferential — no computational sensor exists (by design)"
 fi
 
 # ═════════════════════════════════════════════════════════════════
@@ -493,6 +505,7 @@ echo ""
 # ═════════════════════════════════════════════════════════════════
 
 if $JSON; then
+  exec 1>&3  # Restore stdout for JSON emission
   echo "{"
   echo "  \"health_score\": $HEALTH,"
   echo "  \"passes\": $PASSES,"
@@ -515,13 +528,16 @@ if $JSON; then
 fi
 
 # ── Exit Code ───────────────────────────────────────────────────
+# 0 = healthy (all checks passed)
+# 1 = warnings (only WARNS, no FAILS)
+# 2 = critical gaps (FAILS found)
 if [ "$FAILS" -gt 0 ]; then
-  echo -e "${RED}Audit found $FAILS failure(s).${NC}"
-  exit 1
+  $JSON || warn "Audit found $FAILS failure(s)."
+  exit 2
 elif [ "$WARNS" -gt 0 ]; then
-  echo -e "${YELLOW}Audit passed with $WARNS warning(s).${NC}"
-  exit 0
+  $JSON || warn "Audit passed with $WARNS warning(s)."
+  exit 1
 else
-  echo -e "${GREEN}All harness checks passed.${NC}"
+  $JSON || echo -e "${GREEN}All harness checks passed.${NC}"
   exit 0
 fi
