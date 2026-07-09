@@ -60,6 +60,7 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 ## TypeScript Anti-Patterns (Codacy/Gate Enforcement)
 
 ### Banned Patterns
+
 | Pattern | Issue | Fix |
 |---------|-------|-----|
 | Unused imports | Dead code, Codacy warning | Remove import or use `_` prefix for side-effect imports |
