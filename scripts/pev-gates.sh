@@ -92,6 +92,12 @@ run_gate "deps" "npm audit --audit-level=high 2>&1 | head -10 || true" || true
 # Gate 10: Skill eval coverage (enforces SKILLS.md standards)
 run_gate "skill-eval-check" "bash '${SCRIPT_DIR}/skill-eval-check.sh' --check" || true
 
+# Gate 11: CI workflow config-contract drift (accuracy-guardrails.md)
+run_gate "ci-workflow-validator" "bash '${SCRIPT_DIR}/ci-workflow-validator.sh'" || true
+
+# Gate 12: GOAP re-verification (Re-Verification Protocol in AGENTS.md)
+run_gate "goap-reverify" "bash '${SCRIPT_DIR}/goap-reverify.sh'" || true
+
 # Summary
 echo ""
 echo "╔══════════════════════════════════════════════╗"

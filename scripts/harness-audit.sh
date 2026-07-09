@@ -279,8 +279,21 @@ else
   # Pattern: config/env-var changes breaking CI
   CONFIG_COUNT=$(grep -c 'validateConfig\|env.*var\|secret.*not set\|missing.*EMAIL_WEBHOOK\|missing.*CLOUDFLARE_WORKER_HOST' "$LEARNINGS_FILE" 2>/dev/null || echo "0")
   if [ "$CONFIG_COUNT" -ge 2 ]; then
-    gap "Config/env-var changes breaking CI ($CONFIG_COUNT occurrences) — no computational sensor to validate CI workflow parity"
-    add_gap "Config/env-var CI drift" "accuracy-guardrails.md" "ci-workflow-validator.sh (NOT YET CREATED)"
+    SENSOR_WIRED=false
+    if [ -x "$PROJECT_ROOT/scripts/ci-workflow-validator.sh" ]; then
+      if grep -lq 'ci-workflow-validator' \
+           "$PROJECT_ROOT/scripts/pev-gates.sh" \
+           "$PROJECT_ROOT/scripts/pre-push-hook.sh" \
+           "$PROJECT_ROOT/scripts/pre-commit-hook.sh" 2>/dev/null; then
+        SENSOR_WIRED=true
+      fi
+    fi
+    if $SENSOR_WIRED; then
+      pass "Config/env-var CI drift ($CONFIG_COUNT occurrences) — sensor wired into harness"
+    else
+      gap "Config/env-var changes breaking CI ($CONFIG_COUNT occurrences) — no computational sensor to validate CI workflow parity"
+      add_gap "Config/env-var CI drift" "accuracy-guardrails.md" "ci-workflow-validator.sh (NOT YET CREATED OR UNWIRED)"
+    fi
   else
     pass "Config/env-var CI drift ($CONFIG_COUNT occurrences — below threshold)"
   fi
@@ -297,8 +310,21 @@ else
   # Pattern: stale deferrals / GOAP drift
   DEFERRAL_COUNT=$(grep -c 'deferred\|stale.*status\|without re-verifying' "$LEARNINGS_FILE" 2>/dev/null || echo "0")
   if [ "$DEFERRAL_COUNT" -ge 2 ]; then
-    gap "Stale GOAP deferrals ($DEFERRAL_COUNT occurrences) — no automated re-verification sensor"
-    add_gap "GOAP stale deferrals" "AGENTS.md:Re-Verification Protocol" "goap-reverify.sh (NOT YET CREATED)"
+    SENSOR_WIRED=false
+    if [ -x "$PROJECT_ROOT/scripts/goap-reverify.sh" ]; then
+      if grep -lq 'goap-reverify' \
+           "$PROJECT_ROOT/scripts/pev-gates.sh" \
+           "$PROJECT_ROOT/scripts/pre-push-hook.sh" \
+           "$PROJECT_ROOT/scripts/pre-commit-hook.sh" 2>/dev/null; then
+        SENSOR_WIRED=true
+      fi
+    fi
+    if $SENSOR_WIRED; then
+      pass "Stale GOAP deferrals ($DEFERRAL_COUNT occurrences) — sensor wired into harness"
+    else
+      gap "Stale GOAP deferrals ($DEFERRAL_COUNT occurrences) — no automated re-verification sensor"
+      add_gap "GOAP stale deferrals" "AGENTS.md:Re-Verification Protocol" "goap-reverify.sh (NOT YET CREATED OR UNWIRED)"
+    fi
   else
     pass "Stale GOAP deferrals ($DEFERRAL_COUNT occurrences — below threshold)"
   fi
