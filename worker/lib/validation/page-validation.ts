@@ -2,6 +2,7 @@ import type { Env } from "../../types";
 import { logger } from "../global-logger";
 import { CircuitBreaker, getSourceCircuitBreaker } from "../circuit-breaker";
 import { CONFIG } from "../../config";
+import { validatedFetch } from "../security";
 import type {
   PageValidationResult,
   RedemptionTestResult,
@@ -64,7 +65,7 @@ async function fetchAndValidateCode(
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       headers: {
         "User-Agent": CONFIG.USER_AGENT,
         Accept:

@@ -4,6 +4,7 @@ import {
   getGitHubLogger,
   githubCircuitBreaker,
 } from "./core";
+import { validatedFetch } from "../security";
 import type { WorkflowRun, WorkflowStatus } from "./types";
 
 export async function getWorkflowRuns(
@@ -14,7 +15,7 @@ export async function getWorkflowRuns(
   const { baseUrl, headers } = getGitHubConfig();
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(
+    const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/actions/runs?branch=${branch}&per_page=${perPage}`,
       { headers },
     );

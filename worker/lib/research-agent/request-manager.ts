@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
+import { validatedFetch } from "../security";
 import { logger } from "../global-logger";
 import { createTimeoutSignal } from "../utils";
 
@@ -175,23 +175,11 @@ export class RequestManager {
     options: FetchOptions,
     startTime: number,
   ): Promise<FetchResponse> {
-    if (!(await validateFetchUrl(url))) {
-      return {
-        success: false,
-        content: "",
-        contentType: "",
-        statusCode: 403,
-        error: "Blocked by SSRF protection",
-        fetchDurationMs: Date.now() - startTime,
-        cached: false,
-      };
-    }
-
     try {
       const timeoutMs = options.timeoutMs ?? CONFIG.RESEARCH_FETCH_TIMEOUT_MS;
       const { signal, cleanup } = createTimeoutSignal(timeoutMs);
       try {
-        const response = await fetch(url, {
+        const response = await validatedFetch(url, {
           method: options.method || "GET",
           headers: {
             "User-Agent": CONFIG.USER_AGENT,

@@ -56,16 +56,6 @@ export async function fetchProductHuntDeals(
   `;
 
   const url = "https://api.producthunt.com/v2/api/graphql";
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
 
   try {
     const { signal, cleanup } = createTimeoutSignal(
@@ -176,16 +166,6 @@ export async function fetchGitHubTrending(
   }
 
   const url = `https://api.github.com/search/repositories?q=${encodedQuery}&sort=stars&order=desc&per_page=${limit}`;
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
 
   try {
     const { signal, cleanup } = createTimeoutSignal(
@@ -263,17 +243,6 @@ export async function fetchHackerNewsDeals(
 
   const encodedQuery = encodeURIComponent(searchQuery);
   const url = `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`;
-
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
 
   try {
     if (!validateUrl(url)) {

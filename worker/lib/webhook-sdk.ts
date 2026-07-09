@@ -42,6 +42,7 @@ import {
 } from "./hmac";
 import { createTimeoutSignal } from "./utils";
 import { logger } from "./global-logger";
+import { validatedFetch } from "./security";
 
 // ============================================================================
 // Types
@@ -205,7 +206,7 @@ export class WebhookClient {
     for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
       const { signal, cleanup } = createTimeoutSignal(this.config.timeoutMs);
       try {
-        const response = await fetch(this.config.baseUrl, {
+        const response = await validatedFetch(this.config.baseUrl, {
           method: "POST",
           headers,
           body,

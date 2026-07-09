@@ -1,5 +1,6 @@
 import { CONFIG } from "./config";
 import { createGitHubIssue } from "./lib/github/index";
+import { validatedFetch } from "./lib/security";
 import { getRecentLogs } from "./lib/logger";
 import { createStructuredLogger } from "./lib/logger";
 import {
@@ -193,7 +194,7 @@ ${event.context ? `\`\`\`json\n${JSON.stringify(event.context, null, 2)}\n\`\`\`
 
   const cb = createTelegramCircuitBreaker(env);
   const execute = async () => {
-    const response = await fetch(
+    const response = await validatedFetch(
       `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",

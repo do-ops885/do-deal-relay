@@ -4,6 +4,7 @@
 
 import { VALIDATION_TIMEOUT_MS } from "./url-validator-types";
 import { CONFIG } from "../../config";
+import { validatedFetch } from "../security";
 
 export async function tryHeadRequest(url: string): Promise<{
   success: boolean;
@@ -15,7 +16,7 @@ export async function tryHeadRequest(url: string): Promise<{
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "HEAD",
       headers: {
         "User-Agent": CONFIG.USER_AGENT,
@@ -54,7 +55,7 @@ export async function tryGetRequest(url: string): Promise<{
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         "User-Agent": CONFIG.USER_AGENT,

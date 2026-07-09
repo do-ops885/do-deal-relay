@@ -27,15 +27,6 @@ async function performRewardScrape(
     };
   }
 
-  if (!(await validateFetchUrl(url))) {
-    return {
-      url,
-      success: false,
-      rewardChanged: false,
-      error: "Blocked by SSRF protection",
-    };
-  }
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SCRAPE_TIMEOUT_MS);
 
