@@ -317,18 +317,22 @@ export async function tryHandleLegacyRoutes(
 
   const dealExplainMatch = path.match(/^\/api\/deals\/([^/]+)\/explain$/);
   if (dealExplainMatch && request.method === "GET") {
-    const dealId = dealExplainMatch[1] ?? "";
-    return withAuth(request, env, undefined, () =>
-      handleExplainDeal(dealId, env, request),
-    );
+    const dealId = dealExplainMatch[1];
+    if (dealId) {
+      return withAuth(request, env, undefined, () =>
+        handleExplainDeal(dealId, env, request),
+      );
+    }
   }
 
   const dealValidateMatch = path.match(/^\/api\/deals\/([^/]+)\/validate$/);
   if (dealValidateMatch && request.method === "POST") {
-    const code = dealValidateMatch[1] ?? "";
-    return withAuth(request, env, "user", (auth) =>
-      handleValidateDeal(request, code, env, auth),
-    );
+    const code = dealValidateMatch[1];
+    if (code) {
+      return withAuth(request, env, "user", (auth) =>
+        handleValidateDeal(request, code, env, auth),
+      );
+    }
   }
 
   // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
@@ -394,10 +398,12 @@ export async function tryHandleLegacyRoutes(
 
   const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
   if (experienceMatch && request.method === "GET") {
-    const experienceId = experienceMatch[1] ?? "";
-    return withAuth(request, env, undefined, () =>
-      handleGetExperience(experienceId, env),
-    );
+    const experienceId = experienceMatch[1];
+    if (experienceId) {
+      return withAuth(request, env, undefined, () =>
+        handleGetExperience(experienceId, env),
+      );
+    }
   }
 
   if (path === "/api/experience/aggregate" && request.method === "POST") {
