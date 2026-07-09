@@ -416,75 +416,37 @@ fi
 echo ""
 
 # ============================================
-# GUARD RAIL 9: Root Directory File Organization
+# GUARD RAIL 9: File Organization + Skill Eval Freshness
 # ============================================
-echo "Guard Rail 9: Root Directory File Organization"
+echo "Guard Rail 9: File Organization & Skills"
 
 ALLOWED_ROOT_FILES=(
-    "AGENTS.md"
-    "README.md"
-    "LICENSE"
-    "package.json"
-    "package-lock.json"
-    "tsconfig.json"
-    "vitest.config.ts"
-    "wrangler.jsonc"
-    "wrangler.toml"
-    "VERSION"
-    ".gitignore"
-    ".gitattributes"
-    ".editorconfig"
-    ".prettierrc"
-    ".prettierignore"
-    "commitlint.config.cjs"
-    ".eslintrc*"
-    ".nvmrc"
-    ".node-version"
-    "Dockerfile"
-    "docker-compose.yml"
-    "Makefile"
-    ".codesandbox"
-    ".devcontainer"
-    ".pre-commit-config.yaml"
-    ".codacy.yml"
-    ".codacy.yaml"
+    "AGENTS.md" "README.md" "LICENSE" "package.json" "package-lock.json"
+    "tsconfig.json" "vitest.config.ts" "wrangler.jsonc" "wrangler.toml"
+    "VERSION" ".gitignore" ".gitattributes" ".editorconfig" ".prettierrc"
+    ".prettierignore" "commitlint.config.cjs" ".eslintrc*" ".nvmrc"
+    ".node-version" "Dockerfile" "docker-compose.yml" "Makefile"
+    ".codesandbox" ".devcontainer" ".pre-commit-config.yaml"
+    ".codacy.yml" ".codacy.yaml"
 )
 
 ROOT_VIOLATIONS=0
+MISPLACED=0
+SKILL_EVALS_REGEN=0
 while IFS= read -r file; do
-    # Check if file is in root directory
+    # Root directory file check
     if [[ "$file" != */* ]] && [ -f "$file" ]; then
-        # Check if it's in allowed list (with wildcard support)
         ALLOWED=0
         for allowed in "${ALLOWED_ROOT_FILES[@]}"; do
-            if [[ "$file" == $allowed ]]; then
-                ALLOWED=1
-                break
-            fi
+            if [[ "$file" == $allowed ]]; then ALLOWED=1; break; fi
         done
-
         if [ $ALLOWED -eq 0 ]; then
             error "File in root directory not in allowed list: $file"
             ROOT_VIOLATIONS=1
         fi
     fi
-done <<< "$STAGED_FILES"
 
-if [ $ROOT_VIOLATIONS -eq 0 ]; then
-    success "Root directory organization is valid"
-fi
-echo ""
-
-# ============================================
-# GUARD RAIL 10: Directory Organization
-# ============================================
-echo "Guard Rail 10: Directory Organization"
-
-# Check for misplaced files
-MISPLACED=0
-
-while IFS= read -r file; do
-    # Documentation should be in docs/ or agents-docs/
+    # Misplaced documentation
     if [[ "$file" == *.md ]] && [[ "$file" != "README.md" ]] && [[ "$file" != "AGENTS.md" ]] && [[ "$file" != "LICENSE" ]]; then
         if [[ "$file" != docs/* ]] && [[ "$file" != agents-docs/* ]]; then
             warning "Markdown file outside docs/: $file"
@@ -492,50 +454,28 @@ while IFS= read -r file; do
         fi
     fi
 
-    # Scripts should be in scripts/ or tests/ or .agents/skills/*/scripts/ or .agents/skills/*/examples/
+    # Misplaced shell scripts
     if [[ "$file" == *.sh ]]; then
         if [[ "$file" != scripts/* ]] && [[ "$file" != tests/* ]] && [[ "$file" != .agents/skills/*/scripts/* ]] && [[ "$file" != .agents/skills/*/examples/* ]]; then
             error "Shell script outside allowed directories: $file"
             MISPLACED=1
         fi
     fi
-done <<< "$STAGED_FILES"
 
-if [ $MISPLACED -eq 0 ]; then
-    success "Directory organization is valid"
-fi
-echo ""
-
-# ============================================
-# GUARD RAIL 11: Skill Eval Freshness
-# ============================================
-echo "Guard Rail 11: Skill Eval Freshness"
-
-# Auto-regenerate evals.json when skill content changes
-SKILL_EVALS_REGEN=0
-while IFS= read -r file; do
+    # Auto-regenerate evals.json when skill content changes
     if [[ "$file" == .agents/skills/*/SKILL.md ]] || \
        [[ "$file" == .agents/skills/*/scripts/*.sh ]] || \
        [[ "$file" == .agents/skills/*/references/*.md ]]; then
         SKILL_DIR=$(echo "$file" | cut -d/ -f1-4)
         EVALS_FILE="$SKILL_DIR/evals/evals.json"
         GEN_SCRIPT="$SKILL_DIR/scripts/generate_evals.py"
-
         if [ -f "$GEN_SCRIPT" ] && [ -f "$EVALS_FILE" ]; then
-            # Save current evals.json content
-            if [ -f "$EVALS_FILE" ]; then
-                cp "$EVALS_FILE" /tmp/evals-before.json 2>/dev/null || true
-            fi
-
-            # Regenerate evals from skill content
+            cp "$EVALS_FILE" /tmp/evals-before.json 2>/dev/null || true
             python3 "$GEN_SCRIPT" > /dev/null 2>&1
-
-            # Compare with previous version
             if [ -f /tmp/evals-before.json ]; then
                 if ! diff -q "$EVALS_FILE" /tmp/evals-before.json > /dev/null 2>&1; then
                     git add "$EVALS_FILE"
-                    info "Skill content changed in: $file"
-                    info "  ↳ evals.json regenerated and auto-staged"
+                    info "Skill content changed: evals.json regenerated"
                     SKILL_EVALS_REGEN=1
                 fi
                 rm -f /tmp/evals-before.json
@@ -544,9 +484,9 @@ while IFS= read -r file; do
     fi
 done <<< "$STAGED_FILES"
 
-if [ $SKILL_EVALS_REGEN -eq 0 ]; then
-    success "All skill evals are fresh (no regeneration needed)"
-fi
+[ $ROOT_VIOLATIONS -eq 0 ] && success "Root directory organization valid"
+[ $MISPLACED -eq 0 ] && success "Directory organization valid"
+[ $SKILL_EVALS_REGEN -eq 0 ] && success "Skill evals fresh"
 echo ""
 
 # ============================================
