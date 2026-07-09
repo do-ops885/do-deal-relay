@@ -433,9 +433,15 @@ if [ -d "$PROJECT_ROOT/worker" ]; then
     ARCH_DEDUCTIONS+=("worker non-null assertions x${NULL_ASSERT_COUNT} (-${NULL_PENALTY})")
   fi
 fi
-# Source files >500 lines (excluding deps and generated): -5 per file, capped at -10.
-LONG_FILE_COUNT=$(find "$PROJECT_ROOT" -name '*.ts' \
-  -not -path '*/node_modules/*' -not -path '*/.opencode/*' -not -path '*/_generated/*' -not -path '*/.git/*' \
+# Source files >500 lines (excluding deps, build output, framework caches, and tooling dirs):
+# uses -type d -prune to skip entire trees (cleaner than -not -path globs).
+LONG_FILE_COUNT=$(find "$PROJECT_ROOT" \
+  -type d \( -name "node_modules" -o -name ".git" -o -name ".opencode" \
+            -o -name "dist" -o -name ".wrangler" -o -name ".svelte-kit" \
+            -o -name ".astro" -o -name "_generated" -o -name "__generated__" \
+            -o -name ".cache" -o -name ".turbo" -o -name "coverage" \
+            -o -name ".claude" -o -name ".gemini" -o -name "build" \) -prune \
+  -o -type f -name '*.ts' -print \
   2>/dev/null | xargs wc -l 2>/dev/null | awk '$1 > 500 {n++} END {print n+0}')
 LONG_PENALTY=$(( LONG_FILE_COUNT > 2 ? 10 : LONG_FILE_COUNT * 5 ))
 if [ "$LONG_PENALTY" -gt 0 ]; then
