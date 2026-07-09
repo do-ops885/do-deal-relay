@@ -4,6 +4,7 @@ import { jsonResponse } from "./routes/utils";
 import { validateConfig } from "./lib/config-utils";
 import { logger } from "./lib/global-logger";
 import { handleRequest } from "./router";
+// DORA metrics endpoint registered: /api/dora-metrics (also /dora alias) — see ./router
 import { handleScheduled } from "./scheduled";
 import { toError } from "./lib/sanitize-error";
 import { PipelineLock } from "./durable-objects/pipeline-lock";

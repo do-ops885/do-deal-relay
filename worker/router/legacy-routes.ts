@@ -189,8 +189,8 @@ export async function tryHandleLegacyRoutes(
     });
   }
 
-  // DORA Metrics
-  if (path === "/api/dora-metrics" && request.method === "GET") {
+  // DORA Metrics (also exposed at /dora alias for human-readability)
+  if ((path === "/api/dora-metrics" || path === "/dora") && request.method === "GET") {
     return withAuth(request, env, "admin", () =>
       handleDORAMetrics(url, env, request),
     );

@@ -98,6 +98,9 @@ run_gate "ci-workflow-validator" "bash '${SCRIPT_DIR}/ci-workflow-validator.sh'"
 # Gate 12: GOAP re-verification (Re-Verification Protocol in AGENTS.md)
 run_gate "goap-reverify" "bash '${SCRIPT_DIR}/goap-reverify.sh'" || true
 
+# Gate 13: 9-gate validation pipeline (SYSTEM_REFERENCE.md contract — Schema, Trust, Dedupe, etc.)
+run_gate "validate-codes" "bash '${SCRIPT_DIR}/validate-codes.sh'" || true
+
 # Summary
 echo ""
 echo "╔══════════════════════════════════════════════╗"
