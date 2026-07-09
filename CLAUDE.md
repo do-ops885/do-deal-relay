@@ -1,7 +1,7 @@
 @AGENTS.md
 
 # Claude Code Overrides
-**Version**: 0.1.8
+**Version**: 1.2.0 (Schema: 0.1.8)
 
 ## Behavioral Contract
 Extends [AGENTS.md](AGENTS.md). Claude must adhere to all Core Constraints and Infrastructure Contracts defined there.
@@ -13,6 +13,7 @@ Extends [AGENTS.md](AGENTS.md). Claude must adhere to all Core Constraints and I
 - **Batching**: Group independent `Bash` calls to minimize round-trips.
 - **Unified Toolkit**: Use `./scripts/agent-toolkit.sh` for setup, doctor, quality, and docs tasks.
 - **Always-Fix Policy**: Fix pre-existing issues in the current context immediately per [AGENTS.md](AGENTS.md).
+- **Performance**: Adhere to the 'Zero Slop' directive in [AGENTS.md](AGENTS.md) for all commits.
 - **Triage Protocol**: Follow the ADR-based triage protocol in [AGENTS.md](AGENTS.md) for unfixable issues.
 
 ## Specific Constraints

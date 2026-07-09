@@ -1,5 +1,5 @@
 # System Reference
-**Version**: 0.1.8 | **Status**: Production
+**Version**: 0.2.1 (Schema: 0.1.8) | **Status**: Production
 
 ## Architecture: Two-Phase Publishing
 Candidate deals are staged, validated through 9 gates, then promoted to production.
@@ -38,17 +38,17 @@ Runs on weekly cron (`0 0 * * SUN`) to verify published deals remain valid.
 
 | Binding | Role | ID (Prod) | Access Pattern |
 | :--- | :--- | :--- | :--- |
-| `DEALS_PROD` | Production snapshots | `23ee9b8c...` | Read (Public), Write (Finalization) |
-| `DEALS_STAGING` | Candidate deals | `b0db85b9...` | Read/Write (Validation) |
-| `DEALS_LOG` | Run history & metrics | `1f1a901f...` | Write (Logger), Read (Admin) |
-| `DEALS_LOCK` | Concurrency mutex (legacy) | `e3ab520e...` | Read/Write (`init` stage) |
-| `DEALS_SOURCES` | Source registry | `be3c0fc1...` | Read (Trust), Write (Admin) |
+| `DEALS_PROD` | Production snapshots | `23ee9b8c9e2748e5880f476b8b57a524` | Read (Public), Write (Finalization) |
+| `DEALS_STAGING` | Candidate deals | `b0db85b92fae45c1895152737ab72649` | Read/Write (Validation) |
+| `DEALS_LOG` | Run history & metrics | `1f1a901fd6fb4dffbdcc86aa4a914ba8` | Write (Logger), Read (Admin) |
+| `DEALS_LOCK` | Concurrency mutex (legacy) | `e3ab520eafd5430ab72978e78bdd257e` | Read/Write (`init` stage) |
+| `DEALS_SOURCES` | Source registry | `be3c0fc148b749b49a59aa7cfa23e3ac` | Read (Trust), Write (Admin) |
 
 ### D1 Database
 
 | Binding | Database Name | ID | Role |
 | :--- | :--- | :--- | :--- |
-| `DEALS_DB` | `deals-db` | `29ee4ca4...` | Advanced queries, full-text search |
+| `DEALS_DB` | `deals-db` | `29ee4ca4-8147-4059-9898-b13c1e9599ff` | Advanced queries, full-text search |
 
 ### Durable Objects
 
