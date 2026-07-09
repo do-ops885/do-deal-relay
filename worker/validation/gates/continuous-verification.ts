@@ -3,6 +3,7 @@ import { getProductionSnapshot } from "../../lib/storage";
 import { logger } from "../../lib/global-logger";
 import { notify } from "../../notify";
 import { fetchInBatches, createTimeoutSignal } from "../../lib/utils";
+import { validatedFetch } from "../../lib/security";
 
 // ============================================================================
 // Types
@@ -56,7 +57,7 @@ const CV_MAX_CONCURRENT = 10;
 async function checkLinkLiveness(url: string): Promise<boolean> {
   try {
     const { signal, cleanup } = createTimeoutSignal(CV_HEAD_TIMEOUT_MS);
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "HEAD",
       redirect: "follow",
       signal,
@@ -84,7 +85,7 @@ async function checkRewardAccuracy(deal: Deal): Promise<boolean> {
 async function checkDomainHealth(domain: string): Promise<boolean> {
   try {
     const { signal, cleanup } = createTimeoutSignal(CV_DNS_TIMEOUT_MS);
-    const response = await fetch(`https://${domain}`, {
+    const response = await validatedFetch(`https://${domain}`, {
       method: "HEAD",
       signal,
       redirect: "follow",

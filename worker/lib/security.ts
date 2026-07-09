@@ -135,6 +135,12 @@ export async function validatedFetch(
   if (!validateUrl(url)) {
     throw new Error("Invalid or disallowed URL");
   }
+
+  // Enforce SSRF protection by validating the URL against blocked hosts and private IPs
+  if (!(await validateFetchUrl(url))) {
+    throw new Error("SSRF Blocked: URL failed security validation");
+  }
+
   return fetch(url, init);
 }
 

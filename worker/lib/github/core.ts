@@ -3,6 +3,7 @@ import type { Snapshot, Env } from "../../types";
 import { CircuitBreaker, createGitHubCircuitBreaker } from "../circuit-breaker";
 import { createGitHubCache } from "../cache";
 import { createStructuredLogger } from "../logger";
+import { validatedFetch } from "../security";
 import type { GitHubCommit, GitHubContent } from "./types";
 
 interface GitHubCacheEnv {
@@ -84,7 +85,7 @@ export async function getFileContent(
   const { baseUrl, headers } = getGitHubConfig();
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(
+    const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/contents/${path}?ref=${branch}`,
       { headers },
     );
@@ -131,11 +132,14 @@ export async function commitFile(
   if (sha) body.sha = sha;
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(`${baseUrl}/repos/${repo}/contents/${path}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(body),
-    });
+    const response = await validatedFetch(
+      `${baseUrl}/repos/${repo}/contents/${path}`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body),
+      },
+    );
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`GitHub commit failed: ${response.status} - ${error}`);
@@ -199,7 +203,7 @@ export async function createGitHubIssue(
   const body = `## Notification\n\n**Type**: ${type}\n**Severity**: ${details.severity}\n**Run ID**: ${run_id}\n**Timestamp**: ${new Date().toISOString()}\n\n### Message\n${details.message}\n\n### Context\n\`\`\`json\n${JSON.stringify(details.context || {}, null, 2)}\n\`\`\`\n\n---\n*This issue was automatically created by the Deal Discovery System.*`;
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(`${baseUrl}/repos/${repo}/issues`, {
+    const response = await validatedFetch(`${baseUrl}/repos/${repo}/issues`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -238,7 +242,7 @@ export async function getRecentCommits(
   const { baseUrl, headers } = getGitHubConfig();
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await fetch(
+    const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`,
       { headers },
     );

@@ -23,6 +23,7 @@ export type {
 } from "./url-validator-types";
 import { respectRateLimit, extractDomain } from "./url-rate-limit";
 import { tryHeadRequest, tryGetRequest, resolveUrl } from "./url-request";
+import { validatedFetch } from "../security";
 
 // ============================================================================
 // URL Validation
@@ -346,7 +347,7 @@ export async function detectRedirects(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetch(currentUrl, {
+      const response = await validatedFetch(currentUrl, {
         method: "HEAD",
         headers: {
           "User-Agent": CONFIG.USER_AGENT,

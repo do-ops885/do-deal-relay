@@ -5,6 +5,7 @@ import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
+import { validatedFetch } from "../lib/security";
 import {
   parseHTMLContent,
   parseJSONContent,
@@ -171,7 +172,7 @@ async function discoverFromSource(
           );
           let response;
           try {
-            response = await fetch(url, {
+            response = await validatedFetch(url, {
               method: "GET",
               headers: {
                 "User-Agent":

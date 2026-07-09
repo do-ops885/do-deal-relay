@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl } from "../security";
+import { validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type { PageContentResult, MetaTags } from "./types";
@@ -10,22 +10,11 @@ export async function fetchGenericPageContent(
 ): Promise<FetchResult & { parsedContent?: PageContentResult }> {
   const startTime = Date.now();
 
-  if (!(await validateFetchUrl(url))) {
-    return {
-      success: false,
-      content: "",
-      contentType: "",
-      statusCode: 403,
-      error: "Blocked by SSRF protection",
-      fetchDurationMs: Date.now() - startTime,
-    };
-  }
-
   try {
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await fetch(url, {
+    const response = await validatedFetch(url, {
       method: "GET",
       headers: {
         "User-Agent": CONFIG.USER_AGENT,
