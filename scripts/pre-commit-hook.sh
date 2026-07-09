@@ -64,7 +64,7 @@ while IFS= read -r file; do
         if [[ "$file" == "AGENTS.md" ]]; then [ "$LINES" -gt $MAX_LINES_AGENTS ] && { warning "AGENTS.md has $LINES lines (max $MAX_LINES_AGENTS)"; LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1)); }; fi
     fi
 done <<< "$STAGED_FILES"
-[ $LINE_VIOLATIONS -eq 0 ] && success "Line count check complete" || warning "$LINE_VIOLATIONS file(s) exceed line limit"
+if [ $LINE_VIOLATIONS -eq 0 ]; then success "Line count check complete"; else warning "$LINE_VIOLATIONS file(s) exceed line limit"; fi
 echo ""; echo "Guard Rail 5: Dependency Directory Check"
 DEPS_STAGED=0
 while IFS= read -r file; do
