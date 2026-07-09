@@ -57,6 +57,52 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 6. **Context Hygiene**: Swallow passing output; surface failures only. Follow `agents-docs/CONTEXT.md`.
 7. **Operational Safety**: Coordinate modifications to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`).
 
+## TypeScript Anti-Patterns (Codacy/Gate Enforcement)
+
+### Banned Patterns
+| Pattern | Issue | Fix |
+|---------|-------|-----|
+| Unused imports | Dead code, Codacy warning | Remove import or use `_` prefix for side-effect imports |
+| `x !== undefined` after regex match (without `noUncheckedIndexedAccess`) | Always true when match succeeds | Remove conditional wrapper |
+| `x!` (non-null assertion) | Bypasses null checks, forbidden | Use type guard or restructure |
+
+### Regex Match Groups
+When `path.match(/regex/)` succeeds, capture groups `[1]`, `[2]`, etc. have different types based on tsconfig:
+
+**With `noUncheckedIndexedAccess: true`** (our config):
+```typescript
+const match = path.match(/^\/api\/([^/]+)$/);
+if (match) {
+  const id = match[1] ?? ""; // string | undefined → string (use ?? fallback)
+  // OR
+  const id = match[1]; // string | undefined (handle in type system)
+}
+```
+
+**Without `noUncheckedIndexedAccess`**:
+```typescript
+const match = path.match(/^\/api\/([^/]+)$/);
+if (match) {
+  const id = match[1]; // string (safe, no ?? needed)
+}
+```
+
+**Correct patterns:**
+```typescript
+// With noUncheckedIndexedAccess (our config)
+const id = match[1] ?? "";           // Safe fallback
+const id = match[1] ?? "default";    // Custom fallback
+
+// Without noUncheckedIndexedAccess
+const id = match[1];                 // Already string
+```
+
+**Incorrect patterns (avoid):**
+```typescript
+if (match[1] !== undefined) { ... } // Redundant with noUncheckedIndexedAccess
+handleRequest(match[1]!, env);      // Forbidden non-null assertion
+```
+
 ## Operational Tools
 Agents SHOULD use the unified toolkit for common operations:
 ```bash

@@ -1,5 +1,4 @@
 import type { Env } from "../types";
-import { jsonResponse } from "../routes/utils";
 import { checkBodySize } from "../middleware/body-limit";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
@@ -395,10 +394,10 @@ export async function tryHandleLegacyRoutes(
 
   const experienceMatch = path.match(/^\/api\/experience\/([^/]+)$/);
   if (experienceMatch && request.method === "GET") {
-    if (experienceMatch[1] !== undefined)
-      return withAuth(request, env, undefined, () =>
-        handleGetExperience(experienceMatch[1]!, env),
-      );
+    const experienceId = experienceMatch[1] ?? "";
+    return withAuth(request, env, undefined, () =>
+      handleGetExperience(experienceId, env),
+    );
   }
 
   if (path === "/api/experience/aggregate" && request.method === "POST") {
