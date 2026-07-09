@@ -1,5 +1,5 @@
 # System Reference
-**Version**: 0.2.0 | **Status**: Production
+**Version**: 0.2.1 (Schema: 0.1.8) | **Status**: Production
 
 ## Architecture: Two-Phase Publishing
 Candidate deals are staged, validated through 9 gates, then promoted to production.
@@ -23,7 +23,7 @@ Route registration follows the pattern: `withAuth → createRateLimitMiddleware 
 | `normalization_verification` | Domain is lowercase; Code is uppercase; No UTMs. | `NormalizationError`: Case or URL params detected. |
 | `deduplication_check` | ID and Domain+Code pair are unique in current batch. | `DuplicateError`: Identical deal exists in batch. |
 | `source_trust` | `source.trust_score >= 0.3` (Prod). | `TrustError`: Source trust below environment threshold. |
-| `reward_plausibility` | Value > 0; Cash < $10k; Percent <= 100%. | `PlausibilityError`: Impossible or suspicious rewards. |
+| `reward_plausibility` | Value > 0; Cash < $10,000; Percent <= 100%. | `PlausibilityError`: Impossible or suspicious rewards. |
 | `expiry_validation` | `expiry.date` is null or in the future. | `ExpiryError`: Date is in the past. |
 | `second_pass_validation` | Post-normalization schema re-verification. | `ValidationError`: Normalization broke schema. |
 | `idempotency_check` | Deal ID not in `DEALS_PROD` snapshot. | `IdempotencyError`: Deal already published. |
@@ -36,19 +36,19 @@ Runs on weekly cron (`0 0 * * SUN`) to verify published deals remain valid.
 ## Infrastructure
 ### KV Namespaces
 
-| Binding | Role | Access Pattern |
-| :--- | :--- | :--- |
-| `DEALS_PROD` | Production snapshots | Read (Public), Write (Finalization) |
-| `DEALS_STAGING` | Candidate deals | Read/Write (Validation) |
-| `DEALS_LOG` | Run history & metrics | Write (Logger), Read (Admin) |
-| `DEALS_LOCK` | Concurrency mutex (legacy) | Read/Write (`init` stage) |
-| `DEALS_SOURCES` | Source registry | Read (Trust), Write (Admin) |
+| Binding | Role | ID (Prod) | Access Pattern |
+| :--- | :--- | :--- | :--- |
+| `DEALS_PROD` | Production snapshots | `23ee9b8c9e2748e5880f476b8b57a524` | Read (Public), Write (Finalization) |
+| `DEALS_STAGING` | Candidate deals | `b0db85b92fae45c1895152737ab72649` | Read/Write (Validation) |
+| `DEALS_LOG` | Run history & metrics | `1f1a901fd6fb4dffbdcc86aa4a914ba8` | Write (Logger), Read (Admin) |
+| `DEALS_LOCK` | Concurrency mutex (legacy) | `e3ab520eafd5430ab72978e78bdd257e` | Read/Write (`init` stage) |
+| `DEALS_SOURCES` | Source registry | `be3c0fc148b749b49a59aa7cfa23e3ac` | Read (Trust), Write (Admin) |
 
 ### D1 Database
 
-| Binding | Role | Access Pattern |
-| :--- | :--- | :--- |
-| `DEALS_DB` | Advanced queries, full-text search | Read/Write (NLQ, Analytics) |
+| Binding | Database Name | ID | Role |
+| :--- | :--- | :--- | :--- |
+| `DEALS_DB` | `deals-db` | `29ee4ca4-8147-4059-9898-b13c1e9599ff` | Advanced queries, full-text search |
 
 ### Durable Objects
 
@@ -77,35 +77,60 @@ Runs on weekly cron (`0 0 * * SUN`) to verify published deals remain valid.
 ### 1. Deals (`deals.ts`)
 - **`search_deals`**
   - **Inputs**: `domain?`, `category?`, `status?` (active|inactive|expired|all), `query?`, `limit?` (1-100), `sort_by?` (confidence|recency|value|expiry|trust), `order?` (asc|desc), `min_confidence?`, `min_trust?`.
-  - **Outputs**: `{ deals: Deal[], total: number, filtered: number }`.
+  - **Outputs**: `{ deals: Deal[], total: number }`.
 - **`get_deal`**
   - **Inputs**: `code: string` (Required).
-  - **Outputs**: Detailed `Deal` object.
+  - **Outputs**: Detailed `Deal` object: `{ code, url, domain, title, description, status, reward, confidence, submitted_at }`.
   - **Errors**: `404 Not Found` if code does not exist.
 - **`add_referral`**
   - **Inputs**: `code`, `url`, `domain` (Required); `title?`, `description?`, `reward_type?` (cash|credit|percent|item), `reward_value?`, `category?` (string[]), `expiry_date?` (ISO).
-  - **Outputs**: `{ success: true, id: UUID, code: string, status: "quarantined" }`.
+  - **Outputs**: `{ success: boolean, id: string, code: string, status: string, message: string }`.
 
 ### 2. Research (`research.ts`)
 - **`research_domain`**
   - **Inputs**: `domain` (Required), `depth?` (quick|thorough|deep), `max_results?` (1-50).
-  - **Outputs**: `{ discovered_codes: Deal[], metadata: object }`.
+  - **Outputs**: `{ domain: string, discovered_codes: any[], research_metadata: object }`.
+- **`list_categories`**
+  - **Inputs**: `include_descriptions?` (boolean).
+  - **Outputs**: `{ categories: { name, description, keywords }[] }`.
 - **`validate_deal`**
   - **Inputs**: `url` (Required), `check_status?` (boolean).
-  - **Outputs**: `{ valid: boolean, url: string, extracted_code: string|null, security_check: object }`.
+  - **Outputs**: `{ valid: boolean, url: string, extracted_code: string|null, domain: string, security_check: object, status_check: object }`.
 
 ### 3. System (`system.ts`)
-- **`get_stats`**: `days?` -> Aggregates (Active, Discovered, Expiring).
-- **`trigger_discovery`**: `void` -> `{ success: boolean, message: string }`.
+- **`get_stats`**
+  - **Inputs**: `days?` (number).
+  - **Outputs**: `{ totalActiveDeals, totalDealsDiscovered, topCategory, topSource, expiringNext7Days }`.
+- **`get_pipeline_status`**
+  - **Inputs**: `{}`.
+  - **Outputs**: `{ locked: boolean, last_run: object }`.
+- **`trigger_discovery`**
+  - **Inputs**: `{}`.
+  - **Outputs**: `{ success: boolean, message: string }`.
+- **`get_similar_deals`**
+  - **Inputs**: `code?`, `domain?`, `limit?` (1-50).
+  - **Outputs**: `{ reference: object, similar: any[], total: number }`.
+- **`get_deal_highlights`**
+  - **Inputs**: `limit?` (1-20).
+  - **Outputs**: `{ top_deals: any[], expiring_soon: any[], recently_added: any[] }`.
+- **`get_logs`**
+  - **Inputs**: `run_id?`, `count?` (1-1000).
+  - **Outputs**: `{ logs: any[], count: number }`.
 
 ### 4. User (`user.ts`)
-- **`report_deal`**: `code`, `reason` (broken|expired|fraudulent|inaccurate|duplicate) -> `{ success: boolean }`.
-- **`experience_deal`**: `code`, `success: boolean` -> `{ success: true, new_confidence: number }`.
-- **`natural_language_query`**: `query` (string) -> `{ results: Deal[], count: number }`.
+- **`report_deal`**
+  - **Inputs**: `code`, `reason` (broken|expired|fraudulent|inaccurate|duplicate), `comment?`.
+  - **Outputs**: `{ success: boolean, code: string, reason: string, status: string }`.
+- **`experience_deal`**
+  - **Inputs**: `code`, `success: boolean`, `comment?`.
+  - **Outputs**: `{ success: boolean, code: string, reported_success: boolean, new_confidence: number, total_experiences: number }`.
+- **`natural_language_query`**
+  - **Inputs**: `query` (Required), `limit?` (1-50), `includeSql?` (boolean).
+  - **Outputs**: `{ success: boolean, query: string, parsed: object, count: number, results: any[], suggestions: string[] }`.
 
 ## Operational Safety
 - **Idempotency**: Blocked by `DEALS_LOCK`. `run_id` required for all writes.
-- **Quarantine**: Auto-triggers if trust < 0.5 or reward > $500.
+- **Quarantine**: Auto-triggers if (High Reward AND Trust < 0.5) OR (Cash Reward > $500). High reward defined as Cash > $100 or Percent > 50%.
 - **Circuit Breakers**: API resilience via `worker/lib/circuit-breaker.ts`.
 - **D1 CAS Lock**: Atomic lock acquisition via `PipelineLock` Durable Object.
 - **Async Pipeline**: `/api/discover` returns 202 immediately; pipeline runs via `ctx.waitUntil()`.

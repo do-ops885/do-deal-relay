@@ -29,7 +29,7 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 1. **ANALYZE & STRATEGIZE (Phase 1)**
    - **Analyze-First**: Analyze repo structure and existing infrastructure deeply before asking ANY clarification questions. Infer from existing patterns.
    - **TRIZ/ADR**: Use TRIZ-based analysis for complex deal-discovery logic. Write an ADR in `plans/`.
-   - **CI Status**: Check CI status via `./scripts/agent-toolkit.sh doctor`. If not passing, "Always-Fix" protocol applies.
+   - **CI Status**: Check CI status via `./scripts/agent-toolkit.sh doctor`. If not passing, the **Always-Fix Policy** applies.
 
 2. **DECOMPOSE & PLAN (Phase 2)**
    - **Deep Planning Mode**: Enter Deep Planning Mode at start. Interaction required to confirm assumptions.
@@ -37,8 +37,8 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 
 3. **EXECUTE & COORDINATE (Phase 3)**
    - **Atomic commits**: Execute tasks systematically with atomic commits.
-   - **Always-Fix Pre-Existing Issues**: Agents MUST fix any existing CI check, lint warning, or quality-gate finding found in the current context. Zero tolerance for regressive or inherited failures.
-   - **Triage protocol for unfixable issues**: If a failure cannot be fixed (e.g., external dependency broken, requires human credential):
+   - **Always-Fix Policy**: Agents MUST fix any existing CI check, lint warning, or quality-gate finding found in the current context. Zero tolerance for regressive or inherited failures.
+   - **Triage Protocol for unfixable issues**: If a failure cannot be fixed (e.g., external dependency broken, requires human credential):
      1. Create an ADR in `plans/` documenting root cause and why it's out of scope.
      2. Create a GOAP task in `plans/GOAP_STATE.md` with status `blocked` and ADR link.
      3. Ensure the branch is otherwise green.
@@ -50,7 +50,7 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 
 ## Behavioral Rules
 1. **Analyze-First**: Exhaustive repository analysis before asking questions. Minimize unnecessary clarification requests.
-2. **Always-Fix**: Fix pre-existing issues in the current context immediately. No discussion, no deferral.
+2. **Always-Fix Policy**: Fix pre-existing issues in the current context immediately. No discussion, no deferral.
 3. **Agentic Abstention**: If environmental infeasibility makes further tool calls wasteful, agents MUST abstain per `.agents/skills/agentic-abstention/SKILL.md`.
 4. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`.
 5. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
@@ -127,6 +127,11 @@ Agents SHOULD use the unified toolkit for common operations:
 - **`0 9 * * *`**: Expirations and experience aggregation.
 - **`0 0 * * SUN`**: Weekly full validation sweep.
 
+## Performance & Commit Standards (Zero Slop)
+- **Zero Slop Directive**: Conversational filler, emojis, and markdown formatting in commit bodies are forbidden.
+- **PR Descriptions**: Use plain text with 'What', 'Why', and 'Impact' sections. Include metric improvements.
+- **Benchmarking**: Create micro-benchmarks in `scripts/`; execute via `npx tsx scripts/<script>.ts`.
+
 ## PR & Commit Instructions
 - **MANDATORY**: PR titles and Commit headers MUST follow `type(scope): subject`.
 - **Branching Workflow**: `develop` → `main` (production).
@@ -140,6 +145,7 @@ Agents SHOULD use the unified toolkit for common operations:
 - **Formatting**: Subject line max 72 chars, lowercase. Wrap body at 100 chars. footer max 1000 chars.
 
 ## Maintenance & Verification
+- **Skill Standardization**: Skills in `.agents/skills/` must include YAML frontmatter and `## Rationalizations`/`## Red Flags` sections.
 - **ADR Compliance**: Verify ADR registration and pattern adherence in `plans/`.
 - **Plan Management**: Archive plans in `plans/` older than 60 days to `plans/archive/`.
 - **Yamllint Safeguard**: New `.github/workflows/*.yml` files must include `# yamllint disable-line rule:truthy` on the `on:` line.
