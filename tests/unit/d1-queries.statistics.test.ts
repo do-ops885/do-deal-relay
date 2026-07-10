@@ -1,6 +1,6 @@
 /**
- * Comprehensive Unit Tests for D1 Queries
- * Tests all query functions with mocked D1Database
+ * Unit Tests for D1 Queries — Statistics
+ * getDealStats, getDealTimeSeries
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -11,23 +11,8 @@ import type {
 } from "@cloudflare/workers-types";
 import type { Deal, ReferralInput } from "../../worker/types";
 import {
-  searchDeals,
-  getSearchSuggestions,
-  getDealsByDomain,
-  getDealsByCategory,
-  getDomainsWithCounts,
-  getCategoriesWithCounts,
-  getActiveDeals,
-  getExpiringDeals,
-  getRecentDeals,
   getDealStats,
   getDealTimeSeries,
-  insertDeal,
-  insertReferralCode,
-  getReferralCodesByDeal,
-  getReferralCodeByString,
-  getTopDomains,
-  getReferralUsageStats,
   type DealSearchResult,
   type DealStats,
   type ExpiringDealRow,
@@ -38,7 +23,6 @@ import {
 // Mock Factory
 // ============================================================================
 
-// Create the statement mock factory
 const createMockStatement = () => ({
   bind: vi.fn().mockReturnThis(),
   all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
@@ -46,23 +30,17 @@ const createMockStatement = () => ({
   run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
 });
 
-// Global statement reference that gets reset in beforeEach
 let currentMockStatement = createMockStatement();
 let currentMockSession: ReturnType<typeof createMockSession> | null = null;
 
-const createMockSession = () => {
-  const session = {
-    prepare: vi.fn().mockImplementation(() => currentMockStatement),
-    getBookmark: vi.fn().mockReturnValue("test-bookmark"),
-  };
-  return session;
-};
+const createMockSession = () => ({
+  prepare: vi.fn().mockImplementation(() => currentMockStatement),
+  getBookmark: vi.fn().mockReturnValue("test-bookmark"),
+});
 
 const createMockD1 = () => {
-  // Reset the current statement and session
   currentMockStatement = createMockStatement();
   currentMockSession = createMockSession();
-
   return {
     prepare: vi.fn().mockImplementation(() => currentMockStatement),
     batch: vi.fn().mockResolvedValue([]),
@@ -71,91 +49,25 @@ const createMockD1 = () => {
   };
 };
 
-const createMockDeal = (
-  overrides: Partial<DealSearchResult> = {},
-): DealSearchResult => ({
-  id: 1,
-  deal_id: "deal-001",
-  title: "Test Deal",
-  description: "A test deal description",
-  domain: "example.com",
-  code: "TESTCODE",
-  url: "https://example.com/deal",
-  reward_type: "cash",
-  reward_value: 50,
-  reward_currency: "USD",
-  status: "active",
-  category: ["test", "demo"],
-  tags: ["new", "hot"],
-  confidence_score: 0.85,
-  ...overrides,
-});
-
-const createMockDealInput = (): Partial<Deal> & {
-  deal_id: string;
-  title: string;
-  url: string;
-  domain: string;
-} => ({
-  deal_id: "deal-002",
-  title: "New Test Deal",
-  description: "New deal description",
-  url: "https://newexample.com/deal",
-  domain: "newexample.com",
-  code: "NEWCODE",
-  source: {
-    url: "https://source.com",
-    domain: "source.com",
-    discovered_at: new Date().toISOString(),
-    trust_score: 0.8,
-  },
-  reward: {
-    type: "credit",
-    value: 100,
-    currency: "USD",
-    description: "$100 credit",
-  },
-  metadata: {
-    category: ["finance"],
-    tags: ["credit", "bonus"],
-    normalized_at: new Date().toISOString(),
-    confidence_score: 0.9,
-    status: "active",
-  },
-  expiry: {
-    date: new Date(Date.now() + 86400000).toISOString(),
-    confidence: 0.8,
-    type: "soft",
-  },
-  requirements: ["new user"],
-});
-
-const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
-  deal_id: 1,
-  url: "https://referral.com/code",
-  code: "REFCODE123",
-  domain: "referral.com",
-  description: "Referral code description",
-  source: "user_submitted",
-  status: "active",
-  submitted_at: new Date().toISOString(),
-  submitted_by: "user123",
-  metadata: {
-    title: "Referral Bonus",
-    reward_type: "cash",
-    reward_value: 25,
-    category: ["referral"],
-    tags: ["signup"],
-  },
-});
-
 // ============================================================================
 // Test Suite
 // ============================================================================
 
+describe("D1 Queries — Statistics", () => {
+  let mockDb: ReturnType<typeof createMockD1>;
+  const getMockStatement = () => currentMockStatement;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb = createMockD1();
+  });
+
+  // ========================================================================
+  // getDealStats
+  // ========================================================================
+
   describe("getDealStats", () => {
     it("should return comprehensive deal statistics", async () => {
-      // Setup mock responses for sequential queries in getDealStats
       getMockStatement()
         .run.mockResolvedValueOnce({
           results: [
@@ -231,6 +143,10 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
     });
   });
 
+  // ========================================================================
+  // getDealTimeSeries
+  // ========================================================================
+
   describe("getDealTimeSeries", () => {
     it("should return time-series data for specified days", async () => {
       const mockData = [
@@ -273,6 +189,4 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
       expect(results).toEqual([]);
     });
   });
-
-  // ============================================================================
-  // Insert/Update Tests
+});

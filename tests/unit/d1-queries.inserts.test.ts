@@ -1,6 +1,6 @@
 /**
- * Comprehensive Unit Tests for D1 Queries
- * Tests all query functions with mocked D1Database
+ * Unit Tests for D1 Queries — Mutations
+ * insertDeal, insertReferralCode, getReferralCodesByDeal, getReferralCodeByString
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -11,23 +11,10 @@ import type {
 } from "@cloudflare/workers-types";
 import type { Deal, ReferralInput } from "../../worker/types";
 import {
-  searchDeals,
-  getSearchSuggestions,
-  getDealsByDomain,
-  getDealsByCategory,
-  getDomainsWithCounts,
-  getCategoriesWithCounts,
-  getActiveDeals,
-  getExpiringDeals,
-  getRecentDeals,
-  getDealStats,
-  getDealTimeSeries,
   insertDeal,
   insertReferralCode,
   getReferralCodesByDeal,
   getReferralCodeByString,
-  getTopDomains,
-  getReferralUsageStats,
   type DealSearchResult,
   type DealStats,
   type ExpiringDealRow,
@@ -38,7 +25,6 @@ import {
 // Mock Factory
 // ============================================================================
 
-// Create the statement mock factory
 const createMockStatement = () => ({
   bind: vi.fn().mockReturnThis(),
   all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
@@ -46,23 +32,17 @@ const createMockStatement = () => ({
   run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
 });
 
-// Global statement reference that gets reset in beforeEach
 let currentMockStatement = createMockStatement();
 let currentMockSession: ReturnType<typeof createMockSession> | null = null;
 
-const createMockSession = () => {
-  const session = {
-    prepare: vi.fn().mockImplementation(() => currentMockStatement),
-    getBookmark: vi.fn().mockReturnValue("test-bookmark"),
-  };
-  return session;
-};
+const createMockSession = () => ({
+  prepare: vi.fn().mockImplementation(() => currentMockStatement),
+  getBookmark: vi.fn().mockReturnValue("test-bookmark"),
+});
 
 const createMockD1 = () => {
-  // Reset the current statement and session
   currentMockStatement = createMockStatement();
   currentMockSession = createMockSession();
-
   return {
     prepare: vi.fn().mockImplementation(() => currentMockStatement),
     batch: vi.fn().mockResolvedValue([]),
@@ -70,26 +50,6 @@ const createMockD1 = () => {
     withSession: vi.fn().mockImplementation(() => currentMockSession),
   };
 };
-
-const createMockDeal = (
-  overrides: Partial<DealSearchResult> = {},
-): DealSearchResult => ({
-  id: 1,
-  deal_id: "deal-001",
-  title: "Test Deal",
-  description: "A test deal description",
-  domain: "example.com",
-  code: "TESTCODE",
-  url: "https://example.com/deal",
-  reward_type: "cash",
-  reward_value: 50,
-  reward_currency: "USD",
-  status: "active",
-  category: ["test", "demo"],
-  tags: ["new", "hot"],
-  confidence_score: 0.85,
-  ...overrides,
-});
 
 const createMockDealInput = (): Partial<Deal> & {
   deal_id: string;
@@ -153,7 +113,27 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
 // Test Suite
 // ============================================================================
 
-  // ============================================================================
+describe("D1 Queries — Mutations", () => {
+  let mockDb: ReturnType<typeof createMockD1>;
+  const getMockStatement = () => currentMockStatement;
+  const getSessionPrepareCalls = () => {
+    if (!currentMockSession) return [];
+    return currentMockSession.prepare.mock.calls;
+  };
+  const getLastSessionQuery = () => {
+    const calls = getSessionPrepareCalls();
+    if (calls.length === 0) return null;
+    return calls[calls.length - 1]![0] as string;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb = createMockD1();
+  });
+
+  // ========================================================================
+  // insertDeal
+  // ========================================================================
 
   describe("insertDeal", () => {
     it("should insert a new deal successfully", async () => {
@@ -191,7 +171,6 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
     });
 
     it("should return error on insert failure", async () => {
-      // D1Client returns error when run() throws
       getMockStatement().run.mockRejectedValue(new Error("Duplicate deal_id"));
 
       const deal = createMockDealInput();
@@ -233,6 +212,10 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
     });
   });
 
+  // ========================================================================
+  // insertReferralCode
+  // ========================================================================
+
   describe("insertReferralCode", () => {
     it("should insert a referral code successfully", async () => {
       getMockStatement().run.mockResolvedValue({
@@ -271,7 +254,6 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
     });
 
     it("should return error on insert failure", async () => {
-      // D1Client returns error when run() throws
       getMockStatement().run.mockRejectedValue(
         new Error("Code already exists"),
       );
@@ -300,7 +282,146 @@ const createMockReferralInput = (): ReferralInput & { deal_id: number } => ({
     });
   });
 
-  // ============================================================================
-  // Referral Code Query Tests
-  // ============================================================================
+  // ========================================================================
+  // getReferralCodesByDeal
+  // ========================================================================
 
+  describe("getReferralCodesByDeal", () => {
+    it("should return referral codes for a deal", async () => {
+      const mockReferrals: ReferralCodeResult[] = [
+        {
+          id: 1,
+          code: "REF001",
+          deal_id: 1,
+          deal_title: "Test Deal",
+          domain: "test.com",
+          status: "active",
+          max_uses: 100,
+          current_uses: 50,
+          use_count: 50,
+        },
+      ];
+      getMockStatement().run.mockResolvedValue({
+        results: mockReferrals,
+        success: true,
+        meta: { rows_read: 1, rows_written: 0 },
+      });
+
+      const results = await getReferralCodesByDeal(
+        mockDb as unknown as D1Database,
+        1,
+      );
+
+      expect(results).toHaveLength(1);
+      expect(results[0]!.code).toBe("REF001");
+      expect(getMockStatement().bind).toHaveBeenCalledWith(1);
+    });
+
+    it("should filter by active status by default", async () => {
+      getMockStatement().run.mockResolvedValue({
+        results: [],
+        success: true,
+        meta: { rows_read: 0, rows_written: 0 },
+      });
+
+      await getReferralCodesByDeal(mockDb as unknown as D1Database, 1);
+
+      const prepareCall = getLastSessionQuery();
+      expect(prepareCall).toContain(
+        "rc.is_active = 1 AND rc.status = 'active'",
+      );
+    });
+
+    it("should include inactive when activeOnly is false", async () => {
+      getMockStatement().run.mockResolvedValue({
+        results: [],
+        success: true,
+        meta: { rows_read: 0, rows_written: 0 },
+      });
+
+      await getReferralCodesByDeal(mockDb as unknown as D1Database, 1, false);
+
+      const prepareCall = getLastSessionQuery();
+      expect(prepareCall).not.toContain(
+        "rc.is_active = 1 AND rc.status = 'active'",
+      );
+    });
+
+    it("should return empty array on error", async () => {
+      getMockStatement().run.mockRejectedValue(new Error("Database error"));
+
+      const results = await getReferralCodesByDeal(
+        mockDb as unknown as D1Database,
+        1,
+      );
+
+      expect(results).toEqual([]);
+    });
+  });
+
+  // ========================================================================
+  // getReferralCodeByString
+  // ========================================================================
+
+  describe("getReferralCodeByString", () => {
+    it("should return referral code by code string", async () => {
+      const mockReferral: ReferralCodeResult = {
+        id: 1,
+        code: "SPECIALCODE",
+        deal_id: 1,
+        deal_title: "Special Deal",
+        domain: "special.com",
+        status: "active",
+        max_uses: 100,
+        current_uses: 0,
+        use_count: 0,
+        expires_at: undefined,
+        days_remaining: undefined,
+      };
+      getMockStatement().first.mockResolvedValue(mockReferral);
+
+      const result = await getReferralCodeByString(
+        mockDb as unknown as D1Database,
+        "SPECIALCODE",
+      );
+
+      expect(result).not.toBeNull();
+      expect(result?.code).toBe("SPECIALCODE");
+      expect(getMockStatement().bind).toHaveBeenCalledWith("SPECIALCODE");
+    });
+
+    it("should be case-insensitive", async () => {
+      getMockStatement().first.mockResolvedValue(null);
+
+      await getReferralCodeByString(
+        mockDb as unknown as D1Database,
+        "lowercase",
+      );
+
+      const prepareCall = getLastSessionQuery();
+      expect(prepareCall).toContain("COLLATE NOCASE");
+    });
+
+    it("should return null when code not found", async () => {
+      getMockStatement().first.mockResolvedValue(null);
+
+      const result = await getReferralCodeByString(
+        mockDb as unknown as D1Database,
+        "NONEXISTENT",
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null on error", async () => {
+      getMockStatement().first.mockRejectedValue(new Error("Database error"));
+
+      const result = await getReferralCodeByString(
+        mockDb as unknown as D1Database,
+        "TEST",
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+});
