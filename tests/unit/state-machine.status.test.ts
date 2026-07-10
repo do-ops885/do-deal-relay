@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { executePipeline } from "../../worker/state-machine";
+import { validatedFetch } from "../../worker/lib/security";
 import {
   setGitHubToken,
   initGitHubCircuitBreaker,
 } from "../../worker/lib/github/index";
+import { createMockD1, seedMockLock, type LockRow } from "../fixtures/d1-mock";
 import type { Deal, Env, Snapshot } from "../../worker/types";
+
+// Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 // ============================================================================
 // Mock Factories
@@ -94,13 +101,17 @@ function makeKV(
 
 describe("State Machine - Status & Guards", () => {
   let mockKvStorage: Map<string, unknown>;
+  let mockD1Storage: Map<string, LockRow>;
   let mockEnv: Env;
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let _validatedFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockKvStorage = new Map();
-    vi.stubGlobal("fetch", vi.fn());
+    mockD1Storage = new Map();
+    vi.clearAllMocks();
+    _validatedFetch = vi.mocked(validatedFetch);
 
     // Suppress expected console warnings and errors during tests
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -118,7 +129,7 @@ describe("State Machine - Status & Guards", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: createMockD1(mockD1Storage),
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -132,7 +143,7 @@ describe("State Machine - Status & Guards", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
@@ -152,7 +163,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -165,7 +176,6 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
@@ -189,13 +199,12 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [],
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -222,7 +231,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -235,7 +244,6 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -261,7 +269,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -274,7 +282,6 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -295,7 +302,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -308,7 +315,6 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -316,13 +322,10 @@ describe("State Machine - Status & Guards", () => {
     });
 
     it("should handle concurrency abort", async () => {
-      // Pre-populate a valid lock
-      const futureDate = new Date(Date.now() + 600000).toISOString();
-      mockKvStorage.set("lock:pipeline:lock", {
+      // Pre-populate a valid lock in D1
+      seedMockLock(mockD1Storage, {
         run_id: "concurrent-run",
         trace_id: "concurrent-trace",
-        acquired_at: new Date().toISOString(),
-        expires_at: futureDate,
       });
 
       const result = await executePipeline(mockEnv);
@@ -344,8 +347,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockRejectedValue(new Error("Fatal error"));
-      vi.stubGlobal("fetch", mockFetch);
+      _validatedFetch.mockRejectedValue(new Error("Fatal error"));
 
       try {
         await executePipeline(mockEnv);
@@ -353,8 +355,9 @@ describe("State Machine - Status & Guards", () => {
         // Expected
       }
 
-      // Lock should still be released in finally block
-      expect(mockEnv.DEALS_LOCK.delete).toHaveBeenCalled();
+      // Lock should still be released in finally block (D1 batch called for release)
+      const d1Batch = mockEnv.DEALS_DB.batch as ReturnType<typeof vi.fn>;
+      expect(d1Batch).toHaveBeenCalled();
     });
   });
 
@@ -383,13 +386,12 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [],
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -410,7 +412,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -423,7 +425,6 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
@@ -447,7 +448,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -460,12 +461,11 @@ describe("State Machine - Status & Guards", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
       // Verify notification was attempted
-      expect(mockFetch).toHaveBeenCalled();
+      expect(_validatedFetch).toHaveBeenCalled();
     });
 
     it("should send notification on failure", async () => {
@@ -482,8 +482,7 @@ describe("State Machine - Status & Guards", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockRejectedValue(new Error("Fatal error"));
-      vi.stubGlobal("fetch", mockFetch);
+      _validatedFetch.mockRejectedValue(new Error("Fatal error"));
 
       await executePipeline(mockEnv);
 

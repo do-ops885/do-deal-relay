@@ -158,4 +158,23 @@
 
 ---
 
+## Test Infrastructure Fixes — 2026-07-10
+
+### Completed
+- ✅ **Shared D1 Mock**: Extracted `createMockD1`/`seedMockLock`/`seedExpiredMockLock` from `pipeline-lock-acquire.test.ts` into `tests/fixtures/d1-mock.ts` for reuse across test files
+- ✅ **State Machine Tests Fixed**: Updated `state-machine.status.test.ts` and `state-machine.pipeline.test.ts` to use proper D1 mock instead of `DEALS_DB: {} as any`. Locks were migrated from KV to D1 (ADR-017) but tests were never updated — previously-failing tests now pass
+- ✅ **SSRF DNS Resolution Fix**: `validatedFetch` in `security.ts` does DNS-over-HTTPS lookups via `cloudflare-dns.com` before the actual fetch. Unit tests that mock `fetch` globally had their mock responses consumed by the DNS queries. Fixed by mocking `validatedFetch` via `vi.mock("../../worker/lib/security")` in `github.test.ts`, `discover.parsing.test.ts`, and `discover.engine.test.ts` — previously-failing tests now pass
+- ✅ **D1 Mock Refactored**: `pipeline-lock-acquire.test.ts`, `pipeline-lock-maintenance.extend-status.test.ts`, `pipeline-lock-maintenance.lifecycle.test.ts` all use shared mock from `tests/fixtures/d1-mock.ts`
+
+### Impact
+- **36 pre-existing test failures now fixed** (8 state-machine D1 mock + 28 SSRF DNS bypass)
+- **122 tests passing** across 8 previously-failing test files
+- Zero regressions introduced
+
+### Pending
+- Open PR targeting `main` (files only exist on `main` — `develop` needs syncing first)
+- PR title: `fix(tests): resolve 36 test failures — D1 lock mock + SSRF bypass for validatedFetch`
+
+---
+
 *Cross-referenced from: `reports/analysis/codebase-audit-2026-04-04.md` (50 items), `reports/analysis/swarm-missing-implementations-2026-04-04.md` (31 items), `reports/analysis/feature-gap-analysis.md`, `plans/ADR-015-harness-cloudflare-2026-best-practices.md`, `plans/FOLLOWUP-*.md`, and `agents-docs/KNOWN_ISSUES.md`.*

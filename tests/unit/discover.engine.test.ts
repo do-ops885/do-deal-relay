@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { discover } from "../../worker/pipeline/discover";
+import { validatedFetch } from "../../worker/lib/security";
 import type {
   Deal,
   PipelineContext,
   Env,
   SourceConfig,
 } from "../../worker/types";
+
+// Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -64,13 +70,16 @@ describe("Discovery Engine", () => {
 
   let mockKvStorage: Map<string, unknown>;
 
+  let _validatedFetch: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     mockKvStorage = new Map();
-    vi.stubGlobal("fetch", vi.fn());
+    vi.clearAllMocks();
+    _validatedFetch = vi.mocked(validatedFetch);
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   const createMockEnv = (sources: SourceConfig[] = []): Env => {
@@ -136,7 +145,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -149,11 +158,10 @@ describe("Discovery Engine", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(_validatedFetch).toHaveBeenCalledTimes(1);
+      expect(_validatedFetch).toHaveBeenCalledWith(
         "https://active.com/page",
         expect.any(Object),
       );
@@ -165,11 +173,10 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: false,
         status: 500,
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
       expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -182,8 +189,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockRejectedValue(new Error("Timeout"));
-      vi.stubGlobal("fetch", mockFetch);
+      _validatedFetch.mockRejectedValue(new Error("Timeout"));
 
       const result = await discover(env, ctx);
       expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -196,7 +202,7 @@ describe("Discovery Engine", () => {
       });
       const env = createMockEnv([source]);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -209,7 +215,6 @@ describe("Discovery Engine", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await discover(env, ctx);
       expect(env.DEALS_SOURCES.put).toHaveBeenCalled();
@@ -221,8 +226,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
-      vi.stubGlobal("fetch", mockFetch);
+      _validatedFetch.mockRejectedValue(new Error("Network error"));
 
       await discover(env, ctx);
       expect(env.DEALS_SOURCES.put).toHaveBeenCalled();
@@ -235,8 +239,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi
-        .fn()
+      _validatedFetch
         .mockResolvedValueOnce({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
@@ -263,7 +266,6 @@ describe("Discovery Engine", () => {
               },
             ]),
         });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
       expect(result.deals).toHaveLength(2);
@@ -280,8 +282,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi
-        .fn()
+      _validatedFetch
         .mockResolvedValueOnce({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
@@ -292,14 +293,13 @@ describe("Discovery Engine", () => {
           headers: new Headers({ "content-type": "application/json" }),
           text: async () => "[]",
         });
-      vi.stubGlobal("fetch", mockFetch);
 
       await discover(env, ctx);
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(_validatedFetch).toHaveBeenCalledWith(
         "https://test.com/api/deals",
         expect.any(Object),
       );
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(_validatedFetch).toHaveBeenCalledWith(
         "https://test.com/referrals",
         expect.any(Object),
       );
@@ -311,15 +311,14 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await discover(env, ctx);
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(_validatedFetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           method: "GET",
@@ -340,7 +339,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -357,7 +356,6 @@ describe("Discovery Engine", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
       const deal = result.deals[0]!;
@@ -379,7 +377,7 @@ describe("Discovery Engine", () => {
       ];
       const env = createMockEnv(sources);
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -390,7 +388,6 @@ describe("Discovery Engine", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await discover(env, ctx);
       expect(result.errors.length).toBeGreaterThanOrEqual(0);
