@@ -2,9 +2,15 @@ import { Deal } from "../worker/types";
 
 function generateMockDeals(count: number): Deal[] {
   const deals: Deal[] = [];
-  const statuses: Array<"active" | "quarantined" | "rejected"> = ["active", "quarantined", "rejected"];
+  const statuses = ["active", "quarantined", "rejected"] as const;
 
   for (let i = 0; i < count; i++) {
+    const status = statuses[i % 3];
+    // Explicit guard for TypeScript due to noUncheckedIndexedAccess
+    if (!status) {
+      throw new Error("Invalid status index");
+    }
+
     deals.push({
       id: Math.random().toString(36).substring(2, 15),
       source: {
@@ -30,7 +36,7 @@ function generateMockDeals(count: number): Deal[] {
         tags: ["tag1"],
         normalized_at: new Date().toISOString(),
         confidence_score: Math.random(),
-        status: statuses[i % 3],
+        status: status,
       },
     });
   }
@@ -45,7 +51,8 @@ function benchStats() {
   const stats = {
     total: deals.length,
     active: deals.filter((d) => d.metadata.status === "active").length,
-    quarantined: deals.filter((d) => d.metadata.status === "quarantined").length,
+    quarantined: deals.filter((d) => d.metadata.status === "quarantined")
+      .length,
     rejected: deals.filter((d) => d.metadata.status === "rejected").length,
     duplicates: 0,
   };
@@ -80,7 +87,9 @@ function benchSortDirect() {
 console.log(`Running benchmark with ${DEALS_COUNT} deals...`);
 
 const statsResult = benchStats();
-console.log(`Stats calculation (filter x3): ${statsResult.duration.toFixed(4)}ms`);
+console.log(
+  `Stats calculation (filter x3): ${statsResult.duration.toFixed(4)}ms`,
+);
 
 const localeSort = benchSortLocaleCompare();
 console.log(`Sort (localeCompare): ${localeSort.toFixed(4)}ms`);
@@ -97,9 +106,14 @@ function benchStatsSinglePass() {
   let quarantined = 0;
   let rejected = 0;
   for (const d of deals) {
-    if (d.metadata.status === "active") active++;
-    else if (d.metadata.status === "quarantined") quarantined++;
-    else if (d.metadata.status === "rejected") rejected++;
+    const status = d.metadata.status;
+    if (status === "active") {
+      active++;
+    } else if (status === "quarantined") {
+      quarantined++;
+    } else if (status === "rejected") {
+      rejected++;
+    }
   }
   const stats = {
     total: deals.length,
@@ -113,7 +127,11 @@ function benchStatsSinglePass() {
 }
 
 const singlePassResult = benchStatsSinglePass();
-console.log(`Stats calculation (single pass): ${singlePassResult.duration.toFixed(4)}ms`);
+console.log(
+  `Stats calculation (single pass): ${singlePassResult.duration.toFixed(4)}ms`,
+);
 
-const statsImprovement = ((statsResult.duration - singlePassResult.duration) / statsResult.duration) * 100;
+const statsImprovement =
+  ((statsResult.duration - singlePassResult.duration) / statsResult.duration) *
+  100;
 console.log(`Stats improvement: ${statsImprovement.toFixed(2)}%`);
