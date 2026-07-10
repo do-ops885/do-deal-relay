@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-10
-**Version**: 0.8.0
-**Status**: Active — PR Resolution In Progress
+**Version**: 0.9.0
+**Status**: Active — All P0-P3 resolved, plans synced
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -31,22 +31,31 @@
 
 ---
 
-## PR Resolver Status — 2026-07-10
+## PR Resolution History — 2026-07-10
 
-### Resolution Summary
+All prior tracked PRs have been merged to main. No open PRs remain in this cycle.
 
-| PR | Title | Status | Fix Applied |
-|----|-------|--------|-------------|
-| #571 | test: split oversized test files under 500 lines | **IN PROGRESS** | Fixing 51 markdownlint issues |
-| #570 | perf(pipeline): optimize snapshot staging and hash generation | **PENDING** | Requires Codacy issue review |
-| #569 | feat(ux): add copy-to-clipboard functionality and improve semantic structure | **PENDING** | Requires Codacy issue review |
+### Merged PRs
 
-### Execution Plan
+| PR | Title | Commit | CI Status |
+|----|-------|--------|-----------|
+| #571 | test: split oversized test files under 500 lines | `c239211` | ✅ Pass |
+| #570 | perf(pipeline): optimize snapshot staging and hash generation | `5fb1381` | ✅ Pass |
+| #569 | feat(ux): add copy-to-clipboard functionality and improve semantic structure | `779122c` | ✅ Pass |
+| #567 | docs(agent): synchronize agent contracts and tool signatures | `096343a` | ✅ Pass |
+| #566 | docs(plans): Update GOAP_STATE to v0.7.0 — file splits and anti-pattern fixes | `f884970` | ✅ Pass |
 
-1. **PR #571**: Fix markdownlint issues → push → verify CI → merge
-2. **PR #570**: Review security issues → fix → push → verify CI → merge
-3. **PR #569**: Review security issues → fix → push → verify CI → merge
-4. **LOOP**: Check main CI → repeat if needed
+### Test Infrastructure Fix
+
+| PR / Commit | Title | Status |
+|-------------|-------|--------|
+| `2f290ca` | fix(tests): resolve 36 pre-existing test failures — D1 lock mock + SSRF bypass for validatedFetch | ✅ **MERGED to main** |
+
+All 36 pre-existing test failures fixed (8 state-machine D1 mock + 28 SSRF DNS bypass). 122 tests passing across 8 previously-failing test files.
+
+### SC2034 ShellCheck Fixes
+
+The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/split-oversized-tests` branch) have been verified as already applied on main through other commits. No additional fix needed.
 
 ---
 
@@ -171,9 +180,10 @@
 - **122 tests passing** across 8 previously-failing test files
 - Zero regressions introduced
 
-### Pending
-- Open PR targeting `main` (files only exist on `main` — `develop` needs syncing first)
-- PR title: `fix(tests): resolve 36 test failures — D1 lock mock + SSRF bypass for validatedFetch`
+### Status
+- ✅ All test infrastructure fixes committed to `main` via `2f290ca`
+- No pending PRs — fix is live on `main`
+- `develop` branch is 19 commits behind `main` — needs syncing as separate task
 
 ---
 
