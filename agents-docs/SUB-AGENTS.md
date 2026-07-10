@@ -1,7 +1,7 @@
 # Sub-Agents - Context Control Patterns
 
 > **Harness role: Context isolation mechanism (both guide and sensor).** Sub-agents act as **context firewalls** — preventing context rot by isolating intermediate tool calls from the parent. They are a key mechanism for managing the computational budget of the harness. See `agents-docs/HARNESS.md` for the full framework.
-
+>
 > Reference doc - not loaded by default.
 
 Sub-agents are **context firewalls**. The parent agent sees only what it wrote and the

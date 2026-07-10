@@ -1,7 +1,7 @@
 # Skills - Authoring Guide
 
 > **Harness role: Feedforward guides (computational + inferential).** Skills provide procedural knowledge that steers agents toward correct behavior before they act. Each skill encodes domain-specific patterns that increase the probability of first-attempt success. See `agents-docs/HARNESS.md` for the full framework.
-
+>
 > Single Source of Truth: AGENTS.md
 
 ## Canonical Location
