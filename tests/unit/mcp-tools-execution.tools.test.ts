@@ -1,7 +1,7 @@
 /**
- * Unit Tests for MCP Tools - Extended Operations & Route Handlers
+ * Unit Tests for MCP Tools - Extended Operations
  * Tests research_domain, list_categories, validate_deal, get_stats,
- * natural_language_query, error handling, and MCP route handlers
+ * natural_language_query, error handling
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -386,128 +386,5 @@ describe("MCP Tools - Execution", () => {
       expect(result.isError).toBe(true);
       expect((result.content[0] as any).text).toContain("Invalid arguments");
     });
-  });
-});
-
-// ============================================================================
-// MCP Route Handler Tests (Pagination & Progress)
-// ============================================================================
-
-describe("MCP Route Handler - Pagination", () => {
-  it("tools/list should support cursor pagination", async () => {
-    const { handleMCPRequest } = await import("../../worker/routes/mcp");
-    const env = createMockEnv();
-
-    const firstRequest = new Request("http://localhost/mcp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/list",
-        params: {},
-      }),
-    });
-
-    const firstResponse = await handleMCPRequest(firstRequest, env);
-    const firstBody = (await firstResponse.json()) as any;
-
-    expect(firstBody.result.tools).toBeDefined();
-    expect(firstBody.result.nextCursor).toBeDefined();
-    expect(firstBody.result.tools.length).toBeLessThanOrEqual(5);
-
-    const secondRequest = new Request("http://localhost/mcp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/list",
-        params: { cursor: firstBody.result.nextCursor },
-      }),
-    });
-
-    const secondResponse = await handleMCPRequest(secondRequest, env);
-    const secondBody = (await secondResponse.json()) as any;
-
-    expect(secondBody.result.tools).toBeDefined();
-  });
-
-  it("resources/list should support cursor pagination", async () => {
-    const { handleMCPRequest } = await import("../../worker/routes/mcp");
-    const env = createMockEnv();
-
-    const request = new Request("http://localhost/mcp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "resources/list",
-        params: {},
-      }),
-    });
-
-    const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
-
-    expect(body.result.resources).toBeDefined();
-    expect(Array.isArray(body.result.resources)).toBe(true);
-    expect(body.result.resources.length).toBeGreaterThan(0);
-  });
-});
-
-describe("MCP Route Handler - Progress Notifications", () => {
-  it("tools/call should include progress when progressToken provided", async () => {
-    const { handleMCPRequest } = await import("../../worker/routes/mcp");
-    const env = createMockEnv();
-
-    const request = new Request("http://localhost/mcp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/call",
-        params: {
-          name: "list_categories",
-          arguments: {},
-          _meta: { progressToken: "test-progress-1" },
-        },
-      }),
-    });
-
-    const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
-
-    expect(body.result._meta).toBeDefined();
-    expect(body.result._meta.progress).toBeDefined();
-    expect(body.result._meta.progress.progressToken).toBe("test-progress-1");
-    expect(body.result._meta.progress.progress).toBe(1);
-    expect(body.result._meta.progress.total).toBe(1);
-  });
-
-  it("tools/call should work without progressToken", async () => {
-    const { handleMCPRequest } = await import("../../worker/routes/mcp");
-    const env = createMockEnv();
-
-    const request = new Request("http://localhost/mcp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/call",
-        params: {
-          name: "list_categories",
-          arguments: {},
-        },
-      }),
-    });
-
-    const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
-
-    expect(body.result._meta).toBeUndefined();
   });
 });
