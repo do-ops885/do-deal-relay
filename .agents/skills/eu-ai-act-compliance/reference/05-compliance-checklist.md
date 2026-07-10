@@ -1,6 +1,6 @@
 # Compliance Checklist
 
-### Limited Risk Systems
+## Limited Risk Systems
 
 - [ ] **Transparency (Article 50.1)**
   - [ ] AI interaction disclosure implemented
@@ -16,9 +16,9 @@
   - [ ] Basic system capabilities documented
   - [ ] Known limitations disclosed
 
-### High Risk Systems
+## High Risk Systems
 
-#### Provider Obligations
+### Provider Obligations
 
 - [ ] **Risk Management (Article 9)**
   - [ ] Continuous iterative process established
@@ -81,7 +81,7 @@
   - [ ] Registered in EU database
   - [ ] Annex VIII information submitted
 
-#### Deployer Obligations
+### Deployer Obligations
 
 - [ ] Use system per instructions (Art. 26.1)
 - [ ] Assign competent human oversight (Art. 26.2)

@@ -12,6 +12,7 @@ description: >
 ---
 ## Part 1 — AI-Slop UI Patterns (Visual Design)
 ### The Canon of Slop
+
 | Pattern | What it looks like | Why it's slop |
 |---|---|---|
 | **Purple gradient hero** | `#7c3aed → #2563eb` on white bg | Default Tailwind AI app palette. Seen on 40,000+ products |
@@ -29,6 +30,7 @@ description: >
 | **Animated gradient text** | Moving rainbow or purple-blue sweep on headline text | Peak 2023 AI startup energy. Looks desperate |
 | **"Powered by AI" badge** | Small badge or chip somewhere on the UI | Adds nothing. Trust signal that signals nothing |
 | **Dashboard with 6+ metric cards** | Big number, small label, trend arrow | Data theater. Usually none of it is actionable |
+
 ### What to Do Instead
 - **Typography first.** Choose a font combination that is specific to the context. Research type history. Use a serif with character for body, a grotesque with optical quirks for display — or invert. Never use the font "because it's clean."
 - **Commit to one extreme.** Brutally minimal OR maximally dense. The middle is where slop lives.
@@ -40,6 +42,7 @@ description: >
 ---
 ## Part 2 — AI-Slop UX Patterns (Interaction & Flow)
 ### The Canon of Slop
+
 | Pattern | What it looks like | Why it's slop |
 |---|---|---|
 | **Onboarding modal on first load** | "Welcome to [Product]! Let's get you set up 🎉" | Interrupts before the user has context. Nobody reads it. |
@@ -55,7 +58,9 @@ description: >
 | **Every action requires a reload** | Click save → full page refresh → scroll lost | 2012 called |
 | **Hamburger menu on desktop** | Hidden navigation because mobile-first was misread | Discovery failure. Punishes exploration. |
 | **Hover states only** | Functionality only revealed on hover | Mobile users, keyboard users, discoverers all fail |
+
 ### Responsive Anti-Patterns
+
 | Pattern | What it looks like | Why it's slop |
 |---|---|---|
 | **Hamburger menu on desktop** | Hidden navigation on large screens | Discovery failure. Users can't explore. |
@@ -64,13 +69,17 @@ description: >
 | **Hidden primary actions** | Important buttons only visible on hover/desktop | Mobile users can't complete tasks |
 | **Intrusive popups on mobile** | Modal that covers entire screen, hard to dismiss | Blocks content, frustrating |
 | **Inconsistent navigation** | Different nav structure per viewport | Users get lost when resizing |
+
 ### Responsive Best Practices
+
 | Viewport | Navigation | Layout |
 |---|---|---|
 | **Mobile (< 640px)** | Bottom tab bar OR slide-out drawer | Stacked, full-width |
 | **Tablet (640-1024px)** | Horizontal nav, collapsible sidebar | Hybrid, 2-column max |
 | **Desktop (> 1024px)** | Persistent sidebar OR top nav | Full sidebar (280px) |
+
 **Always verify:**
+
 1. Touch targets ≥ 44px on mobile
 2. Primary actions visible without scrolling
 3. Navigation accessible at all sizes
@@ -119,6 +128,7 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline
 #### The Empathy Performance
 > "I understand how frustrating it can be when things don't work as expected. I want to assure you that we take your concerns very seriously."
 #### Product Copy Sins (Landing Pages)
+
 | Sin | Example | Fix |
 |---|---|---|
 | Features listed as verbs | "Collaborate, Create, Ship" | What does it actually DO? |
@@ -126,7 +136,9 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline
 | Vague problem statement | "Work is broken" | Whose work? Broken how? |
 | The "journey" metaphor | "Begin your journey today" | It's software, not Tolkien |
 | Future-tense promises | "Will change the way you think about X" | Show it changing it. Now. |
+
 #### UX Writing Sins
+
 | Sin | Example | Fix |
 |---|---|---|
 | Error: blame the user | "Invalid input" | "Email addresses need an @ sign" |
@@ -135,6 +147,7 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline
 | Success: announce the action | "Saved!" | "Changes saved — live in 30 seconds" |
 | Placeholder as label | Input with placeholder "Email" and no label | Use a real label. Always. |
 | Confirmation copy that restates the question | "Are you sure you want to delete? This will delete the item." | "Delete [Item Name]? This can't be undone." |
+
 ---
 ## Part 4 — Audit Workflow
 1. **Scan for patterns.** Check all three canons (UI, UX, Copy). List every match by name.
@@ -169,11 +182,13 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline
 - `references/copy-rewrites.md` — Before/after rewrites for the most common AI copy sins
 - `references/inspiration.md` — Design references, typographers, movements to study
 ## Rationalizations
+
 | Concern | Counter-Argument |
 |---------|------------------|
 | "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
 | "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
 | "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+
 ## Red Flags
 - [ ] Starting execution before a plan is approved.
 - [ ] Making multiple unrelated changes in a single commit.

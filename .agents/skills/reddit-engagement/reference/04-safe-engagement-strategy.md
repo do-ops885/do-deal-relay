@@ -1,6 +1,6 @@
 # Safe Engagement Strategy
 
-### Phase 1: Foundation (Days 1-30)
+## Phase 1: Foundation (Days 1-30)
 
 **No promotional activity. Karma building only.**
 
@@ -22,7 +22,7 @@ const phase1 = {
 };
 ```
 
-### Phase 2: Integration (Days 31-60)
+## Phase 2: Integration (Days 31-60)
 
 **Community integration with minimal mentions.**
 
@@ -38,7 +38,7 @@ const phase2 = {
 };
 ```
 
-### Phase 3: Strategic Promotion (Day 90+)
+## Phase 3: Strategic Promotion (Day 90+)
 
 **Full promotion with established reputation.**
 

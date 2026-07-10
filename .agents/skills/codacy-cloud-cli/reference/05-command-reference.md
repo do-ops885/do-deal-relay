@@ -1,6 +1,6 @@
 # Command reference
 
-### Account & repositories
+## Account & repositories
 
 ```bash
 # Authenticated user and organizations
@@ -22,7 +22,7 @@ codacy repository gh my-org my-repo --link-standard <id> # link a coding standar
 codacy repository gh my-org my-repo --unlink-standard <id> # unlink a coding standard
 ```
 
-### Issues (code quality)
+## Issues (code quality)
 
 ```bash
 # List issues with optional filters
@@ -59,7 +59,7 @@ Filters: `--branch`, `--patterns`, `--severities` (Critical,High,Medium,Minor), 
 
 Ignore reasons: `AcceptedUse` (default) | `FalsePositive` | `NotExploitable` | `TestCode` | `ExternalCode`
 
-### Security findings
+## Security findings
 
 ```bash
 # List findings
@@ -82,7 +82,7 @@ Filters: `--search`, `--severities` (Critical,High,Medium,Low), `--statuses` (Ov
 
 Ignore reasons: `AcceptedUse` (default) | `FalsePositive` | `NotExploitable` | `TestCode` | `ExternalCode`
 
-### Pull requests
+## Pull requests
 
 ```bash
 # PR summary (status, issues, coverage, changed files)
@@ -107,7 +107,7 @@ codacy pull-request gh my-org my-repo <prNumber> --reanalyze
 codacy pull-request gh my-org my-repo <prNumber> --reanalyze-and-wait # trigger and wait for completion
 ```
 
-### Tools & patterns
+## Tools & patterns
 
 ```bash
 # List all tools (enabled/disabled)
@@ -148,7 +148,7 @@ codacy patterns gh my-org my-repo semgrep --search HttpGetHTTPRequest
 codacy patterns gh my-org my-repo pylint --search W0123
 ```
 
-### Importing configuration
+## Importing configuration
 
 ```bash
 # Import tool and pattern configuration from a local config file

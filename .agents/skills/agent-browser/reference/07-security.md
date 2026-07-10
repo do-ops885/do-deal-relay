@@ -2,7 +2,7 @@
 
 All security features are opt-in. By default, agent-browser imposes no restrictions on navigation, actions, or output.
 
-### Content Boundaries (Recommended for AI Agents)
+## Content Boundaries (Recommended for AI Agents)
 
 Enable `--content-boundaries` to wrap page-sourced output in markers that help LLMs distinguish tool output from untrusted page content:
 

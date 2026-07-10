@@ -1,6 +1,6 @@
 # Risk Mitigation
 
-### Anti-AI Detection
+## Anti-AI Detection
 
 ```typescript
 async function detectAntiAISentiment(subreddit: string): Promise<Risk> {
@@ -23,7 +23,7 @@ async function detectAntiAISentiment(subreddit: string): Promise<Risk> {
 }
 ```
 
-### Malicious Actor Detection
+## Malicious Actor Detection
 
 ```typescript
 async function detectMaliciousActivity(subreddit: string): Promise<Risk> {
@@ -43,7 +43,7 @@ async function detectMaliciousActivity(subreddit: string): Promise<Risk> {
 }
 ```
 
-### Pre-Posting Checklist
+## Pre-Posting Checklist
 
 **Before ANY promotional activity:**
 

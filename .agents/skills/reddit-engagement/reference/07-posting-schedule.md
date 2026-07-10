@@ -1,13 +1,13 @@
 # Posting Schedule
 
-### Optimal Timing
+## Optimal Timing
 
 - **Best Days:** Tuesday-Thursday
 - **Best Time:** 6-8 AM EST
 - **Critical First 2 Hours:** Respond to EVERY comment
 - **Active Engagement:** 67% more upvotes with creator participation
 
-### Cross-Posting Strategy
+## Cross-Posting Strategy
 
 ```typescript
 const safeCrossPosting = {

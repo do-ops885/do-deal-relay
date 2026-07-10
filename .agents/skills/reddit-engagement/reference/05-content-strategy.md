@@ -1,6 +1,6 @@
 # Content Strategy
 
-### High-Performing Post Types
+## High-Performing Post Types
 
 1. **Technical Tutorials**
    - "How I built X using Y"
@@ -21,7 +21,7 @@
    - Free resources that drive awareness
    - Code examples and demos
 
-### Effective Disclosure Templates
+## Effective Disclosure Templates
 
 **Always disclose your affiliation:**
 
@@ -34,7 +34,7 @@ after struggling with [pain point]. Happy to answer questions!"
 "Shameless plug, but... [humble approach]"
 ```
 
-### Value-First Comment Pattern
+## Value-First Comment Pattern
 
 ```
 When someone asks "How do you discover AI/tech deals?"

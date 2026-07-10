@@ -13,7 +13,7 @@
 | Inspect shows tool as `bundled` but it fails | Bundled library tool has dependency issue | Check `--log-level debug` output; may need `npm rebuild` |
 | Different results than Codacy Cloud | Different tool versions or pattern config | Use `init --remote` to sync config; check tool versions in inspect output |
 
-### Reading logs
+## Reading logs
 
 Logs are written to `~/.codacy/logs/` in JSON lines format:
 

@@ -1,6 +1,6 @@
 # Common Patterns
 
-### Form Submission
+## Form Submission
 
 ```bash
 agent-browser open https://example.com/signup

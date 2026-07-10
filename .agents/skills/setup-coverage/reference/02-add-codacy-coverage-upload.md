@@ -5,7 +5,7 @@
 
 Add a coverage upload step to the CI/CD pipeline **after** the test/coverage step.
 
-#### Authentication
+## Authentication
 
 The upload requires one of:
 
@@ -24,7 +24,7 @@ The upload requires one of:
 
 Always remind the user to add the appropriate token as a CI/CD secret.
 
-#### Upload command
+### Upload command
 
 The standard upload command:
 
@@ -54,7 +54,7 @@ bash <(curl -Ls https://coverage.codacy.com/get.sh) report --partial -r report2.
 bash <(curl -Ls https://coverage.codacy.com/get.sh) final
 ```
 
-#### CI/CD-specific integration
+### CI/CD-specific integration
 
 **GitHub Actions:**
 

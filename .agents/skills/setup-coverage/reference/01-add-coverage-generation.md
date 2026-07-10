@@ -5,7 +5,7 @@
 
 Add the minimal configuration to generate coverage reports in a format Codacy supports. Choose the format based on the language and tooling. See [references/coverage-formats.md](references/coverage-formats.md) for the full format reference.
 
-#### Language-specific setup
+## Language-specific setup
 
 **JavaScript/TypeScript (Jest):**
 

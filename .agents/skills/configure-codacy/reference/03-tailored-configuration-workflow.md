@@ -12,11 +12,11 @@ Configuration Progress:
 - [ ] Step 7: Clean-up
 ```
 
-### Step 0: Check environment and capture baseline
+## Step 0: Check environment and capture baseline
 
 This step determines the starting point and captures the BEFORE metrics for the final summary. The flow depends on two conditions: whether the repo is on Codacy Cloud, and whether a local config already exists.
 
-#### 0a. Create temp directory and check Codacy Cloud status
+### 0a. Create temp directory and check Codacy Cloud status
 
 Create the temporary directory for intermediate analysis files:
 
@@ -46,7 +46,7 @@ codacy tools --output json 2>/dev/null | jq '[.[] | select(.settings.isEnabled =
 
 If it fails (repo not on Codacy, no auth, or no Cloud CLI), note that cloud features will be skipped — the local workflow is fully self-contained. Set the invocation mode to local-only (see "Invocation modes" section).
 
-#### 0b. Capture baseline (BEFORE reference)
+### 0b. Capture baseline (BEFORE reference)
 
 Branch based on Cloud status and local config existence. The baseline captured here is the true BEFORE reference for the summary in Step 5.
 
@@ -116,7 +116,7 @@ Record BEFORE as unconfigured: 0 patterns, 0 tools, 0 issues, `null` runtime. No
 
 Save the BEFORE metrics from whichever track ran. The broad config metrics from Steps 2-3 are internal only — they are NOT reported to the user.
 
-#### 0c. Cloud noise pre-evaluation (Track A only)
+### 0c. Cloud noise pre-evaluation (Track A only)
 
 If the Cloud overview was fetched (`.codacy/tmp/codacy-cloud-overview.json` exists), analyze it now to identify patterns that are already known to be noisy based on Cloud production data. This saves time by pre-disabling known noise before running local analysis.
 
@@ -147,7 +147,7 @@ jq '[.overview.patterns[] | select(.potentialFalsePositives > 0) | {id, title, t
 
 Store both lists for use in Steps 2 and 6. This is a pre-filter — Step 4 will perform deeper noise evaluation on the local analysis results.
 
-### Step 1: Discover repository stack
+## Step 1: Discover repository stack
 
 Run discovery to understand the repository's languages, frameworks, and libraries:
 
@@ -163,7 +163,7 @@ Parse the output to understand:
 
 Note: The Codacy Cloud check already happened in Step 0.
 
-### Step 2: Initialize auto-tuned configuration
+## Step 2: Initialize auto-tuned configuration
 
 First, remove the existing `.codacy/codacy.config.json` if any (the backup copy was already stored in Step 0):
 
@@ -210,7 +210,7 @@ jq '[.tools[].patterns | length] | add' .codacy/codacy.config.json
 jq '.tools | length' .codacy/codacy.config.json
 ```
 
-### Step 3: Run broad-config baseline analysis
+## Step 3: Run broad-config baseline analysis
 
 Run analysis with the broad config to see the full issue landscape. This is an internal step for tuning decisions — the BEFORE reference for the user-facing summary comes from Step 0.
 
@@ -249,13 +249,13 @@ jq '[.issues | group_by(.filePath) | .[] | {filePath: .[0].filePath, count: leng
 jq '.toolResults | map({toolId, status, issueCount, durationMs, filesAnalyzed})' .codacy/tmp/codacy-baseline.json
 ```
 
-### Step 4: Smart noise evaluation and tuning
+## Step 4: Smart noise evaluation and tuning
 
 This is the core of the skill. Work through the baseline results using a structured, context-aware decision framework.
 
 **Cloud overview as a cross-reference (Track A only):** If `.codacy/tmp/codacy-cloud-overview.json` exists (fetched in Step 0b), use its per-pattern issue counts and false positive data as a cross-reference against the local baseline. The cloud overview reflects the full repository analysis on Codacy (production truth), while the local baseline only covers files the local CLI can analyze. When a pattern shows high counts in the cloud overview but low counts locally, it may indicate cloud-only tool coverage — factor this into deduplication and disable decisions (don't disable a pattern that is still needed on Cloud). The false positive counts from the overview are especially valuable for rule 7 below — patterns with high false-positive ratios on Cloud are likely producing the same unreliable results locally.
 
-#### 4a. Establish the noise floor
+### 4a. Establish the noise floor
 
 Calculate the percentage of Critical+High issues (severity `"Error"` or `"High"`) relative to total issues. This determines how aggressively to cut lower-priority categories:
 
@@ -268,7 +268,7 @@ Calculate the percentage of Critical+High issues (severity `"Error"` or `"High"`
 
 The same logic applies proportionally to other low-priority categories (Comprehensibility, Compatibility) when critical issues dominate. Use judgment.
 
-#### 4b. Pattern-level decisions
+### 4b. Pattern-level decisions
 
 For each pattern in the baseline results, sorted by issue count (highest first), apply this priority chain:
 
@@ -300,7 +300,7 @@ For each pattern in the baseline results, sorted by issue count (highest first),
    Tuning preserves coverage while reducing noise.
 9. **File exclusion over disabling.** When a pattern is valid but fires on files where it doesn't apply, exclude the files rather than disabling the pattern. The pattern stays active for real source code.
 
-#### 4c. File-level evaluation
+### 4c. File-level evaluation
 
 Review the top files by issue count from the baseline results (Step 3). Exclusions must be **strictly data-driven** — only add exclusions for files/paths that actually appear in the baseline results and are producing meaningful noise.
 
@@ -319,7 +319,7 @@ Review the top files by issue count from the baseline results (Step 3). Exclusio
 
 Every exclusion must be justified by actual results. Do NOT maintain a prescriptive checklist of "always exclude these paths."
 
-#### 4d. Tool-level evaluation
+### 4d. Tool-level evaluation
 
 For each tool in the config:
 
@@ -327,7 +327,7 @@ For each tool in the config:
 - **Failed to run?** Check `toolResults[].status`. If `"failed"`, check `errors[]` for the reason. Keep the tool in the config (it may work after fixing the root cause) but note it in the summary.
 - **Zero issues?** A tool with zero issues is not noise — it's either confirming code quality or not finding its target files. Leave it enabled unless it's clearly irrelevant to the stack.
 
-#### 4e. Lost patterns recovery
+### 4e. Lost patterns recovery
 
 Compare the baseline analysis results (from Step 0) against the current `.codacy/codacy.config.json` after tuning. For each pattern that:
 
@@ -339,7 +339,7 @@ Compare the baseline analysis results (from Step 0) against the current `.codacy
 
 Skip this step for Track C (no prior config — nothing to recover).
 
-#### Apply all changes
+### Apply all changes
 
 Edit `.codacy/codacy.config.json` with all decisions from 4a–4e. Track every change for the summary in Step 5:
 
@@ -352,7 +352,7 @@ Edit `.codacy/codacy.config.json` with all decisions from 4a–4e. Track every c
 
 **Security guardrail — mandatory check before saving.** Before writing the updated config, verify that every **security concern** (e.g., hardcoded secrets, SQL injection, XSS, path traversal, open redirects) is still covered by at least one active pattern with `category == "Security"`. A security pattern may be disabled only if another active pattern from a different tool covers the same concern (cross-tool deduplication per rule 2 in Step 4b). If any concern has lost all coverage, re-enable the most precise pattern for that concern.
 
-#### 4f. Validation pass
+### 4f. Validation pass
 
 Run analysis with the tuned config to validate the improvement:
 
@@ -382,9 +382,9 @@ jq '.metadata.durationMs' .codacy/tmp/codacy-tuned.json
 - If issues increased or didn't decrease meaningfully (<20% reduction), review the tuning decisions and re-iterate once: go back to "Do AI analysis of the results" (Step 4b) with the updated results, apply further changes, and re-run this validation.
 - The goal is that every remaining issue is worth looking at.
 
-### Step 5: Show local results
+## Step 5: Show local results
 
-#### 5a. Generate summary JSON
+### 5a. Generate summary JSON
 
 Write `.codacy/configure-codacy-summary.json` with the before/after metrics, a detailed change log, and supporting context. Runtime values are in milliseconds (raw `durationMs` from the CLI).
 
@@ -452,7 +452,7 @@ Write `.codacy/configure-codacy-summary.json` with the before/after metrics, a d
 }
 ```
 
-#### 5b. Present local results
+### 5b. Present local results
 
 Display a clear before/after summary to the user:
 
@@ -465,7 +465,7 @@ Display a clear before/after summary to the user:
 7. **Warnings** — failed tools, Semgrep parsing errors, tools with 0 files matched, any other issues encountered
 8. **Local config file limitations** — for tools with `useLocalConfigurationFile: true`, note that their issues are controlled by the project's own config file, not by Codacy's managed patterns.
 
-#### 5c. Generate `.codacy.yaml` for Cloud file exclusions
+### 5c. Generate `.codacy.yaml` for Cloud file exclusions
 
 File exclusions in `.codacy/codacy.config.json` only apply to local analysis. Codacy Cloud does not support importing file exclusions via the API or CLI. To apply file exclusions on Codacy Cloud, they must be defined in a `.codacy.yaml` file committed to the repository root.
 
@@ -496,13 +496,13 @@ engines:
 
 If no new file exclusions were added, skip this step and leave `codacyYaml` as `null`.
 
-### Step 6: Cloud import (conditional)
+## Step 6: Cloud import (conditional)
 
-#### 6a. Check Cloud status
+### 6a. Check Cloud status
 
 If the repo is NOT on Codacy Cloud (from Step 0): skip this step entirely. Note in the results: "The configuration is ready for local analysis."
 
-#### 6b. Determine import behavior
+### 6b. Determine import behavior
 
 Based on invocation mode:
 
@@ -510,7 +510,7 @@ Based on invocation mode:
 2. **Interactive mode** (default): Ask the user whether to import.
 3. **Local-only mode**: Already handled in 6a (skipped).
 
-#### 6c. Cloud-only tools noise evaluation
+### 6c. Cloud-only tools noise evaluation
 
 Only if cloud-only tools had issues fetched in Step 0:
 
@@ -520,7 +520,7 @@ Apply the same noise evaluation framework from Step 4 to the cloud-fetched issue
 - If not tweakable → try to disable it: `codacy pattern <toolName> <patternId> --disable`
 - If disable fails (Coding Standard enforcement) → note it for the results
 
-#### 6d. Import local config
+### 6d. Import local config
 
 ```bash
 codacy tools --import .codacy/codacy.config.json -y
@@ -533,7 +533,7 @@ If the import encounters Coding Standard conflicts (409 errors):
 
 **NEVER unlink Coding Standards without explicit user consent or the "force" invocation flag.**
 
-#### 6e. Post-import Cloud verification
+### 6e. Post-import Cloud verification
 
 After a successful import, trigger reanalysis and wait for Cloud results:
 
@@ -543,11 +543,11 @@ codacy repository --reanalyze-and-wait -o json > .codacy/tmp/codacy-reanalysis-d
 
 Fetch fresh Cloud overview and evaluate. Compare against pre-import overview. Record Cloud verification results in the summary under `cloudVerification`.
 
-#### 6f. Show Cloud import results
+### 6f. Show Cloud import results
 
 Update the `importResults` field in `.codacy/configure-codacy-summary.json` with the import outcome and present results to the user.
 
-### Step 7: Clean-up
+## Step 7: Clean-up
 
 Remove the temporary directory and all intermediate files:
 

@@ -9,7 +9,7 @@ The CLI uses two managed locations:
 
 The analyzed repository is **never modified outside of `.codacy/`**. The `.codacy/.gitignore` is auto-created to exclude `generated/`, logs, and other transient files.
 
-### Key files
+## Key files
 
 - `.codacy/codacy.config.json` — Main configuration: tools, patterns, excludes, metadata. See [references/config-format.md](references/config-format.md) for the full schema
 - `.codacy/generated/<ToolId>/` — Materialized tool-specific configs (gitignored)

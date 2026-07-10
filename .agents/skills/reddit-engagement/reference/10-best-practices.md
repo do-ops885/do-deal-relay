@@ -1,6 +1,6 @@
 # Best Practices
 
-### DO:
+## DO:
 
 ✓ Research communities thoroughly before engaging
 ✓ Build karma and reputation first (30+ days minimum)
@@ -11,7 +11,7 @@
 ✓ Focus on problem-solving, not product features
 ✓ Be humble and transparent about limitations
 
-### DON'T:
+## DON'T:
 
 ✗ Post without explicit user authorization
 ✗ Engage with anti-AI or toxic communities

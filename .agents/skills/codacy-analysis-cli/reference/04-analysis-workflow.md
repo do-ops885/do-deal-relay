@@ -9,7 +9,7 @@ Analysis Progress:
 - [ ] Step 5: Interpret results
 ```
 
-### Step 1: Initialize configuration
+## Step 1: Initialize configuration
 
 Choose the init mode based on the repository's situation:
 
@@ -52,7 +52,7 @@ codacy-analysis init /path/to/repo
 
 All modes create `.codacy/codacy.config.json` in the repo root (or the file passed to `--config-file`, see [Working with alternative configuration files](#working-with-alternative-configuration-files)). If a `.codacy.yaml` (or `.codacy.yml`) exists, its `exclude_paths` are automatically merged into the config.
 
-#### Updating an existing configuration
+### Updating an existing configuration
 
 When the config was initialized with `--remote` and you want to re-sync with the remote Codacy configuration:
 
@@ -64,7 +64,7 @@ This re-fetches the configuration from the same Codacy repository used during in
 
 **Only use `update-config` with `--remote` configs.** For configs initialized with `--default` or bare `init`, `update-config` re-runs the original init mode, which would overwrite any manual changes you've made to the config file.
 
-#### Working with alternative configuration files
+### Working with alternative configuration files
 
 By default every command reads and writes `.codacy/codacy.config.json`. Pass `--config-file <path>` to `init`, `analyze`, and `update-config` to use a different file. This lets you keep several configurations side by side and **test them in parallel** without overwriting the main config:
 
@@ -81,7 +81,7 @@ codacy-analysis update-config --config-file .codacy/auto-config.json
 
 `--config-file` is honored by `init` (where to create the config), `analyze` (which config to run with), and `update-config` (which config to regenerate). It defaults to `.codacy/codacy.config.json` everywhere.
 
-#### Combining configuration files (`config` command)
+### Combining configuration files (`config` command)
 
 The `config` command performs set operations on two config files, combining their tools and patterns. Use it to reconcile experimental configs with a baseline:
 
@@ -102,7 +102,7 @@ codacy-analysis config --diff --source baseline.json --dest .codacy/codacy.confi
 
 **`--dest` is overwritten in place.** Point it at a throwaway file (or back up the original first) if you need to preserve the destination config.
 
-#### Discovering the repository stack
+### Discovering the repository stack
 
 Use `discover` to auto-detect the repository's languages, frameworks, and libraries before initialization:
 
@@ -112,7 +112,7 @@ codacy-analysis discover --output-format json --output /tmp/codacy-discover.json
 
 The output lists detected languages, frameworks, and the tools that apply. Use this to inform which tools and patterns to enable.
 
-#### Listing supported tools
+### Listing supported tools
 
 Use `info` to see which tools are available in the local Analysis CLI:
 
@@ -122,7 +122,7 @@ codacy-analysis info
 
 This lists all tools the CLI can run locally. Compare against tools enabled in Codacy Cloud to identify cloud-only tools that the local CLI cannot run.
 
-### Step 2: Inspect tool availability (dry-run)
+## Step 2: Inspect tool availability (dry-run)
 
 Before running analysis, check which tools are available and which are missing:
 
@@ -147,7 +147,7 @@ codacy-analysis analyze --inspect --output-format json | jq '.capability.unavail
 - If all needed tools are in `capability.ready` → skip to Step 4
 - If tools are in `capability.unavailable` → proceed to Step 3
 
-### Step 3: Install missing dependencies
+## Step 3: Install missing dependencies
 
 **Preferred: use `--install-dependencies`** — installs tools into the `.codacy/` / `~/.codacy/` scope without affecting the rest of the machine:
 
@@ -159,17 +159,17 @@ This installs missing tools and then runs analysis in a single command. The inst
 
 **Last resort: manual installation** — if `--install-dependencies` fails for a specific tool, install it manually on the machine (e.g., `brew install shellcheck`, `pip install ruff`). See [references/supported-tools.md](references/supported-tools.md) for tool details.
 
-### Step 4: Run analysis
+## Step 4: Run analysis
 
 Always use `--output-format json` for agentic workflows.
 
-#### Analyze the entire repository
+### Analyze the entire repository
 
 ```bash
 codacy-analysis analyze --output-format json
 ```
 
-#### Analyze specific files or paths
+### Analyze specific files or paths
 
 ```bash
 # Single file (positional argument)
@@ -185,7 +185,7 @@ codacy-analysis analyze --files "src/**/*.ts" --output-format json
 codacy-analysis analyze ./src/api/ --output-format json
 ```
 
-#### Restrict to specific tools
+### Restrict to specific tools
 
 Tool IDs are **case-sensitive**. See [references/supported-tools.md](references/supported-tools.md) for the full list.
 
@@ -200,7 +200,7 @@ codacy-analysis analyze --tool Ruff --tool Bandit --output-format json
 codacy-analysis analyze --tool ESLint9 --files "src/**/*.ts" --output-format json
 ```
 
-#### Run with an alternative configuration file
+### Run with an alternative configuration file
 
 By default `analyze` reads `.codacy/codacy.config.json`. Pass `--config-file <path>` to run with a different config — useful for comparing configurations side by side (see [Working with alternative configuration files](#working-with-alternative-configuration-files)):
 
@@ -208,7 +208,7 @@ By default `analyze` reads `.codacy/codacy.config.json`. Pass `--config-file <pa
 codacy-analysis analyze --config-file .codacy/auto-config.json --output-format json
 ```
 
-#### Git-aware scoping
+### Git-aware scoping
 
 Analyze only the code that changed, instead of the full repository:
 
@@ -225,7 +225,7 @@ codacy-analysis analyze --pr --output-format json
 
 These flags work with `--tool`, `--files`, and all other analyze options. When combined with `--files`, the intersection is used (files that match both the git scope and the file filter).
 
-#### Performance tuning
+### Performance tuning
 
 ```bash
 # Run up to 4 tools in parallel
@@ -235,7 +235,7 @@ codacy-analysis analyze --parallel-tools 4 --output-format json
 codacy-analysis analyze --tool-timeout 600000 --output-format json
 ```
 
-#### Strict mode
+### Strict mode
 
 Fail immediately if any configured tool is unavailable (instead of skipping it):
 
@@ -243,13 +243,13 @@ Fail immediately if any configured tool is unavailable (instead of skipping it):
 codacy-analysis analyze --fail-if-missing --output-format json
 ```
 
-#### Save output to file
+### Save output to file
 
 ```bash
 codacy-analysis analyze --output-format json --output results.json
 ```
 
-#### Debugging
+### Debugging
 
 ```bash
 # Verbose logging to stderr
@@ -259,7 +259,7 @@ codacy-analysis analyze --log-level debug --output-format json
 codacy-analysis analyze --no-log --output-format json
 ```
 
-### Step 5: Interpret results
+## Step 5: Interpret results
 
 The JSON output contains the full `AnalysisResult`. See [references/output-format.md](references/output-format.md) for the complete schema.
 

@@ -1,6 +1,6 @@
 # Implementation
 
-### Basic Setup
+## Basic Setup
 
 ```typescript
 // Initialize compliance logger
@@ -15,7 +15,7 @@ const logger = new AIActLogger({
 });
 ```
 
-### Logging Operations
+## Logging Operations
 
 ```typescript
 // Log a simple operation
@@ -49,7 +49,7 @@ await logger.log({
 });
 ```
 
-### Transparency Implementation (Article 50)
+## Transparency Implementation (Article 50)
 
 ```typescript
 // AI interaction disclosure
@@ -100,7 +100,7 @@ app.use((req, res, next) => {
 });
 ```
 
-### Human Oversight (Article 14)
+## Human Oversight (Article 14)
 
 ```typescript
 interface HumanOversightFramework {
@@ -166,7 +166,7 @@ await logger.log({
 });
 ```
 
-### Data Governance (Article 10)
+## Data Governance (Article 10)
 
 ```typescript
 interface DataGovernancePolicy {

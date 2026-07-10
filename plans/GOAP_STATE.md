@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-09
-**Version**: 0.7.0
-**Status**: Active — File Splits + Anti-Pattern Fixes Complete
+**Last Updated**: 2026-07-10
+**Version**: 0.8.0
+**Status**: Active — PR Resolution In Progress
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -31,63 +31,22 @@
 
 ---
 
-## GOAP Swarm V7 — Skills Infrastructure — 2026-07-07
-
-### Completed
-- ✅ **Skills Directory**: Created `.agents/skills/` with 6 skills (goap-agent, typescript-coding-standards, pev-loop, validation-gates, pr-resolver, agentic-abstention)
-- ✅ **Setup Script**: `scripts/setup-skills.sh` — creates symlinks for Claude Code, Gemini CLI, Qwen Code
-- ✅ **Metrics Tracking**: `.agents/metrics.jsonl` — post-task metrics logging
-- ✅ **Symlinks**: Created `.claude/skills/`, `.gemini/skills/`, `.qwen/skills/` symlinks
-
-### Verified
-- ✅ `author: any` in `worker/lib/github/core.ts` already resolved (properly typed inline interface)
-- ✅ `webhooks.ts` thin wrapper already removed
-- ✅ `validation.ts` already removed
-- ✅ Jules audit: remaining quality findings are false positives (HACKERNEWS variable name, stale line refs)
-
-### Remaining
-- ⬜ E2E local env setup (P3-16) — requires runtime auth token configuration
-- ⬜ OTEL SDK integration (P3-17) — Cloudflare observability enabled; SDK integration deferred
-
-### Plan
-See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
-
----
-
-## PR Resolver Status — 2026-07-07
+## PR Resolver Status — 2026-07-10
 
 ### Resolution Summary
 
 | PR | Title | Status | Fix Applied |
 |----|-------|--------|-------------|
-| #559 | feat(security): P3 rate limiting, async pipeline, XSS fixes, docs update | **MERGED** | Error-shaping gate violation (`toErrCtx`), markdown lint, quality gate exclusion |
+| #571 | test: split oversized test files under 500 lines | **IN PROGRESS** | Fixing 51 markdownlint issues |
+| #570 | perf(pipeline): optimize snapshot staging and hash generation | **PENDING** | Requires Codacy issue review |
+| #569 | feat(ux): add copy-to-clipboard functionality and improve semantic structure | **PENDING** | Requires Codacy issue review |
 
-### Created
-- **Command**: `.opencode/commands/pr-resolver.md` — `/pr-resolver` command for automated PR lifecycle management
-- **Skill**: `.agents/skills/pr-resolver/SKILL.md` — GOAP swarm orchestrator for PR analysis, CI fix, conflict resolution, comment addressing, and merge
+### Execution Plan
 
-### Usage
-```bash
-/pr-resolver [repo] [--dry-run] [--max-prs N]
-```
-
-### Workflow
-1. DISCOVER: Fetch all open PRs via `gh pr list`
-2. ANALYZE: Classify PRs into READY / FIXABLE / BLOCKED
-3. FIX: GOAP swarm dispatches parallel agents per PR issue
-4. VERIFY: Run `pev-gates.sh` after each fix
-5. MERGE: Merge PRs passing all gates
-6. LOOP: Repeat until main CI green
-
-### Agent Swarm
-
-| Task | Agent | Skills |
-|------|-------|--------|
-| Fix failing CI | code-crafter | typescript-coding-standards |
-| Resolve merge conflicts | code-crafter | pev-loop |
-| Address PR comments | code-reviewer | codacy-code-review |
-| Run tests | test-runner | validation-gates |
-| Review changes | code-reviewer | guard-rails |
+1. **PR #571**: Fix markdownlint issues → push → verify CI → merge
+2. **PR #570**: Review security issues → fix → push → verify CI → merge
+3. **PR #569**: Review security issues → fix → push → verify CI → merge
+4. **LOOP**: Check main CI → repeat if needed
 
 ---
 
@@ -137,64 +96,6 @@ See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
 
 ---
 
-## P2 — Medium Priority (0 Open — 26 Resolved)
-
-### File Size Violations (>500 lines) — ALL RESOLVED
-
-| ID | Item | File | Status | Resolution |
-|:---|:---|:---|:---|:---|
-| P2-1 | Split `core.ts` | `worker/routes/core.ts` | ✅ CLOSED | Split into `worker/routes/core/` (7 files, largest 359 lines) |
-| P2-2 | Split `github.ts` | `worker/lib/github.ts` | ✅ CLOSED | Split into `worker/lib/github/` (4 files, largest 291 lines) |
-| P2-3 | Split `dual-write.ts` | `worker/lib/referral-storage/dual-write.ts` | ✅ CLOSED | Reduced to 413 lines (under limit) |
-| P2-4 | Split `mcp/index.ts` | `worker/routes/mcp/index.ts` | ✅ CLOSED | Reduced to 393 lines (under limit) |
-| P2-5 | Split `types.ts` | `worker/types.ts` | ✅ CLOSED | Split into `worker/types/` (6 type modules + barrel) |
-| P2-6 | Split `state-machine.ts` | `worker/state-machine.ts` | ✅ CLOSED | Reduced to 243 lines (under limit) |
-
-### Misleading / Broken Implementations — ALL RESOLVED
-
-| ID | Item | Source | Status | Resolution |
-|:---|:---|:---|:---|:---|
-| P2-7 | **Gate 9 (snapshot hash verification) is a no-op** | Audit | ✅ CLOSED | Gate refactored to field-integrity check in `validation/gates/snapshot-hash-verification.ts` |
-| P2-8 | **`generateSnapshotHash` has incorrect sort logic** | Audit | ✅ CLOSED | Sort logic correct — compares `id` field via `localeCompare` |
-| P2-9 | **`handleSubmit` hardcodes `"cash"` reward type** | Audit | ✅ CLOSED | Not a bug — deal IDs generated independently of reward type |
-| P2-10 | **MCP version negotiation always returns server version** | Audit | ✅ CLOSED | Removed dead `MCP_PROTOCOL_VERSION_FALLBACK` code |
-| P2-11 | **Notification deduplication has no TTL cleanup** | Audit | ✅ CLOSED | Added `expirationTtl` to `recordNotification()` KV put in `notify.ts:159` |
-
-### Test Coverage Gaps — MOSTLY RESOLVED
-
-| ID | Item | Lines | Status | Resolution |
-|:---|:---|:---|:---|:---|
-| P2-12 | `worker/lib/d1/queries.ts` — database query layer | ~820 | ✅ CLOSED | 65 tests in `tests/unit/d1-queries.test.ts` |
-| P2-13 | `worker/lib/d1/migrations.ts` — schema integrity | ~605 | ✅ CLOSED | 75 tests in `tests/unit/d1/migrations.test.ts` |
-| P2-14 | `worker/lib/mcp/tools.ts` — 8 MCP tools | ~1100+ | ✅ CLOSED | 36 tests in `tests/unit/mcp-tools.test.ts` |
-| P2-15 | `worker/lib/circuit-breaker.ts` — API resilience | ~412 | ✅ CLOSED | 62 tests in `tests/unit/circuit-breaker.test.ts` |
-| P2-16 | `worker/lib/auth.ts` — security | ~259 | ✅ CLOSED | 79 tests in `tests/unit/auth.test.ts` |
-| P2-17 | `worker/lib/cache.ts` — KV caching layer | ~353 | ✅ CLOSED | 52 tests in `tests/unit/cache.test.ts` |
-| P2-18 | `worker/routes/d1.ts` — D1 API routes | ~474 | ✅ CLOSED | File no longer exists at specified path |
-| P2-19 | `worker/lib/mcp/resources.ts` — MCP resources | ~374 | ✅ CLOSED | 30 tests in `tests/unit/mcp-resources.test.ts` |
-| P2-20 | `worker/lib/webhook/delivery.ts` + `incoming.ts` | ~480+ | ✅ CLOSED | 22 tests in `tests/unit/webhook/delivery.test.ts` |
-| P2-21 | `worker/lib/nlq/query-builder/executor.ts` + `sql.ts` | ~550+ | ✅ CLOSED | 37 tests in `tests/unit/nlq/query-builder/executor.test.ts` (sql.ts already had 540 lines of tests) |
-| P2-22 | `worker/lib/referral-storage/dual-write.ts` | ~200+ | ✅ CLOSED | 67 tests in `tests/unit/referral-storage/dual-write.test.ts` |
-| P2-23 | `worker/lib/eu-ai-act-logger.ts` — compliance | ~461 | ✅ CLOSED | 57 tests in `tests/unit/eu-ai-act-logger.test.ts` |
-
-### Code Hygiene — ALL RESOLVED
-
-| ID | Item | Source | Status | Resolution |
-|:---|:---|:---|:---|:---|
-| P2-24 | **Duplicated functions**: `calculateSourceDiversity`/`calculateUniquenessScore` | Audit | ✅ CLOSED | Only defined in `worker/pipeline/score.ts` — no duplication |
-| P2-25 | **Duplicated function**: `verifyCommit` | Audit | ✅ CLOSED | Only defined in `worker/lib/github/core.ts:284` |
-| P2-26 | **Unused dependencies**: `discord.js`, `telegraf`, `agent-browser` | Audit | ✅ CLOSED | `discord.js` and `telegraf` used by `bot/` directory |
-
----
-
-## Blocked — External Dependencies
-
-| ID | Item | Source | Blocker | ADR |
-|:---|:---|:---|:---|:---|
-| BLOCKED-1 | **Workers Builds: do-deal-relay** — Cloudflare dashboard auto-deploy fails on every push | CI | Cloudflare dashboard integration misconfigured (not managed via code) | [ADR-018](ADR-018-cloudflare-workers-builds-failure.md) |
-
----
-
 ## Blocked — External Dependencies
 
 | ID | Item | Source | Blocker | ADR |
@@ -238,84 +139,6 @@ See: [GOAP-SWARM-V7](GOAP-SWARM-V7-2026-07-07.md)
 | P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | ⬜ DEFERRED | Auth setup infrastructure exists; runtime env config needed |
 | P3-17 | No OpenTelemetry / distributed tracing | Audit | ⬜ DEFERRED | Cloudflare observability enabled; OTEL SDK integration deferred |
 | P3-18 | `bot/` and `extension/` directories need documentation review | Audit | ✅ CLOSED | Comprehensive READMEs exist in both directories |
-
----
-
-## ADR-015 Proposals (Deferred — Require Dedicated Sprints)
-
-| ID | Proposal | Effort | Risk |
-|:---|:---|:---|:---|
-| ⬜-1 | **C-1: Durable Objects for core state** — eliminates KV race conditions | 1-2 weeks | Cold start latency |
-| ⬜-2 | **C-2: Durable Execution for long pipelines** — enables >30s pipelines | 1-2 weeks | API stability |
-| ⬜-3 | **C-3: Agent Memory for conversational state** — bot conversation persistence | 1 week | Service availability |
-| ⬜-4 | **C-4: AI Gateway integration** — unified LLM observability | 1 week | Not yet needed |
-| ⬜-5 | **H-1: Continuous Verification (10th gate)** — post-publication health monitoring | 1-2 weeks | Metric stability |
-| ⬜-6 | **H-2: DORA metrics dashboard** — deployment/lead time/CFR/MTTR tracking | 1 week | Data pipeline |
-| ⬜-7 | **H-3: Build-Once-Promote-Everywhere** — artifact immutability via R2 | 1 week | CI/CD changes |
-
----
-
-## Feature Epics (Not Started)
-
-| Epic | Priority | Issues | Effort |
-|:---|:---|:---|:---|
-| **User Management & Auth** (#284) | P1 | JWT auth, RBAC, user CRUD, API key management | 2-3 weeks |
-| **Web UI Dashboard** (#302) | P3 | React dashboard with deal management, analytics, referral tracking | 3-5 weeks |
-| **Real Web Research Enhancements** | P2 | Full Reddit/ProductHunt/GitHub/HN API integration beyond current simulation | 2-3 weeks |
-
----
-
-## Dependency Graph
-
-```
-ADR-016 (Middleware Layer) ─────────────────────┐
-    │                                            │
-    ├── P1-1 (D1 Auth) ─────────────────────────┤
-    ├── P1-2 (API Rate Limits) ─────────────────┤
-    └── P1-3 (Submit Auth) ─────────────────────┤
-                                                 │
-P1-4 (Webhook Routes) ─── independent ──────────┤
-P1-5 (Reactivate Route) ── independent ─────────┤
-P1-7 (evolveSourceTrust) ─ independent ─────────┤
-                                                 │
-P2 File Splits (P2-1 through P2-6) ─────────────┤
-    │                                            │
-    └── P2 Test Coverage (P2-12 through P2-23) ──┤
-                                                 │
-P1-6 (Lock Race) depends on ⬜-1 (DO migration)  │
-                                                 │
-⬜ ADR-015 Proposals ─── independent epics ──────┘
-```
-
----
-
-## Merge Order (Recommended Execution Sequence)
-
-### Phase 1: Quick Wins — ✅ COMPLETED (2026-07-07)
-1. ~~**P1-5**: Register reactivate route~~ ✅
-2. ~~**P1-4**: Register 10 webhook endpoints~~ ✅
-3. ~~**P2-24, P2-25**: Deduplicate shared functions~~ ✅
-4. ~~**P2-26**: Remove unused dependencies~~ ✅ (used by bot/)
-5. ~~**P2-8**: Fix `generateSnapshotHash` sort logic~~ ✅
-6. ~~**P2-9**: Fix hardcoded reward type in `handleSubmit`~~ ✅
-7. ~~**P1-6**: D1 CAS lock + PipelineLock DO~~ ✅
-8. ~~**P1-7**: Implement `evolveSourceTrust` logic~~ ✅
-9. ~~**P2-7 through P2-11**: Fix misleading implementations~~ ✅
-10. ~~**P2-1 through P2-6**: Split oversized files~~ ✅
-
-### Phase 2: Security Hardening — ✅ COMPLETED (2026-07-07)
-11. ~~**ADR-016**: Design and implement unified middleware layer~~ ✅ `worker/lib/middleware/` (4 files)
-12. ~~**P1-1**: Add D1 endpoint auth~~ ✅ via middleware pipeline with `auth: "internal"`
-13. ~~**P1-2**: Apply rate limiting to all API endpoints~~ ✅ via config-driven rate limit middleware
-
-### Phase 3: Test Coverage — ✅ COMPLETED (2026-07-07)
-14. ~~**P2-21**: Write tests for NLQ executor~~ ✅ 37 tests in `tests/unit/nlq/query-builder/executor.test.ts`
-
-### Phase 4: P3 Quick Fixes — ✅ COMPLETED (2026-07-07)
-15. ~~**P3-5**: Add rate limiting to handleAnalytics~~ ✅ `createRateLimitMiddleware` in router.ts
-16. ~~**P3-6**: Add rate limiting to legacy handleMCPCall~~ ✅ `createRateLimitMiddleware` in router.ts
-17. ~~**P3-7**: Make handleDiscover async~~ ✅ `ctx.waitUntil()` + 202 response
-18. ~~**P3-10**: Update SYSTEM_REFERENCE.md~~ ✅ v0.2.0 with middleware, D1, DO, OTEL, DORA
 
 ---
 

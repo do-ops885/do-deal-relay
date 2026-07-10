@@ -1,6 +1,6 @@
 # Logging Requirements
 
-### Article 12: Automatic Record-Keeping
+## Article 12: Automatic Record-Keeping
 
 ```typescript
 interface AIActLogEntry {
@@ -64,7 +64,7 @@ interface AIActLogEntry {
 }
 ```
 
-### Article 19: Provider Log Retention
+## Article 19: Provider Log Retention
 
 ```typescript
 interface LogRetentionPolicy {

@@ -1,6 +1,6 @@
 # Integration
 
-### With web-search-researcher
+## With web-search-researcher
 
 ```typescript
 // Research communities before engaging
@@ -15,7 +15,7 @@ riskThreshold: "low"
 output: temp/safe-communities.json
 ```
 
-### With self-learning-feedback
+## With self-learning-feedback
 
 ```typescript
 // Review engagement effectiveness

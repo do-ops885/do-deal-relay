@@ -43,12 +43,14 @@ tags: [verification, scoring, self-learning, feedback, analysis-swarm, quality]
 **SCORE BEFORE SHIP**: Every output gets a quality score (0-100)
 **LEARN FROM MISTAKES**: Every error becomes institutional knowledge
 ## Module Reference
+
 | Module    | Persona   | Purpose                            | Key Functions                                                                   |
 | --------- | --------- | ---------------------------------- | ------------------------------------------------------------------------------- |
 | `verify`  | RYAN      | Deep analysis, risk control        | `verify_version_consistency`, `verify_status_accuracy`, `verify_todo_alignment` |
 | `score`   | FLASH     | Speed, pragmatism, noise detection | `score_noise_level`, `score_accuracy`, `score_completeness`, `score_clarity`    |
 | `learn`   | SOCRATES  | Questioning, assumption testing    | `capture_lesson`, `track_trends`, `build_knowledge`                             |
 | `improve` | SYNTHESIS | Balanced recommendations           | `suggest_fixes`, `auto_correct`, `report_issues`                                |
+
 ## Workflow
 ### 1. Verify Phase (RYAN Mode)
 ```bash
@@ -116,13 +118,16 @@ bash .agents/skills/self-learning-feedback/scripts/verify_file.sh AGENTS.md
 ```
 ## Scoring System
 ### Output Scoring (0-100)
+
 | Dimension    | Weight | Criteria                        |
 | ------------ | ------ | ------------------------------- |
 | Noise        | 25%    | <20% fluff words, no repetition |
 | Accuracy     | 30%    | All verifiable claims correct   |
 | Completeness | 25%    | All required sections present   |
 | Clarity      | 20%    | Flesch reading ease >50         |
+
 ### Grade Thresholds
+
 | Score  | Grade | Action                 |
 | ------ | ----- | ---------------------- |
 | 90-100 | A     | Ship immediately       |
@@ -130,6 +135,7 @@ bash .agents/skills/self-learning-feedback/scripts/verify_file.sh AGENTS.md
 | 70-79  | C     | Needs improvement      |
 | 60-69  | D     | Block, requires rework |
 | <60    | F     | Major revision needed  |
+
 ## Quality Gates
 After verification and scoring:
 ```markdown
@@ -196,11 +202,13 @@ skill self-learning-feedback score_output agents-update/SKILL.md
 - [Lesson Database](references/lessons.json) - Captured errors and fixes
 - [ANALYSIS SWARM Pattern](references/analysis-swarm.md) - 3-persona methodology
 ## Rationalizations
+
 | Concern | Counter-Argument |
 |---------|------------------|
 | "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
 | "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
 | "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+
 ## Red Flags
 - [ ] Starting execution before a plan is approved.
 - [ ] Making multiple unrelated changes in a single commit.

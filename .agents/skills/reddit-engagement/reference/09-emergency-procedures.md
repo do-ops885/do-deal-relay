@@ -1,6 +1,6 @@
 # Emergency Procedures
 
-### If Account Gets Shadowbanned
+## If Account Gets Shadowbanned
 
 ```typescript
 const recoveryPlan = {
@@ -22,7 +22,7 @@ const recoveryPlan = {
 };
 ```
 
-### If Receiving Negative Feedback
+## If Receiving Negative Feedback
 
 1. **Acknowledge immediately**
 2. **Ask clarifying questions**

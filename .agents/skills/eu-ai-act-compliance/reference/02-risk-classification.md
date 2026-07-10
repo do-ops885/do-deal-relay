@@ -1,6 +1,6 @@
 # Risk Classification
 
-### Limited Risk (Article 50)
+## Limited Risk (Article 50)
 
 Applies to AI systems interacting with natural persons:
 
@@ -23,7 +23,7 @@ const config: AIActConfig = {
 - Inform users of emotion recognition (Art. 50.3)
 - Disclose deepfake content (Art. 50.4)
 
-### High Risk (Chapter III, Articles 8-17)
+## High Risk (Chapter III, Articles 8-17)
 
 Applies to systems in Annex III (recruitment, credit scoring, etc.):
 

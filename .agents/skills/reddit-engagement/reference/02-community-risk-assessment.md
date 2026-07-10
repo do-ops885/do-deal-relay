@@ -1,6 +1,6 @@
 # Community Risk Assessment
 
-### Safe Communities (🟢 Low Risk)
+## Safe Communities (🟢 Low Risk)
 
 **AI Agent Specific:**
 
@@ -21,7 +21,7 @@
 - r/coolgithubprojects (60K) - Technical projects
 - r/alphaandbetausers (22K) - Beta testing
 
-### Communities to Avoid (🔴 High Risk)
+## Communities to Avoid (🔴 High Risk)
 
 **Anti-AI Sentiment:**
 

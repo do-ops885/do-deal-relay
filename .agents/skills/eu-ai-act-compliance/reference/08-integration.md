@@ -1,6 +1,6 @@
 # Integration
 
-### With structured-logging
+## With structured-logging
 
 ```typescript
 import { Logger } from "../structured-logging";
@@ -15,7 +15,7 @@ const complianceLogger = new AIActLogger({
 });
 ```
 
-### With Cloudflare Workers
+## With Cloudflare Workers
 
 ```typescript
 export default {

@@ -1,6 +1,6 @@
 # Tool Patterns
 
-### Return Types
+## Return Types
 
 ```typescript
 // Text response

@@ -31,6 +31,9 @@ Automated PR lifecycle management: analyze, review, fix, resolve, and merge all 
 gh pr list --state open --json number,title,headRefName,mergeable,statusCheckRollup,reviews,comments
 ```
 
+Or use the automated script:
+!`./scripts/pr-resolver.sh --dry-run`
+
 ### Phase 2: Triage (per PR)
 For each PR, classify into:
 - **READY**: CI green, no conflicts, approvals received
