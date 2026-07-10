@@ -44,6 +44,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     statSubmitted: document.getElementById("stat-submitted"),
     statSuccess: document.getElementById("stat-success"),
     manualCodeError: document.getElementById("manual-code-error"),
+    copyDetectedBtn: document.getElementById("copy-detected-btn"),
+    copyManualBtn: document.getElementById("copy-manual-btn"),
   };
 
   // ============================================================================
@@ -450,6 +452,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 3000);
   }
 
+  /**
+   * Copy text to clipboard with visual feedback
+   */
+  async function copyToClipboard(text, buttonElement) {
+    if (!text || buttonElement.dataset.copying === "true") return;
+
+    try {
+      buttonElement.dataset.copying = "true";
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard!", "success");
+
+      // Visual feedback on button
+      const originalContent = buttonElement.innerHTML;
+      buttonElement.innerHTML = '<span aria-hidden="true">✅</span>';
+      setTimeout(() => {
+        buttonElement.innerHTML = originalContent;
+        delete buttonElement.dataset.copying;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      showToast("Failed to copy", "error");
+      delete buttonElement.dataset.copying;
+    }
+  }
+
   function toggleSettings() {
     const isActive = elements.settingsPanel.classList.toggle("active");
     elements.manualSection.classList.toggle("hidden");
@@ -485,6 +512,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     elements.manualBtn.disabled = !isValid;
+    elements.copyManualBtn.disabled = !isValid;
     return isValid;
   }
 
@@ -513,6 +541,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     elements.manualCode.addEventListener("keypress", (e) => {
       if (e.key === "Enter") captureManual();
+    });
+
+    // Copy buttons
+    elements.copyDetectedBtn.addEventListener("click", () => {
+      if (state.selectedDetection) {
+        copyToClipboard(state.selectedDetection.code, elements.copyDetectedBtn);
+      }
+    });
+
+    elements.copyManualBtn.addEventListener("click", () => {
+      const code = elements.manualCode.value.trim();
+      if (code) {
+        copyToClipboard(code.toUpperCase(), elements.copyManualBtn);
+      }
     });
 
     // Settings
