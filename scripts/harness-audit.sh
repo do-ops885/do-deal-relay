@@ -11,12 +11,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-VERBOSE=false
 JSON=false
 
 for arg in "$@"; do
   case "$arg" in
-    --verbose) VERBOSE=true ;;
+    --verbose) : ;;  # reserved
     --json) JSON=true ;;
     *) echo "Unknown flag: $arg"; exit 2 ;;
   esac
@@ -30,7 +29,7 @@ fi
 
 # ── Colour helpers ──────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
+BLUE='\033[0;34m'; NC='\033[0m'; BOLD='\033[1m'
 
 pass()  { echo -e "  ${GREEN}✓${NC} $1"; }
 fail()  { echo -e "  ${RED}✗${NC} $1"; }
@@ -42,7 +41,6 @@ gap()   { echo -e "  ${RED}⟐${NC} $1"; }
 PASSES=0; FAILS=0; WARNS=0
 GAPS=(); GAP_DETAILS=()
 MISSING_FILES=(); MISSING_SCRIPTS=()
-UNESCALATED_ISSUES=()
 
 # ── Helpers ─────────────────────────────────────────────────────
 check_file() {

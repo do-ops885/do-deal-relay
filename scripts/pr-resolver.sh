@@ -437,8 +437,6 @@ main() {
   # Final status
   local blocked_count
   blocked_count=$(echo "$blocked_list" | jq -r '. | length')
-  local merged_count
-  merged_count=$(echo "$merged_list" | jq -r '. | length')
 
   if [[ "$blocked_count" -eq 0 ]] && [[ "$fixable_count" -eq 0 ]]; then
     echo ""

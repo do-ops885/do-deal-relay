@@ -91,8 +91,6 @@ mapfile -t SKILL_FILES < <(find "${SKILLS_ROOT}" -name 'SKILL.md' -type f 2>/dev
 info "${CYAN}=== SKILL EVALUATION (${#SKILL_FILES[@]} skills) ===${NC}"
 
 # ── Phase 2 + 3: Structure & length checks ──────────────────────────
-# Collect issues per file as `failed_path|warn_count|fail_count`
-declare -A FILE_ISSUE_COUNT
 declare -A FILE_LINE_COUNT
 
 for sf in "${SKILL_FILES[@]}"; do

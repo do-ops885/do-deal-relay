@@ -29,7 +29,6 @@ PLANS_DIR="${ROOT_DIR}/plans"
 # Modes
 JSON=false
 DRY_RUN=false
-VERBOSE=false
 
 # Counters (defensive `: $((X++))` to avoid pre-increment-zero trap)
 PASSES=0; WARNINGS=0; FAILURES=0; CRITICALS=0
@@ -44,7 +43,7 @@ MAGENTA='\033[1;35m'; CYAN='\033[0;36m'; NC='\033[0m'
 for arg in "$@"; do
   case "$arg" in
     --json) JSON=true ;;
-    --verbose|-v) VERBOSE=true ;;
+    --verbose|-v) : ;;  # reserved
     --dry-run) DRY_RUN=true ;;
     --help|-h)
       sed -n '2,/^set -uo/p' "$0" | sed 's/^# \?//'
