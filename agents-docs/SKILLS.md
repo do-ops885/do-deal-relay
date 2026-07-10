@@ -1,5 +1,7 @@
 # Skills - Authoring Guide
 
+> **Harness role: Feedforward guides (computational + inferential).** Skills provide procedural knowledge that steers agents toward correct behavior before they act. Each skill encodes domain-specific patterns that increase the probability of first-attempt success. See `agents-docs/HARNESS.md` for the full framework.
+>
 > Single Source of Truth: AGENTS.md
 
 ## Canonical Location
@@ -16,6 +18,8 @@ Every `SKILL.md` MUST include:
 1. **YAML Frontmatter**: `name` and `description`.
 2. **Rationalizations**: A table countering common excuses for cutting corners.
 3. **Red Flags**: A checklist of early warning behaviors.
+
+> **Harness note:** Rationalizations serve as feedforward guides; Red Flags serve as both guides and informal sensors — they tell agents what to watch for.
 
 ## Progressive Disclosure
 

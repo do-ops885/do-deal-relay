@@ -1,5 +1,7 @@
 # Enhanced Local Guard Rails
 
+> **Harness role: Computational feedback sensors (pre-commit/pre-push).** Guard rails are the first line of computational sensors that run before code leaves the developer's machine. They match GitHub Actions CI locally, shifting quality left. See `agents-docs/HARNESS.md` for the full framework.
+
 **Created**: 2026-04-04
 **Purpose**: Match GitHub Actions CI locally to prevent commits/pushes that would fail in CI
 **Location**: `scripts/pre-commit-hook.sh`, `scripts/pre-push-hook.sh`
@@ -289,3 +291,4 @@ SKIP_TESTS=1 git push
 - `scripts/validate-codes.sh` - 9 validation gates
 - `.github/workflows/ci.yml` - GitHub Actions CI pipeline
 - `.github/workflows/security.yml` - Security scanning workflows
+- `agents-docs/HARNESS.md` - Harness engineering framework

@@ -1,5 +1,7 @@
 # Accuracy Guardrails - do-deal-relay
 
+> **Harness role: Inferential feedback sensors + steering loop input.** Accuracy guardrails capture recurring failure patterns and encode them as verification rules. They are the inferential layer of the harness — patterns that can't be caught by computational sensors alone, derived from experience. See `agents-docs/HARNESS.md` for the full framework.
+
 Verification rules and checks to ensure correctness across the codebase.
 
 ## Config Contract Changes
@@ -41,3 +43,16 @@ Verification rules and checks to ensure correctness across the codebase.
 - **Concrete Trigger**: Linter warnings, type errors, deprecated APIs, or CI issues found while working on a task — even if they are unrelated to the current task.
 - **Concrete Check**: Before committing, scan modified files for warnings. Fix what is fixable. If an issue cannot be resolved (upstream bug, out-of-scope, external dependency), create a `plans/FOLLOWUP-<brief-slug>.md` with the issue description, root cause, and proposed resolution.
 - **Example**: While fixing Codacy CI issues, encountering deprecated `node:crypto` usage in a neighboring file — fix it in the same commit rather than leaving it for later.
+
+---
+
+## Steering Loop Integration
+
+When an accuracy guardrail triggers (a failure occurs despite existing guardrails):
+
+1. **Log it** in `agents-docs/LEARNINGS.md` with root cause
+2. **Escalate if recurring**: Can this be made into a computational sensor (lint rule, guard rail, type constraint)?
+3. **Update this file**: Add the new rule or strengthen the existing one
+4. **Verify**: Does the updated guardrail catch the next occurrence?
+
+See `agents-docs/self-learning-patterns.md` for the escalation path.

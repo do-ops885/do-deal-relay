@@ -1,10 +1,12 @@
 # Never-Bypass Validation System
 
+> **Harness role: Computational feedforward guide (audit enforcement).** The never-bypass system ensures that even when guard rails are bypassed, the bypass itself is regulated — through explicit confirmation, written justification, and audit logging. It prevents the harness from being silently disabled. See `agents-docs/HARNESS.md` for the full framework.
+
 **Purpose**: Prevent silent bypasses of quality guard rails with comprehensive audit trails and mandatory justification.
 
 **Date**: 2026-04-01
 **Status**: Active
-\*\*Version: 0.1.1
+**Version**: 0.1.1
 
 ---
 
@@ -25,7 +27,6 @@ The Never-Bypass Validation System ensures that all attempts to bypass git guard
 > **Guard rails must ALWAYS run, even if bypassed.**
 
 There is no "skip guard rails" shortcut. There is no environment variable to disable them. There is no "trust me" mode.
-
 The only way past a guard rail failure is through explicit confirmation, written justification, and audit logging.
 
 ---
@@ -508,10 +509,11 @@ When in doubt:
 - **scripts/pre-commit-hook.sh**: Implementation
 - **scripts/pre-push-hook.sh**: Implementation
 - **scripts/guard-rail-audit.sh**: Audit system
+- `agents-docs/HARNESS.md` - Harness engineering framework
 
 ---
 
-**Version: 0.1.1
+**Version**: 0.1.1
 **Last Updated**: 2026-04-01
 **Maintainer**: Agent System
-**Status\*\*: Production
+**Status**: Production

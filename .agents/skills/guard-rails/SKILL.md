@@ -194,7 +194,6 @@ const quality = GuardRails.quality({
 });
 ```
 
-
 ## Directory Hygiene Policy
 
 | Rule | Pattern | Allowed Location | Severity |

@@ -85,14 +85,6 @@ grep -r "AGENTS.md" agents-docs/ | head -20
 
 ## Implementation Patterns
 
-### Pattern 1: Single Section Migration
-
-For simple cases with 1-2 sections to move:
-
-1. Read AGENTS.md section
-2. Create destination file with moved content
-3. Replace section in AGENTS.md with brief summary + link
-4. Update any cross-references
 
 ### Pattern 2: Swarm Parallel Migration
 
@@ -234,15 +226,7 @@ grep -c "Quick Start" AGENTS.md
 grep -c "## " AGENTS.md  # Should have fewer sections
 ````
 
-## Best Practices
 
-1. **Always backup** AGENTS.md before optimization
-2. **Use swarm** for complex migrations (>3 sections)
-3. **Verify each section** after migration
-4. **Update references** in other files pointing to old sections
-5. **Test AGENTS.md** as quick reference - can new team member get oriented?
-
-## References
 
 - [Section Mapping](references/section-mapping.md) - Complete mapping table
 - [Migration Examples](references/migration-examples.md) - Before/after examples

@@ -1,5 +1,7 @@
 # Hard Constraints - do-deal-relay
 
+> **Harness role: Computational feedforward guides.** Hard constraints are the non-negotiable boundaries that steer agents before they act. They prevent classes of errors by limiting what is possible. See `agents-docs/HARNESS.md` for the full framework.
+
 ## Cost Estimation (delegation threshold: ≥ 12)
 
 | Score | Meaning |

@@ -1,5 +1,7 @@
 # Agent Coordination Hub
 
+> **Harness Philosophy**: Agent = Model + Harness. Our harness combines guides (feedforward) and sensors (feedback) across computational and inferential layers. See `agents-docs/HARNESS.md` for the full framework.
+
 ## Swarm Architecture
 
 Multiple specialized agents work in parallel with defined handoff points.
@@ -96,6 +98,24 @@ Check latest handoff in `/agents-docs/coordination/handoff-log.jsonl`
 3. Find your predecessor's handoff in log
 4. Execute your scope
 5. Create handoff to next agent
+
+## Harness Documentation
+
+| Document | Role in Harness |
+|---|---|
+| `HARNESS.md` | Framework & philosophy: guides, sensors, regulation categories |
+| `AGENTS.md` | Primary feedforward guide (coordination rules, anti-patterns) |
+| `hard-constraints.md` | Computational feedforward guides (limits, thresholds) |
+| `SKILLS.md` | Procedural feedforward guides |
+| `CONTEXT.md` | Context management (guide + sensor) |
+| `HOOKS.md` | Computational feedback sensors |
+| `GUARD_RAILS.md` | Pre-commit/pre-push computational sensors |
+| `quality-standards.md` | Quality criteria enforced by sensors |
+| `accuracy-guardrails.md` | Inferential feedback sensors |
+| `LEARNINGS.md` | Steering loop raw input (failure log) |
+| `self-learning-patterns.md` | Escalation mechanism (steering loop) |
+| `NEVER-BYPASS-SYSTEM.md` | Harness integrity (prevents silent disable) |
+| `SYSTEM_REFERENCE.md` | Architecture fitness sensors (validation gates) |
 
 ## External Skills
 
