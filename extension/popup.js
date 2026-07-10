@@ -463,17 +463,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       await navigator.clipboard.writeText(text);
       showToast("Copied to clipboard!", "success");
 
-      // Visual feedback on button
-      const originalContent = buttonElement.innerHTML;
-      buttonElement.innerHTML = '<span aria-hidden="true">✅</span>';
+      // Visual feedback on button using DOM API (prevents XSS)
+      const children = Array.from(buttonElement.children);
+      buttonElement.textContent = "";
+      const span = document.createElement("span");
+      span.setAttribute("aria-hidden", "true");
+      span.textContent = "✅";
+      buttonElement.appendChild(span);
+
       setTimeout(() => {
-        buttonElement.innerHTML = originalContent;
-        delete buttonElement.dataset.copying;
+        buttonElement.textContent = "";
+        children.forEach(function (child) {
+          buttonElement.appendChild(child);
+        });
+        buttonElement.removeAttribute("data-copying");
       }, 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
       showToast("Failed to copy", "error");
-      delete buttonElement.dataset.copying;
+      buttonElement.removeAttribute("data-copying");
     }
   }
 
