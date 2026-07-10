@@ -37,14 +37,26 @@ export async function generateDealId(
 }
 
 /**
+ * Extract a string property from an unknown object without type assertions.
+ * Uses Reflect.get() to avoid 'as' casts that Codacy flags as security issues.
+ */
+function getStringProp(value: unknown, prop: string): string {
+  if (typeof value !== "object" || value === null) return "";
+  const v = Reflect.get(value, prop);
+  return typeof v === "string" ? v : "";
+}
+
+/**
  * Generate snapshot hash from deals array
  * Sorts deals by ID to ensure canonical ordering regardless of input order
  */
 export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
   const sorted = [...deals].sort((a, b) => {
-    const idA = (a as Record<string, unknown>).id as string;
-    const idB = (b as Record<string, unknown>).id as string;
-    return (idA || "").localeCompare(idB || "");
+    const idA = getStringProp(a, "id");
+    const idB = getStringProp(b, "id");
+    // Performance optimization: direct string comparison is significantly faster
+    // than localeCompare for ID strings (hashes/UUIDs) as it avoids locale-aware collation.
+    return idA < idB ? -1 : idA > idB ? 1 : 0;
   });
   const serialized = JSON.stringify(sorted);
   return sha256(serialized);
@@ -144,7 +156,7 @@ function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
         const bitIdx = prevIdx * 36 + idx;
         const word = bitIdx >>> 5;
         const bit = 1 << (bitIdx & 31);
-        const currentWord = bits[word]!; // Uint32Array index access is safe here
+        const currentWord = bits[word] ?? 0;
         if (!(currentWord & bit)) {
           bits[word] = currentWord | bit;
           count++;
@@ -172,7 +184,7 @@ export function calculateStringSimilarity(a: string, b: string): number {
 
   let intersectionSize = 0;
   for (let i = 0; i < 41; i++) {
-    const common = resA.bits[i]! & resB.bits[i]!;
+    const common = (resA.bits[i] ?? 0) & (resB.bits[i] ?? 0);
     if (common) {
       intersectionSize += popcount(common);
     }
