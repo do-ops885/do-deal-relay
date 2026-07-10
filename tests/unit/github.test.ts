@@ -10,7 +10,13 @@ import {
   setGitHubToken,
   resetGitHubToken,
 } from "../../worker/lib/github/index";
+import { validatedFetch } from "../../worker/lib/security";
 import type { Snapshot } from "../../worker/types";
+
+// Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 const TEST_TOKEN = "test-token";
 
@@ -18,13 +24,13 @@ describe("GitHub Integration", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+    vi.clearAllMocks();
+    fetchMock = vi.mocked(validatedFetch);
     setGitHubToken(TEST_TOKEN);
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
     resetGitHubToken();
   });
 

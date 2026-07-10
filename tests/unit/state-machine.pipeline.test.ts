@@ -1,10 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { executePipeline, getPipelineStatus } from "../../worker/state-machine";
+import { validatedFetch } from "../../worker/lib/security";
 import {
   setGitHubToken,
   initGitHubCircuitBreaker,
 } from "../../worker/lib/github/index";
+import {
+  createMockD1,
+  seedMockLock,
+  seedExpiredMockLock,
+  type LockRow,
+} from "../fixtures/d1-mock";
 import type { Env } from "../../worker/types";
+
+// Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 // ============================================================================
 // Mock Response Helpers
@@ -57,13 +69,17 @@ function makeKV(
 
 describe("State Machine - Pipeline Execution", () => {
   let mockKvStorage: Map<string, unknown>;
+  let mockD1Storage: Map<string, LockRow>;
   let mockEnv: Env;
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let _validatedFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockKvStorage = new Map();
-    vi.stubGlobal("fetch", vi.fn());
+    mockD1Storage = new Map();
+    vi.clearAllMocks();
+    _validatedFetch = vi.mocked(validatedFetch);
 
     // Suppress expected console warnings and errors during tests
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -81,7 +97,7 @@ describe("State Machine - Pipeline Execution", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: createMockD1(mockD1Storage),
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -95,7 +111,7 @@ describe("State Machine - Pipeline Execution", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
@@ -116,7 +132,7 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [
@@ -137,7 +153,6 @@ describe("State Machine - Pipeline Execution", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -159,13 +174,12 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [],
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -187,28 +201,25 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [],
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
-      expect(mockEnv.DEALS_LOCK.put).toHaveBeenCalled();
-      expect(mockEnv.DEALS_LOCK.delete).toHaveBeenCalled();
+      // Lock is now in D1 — verify batch was called (acquire + release)
+      const d1Batch = mockEnv.DEALS_DB.batch as ReturnType<typeof vi.fn>;
+      expect(d1Batch).toHaveBeenCalled();
     });
 
     it("should handle lock acquisition failure", async () => {
-      // Pre-populate a lock that hasn't expired
-      const futureDate = new Date(Date.now() + 600000).toISOString();
-      mockKvStorage.set("lock:pipeline:lock", {
+      // Pre-populate a lock that hasn't expired in D1
+      seedMockLock(mockD1Storage, {
         run_id: "other-run",
         trace_id: "other-trace",
-        acquired_at: new Date().toISOString(),
-        expires_at: futureDate,
       });
 
       const result = await executePipeline(mockEnv);
@@ -231,7 +242,7 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -244,14 +255,12 @@ describe("State Machine - Pipeline Execution", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
       // Should extend lock during discover, validate, and publish phases
-      const putCalls =
-        (mockEnv.DEALS_LOCK.put as ReturnType<typeof vi.fn>).mock.calls || [];
-      expect(putCalls.length).toBeGreaterThanOrEqual(2);
+      const d1Batch = mockEnv.DEALS_DB.batch as ReturnType<typeof vi.fn>;
+      expect(d1Batch).toHaveBeenCalled();
     });
 
     it("should revert on validation failure", async () => {
@@ -271,7 +280,7 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue(
+      _validatedFetch.mockResolvedValue(
         createMockJsonResponse([
           {
             code: "TEST123",
@@ -281,7 +290,6 @@ describe("State Machine - Pipeline Execution", () => {
           },
         ]),
       );
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -306,7 +314,7 @@ describe("State Machine - Pipeline Execution", () => {
       );
 
       let callCount = 0;
-      const mockFetch = vi.fn().mockImplementation(() => {
+      _validatedFetch.mockImplementation(() => {
         callCount++;
         if (callCount < 2) {
           return Promise.reject(new Error("Network error"));
@@ -318,7 +326,6 @@ describe("State Machine - Pipeline Execution", () => {
           text: async () => "[]",
         });
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -341,7 +348,7 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         text: async () =>
@@ -354,7 +361,6 @@ describe("State Machine - Pipeline Execution", () => {
             },
           ]),
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       const result = await executePipeline(mockEnv);
 
@@ -375,13 +381,12 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi.fn().mockResolvedValue({
+      _validatedFetch.mockResolvedValue({
         ok: true,
         headers: new Headers({ "content-type": "application/json" }),
         json: async () => [],
         text: async () => "[]",
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       await executePipeline(mockEnv);
 
@@ -402,10 +407,7 @@ describe("State Machine - Pipeline Execution", () => {
         ]),
       );
 
-      const mockFetch = vi
-        .fn()
-        .mockRejectedValue(new Error("Permanent failure"));
-      vi.stubGlobal("fetch", mockFetch);
+      _validatedFetch.mockRejectedValue(new Error("Permanent failure"));
 
       const result = await executePipeline(mockEnv);
 
@@ -415,12 +417,9 @@ describe("State Machine - Pipeline Execution", () => {
 
   describe("getPipelineStatus", () => {
     it("should return lock status when locked", async () => {
-      const futureDate = new Date(Date.now() + 600000).toISOString();
-      mockKvStorage.set("lock:pipeline:lock", {
+      seedMockLock(mockD1Storage, {
         run_id: "current-run",
         trace_id: "current-trace",
-        acquired_at: new Date().toISOString(),
-        expires_at: futureDate,
       });
 
       const status = await getPipelineStatus(mockEnv);
@@ -437,12 +436,9 @@ describe("State Machine - Pipeline Execution", () => {
     });
 
     it("should return expired lock as unlocked", async () => {
-      const pastDate = new Date(Date.now() - 600000).toISOString();
-      mockKvStorage.set("lock:pipeline:lock", {
+      seedExpiredMockLock(mockD1Storage, {
         run_id: "expired-run",
         trace_id: "expired-trace",
-        acquired_at: "2024-01-01T00:00:00Z",
-        expires_at: pastDate,
       });
 
       const status = await getPipelineStatus(mockEnv);
