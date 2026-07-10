@@ -7,6 +7,12 @@ import {
   validateCodeComplete,
 } from "../../worker/lib/validation/code-validator";
 
+vi.mock("../../worker/lib/security", () => ({
+  validateFetchUrl: vi.fn().mockResolvedValue(true),
+  validateUrl: vi.fn().mockReturnValue(true),
+  validatedFetch: vi.fn((url, init) => fetch(url, init)),
+}));
+
 describe("code-validator", () => {
   beforeEach(() => {
     vi.resetAllMocks();
