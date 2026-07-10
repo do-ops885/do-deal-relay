@@ -1,5 +1,20 @@
 import { Deal } from "../worker/types";
 
+/**
+ * Seeded PRNG (Linear Congruential Generator) for deterministic benchmark data.
+ * Avoids Math.random() which Codacy flags as insecure randomness,
+ * and also makes benchmark results reproducible across runs.
+ */
+function createPRNG(seed: number): () => number {
+  let state = seed | 0;
+  return () => {
+    state = (state * 1103515245 + 12345) | 0;
+    return (state >>> 0) / 0x100000000;
+  };
+}
+
+const rand = createPRNG(42);
+
 function generateMockDeals(count: number): Deal[] {
   const deals: Deal[] = [];
   const statuses = ["active", "quarantined", "rejected"] as const;
@@ -12,12 +27,12 @@ function generateMockDeals(count: number): Deal[] {
     }
 
     deals.push({
-      id: Math.random().toString(36).substring(2, 15),
+      id: rand().toString(36).substring(2, 15),
       source: {
         url: "https://example.com",
         domain: "example.com",
         discovered_at: new Date().toISOString(),
-        trust_score: Math.random(),
+        trust_score: rand(),
       },
       title: `Deal ${i}`,
       description: `Description for deal ${i}`,
@@ -25,7 +40,7 @@ function generateMockDeals(count: number): Deal[] {
       url: `https://example.com/deal/${i}`,
       reward: {
         type: "cash",
-        value: Math.floor(Math.random() * 100),
+        value: Math.floor(rand() * 100),
       },
       expiry: {
         confidence: 0.9,
@@ -35,7 +50,7 @@ function generateMockDeals(count: number): Deal[] {
         category: ["finance"],
         tags: ["tag1"],
         normalized_at: new Date().toISOString(),
-        confidence_score: Math.random(),
+        confidence_score: rand(),
         status: status,
       },
     });
