@@ -42,9 +42,11 @@ export async function generateDealId(
  */
 export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
   const sorted = [...deals].sort((a, b) => {
-    const idA = (a as Record<string, unknown>).id as string;
-    const idB = (b as Record<string, unknown>).id as string;
-    return (idA || "").localeCompare(idB || "");
+    const idA = ((a as Record<string, unknown>).id as string) || "";
+    const idB = ((b as Record<string, unknown>).id as string) || "";
+    // Performance optimization: direct string comparison is significantly faster
+    // than localeCompare for ID strings (hashes/UUIDs) as it avoids locale-aware collation.
+    return idA < idB ? -1 : idA > idB ? 1 : 0;
   });
   const serialized = JSON.stringify(sorted);
   return sha256(serialized);

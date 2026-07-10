@@ -29,6 +29,16 @@ export async function stage(
   const now = new Date().toISOString();
 
   // Build snapshot without hash first
+  let active = 0;
+  let quarantined = 0;
+  let rejected = 0;
+  for (const d of deals) {
+    const status = d.metadata.status;
+    if (status === "active") active++;
+    else if (status === "quarantined") quarantined++;
+    else if (status === "rejected") rejected++;
+  }
+
   const snapshotBase = {
     version: CONFIG.VERSION,
     generated_at: now,
@@ -38,10 +48,9 @@ export async function stage(
     schema_version: CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
-      active: deals.filter((d) => d.metadata.status === "active").length,
-      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
-        .length,
-      rejected: deals.filter((d) => d.metadata.status === "rejected").length,
+      active,
+      quarantined,
+      rejected,
       duplicates: 0, // Already filtered
     },
     deals,
@@ -104,6 +113,14 @@ export function prepareSnapshot(
 ): Promise<Snapshot> {
   const now = new Date().toISOString();
 
+  let active = 0;
+  let quarantined = 0;
+  for (const d of deals) {
+    const status = d.metadata.status;
+    if (status === "active") active++;
+    else if (status === "quarantined") quarantined++;
+  }
+
   const snapshotBase = {
     version: CONFIG.VERSION,
     generated_at: now,
@@ -113,9 +130,8 @@ export function prepareSnapshot(
     schema_version: CONFIG.SCHEMA_VERSION,
     stats: {
       total: deals.length,
-      active: deals.filter((d) => d.metadata.status === "active").length,
-      quarantined: deals.filter((d) => d.metadata.status === "quarantined")
-        .length,
+      active,
+      quarantined,
       rejected: 0, // Already filtered
       duplicates: 0,
     },
