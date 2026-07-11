@@ -36,6 +36,27 @@ npm run test
 npm run test:e2e
 ```
 
+### Middleware Pipeline (ADR-016)
+
+New routes should be registered in the centralized middleware pipeline located in `worker/router.ts`. This pipeline provides automatic:
+- **CORS**: Handles preflight requests and origin validation.
+- **Logging**: Operation tracking for EU AI Act compliance.
+- **Rate Limiting**: Configurable per-route and per-client limits.
+- **Authentication**: Declarative `public`, `api-key`, or `internal` (Admin) tiers.
+
+To register a route:
+```typescript
+registerRoutes([
+  {
+    method: "GET",
+    path: "/api/my-feature",
+    handler: (req, env) => handleMyFeature(req, env),
+    auth: "api-key",
+    rateLimit: { windowSeconds: 60, maxRequests: 10 },
+  }
+]);
+```
+
 ## Quick Start
 
 ```bash

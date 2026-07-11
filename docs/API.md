@@ -369,7 +369,7 @@ Get full snapshot with metadata.
 
 ### GET /metrics
 
-Prometheus-compatible metrics.
+Prometheus-compatible metrics. Requires Admin role.
 
 **Response:**
 
@@ -397,6 +397,62 @@ validation_gate_rejection_ratio{gate="source_trust"} 0.1000
 
 ---
 
+### GET /api/dora-metrics
+
+Get DORA (DevOps Research and Assessment) metrics for the discovery pipeline. Requires Admin role.
+
+**Query Parameters:**
+
+- `days` (number): Time period for analysis (default: 30, max: 365)
+- `bypass_cache` (boolean): If true, recompute metrics instead of using cache (default: false)
+
+**Response:**
+
+```json
+{
+  "summary": {
+    "deployment_frequency": {
+      "runs_per_day": 4.2,
+      "successful_runs_per_day": 4.1,
+      "total_runs_in_period": 126,
+      "period_days": 30
+    },
+    "lead_time": {
+      "avg_duration_ms": 12500,
+      "p50_duration_ms": 11000,
+      "p95_duration_ms": 18000,
+      "p99_duration_ms": 25000,
+      "sample_size": 126
+    },
+    "change_failure_rate": {
+      "failure_rate": 0.0079,
+      "total_runs": 126,
+      "failed_runs": 1
+    },
+    "mean_time_to_recovery": {
+      "avg_recovery_ms": 3600000,
+      "recovery_samples": 1
+    },
+    "computed_at": "2024-03-31T12:00:00Z",
+    "period_days": 30
+  },
+  "daily_breakdown": [
+    {
+      "date": "2024-03-31",
+      "total_runs": 4,
+      "successful_runs": 4,
+      "failed_runs": 0,
+      "avg_duration_ms": 12000
+    }
+  ]
+}
+```
+
+#### GET /dora
+
+Alias for `GET /api/dora-metrics`.
+
+---
 
 ### POST /api/discover
 
@@ -740,7 +796,7 @@ Search and list referral codes with filtering.
 
 ### POST /api/referrals
 
-Create a new referral code.
+Create a new referral code. Requires User role.
 
 **Request Body:**
 
@@ -851,6 +907,10 @@ Get a specific referral by code.
 
 - `code` (string): The referral code to look up
 
+**Query Parameters:**
+
+- `redirect` (boolean): If true, redirect to the referral URL instead of returning JSON (default: false)
+
 **Response:**
 
 ```json
@@ -898,7 +958,7 @@ Get a specific referral by code.
 
 ### POST /api/referrals/:code/deactivate
 
-Deactivate a referral code.
+Deactivate a referral code. Requires User role.
 
 **Parameters:**
 
@@ -950,7 +1010,7 @@ Deactivate a referral code.
 
 ### POST /api/referrals/:code/reactivate
 
-Reactivate a previously deactivated referral code.
+Reactivate a previously deactivated referral code. Requires User role.
 
 **Parameters:**
 
@@ -1178,7 +1238,7 @@ Perform a full validation check on an existing deal by its code.
 
 ## D1 Database API
 
-Advanced database queries, full-text search, and statistics via D1 SQL database.
+Advanced database queries, full-text search, and statistics via D1 SQL database. Requires Admin role.
 
 ### GET /api/d1/search
 
@@ -1602,7 +1662,7 @@ Main entry point for MCP JSON-RPC requests (Specification 2025-11-25).
 
 ## NLQ (Natural Language Query) API
 
-Search deals using natural language queries like "trading deals with $100 bonuses" or "crypto platforms with signup rewards". The NLQ API parses user intent, extracts entities, and executes optimized database queries.
+Search deals using natural language queries like "trading deals with $100 bonuses" or "crypto platforms with signup rewards". The NLQ API parses user intent, extracts entities, and executes optimized database queries. Requires User role.
 
 ---
 
@@ -1812,7 +1872,7 @@ curl "https://your-worker.workers.dev/api/nlq/explain?q=trading%20deals%20with%2
 
 ## Semantic Search API
 
-Natural language search using Cloudflare Vectorize and Workers AI embeddings.
+Natural language search using Cloudflare Vectorize and Workers AI embeddings. Requires User role.
 
 ### POST /api/semantic-search
 
@@ -2817,6 +2877,114 @@ Trigger manual experience aggregation across all deals.
 - `503` - D1 database not configured
 
 **Note:** Aggregation also runs automatically daily at 9am via cron job.
+
+---
+
+## Bulk API
+
+Bulk operations for importing and exporting multiple referral codes. Requires User role for import and Admin role for export (configured via middleware).
+
+### POST /api/bulk/import
+
+Import multiple referral codes at once. Maximum 100 deals per request.
+
+**Request Body:**
+
+```json
+{
+  "deals": [
+    {
+      "code": "CODE1",
+      "url": "https://example.com/invite/CODE1",
+      "domain": "example.com",
+      "source": "bulk_api",
+      "metadata": {
+        "title": "Deal 1",
+        "reward_type": "cash",
+        "reward_value": 10
+      }
+    },
+    {
+      "code": "CODE2",
+      "url": "https://example.com/invite/CODE2",
+      "domain": "example.com"
+    }
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "total": 2,
+  "imported": 2,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "index": 0,
+      "success": true,
+      "code": "CODE1",
+      "message": "created",
+      "referral_id": "sha256-id-1",
+      "errors": null
+    },
+    {
+      "index": 1,
+      "success": true,
+      "code": "CODE2",
+      "message": "created",
+      "referral_id": "sha256-id-2",
+      "errors": null
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: All deals processed successfully
+- 207: Partial success (some deals failed)
+- 400: Invalid request body or batch size exceeded
+- 429: Rate limit exceeded
+
+---
+
+### GET /api/bulk/export
+
+Export deals as CSV or JSON. Requires Admin role.
+
+**Query Parameters:**
+
+- `format` (string): 'csv' or 'json' (default: 'json')
+- `domain` (string): Filter by domain
+- `category` (string): Filter by category
+- `status` (string): Filter by status ('active', 'inactive', 'expired', 'all')
+- `limit` (number): Max results (default: 100, max: 1000)
+- `offset` (number): Pagination offset
+
+**Response (JSON):**
+
+```json
+{
+  "success": true,
+  "format": "json",
+  "total": 150,
+  "returned": 100,
+  "deals": [...],
+  "pagination": {
+    "limit": 100,
+    "offset": 0,
+    "has_more": true
+  }
+}
+```
+
+**Response (CSV):**
+
+Returns a `text/csv` file with headers: `id,code,url,domain,status,source,submitted_at,submitted_by,expires_at,description,title,reward_type,reward_value,category,tags,confidence_score`.
 
 ---
 

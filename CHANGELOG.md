@@ -10,12 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.8] - 2026-07-03
 
 ### Added
+- **API Documentation synchronization**: Added documentation for DORA metrics (`/api/dora-metrics`), Bulk API (`/api/bulk/import`, `/api/bulk/export`), and referral redirects in `docs/API.md`.
+- **Core Data Model documentation**: Detailed the Cloudflare D1 database schema in `README.md`.
+- **Middleware Pipeline documentation**: Added developer guidance for the centralized middleware pipeline (ADR-016) in `CONTRIBUTING.md`.
 - **Authentication & User Management API documentation** (PR #532): Documented `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `GET /api/auth/me`, `PUT /api/auth/me`, and `GET /api/admin/users` in `docs/API.md`.
 - **JWT Authentication support documentation**: Added documentation for JWT Bearer token authentication in the API reference.
 
 ### Changed
 - **Extension UX Enhancements** (PR #530): Implemented a deferred validation pattern for manual referral code input in the browser extension. Errors are now shown only after 4+ characters or when the input loses focus (`blur`).
-- **Documentation synchronization**: Synchronized version references to 0.1.8 across `README.md` and `docs/API.md`.
+- **Documentation synchronization**: Synchronized version references and environment variables to 0.1.8 across `README.md`, `docs/API.md`, and `CONTRIBUTING.md`.
 
 ## [0.1.7] - 2026-06-15
 
