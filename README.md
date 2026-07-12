@@ -67,14 +67,15 @@ curl https://your-worker.workers.dev/api/log      # Recent logs
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
+### Core Data Model
+
 The system utilizes Cloudflare D1 (SQLite) for structured data and identity management:
 
-- **Users**: Identity management including email, hashed passwords, and primary roles.
-- **RBAC**: A granular Role-Based Access Control system with `roles`, `permissions`, and `role_permissions`.
-- **Sessions**: Web-based session tracking for authenticated users.
-- **API Keys**: Enhanced programmatic access keys linked to users with specific permission overrides.
-- **Audit Logs**: Comprehensive tracking of all system and user actions for security auditing.
-- **Deals & Referrals**: Structured storage for discovered deals and referral codes with FTS5 search support.
+- **Identity**: `users`, `roles`, `permissions`, `sessions`, and `api_keys` tables manage access control.
+- **Deals & Referrals**: The `referrals` table stores discovered deals with FTS5 virtual tables for high-performance search.
+- **Compliance**: `ai_act_logs` ensures EU AI Act compliance (Articles 12 & 14) with detailed operation tracking and human oversight recording.
+- **Observability**: `audit_log` tracks all system/user actions, while `system_metrics` stores time-series performance data.
+- **Research**: `research_cache` stores results from external research agents to minimize redundant fetching.
 
 ## Safety & Quality
 
@@ -118,6 +119,8 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 | `CANDIDATE_BUDGET_GLOBAL` | No | Max candidates per run |
 | `CANDIDATE_BUDGET_PER_SOURCE` | No | Base candidates per individual source |
 | `CANDIDATE_BUDGET_HIGH_TRUST_BONUS` | No | Extra budget bonus for high-trust sources |
+| `MCP_PROTOCOL_VERSION` | No | Supported MCP protocol version |
+| `MCP_RATE_LIMIT_PER_MINUTE` | No | Rate limit for MCP requests |
 
 ### Current Settings
 
