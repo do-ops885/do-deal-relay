@@ -1,6 +1,7 @@
 import { Deal, DealMetadata, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { updateSourceTrust } from "../lib/storage";
+import { evolveTrustBatch } from "../lib/d1/trust";
 import { logger } from "../lib/global-logger";
 import { toError } from "../lib/sanitize-error";
 
@@ -210,16 +211,56 @@ export async function evolveSourceTrust(
   deals: Deal[],
   allValid: boolean,
 ): Promise<void> {
+  const sources = new Set(deals.map((d) => d.source.domain));
+  const domains = Array.from(sources);
+
+  // Prefer D1 atomic batch when available
+  if (env.DEALS_DB) {
+    try {
+      const results = await evolveTrustBatch(
+        env.DEALS_DB,
+        domains.map((domain) => ({ domain, success: allValid })),
+      );
+      for (const r of results) {
+        logger.info(`Evolved trust for ${r.domain}`, {
+          domain: r.domain,
+          previous_score: r.previous_score,
+          new_score: r.new_score,
+          adjustment: r.adjustment,
+          allValid,
+        });
+      }
+    } catch (error) {
+      const err = toError(error);
+      logger.error(`D1 batch trust evolution failed, falling back to KV`, {
+        error: err.message,
+        domainCount: domains.length,
+      });
+      await fallbackEvolveTrust(env, domains, allValid);
+    }
+    return;
+  }
+
+  // Fallback: KV-based per-domain updates
+  await fallbackEvolveTrust(env, domains, allValid);
+}
+
+/**
+ * KV-based trust evolution fallback used when D1 is unavailable.
+ */
+async function fallbackEvolveTrust(
+  env: Env,
+  domains: string[],
+  allValid: boolean,
+): Promise<void> {
   const adjustment = allValid
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
-  const sources = new Set(deals.map((d) => d.source.domain));
-
-  for (const domain of sources) {
+  for (const domain of domains) {
     try {
       await updateSourceTrust(env, domain, adjustment);
-      logger.info(`Evolved trust for ${domain}`, {
+      logger.info(`Evolved trust for ${domain} (KV fallback)`, {
         domain,
         adjustment,
         allValid,

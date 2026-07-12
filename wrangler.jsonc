@@ -127,12 +127,20 @@
         "name": "PIPELINE_LOCK",
         "class_name": "PipelineLock",
       },
+      {
+        "name": "SOURCE_REGISTRY",
+        "class_name": "SourceRegistry",
+      },
     ],
   },
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["PipelineLock"],
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["SourceRegistry"],
     },
   ],
   // Vectorize index for semantic search over deals and referrals
