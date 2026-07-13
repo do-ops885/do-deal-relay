@@ -11,7 +11,8 @@ import {
   type ToolCallParams,
 } from "../../lib/mcp/types";
 import { getTools, executeTool } from "../../lib/mcp/tools";
-import { paginate, type ProgressNotification } from "../../lib/mcp/utils";
+import { paginateList } from "../../lib/mcp/pagination";
+import { type ProgressNotification } from "../../lib/mcp/utils";
 
 /**
  * Handle tools/list request with pagination support
@@ -36,11 +37,12 @@ export async function handleToolsList(params?: {
     annotations: tool.annotations,
   }));
 
-  const PAGE_SIZE = 5;
-  const { items, nextCursor } = paginate(
+  const PAGE_SIZE = 20;
+  const { items, nextCursor } = paginateList(
     serializedTools,
     params?.cursor,
     PAGE_SIZE,
+    (tool) => tool.name,
   );
 
   return {

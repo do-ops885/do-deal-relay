@@ -131,12 +131,16 @@
         "name": "SOURCE_REGISTRY",
         "class_name": "SourceRegistry",
       },
+      {
+        "name": "DEAL_REGISTRY",
+        "class_name": "DealRegistry",
+      },
     ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["SourceRegistry"],
+      "new_sqlite_classes": ["SourceRegistry", "DealRegistry"],
     },
   ],
   // Vectorize index for semantic search over deals and referrals
