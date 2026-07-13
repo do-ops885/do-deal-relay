@@ -269,16 +269,27 @@ async function fallbackEvolveTrust(
     ? CONFIG.TRUST_ADJUSTMENT.success
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
-  for (const domain of domains) {
-    try {
-      await updateSourceTrust(env, domain, adjustment);
-      logger.info(`Evolved trust for ${domain} (KV fallback)`, {
-        domain,
-        adjustment,
-        allValid,
+  const results = await Promise.allSettled(
+    domains.map((domain) =>
+      updateSourceTrust(env, domain, adjustment).then(() => {
+        logger.info(`Evolved trust for ${domain} (KV fallback)`, {
+          domain,
+          adjustment,
+          allValid,
+        });
+      }),
+    ),
+  );
+
+  // Log any failures (non-fatal — individual domain errors don't block the batch)
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result && result.status === "rejected") {
+      const err = toError(result.reason);
+      logger.error(`Failed to evolve trust for ${domains[i]}`, {
+        domain: domains[i],
+        error: err.message,
       });
-    } catch {
-      // Individual domain failures are non-fatal; continue with remaining domains.
     }
   }
 }
