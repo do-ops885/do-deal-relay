@@ -62,6 +62,23 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 
 ## TypeScript Anti-Patterns (Codacy/Gate Enforcement)
 
+### Codacy CI Failure Protocol
+
+When Codacy CI fails on a PR (including pre-existing issues):
+
+1. **Identify**: Check Codacy annotations via `gh api repos/.../check-runs/.../annotations`
+2. **Classify**: Determine if issue is introduced by PR or pre-existing
+3. **Fix ALL**: Fix both introduced AND pre-existing issues — zero tolerance
+4. **Local verify**: Run `codacy-analysis analyze --diff` after fixes
+5. **Push**: Commit fix and push to PR branch
+
+**Common Codacy patterns to fix:**
+- `Unnecessary conditional, expected left-hand side of ?? operator` — remove redundant `??` when value is guaranteed defined
+- `Unused import` — remove or prefix with `_`
+- `as any` cast — use proper types
+- `x!` non-null assertion — use type guard
+- Complexity warnings — extract helper functions
+
 ### Banned Patterns
 
 | Pattern | Issue | Fix |
@@ -71,23 +88,7 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
 | `x!` (non-null assertion) | Bypasses null checks, forbidden | Use type guard or restructure |
 
 ### Regex Match Groups
-When `path.match(/regex/)` succeeds, capture groups `[1]`, `[2]`, etc. have different types based on tsconfig.
-
-**With `noUncheckedIndexedAccess: true`** (our config):
-```typescript
-const id = match[1] ?? ""; // string | undefined → string (use ?? fallback)
-```
-
-**Without `noUncheckedIndexedAccess`**:
-```typescript
-const id = match[1]; // string (safe, no ?? needed)
-```
-
-**Incorrect (avoid):**
-```typescript
-if (match[1] !== undefined) { ... } // Redundant
-handleRequest(match[1]!, env);      // Forbidden non-null assertion
-```
+With `noUncheckedIndexedAccess: true` (our config), use `match[1] ?? ""` fallback. Never use `match[1] !== undefined` (redundant) or `match[1]!` (forbidden non-null assertion).
 
 ## Operational Tools
 Agents SHOULD use the unified toolkit for common operations:

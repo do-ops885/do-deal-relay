@@ -329,13 +329,15 @@ export class DealRegistry {
       )
       .toArray();
 
-    const stats: Record<string, number> = { total: 0 };
+    let total = 0;
+    const byStatus: Record<string, number> = {};
     for (const row of rows) {
-      stats[row.status] = Number(row.cnt);
-      stats.total = (stats.total ?? 0) + Number(row.cnt);
+      const cnt = Number(row.cnt);
+      byStatus[row.status] = cnt;
+      total += cnt;
     }
 
-    return stats as Record<DealStatus | "total", number>;
+    return { ...byStatus, total } as Record<DealStatus | "total", number>;
   }
 
   // --------------------------------------------------------------------------

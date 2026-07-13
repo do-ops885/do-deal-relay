@@ -31,11 +31,13 @@
 
 ---
 
-## PR Resolution History — 2026-07-10
+## PR Resolution Status — 2026-07-13
 
-All prior tracked PRs have been merged to main. No open PRs remain in this cycle.
+| PR | Title | Status | CI | Action |
+|----|-------|--------|-----|--------|
+| #588 | feat(mcp): wire cursor-based pagination and add DealRegistry DO | 🟡 PARTIAL | ✅ Smoke Tests FIXED, ⚠️ Codacy pre-existing, ❌ Workers Builds BLOCKED (ADR-018) | Merge-ready pending Codacy review |
 
-### Merged PRs
+### Merged PRs (Historical)
 
 | PR | Title | Commit | CI Status |
 |----|-------|--------|-----------|
