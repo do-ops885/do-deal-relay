@@ -58,5 +58,17 @@ export {
   type ReferralCodeResult,
 } from "./queries";
 
+// Trust score mutations
+export {
+  evolveTrust,
+  evolveTrustBatch,
+  getTrustScore,
+  getTrustScores,
+  getTopTrustedDomains,
+  getDomainsNeedingReview,
+  type TrustScoreRow,
+  type TrustEvolutionResult,
+} from "./trust";
+
 // Re-export SQL schema for reference
 export const SCHEMA_VERSION = "1.0.0";
