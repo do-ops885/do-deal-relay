@@ -236,13 +236,25 @@ export async function evolveSourceTrust(
         error: err.message,
         domainCount: domains.length,
       });
-      await fallbackEvolveTrust(env, domains, allValid);
+      await fallbackEvolveTrust(env, domains, allValid).catch((fbErr) => {
+        const err = toError(fbErr);
+        logger.error(`Fallback KV trust evolution also failed`, {
+          error: err.message,
+          domainCount: domains.length,
+        });
+      });
     }
     return;
   }
 
   // Fallback: KV-based per-domain updates
-  await fallbackEvolveTrust(env, domains, allValid);
+  await fallbackEvolveTrust(env, domains, allValid).catch((fbErr) => {
+    const err = toError(fbErr);
+    logger.error(`KV trust evolution failed`, {
+      error: err.message,
+      domainCount: domains.length,
+    });
+  });
 }
 
 /**
@@ -258,19 +270,20 @@ async function fallbackEvolveTrust(
     : CONFIG.TRUST_ADJUSTMENT.failure;
 
   for (const domain of domains) {
-    try {
-      await updateSourceTrust(env, domain, adjustment);
-      logger.info(`Evolved trust for ${domain} (KV fallback)`, {
-        domain,
-        adjustment,
-        allValid,
+    await updateSourceTrust(env, domain, adjustment)
+      .then(() => {
+        logger.info(`Evolved trust for ${domain} (KV fallback)`, {
+          domain,
+          adjustment,
+          allValid,
+        });
+      })
+      .catch((error) => {
+        const err = toError(error);
+        logger.error(`Failed to evolve trust for ${domain}`, {
+          domain,
+          error: err.message,
+        });
       });
-    } catch (error) {
-      const err = toError(error);
-      logger.error(`Failed to evolve trust for ${domain}`, {
-        domain,
-        error: err.message,
-      });
-    }
   }
 }
