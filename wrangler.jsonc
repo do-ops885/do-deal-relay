@@ -136,10 +136,6 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["PipelineLock"],
-    },
-    {
-      "tag": "v2",
       "new_sqlite_classes": ["SourceRegistry"],
     },
   ],
@@ -308,10 +304,6 @@
       "migrations": [
         {
           "tag": "v1",
-          "new_sqlite_classes": ["PipelineLock"],
-        },
-        {
-          "tag": "v2",
           "new_sqlite_classes": ["SourceRegistry"],
         },
       ],
