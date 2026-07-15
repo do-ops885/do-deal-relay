@@ -255,6 +255,12 @@ async function addToDeadLetterQueue(
   });
 }
 
+/**
+ * Retrieves all events currently in the Dead Letter Queue.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @returns A list of enqueued webhook delivery failures.
+ */
 export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
   try {
     const kv = getWebhookKV(env);
@@ -281,6 +287,15 @@ export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
   }
 }
 
+/**
+ * Retries delivery for a specific event from the Dead Letter Queue.
+ * If successful, the event is removed from the DLQ.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @param eventId - Unique ID of the failed event.
+ * @param subscriptionId - ID of the subscription that failed.
+ * @returns True if retry was initiated, false if event/subscription not found.
+ */
 export async function retryDeadLetterEvent(
   env: Env,
   eventId: string,
