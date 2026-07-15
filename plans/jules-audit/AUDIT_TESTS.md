@@ -1,6 +1,8 @@
-# Track C - Test Coverage
+# Track C — Test Coverage
 
-- **Missing Coverage**:
-  - `worker/pipeline/discover.ts`: Adaptive budget calculation logic needs more exhaustive unit tests.
-- **Action**:
-  - Add unit tests for `calculateAdaptiveBudget` in a new test file `tests/unit/discovery-budget.test.ts`.
+## Uncovered Core Logic
+- `worker/lib/metrics/prometheus.ts`: Metric registry serialization lacks unit tests.
+- `worker/lib/webhook/delivery.ts`: `calculateBackoff` jitter logic is not explicitly tested for distribution.
+
+## Actionable Fixes
+1. Add unit test for `calculateBackoff` in `tests/unit/webhook/delivery.test.ts` to verify it respects min/max bounds.

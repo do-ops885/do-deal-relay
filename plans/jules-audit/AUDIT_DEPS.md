@@ -1,10 +1,14 @@
-# Track A - Dependency Audit
+# Track A — Dependency Audit
 
-| package | current | available | risk | upgrade safe? |
+| Package | Current | Available | Risk | Upgrade Safe? |
 |---------|---------|-----------|------|---------------|
-| @cloudflare/workers-types | 4.20260613.1 | 4.20260615.1 | Low | Yes (Patch) |
-| @types/node | 25.9.2 | 25.9.3 | Low | Yes (Patch) |
-| prettier | 3.8.3 | 3.8.4 | Low | Yes (Patch) |
-| protobufjs | 8.6.1 | 8.6.3 | Low | Yes (Patch) |
-| zod | 3.25.76 | 4.4.3 | High | No (Major - Human Review Required) |
+| @cloudflare/workers-types | 5.20260713.1 | 5.20260715.1 | Low | Yes (patch) |
+| @types/node | 26.1.0 | 26.1.1 | Low | Yes (patch) |
+| markdownlint-cli | 0.49.0 | 0.49.1 | Low | Yes (patch) |
+| prettier | 3.9.4 | 3.9.5 | Low | Yes (patch) |
+| protobufjs | 8.7.0 | 8.7.1 | Low | Yes (patch) |
+| typescript | 6.0.3 | 7.0.2 | High | Human review required (major) |
+| zod | 3.25.76 | 4.4.3 | High | Human review required (major) |
 
+## Summary
+Documented patch-level upgrades for Cloudflare types, Node types, markdownlint, Prettier, and protobufjs. Major upgrades for TypeScript and Zod require human review.

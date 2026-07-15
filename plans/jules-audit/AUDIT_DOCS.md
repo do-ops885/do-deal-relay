@@ -1,8 +1,9 @@
-# Track D - Documentation
+# Track D — Documentation
 
-- **Missing JSDoc**:
-  - `worker/lib/storage.ts`: Checked, but most functions have documentation.
-  - `worker/pipeline/score.ts`: Checked, but functions have documentation.
-- **Action**:
-  - I will perform a deeper dive to find truly undocumented public APIs in the next step if I find any.
-  - Actually, looking at the previous grep, `worker/routes/webhooks.ts` is marked as DEPRECATED but lacks a JSDoc `@deprecated` tag. I will add it.
+## Missing JSDoc (Public APIs)
+- `worker/lib/metrics/prometheus.ts`: `renderMetrics` is exported but lacks JSDoc.
+- `worker/lib/webhook/delivery.ts`: `sendOutgoingWebhooks` has JSDoc, but `getDeadLetterQueue` and `retryDeadLetterEvent` lack full param/return descriptions.
+
+## Actionable Fixes
+1. Add JSDoc to `getDeadLetterQueue` and `retryDeadLetterEvent` in `worker/lib/webhook/delivery.ts`.
+2. Add JSDoc to `renderMetrics` in `worker/lib/metrics/prometheus.ts`.
