@@ -180,12 +180,18 @@ function isPrivateIP(ip: string): boolean {
   return false;
 }
 
-function isIpInCidr(ip: string, cidr: string): boolean {
+/** @internal */
+export function isIpInCidr(ip: string, cidr: string): boolean {
   try {
     const parts = cidr.split("/");
     const range = parts[0];
     const bitsStr = parts[1];
     if (!range) return false;
+
+    // Security: Ensure input is a valid IP address before CIDR matching.
+    // Prevents hostnames from matching 0.0.0.0/8 due to ipToLong returning 0.
+    if (!isIpAddress(ip)) return false;
+
     const normalizedIp = normalizeIp(ip);
     const normalizedRange = normalizeIp(range);
     const ipIsV4 = !normalizedIp.includes(":");
