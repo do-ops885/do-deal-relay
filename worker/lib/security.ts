@@ -157,9 +157,11 @@ function normalizeIp(ip: string): string {
     if (inner.includes(".")) return inner;
     if (inner.includes(":")) {
       const parts = inner.split(":");
-      if (parts.length === 2) {
-        const high = parseInt(parts[0]!, 16);
-        const low = parseInt(parts[1]!, 16);
+      const p0 = parts[0];
+      const p1 = parts[1];
+      if (parts.length === 2 && p0 !== undefined && p1 !== undefined) {
+        const high = parseInt(p0, 16);
+        const low = parseInt(p1, 16);
         return [
           (high >> 8) & 0xff,
           high & 0xff,
@@ -221,9 +223,11 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
 function ipToLong(ip: string): number {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
   if (parts.length !== SECURITY_CONSTANTS.IPV4_PARTS) return 0;
-  return (
-    ((parts[0]! << 24) | (parts[1]! << 16) | (parts[2]! << 8) | parts[3]!) >>> 0
-  );
+  const p0 = parts[0] ?? 0;
+  const p1 = parts[1] ?? 0;
+  const p2 = parts[2] ?? 0;
+  const p3 = parts[3] ?? 0;
+  return ((p0 << 24) | (p1 << 16) | (p2 << 8) | p3) >>> 0;
 }
 
 function ipv6ToBigInt(ipv6: string): bigint {
