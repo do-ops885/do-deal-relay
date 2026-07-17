@@ -137,12 +137,8 @@
       },
     ],
   },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["SourceRegistry", "DealRegistry"],
-    },
-  ],
+  // NOTE: No migrations needed — DOs are already deployed and provisioned.
+  // migrations blocks MUST be absent for wrangler versions upload (Cloudflare Git Integration).
   // Vectorize index for semantic search over deals and referrals
   // Index name must match SEMANTIC_SEARCH_CONFIG.INDEX_NAME in worker/lib/search/types.ts
   // Free tier limits: 100 indexes, 1000 namespaces, 1000 vectors/upsert, topK=50
@@ -309,12 +305,7 @@
           },
         ],
       },
-      "migrations": [
-        {
-          "tag": "v1",
-          "new_sqlite_classes": ["SourceRegistry", "DealRegistry"],
-        },
-      ],
+      // No migrations — DOs already provisioned. See note above.
     },
   },
 }

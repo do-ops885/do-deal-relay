@@ -82,4 +82,8 @@ export interface Env {
   JWT_REFRESH_SECRET?: string;
   // Vectorize index for semantic search (binding declared in wrangler.jsonc)
   DEAL_EMBEDDINGS?: VectorizeIndex;
+  // Durable Objects for atomic concurrency control and stateful coordination
+  PIPELINE_LOCK?: DurableObjectNamespace;
+  SOURCE_REGISTRY?: DurableObjectNamespace;
+  DEAL_REGISTRY?: DurableObjectNamespace;
 }
