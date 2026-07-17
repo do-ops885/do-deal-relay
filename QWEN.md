@@ -13,7 +13,10 @@ Extends [AGENTS.md](AGENTS.md). Qwen must adhere to all Core Constraints and Inf
 - **Unified Toolkit**: Use `./scripts/agent-toolkit.sh` for setup, doctor, quality, and docs tasks.
 - **Always-Fix Policy**: Fix pre-existing issues in the current context immediately per [AGENTS.md](AGENTS.md).
 - **Performance**: Adhere to the 'Zero Slop' directive in [AGENTS.md](AGENTS.md) for all commits.
-- **Triage Protocol**: Follow the ADR-based triage protocol in [AGENTS.md](AGENTS.md) for unfixable issues.
+- **Triage Protocol**: For unfixable/blocked issues, register a new ADR in `plans/` and mark the corresponding GOAP task as `blocked`.
+- **Analyze-First**: Analyze repository structure, CI/CD setup, quality gates, and agent infrastructure deeply before asking ANY questions.
+- **No Low-Value Questions**: Do not ask redundant questions that can be answered by the codebase itself.
+- **Incremental & Non-Speculative**: Make small, incremental changes. Never speculatively rewrite core pipeline logic or validation gates.
 
 ## Constraints
 - **Sub-Agents**: Use OpenCode sub-agents (see `agents-docs/SUB-AGENTS.md`) if complex delegation is required.

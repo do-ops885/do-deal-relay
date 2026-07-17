@@ -6,6 +6,8 @@
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_AGENTS_MD=200
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
+readonly MAX_PR_TITLE_LENGTH=150
+readonly MAX_PR_BODY_LENGTH=1000
 readonly TRUST_THRESHOLD=0.3
 readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
@@ -51,11 +53,17 @@ We use a Goal-Oriented Action Planning (GOAP) approach combined with Architectur
    - **Documentation**: Update `README.md`, `docs/`, and `agents-docs/`.
    - **Extract learnings**: Append discoveries to `agents-docs/LEARNINGS.md` or nearest `AGENTS.md`.
 
+## Session Bootstrap
+Agents use a `SessionStart` hook to inject compact project context (top-level docs index + latest changelog) at startup; configured via `docflow.json` and agent-specific settings (e.g., `.claude/settings.json`).
+```bash
+./hooks/session-start.sh # Manual execution to verify context injection
+```
+
 ## Behavioral Rules
-1. **Analyze-First**: Exhaustive repository analysis before asking questions. Minimize unnecessary clarification requests.
-2. **Always-Fix Policy**: Fix pre-existing issues in the current context immediately. No discussion, no deferral.
+1. **Analyze-First**: Exhaustive repository analysis before asking questions. Minimize unnecessary clarification requests. Do NOT ask low-value, redundant questions that can be answered by analyzing the repo itself (e.g., whether quality gates, skills systems, validation workflows, act/local CI rehearsal, or sub-agents exist—they do).
+2. **Always-Fix Policy**: Fix pre-existing issues in the current context immediately. No discussion, no deferral. If a failure is unfixable, register an ADR in `plans/` and link to a `blocked` GOAP task.
 3. **Agentic Abstention**: If environmental infeasibility makes further tool calls wasteful, agents MUST abstain per `.agents/skills/agentic-abstention/SKILL.md`.
-4. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`.
+4. **Validation-First**: All deals MUST pass 9 gates (Schema, Trust, Dedupe, Reward, etc.). See `agents-docs/SYSTEM_REFERENCE.md`. Never bypass, modify, or speculatively rewrite any validation gate logic.
 5. **Incremental Changes**: Prefer architectural consistency and small, verified steps over speculative rewrites.
 6. **Context Hygiene**: Swallow passing output; surface failures only. Follow `agents-docs/CONTEXT.md`.
 7. **Operational Safety**: Coordinate modifications to shared 'hot files' (e.g., `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`).
@@ -119,6 +127,7 @@ Agents SHOULD use the unified toolkit for common operations:
 
 ## PR & Commit Instructions
 - **MANDATORY**: PR titles and Commit headers MUST follow `type(scope): subject`.
+- **Validation**: `echo "title" | npx commitlint --config commitlint.config.cjs`
 - **Branching Workflow**: `develop` → `main` (production).
   - `develop`: Active development. All PRs target `develop`.
   - `main`: Production. Only merged from `develop` after CI passes.
@@ -127,7 +136,10 @@ Agents SHOULD use the unified toolkit for common operations:
   - `fix(security)`: Security patch / hardening.
   - `feat(security)`: New security feature/control.
   - `ci(security)`: Security-related CI/tooling.
-- **Formatting**: Subject line max 72 chars, lowercase. Wrap body at 100 chars. footer max 1000 chars.
+- **Formatting**:
+  - PR Title: `type(scope): description` (max `${MAX_PR_TITLE_LENGTH}` chars).
+  - Commit Header: `type(scope): subject` (max `${MAX_COMMIT_SUBJECT_LENGTH}` chars total, lowercase).
+  - Commit Body: Enforced at PR level as `${MAX_PR_BODY_LENGTH}` chars maximum. Wrap body at 100 chars. Footer max 1000 chars.
 
 ## Maintenance & Verification
 - **Skill Standardization**: Skills in `.agents/skills/` must include YAML frontmatter and `## Rationalizations`/`## Red Flags` sections.
