@@ -458,6 +458,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function copyToClipboard(text, buttonElement) {
     if (!text || buttonElement.dataset.copying === "true") return;
 
+    const originalLabel = buttonElement.getAttribute("aria-label");
+    const originalTitle = buttonElement.getAttribute("title");
+
     try {
       buttonElement.dataset.copying = "true";
       await navigator.clipboard.writeText(text);
@@ -471,11 +474,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       span.textContent = "✅";
       buttonElement.appendChild(span);
 
+      // Enhance accessibility feedback
+      buttonElement.setAttribute("aria-label", "Copied!");
+      buttonElement.setAttribute("title", "Copied!");
+
       setTimeout(() => {
         buttonElement.textContent = "";
         children.forEach(function (child) {
           buttonElement.appendChild(child);
         });
+        if (originalLabel) {
+          buttonElement.setAttribute("aria-label", originalLabel);
+        } else {
+          buttonElement.removeAttribute("aria-label");
+        }
+        if (originalTitle) {
+          buttonElement.setAttribute("title", originalTitle);
+        } else {
+          buttonElement.removeAttribute("title");
+        }
         buttonElement.removeAttribute("data-copying");
       }, 2000);
     } catch (err) {
@@ -514,9 +531,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (shouldShowError) {
       elements.manualCode.classList.toggle("invalid", !isValid);
       elements.manualCodeError.classList.toggle("hidden", isValid);
+      elements.manualCode.setAttribute("aria-invalid", (!isValid).toString());
     } else {
       elements.manualCode.classList.remove("invalid");
       elements.manualCodeError.classList.add("hidden");
+      elements.manualCode.removeAttribute("aria-invalid");
     }
 
     elements.manualBtn.disabled = !isValid;
