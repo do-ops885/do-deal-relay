@@ -91,8 +91,10 @@ function normalizeUrl(url: string): string {
     }
 
     // Sort remaining params for consistency
+    // Performance optimization: direct string lexicographical comparison (< and >)
+    // is significantly faster than localeCompare and avoids locale-aware collation overhead.
     const sortedParams = new URLSearchParams(
-      [...parsed.searchParams].sort(([a], [b]) => a.localeCompare(b)),
+      [...parsed.searchParams].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
     );
     parsed.search = sortedParams.toString();
 
