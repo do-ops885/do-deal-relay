@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-10
-**Version**: 0.9.0
-**Status**: Active — All P0-P3 resolved, plans synced
+**Last Updated**: 2026-07-13
+**Version**: 0.10.0
+**Status**: Active — P0-P3 resolved; deferred items tracked
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -31,11 +31,13 @@
 
 ---
 
-## PR Resolution History — 2026-07-10
+## PR Resolution Status — 2026-07-13
 
-All prior tracked PRs have been merged to main. No open PRs remain in this cycle.
+| PR | Title | Status | CI | Action |
+|----|-------|--------|-----|--------|
+| #588 | feat(mcp): wire cursor-based pagination and add DealRegistry DO | 🟡 PARTIAL | ✅ Smoke Tests FIXED, ⚠️ Codacy pre-existing, ❌ Workers Builds BLOCKED (ADR-018) | Merge-ready pending Codacy review |
 
-### Merged PRs
+### Merged PRs (Historical)
 
 | PR | Title | Commit | CI Status |
 |----|-------|--------|-----------|
@@ -114,7 +116,7 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 
 ---
 
-## P3 — Low Priority (4 Open — 14 Resolved)
+## P3 — Low Priority (2 Open — 16 Resolved)
 
 ### Minor Correctness
 
@@ -143,9 +145,9 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 
 | ID | Item | Source | Status | Resolution |
 |:---|:---|:---|:---|:---|
-| P3-14 | MCP pagination — cursor parameters defined but logic not implemented | Swarm | ✅ CLOSED | Cursor-based pagination in tools/list and resources/list |
+| P3-14 | MCP pagination — cursor parameters defined but logic not implemented | Swarm | ✅ CLOSED | Cursor-based pagination via `pagination.ts` wired into tools/list and resources/list routes. Offset-based approach replaced. |
 | P3-15 | MCP progress notifications — `_meta.progressToken` defined but unused | Swarm | ✅ CLOSED | Progress embedded in response `_meta` per MCP spec |
-| P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | ⬜ DEFERRED | Auth setup infrastructure exists; runtime env config needed |
+| P3-16 | E2E local env setup — 7/26 tests fail with 401 (auth tokens) | FOLLOWUP | ✅ CLOSED | Auth setup infrastructure fully implemented: `global-setup.ts`, `setup-auth.sh`, JWT token seeding, Playwright config with globalSetup. |
 | P3-17 | No OpenTelemetry / distributed tracing | Audit | ⬜ DEFERRED | Cloudflare observability enabled; OTEL SDK integration deferred |
 | P3-18 | `bot/` and `extension/` directories need documentation review | Audit | ✅ CLOSED | Comprehensive READMEs exist in both directories |
 
