@@ -3,6 +3,7 @@ import {
   sendOutgoingWebhooks,
   getDeadLetterQueue,
   retryDeadLetterEvent,
+  calculateBackoff,
 } from "../../../worker/lib/webhook/delivery";
 import type {
   WebhookEvent,
@@ -13,7 +14,7 @@ import type {
 vi.mock("../../../worker/lib/security", () => ({
   validateFetchUrl: vi.fn().mockResolvedValue(true),
   validateUrl: vi.fn().mockReturnValue(true),
-  validatedFetch: vi.fn((url, init) => fetch(url, init)),
+  validatedFetch: vi.fn((url, init) => globalThis.fetch(url, init)),
 }));
 
 // ============================================================================
@@ -283,6 +284,28 @@ describe("Webhook Delivery", () => {
       await sendOutgoingWebhooks(env, event);
 
       expect(kv.storage.has(`webhook_dlq:${event.id}:${sub.id}`)).toBe(true);
+    });
+
+    it("should calculate backoff within bounds and include jitter", () => {
+      const policy = {
+        initial_delay_ms: 1000,
+        backoff_multiplier: 2,
+        max_delay_ms: 10000,
+      };
+
+      // Attempt 1: 1000 * 2^0 + jitter(0-1000) = 1000-2000
+      const b1 = calculateBackoff(1, policy);
+      expect(b1).toBeGreaterThanOrEqual(1000);
+      expect(b1).toBeLessThanOrEqual(2000);
+
+      // Attempt 2: 1000 * 2^1 + jitter(0-1000) = 2000-3000
+      const b2 = calculateBackoff(2, policy);
+      expect(b2).toBeGreaterThanOrEqual(2000);
+      expect(b2).toBeLessThanOrEqual(3000);
+
+      // Attempt 5 (Cap): 1000 * 2^4 + jitter = 16000 + jitter -> capped at 10000
+      const b5 = calculateBackoff(5, policy);
+      expect(b5).toBe(10000);
     });
   });
 

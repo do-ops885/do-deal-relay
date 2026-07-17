@@ -18,6 +18,12 @@ import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
 import { validatedFetch } from "../security";
 
+const DELIVERY_CONSTANTS = {
+  MAX_ERROR_RESPONSE_SIZE: 10 * 1024, // 10KB
+  DELIVERY_RECORD_EXPIRATION_SECONDS: 7 * 24 * 60 * 60, // 7 days
+  DLQ_EXPIRATION_SECONDS: 30 * 24 * 60 * 60, // 30 days
+} as const;
+
 // ============================================================================
 // Outgoing Webhooks
 // ============================================================================
@@ -153,7 +159,7 @@ async function sendWebhookToSubscription(
         // Failed - retry
         // Check Content-Length before reading to avoid memory issues with large error responses
         const contentLength = response.headers.get("content-length");
-        const maxErrorSize = 10 * 1024; // 10KB limit for webhook error responses
+        const maxErrorSize = DELIVERY_CONSTANTS.MAX_ERROR_RESPONSE_SIZE;
 
         if (contentLength && parseInt(contentLength, 10) > maxErrorSize) {
           attemptRecord.response_body = `Error response too large (${contentLength} bytes)`;
@@ -192,7 +198,7 @@ async function sendWebhookToSubscription(
     await kv.put(
       `webhook_delivery:${delivery.event_id}:${subscription.id}`,
       JSON.stringify(delivery),
-      { expirationTtl: 7 * 24 * 60 * 60 }, // 7 days
+      { expirationTtl: DELIVERY_CONSTANTS.DELIVERY_RECORD_EXPIRATION_SECONDS },
     );
   }
 
@@ -202,7 +208,7 @@ async function sendWebhookToSubscription(
   }
 }
 
-function calculateBackoff(
+export function calculateBackoff(
   attempt: number,
   policy: {
     initial_delay_ms: number;
@@ -244,7 +250,7 @@ async function addToDeadLetterQueue(
   await kv.put(
     `webhook_dlq:${delivery.event_id}:${delivery.subscription_id}`,
     JSON.stringify(dlqEntry),
-    { expirationTtl: 30 * 24 * 60 * 60 }, // 30 days
+    { expirationTtl: DELIVERY_CONSTANTS.DLQ_EXPIRATION_SECONDS },
   );
 
   logger.warn(`Webhook added to DLQ: ${delivery.event_id}`, {
@@ -255,6 +261,12 @@ async function addToDeadLetterQueue(
   });
 }
 
+/**
+ * Retrieves all events currently in the Dead Letter Queue.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @returns A list of enqueued webhook delivery failures.
+ */
 export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
   try {
     const kv = getWebhookKV(env);
@@ -281,6 +293,15 @@ export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
   }
 }
 
+/**
+ * Retries delivery for a specific event from the Dead Letter Queue.
+ * If successful, the event is removed from the DLQ.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @param eventId - Unique ID of the failed event.
+ * @param subscriptionId - ID of the subscription that failed.
+ * @returns True if retry was initiated, false if event/subscription not found.
+ */
 export async function retryDeadLetterEvent(
   env: Env,
   eventId: string,

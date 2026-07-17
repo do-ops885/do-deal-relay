@@ -1,3 +1,8 @@
-# Track C - Test Coverage
+# Track C — Test Coverage
 
-No public functions or modules in core business logic lack unit test coverage. All core pipelines, validation gates, and utility helpers have robust coverage.
+## Uncovered Core Logic
+- `worker/lib/metrics/prometheus.ts`: Metric registry serialization lacks unit tests.
+- `worker/lib/webhook/delivery.ts`: `calculateBackoff` jitter logic is not explicitly tested for distribution.
+
+## Actionable Fixes
+1. Add unit test for `calculateBackoff` in `tests/unit/webhook/delivery.test.ts` to verify it respects min/max bounds.

@@ -3,6 +3,7 @@ import type {
   KVNamespace,
   D1Database,
   VectorizeIndex,
+  DurableObjectNamespace,
 } from "@cloudflare/workers-types";
 
 // ============================================================================
@@ -82,4 +83,7 @@ export interface Env {
   JWT_REFRESH_SECRET?: string;
   // Vectorize index for semantic search (binding declared in wrangler.jsonc)
   DEAL_EMBEDDINGS?: VectorizeIndex;
+  // Durable Objects
+  PIPELINE_LOCK?: DurableObjectNamespace;
+  SOURCE_REGISTRY?: DurableObjectNamespace;
 }
