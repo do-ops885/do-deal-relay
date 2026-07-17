@@ -106,7 +106,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           elements.favicon.appendChild(img);
           faviconSet = true;
         }
-      } catch {}
+      } catch {
+        // Fallback handled by !faviconSet below
+      }
     }
     if (!faviconSet) {
       elements.favicon.textContent = "🌐";
