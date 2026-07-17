@@ -16,7 +16,7 @@ import {
   getResourceTemplates,
   readResource,
 } from "../../lib/mcp/resources";
-import { paginate } from "../../lib/mcp/utils";
+import { paginateList } from "../../lib/mcp/pagination";
 
 /**
  * Handle resources/list request with pagination support
@@ -26,8 +26,13 @@ export async function handleResourcesList(params?: {
 }): Promise<ResourcesListResult> {
   const resources = getResources();
 
-  const PAGE_SIZE = 5;
-  const { items, nextCursor } = paginate(resources, params?.cursor, PAGE_SIZE);
+  const PAGE_SIZE = 20;
+  const { items, nextCursor } = paginateList(
+    resources,
+    params?.cursor,
+    PAGE_SIZE,
+    (resource) => resource.uri,
+  );
 
   return { resources: items, nextCursor };
 }
