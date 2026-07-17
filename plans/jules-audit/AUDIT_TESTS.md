@@ -1,6 +1,3 @@
 # Track C - Test Coverage
 
-- **Missing Coverage**:
-  - `worker/pipeline/discover.ts`: Adaptive budget calculation logic needs more exhaustive unit tests.
-- **Action**:
-  - Add unit tests for `calculateAdaptiveBudget` in a new test file `tests/unit/discovery-budget.test.ts`.
+No public functions or modules in core business logic lack unit test coverage. All core pipelines, validation gates, and utility helpers have robust coverage.

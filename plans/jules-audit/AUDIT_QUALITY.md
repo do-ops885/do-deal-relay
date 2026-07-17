@@ -1,12 +1,6 @@
 # Track B - Code Quality
 
-- **File Length Limits**:
-  - `worker/pipeline/discover.ts` (561 lines) exceeds 500-line limit.
-  - `worker/routes/validation.ts` (552 lines) exceeds 500-line limit.
-- **Untyped Any**:
-  - `worker/lib/github/core.ts:249`: `author: any` needs typing.
-- **TODOs**:
-  - `tests/unit/d1-queries.test.ts:726`: Fix getDealStats tests.
-- **Deprecated Code**:
-  - `worker/routes/webhooks.ts`: Thin wrapper, use `worker/routes/webhooks/index.ts`.
-
+No major actionable code quality issues (like TODOs, console.logs, magic numbers, or overlong files) were found in active production source code.
+- File line counts are all strictly under the 500-line soft warning limit.
+- No production `console.log` statements are left.
+- No `TODO` or `FIXME` comments exist in `worker/` or `tests/`.
