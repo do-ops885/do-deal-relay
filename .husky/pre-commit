@@ -1,0 +1,20 @@
+# Run Prettier check on staged files
+echo "Running Prettier check..."
+git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|json|css|html|md|yaml|yml|sh)$' | xargs -r npx prettier --check 2>&1
+if [ $? -ne 0 ]; then
+  echo "❌ Prettier check failed. Run 'npm run fmt:fix' to fix."
+  exit 1
+fi
+
+# Run markdownlint on staged .md files
+echo "Running markdownlint check..."
+STAGED_MD=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.md$' || true)
+if [ -n "$STAGED_MD" ]; then
+  echo "$STAGED_MD" | xargs npx markdownlint-cli --config .markdownlint.json 2>&1
+  if [ $? -ne 0 ]; then
+    echo "❌ Markdown lint failed. Run 'npm run lint:md:fix' to fix."
+    exit 1
+  fi
+fi
+
+echo "✅ Pre-commit checks passed."
