@@ -25,7 +25,14 @@ function jwtAuthHeaders(): Record<string, string> {
   const token = getJwtToken();
   if (!token) {
     throw new Error(
-      "E2E_JWT_TOKEN not set – JWT auth tests require a valid token from global setup",
+      "E2E_JWT_TOKEN not set – JWT auth tests require a valid token from global setup. " +
+        "Ensure global setup authentication succeeded and token was persisted correctly.",
+    );
+  }
+  // Validate token format (should be 3 dot-separated segments)
+  if (!token.includes(".") || token.split(".").length !== 3) {
+    throw new Error(
+      "E2E_JWT_TOKEN has invalid format – expected JWT with 3 dot-separated segments",
     );
   }
   return { Authorization: `Bearer ${token}` };
@@ -257,6 +264,20 @@ test.describe("JWT Auth – Deals API", () => {
   // Skip entire suite if JWT token was not obtained during setup
   test.skip(() => !getJwtToken(), "E2E_JWT_TOKEN not available");
 
+  // Debug logging for JWT token availability
+  test.beforeAll(() => {
+    const token = getJwtToken();
+    if (token) {
+      console.log(`JWT Token Available: true`);
+      console.log(`Token Length: ${token.length}`);
+      console.log(
+        `Token Format Valid: ${token.includes(".") && token.split(".").length === 3}`,
+      );
+    } else {
+      console.log("JWT Token Available: false");
+    }
+  });
+
   test("GET /deals with JWT Bearer token", async ({ request }) => {
     const response = await request.get("/deals", {
       headers: jwtAuthHeaders(),
@@ -274,6 +295,13 @@ test.describe("JWT Auth – Deals API", () => {
       headers: jwtAuthHeaders(),
     });
 
+    // Debug logging for failed requests
+    if (response.status() !== 200) {
+      console.log(`Request failed with status: ${response.status()}`);
+      const responseText = await response.text();
+      console.log(`Response body: ${responseText.substring(0, 500)}`);
+    }
+
     expect(response.status()).toBe(200);
 
     const contentType = response.headers()["content-type"];
@@ -290,6 +318,13 @@ test.describe("JWT Auth – Deals API", () => {
       headers: jwtAuthHeaders(),
     });
 
+    // Debug logging for failed requests
+    if (response.status() !== 200) {
+      console.log(`Request failed with status: ${response.status()}`);
+      const responseText = await response.text();
+      console.log(`Response body: ${responseText.substring(0, 500)}`);
+    }
+
     expect(response.status()).toBe(200);
 
     // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -304,6 +339,13 @@ test.describe("JWT Auth – Deals API", () => {
       headers: jwtAuthHeaders(),
     });
 
+    // Debug logging for failed requests
+    if (response.status() !== 200) {
+      console.log(`Request failed with status: ${response.status()}`);
+      const responseText = await response.text();
+      console.log(`Response body: ${responseText.substring(0, 500)}`);
+    }
+
     expect(response.status()).toBe(200);
     // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
     const body = (await response.json()) as any;
@@ -314,6 +356,13 @@ test.describe("JWT Auth – Deals API", () => {
     const response = await request.get("/api/status", {
       headers: jwtAuthHeaders(),
     });
+
+    // Debug logging for failed requests
+    if (response.status() !== 200) {
+      console.log(`Request failed with status: ${response.status()}`);
+      const responseText = await response.text();
+      console.log(`Response body: ${responseText.substring(0, 500)}`);
+    }
 
     expect(response.status()).toBe(200);
     // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
@@ -327,6 +376,13 @@ test.describe("JWT Auth – Deals API", () => {
     const response = await request.get("/api/auth/me", {
       headers: jwtAuthHeaders(),
     });
+
+    // Debug logging for failed requests
+    if (response.status() !== 200) {
+      console.log(`Request failed with status: ${response.status()}`);
+      const responseText = await response.text();
+      console.log(`Response body: ${responseText.substring(0, 500)}`);
+    }
 
     expect(response.status()).toBe(200);
 

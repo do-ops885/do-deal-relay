@@ -39,15 +39,23 @@ export default async function globalSetup() {
   // Read JWT token from file and expose as environment variable for tests
   if (existsSync(JWT_TOKEN_PATH)) {
     const token = readFileSync(JWT_TOKEN_PATH, "utf-8").trim();
-    process.env.E2E_JWT_TOKEN = token;
-    console.log("✓ E2E JWT token loaded into environment");
-    // Clean up token file to prevent secrets from lingering on disk
-    unlinkSync(JWT_TOKEN_PATH);
-    console.log("✓ Cleaned up JWT token file");
+    if (token && token.includes(".") && token.split(".").length === 3) {
+      process.env.E2E_JWT_TOKEN = token;
+      console.log("✓ E2E JWT token loaded into environment");
+      console.log(`✓ Token length: ${token.length} characters`);
+      console.log(`✓ Token preview: ${token.substring(0, 20)}...`);
+      // Clean up token file to prevent secrets from lingering on disk
+      unlinkSync(JWT_TOKEN_PATH);
+      console.log("✓ Cleaned up JWT token file");
+    } else {
+      console.warn("⚠ JWT token file exists but contains invalid token format");
+      console.warn(`  Token preview: ${token.substring(0, 50)}...`);
+    }
   } else {
     console.warn(
       "⚠ No JWT token file found at tests/e2e/.jwt-token – JWT-based tests will be skipped",
     );
+    console.warn("  Expected path:", JWT_TOKEN_PATH);
   }
 
   console.log("✓ E2E global setup complete");
