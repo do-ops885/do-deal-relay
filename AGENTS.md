@@ -94,6 +94,8 @@ When Codacy CI fails on a PR (including pre-existing issues):
 | Unused imports | Dead code, Codacy warning | Remove import or use `_` prefix for side-effect imports |
 | `x !== undefined` after regex match (without `noUncheckedIndexedAccess`) | Always true when match succeeds | Remove conditional wrapper |
 | `x!` (non-null assertion) | Bypasses null checks, forbidden | Use type guard or restructure |
+| Hardcoded secrets/keys | Security risk, Codacy `hardcoded-password` finding | Source from env var (`process.env.X`) with a clearly-labeled non-prod test fallback |
+| Magic numbers | Unclear intent, fragile coupling | Extract to a named `UPPER_SNAKE_CASE` constant at module scope |
 
 ### Regex Match Groups
 With `noUncheckedIndexedAccess: true` (our config), use `match[1] ?? ""` fallback. Never use `match[1] !== undefined` (redundant) or `match[1]!` (forbidden non-null assertion).

@@ -3,7 +3,7 @@
 // Run via: node tests/e2e/generate-jwt.mjs
 import { webcrypto } from "node:crypto";
 
-const JWT_SECRET = "e2e-test-jwt-secret-do-not-use-in-prod";
+const JWT_SECRET = process.env.JWT_SECRET || "e2e-test-jwt-secret-do-not-use-in-prod";
 const TOKEN_PATH = new URL("./.jwt-token", import.meta.url).pathname;
 
 function base64urlEncode(input) {

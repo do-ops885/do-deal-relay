@@ -18,6 +18,8 @@ Enforce TypeScript coding standards for the do-deal-relay codebase. Ensure type 
 
 ### Code Quality
 - **MAX_LINES_PER_SOURCE_FILE = 500**: Split files exceeding this limit
+- **No hardcoded secrets/keys**: Source credentials, tokens, and secrets from env vars (`process.env.X`). Non-prod test fixtures may fall back to a clearly-labeled test value (e.g., `process.env.JWT_SECRET || "e2e-test-..."`). Hardcoded literals trip Codacy `hardcoded-password`.
+- **No magic numbers**: Extract numeric literals with unclear intent to a named `UPPER_SNAKE_CASE` constant at module scope instead of inlining raw numbers.
 - **Single responsibility**: Each file should have one clear purpose
 - **Naming conventions**:
   - Functions: camelCase, descriptive verbs (getX, handleY, createZ)
@@ -95,6 +97,8 @@ if (obj.prop !== undefined) {
 - "`as any` is fine for this stub" — `any` defeats type safety; use a typed alternative or `unknown` with a type guard. Per AGENTS.md: "Only when the value can truly be any type."
 - "Implicit any is short-term cost, long-term gain" — implicit any silently bypasses the contract; declare the type or use `unknown`.
 - "This single file is too large but it works" — `MAX_LINES_PER_SOURCE_FILE=500` is a hard constraint; split the file rather than waive the limit.
+- "The test secret is just a string, no harm hardcoding it" — hardcoded secrets trip Codacy `hardcoded-password`; source from `process.env.X` with a clearly-labeled test fallback even in fixtures.
+- "It's just a 7, everyone knows what it means" — magic numbers hide intent and couple call sites; name the constant at module scope.
 - "Function names are too long, abbreviate" — descriptive verbs (`getX`, `handleY`, `createZ`) make call sites self-documenting; avoid `do`, `process`, `handleData`.
 - "Skip the test for a config change" — all changes must be covered by the gate suite, including TypeScript tests for new behaviour.
 
@@ -102,5 +106,7 @@ if (obj.prop !== undefined) {
 - A PR introduces one or more new `as any` casts not previously present in the file.
 - A test is removed or skipped (`it.skip`, `xit`, `describe.skip`) without a linked ADR explaining why.
 - A file's `wc -l` exceeds 500 and is not being split in the same PR.
+- A credential, token, or API key is committed as a hardcoded string literal rather than sourced from `process.env.X`.
+- A numeric literal with non-obvious intent appears inline instead of as a named `UPPER_SNAKE_CASE` constant.
 - An export is renamed without updating all import references (caught by `tsc --noEmit` only if imports are typed same; otherwise by code review).
 - A new external dependency is added without checking that `package.json` is updated and `package-lock.json` is committed.
