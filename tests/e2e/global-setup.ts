@@ -22,9 +22,19 @@ export default async function globalSetup() {
     writeFileSync(resolve(root, ".dev.vars"), example);
   }
 
-  // Seed KV with test API keys and obtain JWT token
+  // Seed KV with test API keys and obtain JWT token.
+  // Prefer the deterministic local JWT mint; fall back to the bash setup
+  // script (which can spin up a temporary wrangler dev server) if needed.
   console.log("Seeding E2E test API keys and obtaining JWT token...");
-  execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
+  try {
+    execSync("node tests/e2e/generate-jwt.mjs", {
+      cwd: root,
+      stdio: "inherit",
+    });
+  } catch {
+    console.warn("⚠ Local JWT mint failed — falling back to setup-auth.sh");
+    execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
+  }
 
   // Read JWT token from file and expose as environment variable for tests
   if (existsSync(JWT_TOKEN_PATH)) {
