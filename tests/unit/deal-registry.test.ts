@@ -679,9 +679,7 @@ describe("DealRegistry", () => {
   describe("getDeal", () => {
     it("should return a deal by ID", async () => {
       const { registry } = createRegistry();
-      await registry.stageDeals([
-        makeDeal({ id: "deal-1", title: "My Deal" }),
-      ]);
+      await registry.stageDeals([makeDeal({ id: "deal-1", title: "My Deal" })]);
 
       const deal = await registry.getDeal("deal-1");
 
@@ -1023,8 +1021,7 @@ describe("DealRegistry", () => {
       expect(trading212Candidates).toHaveLength(0);
 
       // etoro: deal-3 is candidate → 1 candidate
-      const etoroCandidates =
-        await registry.getCandidatesBySource("etoro");
+      const etoroCandidates = await registry.getCandidatesBySource("etoro");
       expect(etoroCandidates).toHaveLength(1);
       expect(etoroCandidates[0]!.deal_id).toBe("deal-3");
 

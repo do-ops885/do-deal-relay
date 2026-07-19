@@ -196,6 +196,7 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 ## PR Merge Swarm Results (2026-07-17)
 
 ### Completed Merges
+
 | PR | Title | Status | Notes |
 |----|-------|--------|-------|
 | #591 | fix(security): SSRF filter bypass | MERGED | P0 security fix |
@@ -208,11 +209,13 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 | #599 | merge: PR 588 DealRegistry DO | MERGED | Temp PR to bypass branch protection |
 
 ### Skipped / Closed
+
 | PR | Title | Reason |
 |----|-------|--------|
 | #589 | [Jules Audit] Deps: update 4 patch deps | Fabricated — no actual dependency changes |
 
 ### Issues Closed
+
 | Issue | Title | Resolution |
 |-------|-------|------------|
 | #587 | Production deployment failed - 7f50cbe | Fixed by removing wrangler.jsonc migrations |
