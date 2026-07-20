@@ -88,8 +88,8 @@ async function validateSingleDeal(
     // These gates may do async lookups or check mutable context
     const asyncGates: ValidationGate[] = [
       "deduplication_check",
-      "second_pass_validation",
       "idempotency_check",
+      "second_pass_validation",
       "snapshot_hash_verification",
     ];
 

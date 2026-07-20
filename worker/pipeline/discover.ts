@@ -136,7 +136,23 @@ export async function discover(
     }
   }
 
-  return { deals, errors };
+  // Fast pre-filter: cheap checks before expensive validation
+  const seenUrls = new Set<string>();
+  const filtered = deals.filter((deal) => {
+    // Well-formedness: required fields
+    if (!deal.code || !deal.url || !deal.title) return false;
+
+    // Trust threshold pre-filter
+    if (deal.source.trust_score < trustThreshold) return false;
+
+    // In-batch dedup by URL
+    if (seenUrls.has(deal.url)) return false;
+    seenUrls.add(deal.url);
+
+    return true;
+  });
+
+  return { deals: filtered, errors };
 }
 
 /**
