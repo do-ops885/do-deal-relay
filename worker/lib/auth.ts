@@ -12,6 +12,9 @@ import {
   forbiddenResponse,
 } from "../routes/utils";
 import { checkRateLimit, createRateLimitHeaders } from "./rate-limit";
+import { verifyToken } from "./jwt";
+
+const JWT_ROLES: AuthRole[] = ["admin", "user", "readonly", "viewer"];
 
 export { getAllowedOrigin };
 
@@ -26,6 +29,7 @@ export interface AuthResult {
   authenticated: boolean;
   userId?: string;
   role?: AuthRole;
+  email?: string;
   error?: string;
   requestsPerMinute?: number;
   requestsPerHour?: number;
@@ -242,6 +246,24 @@ export async function authenticateRequest(
   const apiKey = extractApiKey(request);
   if (!apiKey) {
     return { authenticated: false, error: "Missing API key" };
+  }
+
+  // JWT Bearer tokens are not API keys (no ddr_ prefix) and carry 3 dot-separated
+  // segments. Verify them via the worker's HMAC JWT verifier.
+  if (!apiKey.startsWith("ddr_") && apiKey.split(".").length === 3) {
+    const payload = await verifyToken(apiKey, env.JWT_SECRET ?? "");
+    if (!payload) {
+      return { authenticated: false, error: "Invalid JWT token" };
+    }
+    const role = JWT_ROLES.includes(payload.role as AuthRole)
+      ? (payload.role as AuthRole)
+      : "user";
+    return {
+      authenticated: true,
+      userId: typeof payload.sub === "string" ? payload.sub : undefined,
+      role,
+      email: typeof payload.email === "string" ? payload.email : undefined,
+    };
   }
 
   return await verifyApiKey(env, apiKey);

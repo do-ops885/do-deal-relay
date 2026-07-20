@@ -51,6 +51,9 @@ Enforced in `worker/lib/guard-rails.ts`.
 
 ## Code Quality Constraints
 
+- **No hardcoded secrets/keys**: Source credentials, tokens, and secrets from env vars (`process.env.X`). For non-prod test fixtures, use an env var with a clearly-labeled test-value fallback (e.g., `process.env.JWT_SECRET || "e2e-test-..."`). Hardcoded literals trigger Codacy `hardcoded-password` findings.
+- **No magic numbers**: Extract numeric literals with unclear intent to a named `UPPER_SNAKE_CASE` constant at module scope.
+
 ### Line Count Limits
 All source files must be ≤ 500 lines. Files exceeding this limit must be split.
 
