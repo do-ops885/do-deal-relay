@@ -320,15 +320,21 @@ export function formatPrometheusMetrics(metrics: PipelineMetrics): string {
 }
 
 /**
- * Convenience: return the proper Prometheus text content type.
+ * Convenience utility to retrieve the proper Prometheus text format Content-Type header.
+ *
+ * @returns The standard Prometheus text content-type string.
  */
 export function getPrometheusContentType(): string {
   return PROMETHEUS_CONTENT_TYPE;
 }
 
 /**
- * Convenience: render a prometheus response with the correct content type.
- * Caller is responsible for setting CORS / security headers.
+ * Creates and returns a structured Response containing the metrics body with the correct
+ * Prometheus headers and Cache-Control directives.
+ *
+ * @param body - The formatted metrics string.
+ * @param status - The HTTP status code of the response. Defaults to 200.
+ * @returns A Cloudflare Workers Response object configured for Prometheus scraping.
  */
 export function prometheusResponse(body: string, status = 200): Response {
   return new Response(body, {
@@ -341,8 +347,11 @@ export function prometheusResponse(body: string, status = 200): Response {
 }
 
 /**
- * Helper for callers that want to know whether a given format string selects
- * Prometheus output. Accepts "prometheus", "prom", "text", and "txt".
+ * Helper to determine if a requested format corresponds to a Prometheus metrics scraping request.
+ * Matches string values like "prometheus", "prom", "text", or "txt".
+ *
+ * @param format - The incoming format query parameter.
+ * @returns True if the format indicates a Prometheus scraping request, false otherwise.
  */
 export function isPrometheusFormat(format: string | null | undefined): boolean {
   if (!format) return false;
@@ -351,8 +360,9 @@ export function isPrometheusFormat(format: string | null | undefined): boolean {
 }
 
 /**
- * Log a one-line info entry whenever a metrics scrape is generated. Useful
- * for debugging slow scrapes or for correlating with Cloudflare logs.
+ * Logs a debug entry indicating that a Prometheus export snapshot was compiled.
+ *
+ * @param metrics - The pipeline metrics being exported.
  */
 export function logPrometheusExport(metrics: PipelineMetrics): void {
   try {
