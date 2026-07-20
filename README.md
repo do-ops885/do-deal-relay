@@ -4,7 +4,7 @@
 [![Security](https://github.com/do-ops885/do-deal-relay/actions/workflows/security.yml/badge.svg)](https://github.com/do-ops885/do-deal-relay/actions/workflows/security.yml)
 [![Nightly](https://github.com/do-ops885/do-deal-relay/actions/workflows/nightly.yml/badge.svg)](https://github.com/do-ops885/do-deal-relay/actions/workflows/nightly.yml)
 
-**Version: 0.1.8 | **Status**: Active / Testing
+**Status**: Active / Testing
 
 Autonomous AI-agent deal discovery system on Cloudflare Workers.
 
