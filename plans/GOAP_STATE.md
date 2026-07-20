@@ -227,3 +227,24 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 ### Remaining Follow-ups
 - PR #588 added DealRegistry DO without unit tests — should be added
 - PR #588 dead code: old offset-based pagination utils not removed from `worker/lib/mcp/utils.ts`
+
+---
+
+## Pipeline Cache & Data Access Optimization — 2026-07-20
+
+### Completed
+
+| Task | Files | Status |
+|------|-------|--------|
+| Batch research cache D1 helpers | `worker/lib/d1/research-cache.ts` (new) | ✅ |
+| Fast pre-filter in discovery | `worker/pipeline/discover.ts` | ✅ |
+| Reorder validation gates (cheap-first) | `worker/validation/pipeline.ts` | ✅ |
+| Batch D1 writes (audit, metrics, referrals) | `worker/lib/d1/audit-log.ts` (new), `worker/lib/d1/system-metrics.ts` (new), `worker/lib/d1/referrals-batch.ts` (new), `worker/publish.ts` | ✅ |
+| Cache-hit metrics + adaptive budgets | `worker/lib/metrics/names.ts` (new), `worker/pipeline/discovery-budget.ts` | ✅ |
+
+### Impact
+- Research cache: batch reads reduce D1 round-trips from N to 1 per pipeline run
+- Discovery pre-filter: cheap checks (well-formedness, trust, dedup) short-circuit before expensive validation
+- Gate ordering: async gates run cheapest-first (dedup → idempotency → second-pass → snapshot-hash)
+- Batch D1 writes: referrals, audit events, and metrics are single batch operations per publish
+- Adaptive budgets: environment-aware defaults reduce worst-case load in production
