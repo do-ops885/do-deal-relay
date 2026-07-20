@@ -36,17 +36,15 @@ export default async function globalSetup() {
     execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
   }
 
-  // Read JWT token from file and expose as environment variable for tests
+  // Verify JWT token file is valid and leave it for tests to read.
+  // Playwright global-setup runs in a separate process; env vars set here
+  // do NOT propagate to test workers, so we must use a shared file instead.
   if (existsSync(JWT_TOKEN_PATH)) {
     const token = readFileSync(JWT_TOKEN_PATH, "utf-8").trim();
     if (token && token.includes(".") && token.split(".").length === 3) {
-      process.env.E2E_JWT_TOKEN = token;
-      console.log("✓ E2E JWT token loaded into environment");
+      console.log("✓ E2E JWT token file verified");
       console.log(`✓ Token length: ${token.length} characters`);
       console.log(`✓ Token preview: ${token.substring(0, 20)}...`);
-      // Clean up token file to prevent secrets from lingering on disk
-      unlinkSync(JWT_TOKEN_PATH);
-      console.log("✓ Cleaned up JWT token file");
     } else {
       console.warn("⚠ JWT token file exists but contains invalid token format");
       console.warn(`  Token preview: ${token.substring(0, 50)}...`);

@@ -49,7 +49,7 @@ try {
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
     sub: "e2e-user-id",
-    role: "user",
+    role: "admin",
     email: "e2e-test@example.com",
     name: "E2E Test User",
     exp: now + 86400,
