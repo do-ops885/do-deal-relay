@@ -28,6 +28,14 @@ const DELIVERY_CONSTANTS = {
 // Outgoing Webhooks
 // ============================================================================
 
+/**
+ * Dispatches a webhook event to all active matching partner subscriptions.
+ * Evaluates subscription filters (e.g. domain and status filters) before sending.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @param event - The WebhookEvent payload to deliver.
+ * @returns A promise that resolves when delivery processing is complete.
+ */
 export async function sendOutgoingWebhooks(
   env: Env,
   event: WebhookEvent,
@@ -208,6 +216,16 @@ async function sendWebhookToSubscription(
   }
 }
 
+/**
+ * Calculates exponential backoff with random jitter for a given retry attempt.
+ *
+ * @param attempt - The current retry attempt (1-based).
+ * @param policy - The retry configuration policy containing delay parameters.
+ * @param policy.initial_delay_ms - Base delay in milliseconds for the first retry.
+ * @param policy.backoff_multiplier - Rate at which delay increases per attempt.
+ * @param policy.max_delay_ms - The maximum delay bound in milliseconds.
+ * @returns Calculated delay in milliseconds (capped at max_delay_ms).
+ */
 export function calculateBackoff(
   attempt: number,
   policy: {
