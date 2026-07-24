@@ -139,12 +139,17 @@ export function normalizedEquals(a: string, b: string): boolean {
   return true;
 }
 
+export interface BigramBitset {
+  bits: Uint32Array;
+  count: number;
+}
+
 /**
  * Extracts character bigrams into a bitset for Jaccard similarity.
  * 36 characters (a-z0-9) -> 36*36 = 1296 possible bigrams.
  * 1296 bits / 32 = 40.5 words. 41 words total.
  */
-function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
+export function getBigramBitset(s: string): BigramBitset {
   const bits = new Uint32Array(41);
   let prevIdx = -1;
   let count = 0;
@@ -169,17 +174,13 @@ function getBigramBitset(s: string): { bits: Uint32Array; count: number } {
 }
 
 /**
- * Calculate similarity between two strings (0-1)
- * Uses Jaccard similarity on character bigrams with zero-allocation bitset normalization.
- * Optimized to avoid Set/Map allocations by using a fixed-size bitset for 36x36 bigrams.
+ * Calculate similarity between two precomputed string bigrams (0-1).
+ * Avoids any dynamic allocations or string parsing.
  */
-export function calculateStringSimilarity(a: string, b: string): number {
-  if (a === b) return 1.0;
-  if (normalizedEquals(a, b)) return 1.0;
-
-  const resA = getBigramBitset(a);
-  const resB = getBigramBitset(b);
-
+export function calculateStringSimilarityPrecomputed(
+  resA: BigramBitset,
+  resB: BigramBitset,
+): number {
   if (resA.count === 0 || resB.count === 0) return 0.0;
 
   let intersectionSize = 0;
@@ -192,6 +193,21 @@ export function calculateStringSimilarity(a: string, b: string): number {
 
   const unionSize = resA.count + resB.count - intersectionSize;
   return intersectionSize / unionSize;
+}
+
+/**
+ * Calculate similarity between two strings (0-1)
+ * Uses Jaccard similarity on character bigrams with zero-allocation bitset normalization.
+ * Optimized to avoid Set/Map allocations by using a fixed-size bitset for 36x36 bigrams.
+ */
+export function calculateStringSimilarity(a: string, b: string): number {
+  if (a === b) return 1.0;
+  if (normalizedEquals(a, b)) return 1.0;
+
+  const resA = getBigramBitset(a);
+  const resB = getBigramBitset(b);
+
+  return calculateStringSimilarityPrecomputed(resA, resB);
 }
 
 /**
@@ -217,6 +233,101 @@ export function base64urlEncode(input: string | Uint8Array): string {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
+}
+
+export interface PrecomputedUrlSimilarityData {
+  hostname: string;
+  pathname: string;
+  search: string;
+  pathBigrams: BigramBitset;
+  searchBigrams: BigramBitset;
+  rawUrlString: string;
+  isMalformed: boolean;
+}
+
+/**
+ * Precomputes URL similarity fields once to avoid O(N^2) parsing/allocation overhead in hot loops.
+ */
+export function precomputeUrlSimilarityData(
+  urlInput: string | URL,
+): PrecomputedUrlSimilarityData {
+  try {
+    const parsed = typeof urlInput === "string" ? new URL(urlInput) : urlInput;
+    const pathname = parsed.pathname;
+    const search = parsed.search;
+    return {
+      hostname: parsed.hostname,
+      pathname,
+      search,
+      pathBigrams: getBigramBitset(pathname),
+      searchBigrams: getBigramBitset(search),
+      rawUrlString:
+        typeof urlInput === "string" ? urlInput : urlInput.toString(),
+      isMalformed: false,
+    };
+  } catch {
+    const rawUrlString =
+      typeof urlInput === "string" ? urlInput : urlInput.toString();
+    return {
+      hostname: "",
+      pathname: rawUrlString,
+      search: "",
+      pathBigrams: getBigramBitset(rawUrlString),
+      searchBigrams: { bits: new Uint32Array(41), count: 0 },
+      rawUrlString,
+      isMalformed: true,
+    };
+  }
+}
+
+/**
+ * Calculates similarity between two precomputed URL structures without string-scanning/allocation overhead.
+ */
+export function calculateUrlSimilarityPrecomputed(
+  a: PrecomputedUrlSimilarityData,
+  b: PrecomputedUrlSimilarityData,
+): number {
+  if (a.isMalformed || b.isMalformed) {
+    if (a.rawUrlString === b.rawUrlString) return 1.0;
+    if (normalizedEquals(a.rawUrlString, b.rawUrlString)) return 1.0;
+    return calculateStringSimilarityPrecomputed(a.pathBigrams, b.pathBigrams);
+  }
+
+  // Same domain is prerequisite
+  if (a.hostname !== b.hostname) {
+    return 0.0;
+  }
+
+  // Compare paths
+  let pathSim: number;
+  if (a.pathname === b.pathname) {
+    pathSim = 1.0;
+  } else if (normalizedEquals(a.pathname, b.pathname)) {
+    pathSim = 1.0;
+  } else {
+    pathSim = calculateStringSimilarityPrecomputed(
+      a.pathBigrams,
+      b.pathBigrams,
+    );
+  }
+
+  // Compare query parameters (if present)
+  let paramsSim: number;
+  if (!a.search && !b.search) {
+    paramsSim = 1.0;
+  } else if (a.search === b.search) {
+    paramsSim = 1.0;
+  } else if (normalizedEquals(a.search, b.search)) {
+    paramsSim = 1.0;
+  } else {
+    paramsSim = calculateStringSimilarityPrecomputed(
+      a.searchBigrams,
+      b.searchBigrams,
+    );
+  }
+
+  // Weighted average: path matters more
+  return pathSim * 0.7 + paramsSim * 0.3;
 }
 
 /**

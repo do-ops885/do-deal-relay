@@ -6,6 +6,8 @@ import {
   generateUUID,
   calculateStringSimilarity,
   calculateUrlSimilarity,
+  precomputeUrlSimilarityData,
+  calculateUrlSimilarityPrecomputed,
 } from "../../worker/lib/crypto";
 
 describe("Crypto Utilities", () => {
@@ -68,6 +70,42 @@ describe("Crypto Utilities", () => {
       expect(
         calculateUrlSimilarity("https://example.com", "https://other.com"),
       ).toBe(0.0);
+    });
+  });
+
+  describe("calculateUrlSimilarityPrecomputed", () => {
+    it("should return 1.0 for identical URLs", () => {
+      const url1 = "https://example.com/path?ref=123";
+      const url2 = "https://example.com/path?ref=123";
+      const pre1 = precomputeUrlSimilarityData(url1);
+      const pre2 = precomputeUrlSimilarityData(url2);
+      expect(calculateUrlSimilarityPrecomputed(pre1, pre2)).toBe(1.0);
+    });
+
+    it("should return 0.0 for different domains", () => {
+      const url1 = "https://example.com/path";
+      const url2 = "https://other.com/path";
+      const pre1 = precomputeUrlSimilarityData(url1);
+      const pre2 = precomputeUrlSimilarityData(url2);
+      expect(calculateUrlSimilarityPrecomputed(pre1, pre2)).toBe(0.0);
+    });
+
+    it("should match regular similarity for similar URLs", () => {
+      const url1 = "https://example.com/path/to/deal?promo=abc";
+      const url2 = "https://example.com/path/to/deal?promo=def";
+      const pre1 = precomputeUrlSimilarityData(url1);
+      const pre2 = precomputeUrlSimilarityData(url2);
+      const scorePrecomputed = calculateUrlSimilarityPrecomputed(pre1, pre2);
+      const scoreRegular = calculateUrlSimilarity(url1, url2);
+      expect(scorePrecomputed).toBeCloseTo(scoreRegular, 5);
+    });
+
+    it("should handle malformed URLs gracefully", () => {
+      const url1 = "not-a-valid-url";
+      const url2 = "not-a-valid-url";
+      const pre1 = precomputeUrlSimilarityData(url1);
+      const pre2 = precomputeUrlSimilarityData(url2);
+      expect(calculateUrlSimilarityPrecomputed(pre1, pre2)).toBe(1.0);
     });
   });
 });
