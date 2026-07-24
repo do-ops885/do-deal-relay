@@ -444,7 +444,8 @@
         margin-bottom: 12px;
       }
 
-      .settings-label {
+      .settings-label,
+      .manual-label {
         display: block;
         font-size: 12px;
         font-weight: 500;
@@ -589,12 +590,12 @@
         <h2 class="section-title">
           <span aria-hidden="true">✏️</span> Manual Entry
         </h2>
-        <label for="manual-code" class="sr-only">Referral code</label>
+        <label for="manual-code" class="manual-label">Referral Code</label>
         <input
           type="text"
           class="manual-input"
           id="manual-code"
-          placeholder="Enter referral code..."
+          placeholder="e.g. SAVE50, WELCOME"
           maxlength="20"
           aria-describedby="manual-code-error"
         />
@@ -634,7 +635,7 @@
           <span aria-hidden="true">⚙️</span> Settings
         </h2>
         <div class="settings-field">
-          <label class="settings-label">API Endpoint</label>
+          <label for="api-endpoint" class="settings-label">API Endpoint</label>
           <input
             type="text"
             class="settings-input"
