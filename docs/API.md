@@ -1925,6 +1925,28 @@ Execute a semantic search query.
 
 Manage webhook subscriptions, incoming webhooks from partners, and delivery monitoring. Webhooks enable real-time notifications when referral deals are created, updated, or change status.
 
+### Webhook Delivery Policies & Constants
+
+The webhook delivery pipeline enforces strict performance, reliability, and retention bounds. All outgoing dispatch operations conform to the following architectural limits:
+
+| Policy Constant | Value | Purpose / Behavioral Impact |
+|-----------------|-------|-----------------------------|
+| `MAX_ERROR_RESPONSE_SIZE` | 10 KB | Truncates downstream receiver error responses to prevent database/KV bloat. |
+| `DELIVERY_RECORD_EXPIRATION_SECONDS` | 7 Days | Retains delivery and attempt logs in Cloudflare KV before auto-expiring. |
+| `DLQ_EXPIRATION_SECONDS` | 30 Days | Retains failed deliveries in the Dead Letter Queue for manual/scripted retry. |
+| `MAX_JITTER_MS` | 1000 ms | Random jitter (0–1000ms) added to backoff intervals to prevent thundering herds. |
+
+#### Exponential Backoff & Jitter
+
+When a webhook delivery fails, the system automatically schedules retries using an exponential backoff formula. The backoff interval is calculated using:
+
+`Backoff Delay = min(base * multiplier^(attempt) + jitter, max_delay_ms)`
+
+- **Base Delay**: 1,000ms (default)
+- **Multiplier**: 2
+- **Jitter Range**: 0 to 1,000ms (uniformly distributed)
+- **Retry Bound**: Cap enforced by the subscriber-specified `max_delay_ms` (defaults to 60,000ms).
+
 ---
 
 ### POST /webhooks/subscribe
