@@ -18,6 +18,10 @@ import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
 import { validatedFetch } from "../security";
 
+/**
+ * Configuration constants for webhook delivery timeouts, response limits,
+ * execution records retention times, and Dead Letter Queue (DLQ) expiration times.
+ */
 const DELIVERY_CONSTANTS = {
   MAX_ERROR_RESPONSE_SIZE: 10 * 1024, // 10KB
   DELIVERY_RECORD_EXPIRATION_SECONDS: 7 * 24 * 60 * 60, // 7 days

@@ -377,7 +377,10 @@ export function logPrometheusExport(metrics: PipelineMetrics): void {
   }
 }
 
-// Re-export the constant so the route layer does not depend on internal layout
+/**
+ * Public Prometheus exporter configuration constants.
+ * Includes the default standard Content-Type and the alignment histogram buckets.
+ */
 export const PROMETHEUS_CONSTANTS = {
   CONTENT_TYPE: PROMETHEUS_CONTENT_TYPE,
   BUCKETS_SECONDS: HISTOGRAM_BUCKETS_SECONDS,
