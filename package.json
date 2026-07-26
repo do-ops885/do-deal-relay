@@ -40,7 +40,7 @@
     "@types/node": "26.1.1",
     "cheerio": "^1.2.0",
     "discord.js": "^14.26.5",
-    "js-yaml": "^5.2.1",
+    "js-yaml": "^5.2.2",
     "protobufjs": "8.7.1",
     "telegraf": "^4.16.3",
     "zod": "^3.22.4"
