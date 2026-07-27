@@ -46,19 +46,19 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.18.4",
-    "@cloudflare/workers-types": "5.20260713.1",
+    "@cloudflare/vitest-pool-workers": "0.18.8",
+    "@cloudflare/workers-types": "5.20260727.1",
     "@playwright/test": "^1.61.1",
     "@types/js-yaml": "^4.0.9",
     "@vitest/coverage-v8": "^4.1.10",
     "artillery": "^2.0.33",
     "husky": "^9.1.7",
     "markdownlint-cli": "^0.49.0",
-    "miniflare": "4.20260708.1",
+    "miniflare": "4.20260722.0",
     "prettier": "^3.9.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5",
-    "wrangler": "4.110.0"
+    "wrangler": "4.114.0"
   },
   "overrides": {
     "esbuild": ">=0.28.1",
