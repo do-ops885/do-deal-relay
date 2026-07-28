@@ -163,7 +163,13 @@ export function validateUrl(
       }
     }
 
-    // Check for common redirect bypasses
+    // Check for common redirect bypasses in the remaining URL string (after protocol)
+    const protocolPrefix = parsed.protocol + "//";
+    if (!url.startsWith(protocolPrefix)) {
+      return null;
+    }
+    const urlWithoutProtocol = url.slice(protocolPrefix.length);
+
     const dangerousPatterns = [
       /\/\/+/g, // Multiple slashes
       /\.\./g, // Path traversal
@@ -172,7 +178,7 @@ export function validateUrl(
     ];
 
     for (const pattern of dangerousPatterns) {
-      if (pattern.test(url)) {
+      if (pattern.test(urlWithoutProtocol)) {
         return null;
       }
     }
