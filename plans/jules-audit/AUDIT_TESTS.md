@@ -1,8 +1,10 @@
-# Track C — Test Coverage
+# Track C — Test Coverage - 2026-07-28
 
-## Uncovered Core Logic
-- `worker/lib/metrics/prometheus.ts`: Metric registry serialization lacks unit tests.
-- `worker/lib/webhook/delivery.ts`: `calculateBackoff` jitter logic is not explicitly tested for distribution.
+The test coverage audit targets public functions and core business logic that can benefit from more robust testing coverage and boundary cases.
 
-## Actionable Fixes
-1. Add unit test for `calculateBackoff` in `tests/unit/webhook/delivery.test.ts` to verify it respects min/max bounds.
+## Actionable Findings
+- **File**: `tests/unit/webhook/delivery.test.ts`
+  - **Logic**: Expand test suite for `calculateBackoff` (which computes the backoff duration for webhook delivery retries) to cover the following:
+    1. **Multiplier Scaling Progression**: Ensure exponential progression scale matches expected multiplier value step-by-step.
+    2. **Max Delay Capping**: Ensure the delay calculates and is strictly capped at `max_delay_ms` under high attempt counts and extreme multiplier values.
+    3. **Randomized Jitter Distribution**: Ensure delay varies with randomized jitter across multiple calls while staying within correct mathematical bounds.
