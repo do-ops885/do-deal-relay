@@ -252,6 +252,13 @@ See [`AGENTS.md`](../../AGENTS.md) for complete style guide. Key points:
 - Progressive disclosure (simple → complex)
 - Include concrete examples
 
+**Browser Extension & Frontend Accessibility:**
+- **Keyboard Navigation & Focus Order**: Maintain a logical keyboard tab focus order for interactive controls: `#manual-code` -> `#manual-btn` -> `#copy-manual-btn` -> `#settings-link`.
+- **Button Visual Feedback on Hover**: Avoid using `pointer-events: none` on disabled buttons (such as `.btn:disabled`). Doing so blocks hover/visual interaction feedback and prevents the cursor from turning into a 'not-allowed' symbol, degrading accessibility.
+- **Form Inputs and Explicit Labeling**: Pair form labels with input elements explicitly using the `for` attribute. Avoid using visually hidden screen-reader-only labels (`.sr-only`) for primary user inputs to ensure high visual and cognitive accessibility.
+- **Copying States & Race Guards**: Copying operations must utilize a race-condition guard (such as `dataset.copying`) during the active 2-second visual feedback (e.g., icon change or 'Copied!' label) interval.
+- **Semantic Headers**: Always use proper semantic `<h2>` headers for section titles.
+
 ## Testing
 
 ```bash
