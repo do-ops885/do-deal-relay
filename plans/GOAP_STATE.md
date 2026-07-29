@@ -3,7 +3,7 @@
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-29
 **Version**: 0.12.0
-**Status**: Active — All P0-P3 resolved; PRs #640 and #639 awaiting merge
+**Status**: Active — All P0-P3 resolved; PR #640 merged, PR #639 closed
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -232,8 +232,8 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 ## Pipeline Cache & Data Access Optimization — 2026-07-20
 
 ### Status
-- PR #640: `chore/merge-pipeline-optimizations` → `main` — **OPEN, all 21 CI checks pass**
-- PR #639: `jules/deps-2026-07-29` → `main` — **OPEN, all 20 CI checks pass**
+- PR #640: `chore/merge-pipeline-optimizations` → `main` — **MERGED** (`83bd67e`)
+- PR #639: `jules/deps-2026-07-29` → `main` — **CLOSED** (superseded by dependabot)
 
 ### Completed
 

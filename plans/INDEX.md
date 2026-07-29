@@ -11,7 +11,7 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **Comprehensive inventory of ALL missing tasks, implementations, features, and gaps** (65+ items across P0–P3 + deferred ADR-015 proposals). Single source of truth for all planned work. **Refreshed 2026-07-10 (v0.9.0)** — All P0-P3 items resolved or documented. No open PRs remain.
+- [GOAP State](GOAP_STATE.md) — **Comprehensive inventory of ALL missing tasks, implementations, features, and gaps** (65+ items across P0–P3 + deferred ADR-015 proposals). Single source of truth for all planned work. **Refreshed 2026-07-29 (v0.12.0)** — All P0-P3 items resolved or documented. PR #640 merged, PR #639 closed.
 - [Progress 2026-07-02](PROGRESS-2026-07-02.md) — Re-verification of the 5 P0 critical bugs from the April audit against current code: all confirmed closed. New focus shifts to P1/P2 items.
 - [ADR-015: Harness & Cloudflare 2026 Best Practices](ADR-015-harness-cloudflare-2026-best-practices.md) — Architecture Decision Record mapping 2026 Harness CI/CD and Cloudflare Agentic Cloud patterns to our codebase. Includes migration roadmap for Durable Objects, Durable Execution, Agent Memory, and AI Gateway. **Proposed** as of 2026-07-02.
 - [ADR-016: Centralized Security & Routing Middleware Architecture](ADR-016-centralized-middleware-architecture.md) — **New** (2026-07-06). Proposes a unified middleware pipeline (auth tiers, rate limiting, validation, logging) to address the recurring pattern of ad-hoc security in route handlers. Directly unblocks P1 items: D1 auth, API rate limiting, submit auth, and webhook route registration. **Proposed** — implementation depends on this ADR being accepted.
@@ -26,6 +26,12 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 - ✅ **PR #567** — docs(agent): sync agent contracts — MERGED `096343a`
 - ✅ **PR #566** — docs(plans): GOAP_STATE v0.7.0 — MERGED `f884970`
 - ✅ **`2f290ca`** — fix(tests): resolve 36 test failures (D1 mock + SSRF) — MERGED to main
+- ✅ **PR #640** — perf(pipeline): batch D1 writes, fast pre-filter, and validation gate reorder — MERGED `83bd67e`
+- ✅ **PR #638** — ci(fix): pin checkout action to full sha — MERGED
+- ✅ **PR #637** — chore: bump postcss from 8.5.16 to 8.5.24 — MERGED
+- ✅ **PR #636** — ci(fix): add checkout step to auto-merge workflow — MERGED
+- ✅ **PR #635** — chore: bump dependencies to safe patch versions — MERGED
+- ✅ **PR #631** — chore: bump typescript from 6.0.3 to 7.0.2 — MERGED
 
 ## Follow-Up Plans (Tracked)
 
