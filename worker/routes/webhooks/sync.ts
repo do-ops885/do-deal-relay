@@ -4,7 +4,6 @@
 
 import type { Env } from "../../types";
 import { handleError } from "../../lib/error-handler";
-import { toError } from "../../lib/sanitize-error";
 import {
   createSyncConfig,
   getSyncState,
@@ -71,7 +70,7 @@ export async function handleCreateSyncConfig(
       handler: "handleCreateSyncConfig",
     });
     return jsonResponse(
-      { error: "Failed to create sync config" },
+      { error: "Failed to create sync config", message: err.message },
       500,
       request,
       env,
@@ -101,7 +100,7 @@ export async function handleGetSyncState(
       handler: "handleGetSyncState",
     });
     return jsonResponse(
-      { error: "Failed to get sync state" },
+      { error: "Failed to get sync state", message: err.message },
       500,
       request,
       env,
@@ -178,7 +177,12 @@ export async function handleTriggerSync(
       component: "webhook",
       handler: "handleTriggerSync",
     });
-    return jsonResponse({ error: "Failed to trigger sync" }, 500, request, env);
+    return jsonResponse(
+      { error: "Failed to trigger sync", message: err.message },
+      500,
+      request,
+      env,
+    );
   }
 }
 
@@ -190,10 +194,9 @@ async function getSyncConfig(env: Env, partnerId: string) {
     );
     return raw as import("../../lib/webhook/types").SyncConfig | null;
   } catch (error) {
-    const err = toError(error);
     logger.warn("Failed to fetch sync config for partner", {
       partnerId,
-      error: err.message,
+      error: (error as Error).message,
     });
     return null;
   }
