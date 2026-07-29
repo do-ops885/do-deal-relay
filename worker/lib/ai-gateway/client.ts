@@ -19,6 +19,7 @@
  */
 
 import { logger } from "../global-logger";
+import { validatedFetch } from "../security";
 import { toError } from "../sanitize-error";
 import type {
   GatewayConfig,
@@ -417,7 +418,7 @@ export class AIGatewayClient {
     const { signal, cleanup } = createTimeoutSignal(this.config.timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await validatedFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
