@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-17
-**Version**: 0.11.0
-**Status**: Active — P0-P3 resolved; PR merge swarm complete
+**Last Updated**: 2026-07-29
+**Version**: 0.12.0
+**Status**: Active — All P0-P3 resolved; PRs #640 and #639 awaiting merge
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -185,7 +185,6 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 ### Status
 - ✅ All test infrastructure fixes committed to `main` via `2f290ca`
 - No pending PRs — fix is live on `main`
-- `develop` branch is 19 commits behind `main` — needs syncing as separate task
 
 ---
 
@@ -225,12 +224,16 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 `wrangler.jsonc` migration blocks (`"migrations": [...]`) were blocking `wrangler versions upload`, causing all Cloudflare Git Integration builds to fail with code 10211. Both root-level and `env.production` migrations were removed. DOs are already deployed and provisioned.
 
 ### Remaining Follow-ups
-- PR #588 added DealRegistry DO without unit tests — should be added
-- PR #588 dead code: old offset-based pagination utils not removed from `worker/lib/mcp/utils.ts`
+- ✅ PR #588 dead code: old offset-based pagination utils removed from `worker/lib/mcp/utils.ts`
+- ✅ PR #588 DealRegistry DO unit tests: 48 tests in `tests/unit/deal-registry.test.ts`
 
 ---
 
 ## Pipeline Cache & Data Access Optimization — 2026-07-20
+
+### Status
+- PR #640: `chore/merge-pipeline-optimizations` → `main` — **OPEN, all 21 CI checks pass**
+- PR #639: `jules/deps-2026-07-29` → `main` — **OPEN, all 20 CI checks pass**
 
 ### Completed
 
