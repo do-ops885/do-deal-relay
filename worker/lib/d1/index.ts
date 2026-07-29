@@ -70,5 +70,28 @@ export {
   type TrustEvolutionResult,
 } from "./trust";
 
+// Batch operations
+export {
+  logAuditEvent,
+  logAuditEventsBatch,
+  type AuditEvent,
+} from "./audit-log";
+
+export { insertReferralsBatch, type ReferralRecord } from "./referrals-batch";
+
+export {
+  writeMetric,
+  writeMetricsBatch,
+  type MetricType,
+  type SystemMetric,
+} from "./system-metrics";
+
+export {
+  getResearchCacheBatch,
+  putResearchCacheBatch,
+  getResearchCache,
+  putResearchCache,
+} from "./research-cache";
+
 // Re-export SQL schema for reference
 export const SCHEMA_VERSION = "1.0.0";

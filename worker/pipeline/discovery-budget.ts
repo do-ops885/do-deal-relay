@@ -1,5 +1,24 @@
 import type { SourceConfig } from "../types";
 
+/**
+ * Get adaptive budget defaults based on environment.
+ * Production uses tighter budgets to reduce worst-case load.
+ */
+export function getDefaultBudgets(envName: string = "development"): {
+  global: number;
+  perSource: number;
+  highTrustBonus: number;
+} {
+  switch (envName) {
+    case "production":
+      return { global: 500, perSource: 50, highTrustBonus: 50 };
+    case "staging":
+      return { global: 300, perSource: 30, highTrustBonus: 25 };
+    default:
+      return { global: 150, perSource: 20, highTrustBonus: 25 };
+  }
+}
+
 // ============================================================================
 // Discovery Budget Constants
 // ============================================================================
