@@ -101,7 +101,8 @@ export async function putResearchCacheBatch(
   const now = new Date().toISOString();
 
   const statements = Array.from({ length: count }, (_, i) => {
-    const key = keys[i]!;
+    const key = keys[i];
+    if (key === undefined) return null;
     const payload = JSON.stringify(payloads[i]);
 
     return db
@@ -113,7 +114,7 @@ export async function putResearchCacheBatch(
            updated_at = excluded.updated_at`,
       )
       .bind(key, payload, now);
-  });
+  }).filter((s): s is NonNullable<typeof s> => s !== null);
 
   await db.batch(statements);
 }

@@ -11,7 +11,7 @@ import {
   parseJSONContent,
   buildDeal,
 } from "./discover-parsers";
-import { calculateAdaptiveBudget } from "./discovery-budget";
+import { calculateAdaptiveBudget, getDefaultBudgets } from "./discovery-budget";
 
 // ============================================================================
 // Discovery Engine
@@ -49,13 +49,19 @@ export async function discover(
   }
 
   // Budget configuration
+  const envName = env.ENVIRONMENT || "production";
+  const budgetDefaults = getDefaultBudgets(envName);
   const globalBudget = parseInt(
-    env.CANDIDATE_BUDGET_GLOBAL || String(CONFIG.MAX_DEALS_PER_RUN),
+    env.CANDIDATE_BUDGET_GLOBAL || String(budgetDefaults.global),
     10,
   );
-  const perSourceBase = parseInt(env.CANDIDATE_BUDGET_PER_SOURCE || "100", 10);
+  const perSourceBase = parseInt(
+    env.CANDIDATE_BUDGET_PER_SOURCE || String(budgetDefaults.perSource),
+    10,
+  );
   const highTrustBonus = parseInt(
-    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS || "200",
+    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS ||
+      String(budgetDefaults.highTrustBonus),
     10,
   );
 
@@ -112,9 +118,12 @@ export async function discover(
       budget: effectiveLimit,
       adaptiveBudget: sourceBudget,
       validationSuccessRate:
-        source.validation_success_count && source.validation_failure_count
-          ? source.validation_success_count /
-            (source.validation_success_count + source.validation_failure_count)
+        (source.validation_success_count || 0) +
+          (source.validation_failure_count || 0) >
+        0
+          ? (source.validation_success_count || 0) /
+            ((source.validation_success_count || 0) +
+              (source.validation_failure_count || 0))
           : "N/A",
       discoveryCount: source.discovery_count || 0,
       remainingGlobal,
@@ -136,7 +145,9 @@ export async function discover(
     }
   }
 
-  // Fast pre-filter: cheap checks before expensive validation
+  // Fast pre-filter: cheap checks before expensive validation.
+  // INVARIANT: normalization must NOT derive missing code/url/title —
+  // this pre-filter runs before normalize and depends on them being absent.
   const seenUrls = new Set<string>();
   const filtered = deals.filter((deal) => {
     // Well-formedness: required fields

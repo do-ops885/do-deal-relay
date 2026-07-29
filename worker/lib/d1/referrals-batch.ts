@@ -9,6 +9,16 @@
 import type { D1Database } from "@cloudflare/workers-types";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/** Maximum number of referrals per single batch operation (D1 limit: 100) */
+const MAX_BATCH_SIZE = 100;
+
+const DEFAULT_CURRENCY = "USD";
+const DEFAULT_STATUS = "quarantined";
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -55,10 +65,11 @@ export async function insertReferralsBatch(
 ): Promise<void> {
   if (referrals.length === 0) return;
 
+  const safeReferrals = referrals.slice(0, MAX_BATCH_SIZE);
   const stmt = db.prepare(UPSERT_SQL);
 
   await db.batch(
-    referrals.map((r) =>
+    safeReferrals.map((r) =>
       stmt.bind(
         r.id,
         r.code,
@@ -69,8 +80,8 @@ export async function insertReferralsBatch(
         r.description ?? null,
         r.rewardType ?? null,
         r.rewardValue ?? null,
-        r.currency ?? "USD",
-        r.status ?? "quarantined",
+        r.currency ?? DEFAULT_CURRENCY,
+        r.status ?? DEFAULT_STATUS,
       ),
     ),
   );

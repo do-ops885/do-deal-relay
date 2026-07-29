@@ -9,12 +9,19 @@ import { setLastRunMetadata } from "./lib/storage";
 import type { Env } from "./types";
 import { toError } from "./lib/sanitize-error";
 import { logger } from "./lib/global-logger";
-import { logAuditEvent } from "./lib/d1/audit-log";
+import { logAuditEventsBatch, type AuditEvent } from "./lib/d1/audit-log";
 import { writeMetricsBatch } from "./lib/d1/system-metrics";
 import {
   insertReferralsBatch,
   type ReferralRecord,
 } from "./lib/d1/referrals-batch";
+import {
+  METRIC_PUBLISH_DURATION,
+  METRIC_PUBLISH_DEALS_TOTAL,
+  METRIC_PUBLISH_DEALS_ACTIVE,
+  METRIC_PUBLISH_REFERRALS_WRITTEN,
+  METRIC_PUBLISH_ERRORS,
+} from "./lib/metrics/names";
 
 // ============================================================================
 // Production Publish Flow
@@ -33,23 +40,22 @@ export async function publishSnapshot(
   commitSha?: string;
 }> {
   const publishStartTime = Date.now();
-  const auditId = crypto.randomUUID();
-
-  // Audit: log publish initiation
-  await logAuditEvent(env.DEALS_DB, {
-    id: auditId,
-    action: "publish.started",
-    resource: "snapshot",
-    resourceType: "pipeline",
-    resourceId: snapshot.snapshot_hash,
-    details: {
-      run_id: ctx.run_id,
-      trace_id: ctx.trace_id,
-      deals_total: snapshot.stats.total,
-      deals_active: snapshot.stats.active,
+  const auditEvents: AuditEvent[] = [
+    {
+      id: crypto.randomUUID(),
+      action: "publish.started",
+      resource: "snapshot",
+      resourceType: "pipeline",
+      resourceId: snapshot.snapshot_hash,
+      details: {
+        run_id: ctx.run_id,
+        trace_id: ctx.trace_id,
+        deals_total: snapshot.stats.total,
+        deals_active: snapshot.stats.active,
+      },
+      correlationId: ctx.trace_id,
     },
-    correlationId: ctx.trace_id,
-  });
+  ];
 
   try {
     // Step 1: Verify staging exists and matches
@@ -109,10 +115,7 @@ export async function publishSnapshot(
       title: deal.title,
       description: deal.description,
       rewardType: deal.reward.type,
-      rewardValue:
-        typeof deal.reward.value === "number"
-          ? String(deal.reward.value)
-          : deal.reward.value,
+      rewardValue: String(deal.reward.value),
       currency: deal.reward.currency,
       status: deal.metadata.status,
     }));
@@ -143,43 +146,49 @@ export async function publishSnapshot(
       deals_count: publishedSnapshot.stats.active,
     });
 
-    // Write system metrics for successful publish
+    // Observability: metrics + audit (best-effort, non-blocking)
     const publishDurationMs = Date.now() - publishStartTime;
-    await writeMetricsBatch(env.DEALS_DB, [
-      {
-        name: "publish.duration_ms",
-        value: publishDurationMs,
-        type: "histogram",
-        labels: { status: "success" },
-        runId: ctx.run_id,
-        phase: "publish",
-        durationMs: publishDurationMs,
-      },
-      {
-        name: "publish.deals_total",
-        value: publishedSnapshot.stats.total,
-        type: "gauge",
-        runId: ctx.run_id,
-        phase: "publish",
-      },
-      {
-        name: "publish.deals_active",
-        value: publishedSnapshot.stats.active,
-        type: "gauge",
-        runId: ctx.run_id,
-        phase: "publish",
-      },
-      {
-        name: "publish.referrals_written",
-        value: referrals.length,
-        type: "counter",
-        runId: ctx.run_id,
-        phase: "publish",
-      },
-    ]);
+    try {
+      await writeMetricsBatch(env.DEALS_DB, [
+        {
+          name: METRIC_PUBLISH_DURATION,
+          value: publishDurationMs,
+          type: "histogram",
+          labels: { status: "success" },
+          runId: ctx.run_id,
+          phase: "publish",
+          durationMs: publishDurationMs,
+        },
+        {
+          name: METRIC_PUBLISH_DEALS_TOTAL,
+          value: publishedSnapshot.stats.total,
+          type: "gauge",
+          runId: ctx.run_id,
+          phase: "publish",
+        },
+        {
+          name: METRIC_PUBLISH_DEALS_ACTIVE,
+          value: publishedSnapshot.stats.active,
+          type: "gauge",
+          runId: ctx.run_id,
+          phase: "publish",
+        },
+        {
+          name: METRIC_PUBLISH_REFERRALS_WRITTEN,
+          value: referrals.length,
+          type: "counter",
+          runId: ctx.run_id,
+          phase: "publish",
+        },
+      ]);
+    } catch (e) {
+      logger.warn("Metrics write failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
 
-    // Audit: log publish completion
-    await logAuditEvent(env.DEALS_DB, {
+    auditEvents.push({
       id: crypto.randomUUID(),
       action: "publish.completed",
       resource: "snapshot",
@@ -197,30 +206,37 @@ export async function publishSnapshot(
 
     return { success: true, commitSha };
   } catch (error) {
-    // Write failure metric
     const publishDurationMs = Date.now() - publishStartTime;
-    await writeMetricsBatch(env.DEALS_DB, [
-      {
-        name: "publish.duration_ms",
-        value: publishDurationMs,
-        type: "histogram",
-        labels: { status: "failure" },
-        runId: ctx.run_id,
-        phase: "publish",
-        durationMs: publishDurationMs,
-      },
-      {
-        name: "publish.errors",
-        value: 1,
-        type: "counter",
-        runId: ctx.run_id,
-        phase: "publish",
-      },
-    ]);
 
-    // Audit: log publish failure
+    // Observability: metrics + audit (best-effort, non-blocking)
+    try {
+      await writeMetricsBatch(env.DEALS_DB, [
+        {
+          name: METRIC_PUBLISH_DURATION,
+          value: publishDurationMs,
+          type: "histogram",
+          labels: { status: "failure" },
+          runId: ctx.run_id,
+          phase: "publish",
+          durationMs: publishDurationMs,
+        },
+        {
+          name: METRIC_PUBLISH_ERRORS,
+          value: 1,
+          type: "counter",
+          runId: ctx.run_id,
+          phase: "publish",
+        },
+      ]);
+    } catch (e) {
+      logger.warn("Metrics write failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
+
     const errorInfo = toError(error);
-    await logAuditEvent(env.DEALS_DB, {
+    auditEvents.push({
       id: crypto.randomUUID(),
       action: "publish.failed",
       resource: "snapshot",
@@ -243,6 +259,16 @@ export async function publishSnapshot(
       "publish",
       true,
     );
+  } finally {
+    // Flush all accumulated audit events in a single batch (best-effort)
+    try {
+      await logAuditEventsBatch(env.DEALS_DB, auditEvents);
+    } catch (e) {
+      logger.warn("Audit log batch write failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
   }
 }
 
@@ -253,19 +279,18 @@ export async function rollbackSnapshot(
   env: Env,
   previousSnapshot: Snapshot,
 ): Promise<void> {
-  const rollbackId = crypto.randomUUID();
-
-  // Audit: log rollback initiation
-  await logAuditEvent(env.DEALS_DB, {
-    id: rollbackId,
-    action: "rollback.started",
-    resource: "snapshot",
-    resourceType: "pipeline",
-    resourceId: previousSnapshot.snapshot_hash,
-    details: {
-      target_hash: previousSnapshot.snapshot_hash,
+  const auditEvents: AuditEvent[] = [
+    {
+      id: crypto.randomUUID(),
+      action: "rollback.started",
+      resource: "snapshot",
+      resourceType: "pipeline",
+      resourceId: previousSnapshot.snapshot_hash,
+      details: {
+        target_hash: previousSnapshot.snapshot_hash,
+      },
     },
-  });
+  ];
 
   try {
     const { revertProduction, getProductionSnapshot } =
@@ -283,8 +308,7 @@ export async function rollbackSnapshot(
       );
     }
 
-    // Audit: log rollback completion
-    await logAuditEvent(env.DEALS_DB, {
+    auditEvents.push({
       id: crypto.randomUUID(),
       action: "rollback.completed",
       resource: "snapshot",
@@ -297,8 +321,7 @@ export async function rollbackSnapshot(
   } catch (error) {
     const err = toError(error);
 
-    // Audit: log rollback failure
-    await logAuditEvent(env.DEALS_DB, {
+    auditEvents.push({
       id: crypto.randomUUID(),
       action: "rollback.failed",
       resource: "snapshot",
@@ -310,5 +333,14 @@ export async function rollbackSnapshot(
     });
 
     throw new PipelineError("PublishError", err.message, "publish", false);
+  } finally {
+    try {
+      await logAuditEventsBatch(env.DEALS_DB, auditEvents);
+    } catch (e) {
+      logger.warn("Audit log batch write failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
   }
 }

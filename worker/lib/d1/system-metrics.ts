@@ -10,6 +10,13 @@
 import type { D1Database } from "@cloudflare/workers-types";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/** Maximum number of metrics per single batch operation (D1 limit: 100) */
+const MAX_BATCH_SIZE = 100;
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -67,10 +74,11 @@ export async function writeMetricsBatch(
 ): Promise<void> {
   if (metrics.length === 0) return;
 
+  const safeMetrics = metrics.slice(0, MAX_BATCH_SIZE);
   const stmt = db.prepare(INSERT_SQL);
 
   await db.batch(
-    metrics.map((m) =>
+    safeMetrics.map((m) =>
       stmt.bind(
         m.name,
         m.value,

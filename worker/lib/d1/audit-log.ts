@@ -8,6 +8,13 @@
 import type { D1Database } from "@cloudflare/workers-types";
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/** Maximum number of events per single batch operation (D1 limit: 100) */
+const MAX_BATCH_SIZE = 100;
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -69,10 +76,11 @@ export async function logAuditEventsBatch(
 ): Promise<void> {
   if (events.length === 0) return;
 
+  const safeEvents = events.slice(0, MAX_BATCH_SIZE);
   const stmt = db.prepare(INSERT_SQL);
 
   await db.batch(
-    events.map((e) =>
+    safeEvents.map((e) =>
       stmt.bind(
         e.id,
         e.userId ?? null,

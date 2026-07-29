@@ -85,11 +85,13 @@ async function validateSingleDeal(
       "reward_plausibility",
       "expiry_validation",
     ];
-    // These gates may do async lookups or check mutable context
+    // These gates may do async lookups or check mutable context.
+    // Note: runtime order differs from VALIDATION_GATES in config.ts —
+    // async gates are grouped for parallel execution, ordered cheapest-first.
     const asyncGates: ValidationGate[] = [
       "deduplication_check",
-      "idempotency_check",
-      "second_pass_validation",
+      "idempotency_check", // cheap read from Set, runs before second_pass
+      "second_pass_validation", // schema re-parse, heavier than idempotency
       "snapshot_hash_verification",
     ];
 
@@ -159,11 +161,10 @@ async function validateSingleDeal(
   }
 
   const passedTrust = skipGates
-    ? fastPathDecision != null &&
-      (fastPathDecision as ValidationCacheEntry).trustScore != null
-      ? (fastPathDecision as ValidationCacheEntry).trustScore! >=
-        getTrustThreshold(env)
-      : false
+    ? (() => {
+        const ts = (fastPathDecision as ValidationCacheEntry).trustScore;
+        return ts != null && ts >= getTrustThreshold(env);
+      })()
     : gatePasses.includes("source_trust");
 
   return {
