@@ -1,7 +1,7 @@
 /**
  * AI Gateway Client Tests
  *
- * Mocks fetch for all gateway responses. Tests forwarding, caching,
+ * Mocks validatedFetch for all gateway responses. Tests forwarding, caching,
  * failover, error handling, and observability logging.
  */
 
@@ -12,6 +12,11 @@ import {
   createDisabledConfig,
 } from "../../worker/lib/ai-gateway";
 import type { GatewayRequest } from "../../worker/lib/ai-gateway/types";
+
+const validatedFetchMock = vi.hoisted(() => vi.fn());
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: validatedFetchMock,
+}));
 
 // ============================================================================
 // Fixtures
@@ -96,26 +101,26 @@ describe("createDisabledConfig", () => {
 
 describe("AIGatewayClient", () => {
   let client: AIGatewayClient;
-  let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
     client = new AIGatewayClient(successConfig());
+    validatedFetchMock.mockReset();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    vi.unstubAllGlobals();
   });
 
   describe("forward()", () => {
     it("sends request to gateway URL with correct headers", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       await client.forward(VALID_REQUEST, AUTH_TOKEN);
 
-      expect(fetchSpy).toHaveBeenCalledOnce();
-      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(validatedFetchMock).toHaveBeenCalledOnce();
+      const [url, init] = validatedFetchMock.mock.calls[0] as [
+        string,
+        RequestInit,
+      ];
       expect(url).toBe(GATEWAY_URL);
       expect(init.method).toBe("POST");
 
@@ -129,7 +134,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("returns ok response with usage and cost data", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
 
       expect(result.ok).toBe(true);
@@ -143,17 +148,17 @@ describe("AIGatewayClient", () => {
     });
 
     it("retries on 5xx then succeeds", async () => {
-      fetchSpy
+      validatedFetchMock
         .mockResolvedValueOnce(new Response("Bad Gateway", { status: 502 }))
         .mockResolvedValueOnce(okResponse());
 
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
       expect(result.ok).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("returns error when all attempts fail and no fallback", async () => {
-      fetchSpy.mockRejectedValue(new Error("Network error"));
+      validatedFetchMock.mockRejectedValue(new Error("Network error"));
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
 
       expect(result.ok).toBe(false);
@@ -163,7 +168,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("handles non-JSON response body gracefully", async () => {
-      fetchSpy.mockResolvedValueOnce(
+      validatedFetchMock.mockResolvedValueOnce(
         new Response("<html>Bad Gateway</html>", { status: 502 }),
       );
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
@@ -172,7 +177,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("handles response with no usage field", async () => {
-      fetchSpy.mockResolvedValueOnce(
+      validatedFetchMock.mockResolvedValueOnce(
         new Response(JSON.stringify({ id: "cmpl-1", choices: [] }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -184,7 +189,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("reports latency in milliseconds", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
       expect(result.latencyMs).toBeGreaterThanOrEqual(0);
       expect(typeof result.latencyMs).toBe("number");
@@ -205,16 +210,16 @@ describe("AIGatewayClient", () => {
         }),
       );
 
-      fetchSpy
+      validatedFetchMock
         .mockResolvedValueOnce(new Response("Bad Gateway", { status: 502 }))
         .mockResolvedValueOnce(okResponse());
 
       const result = await failoverClient.forward(VALID_REQUEST, AUTH_TOKEN);
       expect(result.ok).toBe(true);
       expect(result.failover).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
 
-      const secondCall = fetchSpy.mock.calls[1];
+      const secondCall = validatedFetchMock.mock.calls[1];
       expect(secondCall).toBeDefined();
       const [, fallbackInit] = secondCall as [string, RequestInit];
       const fallbackHeaders = fallbackInit.headers as Record<string, string>;
@@ -230,7 +235,7 @@ describe("AIGatewayClient", () => {
         }),
       );
 
-      fetchSpy.mockRejectedValue(new Error("Connection refused"));
+      validatedFetchMock.mockRejectedValue(new Error("Connection refused"));
       const result = await failoverClient.forward(VALID_REQUEST, AUTH_TOKEN);
 
       expect(result.ok).toBe(false);
@@ -257,7 +262,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("caches successful responses and returns cache hit", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       const first = await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
       expect(first.ok).toBe(true);
       expect(first.cached).toBe(false);
@@ -265,31 +270,33 @@ describe("AIGatewayClient", () => {
       const second = await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
       expect(second.ok).toBe(true);
       expect(second.cached).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledOnce();
+      expect(validatedFetchMock).toHaveBeenCalledOnce();
     });
 
     it("does not cache failed responses", async () => {
-      fetchSpy.mockResolvedValueOnce(new Response("Error", { status: 500 }));
+      validatedFetchMock.mockResolvedValueOnce(
+        new Response("Error", { status: 500 }),
+      );
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
 
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("differentiates cache by model", async () => {
-      fetchSpy.mockResolvedValue(okResponse());
+      validatedFetchMock.mockResolvedValue(okResponse());
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
 
       await cachedClient.forward(
         { ...VALID_REQUEST, model: "claude-3-opus" },
         AUTH_TOKEN,
       );
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("differentiates cache by messages", async () => {
-      fetchSpy.mockResolvedValue(okResponse());
+      validatedFetchMock.mockResolvedValue(okResponse());
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
 
       await cachedClient.forward(
@@ -299,16 +306,16 @@ describe("AIGatewayClient", () => {
         },
         AUTH_TOKEN,
       );
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("clearCache() removes all cached entries", async () => {
-      fetchSpy.mockResolvedValue(okResponse());
+      validatedFetchMock.mockResolvedValue(okResponse());
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
       cachedClient.clearCache();
 
       await cachedClient.forward(VALID_REQUEST, AUTH_TOKEN);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(validatedFetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("expires cache entries after TTL", async () => {
@@ -319,7 +326,7 @@ describe("AIGatewayClient", () => {
           maxRetries: 0,
         }),
       );
-      fetchSpy.mockResolvedValue(okResponse());
+      validatedFetchMock.mockResolvedValue(okResponse());
 
       await shortTtlClient.forward(VALID_REQUEST, AUTH_TOKEN);
       const cached = shortTtlClient.checkCache(VALID_REQUEST);
@@ -341,7 +348,7 @@ describe("AIGatewayClient", () => {
 
   describe("cost estimation", () => {
     it("estimates cost for known models", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       const result = await client.forward(VALID_REQUEST, AUTH_TOKEN);
 
       expect(result.cost.promptCostUsd).toBeGreaterThan(0);
@@ -353,7 +360,7 @@ describe("AIGatewayClient", () => {
     });
 
     it("uses default cost for unknown models", async () => {
-      fetchSpy.mockResolvedValueOnce(okResponse());
+      validatedFetchMock.mockResolvedValueOnce(okResponse());
       const result = await client.forward(
         { ...VALID_REQUEST, model: "unknown-model-xyz" },
         AUTH_TOKEN,
