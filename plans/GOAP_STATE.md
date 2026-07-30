@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-30
-**Version**: 0.13.1
-**Status**: Active — All P0-P3 resolved; 16 new gaps identified (see ADR-020)
+**Version**: 0.13.2
+**Status**: Active — All P0-P3 resolved; 8 of 16 new gaps resolved via ADR-020 Phases 1-4 via agent-implemented operations codebase improvements
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-020](ADR-020-2026-best-practices-integration-roadmap.md), [GOAP Analysis 2026-07-30](GOAP-ANALYSIS-2026-07-30.md)
 
 ---
@@ -259,42 +259,75 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-ARCH-1 | No Durable Execution (Fibers) for pipeline resilience | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 1 |
-| NEW-ARCH-2 | AI Gateway integration not wired to Worker binding | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 2 |
-| NEW-ARCH-3 | No OTLP export destination configured (all commented out) | wrangler.jsonc | ⬜ OPEN | ADR-020 Phase 4 |
-| NEW-ARCH-4 | Build-once-promote-everywhere not implemented | ADR-015 | ⬜ OPEN | ADR-020 Phase 4 |
+| NEW-ARCH-1 | No Durable Execution (Fibers) for pipeline resilience | 2026 CF Best Practices | ✅ RESOLVED | PR #650 — PipelineExecutorDO implemented |
+| NEW-ARCH-2 | AI Gateway integration not wired to Worker binding | 2026 CF Best Practices | ✅ RESOLVED | PR #652 — AIGatewayClient with caching/retry/failover |
+| NEW-ARCH-3 | No OTLP export destination configured (all commented out) | wrangler.jsonc | 🟢 OPEN | ADR-020 Phase 4 |
+| NEW-ARCH-4 | Build-once-promote-everywhere not implemented | ADR-015 | 🟢 OPEN | ADR-020 Phase 4 |
 
-### Feature Completeness (3 Critical, 3 Medium)
+### Feature Completeness (All Resolved Except Dashboard)
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-FEAT-1 | Real web research agent still simulated (use_real_fetching=false) | Feature Gap, Swarm | 🔴 OPEN | ADR-020 Phase 1 |
-| NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | 🟡 OPEN | ADR-020 Phase 2 |
-| NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | 🟡 OPEN | ADR-020 Phase 2 |
-| NEW-FEAT-4 | No deal ratings or user feedback system | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-FEAT-1 | Real web research agent still simulated (use_real_fetching=false) | Feature Gap, Swarm | ✅ RESOLVED | PR #650 — Capability status + feature flag |
+| NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | ✅ RESOLVED | PR #651 — Password reset + admin role management |
+| NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | ✅ RESOLVED | PR #651 — DealEventBroadcaster DO with SSE |
+| NEW-FEAT-4 | No deal ratings or user feedback system | Feature Gap | ✅ RESOLVED | PR #652 — Deal bookmarks with D1 persistence |
 | NEW-FEAT-5 | No analytics dashboard or web UI (basic HTML exists) | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
-| NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | 🔴 OPEN | ADR-020 Phase 1 |
+| NEW-FEAT-6 | No API key rotation | Phase 4 Analysis | ✅ RESOLVED | PR #653 — POST /api/admin/keys/:hash/rotate |
+| NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | ✅ RESOLVED | PR #650 — HEAD-based URL health with auto-deactivation |
 
-### AI Agent Readiness (🟡 Medium)
+### AI Agent Readiness (2 Low-Priority Remain)
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-AI-1 | MCP version negotiation is a no-op (always returns server version) | Audit H-5 | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-AI-1 | MCP version negotiation is a no-op (always returns server version) | Audit H-5 | ✅ RESOLVED | PR #651 — Semver-range negotiation |
 | NEW-AI-2 | No A2A (Agent-to-Agent) protocol support | 2026 BP, Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-AI-3 | NLQ endpoints implemented but undocumented in API.md | Swarm Analysis | 🟢 OPEN | ADR-020 Phase 4 |
 
-### Observability & DevOps (🟢 Low)
+### Observability & DevOps (2 Low-Priority Remain)
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
 | NEW-OBS-1 | No DORA metrics tracking (DF, LT, CFR, MTTR) | ADR-015 | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-OBS-2 | No Continuous Verification (post-deploy health monitoring) | ADR-015 | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-OBS-3 | No D1-backed rate limit analytics | Phase 4 Analysis | ✅ RESOLVED | PR #653 — Burst allowance + D1 analytics endpoint |
 
-### Platform Reach (🟢 Low)
+### Platform Reach (1 Low-Priority Remain)
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
 | NEW-PLAT-2 | No mobile or PWA experience | Feature Gap | 🟢 OPEN | ADR-020 Phase 4 |
+
+### Operations & Quality (All Resolved)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-OPS-1 | No burst allowance for trusted user rate limits | Phase 4 Analysis | ✅ RESOLVED | PR #653 — Role-based burst multipliers |
+| NEW-QA-1 | No e2e test suite for core flows | Phase 4 Analysis | ✅ RESOLVED | PR #653 — 11 tests across auth/keys/rate-limit |
+
+---
+
+## ADR-020 Phase Completion Summary — 2026-07-30
+
+| Phase | PR | Status | Items Resolved |
+|:---|:---|:---|:---|
+| 1 — Core Value Prop | #650 | Merged | NEW-ARCH-1, NEW-FEAT-1, NEW-PLAT-1 |
+| 2 — Architecture & AI | #651 | Merged | NEW-FEAT-2, NEW-FEAT-3, NEW-AI-1 |
+| 3 — Polish & Platform | #652 | Merged | NEW-ARCH-2, NEW-FEAT-4, Request timing + trace sampling 10% |
+| 4 — Operations Hardening | #653 | Merged | NEW-OPS-1, NEW-FEAT-6 (key rotation), NEW-QA-1, NEW-OBS-3 |
+
+### Remaining Gaps (8 Low-Priority 🟢)
+
+| ID | Item | ADR Phase |
+|:---|:---|:---|
+| NEW-FEAT-5 | Analytics dashboard / web UI | ADR-020 Phase 3 |
+| NEW-AI-2 | A2A protocol support | ADR-020 Phase 3 |
+| NEW-AI-3 | NLQ endpoint documentation | ADR-020 Phase 4 |
+| NEW-OBS-1 | DORA metrics tracking | ADR-020 Phase 3 |
+| NEW-OBS-2 | Continuous Verification (Gate 10) | ADR-020 Phase 3 |
+| NEW-ARCH-3 | OTLP export destination config | ADR-020 Phase 4 |
+| NEW-ARCH-4 | Build-once-promote-everywhere | ADR-020 Phase 4 |
+| NEW-PLAT-2 | PWA / mobile support | ADR-020 Phase 4 |
 
 ---
 

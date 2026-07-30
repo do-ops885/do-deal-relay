@@ -504,7 +504,10 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/admin/rate-limit-analytics" && request.method === "GET") {
     return withAuth(request, env, "admin", async () => {
       const minutes = parseInt(url.searchParams.get("minutes") || "60", 10);
-      const analytics = await getRateLimitAnalytics(env, Math.min(minutes, 1440));
+      const analytics = await getRateLimitAnalytics(
+        env,
+        Math.min(minutes, 1440),
+      );
       return jsonResponse(analytics, 200, request, env);
     });
   }
