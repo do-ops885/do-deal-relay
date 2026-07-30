@@ -11,8 +11,9 @@ readonly MAX_PR_BODY_LENGTH=1000
 readonly TRUST_THRESHOLD=0.3
 readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
-- **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`.
+- **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `.github/workflows/*.yml`.
 - **Single Source of Truth**: System version is maintained solely in the root `VERSION` file. Never edit version strings elsewhere.
+- **Formatting Mandate**: All TypeScript, JavaScript, JSON, YAML, and Markdown files MUST pass `npx prettier --check` before commit. The pre-commit hook BLOCKS unformatted commits (Gate 6); CI Format Check mirrors this gate.
 
 ## 2. Analyze-First Mandate & Zero Low-Value Questions
 1. **Deep Analysis First**: Prior to asking ANY clarification questions, deeply analyze the repository structure, local tooling, sub-agent setups, and workflows.

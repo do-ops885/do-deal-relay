@@ -290,8 +290,8 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
 | NEW-FEAT-1 | Real web research agent still simulated (use_real_fetching=false) | Feature Gap, Swarm | 🔴 OPEN | ADR-020 Phase 1 |
-| NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | 🟡 OPEN | ADR-020 Phase 2 |
-| NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | ✅ RESOLVED | PR #654 — Password reset + admin role management |
+| NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | ✅ RESOLVED | PR #654 — DealEventBroadcaster DO with SSE |
 | NEW-FEAT-4 | No deal ratings or user feedback system | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-FEAT-5 | No analytics dashboard or web UI (basic HTML exists) | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | 🔴 OPEN | ADR-020 Phase 1 |
@@ -300,7 +300,7 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-AI-1 | MCP version negotiation is a no-op (always returns server version) | Audit H-5 | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-AI-1 | MCP version negotiation is a no-op (always returns server version) | Audit H-5 | ✅ RESOLVED | PR #654 — Semver-range negotiation |
 | NEW-AI-2 | No A2A (Agent-to-Agent) protocol support | 2026 BP, Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-AI-3 | NLQ endpoints implemented but undocumented in API.md | Swarm Analysis | 🟢 OPEN | ADR-020 Phase 4 |
 
