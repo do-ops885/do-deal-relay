@@ -459,7 +459,13 @@ export async function handleBookmarkDeal(
 ): Promise<Response> {
   try {
     if (!auth.userId) {
-      return errorResponse("Authentication required", 401, undefined, request, env);
+      return errorResponse(
+        "Authentication required",
+        401,
+        undefined,
+        request,
+        env,
+      );
     }
 
     const body = (await request.json()) as { dealId: string };
@@ -517,7 +523,13 @@ export async function handleRemoveBookmark(
 ): Promise<Response> {
   try {
     if (!auth.userId) {
-      return errorResponse("Authentication required", 401, undefined, request, env);
+      return errorResponse(
+        "Authentication required",
+        401,
+        undefined,
+        request,
+        env,
+      );
     }
 
     const body = (await request.json()) as { dealId: string };
@@ -531,9 +543,16 @@ export async function handleRemoveBookmark(
       .bind(auth.userId, body.dealId)
       .run();
 
-    await logAuditAction(auth.userId, "deal_unbookmark", "deals", request, env, {
-      dealId: body.dealId,
-    });
+    await logAuditAction(
+      auth.userId,
+      "deal_unbookmark",
+      "deals",
+      request,
+      env,
+      {
+        dealId: body.dealId,
+      },
+    );
 
     return jsonResponse({ message: "Bookmark removed" }, 200, request, env);
   } catch {
@@ -551,7 +570,13 @@ export async function handleListBookmarks(
 ): Promise<Response> {
   try {
     if (!auth.userId) {
-      return errorResponse("Authentication required", 401, undefined, request, env);
+      return errorResponse(
+        "Authentication required",
+        401,
+        undefined,
+        request,
+        env,
+      );
     }
 
     const result = await env.DEALS_DB.prepare(
@@ -569,7 +594,12 @@ export async function handleListBookmarks(
       createdAt: row.created_at,
     }));
 
-    return jsonResponse({ bookmarks, count: bookmarks.length }, 200, request, env);
+    return jsonResponse(
+      { bookmarks, count: bookmarks.length },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     logger.error("Failed to list bookmarks", toErrCtx(error));
     return errorResponse(

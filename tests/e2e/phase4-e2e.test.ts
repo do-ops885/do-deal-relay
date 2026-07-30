@@ -43,7 +43,7 @@ describe("Auth Flow", () => {
     });
     expect(response.status).toBe(200);
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       accessToken: string;
       refreshToken: string;
       user: { id: string };
@@ -61,12 +61,12 @@ describe("Auth Flow", () => {
     const response = await fetch("http://localhost:8787/api/auth/me", {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     expect(response.status).toBe(200);
 
-    const data = await response.json() as { email: string };
+    const data = (await response.json()) as { email: string };
     expect(data.email).toBe("e2e-test@example.com");
   });
 
@@ -85,7 +85,7 @@ describe("Auth Flow", () => {
     });
     expect(response.status).toBe(200);
 
-    const data = await response.json() as { accessToken: string };
+    const data = (await response.json()) as { accessToken: string };
     expect(data.accessToken).toBeTruthy();
     accessToken = data.accessToken;
   });
@@ -110,7 +110,7 @@ describe("API Key Management", () => {
         password: "AdminPassword123!",
       }),
     });
-    const data = await response.json() as { accessToken: string };
+    const data = (await response.json()) as { accessToken: string };
     adminToken = data.accessToken;
   });
 
@@ -119,7 +119,7 @@ describe("API Key Management", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${adminToken}`,
+        Authorization: `Bearer ${adminToken}`,
       },
       body: JSON.stringify({
         userId: "test-user-1",
@@ -129,7 +129,7 @@ describe("API Key Management", () => {
     });
     expect(response.status).toBe(201);
 
-    const data = await response.json() as { apiKey: string };
+    const data = (await response.json()) as { apiKey: string };
     expect(data.apiKey).toBeTruthy();
     expect(data.apiKey.startsWith("ddr_")).toBe(true);
     plainTextKey = data.apiKey;
@@ -138,11 +138,11 @@ describe("API Key Management", () => {
   it("should list API keys", async () => {
     const response = await fetch("http://localhost:8787/api/admin/keys", {
       method: "GET",
-      headers: { "Authorization": `Bearer ${adminToken}` },
+      headers: { Authorization: `Bearer ${adminToken}` },
     });
     expect(response.status).toBe(200);
 
-    const data = await response.json() as { keys: Array<{ hash: string }> };
+    const data = (await response.json()) as { keys: Array<{ hash: string }> };
     expect(Array.isArray(data.keys)).toBe(true);
     expect(data.keys.length).toBeGreaterThan(0);
 
@@ -155,9 +155,11 @@ describe("API Key Management", () => {
     // First list keys to find one to rotate
     const listResp = await fetch("http://localhost:8787/api/admin/keys", {
       method: "GET",
-      headers: { "Authorization": `Bearer ${adminToken}` },
+      headers: { Authorization: `Bearer ${adminToken}` },
     });
-    const listData = await listResp.json() as { keys: Array<{ hash: string }> };
+    const listData = (await listResp.json()) as {
+      keys: Array<{ hash: string }>;
+    };
     const keyToRotate = listData.keys[listData.keys.length - 1];
     expect(keyToRotate).toBeTruthy();
     if (!keyToRotate) return;
@@ -166,12 +168,15 @@ describe("API Key Management", () => {
       `http://localhost:8787/api/admin/keys/${keyToRotate.hash}/rotate`,
       {
         method: "POST",
-        headers: { "Authorization": `Bearer ${adminToken}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       },
     );
     expect(response.status).toBe(201);
 
-    const data = await response.json() as { apiKey: string; rotatedFrom: string };
+    const data = (await response.json()) as {
+      apiKey: string;
+      rotatedFrom: string;
+    };
     expect(data.apiKey).toBeTruthy();
     expect(data.rotatedFrom).toBe(keyToRotate.hash);
     expect(data.apiKey.startsWith("ddr_")).toBe(true);
@@ -180,9 +185,11 @@ describe("API Key Management", () => {
   it("should revoke an API key", async () => {
     const listResp = await fetch("http://localhost:8787/api/admin/keys", {
       method: "GET",
-      headers: { "Authorization": `Bearer ${adminToken}` },
+      headers: { Authorization: `Bearer ${adminToken}` },
     });
-    const listData = await listResp.json() as { keys: Array<{ hash: string }> };
+    const listData = (await listResp.json()) as {
+      keys: Array<{ hash: string }>;
+    };
     const keyToRevoke = listData.keys[listData.keys.length - 1];
     expect(keyToRevoke).toBeTruthy();
     if (!keyToRevoke) return;
@@ -191,12 +198,12 @@ describe("API Key Management", () => {
       `http://localhost:8787/api/admin/keys/${keyToRevoke.hash}`,
       {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${adminToken}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
       },
     );
     expect(response.status).toBe(200);
 
-    const data = await response.json() as { success: boolean };
+    const data = (await response.json()) as { success: boolean };
     expect(data.success).toBe(true);
   });
 });
@@ -252,18 +259,18 @@ describe("Rate Limiting", () => {
         password: "AdminPassword123!",
       }),
     });
-    const loginData = await loginResp.json() as { accessToken: string };
+    const loginData = (await loginResp.json()) as { accessToken: string };
 
     const response = await fetch(
       "http://localhost:8787/api/admin/rate-limit-analytics",
       {
         method: "GET",
-        headers: { "Authorization": `Bearer ${loginData.accessToken}` },
+        headers: { Authorization: `Bearer ${loginData.accessToken}` },
       },
     );
     expect(response.status).toBe(200);
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       total: number;
       blocked: number;
       byEndpoint: Record<string, unknown>;

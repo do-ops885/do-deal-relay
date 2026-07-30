@@ -140,9 +140,7 @@ export async function getRouteTimingSummary(
   errorRate: number;
 } | null> {
   try {
-    const cutoff = new Date(
-      Date.now() - minutes * 60 * 1000,
-    ).toISOString();
+    const cutoff = new Date(Date.now() - minutes * 60 * 1000).toISOString();
 
     const result = await env.DEALS_DB.prepare(
       `SELECT
