@@ -330,6 +330,17 @@ async function fetchDns(
  */
 export function validateReferralUrl(url: string, domain: string): boolean {
   try {
+    // Reject dangerous characters or control characters that could bypass URL parsing
+    if (
+      url.includes("\\") ||
+      url.includes("\x00") ||
+      url.includes("\x0d") ||
+      url.includes("\x0a") ||
+      url.includes("\t")
+    ) {
+      return false;
+    }
+
     const parsed = new URL(url);
 
     // 1. Enforce HTTPS
