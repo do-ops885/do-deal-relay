@@ -40,7 +40,8 @@ export interface NotificationEvent {
     | "system_error"
     | "deal_expiring"
     | "deal_expired"
-    | "pipeline_complete";
+    | "pipeline_complete"
+    | "deal_health_check";
   severity: "info" | "warning" | "critical";
   run_id: string;
   message: string;
@@ -95,4 +96,5 @@ export interface Env {
   PIPELINE_LOCK?: DurableObjectNamespace;
   SOURCE_REGISTRY?: DurableObjectNamespace;
   DEAL_REGISTRY?: DurableObjectNamespace;
+  PIPELINE_EXECUTOR?: DurableObjectNamespace;
 }
