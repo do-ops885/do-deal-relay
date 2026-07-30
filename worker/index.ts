@@ -10,6 +10,7 @@ import { toError } from "./lib/sanitize-error";
 import { PipelineLock } from "./durable-objects/pipeline-lock";
 import { SourceRegistry } from "./durable-objects/source-registry";
 import { DealRegistry } from "./durable-objects/deal-registry";
+import { PipelineExecutorDO } from "./durable-objects/pipeline-executor";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -30,7 +31,7 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 }
 
 // Named export for Durable Objects — required by wrangler
-export { PipelineLock, SourceRegistry, DealRegistry };
+export { PipelineLock, SourceRegistry, DealRegistry, PipelineExecutorDO };
 
 export default {
   async fetch(
