@@ -15,10 +15,10 @@
     },
     "traces": {
       "enabled": true,
-      // head_sampling_rate: fraction of traces to export (0.0–1.0).
+      // head_sampling_rate: fraction of traces to export (0.0-1.0).
       // 1.0 = export everything (development/debugging).
       // 0.1 = export 10% of traces (recommended for production).
-      "head_sampling_rate": 1,
+      "head_sampling_rate": 0.1,
       // OTLP export destinations — add one entry per backend.
       // Each destination requires a URL and an Authorization header with
       // the vendor-specific API key stored as a Cloudflare secret.
