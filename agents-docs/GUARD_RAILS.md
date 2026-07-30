@@ -30,7 +30,7 @@ These enhanced guard rails run the **same checks as GitHub Actions CI** locally 
 | 3 | File Size Limits (10MB max) | ✅ Custom |
 | 4 | Line Count Limits (500 max) | ✅ validate-codes job |
 | 5 | Dependency Directory Check | ✅ Custom |
-| 6 | Code Quality (TypeScript + Tests) | ✅ lint + test jobs |
+| 6 | Code Quality (TypeScript + Tests + **Prettier Format**) | ✅ lint + test + format-check jobs | **BLOCKS on format failures** |
 | 7 | JSON/YAML Syntax Validation | ✅ yaml-lint job |
 | 8 | Root Directory Organization | ✅ Custom |
 | 9 | Directory Organization | ✅ Custom |
@@ -282,6 +282,14 @@ Pre-push tests can be slow. To skip temporarily:
 ```bash
 SKIP_TESTS=1 git push
 ```
+
+---
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-07-30 | **Gate 6 hardened**: Prettier formatting check now **BLOCKS** commits (was warning-only). Added formatting-enforcement skill. |
 
 ---
 

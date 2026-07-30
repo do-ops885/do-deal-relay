@@ -12,6 +12,7 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 - **Hot Files (require coordination)**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `.github/workflows/*.yml`.
 - **SSRF Hardening**: Outgoing calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass SSRF DNS checks.
 - **Banned Patterns**: No hardcoded secrets (use `process.env.X`), no magic numbers (use named constants), no `!` (non-null assertions), and no unused imports.
+- **Formatting Mandate**: All TypeScript, JavaScript, JSON, YAML, and Markdown files MUST pass `npx prettier --check` before commit. Run `npx prettier --write .` after every file edit. The pre-commit hook BLOCKS unformatted commits (Gate 6). CI Format Check mirrors this gate — formatting failures in CI indicate the agent skipped verification.
 
 ## Analyze-First Mandate
 1. **Deep Analysis First**: Always analyze the repository and existing infrastructure deeply before asking ANY clarification questions.
@@ -23,7 +24,7 @@ Non-trivial tasks follow the strict PEV loop:
 1. **Plan**: Produce a spec with `approach`, `non_goals`, and `acceptance_criteria` in `plans/` using `plans/SPEC_TEMPLATE.md`.
 2. **Execute**: Implement incrementally. Apply the **Always-Fix Policy**: fix pre-existing CI check/lint/type/formatting failures in your current context.
    - *Triage Protocol for Unfixable Issues*: Create an ADR in `plans/` documenting the root cause, mark the task as `blocked` in `plans/GOAP_STATE.md`, and link the ADR.
-3. **Verify**: Use `./scripts/pev-gates.sh` and the 13 Quality Gates (`./scripts/quality_gate.sh`).
+3. **Verify**: After EVERY code change, run `npm run lint` (which runs `tsc --noEmit && prettier --check .`). Never skip this step. Use `./scripts/pev-gates.sh` and the 13 Quality Gates (`./scripts/quality_gate.sh`).
 4. **Validation Pipeline**: Deals MUST pass the 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites, bypasses, or structural alterations of validation gates are strictly forbidden.
 
 ## Operational Commands Quick Reference

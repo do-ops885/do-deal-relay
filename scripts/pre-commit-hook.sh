@@ -303,14 +303,16 @@ if [ -n "$PRETTIER_FILES" ]; then
         while IFS= read -r file; do
             if [ -f "$file" ]; then
                 if ! npx prettier --check "$file" >/dev/null 2>&1; then
-                    warning "Formatting issue in: $file"
-                    warning "  ↳ Run: npx prettier --write $file"
+                    error "Formatting issue in: $file"
+                    error "  ↳ Auto-fix: npx prettier --write $file"
                     FORMAT_ERRORS=1
                 fi
             fi
         done <<< "$PRETTIER_FILES"
         if [ $FORMAT_ERRORS -eq 0 ]; then
             success "All staged files are properly formatted"
+        else
+            error "COMMIT BLOCKED: Unformatted files detected. Run 'npx prettier --write .' to fix all."
         fi
     fi
 fi
