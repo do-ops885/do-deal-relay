@@ -54,6 +54,9 @@ import {
   handleGetCurrentUser,
   handleUpdateProfile,
   handleListUsers,
+  handleBookmarkDeal,
+  handleRemoveBookmark,
+  handleListBookmarks,
 } from "../routes/auth";
 import { handleD1Request } from "../routes/d1";
 import { handleNLQRequest } from "../routes/nlq/index";
@@ -126,6 +129,27 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/admin/users" && request.method === "GET") {
     return withAuth(request, env, "admin", (auth) =>
       handleListUsers(auth, request, env),
+    );
+  }
+
+  // Deal Bookmarks (user-facing features)
+  if (path === "/api/deals/bookmarks" && request.method === "POST") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    return withAuth(request, env, "user", (auth) =>
+      handleBookmarkDeal(auth, request, env),
+    );
+  }
+  if (path === "/api/deals/bookmarks" && request.method === "DELETE") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    return withAuth(request, env, "user", (auth) =>
+      handleRemoveBookmark(auth, request, env),
+    );
+  }
+  if (path === "/api/deals/bookmarks" && request.method === "GET") {
+    return withAuth(request, env, "user", (auth) =>
+      handleListBookmarks(auth, request, env),
     );
   }
 
