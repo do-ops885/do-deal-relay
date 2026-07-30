@@ -22,6 +22,7 @@ const DELIVERY_CONSTANTS = {
   MAX_ERROR_RESPONSE_SIZE: 10 * 1024, // 10KB
   DELIVERY_RECORD_EXPIRATION_SECONDS: 7 * 24 * 60 * 60, // 7 days
   DLQ_EXPIRATION_SECONDS: 30 * 24 * 60 * 60, // 30 days
+  MAX_JITTER_MS: 1000,
 } as const;
 
 // ============================================================================
@@ -236,8 +237,10 @@ export function calculateBackoff(
 ): number {
   const base = policy.initial_delay_ms;
   const multiplier = Math.pow(policy.backoff_multiplier, attempt - 1);
-  // Math.random() is acceptable here for jitter - not security-sensitive, just adds randomness to prevent thundering herd
-  const jitter = Math.random() * 1000;
+  // Use crypto for jitter to satisfy static analysis; not security-sensitive, just adds randomness to prevent thundering herd
+  const randomBytes = crypto.getRandomValues(new Uint32Array(1));
+  const jitter =
+    ((randomBytes[0] ?? 0) / 0xffffffff) * DELIVERY_CONSTANTS.MAX_JITTER_MS;
 
   return Math.min(base * multiplier + jitter, policy.max_delay_ms);
 }
