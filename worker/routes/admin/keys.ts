@@ -10,6 +10,7 @@ import {
   listApiKeys,
   revokeApiKey,
   ApiKeyConfig,
+  hashApiKey,
 } from "../../lib/auth";
 import { jsonResponse } from "../utils";
 
@@ -100,5 +101,57 @@ export async function handleRevokeApiKey(
     );
   } catch (error) {
     return jsonResponse({ error: "Failed to revoke API key" }, 500, request);
+  }
+}
+
+/**
+ * Rotate an API key: revoke the old key and create a new one with the same config.
+ * POST /api/admin/keys/:hash/rotate (NEW-FEAT-4)
+ */
+export async function handleRotateApiKey(
+  request: Request,
+  keyHash: string,
+  env: Env,
+): Promise<Response> {
+  try {
+    // Look up existing key
+    const keys = await listApiKeys(env);
+    const existing = keys.find((k) => k.keyHash === keyHash);
+
+    if (!existing) {
+      return jsonResponse({ error: "API key not found" }, 404, request);
+    }
+
+    // Revoke old key
+    await revokeApiKey(env, keyHash);
+
+    // Create new key with same config
+    const config: ApiKeyConfig = {
+      key: "",
+      userId: existing.userId,
+      role: existing.role,
+      createdAt: new Date().toISOString(),
+      expiresAt: existing.expiresAt,
+      rateLimit: existing.rateLimit || {
+        requestsPerMinute: 60,
+        requestsPerHour: 1000,
+      },
+    };
+
+    const newApiKey = await storeApiKey(env, config);
+
+    return jsonResponse(
+      {
+        success: true,
+        apiKey: newApiKey,
+        rotatedFrom: keyHash,
+        message:
+          "API key rotated successfully. Old key revoked, new key created. Store this key securely.",
+      },
+      201,
+      request,
+    );
+  } catch (error) {
+    return jsonResponse({ error: "Failed to rotate API key" }, 500, request);
   }
 }

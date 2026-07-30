@@ -36,6 +36,13 @@ const DEFAULT_CONFIG: RateLimitConfig = {
   keyPrefix: "ratelimit",
 };
 
+// Burst allowance multiplier for trusted roles (NEW-OPS-1)
+const BURST_MULTIPLIER: Record<string, number> = {
+  admin: 5,
+  moderator: 3,
+  verified: 2,
+};
+
 // Endpoint-specific rate limits
 const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/submit": {
@@ -356,6 +363,93 @@ export function getPerKeyRateLimitConfig(
     maxRequests: auth.requestsPerMinute ?? DEFAULT_CONFIG.maxRequests,
     windowSeconds: 60,
     keyPrefix: "ratelimit:user",
+  };
+}
+
+/**
+ * Get burst allowance multiplier for a role (NEW-OPS-1).
+ * Trusted roles get higher burst limits for short traffic spikes.
+ */
+export function getBurstMultiplier(role?: string): number {
+  if (!role) return 1;
+  return BURST_MULTIPLIER[role] ?? 1;
+}
+
+/**
+ * Record a rate limit event to D1 for analytics (NEW-OPS-1).
+ * Fire-and-forget: does not block the request.
+ */
+export async function recordRateLimitHit(
+  env: Env,
+  identifier: string,
+  endpoint: string,
+  allowed: boolean,
+): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+    await env.DEALS_DB.prepare(
+      `INSERT INTO rate_limit_events (identifier, endpoint, allowed, created_at)
+       VALUES (?, ?, ?, ?)`,
+    )
+      .bind(identifier, endpoint, allowed ? 1 : 0, now)
+      .run();
+  } catch {
+    // Fire-and-forget; silently ignore failures
+  }
+}
+
+/**
+ * Get rate limit analytics for the last N minutes (NEW-OPS-1).
+ */
+export async function getRateLimitAnalytics(
+  env: Env,
+  minutes: number = 60,
+): Promise<{
+  total: number;
+  blocked: number;
+  byEndpoint: Record<string, { total: number; blocked: number }>;
+  byIdentifier: Array<{ identifier: string; total: number; blocked: number }>;
+}> {
+  const since = new Date(Date.now() - minutes * 60_000).toISOString();
+
+  const totalResult = await env.DEALS_DB.prepare(
+    `SELECT COUNT(*) as count FROM rate_limit_events WHERE created_at >= ?`,
+  )
+    .bind(since)
+    .first<{ count: number }>();
+
+  const blockedResult = await env.DEALS_DB.prepare(
+    `SELECT COUNT(*) as count FROM rate_limit_events WHERE created_at >= ? AND allowed = 0`,
+  )
+    .bind(since)
+    .first<{ count: number }>();
+
+  const byEndpointResult = await env.DEALS_DB.prepare(
+    `SELECT endpoint, COUNT(*) as total, SUM(CASE WHEN allowed = 0 THEN 1 ELSE 0 END) as blocked
+     FROM rate_limit_events WHERE created_at >= ?
+     GROUP BY endpoint ORDER BY total DESC LIMIT 20`,
+  )
+    .bind(since)
+    .all<{ endpoint: string; total: number; blocked: number }>();
+
+  const byIdentifierResult = await env.DEALS_DB.prepare(
+    `SELECT identifier, COUNT(*) as total, SUM(CASE WHEN allowed = 0 THEN 1 ELSE 0 END) as blocked
+     FROM rate_limit_events WHERE created_at >= ?
+     GROUP BY identifier ORDER BY blocked DESC LIMIT 10`,
+  )
+    .bind(since)
+    .all<{ identifier: string; total: number; blocked: number }>();
+
+  const byEndpoint: Record<string, { total: number; blocked: number }> = {};
+  for (const row of byEndpointResult.results || []) {
+    byEndpoint[row.endpoint] = { total: row.total, blocked: row.blocked };
+  }
+
+  return {
+    total: totalResult?.count ?? 0,
+    blocked: blockedResult?.count ?? 0,
+    byEndpoint,
+    byIdentifier: byIdentifierResult.results || [],
   };
 }
 
