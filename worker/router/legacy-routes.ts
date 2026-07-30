@@ -46,7 +46,10 @@ import {
   handleCreateApiKey,
   handleListApiKeys,
   handleRevokeApiKey,
+  handleRotateApiKey,
 } from "../routes/admin/keys";
+import { getRateLimitAnalytics } from "../lib/rate-limit";
+import { jsonResponse } from "../routes/utils";
 import {
   handleRegister,
   handleLogin,
@@ -476,6 +479,17 @@ export async function tryHandleLegacyRoutes(
     }
   }
 
+  // API Key Rotation — must be registered before the revoke match (NEW-FEAT-4)
+  const apiKeyRotateMatch = path.match(/^\/api\/admin\/keys\/([^/]+)\/rotate$/);
+  if (apiKeyRotateMatch && request.method === "POST") {
+    const hash = apiKeyRotateMatch[1];
+    if (hash) {
+      return withAuth(request, env, "admin", () =>
+        handleRotateApiKey(request, hash, env),
+      );
+    }
+  }
+
   const apiKeyRevokeMatch = path.match(/^\/api\/admin\/keys\/([^/]+)$/);
   if (apiKeyRevokeMatch && request.method === "DELETE") {
     const hash = apiKeyRevokeMatch[1];
@@ -484,6 +498,15 @@ export async function tryHandleLegacyRoutes(
         handleRevokeApiKey(request, hash, env),
       );
     }
+  }
+
+  // Rate Limit Analytics (NEW-OPS-1)
+  if (path === "/api/admin/rate-limit-analytics" && request.method === "GET") {
+    return withAuth(request, env, "admin", async () => {
+      const minutes = parseInt(url.searchParams.get("minutes") || "60", 10);
+      const analytics = await getRateLimitAnalytics(env, Math.min(minutes, 1440));
+      return jsonResponse(analytics, 200, request, env);
+    });
   }
 
   // No legacy route matched.
