@@ -46,9 +46,9 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 >
 > **Swarm V3 closed on 2026-07-06:** All 8 deferred items from GOAP_STATE.md resolved. P3-12/P3-13 closed as NO-FIX. P3-17 OTEL config implemented. ⬜-5 Continuous Verification gate (10th gate) implemented. ⬜-6 DORA metrics endpoint implemented. ⬜-1/⬜-2 DO/DE research complete with migration plans. Commits: `feat(dora)` + `docs(observability)` pushed to `develop`.
 
-## Active Specs
+## Completed Specs
 
-- [Codacy Fix + GOAP State Update](SPEC-codacy-fixes-and-goap-state-update.md) — PEV spec for applying SC2034 fixes and updating plans to current state. **Active** as of 2026-07-10.
+- [Codacy Fix + GOAP State Update](SPEC-codacy-fixes-and-goap-state-update.md) — PEV spec for applying SC2034 fixes and updating plans to current state. **Completed** — SC2034 fixes applied, GOAP_STATE updated to v0.12.0.
 
 ## Archived
 
