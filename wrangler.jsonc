@@ -137,6 +137,10 @@
         "name": "DEAL_REGISTRY",
         "class_name": "DealRegistry",
       },
+      {
+        "name": "DEAL_EVENT_BROADCASTER",
+        "class_name": "DealEventBroadcaster",
+      },
     ],
   },
   // NOTE: No migrations needed — DOs are already deployed and provisioned.
@@ -153,6 +157,10 @@
       "storage": "sqlite",
     },
     "DealRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "DealEventBroadcaster": {
       "type": "durable-object",
       "storage": "sqlite",
     },

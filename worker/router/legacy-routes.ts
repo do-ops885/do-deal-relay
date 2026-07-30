@@ -2,6 +2,7 @@ import type { Env } from "../types";
 import { checkBodySize } from "../middleware/body-limit";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
+import { jsonResponse } from "../routes/utils";
 import {
   handleHealth,
   handleReady,
@@ -54,6 +55,10 @@ import {
   handleGetCurrentUser,
   handleUpdateProfile,
   handleListUsers,
+  handleRequestPasswordReset,
+  handleConfirmPasswordReset,
+  handleChangeUserRole,
+  handleToggleUserActive,
 } from "../routes/auth";
 import { handleD1Request } from "../routes/d1";
 import { handleNLQRequest } from "../routes/nlq/index";
@@ -126,6 +131,36 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/admin/users" && request.method === "GET") {
     return withAuth(request, env, "admin", (auth) =>
       handleListUsers(auth, request, env),
+    );
+  }
+
+  // Auth: Password reset flow
+  if (path === "/api/auth/password-reset" && request.method === "POST") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/password-reset");
+    return rateLimiter(request, () => handleRequestPasswordReset(request, env));
+  }
+  if (path === "/api/auth/password-reset/confirm" && request.method === "POST") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/password-reset/confirm");
+    return rateLimiter(request, () => handleConfirmPasswordReset(request, env));
+  }
+
+  // Admin: Role management
+  if (path === "/api/admin/users/role" && request.method === "PUT") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    return withAuth(request, env, "admin", (auth) =>
+      handleChangeUserRole(auth, request, env),
+    );
+  }
+  if (path === "/api/admin/users/active" && request.method === "PUT") {
+    const bodyTooLarge = checkBodySize(request, 5 * 1024);
+    if (bodyTooLarge) return bodyTooLarge;
+    return withAuth(request, env, "admin", (auth) =>
+      handleToggleUserActive(auth, request, env),
     );
   }
 
@@ -460,6 +495,22 @@ export async function tryHandleLegacyRoutes(
         handleRevokeApiKey(request, hash, env),
       );
     }
+  }
+
+  // SSE: Real-time deal event stream (Phase 2 / ADR-020)
+  if (path === "/deals/stream" && request.method === "GET") {
+    if (!env.DEAL_EVENT_BROADCASTER) {
+      return jsonResponse(
+        { error: "Deal event streaming not configured" },
+        503,
+        request,
+        env,
+      );
+    }
+    const doId = env.DEAL_EVENT_BROADCASTER.idFromName("events");
+    const stub = env.DEAL_EVENT_BROADCASTER.get(doId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (stub as any).fetch(request) as Response;
   }
 
   // No legacy route matched.

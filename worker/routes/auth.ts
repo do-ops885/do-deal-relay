@@ -9,7 +9,7 @@ import type {
 import { logger } from "../lib/global-logger";
 import { jsonResponse, errorResponse } from "./utils";
 import { generateUUID } from "../lib/crypto";
-import { createToken, hashPassword, verifyPassword } from "../lib/jwt";
+import { createToken, hashPassword, verifyPassword, verifyToken } from "../lib/jwt";
 import { toErrCtx } from "../lib/errors";
 import type { AuthResult } from "../lib/auth";
 
@@ -442,6 +442,316 @@ async function getUserByEmail(email: string, env: Env): Promise<User | null> {
       .first()) as User | null;
   } catch {
     return null;
+  }
+}
+
+// ============================================================================
+// Password Reset Flow
+// ============================================================================
+
+const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Request a password reset token.
+ * Sends a reset token that can be used to change the password.
+ */
+export async function handleRequestPasswordReset(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { email: string };
+    if (!body.email) {
+      return errorResponse("Email is required", 400, undefined, request, env);
+    }
+
+    const user = await getUserByEmail(body.email, env);
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return jsonResponse(
+        { message: "If the email exists, a reset link has been sent" },
+        200,
+        request,
+        env,
+      );
+    }
+
+    const resetToken = await createToken(
+      { sub: user.id, type: "password_reset" },
+      getJwtSecret(env),
+      "1h",
+    );
+
+    // Store reset token hash for verification
+    const tokenHash = await hashPassword(resetToken);
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS).toISOString();
+
+    await env.DEALS_DB.prepare(
+      `INSERT INTO password_resets (id, user_id, token_hash, expires_at, used, created_at)
+       VALUES (?, ?, ?, ?, 0, ?)`,
+    )
+      .bind(generateUUID(), user.id, tokenHash, expiresAt, now)
+      .run();
+
+    await logAuditAction(user.id, "password_reset_request", "users", request, env, {
+      userId: user.id,
+    });
+
+    logger.info("Password reset requested", {
+      component: "auth",
+      user_id: user.id,
+      email: user.email,
+    });
+
+    return jsonResponse(
+      {
+        message: "If the email exists, a reset link has been sent",
+        resetToken, // In production, this would be sent via email
+      },
+      200,
+      request,
+      env,
+    );
+  } catch {
+    return errorResponse("Invalid request", 400, undefined, request, env);
+  }
+}
+
+/**
+ * Confirm a password reset using the reset token.
+ */
+export async function handleConfirmPasswordReset(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as {
+      token: string;
+      newPassword: string;
+    };
+    if (!body.token || !body.newPassword) {
+      return errorResponse(
+        "Token and new password are required",
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    if (body.newPassword.length < 8) {
+      return errorResponse(
+        "Password must be at least 8 characters",
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    // Verify the reset token
+    const payload = await verifyToken(body.token, getJwtSecret(env));
+    if (!payload || payload.type !== "password_reset") {
+      return errorResponse(
+        "Invalid or expired reset token",
+        401,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    const userId = payload.sub as string;
+
+    // Verify token hasn't been used
+    const tokenHash = await hashPassword(body.token);
+    const resetRecord = await env.DEALS_DB.prepare(
+      `SELECT id, used, expires_at FROM password_resets
+       WHERE user_id = ? AND used = 0 AND expires_at > ?
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+      .bind(userId, new Date().toISOString())
+      .first<{ id: string; used: number; expires_at: string }>();
+
+    if (!resetRecord) {
+      return errorResponse(
+        "Reset token has expired or already been used",
+        401,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    // Update password
+    const passwordHash = await hashPassword(body.newPassword);
+    const now = new Date().toISOString();
+    await env.DEALS_DB.prepare(
+      `UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`,
+    )
+      .bind(passwordHash, now, userId)
+      .run();
+
+    // Mark reset token as used
+    await env.DEALS_DB.prepare(
+      `UPDATE password_resets SET used = 1 WHERE id = ?`,
+    )
+      .bind(resetRecord.id)
+      .run();
+
+    await logAuditAction(userId, "password_reset_confirm", "users", request, env, {
+      userId,
+    });
+
+    return jsonResponse(
+      { message: "Password has been reset successfully" },
+      200,
+      request,
+      env,
+    );
+  } catch {
+    return errorResponse("Invalid request", 400, undefined, request, env);
+  }
+}
+
+// ============================================================================
+// Admin Role Management
+// ============================================================================
+
+/**
+ * Admin: Change a user's role.
+ */
+export async function handleChangeUserRole(
+  auth: AuthResult,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  try {
+    if (!auth.userId || auth.role !== "admin") {
+      return errorResponse("Admin access required", 403, undefined, request, env);
+    }
+
+    const body = (await request.json()) as {
+      userId: string;
+      role: "admin" | "user" | "readonly" | "viewer";
+    };
+    if (!body.userId || !body.role) {
+      return errorResponse(
+        "userId and role are required",
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    const validRoles = ["admin", "user", "readonly", "viewer"];
+    if (!validRoles.includes(body.role)) {
+      return errorResponse(
+        `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    const user = await getUserById(body.userId, env);
+    if (!user) {
+      return errorResponse("User not found", 404, undefined, request, env);
+    }
+
+    const now = new Date().toISOString();
+    await env.DEALS_DB.prepare(
+      `UPDATE users SET role = ?, updated_at = ? WHERE id = ?`,
+    )
+      .bind(body.role, now, body.userId)
+      .run();
+
+    await logAuditAction(auth.userId, "user_role_change", "users", request, env, {
+      targetUserId: body.userId,
+      newRole: body.role,
+      previousRole: user.role,
+    });
+
+    return jsonResponse(
+      { userId: body.userId, role: body.role, updatedAt: now },
+      200,
+      request,
+      env,
+    );
+  } catch {
+    return errorResponse("Invalid request", 400, undefined, request, env);
+  }
+}
+
+/**
+ * Admin: Deactivate or reactivate a user account.
+ */
+export async function handleToggleUserActive(
+  auth: AuthResult,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  try {
+    if (!auth.userId || auth.role !== "admin") {
+      return errorResponse("Admin access required", 403, undefined, request, env);
+    }
+
+    const body = (await request.json()) as {
+      userId: string;
+      isActive: boolean;
+    };
+    if (!body.userId || body.isActive === undefined) {
+      return errorResponse(
+        "userId and isActive are required",
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    if (body.userId === auth.userId) {
+      return errorResponse(
+        "Cannot deactivate your own account",
+        400,
+        undefined,
+        request,
+        env,
+      );
+    }
+
+    const user = await getUserById(body.userId, env);
+    if (!user) {
+      return errorResponse("User not found", 404, undefined, request, env);
+    }
+
+    const now = new Date().toISOString();
+    await env.DEALS_DB.prepare(
+      `UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?`,
+    )
+      .bind(body.isActive ? 1 : 0, now, body.userId)
+      .run();
+
+    await logAuditAction(
+      auth.userId,
+      body.isActive ? "user_activated" : "user_deactivated",
+      "users",
+      request,
+      env,
+      { targetUserId: body.userId },
+    );
+
+    return jsonResponse(
+      { userId: body.userId, isActive: body.isActive, updatedAt: now },
+      200,
+      request,
+      env,
+    );
+  } catch {
+    return errorResponse("Invalid request", 400, undefined, request, env);
   }
 }
 
