@@ -2,9 +2,9 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-30
-**Version**: 0.13.0
-**Status**: Complete — All P0-P3 resolved; documentation updated
-**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+**Version**: 0.13.1
+**Status**: Active — All P0-P3 resolved; 16 new gaps identified (see ADR-020)
+**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-020](ADR-020-2026-best-practices-integration-roadmap.md), [GOAP Analysis 2026-07-30](GOAP-ANALYSIS-2026-07-30.md)
 
 ---
 
@@ -188,10 +188,6 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 
 ---
 
-*Cross-referenced from: `reports/analysis/codebase-audit-2026-04-04.md` (50 items), `reports/analysis/swarm-missing-implementations-2026-04-04.md` (31 items), `reports/analysis/feature-gap-analysis.md`, `plans/ADR-015-harness-cloudflare-2026-best-practices.md`, `plans/FOLLOWUP-*.md`, and `agents-docs/KNOWN_ISSUES.md`.*
-
----
-
 ## PR Merge Swarm Results (2026-07-17)
 
 ### Completed Merges
@@ -251,3 +247,55 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 - Gate ordering: async gates run cheapest-first (dedup → idempotency → second-pass → snapshot-hash)
 - Batch D1 writes: referrals, audit events, and metrics are single batch operations per publish
 - Adaptive budgets: environment-aware defaults reduce worst-case load in production
+
+---
+
+## New Gaps Identified — 2026-07-30 GOAP Swarm Analysis
+
+Fresh analysis combining codebase audit, web research on 2026 Cloudflare Workers & AI Agent best practices.
+See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-020-2026-best-practices-integration-roadmap.md) for full details.
+
+### Architecture Modernization (🟠 High)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-ARCH-1 | No Durable Execution (Fibers) for pipeline resilience | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 1 |
+| NEW-ARCH-2 | AI Gateway integration not wired to Worker binding | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 2 |
+| NEW-ARCH-3 | No OTLP export destination configured (all commented out) | wrangler.jsonc | ⬜ OPEN | ADR-020 Phase 4 |
+| NEW-ARCH-4 | Build-once-promote-everywhere not implemented | ADR-015 | ⬜ OPEN | ADR-020 Phase 4 |
+
+### Feature Completeness (3 Critical, 3 Medium)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-FEAT-1 | Real web research agent still simulated (use_real_fetching=false) | Feature Gap, Swarm | 🔴 OPEN | ADR-020 Phase 1 |
+| NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-FEAT-4 | No deal ratings or user feedback system | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-FEAT-5 | No analytics dashboard or web UI (basic HTML exists) | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | 🔴 OPEN | ADR-020 Phase 1 |
+
+### AI Agent Readiness (🟡 Medium)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-AI-1 | MCP version negotiation is a no-op (always returns server version) | Audit H-5 | 🟡 OPEN | ADR-020 Phase 2 |
+| NEW-AI-2 | No A2A (Agent-to-Agent) protocol support | 2026 BP, Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-AI-3 | NLQ endpoints implemented but undocumented in API.md | Swarm Analysis | 🟢 OPEN | ADR-020 Phase 4 |
+
+### Observability & DevOps (🟢 Low)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-OBS-1 | No DORA metrics tracking (DF, LT, CFR, MTTR) | ADR-015 | 🟢 OPEN | ADR-020 Phase 3 |
+| NEW-OBS-2 | No Continuous Verification (post-deploy health monitoring) | ADR-015 | 🟢 OPEN | ADR-020 Phase 3 |
+
+### Platform Reach (🟢 Low)
+
+| ID | Item | Source | Status | ADR |
+|:---|:---|:---|:---|:---|
+| NEW-PLAT-2 | No mobile or PWA experience | Feature Gap | 🟢 OPEN | ADR-020 Phase 4 |
+
+---
+
+*Cross-referenced from: `reports/analysis/codebase-audit-2026-04-04.md` (50 items), `reports/analysis/swarm-missing-implementations-2026-04-04.md` (31 items), `reports/analysis/feature-gap-analysis.md`, `plans/ADR-015-harness-cloudflare-2026-best-practices.md`, `plans/GOAP-ANALYSIS-2026-07-30.md` (16 new gaps), `plans/FOLLOWUP-*.md`, and `agents-docs/KNOWN_ISSUES.md`.*
