@@ -89,4 +89,5 @@ export interface Env {
   SOURCE_REGISTRY?: DurableObjectNamespace;
   DEAL_REGISTRY?: DurableObjectNamespace;
   PIPELINE_EXECUTOR?: DurableObjectNamespace;
+  DEAL_EVENT_BROADCASTER?: DurableObjectNamespace;
 }
