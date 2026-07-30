@@ -23,6 +23,7 @@ import { validatedFetch } from "../security";
 import { toError } from "../sanitize-error";
 import type {
   GatewayConfig,
+  GatewayData,
   GatewayRequest,
   GatewayResponse,
   GatewayRequestLog,
@@ -201,7 +202,7 @@ export class AIGatewayClient {
 
         const result: GatewayResponse = {
           ok: response.ok,
-          data: response.data,
+          data: response.data as GatewayData | null,
           usage,
           cost,
           statusCode: response.statusCode,
@@ -343,7 +344,7 @@ export class AIGatewayClient {
 
       const result: GatewayResponse = {
         ok: response.ok,
-        data: response.data,
+        data: response.data as GatewayData | null,
         usage,
         cost,
         statusCode: response.statusCode,

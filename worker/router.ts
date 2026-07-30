@@ -3,6 +3,7 @@ import { logger } from "./lib/global-logger";
 import { jsonResponse } from "./routes/utils";
 import { toError } from "./lib/sanitize-error";
 import { tryHandleLegacyRoutes } from "./router/legacy-routes";
+import { withResponseTiming } from "./lib/request-timing";
 
 // ============================================================================
 // Centralized Middleware Pipeline (ADR-016)
@@ -80,6 +81,7 @@ export async function handleRequest(
   env: Env,
   ctx: ExecutionContext,
 ): Promise<Response> {
+  const startTime = Date.now();
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -88,7 +90,9 @@ export async function handleRequest(
     // Try the pipeline first. If a route matches, the pipeline handles it
     // with the full middleware stack. If no match, fall through to legacy.
     const pipelineResponse = await handlePipelineRequest(request, env);
-    if (pipelineResponse) return pipelineResponse;
+    if (pipelineResponse) {
+      return withResponseTiming(pipelineResponse, request, env, startTime);
+    }
 
     // ── Legacy Routes (pre-pipeline) ────────────────────────────────────
     // These routes will be migrated to the pipeline incrementally.
@@ -102,10 +106,17 @@ export async function handleRequest(
       url,
       path,
     );
-    if (legacyResponse) return legacyResponse;
+    if (legacyResponse) {
+      return withResponseTiming(legacyResponse, request, env, startTime);
+    }
 
     // 404
-    return jsonResponse({ error: "Not found" }, 404, request, env);
+    return withResponseTiming(
+      jsonResponse({ error: "Not found" }, 404, request, env),
+      request,
+      env,
+      startTime,
+    );
   } catch (error) {
     const err = toError(error);
     logger.error("Request handler error", {
@@ -113,6 +124,11 @@ export async function handleRequest(
       error_message: err.message,
       error_stack: err.stack,
     });
-    return jsonResponse({ error: "Internal server error" }, 500, request, env);
+    return withResponseTiming(
+      jsonResponse({ error: "Internal server error" }, 500, request, env),
+      request,
+      env,
+      startTime,
+    );
   }
 }
