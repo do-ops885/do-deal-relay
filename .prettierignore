@@ -68,3 +68,6 @@ agents-docs/coordination/handoff-log.jsonl
 
 # Convex local dev server generated files
 .convex/
+
+# Shell scripts (ShellCheck handles linting/formatting; Prettier has no sh parser)
+*.sh

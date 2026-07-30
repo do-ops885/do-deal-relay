@@ -104,6 +104,8 @@
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
+    // JWT auth secret for local dev / E2E (overridden by real secret in prod via wrangler secret)
+    "JWT_SECRET": "e2e-test-jwt-secret-do-not-use-in-prod",
   },
   "secrets": {
     "required": [
@@ -131,14 +133,30 @@
         "name": "SOURCE_REGISTRY",
         "class_name": "SourceRegistry",
       },
+      {
+        "name": "DEAL_REGISTRY",
+        "class_name": "DealRegistry",
+      },
     ],
   },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["SourceRegistry"],
+  // NOTE: No migrations needed — DOs are already deployed and provisioned.
+  // migrations blocks MUST be absent for wrangler versions upload (Cloudflare Git Integration).
+  // Live durable-object exports: required so wrangler registers the DO classes
+  // with the Cloudflare API (error code 10061 otherwise). Storage uses SQLite.
+  "exports": {
+    "PipelineLock": {
+      "type": "durable-object",
+      "storage": "sqlite",
     },
-  ],
+    "SourceRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "DealRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
   // Vectorize index for semantic search over deals and referrals
   // Index name must match SEMANTIC_SEARCH_CONFIG.INDEX_NAME in worker/lib/search/types.ts
   // Free tier limits: 100 indexes, 1000 namespaces, 1000 vectors/upsert, topK=50
@@ -299,14 +317,13 @@
             "name": "SOURCE_REGISTRY",
             "class_name": "SourceRegistry",
           },
+          {
+            "name": "DEAL_REGISTRY",
+            "class_name": "DealRegistry",
+          },
         ],
       },
-      "migrations": [
-        {
-          "tag": "v1",
-          "new_sqlite_classes": ["SourceRegistry"],
-        },
-      ],
+      // No migrations — DOs already provisioned. See note above.
     },
   },
 }

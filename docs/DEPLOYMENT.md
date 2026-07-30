@@ -1,7 +1,7 @@
 # Deployment Guide
 
 **Project**: do-deal-relay — Cloudflare Workers deal discovery system
-**Version**: 0.1.6
+**Version**: 0.1.8
 
 ---
 
@@ -480,7 +480,7 @@ curl -s "${PROD_URL}/mcp/v1/info" | jq .
 {
   "status": "healthy",
   "environment": "production",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "timestamp": "2026-04-04T..."
 }
 ```

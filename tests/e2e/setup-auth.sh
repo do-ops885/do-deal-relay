@@ -68,10 +68,26 @@ npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$EXPIRED_HASH" \
 echo "✓ E2E test API keys seeded successfully"
 
 # ============================================================================
-# Step 3: Obtain JWT token via temporary wrangler dev server
+# Step 3: Obtain JWT token
 # ============================================================================
+# Preferred: mint a valid HS256 JWT locally with the known test secret.
+# This is deterministic and does not require a running worker.
+# Fallback: spin up a temporary wrangler dev server to register+login.
 # JWT acquisition is optional — tests skip gracefully if token unavailable.
 # Any failure here emits a warning but does NOT block the E2E suite.
+
+acquire_jwt_token_local() {
+  echo ""
+  echo "Minting E2E JWT token locally (deterministic, no server required)..."
+  if node tests/e2e/generate-jwt.mjs > /dev/null 2>&1; then
+    if [ -f "$E2E_JWT_TOKEN_FILE" ]; then
+      echo "✓ JWT token minted locally"
+      return 0
+    fi
+  fi
+  echo "✗ Local JWT minting failed"
+  return 1
+}
 
 acquire_jwt_token() {
   echo ""
@@ -153,7 +169,7 @@ acquire_jwt_token() {
   echo "✓ E2E JWT token acquisition complete"
 }
 
-acquire_jwt_token || {
+acquire_jwt_token_local || acquire_jwt_token || {
   echo ""
   echo "⚠ WARNING: JWT token acquisition failed — JWT-based E2E tests will be skipped"
   echo "  Tests that only need API keys will still run normally."

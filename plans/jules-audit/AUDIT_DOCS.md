@@ -1,9 +1,11 @@
-# Track D — Documentation
+# Track D — Documentation - 2026-07-28
 
-## Missing JSDoc (Public APIs)
-- `worker/lib/metrics/prometheus.ts`: `renderMetrics` is exported but lacks JSDoc.
-- `worker/lib/webhook/delivery.ts`: `sendOutgoingWebhooks` has JSDoc, but `getDeadLetterQueue` and `retryDeadLetterEvent` lack full param/return descriptions.
+The documentation audit identifies public constants and objects missing JSDoc comments to improve public API surface understandability and compliance with coding conventions.
 
-## Actionable Fixes
-1. Add JSDoc to `getDeadLetterQueue` and `retryDeadLetterEvent` in `worker/lib/webhook/delivery.ts`.
-2. Add JSDoc to `renderMetrics` in `worker/lib/metrics/prometheus.ts`.
+## Actionable Findings
+- **File**: `worker/lib/webhook/delivery.ts`
+  - **Target**: `DELIVERY_CONSTANTS`
+  - **Action**: Add standard JSDoc comment explaining its purpose and each constant property.
+- **File**: `worker/lib/metrics/prometheus.ts`
+  - **Target**: `PROMETHEUS_CONSTANTS`
+  - **Action**: Add standard JSDoc comment explaining its purpose and each property.

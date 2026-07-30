@@ -1,12 +1,9 @@
-# Audit Pre-Check Results
+# Audit Pre-check - 2026-07-28
 
-**Status**: PASS ✅ (with fixes)
+Status: PASS ✅
 
-## Issues Found and Fixed
-1. **Failing Unit Tests**: `tests/unit/webhook/delivery.test.ts` was failing with 7 errors due to missing mocks for `validatedFetch` and `validateUrl` which are now used in `sendOutgoingWebhooks`.
-   - **Fix**: Updated the `worker/lib/security` mock in the test file to include `validateUrl` and `validatedFetch`.
-   - **Result**: All 22 tests in `tests/unit/webhook/delivery.test.ts` now pass.
+All baseline checks completed successfully.
 
-## Remaining Warnings
-- Vitest occasionally hangs/timeouts (known upstream issue in this environment).
-- File length warnings for `extension/popup.js`, `agents-docs/NEVER-BYPASS-SYSTEM.md`, and `scripts/pre-commit-hook.sh`.
+## Findings & Validations
+- Fast Quality Gate: Checked formatting, Error-shaping helpers gate, LOC limits, and configuration files via `SKIP_TESTS=1 bash scripts/quality_gate.sh`. **Status: PASS**
+- Vitest unit tests: Ran subset of key worker logic tests via `npx vitest run tests/unit/experience-api.test.ts tests/unit/code-validator-impl.test.ts`. **Status: PASS (14/14 passed)**

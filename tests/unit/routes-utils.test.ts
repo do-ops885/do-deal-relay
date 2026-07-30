@@ -32,6 +32,24 @@ describe("Route Utilities", () => {
   it("should validate URLs", () => {
     expect(validateUrl("http://example.com")).toBeNull();
     expect(validateUrl("not-a-url")).toBeNull();
+
+    // Valid HTTPS URL
+    expect(validateUrl("https://example.com")).toBe("https://example.com");
+    expect(validateUrl("https://example.com/some/path")).toBe(
+      "https://example.com/some/path",
+    );
+
+    // Localhost allowed with HTTP or HTTPS
+    expect(validateUrl("https://localhost")).toBe("https://localhost");
+    expect(validateUrl("https://localhost/path")).toBe(
+      "https://localhost/path",
+    );
+
+    // Block common redirect bypasses
+    expect(validateUrl("https://example.com//google.com")).toBeNull();
+    expect(validateUrl("https://example.com/path//to/something")).toBeNull();
+    expect(validateUrl("https://example.com/path/../to/something")).toBeNull();
+    expect(validateUrl("https://example.com@google.com")).toBeNull();
   });
 
   it("should validate redirects", () => {

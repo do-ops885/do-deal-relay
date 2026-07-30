@@ -324,16 +324,50 @@ async function fetchDns(
   }
 }
 
+// Matches C0 control characters (\x00-\x1f), DEL (\x7f), and common
+// encoded variants (%00-%1f, %7f) that bypass naive string checks.
+const DANGEROUS_CHARS_RE = /[\x00-\x1f\x7f]/;
+const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
+// %5c = backslash, %25 = double-encoding prefix
+const ENCODED_BACKSLASH_RE = /%5[cC]/i;
+const DOUBLE_ENCODING_RE = /%25(?:0[0-9a-f]|1[0-9a-f]|5[cC]|7[fF])/i;
+
+function hasDangerousChars(url: string): boolean {
+  return (
+    DANGEROUS_CHARS_RE.test(url) ||
+    ENCODED_CONTROL_RE.test(url) ||
+    ENCODED_BACKSLASH_RE.test(url) ||
+    DOUBLE_ENCODING_RE.test(url) ||
+    url.includes("\\")
+  );
+}
+
 /**
  * Validates a referral URL to prevent open redirects.
  * Ensures the URL uses HTTPS and its hostname matches the intended domain.
+ * Rejects control characters, encoded bypasses, and UNC paths.
  */
 export function validateReferralUrl(url: string, domain: string): boolean {
   try {
+    if (hasDangerousChars(url)) {
+      logger.warn("Referral URL rejected: dangerous characters detected", {
+        component: "security",
+        url,
+        domain,
+      });
+      return false;
+    }
+
     const parsed = new URL(url);
 
     // 1. Enforce HTTPS
     if (parsed.protocol !== "https:") {
+      logger.warn("Referral URL rejected: non-HTTPS protocol", {
+        component: "security",
+        protocol: parsed.protocol,
+        url,
+        domain,
+      });
       return false;
     }
 
@@ -342,6 +376,12 @@ export function validateReferralUrl(url: string, domain: string): boolean {
     const targetDomain = domain.toLowerCase().replace(/^www\./, "");
 
     if (urlHostname !== targetDomain) {
+      logger.warn("Referral URL rejected: domain mismatch", {
+        component: "security",
+        urlHostname,
+        targetDomain,
+        url,
+      });
       return false;
     }
 
@@ -350,7 +390,10 @@ export function validateReferralUrl(url: string, domain: string): boolean {
     for (const param of suspiciousParams) {
       if (parsed.searchParams.has(param)) {
         const val = parsed.searchParams.get(param);
-        if (val && (val.includes("://") || val.startsWith("//"))) {
+        if (
+          val &&
+          (val.includes("://") || val.startsWith("//") || val.includes("\\"))
+        ) {
           // If it looks like a full URL, ensure it's on the same domain
           try {
             const nestedUrl = new URL(val);
@@ -358,10 +401,24 @@ export function validateReferralUrl(url: string, domain: string): boolean {
               .toLowerCase()
               .replace(/^www\./, "");
             if (nestedHostname !== targetDomain) {
+              logger.warn(
+                "Referral URL rejected: suspicious param points to external domain",
+                {
+                  component: "security",
+                  param,
+                  nestedHostname,
+                  targetDomain,
+                  url,
+                },
+              );
               return false;
             }
           } catch {
             // If it's not a valid URL but contains protocol markers, block it
+            logger.warn(
+              "Referral URL rejected: suspicious param contains unparseable URL",
+              { component: "security", param, url },
+            );
             return false;
           }
         }

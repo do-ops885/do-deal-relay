@@ -1,6 +1,11 @@
 import { Deal, PipelineContext } from "../types";
 import { CONFIG } from "../config";
-import { calculateUrlSimilarity } from "../lib/crypto";
+import {
+  calculateUrlSimilarity,
+  calculateUrlSimilarityPrecomputed,
+  precomputeUrlSimilarityData,
+  PrecomputedUrlSimilarityData,
+} from "../lib/crypto";
 
 // ============================================================================
 // Constants
@@ -72,18 +77,21 @@ function precomputeDealKeys(deals: Deal[]): {
   return { partitionKeys, urlKeys };
 }
 
+interface PartitionItem {
+  deal: Deal;
+  url: URL | string;
+  precomputedUrl?: PrecomputedUrlSimilarityData;
+}
+
 /**
  * Partition deals into buckets by their pre-computed partition key.
  * Returns both the bucket map and the ordered list for iteration.
  */
 function partitionByKey(
-  items: Array<{ deal: Deal; url: URL | string }>,
+  items: PartitionItem[],
   partitionKeys: Map<Deal, string>,
-): Map<string, Array<{ deal: Deal; url: URL | string }>> {
-  const partitions = new Map<
-    string,
-    Array<{ deal: Deal; url: URL | string }>
-  >();
+): Map<string, PartitionItem[]> {
+  const partitions = new Map<string, PartitionItem[]>();
   for (const item of items) {
     const pkey = partitionKeys.get(item.deal) || "";
     if (!partitions.has(pkey)) {
@@ -155,24 +163,40 @@ export function deduplicate(
 
   // Second pass: semantic dedupe (similar URLs) with pre-partitioning
   // Partition the unique deals into smaller buckets by pre-computed keys
-  const uniqueWithKeys = result.unique.map((deal) => ({
-    deal,
-    url: uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url),
-  }));
+  const uniqueWithKeys: PartitionItem[] = result.unique.map((deal) => {
+    const urlObj = uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
+    return {
+      deal,
+      url: urlObj,
+      precomputedUrl: precomputeUrlSimilarityData(urlObj),
+    };
+  });
   const partitions = partitionByKey(uniqueWithKeys, uniquePartitionKeys);
 
   const semanticUnique: Deal[] = [];
   for (const [, bucket] of partitions) {
-    const bucketUnique: Deal[] = [];
+    const bucketUnique: PartitionItem[] = [];
     for (const entry of bucket) {
       let isDuplicate = false;
       let matchedWith = "";
       for (const existing of bucketUnique) {
-        const sim = calculateUrlSimilarity(entry.url, existing.url);
-        if (sim >= CONFIG.SIMILARITY_THRESHOLD) {
-          isDuplicate = true;
-          matchedWith = existing.id;
-          break;
+        if (entry.precomputedUrl && existing.precomputedUrl) {
+          const sim = calculateUrlSimilarityPrecomputed(
+            entry.precomputedUrl,
+            existing.precomputedUrl,
+          );
+          if (sim >= CONFIG.SIMILARITY_THRESHOLD) {
+            isDuplicate = true;
+            matchedWith = existing.deal.id;
+            break;
+          }
+        } else {
+          const sim = calculateUrlSimilarity(entry.url, existing.url);
+          if (sim >= CONFIG.SIMILARITY_THRESHOLD) {
+            isDuplicate = true;
+            matchedWith = existing.deal.id;
+            break;
+          }
         }
       }
       if (isDuplicate) {
@@ -182,7 +206,7 @@ export function deduplicate(
           reason: "semantic_url_similarity",
         });
       } else {
-        bucketUnique.push(entry.deal);
+        bucketUnique.push(entry);
         semanticUnique.push(entry.deal);
       }
     }
@@ -233,14 +257,25 @@ export function deduplicate(
     const { partitionKeys: existingPartitionKeys, urlKeys: existingUrlKeys } =
       precomputeDealKeys(existingDeals);
 
-    const existingWithKeys = existingDeals.map((d) => ({
-      deal: d,
-      url: existingUrlKeys.get(d) || precomputeUrlKey(d.url),
-    }));
+    const existingWithKeys: PartitionItem[] = existingDeals.map((d) => {
+      const urlObj = existingUrlKeys.get(d) || precomputeUrlKey(d.url);
+      return {
+        deal: d,
+        url: urlObj,
+        precomputedUrl: precomputeUrlSimilarityData(urlObj),
+      };
+    });
     const existingPartitions = partitionByKey(
       existingWithKeys,
       existingPartitionKeys,
     );
+
+    // Precompute similarity data for current unique deals
+    const uniquePrecomputed = new Map<Deal, PrecomputedUrlSimilarityData>();
+    for (const deal of result.unique) {
+      const dealUrlObj = uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
+      uniquePrecomputed.set(deal, precomputeUrlSimilarityData(dealUrlObj));
+    }
 
     const finalUnique: Deal[] = [];
     for (const deal of result.unique) {
@@ -250,8 +285,7 @@ export function deduplicate(
       const existingInBucket = existingPartitions.get(pkey) || [];
 
       if (existingInBucket.length > 0) {
-        const dealUrlObj =
-          uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
+        const dealPrecomputed = uniquePrecomputed.get(deal);
         for (const existing of existingInBucket) {
           if (
             existing.deal.id === deal.id ||
@@ -261,11 +295,25 @@ export function deduplicate(
             matchedWith = existing.deal.id;
             break;
           }
-          const urlSim = calculateUrlSimilarity(existing.url, dealUrlObj);
-          if (urlSim >= CONFIG.SIMILARITY_THRESHOLD) {
-            isDuplicate = true;
-            matchedWith = existing.deal.id;
-            break;
+          if (dealPrecomputed && existing.precomputedUrl) {
+            const urlSim = calculateUrlSimilarityPrecomputed(
+              existing.precomputedUrl,
+              dealPrecomputed,
+            );
+            if (urlSim >= CONFIG.SIMILARITY_THRESHOLD) {
+              isDuplicate = true;
+              matchedWith = existing.deal.id;
+              break;
+            }
+          } else {
+            const dealUrlObj =
+              uniqueUrlKeys.get(deal) || precomputeUrlKey(deal.url);
+            const urlSim = calculateUrlSimilarity(existing.url, dealUrlObj);
+            if (urlSim >= CONFIG.SIMILARITY_THRESHOLD) {
+              isDuplicate = true;
+              matchedWith = existing.deal.id;
+              break;
+            }
           }
         }
       }

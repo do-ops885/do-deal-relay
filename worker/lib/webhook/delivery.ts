@@ -22,12 +22,21 @@ const DELIVERY_CONSTANTS = {
   MAX_ERROR_RESPONSE_SIZE: 10 * 1024, // 10KB
   DELIVERY_RECORD_EXPIRATION_SECONDS: 7 * 24 * 60 * 60, // 7 days
   DLQ_EXPIRATION_SECONDS: 30 * 24 * 60 * 60, // 30 days
+  MAX_JITTER_MS: 1000,
 } as const;
 
 // ============================================================================
 // Outgoing Webhooks
 // ============================================================================
 
+/**
+ * Dispatches a webhook event to all active matching partner subscriptions.
+ * Evaluates subscription filters (e.g. domain and status filters) before sending.
+ *
+ * @param env - Worker environment with KV bindings.
+ * @param event - The WebhookEvent payload to deliver.
+ * @returns A promise that resolves when delivery processing is complete.
+ */
 export async function sendOutgoingWebhooks(
   env: Env,
   event: WebhookEvent,
@@ -208,6 +217,16 @@ async function sendWebhookToSubscription(
   }
 }
 
+/**
+ * Calculates exponential backoff with random jitter for a given retry attempt.
+ *
+ * @param attempt - The current retry attempt (1-based).
+ * @param policy - The retry configuration policy containing delay parameters.
+ * @param policy.initial_delay_ms - Base delay in milliseconds for the first retry.
+ * @param policy.backoff_multiplier - Rate at which delay increases per attempt.
+ * @param policy.max_delay_ms - The maximum delay bound in milliseconds.
+ * @returns Calculated delay in milliseconds (capped at max_delay_ms).
+ */
 export function calculateBackoff(
   attempt: number,
   policy: {
@@ -218,8 +237,10 @@ export function calculateBackoff(
 ): number {
   const base = policy.initial_delay_ms;
   const multiplier = Math.pow(policy.backoff_multiplier, attempt - 1);
-  // Math.random() is acceptable here for jitter - not security-sensitive, just adds randomness to prevent thundering herd
-  const jitter = Math.random() * 1000;
+  // Use crypto for jitter to satisfy static analysis; not security-sensitive, just adds randomness to prevent thundering herd
+  const randomBytes = crypto.getRandomValues(new Uint32Array(1));
+  const jitter =
+    ((randomBytes[0] ?? 0) / 0xffffffff) * DELIVERY_CONSTANTS.MAX_JITTER_MS;
 
   return Math.min(base * multiplier + jitter, policy.max_delay_ms);
 }

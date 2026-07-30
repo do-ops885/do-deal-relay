@@ -12,11 +12,6 @@ exclude_paths:
   - "node_modules/**"
   - "dist/**"
   - ".wrangler/**"
-  - "**/*.test.ts"
-  - "**/*.test.js"
-  - "**/*.test.sh"
-  - "**/*.spec.ts"
-  - "**/*.spec.js"
-  # Scratch / staging artifacts directory (commit messages, gh query dumps,
+  -  # Scratch / staging artifacts directory (commit messages, gh query dumps,
   # fixture files; may contain malformed middle-of-edit docs).
   - ".audit/**"
