@@ -149,7 +149,8 @@ export async function deactivateUnhealthyDeals(
   const unhealthy = healthResults.filter((r) => !r.healthy);
   const toDeactivate = unhealthy.filter(
     (r) =>
-      r.statusCode !== undefined && DEFINITIVE_FAILURE_CODES.includes(r.statusCode),
+      r.statusCode !== undefined &&
+      DEFINITIVE_FAILURE_CODES.includes(r.statusCode),
   );
   const toFlag = unhealthy.filter(
     (r) =>

@@ -9,7 +9,12 @@ import type {
 import { logger } from "../lib/global-logger";
 import { jsonResponse, errorResponse } from "./utils";
 import { generateUUID } from "../lib/crypto";
-import { createToken, hashPassword, verifyPassword, verifyToken } from "../lib/jwt";
+import {
+  createToken,
+  hashPassword,
+  verifyPassword,
+  verifyToken,
+} from "../lib/jwt";
 import { toErrCtx } from "../lib/errors";
 import type { AuthResult } from "../lib/auth";
 
@@ -485,7 +490,9 @@ export async function handleRequestPasswordReset(
     // Store reset token hash for verification
     const tokenHash = await hashPassword(resetToken);
     const now = new Date().toISOString();
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS).toISOString();
+    const expiresAt = new Date(
+      Date.now() + RESET_TOKEN_EXPIRY_MS,
+    ).toISOString();
 
     await env.DEALS_DB.prepare(
       `INSERT INTO password_resets (id, user_id, token_hash, expires_at, used, created_at)
@@ -494,9 +501,16 @@ export async function handleRequestPasswordReset(
       .bind(generateUUID(), user.id, tokenHash, expiresAt, now)
       .run();
 
-    await logAuditAction(user.id, "password_reset_request", "users", request, env, {
-      userId: user.id,
-    });
+    await logAuditAction(
+      user.id,
+      "password_reset_request",
+      "users",
+      request,
+      env,
+      {
+        userId: user.id,
+      },
+    );
 
     logger.info("Password reset requested", {
       component: "auth",
@@ -600,9 +614,16 @@ export async function handleConfirmPasswordReset(
       .bind(resetRecord.id)
       .run();
 
-    await logAuditAction(userId, "password_reset_confirm", "users", request, env, {
+    await logAuditAction(
       userId,
-    });
+      "password_reset_confirm",
+      "users",
+      request,
+      env,
+      {
+        userId,
+      },
+    );
 
     return jsonResponse(
       { message: "Password has been reset successfully" },
@@ -629,7 +650,13 @@ export async function handleChangeUserRole(
 ): Promise<Response> {
   try {
     if (!auth.userId || auth.role !== "admin") {
-      return errorResponse("Admin access required", 403, undefined, request, env);
+      return errorResponse(
+        "Admin access required",
+        403,
+        undefined,
+        request,
+        env,
+      );
     }
 
     const body = (await request.json()) as {
@@ -669,11 +696,18 @@ export async function handleChangeUserRole(
       .bind(body.role, now, body.userId)
       .run();
 
-    await logAuditAction(auth.userId, "user_role_change", "users", request, env, {
-      targetUserId: body.userId,
-      newRole: body.role,
-      previousRole: user.role,
-    });
+    await logAuditAction(
+      auth.userId,
+      "user_role_change",
+      "users",
+      request,
+      env,
+      {
+        targetUserId: body.userId,
+        newRole: body.role,
+        previousRole: user.role,
+      },
+    );
 
     return jsonResponse(
       { userId: body.userId, role: body.role, updatedAt: now },
@@ -696,7 +730,13 @@ export async function handleToggleUserActive(
 ): Promise<Response> {
   try {
     if (!auth.userId || auth.role !== "admin") {
-      return errorResponse("Admin access required", 403, undefined, request, env);
+      return errorResponse(
+        "Admin access required",
+        403,
+        undefined,
+        request,
+        env,
+      );
     }
 
     const body = (await request.json()) as {

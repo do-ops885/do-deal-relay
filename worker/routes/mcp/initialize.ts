@@ -85,7 +85,7 @@ export async function handleInitialize(
   // No compatible version found — reject with supported versions list
   throw new Error(
     `Unsupported protocol version: ${params.protocolVersion}. ` +
-    `Supported versions: ${SUPPORTED_VERSIONS.join(", ")}`,
+      `Supported versions: ${SUPPORTED_VERSIONS.join(", ")}`,
   );
 }
 
