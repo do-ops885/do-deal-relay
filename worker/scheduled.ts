@@ -95,8 +95,10 @@ export async function handleScheduled(
         const activeDeals = await getActiveDeals(env);
         if (activeDeals.length > 0) {
           const healthResult = await checkDealUrlHealth(env, activeDeals, 5);
-          const deactivateResult =
-            await deactivateUnhealthyDeals(env, healthResult.results);
+          const deactivateResult = await deactivateUnhealthyDeals(
+            env,
+            healthResult.results,
+          );
           logger.info("URL health check completed", {
             component: "scheduled",
             checked: healthResult.checked,

@@ -32,7 +32,13 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 }
 
 // Named export for Durable Objects — required by wrangler
-export { PipelineLock, SourceRegistry, DealRegistry, PipelineExecutorDO, DealEventBroadcaster };
+export {
+  PipelineLock,
+  SourceRegistry,
+  DealRegistry,
+  PipelineExecutorDO,
+  DealEventBroadcaster,
+};
 
 export default {
   async fetch(

@@ -84,8 +84,7 @@ export class PipelineExecutorDO extends DurableObject {
         // Track phase-specific metrics
         if (currentPhase === "discover")
           this.checkpoint.dealsDiscovered = ctx.candidates.length;
-        if (currentPhase === "publish")
-          dealsPublished = ctx.scored.length;
+        if (currentPhase === "publish") dealsPublished = ctx.scored.length;
 
         // Handle failure paths
         if (

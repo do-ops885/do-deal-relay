@@ -138,13 +138,22 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/auth/password-reset" && request.method === "POST") {
     const bodyTooLarge = checkBodySize(request, 5 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
-    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/password-reset");
+    const rateLimiter = createRateLimitMiddleware(
+      env,
+      "/api/auth/password-reset",
+    );
     return rateLimiter(request, () => handleRequestPasswordReset(request, env));
   }
-  if (path === "/api/auth/password-reset/confirm" && request.method === "POST") {
+  if (
+    path === "/api/auth/password-reset/confirm" &&
+    request.method === "POST"
+  ) {
     const bodyTooLarge = checkBodySize(request, 5 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
-    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/password-reset/confirm");
+    const rateLimiter = createRateLimitMiddleware(
+      env,
+      "/api/auth/password-reset/confirm",
+    );
     return rateLimiter(request, () => handleConfirmPasswordReset(request, env));
   }
 
