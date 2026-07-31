@@ -88,7 +88,9 @@ export async function executeStructuredQuery(
             comparison = (a.reward_value || 0) - (b.reward_value || 0);
             break;
           case "title":
-            comparison = a.title.localeCompare(b.title);
+            // Performance optimization: direct string lexicographical comparison (< and >)
+            // is significantly faster than localeCompare and avoids locale-aware collation overhead.
+            comparison = a.title < b.title ? -1 : a.title > b.title ? 1 : 0;
             break;
         }
         return query.sortOrder === "desc" ? -comparison : comparison;
