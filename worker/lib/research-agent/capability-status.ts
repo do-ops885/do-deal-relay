@@ -73,7 +73,7 @@ export async function getResearchCapabilityStatus(
       hasApiConfig && (!requiresApiKey || hasSourceApiKey(source.name, env));
 
     let status: ResearchSourceStatus["status"] = "inactive";
-    if (hasApiConfig) {
+    if (hasApiConfig && source.baseUrl) {
       status = apiKeyConfigured ? "ready" : "needs_api_key";
     }
 

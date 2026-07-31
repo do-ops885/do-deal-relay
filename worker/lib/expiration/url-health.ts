@@ -203,6 +203,7 @@ export async function deactivateUnhealthyDeals(
           ...snapshot,
           deals: updatedDeals,
           generated_at: checkedAt,
+          previous_hash: snapshot.snapshot_hash,
           stats: {
             ...snapshot.stats,
             active: updatedDeals.filter(
