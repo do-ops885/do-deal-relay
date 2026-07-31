@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-30
-**Version**: 0.13.1
-**Status**: Active — All P0-P3 resolved; 16 new gaps identified (see ADR-020)
+**Last Updated**: 2026-07-31
+**Version**: 0.13.2
+**Status**: Active — Roadmap batch completed with Phase 1 URL health shipped; guarded research partial; AI Gateway and Durable Execution deferred (see ADR-020)
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-020](ADR-020-2026-best-practices-integration-roadmap.md), [GOAP Analysis 2026-07-30](GOAP-ANALYSIS-2026-07-30.md)
 
 ---
@@ -250,6 +250,26 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 
 ---
 
+## Roadmap Batch — 2026-07-31
+
+### Completed / Partial
+
+| Item | Status | Resolution |
+|------|--------|------------|
+| Skills workflow alignment | ✅ COMPLETED | CI now runs canonical skill validation and `check-evals-freshness.sh`; local skill and eval checks pass. |
+| NEW-PLAT-1 URL health | ✅ COMPLETED | Daily `0 9 * * *` cron runs SSRF-safe HEAD checks with bounded concurrency, per-domain pacing, transient KV flags, and snapshot-safe rejection of definitive failures. |
+| NEW-FEAT-1 real research | 🟡 PARTIAL | Real fetching is available only through the request override, `real_research_fetching` feature flag, or explicit `RESEARCH_USE_REAL_FETCHING=true`; the default flag is disabled and capability reporting uses the same gate. |
+
+### Deferred / Blocked
+
+| Item | Status | Reason |
+|------|--------|--------|
+| NEW-ARCH-2 AI Gateway call-site migration | ⬜ DEFERRED | The reusable client/config exists, but native Workers AI call sites lack a provider/auth contract for gateway failover. Requires explicit provider credentials and dedicated integration tests. |
+| NEW-ARCH-1 Durable Execution | ⬜ DEFERRED | Runtime migration requires a separate scoped POC and compatibility verification. |
+| Cloudflare Workers Builds / deploy timeout | 🔴 BLOCKED | External dashboard/OAuth constraints remain documented in ADR-018/ADR-019. |
+
+---
+
 ## New Gaps Identified — 2026-07-30 GOAP Swarm Analysis
 
 Fresh analysis combining codebase audit, web research on 2026 Cloudflare Workers & AI Agent best practices.
@@ -260,7 +280,7 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
 | NEW-ARCH-1 | No Durable Execution (Fibers) for pipeline resilience | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 1 |
-| NEW-ARCH-2 | AI Gateway integration not wired to Worker binding | 2026 CF Best Practices | ⬜ OPEN | ADR-020 Phase 2 |
+| NEW-ARCH-2 | AI Gateway integration not wired to Worker binding | 2026 CF Best Practices | ⬜ DEFERRED | ADR-020 Phase 2 — provider/auth contract required |
 | NEW-ARCH-3 | No OTLP export destination configured (all commented out) | wrangler.jsonc | ⬜ OPEN | ADR-020 Phase 4 |
 | NEW-ARCH-4 | Build-once-promote-everywhere not implemented | ADR-015 | ⬜ OPEN | ADR-020 Phase 4 |
 
@@ -268,12 +288,12 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-FEAT-1 | Real web research agent still simulated (use_real_fetching=false) | Feature Gap, Swarm | 🔴 OPEN | ADR-020 Phase 1 |
+| NEW-FEAT-1 | Real web research agent still simulated by default | Feature Gap, Swarm | 🟡 PARTIAL | ADR-020 Phase 1 — guarded opt-in implemented; default remains disabled |
 | NEW-FEAT-2 | No user management or authentication system for end users | Feature Gap | ✅ RESOLVED | PR #654 — Password reset + admin role management |
 | NEW-FEAT-3 | No real-time updates (WebSocket/SSE) for deal events | Feature Gap, 2026 BP | ✅ RESOLVED | PR #654 — DealEventBroadcaster DO with SSE |
 | NEW-FEAT-4 | No deal ratings or user feedback system | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
 | NEW-FEAT-5 | No analytics dashboard or web UI (basic HTML exists) | Feature Gap | 🟢 OPEN | ADR-020 Phase 3 |
-| NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | 🔴 OPEN | ADR-020 Phase 1 |
+| NEW-PLAT-1 | No automated URL health checking (cron fires but validation logic missing) | Feature Gap | ✅ RESOLVED | ADR-020 Phase 1 — daily SSRF-safe checks and snapshot-safe deactivation implemented |
 
 ### AI Agent Readiness (🟡 Medium)
 

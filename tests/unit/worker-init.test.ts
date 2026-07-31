@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("cloudflare:workers", () => ({
+  DurableObject: class DurableObject {},
+}));
+
 import worker from "../../worker/index";
 import { notify } from "../../worker/notify";
 import type { Env } from "../../worker/types";

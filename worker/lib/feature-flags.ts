@@ -48,8 +48,8 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
   },
   {
     name: "real_research_fetching",
-    enabled: true,
-    rolloutPercentage: 100,
+    enabled: false,
+    rolloutPercentage: 0,
     description:
       "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
   },

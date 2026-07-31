@@ -94,7 +94,7 @@ describe("Research API Integration", () => {
     // but here we check used_real_fetching flag in metadata.
   });
 
-  it("should use real fetching when ENVIRONMENT is production", async () => {
+  it("should keep real fetching disabled in production without opt-in", async () => {
     mockEnv.ENVIRONMENT = "production";
 
     // Mock fetch for real fetching attempt
@@ -120,7 +120,7 @@ describe("Research API Integration", () => {
     };
 
     expect(response.status).toBe(200);
-    expect(body.research_metadata.used_real_fetching).toBe(true);
+    expect(body.research_metadata.used_real_fetching).toBe(false);
   });
 
   it("should use real fetching when RESEARCH_USE_REAL_FETCHING is true", async () => {

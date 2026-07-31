@@ -1,15 +1,24 @@
 import type { Deal, Env } from "../../types";
-import { getActiveDeals } from "../storage";
+import {
+  getActiveDeals,
+  getProductionSnapshot,
+  promoteToProduction,
+  writeStagingSnapshot,
+} from "../storage";
 import { logger } from "../global-logger";
 import { CONFIG } from "../../config";
 import { notify } from "../../notify";
-import { storeValidationStats } from "./scheduling";
 import { validatedFetch } from "../security";
 import { toError } from "../sanitize-error";
 
 // ============================================================================
 // Deal URL Health Checking (NEW-PLAT-1: ADR-020 Phase 1)
 // ============================================================================
+
+const DEFAULT_HEALTH_CHECK_CONCURRENCY = 5;
+const MIN_DOMAIN_REQUEST_INTERVAL_MS = 2000;
+const DEFINITIVE_FAILURE_CODES = new Set([400, 404, 410, 451]);
+const TRANSIENT_FAILURE_CODES = new Set([429, 500, 502, 503, 504]);
 
 export interface UrlHealthResult {
   dealId: string;
@@ -27,7 +36,7 @@ export interface UrlHealthResult {
 export async function checkDealUrlHealth(
   env: Env,
   deals: Deal[],
-  concurrency: number = 5,
+  concurrency: number = DEFAULT_HEALTH_CHECK_CONCURRENCY,
 ): Promise<{
   checked: number;
   healthy: number;
@@ -37,8 +46,11 @@ export async function checkDealUrlHealth(
 }> {
   const results: UrlHealthResult[] = [];
   const errors: string[] = [];
-  const domainLastRequest = new Map<string, number>();
-  const MIN_DOMAIN_INTERVAL_MS = 2000; // 2s between requests to same domain
+  const domainNextRequestAt = new Map<string, number>();
+  const requestedConcurrency = Number.isFinite(concurrency)
+    ? Math.floor(concurrency)
+    : DEFAULT_HEALTH_CHECK_CONCURRENCY;
+  const effectiveConcurrency = Math.max(1, requestedConcurrency);
 
   const timeoutSignal = () => {
     const controller = new AbortController();
@@ -49,31 +61,34 @@ export async function checkDealUrlHealth(
     return { signal: controller.signal, cleanup: () => clearTimeout(timeout) };
   };
 
-  // Process in batches with concurrency limit
-  for (let i = 0; i < deals.length; i += concurrency) {
-    const batch = deals.slice(i, i + concurrency);
+  // Process in batches with concurrency limit.
+  for (let i = 0; i < deals.length; i += effectiveConcurrency) {
+    const batch = deals.slice(i, i + effectiveConcurrency);
 
     const batchResults = await Promise.allSettled(
       batch.map(async (deal): Promise<UrlHealthResult> => {
         try {
-          // Rate limit by domain to be polite
           const domain = new URL(deal.url).hostname;
-          const lastRequest = domainLastRequest.get(domain) || 0;
-          const elapsed = Date.now() - lastRequest;
-          if (elapsed < MIN_DOMAIN_INTERVAL_MS) {
-            await new Promise((r) =>
-              setTimeout(r, MIN_DOMAIN_INTERVAL_MS - elapsed),
+          const now = Date.now();
+          const nextRequestAt = Math.max(
+            now,
+            domainNextRequestAt.get(domain) ?? now,
+          );
+          domainNextRequestAt.set(
+            domain,
+            nextRequestAt + MIN_DOMAIN_REQUEST_INTERVAL_MS,
+          );
+          if (nextRequestAt > now) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, nextRequestAt - now),
             );
           }
-          domainLastRequest.set(domain, Date.now());
 
           const { signal, cleanup } = timeoutSignal();
           try {
             const response = await validatedFetch(deal.url, {
               method: "HEAD",
-              headers: {
-                "User-Agent": CONFIG.USER_AGENT,
-              },
+              headers: { "User-Agent": CONFIG.USER_AGENT },
               signal,
               redirect: "follow",
             });
@@ -90,7 +105,6 @@ export async function checkDealUrlHealth(
           }
         } catch (error) {
           const err = toError(error);
-          // Network errors or timeouts mean unhealthy
           return {
             dealId: deal.id,
             code: deal.code,
@@ -106,12 +120,12 @@ export async function checkDealUrlHealth(
       if (result.status === "fulfilled") {
         results.push(result.value);
       } else {
-        errors.push(result.reason?.message || "Unknown error in batch");
+        errors.push(toError(result.reason).message);
       }
     }
   }
 
-  const healthy = results.filter((r) => r.healthy).length;
+  const healthy = results.filter((result) => result.healthy).length;
   const unhealthy = results.length - healthy;
 
   logger.info("URL health check completed", {
@@ -131,9 +145,9 @@ export async function checkDealUrlHealth(
 }
 
 /**
- * Deactivate deals with unhealthy URLs (404, connection refused, etc).
- * Only deactivates deals with definitive failure codes (404, 410, 5xx after retry).
- * Transient errors (timeouts, 429, 503) are noted but not auto-deactivated.
+ * Deactivate deals with definitive URL failures and flag transient failures.
+ * Deactivations use the production snapshot's staging/promotion path so the
+ * normal snapshot validation and hash-chain checks remain in force.
  */
 export async function deactivateUnhealthyDeals(
   env: Env,
@@ -143,61 +157,92 @@ export async function deactivateUnhealthyDeals(
   flagged: number;
   deals: string[];
 }> {
-  const DEFINITIVE_FAILURE_CODES = [404, 410, 400, 451]; // Permanent failures
-  const TRANSIENT_CODES = [429, 500, 502, 503, 504]; // May recover
-
-  const unhealthy = healthResults.filter((r) => !r.healthy);
+  const unhealthy = healthResults.filter((result) => !result.healthy);
   const toDeactivate = unhealthy.filter(
-    (r) =>
-      r.statusCode !== undefined &&
-      DEFINITIVE_FAILURE_CODES.includes(r.statusCode),
+    (result) =>
+      result.statusCode !== undefined &&
+      DEFINITIVE_FAILURE_CODES.has(result.statusCode),
   );
   const toFlag = unhealthy.filter(
-    (r) =>
-      r.statusCode === undefined || // Network error
-      TRANSIENT_CODES.includes(r.statusCode!),
+    (result) =>
+      result.statusCode === undefined ||
+      TRANSIENT_FAILURE_CODES.has(result.statusCode) ||
+      !DEFINITIVE_FAILURE_CODES.has(result.statusCode),
   );
 
   const deactivatedIds: string[] = [];
-  for (const result of toDeactivate) {
-    try {
-      // Mark deal as rejected in staging
-      const key = `deal:${result.dealId}:status`;
-      await env.DEALS_STAGING.put(
-        key,
-        JSON.stringify({
-          status: "rejected",
-          reason: `URL health check failed: HTTP ${result.statusCode}`,
-          checkedAt: new Date().toISOString(),
-        }),
-      );
-      deactivatedIds.push(result.dealId);
-    } catch (error) {
-      logger.warn("Failed to deactivate unhealthy deal", {
+  if (toDeactivate.length > 0) {
+    const snapshot = await getProductionSnapshot(env);
+    if (!snapshot) {
+      logger.warn("Cannot deactivate unhealthy deals without a snapshot", {
         component: "expiration",
-        dealId: result.dealId,
-        error: toError(error).message,
       });
+    } else {
+      const deactivationById = new Map(
+        toDeactivate.map((result) => [result.dealId, result]),
+      );
+      const checkedAt = new Date().toISOString();
+      const updatedDeals = snapshot.deals.map((deal) => {
+        const result = deactivationById.get(deal.id);
+        if (!result || deal.metadata.status !== "active") return deal;
+
+        deactivatedIds.push(deal.id);
+        return {
+          ...deal,
+          metadata: {
+            ...deal.metadata,
+            status: "rejected" as const,
+            deactivated_at: checkedAt,
+            deactivated_reason: `url_health_http_${result.statusCode}`,
+          },
+        };
+      });
+
+      if (deactivatedIds.length > 0) {
+        const updatedSnapshot = {
+          ...snapshot,
+          deals: updatedDeals,
+          generated_at: checkedAt,
+          stats: {
+            ...snapshot.stats,
+            active: updatedDeals.filter(
+              (deal) => deal.metadata.status === "active",
+            ).length,
+            rejected: updatedDeals.filter(
+              (deal) => deal.metadata.status === "rejected",
+            ).length,
+          },
+        };
+
+        try {
+          await writeStagingSnapshot(env, updatedSnapshot);
+          await promoteToProduction(env, snapshot.snapshot_hash);
+        } catch (error) {
+          logger.warn("Failed to promote unhealthy deal deactivations", {
+            component: "expiration",
+            error: toError(error).message,
+          });
+          deactivatedIds.length = 0;
+        }
+      }
     }
   }
 
-  // Flag transient errors for review
   for (const result of toFlag) {
     try {
-      const flagKey = `flag:url-health:${result.dealId}`;
       await env.DEALS_LOG.put(
-        flagKey,
+        `flag:url-health:${result.dealId}`,
         JSON.stringify({
           dealId: result.dealId,
           code: result.code,
           url: result.url,
-          error: result.error || `HTTP ${result.statusCode}`,
+          error: result.error ?? `HTTP ${result.statusCode}`,
           flaggedAt: new Date().toISOString(),
           transient: true,
         }),
       );
     } catch {
-      // Best-effort flagging
+      // Best-effort flagging must not fail the scheduled job.
     }
   }
 
@@ -228,5 +273,39 @@ export async function deactivateUnhealthyDeals(
   };
 }
 
-// Re-export from existing validation module for convenience
+/** Run the scheduled health check against active production deals. */
+export async function runUrlHealthCheck(env: Env): Promise<{
+  checked: number;
+  healthy: number;
+  unhealthy: number;
+  deactivated: number;
+  flagged: number;
+}> {
+  const activeDeals = await getActiveDeals(env);
+  if (activeDeals.length === 0) {
+    return {
+      checked: 0,
+      healthy: 0,
+      unhealthy: 0,
+      deactivated: 0,
+      flagged: 0,
+    };
+  }
+
+  const healthResult = await checkDealUrlHealth(env, activeDeals);
+  const deactivationResult = await deactivateUnhealthyDeals(
+    env,
+    healthResult.results,
+  );
+
+  return {
+    checked: healthResult.checked,
+    healthy: healthResult.healthy,
+    unhealthy: healthResult.unhealthy,
+    deactivated: deactivationResult.deactivated,
+    flagged: deactivationResult.flagged,
+  };
+}
+
+// Re-export from existing validation module for convenience.
 export { validateDealsBatch, deactivateInvalidDeals } from "./validation";

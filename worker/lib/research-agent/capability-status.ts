@@ -1,6 +1,9 @@
 import type { Env } from "../../types";
 import { isFeatureEnabled } from "../feature-flags";
-import { getSourceRateLimit } from "../research-agent/sources";
+import {
+  getSourceRateLimit,
+  SOURCE_AUTH_ENV_VARS,
+} from "../research-agent/sources";
 import { RESEARCH_SOURCES } from "../research-agent/constants";
 
 // ============================================================================
@@ -59,26 +62,19 @@ export async function getResearchCapabilityStatus(
   );
 
   const realFetchingEnabled =
-    featureFlagEnabled &&
-    (env.ENVIRONMENT === "production" ||
-      env.RESEARCH_USE_REAL_FETCHING === "true" ||
-      apiKeysConfigured.length > 0);
+    featureFlagEnabled || env.RESEARCH_USE_REAL_FETCHING === "true";
 
   const sources: ResearchSourceStatus[] = RESEARCH_SOURCES.map((source) => {
     const rateLimit = getSourceRateLimit(source.name);
     const hasApiConfig = Boolean(source.apiConfig);
-    const apiKeyConfigured = hasApiConfig && apiKeysConfigured.length > 0;
+    const requiresApiKey =
+      hasApiConfig && source.apiConfig?.authType !== "none";
+    const apiKeyConfigured =
+      hasApiConfig && (!requiresApiKey || hasSourceApiKey(source.name, env));
 
     let status: ResearchSourceStatus["status"] = "inactive";
     if (hasApiConfig) {
-      if (apiKeyConfigured) {
-        status = "ready";
-      } else {
-        status = "needs_api_key";
-      }
-    } else if (source.name === "company_site") {
-      // Company site doesn't need API keys (uses generic scraping)
-      status = "ready";
+      status = apiKeyConfigured ? "ready" : "needs_api_key";
     }
 
     return {
@@ -102,4 +98,22 @@ export async function getResearchCapabilityStatus(
     sources,
     apiKeysConfigured,
   };
+}
+
+function hasSourceApiKey(sourceName: string, env: Env): boolean {
+  const auth = SOURCE_AUTH_ENV_VARS[sourceName];
+  if (!auth) return false;
+
+  if (auth.token) {
+    return Boolean((env as unknown as Record<string, unknown>)[auth.token]);
+  }
+
+  if (auth.clientId && auth.clientSecret) {
+    return Boolean(
+      (env as unknown as Record<string, unknown>)[auth.clientId] &&
+      (env as unknown as Record<string, unknown>)[auth.clientSecret],
+    );
+  }
+
+  return false;
 }
