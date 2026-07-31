@@ -197,15 +197,47 @@ async function fallbackCopy(text) {
 function handleCopyClick(dialog, event) {
   const target = event.target.closest("[data-copy]");
   if (!target) return;
+  if (target.dataset.copying === "true") return;
+
   const code = target.getAttribute("data-copy");
   if (!code) return;
+
   const status = dialog.querySelector(".deal-detail__copy-status");
+  const originalLabel = target.getAttribute("aria-label");
+  const originalText = target.textContent;
+
+  target.dataset.copying = "true";
+
   copyToClipboard(code).then((ok) => {
-    if (!status) return;
-    status.hidden = false;
-    status.textContent = ok
-      ? "Code copied to clipboard"
-      : "Copy failed - select and copy manually";
+    if (ok) {
+      target.textContent = "Copied! ✅";
+      target.setAttribute("aria-label", "Copied!");
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Code copied to clipboard";
+      }
+    } else {
+      target.textContent = "Failed! ❌";
+      target.setAttribute("aria-label", "Copy failed");
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Copy failed - select and copy manually";
+      }
+    }
+
+    setTimeout(() => {
+      target.textContent = originalText;
+      if (originalLabel) {
+        target.setAttribute("aria-label", originalLabel);
+      } else {
+        target.removeAttribute("aria-label");
+      }
+      if (status) {
+        status.textContent = "";
+        status.hidden = true;
+      }
+      delete target.dataset.copying;
+    }, 2000);
   });
 }
 
