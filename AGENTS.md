@@ -1,50 +1,48 @@
 # Agent Coordination Hub - do-deal-relay
-**Version**: 0.1.9 (Adapted v0.3.5 Upstream Workflow Standards)
+**Version**: 0.2.0 (Adapted v0.3.5 Upstream Workflow Standards)
 
-## Core Constraints & Hot Files
+## Core Constants & Hot Files
 ```bash
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_AGENTS_MD=200
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
+readonly MAX_PR_TITLE_LENGTH=150
+readonly MAX_PR_BODY_LENGTH=1000
 readonly TRUST_THRESHOLD=0.3
 readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
-- **Hot Files (require coordination)**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `.github/workflows/*.yml`.
-- **SSRF Hardening**: Outgoing calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass SSRF DNS checks.
-- **Banned Patterns**: No hardcoded secrets (use `process.env.X`), no magic numbers (use named constants), no `!` (non-null assertions), and no unused imports.
+- **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `.github/workflows/*.yml`.
+- **SSRF Hardening**: Outgoing network calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass DoH/DNS checks.
+- **Banned Patterns**: No hardcoded secrets, no magic numbers, no `!` assertions, and no unused imports.
+- **Single Source of Truth**: System version is maintained solely in the root `VERSION` file. Never edit version strings elsewhere.
 
 ## Analyze-First Mandate
-1. **Deep Analysis First**: Always analyze the repository and existing infrastructure deeply before asking ANY clarification questions.
-2. **Zero Low-Value Questions**: Do not ask whether quality gates, skills systems, sub-agents, or validation scripts exist—they are fully operational and documented.
-3. **Infer Patterns Autonomously**: When modifying or adding logic, match existing conventions (Centralized Middleware, TypeScript strict checks) instead of introducing generic templates.
+1. **Deep Analysis First**: Prior to asking ANY clarification questions, deeply analyze the repository, local tooling, and workflows.
+2. **Zero Low-Value Questions**: Do not ask if quality gates, skills systems, sub-agents, or validation scripts exist—they are fully operational.
+3. **Infer Conventions**: Align with existing patterns (Centralized Middleware, TypeScript strict checks) instead of generic template styles.
 
-## PEV Loop (Plan-Execute-Verify)
-Non-trivial tasks follow the strict PEV loop:
-1. **Plan**: Produce a spec with `approach`, `non_goals`, and `acceptance_criteria` in `plans/` using `plans/SPEC_TEMPLATE.md`.
-2. **Execute**: Implement incrementally. Apply the **Always-Fix Policy**: fix pre-existing CI check/lint/type/formatting failures in your current context.
-   - *Triage Protocol for Unfixable Issues*: Create an ADR in `plans/` documenting the root cause, mark the task as `blocked` in `plans/GOAP_STATE.md`, and link the ADR.
-3. **Verify**: Use `./scripts/pev-gates.sh` and the 13 Quality Gates (`./scripts/quality_gate.sh`).
-4. **Validation Pipeline**: Deals MUST pass the 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites, bypasses, or structural alterations of validation gates are strictly forbidden.
+## Development Modes & PEV Loop (Plan-Execute-Verify)
+- **Light Mode** (Small fixes, docs): Quality gate → atomic commit → PR.
+- **Full Mode** (Refactors, systems): Requires spec in `plans/` (using `SPEC_TEMPLATE.md`), GOAP tracking, and ADR creation.
+- **CI Precheck**: Before starting in Full Mode, verify `.github/ci-status/ci-status.json` is "passing". Pause if failing.
+- **Execution & Always-Fix Policy**: Implement incrementally. Resolve all pre-existing CI check/lint/type/formatting failures in current context.
+  - *Triage Protocol*: If an issue is blocked by external factors, register an ADR in `plans/` and set the task as `blocked` in `plans/GOAP_STATE.md`.
+- **Validation Pipeline**: Deals MUST pass the 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites or gate bypasses are strictly banned.
 
-## Operational Commands Quick Reference
-- Setup & Doctor: `./scripts/agent-toolkit.sh setup` / `./scripts/agent-toolkit.sh doctor`
-- Quality & Verification: `./scripts/pev-gates.sh` / `./scripts/agent-toolkit.sh quality`
-- Unit Tests: `npm run test:unit`
-- Lint & Format: `npm run lint` / `npm run fmt:fix`
-
-## Session, Context & Swarm Protocols
-- **Session Bootstrap**: Compact context is auto-injected at startup via `./hooks/session-start.sh` and `docflow.json`.
-- **Cross-Repo Context**: Check `.agents/context/` (e.g., `external-repos.json`, `shared-conventions.md`) if available to synchronize practices with related repositories. Merge precedence: Local instructions > imported context.
-- **Re-Verification Protocol**: Before executing GOAP items, verify older deferrals or assumptions in `plans/GOAP_STATE.md` to ensure they are still valid.
-- **Incremental Verification**: Post-swarm or mid-development, run targeted verification (typecheck only changed files, run tests in changed directories, format changed files only). Run the full suite only before submission.
-- **Skills System**: Maintained in `.agents/skills/`. Claude/Qwen/Gemini use symlinks in `.<tool>/skills/` created via `./scripts/setup-skills.sh`.
+## Operational Commands & Standards
+- Setup & Quality: `./scripts/agent-toolkit.sh setup` | `./scripts/pev-gates.sh` | `./scripts/quality_gate.sh` (13 quality gates)
+- Lint & Tests: `npm run lint` | `npm run fmt:fix` | `npm run test:unit`
+- Context Control & Sub-Agents: Use specialized agents in `.opencode/agents/` or `.claude/agents/` as context firewalls to isolate intermediate steps.
+- Skills: Canonical skills live in `.agents/skills/`. Load only as needed via `skill <name>` to optimize token budget.
+- Re-Verification: Before executing GOAP items, re-verify older assumptions or deferrals. Apply incremental verification during tasks.
 
 ## PR & Commit Standards (Zero Slop)
-- **Zero Slop**: Conversational filler, markdown in commits, or emojis are strictly forbidden.
-- **PR Descriptions**: Plain-text format only, specifying 'What', 'Why', and 'Impact' (specifying metrics/performance changes).
-- **Commit Format**: MUST be `type(scope): subject` in **strictly lowercase** (e.g., `fix(security): resolve SSRF validation`). Subject line length limit: 72 characters. PR Title limit: 150 characters.
+- **Zero Slop**: Conversational filler, markdown in commit messages, or emojis are strictly forbidden.
+- **PR Descriptions**: Plain-text only, detailing 'What', 'Why', and 'Impact' (highlighting performance or metrics changes).
+- **Commit format**: MUST be `type(scope): subject` in **strictly lowercase** (e.g., `fix(security): resolve SSRF validation`). Max 72 chars.
+- **YAML Workflows**: All new `.github/workflows/*.yml` files must have `# yamllint disable-line rule:truthy` on the `on:` line (typically line 4).
 
 ## Post-Task Protocol
-Append JSON entry to `.agents/metrics.jsonl` upon completion or abstention:
+Upon completion or abstention, append a JSON entry to `.agents/metrics/metrics-{agent}.jsonl` (create if missing; fall back to `.agents/metrics.jsonl` if directory absent) to prevent merge conflicts:
 - *Completed*: `{"timestamp": "ISO8601", "agent": "name", "task": "desc", "status": "completed"}`
 - *Abstained*: `{"timestamp": "ISO8601", "agent": "name", "task": "desc", "abstained": true, "abstention_reason": "code", "stopped_at_step": N}`
