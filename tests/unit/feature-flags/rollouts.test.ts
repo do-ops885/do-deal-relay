@@ -402,20 +402,26 @@ describe("Feature Flags Rollouts", () => {
   });
 
   // ==========================================================================
-  // initializeDefaultFlags Tests
+  // initializeDefaultFlags Tests (v2 with versioned migration)
   // ==========================================================================
 
   describe("initializeDefaultFlags", () => {
-    it("should create default flags if not initialized", async () => {
+    it("should create default flags and stamp schema v2 on fresh init", async () => {
       await initializeDefaultFlags(mockEnv);
 
       const flags = await getAllFeatureFlags(mockEnv);
-      // Should have 5 default flags
-      expect(flags.size).toBeGreaterThanOrEqual(5);
+      // All 7 default flags created
+      expect(flags.size).toBeGreaterThanOrEqual(7);
+
+      // Schema version key set to v2
+      expect(mockKvStorage.get("__ff_schema_version__")).toBe("2");
+
+      // Legacy marker cleaned up
+      expect(mockKvStorage.has("__ff_initialized__")).toBe(false);
     });
 
-    it("should not overwrite existing flags", async () => {
-      // Pre-set a flag
+    it("should not overwrite existing flags on fresh init", async () => {
+      // Pre-set a flag before init
       await setFeatureFlag(
         { name: "bulk_import_export", enabled: true },
         mockEnv,
@@ -425,17 +431,6 @@ describe("Feature Flags Rollouts", () => {
 
       const flag = await getFeatureFlag("bulk_import_export", mockEnv);
       expect(flag?.enabled).toBe(true); // Should remain true, not reset to default false
-    });
-
-    it("should skip initialization if already done", async () => {
-      // Manually set the initialized flag with the exact key used in the code
-      mockKvStorage.set("__ff_initialized__", "true");
-
-      await initializeDefaultFlags(mockEnv);
-
-      // Should not create any new flags
-      const flags = await getAllFeatureFlags(mockEnv);
-      expect(flags.size).toBe(0);
     });
 
     it("should create flags with correct default values", async () => {
@@ -449,6 +444,110 @@ describe("Feature Flags Rollouts", () => {
 
       const webhookFlag = await getFeatureFlag("webhook_system", mockEnv);
       expect(webhookFlag?.enabled).toBe(true);
+
+      // v2 default: real_research_fetching is disabled
+      const researchFlag = await getFeatureFlag(
+        "real_research_fetching",
+        mockEnv,
+      );
+      expect(researchFlag?.enabled).toBe(false);
+    });
+
+    // ---- Migration v1 → v2 ----
+
+    it("should migrate real_research_fetching from v1 old default to v2", async () => {
+      // Simulate v1 deployment: legacy marker + old-default flag
+      mockKvStorage.set("__ff_initialized__", "true");
+      await setFeatureFlag(
+        {
+          name: "real_research_fetching",
+          enabled: true,
+          rolloutPercentage: 0,
+          description:
+            "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
+        },
+        mockEnv,
+      );
+
+      await initializeDefaultFlags(mockEnv);
+
+      const flag = await getFeatureFlag("real_research_fetching", mockEnv);
+      expect(flag?.enabled).toBe(false); // Migrated to v2 default
+      expect(flag?.rolloutPercentage).toBe(0);
+
+      // Version stamped
+      expect(mockKvStorage.get("__ff_schema_version__")).toBe("2");
+      // Legacy cleaned up
+      expect(mockKvStorage.has("__ff_initialized__")).toBe(false);
+    });
+
+    it("should not migrate real_research_fetching when user customized it", async () => {
+      // Simulate v1 deployment where user changed the flag
+      mockKvStorage.set("__ff_initialized__", "true");
+      await setFeatureFlag(
+        {
+          name: "real_research_fetching",
+          enabled: true,
+          rolloutPercentage: 50, // user customized
+          description:
+            "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
+        },
+        mockEnv,
+      );
+
+      await initializeDefaultFlags(mockEnv);
+
+      const flag = await getFeatureFlag("real_research_fetching", mockEnv);
+      expect(flag?.enabled).toBe(true); // Preserved user override
+      expect(flag?.rolloutPercentage).toBe(50); // Preserved user override
+
+      // Version still stamped
+      expect(mockKvStorage.get("__ff_schema_version__")).toBe("2");
+    });
+
+    it("should be no-op when already at v2", async () => {
+      mockKvStorage.set("__ff_schema_version__", "2");
+
+      await initializeDefaultFlags(mockEnv);
+
+      // No flags created (already initialized)
+      const flags = await getAllFeatureFlags(mockEnv);
+      expect(flags.size).toBe(0);
+
+      // Version unchanged
+      expect(mockKvStorage.get("__ff_schema_version__")).toBe("2");
+    });
+
+    it("should clean up legacy __ff_initialized__ and not re-create flags", async () => {
+      // Simulate v1 deployment with all 7 default flags stored
+      mockKvStorage.set("__ff_initialized__", "true");
+      const oldDescription =
+        "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)";
+      await setFeatureFlag(
+        {
+          name: "real_research_fetching",
+          enabled: true,
+          rolloutPercentage: 0,
+          description: oldDescription,
+        },
+        mockEnv,
+      );
+      // Also seed some other flags to verify they are untouched
+      await setFeatureFlag(
+        { name: "nlq_ai_enhancement", enabled: true },
+        mockEnv,
+      );
+
+      await initializeDefaultFlags(mockEnv);
+
+      // Other flags untouched
+      const nlq = await getFeatureFlag("nlq_ai_enhancement", mockEnv);
+      expect(nlq?.enabled).toBe(true);
+
+      // Legacy marker cleaned up
+      expect(mockKvStorage.has("__ff_initialized__")).toBe(false);
+      // Version stamped
+      expect(mockKvStorage.get("__ff_schema_version__")).toBe("2");
     });
   });
 });

@@ -18,6 +18,8 @@ import { toErrMessage } from "./errors";
 
 const FEATURE_FLAG_PREFIX = "ff:";
 const DEFAULT_FLAGS_INITIALIZED_KEY = "__ff_initialized__";
+const FLAG_SCHEMA_VERSION_KEY = "__ff_schema_version__";
+const CURRENT_FLAG_SCHEMA_VERSION = 2;
 
 // Default feature flags to initialize
 const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
@@ -279,33 +281,100 @@ export async function getAllFeatureFlags(
  */
 export async function initializeDefaultFlags(env: Env): Promise<void> {
   try {
-    // Check if already initialized
-    const initialized = await env.DEALS_LOCK.get(DEFAULT_FLAGS_INITIALIZED_KEY);
-    if (initialized) {
+    const storedVersion = await env.DEALS_LOCK.get(FLAG_SCHEMA_VERSION_KEY);
+    const wasInitializedLegacy = !storedVersion
+      ? await env.DEALS_LOCK.get(DEFAULT_FLAGS_INITIALIZED_KEY)
+      : null;
+
+    // Fresh deployment: create all defaults and stamp current version
+    if (!storedVersion && !wasInitializedLegacy) {
+      const now = new Date().toISOString();
+      for (const flag of DEFAULT_FLAGS) {
+        const existing = await getFeatureFlag(flag.name, env);
+        if (!existing) {
+          const fullFlag: FeatureFlag = {
+            ...flag,
+            createdAt: now,
+            updatedAt: now,
+          };
+          const key = `${FEATURE_FLAG_PREFIX}${flag.name}`;
+          await env.DEALS_LOCK.put(key, JSON.stringify(fullFlag));
+        }
+      }
+
+      await env.DEALS_LOCK.put(
+        FLAG_SCHEMA_VERSION_KEY,
+        String(CURRENT_FLAG_SCHEMA_VERSION),
+      );
+      // Clean up legacy marker so only one signal drives future migrations
+      await env.DEALS_LOCK.delete(DEFAULT_FLAGS_INITIALIZED_KEY);
       return;
     }
 
-    // Create default flags
-    const now = new Date().toISOString();
-    for (const flag of DEFAULT_FLAGS) {
-      const existing = await getFeatureFlag(flag.name, env);
-      if (!existing) {
-        const fullFlag: FeatureFlag = {
-          ...flag,
-          createdAt: now,
-          updatedAt: now,
-        };
-        const key = `${FEATURE_FLAG_PREFIX}${flag.name}`;
-        await env.DEALS_LOCK.put(key, JSON.stringify(fullFlag));
-      }
+    // Existing deployment: run any pending version migrations
+    const version = storedVersion ? parseInt(storedVersion, 10) : 1; // legacy __ff_initialized__ == v1
+
+    if (version < 2) {
+      await migrateV1toV2(env);
     }
 
-    // Mark as initialized
-    await env.DEALS_LOCK.put(DEFAULT_FLAGS_INITIALIZED_KEY, "true");
+    // Stamp current version (upsert for forward-only idempotent migration)
+    await env.DEALS_LOCK.put(
+      FLAG_SCHEMA_VERSION_KEY,
+      String(CURRENT_FLAG_SCHEMA_VERSION),
+    );
+    // Always clean up legacy marker after migration runs
+    if (wasInitializedLegacy) {
+      await env.DEALS_LOCK.delete(DEFAULT_FLAGS_INITIALIZED_KEY);
+    }
   } catch (error) {
     logger.error("Failed to initialize default flags", {
       component: "feature-flags",
       error: toErrMessage(error),
+    });
+  }
+}
+
+// ============================================================================
+// Flag Schema Migrations
+// ============================================================================
+
+/**
+ * Migration v1 → v2: real_research_fetching default changed from enabled:true
+ * to enabled:false for production safety. Only migrates flags whose stored
+ * values still match the old default exactly, preserving any user overrides.
+ */
+async function migrateV1toV2(env: Env): Promise<void> {
+  const flagName = "real_research_fetching";
+  const oldDefault: Omit<FeatureFlag, "createdAt" | "updatedAt"> = {
+    name: flagName,
+    enabled: true,
+    rolloutPercentage: 0,
+    description:
+      "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
+  };
+
+  const flag = await getFeatureFlag(flagName, env);
+  if (!flag) return;
+
+  // Only migrate if stored flag still matches the old default exactly
+  if (
+    flag.enabled === oldDefault.enabled &&
+    flag.rolloutPercentage === oldDefault.rolloutPercentage &&
+    flag.description === oldDefault.description
+  ) {
+    await setFeatureFlag(
+      {
+        name: flagName,
+        enabled: false,
+        rolloutPercentage: 0,
+        description: oldDefault.description,
+      },
+      env,
+    );
+    logger.info("Migrated feature flag to v2 default", {
+      component: "feature-flags",
+      flag: flagName,
     });
   }
 }
