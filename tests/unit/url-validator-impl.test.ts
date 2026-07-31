@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   validateUrl,
   checkUrlStatusBatch,
@@ -6,35 +6,22 @@ import {
   isUrlDead,
   getValidationSummary,
 } from "../../worker/lib/validation/url-validator";
-import { logger } from "../../worker/lib/global-logger";
-
-// Mock logger to avoid noise
-vi.mock("../../worker/lib/global-logger", () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-  },
+const { mockValidatedFetch } = vi.hoisted(() => ({
+  mockValidatedFetch: vi.fn(),
 }));
 
-// Mock fetch
-const globalFetch = global.fetch;
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-afterAll(() => {
-  global.fetch = globalFetch;
-});
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: mockValidatedFetch,
+}));
 
 describe("url-validator", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockValidatedFetch.mockReset();
   });
 
   describe("validateUrl", () => {
     it("should return valid for 200 OK", async () => {
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -48,13 +35,13 @@ describe("url-validator", () => {
 
     it("should follow redirects", async () => {
       // 301 Redirect
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 301,
         statusText: "Moved Permanently",
         headers: new Map([["location", "https://example.com/new"]]),
       });
       // 200 OK
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -69,13 +56,13 @@ describe("url-validator", () => {
 
     it("should return invalid for 404", async () => {
       // HEAD 404
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 404,
         statusText: "Not Found",
         headers: new Map(),
       });
       // GET 404 (fallback)
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 404,
         statusText: "Not Found",
         headers: new Map(),
@@ -87,7 +74,7 @@ describe("url-validator", () => {
     });
 
     it("should handle redirect loops", async () => {
-      mockFetch.mockImplementation(() =>
+      mockValidatedFetch.mockImplementation(() =>
         Promise.resolve({
           status: 302,
           statusText: "Found",
@@ -103,7 +90,9 @@ describe("url-validator", () => {
     });
 
     it("should handle network errors", async () => {
-      mockFetch.mockRejectedValue(new Error("Network connection lost"));
+      mockValidatedFetch.mockRejectedValue(
+        new Error("Network connection lost"),
+      );
 
       const result = await validateUrl("https://example.com/fail");
       expect(result.valid).toBe(false);
@@ -113,7 +102,7 @@ describe("url-validator", () => {
 
   describe("checkUrlStatusBatch", () => {
     it("should validate a batch of URLs", async () => {
-      mockFetch.mockResolvedValue({
+      mockValidatedFetch.mockResolvedValue({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -129,12 +118,12 @@ describe("url-validator", () => {
 
   describe("detectRedirects", () => {
     it("should detect simple redirect", async () => {
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 302,
         statusText: "Found",
         headers: new Map([["location", "https://example.com/final"]]),
       });
-      mockFetch.mockResolvedValueOnce({
+      mockValidatedFetch.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),

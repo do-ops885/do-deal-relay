@@ -2,11 +2,7 @@ import { executePipeline } from "./state-machine";
 import { notify } from "./notify";
 import type { Env } from "./types";
 import { checkDealExpirations, runFullValidationSweep } from "./lib/expiration";
-import {
-  checkDealUrlHealth,
-  deactivateUnhealthyDeals,
-} from "./lib/expiration/url-health";
-import { getActiveDeals } from "./lib/storage";
+import { runUrlHealthCheck } from "./lib/expiration/url-health";
 import { logger } from "./lib/global-logger";
 import { runAggregation } from "./lib/d1/experience";
 import { toError } from "./lib/sanitize-error";
@@ -66,6 +62,22 @@ export async function handleScheduled(
         eventsProcessed: aggResult.eventsProcessed,
       });
 
+      logger.info("Running daily URL health check", {
+        component: "scheduled",
+      });
+      try {
+        const healthResult = await runUrlHealthCheck(env);
+        logger.info("Daily URL health check completed", {
+          component: "scheduled",
+          ...healthResult,
+        });
+      } catch (error) {
+        logger.warn("URL health check failed (non-critical)", {
+          component: "scheduled",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       return;
     }
 
@@ -97,34 +109,6 @@ export async function handleScheduled(
             validated: result.validated,
             deactivated: result.deactivated,
           },
-        });
-      }
-
-      // NEW-PLAT-1 (ADR-020 Phase 1): URL health checking on weekly cron
-      logger.info("Running URL health check on active deals", {
-        component: "scheduled",
-      });
-      try {
-        const activeDeals = await getActiveDeals(env);
-        if (activeDeals.length > 0) {
-          const healthResult = await checkDealUrlHealth(env, activeDeals, 5);
-          const deactivateResult = await deactivateUnhealthyDeals(
-            env,
-            healthResult.results,
-          );
-          logger.info("URL health check completed", {
-            component: "scheduled",
-            checked: healthResult.checked,
-            healthy: healthResult.healthy,
-            unhealthy: healthResult.unhealthy,
-            deactivated: deactivateResult.deactivated,
-            flagged: deactivateResult.flagged,
-          });
-        }
-      } catch (error) {
-        logger.warn("URL health check failed (non-critical)", {
-          component: "scheduled",
-          error: error instanceof Error ? error.message : String(error),
         });
       }
 

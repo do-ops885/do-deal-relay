@@ -44,13 +44,15 @@ function getApiKeys(env: Env) {
  * Order of precedence (all checks return true to enable real fetching):
  *   1. Request level: request.options?.use_real_fetching
  *   2. Feature flag: real_research_fetching (supports rolloutPercentage)
- *   3. Environment allowlist: production OR explicit RESEARCH_USE_REAL_FETCHING=true
- *   4. Fallback: any API key configured (legacy heuristic)
+ *   3. Explicit environment opt-in: RESEARCH_USE_REAL_FETCHING=true
+ *
+ * Production is never enabled implicitly by the environment or by the
+ * presence of provider credentials. This keeps external traffic behind an
+ * intentional rollout control.
  */
 async function shouldUseRealFetching(
   env: Env,
   request: WebResearchRequest,
-  hasApiKeys: boolean,
 ): Promise<boolean> {
   if (request.options?.use_real_fetching !== undefined) {
     return request.options.use_real_fetching;
@@ -59,13 +61,10 @@ async function shouldUseRealFetching(
   if (rolloutEnabled) {
     return true;
   }
-  const envAllowsRealFetching =
-    env.ENVIRONMENT === "production" ||
-    env.RESEARCH_USE_REAL_FETCHING === "true";
-  if (envAllowsRealFetching) {
+  if (env.RESEARCH_USE_REAL_FETCHING === "true") {
     return true;
   }
-  return hasApiKeys;
+  return false;
 }
 
 export async function executeReferralResearch(
@@ -78,11 +77,8 @@ export async function executeReferralResearch(
   const normalizedQuery = normalizeResearchQuery(request.query, request.domain);
 
   const apiKeys = getApiKeys(env);
-  const hasApiKeys = Boolean(
-    apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
-  );
-  // useRealFetching now resolves through the feature flag for gradual rollout.
-  const useRealFetching = await shouldUseRealFetching(env, request, hasApiKeys);
+  // useRealFetching resolves through the feature flag and explicit opt-in.
+  const useRealFetching = await shouldUseRealFetching(env, request);
 
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
   const sourcesChecked: string[] = [];

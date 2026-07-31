@@ -1,6 +1,6 @@
 # ADR-020: 2026 Best Practices Integration Roadmap
 
-**Status**: Proposed
+**Status**: In Progress — Phase 1 URL health and guarded research scaffolding implemented; AI Gateway and Durable Execution deferred
 **Created**: 2026-07-30
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
@@ -23,6 +23,30 @@ This ADR prioritizes those gaps into an executable roadmap.
 
 ---
 
+## Batch Implementation Status — 2026-07-31
+
+This batch completed the safe, self-contained portions of the roadmap without enabling
+uncontrolled external traffic or introducing a new runtime dependency:
+
+- **GAP-FEAT-1 / NEW-FEAT-1 — Partial**: Real research remains opt-in through the
+  `real_research_fetching` feature flag, request override, or explicit
+  `RESEARCH_USE_REAL_FETCHING=true`. Fresh default flags are disabled; existing KV
+  overrides remain operator-controlled. Source capability reporting now matches the
+  same gate and checks per-source credentials accurately.
+- **GAP-PLAT-1 / NEW-PLAT-1 — Implemented**: The daily `0 9 * * *` cron performs
+  SSRF-safe HEAD checks with bounded concurrency, serialized per-domain pacing,
+  transient failure flagging, and snapshot-validated production deactivation for
+  definitive HTTP failures.
+- **Skills workflow — Implemented**: CI validates canonical skills and checks
+  `evals.json` freshness.
+- **GAP-ARCH-2 / NEW-ARCH-2 — Deferred**: The reusable AI Gateway client and URL
+  configuration already exist, but production LLM call sites use the native Workers
+  AI binding and no provider credential contract is defined for gateway failover.
+  Wiring this requires an explicit provider/auth decision and dedicated integration
+  tests; this batch does not silently change the model path.
+- **GAP-ARCH-1 / NEW-ARCH-1 — Deferred**: Durable Execution adoption remains a
+  separately scoped runtime migration.
+
 ## Decision: Adopt a 4-Phase Modernization Roadmap
 
 ### Phase 1 — Core Value Prop (Immediate: 1-2 weeks)
@@ -31,8 +55,8 @@ This ADR prioritizes those gaps into an executable roadmap.
 
 | ID | Action | Effort | Rationale |
 |:---|:---|:---|:---|
-| GAP-FEAT-1 | Enable real web research behind feature flag | 3-5 days | Core value prop currently disabled |
-| GAP-PLAT-1 | Implement URL health checking in daily cron | 1-2 days | Deal freshness automation |
+| GAP-FEAT-1 | Enable guarded real web research behind feature flag | 3-5 days | Core value prop currently disabled; rollout remains operator-controlled |
+| GAP-PLAT-1 | Implement URL health checking in daily cron | 1-2 days | ✅ Implemented in this batch with snapshot-safe deactivation |
 | GAP-ARCH-1 | POC Durable Execution for pipeline | 2-3 days | Pipeline timeout resilience |
 
 **Success Criteria**:
@@ -47,7 +71,7 @@ This ADR prioritizes those gaps into an executable roadmap.
 | ID | Action | Effort | Rationale |
 |:---|:---|:---|:---|
 | GAP-FEAT-2 | User management & JWT auth system | 1-2 weeks | Enable personalization, reputation |
-| GAP-ARCH-2 | AI Gateway integration for LLM calls | 2-3 days | Cost tracking, caching, failover |
+| GAP-ARCH-2 | AI Gateway integration for LLM calls | 2-3 days | Deferred pending provider/auth contract and call-site migration |
 | GAP-AI-1 | Fix MCP version negotiation | 1 day | Spec compliance |
 | GAP-FEAT-3 | SSE real-time deal updates via DO | 3-5 days | Reduce polling, enable live UIs |
 
