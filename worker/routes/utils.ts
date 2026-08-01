@@ -7,6 +7,10 @@ import type { Env } from "../types";
 /**
  * Default allowed origins for CORS validation
  */
+const DEFAULT_DAYS = 30;
+const MIN_DAYS = 1;
+const MAX_DAYS = 365;
+
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://do-deal-relay.pages.dev",
   "https://do-deal-relay.com",
@@ -14,6 +18,36 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:8787",
   "http://localhost:3000",
 ];
+
+/**
+ * Parse a days query parameter with safe bounds and an invalid-input fallback.
+ *
+ * A missing parameter uses the route's default. A present but invalid value
+ * falls back to the minimum so NaN never reaches downstream query logic.
+ */
+export function parseDaysParam(
+  url: URL,
+  options: {
+    defaultValue?: number;
+    min?: number;
+    max?: number;
+  } = {},
+): number {
+  const {
+    defaultValue = DEFAULT_DAYS,
+    min = MIN_DAYS,
+    max = MAX_DAYS,
+  } = options;
+  const rawValue = url.searchParams.get("days");
+
+  if (rawValue === null) {
+    return defaultValue;
+  }
+
+  const parsedValue = Number.parseInt(rawValue, 10);
+  const safeValue = Number.isFinite(parsedValue) ? parsedValue : min;
+  return Math.min(max, Math.max(min, safeValue));
+}
 
 /**
  * Get all allowed origins, including those from environment variables

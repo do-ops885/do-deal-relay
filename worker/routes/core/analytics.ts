@@ -5,7 +5,7 @@
  */
 
 import type { Env } from "../../types";
-import { jsonResponse } from "../utils";
+import { jsonResponse, parseDaysParam } from "../utils";
 import {
   generateDealAnalytics,
   generateAnalyticsSummary,
@@ -22,9 +22,7 @@ export async function handleAnalytics(
   request?: Request,
 ): Promise<Response> {
   const format = url.searchParams.get("format") || "json";
-  const days = url.searchParams.has("days")
-    ? parseInt(url.searchParams.get("days")!, 10)
-    : 30;
+  const days = parseDaysParam(url);
 
   try {
     if (format === "summary") {
