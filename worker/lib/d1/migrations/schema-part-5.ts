@@ -1,9 +1,7 @@
 import type { Migration } from "./types";
 
 /**
- * Migration 9: trust_scores table for atomic source trust evolution.
- * Replaces KV-based source registry trust scores with D1 for strong consistency.
- * See: plans/ADR-017-durable-objects-migration.md
+ * Migrations 9-10: source trust evolution and Reddit post lifecycle state.
  */
 export const MIGRATIONS_PART_5: Migration[] = [
   {
@@ -33,6 +31,39 @@ export const MIGRATIONS_PART_5: Migration[] = [
       DROP INDEX IF EXISTS idx_trust_scores_classification;
       DROP INDEX IF EXISTS idx_trust_scores_score;
       DROP TABLE IF EXISTS trust_scores;
+    `,
+  },
+  {
+    version: 10,
+    name: "add_reddit_posts",
+    up: `
+      CREATE TABLE IF NOT EXISTS reddit_posts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          fullname TEXT NOT NULL UNIQUE CHECK(fullname GLOB 't3_*'),
+          deal_id TEXT NOT NULL,
+          subreddit TEXT NOT NULL,
+          posted_at INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active'
+            CHECK(status IN ('active', 'deleted')),
+          delete_reason TEXT,
+          deleted_at INTEGER,
+          last_checked_at INTEGER,
+          CHECK(
+            (status = 'active' AND delete_reason IS NULL AND deleted_at IS NULL)
+            OR
+            (status = 'deleted' AND delete_reason IS NOT NULL AND deleted_at IS NOT NULL)
+          )
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_reddit_posts_status_checked
+        ON reddit_posts(status, last_checked_at);
+      CREATE INDEX IF NOT EXISTS idx_reddit_posts_deal_id
+        ON reddit_posts(deal_id);
+    `,
+    down: `
+      DROP INDEX IF EXISTS idx_reddit_posts_deal_id;
+      DROP INDEX IF EXISTS idx_reddit_posts_status_checked;
+      DROP TABLE IF EXISTS reddit_posts;
     `,
   },
 ];

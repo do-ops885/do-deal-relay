@@ -59,7 +59,7 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -221,7 +221,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(8);
+    expect(MIGRATIONS.length).toBe(10);
   });
 });
 
@@ -248,7 +248,7 @@ describe("factory functions", () => {
     const result = await initDatabase(mockDb);
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it("initDatabase returns already-migrated result when DB is up to date", async () => {
@@ -267,6 +267,8 @@ describe("factory functions", () => {
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
         { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
+        { version: 9, name: "add_trust_scores", applied_at: 9000 },
+        { version: 10, name: "add_reddit_posts", applied_at: 10000 },
       ],
     });
 
@@ -274,7 +276,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(8);
+    expect(result.currentVersion).toBe(10);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -287,8 +289,8 @@ describe("factory functions", () => {
 
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
-    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8]);
-    expect(status.latestVersion).toBe(8);
+    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(status.latestVersion).toBe(10);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -307,13 +309,15 @@ describe("factory functions", () => {
         },
         { version: 7, name: "add_auth_tables", applied_at: 7000 },
         { version: 8, name: "add_pipeline_locks", applied_at: 8000 },
+        { version: 9, name: "add_trust_scores", applied_at: 9000 },
+        { version: 10, name: "add_reddit_posts", applied_at: 10000 },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(8);
+    expect(status.currentVersion).toBe(10);
   });
 });
 

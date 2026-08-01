@@ -1,6 +1,25 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+export function parseBoundedIntegerConfig(
+  name: string,
+  value: string | undefined,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (value === undefined || value.trim() === "") return fallback;
+  const normalized = value.trim();
+  if (!/^-?\d+$/.test(normalized)) {
+    throw new Error(`${name} must be an integer`);
+  }
+  const parsed = Number(normalized);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${name} must be between ${minimum} and ${maximum}`);
+  }
+  return parsed;
+}
+
 /**
  * Get the trust threshold from environment or fallback to default
  * @param env Worker environment

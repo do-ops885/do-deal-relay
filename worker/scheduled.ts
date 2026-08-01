@@ -6,6 +6,7 @@ import { logger } from "./lib/global-logger";
 import { runAggregation } from "./lib/d1/experience";
 import { toError } from "./lib/sanitize-error";
 import { runContinuousVerification } from "./validation/gates/continuous-verification";
+import { checkAndCleanPosts } from "./reddit";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -21,6 +22,18 @@ export async function handleScheduled(
   });
 
   try {
+    if (cron === "*/30 * * * *") {
+      const result = await checkAndCleanPosts(env);
+      logger.info("Reddit moderation completed", {
+        component: "scheduled",
+        checked: result.checked,
+        deleted: result.deleted,
+        skipped: result.skipped,
+        errors: result.errors,
+      });
+      return;
+    }
+
     // Daily cron job at 9am - expiration checks and experience aggregation
     if (cron === "0 9 * * *") {
       logger.info("Running daily expiration check", {

@@ -64,9 +64,9 @@
       // See: docs/opentelemetry-setup.md for full setup guide.
     },
   },
-  // Scheduled triggers: Discovery every 6h, expiry check at 9am, weekly validation Sunday midnight
+  // Scheduled triggers: discovery, Reddit moderation, expiry, and weekly validation
   "triggers": {
-    "crons": ["0 */6 * * *", "0 9 * * *", "0 0 * * SUN"],
+    "crons": ["0 */6 * * *", "*/30 * * * *", "0 9 * * *", "0 0 * * SUN"],
   },
   // KV Namespaces for different data types
   "kv_namespaces": [
