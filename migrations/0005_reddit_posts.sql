@@ -1,7 +1,8 @@
+/* tsqllint-disable set-quoted-identifier */
 -- Reddit posts created by do-deal-relay and their lifecycle state.
 CREATE TABLE IF NOT EXISTS reddit_posts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  fullname TEXT NOT NULL UNIQUE CHECK(fullname GLOB 't3_*'),
+  id INTEGER PRIMARY KEY,
+  fullname TEXT NOT NULL UNIQUE CHECK(substr(fullname, 1, 3) = 't3_'),
   deal_id TEXT NOT NULL,
   subreddit TEXT NOT NULL,
   posted_at INTEGER NOT NULL,
