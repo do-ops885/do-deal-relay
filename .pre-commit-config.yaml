@@ -33,7 +33,7 @@ repos:
       - id: markdownlint
         args: ["--config", ".markdownlint.json"]
         additional_dependencies:
-          - markdownlint-cli@0.43.0
+          - markdownlint-cli@0.49.1
 
   - repo: local
     hooks:
