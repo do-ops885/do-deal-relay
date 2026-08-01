@@ -1,5 +1,5 @@
 import type { Env } from "../../types";
-import { jsonResponse } from "../utils";
+import { jsonResponse, parseDaysParam } from "../utils";
 import { logger } from "../../lib/global-logger";
 import { getDORASummary, computeDORAMetrics } from "../../lib/metrics/dora";
 
@@ -9,8 +9,7 @@ export async function handleDORAMetrics(
   request: Request,
 ): Promise<Response> {
   try {
-    const daysParam = url.searchParams.get("days");
-    const days = daysParam ? Math.max(1, Math.min(365, Number(daysParam))) : 30;
+    const days = parseDaysParam(url);
     const bypassCache = url.searchParams.get("bypass_cache") === "true";
 
     const result = bypassCache

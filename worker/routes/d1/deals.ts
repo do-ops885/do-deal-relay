@@ -5,7 +5,7 @@
  */
 
 import type { Env } from "../../types";
-import { jsonResponse } from "../utils";
+import { jsonResponse, parseDaysParam } from "../utils";
 import { createStructuredLogger } from "../../lib/logger";
 import { logger } from "../../lib/global-logger";
 import { toError } from "../../lib/sanitize-error";
@@ -227,9 +227,10 @@ export async function handleD1Recommended(
 // ============================================================================
 
 export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
-  const days = url.searchParams.has("days")
-    ? parseInt(url.searchParams.get("days")!, 10)
-    : 7;
+  const days = parseDaysParam(url, {
+    defaultValue: 7,
+    max: Number.MAX_SAFE_INTEGER,
+  });
   const limit = url.searchParams.has("limit")
     ? parseInt(url.searchParams.get("limit")!, 10)
     : 10;

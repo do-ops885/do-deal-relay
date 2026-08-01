@@ -14,6 +14,7 @@ import {
 } from "./lib/middleware/pipeline";
 import { handleHealth, handleReady, handleLive } from "./routes/core";
 import { handleD1Request } from "./routes/d1";
+import { handleA2AAgentCard } from "./routes/a2a";
 
 /**
  * Initialize pipeline-registered routes.
@@ -49,6 +50,17 @@ function initPipelineRoutes(): void {
       handler: (_req, env) => handleLive(env, _req),
       auth: "public",
       description: "Liveness probe",
+    },
+
+    // -----------------------------------------------------------------------
+    // A2A Agent Card — agent discovery for Agent-to-Agent protocol
+    // -----------------------------------------------------------------------
+    {
+      method: "GET",
+      path: "/.well-known/agent.json",
+      handler: (req, env) => handleA2AAgentCard(req, env),
+      auth: "public",
+      description: "A2A agent discovery card",
     },
 
     // -----------------------------------------------------------------------
