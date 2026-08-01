@@ -23,7 +23,7 @@ export function collectFlagAuthors(
   botUsername: string,
 ): Set<string> {
   const authors = new Set<string>();
-  const visit = (node: unknown): void => {
+  function visit(node: unknown): void {
     if (authors.size >= MAX_REDDIT_FLAG_CANDIDATES) return;
     if (Array.isArray(node)) {
       for (const item of node) visit(item);
@@ -48,7 +48,7 @@ export function collectFlagAuthors(
       return;
     }
     visit(asRecord(record.data)?.children);
-  };
+  }
   visit(value);
   return authors;
 }
