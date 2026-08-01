@@ -11,6 +11,11 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 
 ## Active Plans
 
+- [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
+  Implements an opt-in, fail-closed Reddit publication and moderation client.
+- [ADR-020: Fail-Closed Reddit Post Lifecycle](ADR-020-reddit-post-lifecycle.md)
+  — **Accepted for implementation; production activation gated**. Corrects
+  API, privacy, SSRF, scheduling, and audit defects in the initial proposal.
 - [GOAP State](GOAP_STATE.md) — **Comprehensive inventory of ALL missing tasks, implementations, features, and gaps** (65+ items across P0–P3 + deferred ADR-015 proposals). Single source of truth for all planned work. **Refreshed 2026-07-29 (v0.12.0)** — All P0-P3 items resolved or documented. PR #640 merged, PR #639 closed.
 - [Progress 2026-07-02](PROGRESS-2026-07-02.md) — Re-verification of the 5 P0 critical bugs from the April audit against current code: all confirmed closed. New focus shifts to P1/P2 items.
 - [ADR-015: Harness & Cloudflare 2026 Best Practices](ADR-015-harness-cloudflare-2026-best-practices.md) — Architecture Decision Record mapping 2026 Harness CI/CD and Cloudflare Agentic Cloud patterns to our codebase. Includes migration roadmap for Durable Objects, Durable Execution, Agent Memory, and AI Gateway. **Proposed** as of 2026-07-02.

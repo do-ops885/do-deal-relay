@@ -1,10 +1,31 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-07-30
-**Version**: 0.13.0
-**Status**: Complete — All P0-P3 resolved; documentation updated
+**Last Updated**: 2026-08-01
+**Version**: 0.14.0
+**Status**: Active — Reddit post lifecycle implemented; production gated
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## Reddit Post Lifecycle — 2026-08-01
+
+**Goal**: Track bot-authored deal posts and remove them after a verified
+negative-score, corroborated community, or source-expiry signal.
+
+| ID | Action | Preconditions | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| REDDIT-1 | Correct proposal assumptions and record architecture | CI precheck passing | ✅ COMPLETE | [ADR-020](ADR-020-reddit-post-lifecycle.md), [spec](SPEC-reddit-post-lifecycle.md) |
+| REDDIT-2 | Add D1 lifecycle schema to external and runtime migrations | REDDIT-1 | ✅ COMPLETE | `migrations/0005_reddit_posts.sql`, migration 10 |
+| REDDIT-3 | Implement SSRF-safe typed Reddit client and three deletion triggers | REDDIT-2 | ✅ COMPLETE | `worker/reddit.ts` |
+| REDDIT-4 | Isolate the 30-minute moderation cron and configuration | REDDIT-3 | ✅ COMPLETE | `worker/scheduled.ts`, `wrangler.jsonc` |
+| REDDIT-5 | Add unit coverage and run PEV gates | REDDIT-4 | 🟡 IN PROGRESS | 98 focused tests, typecheck, format, and Markdown lint pass; full unit suite stalled in the orb |
+| REDDIT-6 | Enable production credentials and cron | Reddit app and subreddit approval | ⬜ BLOCKED | External policy/credential prerequisite |
+
+### Goal State
+
+`REDDIT-1 → REDDIT-2 → REDDIT-3 → REDDIT-4 → REDDIT-5`; production
+activation (`REDDIT-6`) remains a separate human-controlled action.
 
 ---
 
