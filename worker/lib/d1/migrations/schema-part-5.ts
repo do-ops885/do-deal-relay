@@ -38,8 +38,8 @@ export const MIGRATIONS_PART_5: Migration[] = [
     name: "add_reddit_posts",
     up: `
       CREATE TABLE IF NOT EXISTS reddit_posts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          fullname TEXT NOT NULL UNIQUE CHECK(fullname GLOB 't3_*'),
+          id INTEGER PRIMARY KEY,
+          fullname TEXT NOT NULL UNIQUE CHECK(substr(fullname, 1, 3) = 't3_'),
           deal_id TEXT NOT NULL,
           subreddit TEXT NOT NULL,
           posted_at INTEGER NOT NULL,

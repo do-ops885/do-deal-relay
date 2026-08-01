@@ -12,8 +12,6 @@ exclude_paths:
   - "node_modules/**"
   - "dist/**"
   - ".wrangler/**"
-  # D1 migrations use SQLite syntax; Codacy's SQL analyzer assumes SQL Server.
-  - "migrations/**"
   -  # Scratch / staging artifacts directory (commit messages, gh query dumps,
   # fixture files; may contain malformed middle-of-edit docs).
   - ".audit/**"
