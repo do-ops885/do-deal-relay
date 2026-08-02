@@ -143,7 +143,7 @@ However, **fresh analysis against 2026 best practices reveals 16 new gaps** acro
 **Severity**: 🟢 LOW | **Source**: Feature Gap Analysis, Rakuten/Honey comparison
 **Problem**: No mobile presence. Modern deal platforms all have mobile apps or PWAs.
 **Impact**: Limited user reach.
-**Recommendation**: Enhance the `public/` web UI with PWA support (service worker, manifest, installability). Lower priority than core features.
+**Status**: ✅ RESOLVED on 2026-08-02. The existing `public/` dashboard now has an installable manifest, service worker, icons, and Cloudflare Workers Static Assets configuration. The service worker is restricted to same-origin static assets and never caches API or deal data.
 
 ---
 
@@ -192,8 +192,8 @@ For context, the following major items from previous audits have been resolved:
 ### Long-Term (Week 11+) — Maturity
 13. **GAP-ARCH-3**: OTLP export destination configuration
 14. **GAP-ARCH-4**: Build-once-promote-everywhere artifact strategy
-15. **GAP-AI-3**: NLQ documentation & MCP integration
-16. **GAP-PLAT-2**: PWA support for web UI
+15. **GAP-AI-3**: NLQ documentation & MCP integration (already shipped; roadmap text pending reconciliation)
+16. **GAP-PLAT-2**: PWA support for web UI — ✅ shipped 2026-08-02
 
 ---
 

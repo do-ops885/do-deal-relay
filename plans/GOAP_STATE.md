@@ -3,7 +3,7 @@
 **Generated**: 2026-07-06
 **Last Updated**: 2026-07-31
 **Version**: 0.13.2
-**Status**: Active — Roadmap batch completed with Phase 1 URL health shipped; guarded research partial; AI Gateway and Durable Execution deferred (see ADR-020)
+**Status**: Active — Roadmap batch completed with Phase 1 URL health shipped; guarded research partial; PWA support shipped; AI Gateway and Durable Execution deferred (see ADR-020)
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-020](ADR-020-2026-best-practices-integration-roadmap.md), [GOAP Analysis 2026-07-30](GOAP-ANALYSIS-2026-07-30.md)
 
 ---
@@ -335,7 +335,7 @@ See [GOAP-ANALYSIS-2026-07-30](GOAP-ANALYSIS-2026-07-30.md) and [ADR-020](ADR-02
 
 | ID | Item | Source | Status | ADR |
 |:---|:---|:---|:---|:---|
-| NEW-PLAT-2 | No mobile or PWA experience | Feature Gap | 🟢 OPEN | ADR-020 Phase 4 |
+| NEW-PLAT-2 | No mobile or PWA experience | Feature Gap | ✅ RESOLVED | Installable dashboard shell, manifest, service worker, and Static Assets config shipped in PR |
 
 ---
 

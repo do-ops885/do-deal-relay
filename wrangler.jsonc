@@ -6,6 +6,12 @@
   "compatibility_date": "2026-06-13",
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
+  // Static dashboard and PWA assets. API routes remain handled by the Worker.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+  },
   // Observability for monitoring and debugging
   "observability": {
     "logs": {

@@ -46,6 +46,10 @@ uncontrolled external traffic or introducing a new runtime dependency:
   tests; this batch does not silently change the model path.
 - **GAP-ARCH-1 / NEW-ARCH-1 — Deferred**: Durable Execution adoption remains a
   separately scoped runtime migration.
+- **GAP-PLAT-2 / NEW-PLAT-2 — Implemented**: The public dashboard is now an
+  installable PWA with a manifest, icons, a same-origin static-asset service worker,
+  and Cloudflare Workers Static Assets configuration. API and deal data are not
+  cached by the service worker.
 
 ## Decision: Adopt a 4-Phase Modernization Roadmap
 

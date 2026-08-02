@@ -97,4 +97,7 @@ export interface Env {
   SOURCE_REGISTRY?: DurableObjectNamespace;
   DEAL_REGISTRY?: DurableObjectNamespace;
   PIPELINE_EXECUTOR?: DurableObjectNamespace;
+  ASSETS?: {
+    fetch(request: Request): Promise<Response>;
+  };
 }
