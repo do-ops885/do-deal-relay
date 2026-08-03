@@ -64,3 +64,12 @@ CI-mirrored local full run (`npm run test:e2e` with `SKIP_DEV_SERVER=1`, `CI=1`)
 - Deals API endpoints now exercise real data paths in local and CI E2E runs.
 - Rotate/revoke no longer depend on key metadata being written by the app's own `storeApiKey`.
 - **Remaining**: 22 browser-extension E2E tests require Playwright system deps (environment-only; CI covers them). The full `npm run test:unit` has a documented upstream vitest pool deadlock in constrained sandboxes (CANTFIX-002), handled by the CI timeout wrapper.
+
+## Codacy Static Analysis Follow-up (2026-08-03)
+
+Codacy's PR #662 check ("Not up to standards") surfaced 8 annotations. 7 were resolved at the source; 1 is documented noise requiring a dashboard dismissal.
+
+- **Generic API Key detected** (failure; `tests/unit/auth.store-verify.test.ts:273,305,306`): Codacy's native secret scanner matched the synthetic `apikey:<32-hex>` KV-name fixtures used to test the `listApiKeys` keyHash fallback. Fixed by renaming the fixtures to non-secret-looking values (`apikey:test-hash-*`) and updating the derived-hash assertion; no test semantics changed.
+- **Non-serializable expression must be wrapped with `$(...)`** (warning; `worker/lib/d1/factory.ts:59,65`, `tests/unit/auth.store-verify.test.ts:257`): this is Biome's `lint/correctness/useQwikValidLexicalScope`, a Qwik-only rule that Codacy's Biome engine runs by default. False positive on a non-Qwik codebase; suppressed with `biome-ignore` comments (existing repo convention).
+- **Unhandled errors detected in asynchronous function** (warning; `worker/routes/auth-bookmarks.ts:16`): the extracted bookmark handlers' unbound catch swallowed errors without logging. Fixed by binding and logging the error (`logger.error` + `toErrCtx`) while preserving the 400 "Invalid request" response contract (malformed JSON must stay 400).
+- **Hardcoded passwords are a security risk** (warning; `tests/e2e/phase4-e2e.test.ts:74`): `ddr_admin_test_key_0000000000000000` is the deterministic admin API key seeded by `setup-auth.sh` and must remain a literal to match the seed; it already carries a `biome-ignore lint/security/noSecrets` comment. Codacy's native scanner does not honor inline ignores, so clearing it requires a dashboard dismissal — consistent with the pre-existing Codacy noise documented for PR #588 in GOAP_STATE.
