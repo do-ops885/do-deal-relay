@@ -73,3 +73,16 @@ Codacy's PR #662 check ("Not up to standards") surfaced 8 annotations. 7 were re
 - **Non-serializable expression must be wrapped with `$(...)`** (warning; `worker/lib/d1/factory.ts:59,65`, `tests/unit/auth.store-verify.test.ts:257`): this is Biome's `lint/correctness/useQwikValidLexicalScope`, a Qwik-only rule that Codacy's Biome engine runs by default. False positive on a non-Qwik codebase; suppressed with `biome-ignore` comments (existing repo convention).
 - **Unhandled errors detected in asynchronous function** (warning; `worker/routes/auth-bookmarks.ts:16`): the extracted bookmark handlers' unbound catch swallowed errors without logging. Fixed by binding and logging the error (`logger.error` + `toErrCtx`) while preserving the 400 "Invalid request" response contract (malformed JSON must stay 400).
 - **Hardcoded passwords are a security risk** (warning; `tests/e2e/phase4-e2e.test.ts:74`): `ddr_admin_test_key_0000000000000000` is the deterministic admin API key seeded by `setup-auth.sh` and must remain a literal to match the seed; it already carries a `biome-ignore lint/security/noSecrets` comment. Codacy's native scanner does not honor inline ignores, so clearing it requires a dashboard dismissal — consistent with the pre-existing Codacy noise documented for PR #588 in GOAP_STATE.
+
+### Dismissing the remaining warning (maintainer action, ~1 minute)
+
+Codacy's native scanner ignores inline comments, and `.codacy.yml` only supports `exclude_paths` / per-engine tool configs (the native scanner is not in the configurable tool list), so this single warning must be dismissed in the Codacy dashboard by a maintainer with repo access. Exact steps:
+
+1. On GitHub PR #662, click **Details** on the failing **Codacy Static Code Analysis** check to open the PR analysis in Codacy (app.codacy.com).
+2. Switch to the **Issues** tab and locate the **Hardcoded passwords** issue at `tests/e2e/phase4-e2e.test.ts:74`.
+3. Click the **gear/cogwheel menu** on the issue card and select **"Ignore the issue and hide it from the list"** (may read "Ignore this instance" depending on the view).
+4. Choose the context reason **test code** (the value is a seeded E2E fixture) — or "not relevant in this context". Do not select "False positive" unless the bulk "Ignore all false positives" semantics are intended.
+5. Confirm; the dismissal persists across future commits for the same file/line/pattern, so the next push will not re-flag it.
+6. Codacy re-analyzes the PR head on its next analysis cycle; with the new-issues count back at zero the check flips to green ("Up to standards"). If it does not flip promptly, re-run/re-analyze from the Codacy PR page.
+
+Do **not** use the same menu's "Disable the code pattern" (turns the rule off repo-wide, hiding future real findings) or "Ignore the file" (hides all findings in the test file).
