@@ -377,8 +377,16 @@ export function logPrometheusExport(metrics: PipelineMetrics): void {
   }
 }
 
-// Re-export the constant so the route layer does not depend on internal layout
+/**
+ * Prometheus text exporter constants exported for routing and external layers.
+ */
 export const PROMETHEUS_CONSTANTS = {
+  /**
+   * The standard text content-type including version descriptor for Prometheus scraping clients.
+   */
   CONTENT_TYPE: PROMETHEUS_CONTENT_TYPE,
+  /**
+   * Default duration/latency bucket upper bounds (in seconds) used for phase performance profiling.
+   */
   BUCKETS_SECONDS: HISTOGRAM_BUCKETS_SECONDS,
 } as const;
