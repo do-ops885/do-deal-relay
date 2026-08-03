@@ -94,11 +94,22 @@ export async function storeApiKey(
   };
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+
+  // Never pass a past or invalid expiration to KV (wrangler throws on past
+  // timestamps, which would surface as a 500). A past/invalid expiresAt falls
+  // back to the 1-year default TTL; verifyApiKey still rejects an already-
+  // expired key via its metadata.
+  const expiresAtMs = config.expiresAt
+    ? new Date(config.expiresAt).getTime()
+    : undefined;
+  const hasFutureExpiry = expiresAtMs !== undefined && expiresAtMs > Date.now();
+
   await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
-    expiration: config.expiresAt
-      ? Math.floor(new Date(config.expiresAt).getTime() / 1000)
-      : undefined,
-    expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
+    expiration:
+      hasFutureExpiry && expiresAtMs !== undefined
+        ? Math.floor(expiresAtMs / 1000)
+        : undefined,
+    expirationTtl: hasFutureExpiry ? undefined : 365 * 86400, // 1 year default
   });
 
   return key;
@@ -114,7 +125,18 @@ export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const results = await Promise.all(
     list.keys.map(async (key) => {
       const raw = await kv.get(key.name, "json");
-      return raw as ApiKeyConfig | null;
+      const config = raw as ApiKeyConfig | null;
+      if (!config) return null;
+
+      // Keys written directly to KV (e.g. seeded by tests/e2e/setup-auth.sh)
+      // may lack the keyHash field. Derive it from the key name
+      // (apikey:<hash>) so admin rotate/revoke can address them by hash.
+      if (!config.keyHash) {
+        config.keyHash = key.name.startsWith("apikey:")
+          ? key.name.slice("apikey:".length)
+          : key.name;
+      }
+      return config;
     }),
   );
 

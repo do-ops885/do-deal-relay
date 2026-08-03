@@ -155,7 +155,7 @@ jobs:
             }'
 
           npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" \
-            '{"stats":{"active":1,"expired":0,"validated":1},"generated_at":"2026-01-01T00:00:00Z","deals":[]}'
+            --path tests/fixtures/deals-snapshot.json
 
           npx wrangler kv key put --binding DEALS_PROD --local "meta:last_run" \
             '{"run_id":"ci-run","timestamp":"2026-01-01T00:00:00Z","duration_ms":100,"deals_count":1}'

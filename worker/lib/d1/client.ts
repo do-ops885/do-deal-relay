@@ -8,7 +8,7 @@ import type {
   D1PreparedStatement,
 } from "@cloudflare/workers-types";
 import { logger } from "../global-logger";
-import { stripSqlComments } from "./factory";
+import { splitSqlStatements, stripSqlComments } from "./factory";
 
 export {
   createD1Client,
@@ -185,20 +185,14 @@ export class D1Client {
    * Execute a raw SQL statement without parameters
    */
   async raw(sql: string): Promise<{ success: boolean; error?: string }> {
-    const cleanSql = stripSqlComments(sql);
-    if (cleanSql.trim().length === 0) {
+    const statements = splitSqlStatements(stripSqlComments(sql));
+    if (statements.length === 0) return { success: true };
+    return this.executeWithRetry<{ success: boolean }>(async () => {
+      await this.db.batch(
+        statements.map((statement) => this.db.prepare(statement)),
+      );
       return { success: true };
-    }
-    const result = await this.executeWithRetry<{ success: boolean }>(
-      async () => {
-        // Use direct db for exec (not available on session)
-        await (this.db as D1Database).exec(cleanSql);
-        return { success: true };
-      },
-      cleanSql,
-    );
-
-    return result;
+    }, sql);
   }
 
   // ============================================================================

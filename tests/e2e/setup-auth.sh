@@ -8,6 +8,8 @@ set -euo pipefail
 E2E_JWT_TOKEN_FILE="tests/e2e/.jwt-token"
 E2E_JWT_PORT=8788
 E2E_JWT_TIMEOUT=90
+E2E_BASE_URL="${TEST_BASE_URL:-http://localhost:8787}"
+E2E_D1_DATABASE="do-deal-relay"
 
 # ============================================================================
 # Helper: kill background wrangler process on exit
@@ -67,8 +69,98 @@ npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$EXPIRED_HASH" \
 
 echo "✓ E2E test API keys seeded successfully"
 
+# Seed a production snapshot with active deals so /deals, /deals/ranked and
+# /deals/highlights return data instead of 404. The static public/deals.json
+# asset only covers /deals.json; the KV snapshot drives the worker routes.
+echo "Seeding E2E deals snapshot..."
+npx wrangler kv key put --binding DEALS_PROD --local "snapshot:prod" \
+  --path tests/fixtures/deals-snapshot.json
+echo "✓ E2E deals snapshot seeded successfully"
+
 # ============================================================================
-# Step 3: Obtain JWT token
+# Step 3: Seed D1 users required by auth/API-key E2E tests
+# ============================================================================
+# The CI server owns the local D1 instance. Initialize it through the worker,
+# register both test accounts through the public auth API, then promote the
+# admin fixture with a local-only D1 statement. Production auth code is not
+# changed and passwords are still hashed by the registration route.
+seed_d1_users() {
+  local base_url="${1%/}"
+  local init_response
+  local register_response
+  local admin_register_response
+  local promote_response
+  local admin_status
+  local shared_register_response
+
+  if ! curl -sf "${base_url}/health/live" > /dev/null 2>&1; then
+    echo "✗ E2E worker is not reachable at ${base_url}"
+    return 1
+  fi
+
+  echo "Initializing E2E D1 database..."
+  init_response=$(curl -sS -X GET "${base_url}/api/d1/migrations?action=init" \
+    -H "X-API-Key: ddr_admin_test_key_0000000000000000" 2>&1) || true
+  echo "D1 init: ${init_response}"
+  if ! echo "${init_response}" | grep -q '"success"[[:space:]]*:[[:space:]]*true'; then
+    echo "✗ E2E D1 initialization failed"
+    return 1
+  fi
+
+  echo "Registering E2E phase 4 user..."
+  register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"email":"e2e-phase4@example.com","password":"TestPassword123!","name":"Phase 4 E2E User"}' 2>&1) || true
+  echo "Phase 4 registration: ${register_response}"
+  if echo "${register_response}" | grep -q '"error"' && \
+    ! echo "${register_response}" | grep -qi 'already registered'; then
+    echo "✗ Phase 4 user registration failed"
+    return 1
+  fi
+
+  echo "Registering E2E admin user..."
+  admin_register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"email":"admin@example.com","password":"AdminPassword123!","name":"E2E Admin"}' 2>&1) || true
+  echo "Admin registration: ${admin_register_response}"
+  if echo "${admin_register_response}" | grep -q '"error"' && \
+    ! echo "${admin_register_response}" | grep -qi 'already registered'; then
+    echo "✗ E2E admin registration failed"
+    return 1
+  fi
+
+  promote_response=$(npx wrangler d1 execute "${E2E_D1_DATABASE}" --local \
+    --command "UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';" 2>&1) || true
+  echo "Admin role promotion: ${promote_response}"
+  if ! echo "${promote_response}" | grep -q '"success"[[:space:]]*:[[:space:]]*true'; then
+    echo "✗ E2E admin role promotion failed"
+    return 1
+  fi
+
+  admin_status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
+    "${base_url}/api/auth/login" -H "Content-Type: application/json" \
+    -d '{"email":"admin@example.com","password":"AdminPassword123!"}' 2>/dev/null) || true
+  if [ "${admin_status}" != "200" ]; then
+    echo "✗ E2E admin login verification failed (HTTP ${admin_status})"
+    return 1
+  fi
+
+  echo "Registering shared E2E API user..."
+  shared_register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"email":"e2e-test@example.com","password":"test-password-123","name":"E2E Test User"}' 2>&1) || true
+  echo "Shared user registration: ${shared_register_response}"
+  if echo "${shared_register_response}" | grep -q '"error"' && \
+    ! echo "${shared_register_response}" | grep -qi 'already registered'; then
+    echo "✗ Shared E2E user registration failed"
+    return 1
+  fi
+
+  echo "✓ E2E D1 users seeded and admin login verified"
+}
+
+# ============================================================================
+# Step 4: Obtain JWT token
 # ============================================================================
 # Preferred: mint a valid HS256 JWT locally with the known test secret.
 # This is deterministic and does not require a running worker.
@@ -121,24 +213,13 @@ acquire_jwt_token() {
     return 1
   fi
 
-  # Initialize D1 database (creates users table via migrations)
-  echo "Initializing D1 database..."
-  INIT_RESPONSE=$(curl -s -X GET "http://localhost:${E2E_JWT_PORT}/api/d1/migrations?action=init" \
-    -H "X-API-Key: ddr_admin_test_key_0000000000000000" 2>&1) || true
-  echo "D1 init: $INIT_RESPONSE"
+  seed_d1_users "http://localhost:${E2E_JWT_PORT}"
 
-  # Register a test user (idempotent – re-registration returns 400 "already registered")
-  echo "Registering E2E test user..."
-  REGISTER_RESPONSE=$(curl -s -X POST "http://localhost:${E2E_JWT_PORT}/api/auth/register" \
-    -H "Content-Type: application/json" \
-    -d '{"email":"e2e-test@example.com","password":"test-password-123","name":"E2E Test User"}' 2>&1) || true
-  echo "Register: $REGISTER_RESPONSE"
-
-  # Login to obtain JWT access token
-  echo "Logging in E2E test user..."
+  # Login to obtain a separate JWT used by the broader API E2E tests.
+  echo "Logging in E2E phase 4 user..."
   LOGIN_RESPONSE=$(curl -s -X POST "http://localhost:${E2E_JWT_PORT}/api/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"e2e-test@example.com","password":"test-password-123"}' 2>&1) || true
+    -d '{"email":"e2e-phase4@example.com","password":"TestPassword123!"}' 2>&1) || true
   echo "Login: $LOGIN_RESPONSE"
 
   # Extract accessToken from login response
@@ -169,8 +250,18 @@ acquire_jwt_token() {
   echo "✓ E2E JWT token acquisition complete"
 }
 
-acquire_jwt_token_local || acquire_jwt_token || {
-  echo ""
-  echo "⚠ WARNING: JWT token acquisition failed — JWT-based E2E tests will be skipped"
-  echo "  Tests that only need API keys will still run normally."
-}
+if ! seed_d1_users "${E2E_BASE_URL}"; then
+  echo "Falling back to a temporary worker for E2E D1 setup..."
+  if ! acquire_jwt_token; then
+    echo ""
+    echo "⚠ WARNING: E2E D1 setup failed — auth/API-key E2E tests may fail"
+  fi
+fi
+
+if ! acquire_jwt_token_local; then
+  acquire_jwt_token || {
+    echo ""
+    echo "⚠ WARNING: JWT token acquisition failed — JWT-based E2E tests will be skipped"
+    echo "  Tests that only need API keys will still run normally."
+  }
+fi

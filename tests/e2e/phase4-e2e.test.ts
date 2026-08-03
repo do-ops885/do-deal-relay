@@ -14,7 +14,9 @@ import { test, expect } from "@playwright/test";
 // ---------------------------------------------------------------------------
 
 test.describe("Auth Flow — Phase 4", () => {
-  test("should register a new user", async ({ request }) => {
+  test("should register a new user (idempotent across runs)", async ({
+    request,
+  }) => {
     const response = await request.post("/api/auth/register", {
       data: {
         email: "e2e-phase4@example.com",
@@ -22,7 +24,18 @@ test.describe("Auth Flow — Phase 4", () => {
         name: "Phase 4 E2E User",
       },
     });
-    expect(response.status()).toBe(201);
+
+    // setup-auth.sh pre-registers this fixture so the account already exists
+    // on re-runs. A fresh 201 or an "already registered" 400 are both valid
+    // outcomes — the invariant is that the account exists for later tests.
+    if (response.status() === 201) {
+      expect(response.ok()).toBe(true);
+      return;
+    }
+
+    expect(response.status()).toBe(400);
+    const body = (await response.json()) as { error?: string };
+    expect(body.error).toMatch(/already registered/i);
   });
 
   test("should login and receive tokens", async ({ request }) => {
@@ -51,22 +64,18 @@ test.describe("Auth Flow — Phase 4", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("API Key Management — Phase 4", () => {
-  let adminToken: string;
-
-  test.beforeAll(async ({ request }) => {
-    const response = await request.post("/api/auth/login", {
-      data: {
-        email: "admin@example.com",
-        password: "AdminPassword123!",
-      },
-    });
-    const data = await response.json();
-    adminToken = data.accessToken;
-  });
+  // Auth via the deterministic seeded admin API key (setup-auth.sh) instead
+  // of a login-minted JWT: the "should eventually rate limit excessive
+  // requests" test hammers /api/auth/login (10 req/min), and Playwright runs
+  // that hook-free describe before this one — a 429 on a beforeAll login
+  // would surface here as spurious 401s. These tests cover key CRUD, not the
+  // login flow.
+  // biome-ignore lint/security/noSecrets: E2E test fixture, not a real key
+  const ADMIN_API_KEY = "ddr_admin_test_key_0000000000000000";
 
   test("should create a new API key", async ({ request }) => {
     const response = await request.post("/api/admin/keys", {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { "X-API-Key": ADMIN_API_KEY },
       data: {
         userId: "phase4-test-user",
         role: "user",
@@ -82,7 +91,7 @@ test.describe("API Key Management — Phase 4", () => {
 
   test("should list API keys", async ({ request }) => {
     const response = await request.get("/api/admin/keys", {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { "X-API-Key": ADMIN_API_KEY },
     });
     expect(response.status()).toBe(200);
 
@@ -93,7 +102,7 @@ test.describe("API Key Management — Phase 4", () => {
   test("should rotate an API key (NEW-FEAT-4)", async ({ request }) => {
     // First list keys to find one to rotate
     const listResp = await request.get("/api/admin/keys", {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { "X-API-Key": ADMIN_API_KEY },
     });
     const listData = await listResp.json();
     const keys: Array<{ hash: string }> = listData.keys;
@@ -104,7 +113,7 @@ test.describe("API Key Management — Phase 4", () => {
     const response = await request.post(
       `/api/admin/keys/${keyToRotate.hash}/rotate`,
       {
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: { "X-API-Key": ADMIN_API_KEY },
       },
     );
     expect(response.status()).toBe(201);
@@ -116,7 +125,7 @@ test.describe("API Key Management — Phase 4", () => {
 
   test("should revoke an API key", async ({ request }) => {
     const listResp = await request.get("/api/admin/keys", {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: { "X-API-Key": ADMIN_API_KEY },
     });
     const listData = await listResp.json();
     const keys: Array<{ hash: string }> = listData.keys;
@@ -127,7 +136,7 @@ test.describe("API Key Management — Phase 4", () => {
     const response = await request.delete(
       `/api/admin/keys/${keyToRevoke.hash}`,
       {
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: { "X-API-Key": ADMIN_API_KEY },
       },
     );
     expect(response.status()).toBe(200);
