@@ -18,10 +18,26 @@ import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
 import { validatedFetch } from "../security";
 
+/**
+ * Delivery-related magic numbers and system policy constants.
+ */
 const DELIVERY_CONSTANTS = {
+  /**
+   * The maximum error response payload size (10KB) allowed to be read and stored in
+   * the attempt record before being truncated, avoiding potential out-of-memory errors.
+   */
   MAX_ERROR_RESPONSE_SIZE: 10 * 1024, // 10KB
+  /**
+   * Storage expiration TTL (7 days) for a successful/completed webhook delivery record in KV.
+   */
   DELIVERY_RECORD_EXPIRATION_SECONDS: 7 * 24 * 60 * 60, // 7 days
+  /**
+   * Storage expiration TTL (30 days) for failed delivery events placed in the Dead Letter Queue.
+   */
   DLQ_EXPIRATION_SECONDS: 30 * 24 * 60 * 60, // 30 days
+  /**
+   * The maximum upper bound of randomized delay jitter in milliseconds to avoid thundering herds.
+   */
   MAX_JITTER_MS: 1000,
 } as const;
 
