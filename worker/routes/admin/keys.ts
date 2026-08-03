@@ -125,13 +125,19 @@ export async function handleRotateApiKey(
     // Revoke old key
     await revokeApiKey(env, keyHash);
 
-    // Create new key with same config
+    // Create new key with same config. Do not propagate an already-past
+    // expiresAt: it would make storeApiKey put a past expiration and fail
+    // with a 500. A rotated key gets a fresh (unset) expiry instead.
     const config: ApiKeyConfig = {
       key: "",
       userId: existing.userId,
       role: existing.role,
       createdAt: new Date().toISOString(),
-      expiresAt: existing.expiresAt,
+      expiresAt:
+        existing.expiresAt &&
+        new Date(existing.expiresAt).getTime() > Date.now()
+          ? existing.expiresAt
+          : undefined,
       rateLimit: existing.rateLimit || {
         requestsPerMinute: 60,
         requestsPerHour: 1000,

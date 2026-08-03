@@ -1,0 +1,146 @@
+{
+  "version": "0.1.8",
+  "generated_at": "2026-08-02T00:00:00Z",
+  "run_id": "e2e-fixture-snapshot",
+  "trace_id": "e2e-fixture-trace",
+  "snapshot_hash": "e2e-fixture-snapshot-hash",
+  "previous_hash": "",
+  "schema_version": "0.1.8",
+  "stats": {
+    "total": 4,
+    "active": 4,
+    "quarantined": 0,
+    "rejected": 0,
+    "duplicates": 0
+  },
+  "deals": [
+    {
+      "id": "e2e-deal-001",
+      "title": "Get $50 when you open a Trading212 account",
+      "description": "Open a Trading212 Invest account and deposit $1 to get $50 free share",
+      "code": "ABC123",
+      "url": "https://www.trading212.com/referral/ABC123",
+      "source": {
+        "url": "https://www.trading212.com/referral",
+        "domain": "trading212.com",
+        "discovered_at": "2026-07-28T12:00:00Z",
+        "trust_score": 0.95
+      },
+      "reward": {
+        "type": "cash",
+        "value": 50,
+        "currency": "USD",
+        "description": "$50 free share on signup"
+      },
+      "requirements": ["New account", "Minimum $1 deposit"],
+      "expiry": {
+        "date": "2026-09-01T00:00:00Z",
+        "confidence": 0.9,
+        "type": "hard"
+      },
+      "metadata": {
+        "category": ["finance"],
+        "tags": ["brokerage", "stocks", "signup-bonus"],
+        "normalized_at": "2026-07-29T12:00:00Z",
+        "confidence_score": 0.92,
+        "status": "active"
+      }
+    },
+    {
+      "id": "e2e-deal-002",
+      "title": "DoorDash - $30 off first 3 orders",
+      "description": "New customers get $10 off each of their first 3 orders",
+      "code": "DD50OFF",
+      "url": "https://www.doordash.com/consumer/referral/DD50OFF",
+      "source": {
+        "url": "https://www.doordash.com/referral",
+        "domain": "doordash.com",
+        "discovered_at": "2026-08-01T12:00:00Z",
+        "trust_score": 0.75
+      },
+      "reward": {
+        "type": "credit",
+        "value": 30,
+        "currency": "USD",
+        "description": "$10 off each of first 3 orders"
+      },
+      "requirements": ["New customer", "Minimum order $15"],
+      "expiry": {
+        "date": "2026-08-05T00:00:00Z",
+        "confidence": 0.8,
+        "type": "soft"
+      },
+      "metadata": {
+        "category": ["food_delivery"],
+        "tags": ["delivery", "food", "signup-bonus"],
+        "normalized_at": "2026-08-02T00:00:00Z",
+        "confidence_score": 0.78,
+        "status": "active"
+      }
+    },
+    {
+      "id": "e2e-deal-003",
+      "title": "Uber - $20 ride credit",
+      "description": "Get $20 off your first ride when you sign up with referral code",
+      "code": "UBER20",
+      "url": "https://www.uber.com/referral/UBER20",
+      "source": {
+        "url": "https://www.uber.com/referral",
+        "domain": "uber.com",
+        "discovered_at": "2026-07-30T12:00:00Z",
+        "trust_score": 0.88
+      },
+      "reward": {
+        "type": "credit",
+        "value": 20,
+        "currency": "USD",
+        "description": "$20 ride credit for new users"
+      },
+      "requirements": ["New user", "First ride only"],
+      "expiry": {
+        "date": "2026-10-01T00:00:00Z",
+        "confidence": 0.85,
+        "type": "soft"
+      },
+      "metadata": {
+        "category": ["transportation"],
+        "tags": ["rideshare", "signup-bonus"],
+        "normalized_at": "2026-07-31T12:00:00Z",
+        "confidence_score": 0.85,
+        "status": "active"
+      }
+    },
+    {
+      "id": "e2e-deal-004",
+      "title": "Airbnb - $55 off first trip",
+      "description": "New users get $40 off home booking + $15 off experience",
+      "code": "airbnb55",
+      "url": "https://www.airbnb.com/r/airbnb55",
+      "source": {
+        "url": "https://www.airbnb.com/r",
+        "domain": "airbnb.com",
+        "discovered_at": "2026-07-31T12:00:00Z",
+        "trust_score": 0.82
+      },
+      "reward": {
+        "type": "credit",
+        "value": 55,
+        "currency": "USD",
+        "description": "$40 off stay + $15 off experience"
+      },
+      "requirements": ["New account", "First booking"],
+      "expiry": {
+        "date": "2026-09-15T00:00:00Z",
+        "confidence": 0.87,
+        "type": "soft"
+      },
+      "metadata": {
+        "category": ["travel"],
+        "tags": ["vacation", "signup-bonus"],
+        "normalized_at": "2026-08-01T12:00:00Z",
+        "confidence_score": 0.87,
+        "status": "active"
+      }
+    }
+  ]
+}

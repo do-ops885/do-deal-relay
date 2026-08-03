@@ -29,6 +29,90 @@ export function stripSqlComments(sql: string): string {
     .join("\n");
 }
 
+/**
+ * Returns true when the SQL chunk contains nothing but `--` comment lines and
+ * blank lines, so splitSqlStatements never emits comment-only chunks (e.g. a
+ * trailing `-- note;` after a semicolon) as statements.
+ */
+function isCommentOnlyStatement(sql: string): boolean {
+  return sql
+    .split("\n")
+    .every((line) => line.trim().length === 0 || line.trim().startsWith("--"));
+}
+
+/**
+ * Split SQL without breaking quoted values or CREATE TRIGGER bodies.
+ * D1Database.exec is inconsistent across local and remote runtimes when it
+ * receives a large multi-statement string, while batch accepts the same
+ * statements reliably.
+ *
+ * Chunks that contain only `--` comments (for example a trailing `-- note;`
+ * after a semicolon) are dropped rather than emitted as statements.
+ */
+export function splitSqlStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let statement = "";
+  let quote: "'" | '"' | "`" | null = null;
+  let beginDepth = 0;
+  let word = "";
+
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+  const flushWord = (): void => {
+    if (word === "begin") beginDepth += 1;
+    if (word === "end" && beginDepth > 0) beginDepth -= 1;
+    word = "";
+  };
+
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+  const pushStatement = (): void => {
+    const trimmed = statement.trim();
+    if (trimmed && !isCommentOnlyStatement(trimmed)) statements.push(trimmed);
+    statement = "";
+  };
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const character = sql[index];
+    if (!character) continue;
+
+    if (quote) {
+      statement += character;
+      if (character === quote) {
+        const next = sql[index + 1];
+        if (next === quote) {
+          statement += next;
+          index += 1;
+        } else {
+          quote = null;
+        }
+      }
+      continue;
+    }
+
+    if (character === "'" || character === '"' || character === "`") {
+      flushWord();
+      quote = character;
+      statement += character;
+      continue;
+    }
+
+    if (/\w/.test(character)) {
+      word += character.toLowerCase();
+    } else {
+      flushWord();
+    }
+
+    if (character === ";" && beginDepth === 0) {
+      pushStatement();
+    } else {
+      statement += character;
+    }
+  }
+
+  flushWord();
+  pushStatement();
+  return statements;
+}
+
 // ============================================================================
 // Factory Functions
 // ============================================================================

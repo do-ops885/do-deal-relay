@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Mock } from "vitest";
 import {
+  listApiKeys,
   storeApiKey,
   verifyApiKey,
   type ApiKeyConfig,
@@ -185,6 +186,22 @@ describe("Auth", () => {
       });
     });
 
+    it("should fall back to default TTL when expiresAt is in the past", async () => {
+      mockPut.mockResolvedValue(undefined);
+      const pastDate = new Date(Date.now() - 86400000);
+
+      await storeApiKey(mockEnv, {
+        ...baseConfig,
+        key: "",
+        expiresAt: pastDate.toISOString(),
+      });
+
+      const [, , options] = mockPut.mock.calls[0]!;
+      // A past expiration must never reach KV as a past timestamp (wrangler
+      // would reject it with a 500); the 1-year default TTL applies instead.
+      expect(options).toEqual({ expirationTtl: 365 * 86400 });
+    });
+
     it("should preserve all metadata fields", async () => {
       mockPut.mockResolvedValue(undefined);
 
@@ -229,6 +246,77 @@ describe("Auth", () => {
         const metadata = JSON.parse(storedValue as string);
         expect(metadata.role).toBe(role);
       }
+    });
+  });
+
+  // ============================================================================
+  // listApiKeys()
+  // ============================================================================
+
+  describe("listApiKeys()", () => {
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+    const makeMetadata = (
+      overrides: Partial<ApiKeyConfig> = {},
+    ): ApiKeyConfig => ({
+      key: "",
+      userId: "user-123",
+      role: "user",
+      createdAt: new Date().toISOString(),
+      rateLimit: {
+        requestsPerMinute: 60,
+        requestsPerHour: 1000,
+      },
+      ...overrides,
+    });
+
+    it("should return keyHash from metadata when present", async () => {
+      mockList.mockResolvedValue({
+        keys: [{ name: "apikey:test-key-hash-0001" }],
+      });
+      mockGet.mockResolvedValue(
+        makeMetadata({ keyHash: "abcdef1234567890abcdef1234567890" }),
+      );
+
+      const keys = await listApiKeys(mockEnv);
+
+      expect(keys).toHaveLength(1);
+      expect(keys[0]?.keyHash).toBe("abcdef1234567890abcdef1234567890");
+      expect(mockList).toHaveBeenCalledWith({ prefix: "apikey:" });
+    });
+
+    it("should derive keyHash from the KV key name when metadata lacks it", async () => {
+      // Mirrors keys seeded directly into KV by tests/e2e/setup-auth.sh,
+      // whose metadata has no keyHash field.
+      const seededHash =
+        "8440f560ecef5acc8a755f55176b2847008907591fab695d3d2e0fd0255502fe";
+      mockList.mockResolvedValue({
+        keys: [{ name: `apikey:${seededHash}` }],
+      });
+      mockGet.mockResolvedValue(makeMetadata());
+
+      const keys = await listApiKeys(mockEnv);
+
+      expect(keys).toHaveLength(1);
+      expect(keys[0]?.keyHash).toBe(seededHash);
+    });
+
+    it("should filter out KV entries without metadata", async () => {
+      mockList.mockResolvedValue({
+        keys: [
+          { name: "apikey:test-hash-aaaa1111" },
+          { name: "apikey:test-hash-bbbb2222" },
+        ],
+      });
+      mockGet.mockImplementation((name: string) =>
+        name.includes("aaaa")
+          ? Promise.resolve(null)
+          : Promise.resolve(makeMetadata({ keyHash: name.slice(7) })),
+      );
+
+      const keys = await listApiKeys(mockEnv);
+
+      expect(keys).toHaveLength(1);
+      expect(keys[0]?.keyHash).toBe("test-hash-bbbb2222");
     });
   });
 

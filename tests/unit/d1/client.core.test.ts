@@ -282,23 +282,30 @@ describe("d1/client", () => {
 
       const sql = `-- this is a comment\nCREATE TABLE foo (id INTEGER);\n-- another\n`;
 
-      await client.raw(sql);
+      const result = await client.raw(sql);
 
-      const execArg = (mocks.exec as Mock).mock.calls[0]?.[0] as string;
-      expect(execArg).not.toContain("--");
-      expect(execArg).not.toMatch(/^\s*$/m);
-      expect(execArg).toContain("CREATE TABLE foo");
+      expect(result.success).toBe(true);
+      // The cleaned SQL is split into statements and executed via batch.
+      expect(mocks.exec).not.toHaveBeenCalled();
+      expect(mocks.prepare).toHaveBeenCalledWith(
+        "CREATE TABLE foo (id INTEGER)",
+      );
+      expect(mocks.batch).toHaveBeenCalledTimes(1);
     });
 
     it("preserves inline trailing comments after SQL keywords", async () => {
       const { db, mocks } = buildMockDb({ execResult: undefined });
       const client = new D1Client(db);
 
-      await client.raw("SELECT 1 -- inline trailing comment\n");
+      const result = await client.raw("SELECT 1 -- inline trailing comment\n");
 
-      const execArg = (mocks.exec as Mock).mock.calls[0]?.[0] as string;
-      // Behavior: the comment line itself is removed, but the SQL line keeps "SELECT 1"
-      expect(execArg).toContain("SELECT 1");
+      expect(result.success).toBe(true);
+      // Inline comments are preserved inside the statement text.
+      expect(mocks.exec).not.toHaveBeenCalled();
+      expect(mocks.prepare).toHaveBeenCalledWith(
+        "SELECT 1 -- inline trailing comment",
+      );
+      expect(mocks.batch).toHaveBeenCalledTimes(1);
     });
 
     it("returns success without executing when SQL is empty after stripping comments", async () => {
@@ -309,6 +316,8 @@ describe("d1/client", () => {
 
       expect(result.success).toBe(true);
       expect(mocks.exec).not.toHaveBeenCalled();
+      expect(mocks.prepare).not.toHaveBeenCalled();
+      expect(mocks.batch).not.toHaveBeenCalled();
     });
   });
 

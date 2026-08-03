@@ -56,6 +56,7 @@
 - **MCP Server**: Model Context Protocol 2025-11-25 for AI agent integration
 - **Webhook System**: Event notifications with HMAC signature verification
 - **Cron Triggers**: Discovery every 6 hours (`0 */6 * * *`), expiry check at 9am (`0 9 * * *`)
+- **Dashboard PWA**: The `public/` directory is deployed as Cloudflare Workers Static Assets with an installable manifest and service worker.
 
 ---
 
@@ -153,6 +154,21 @@ curl -X POST http://localhost:8787/api/discover
 | `npm run format`     | Format code with Prettier            |
 
 ---
+
+## Dashboard PWA Assets
+
+The public dashboard is installable on supported browsers. Wrangler serves `public/` through the `ASSETS` binding; API routes continue through the Worker router before static asset fallback.
+
+The shell registers `/sw.js`, which caches only same-origin dashboard assets under `/`, `/css/`, and `/js/`. It does not cache API, health, deals, or non-GET requests, so authenticated and live data remain network-bound.
+
+When changing dashboard assets, update the service-worker cache name in `public/sw.js` (for example, `ddr-dashboard-v2`) so clients activate the new shell immediately. Verify deployment with:
+
+```bash
+curl -I https://your-worker.workers.dev/manifest.webmanifest
+curl -I https://your-worker.workers.dev/sw.js
+```
+
+Expected responses are `200 OK` with `application/manifest+json` and a JavaScript content type respectively.
 
 ## 4. KV Namespace Setup
 

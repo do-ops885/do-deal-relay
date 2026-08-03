@@ -14,6 +14,25 @@ import { PipelineExecutorDO } from "./durable-objects/pipeline-executor";
 
 let configValidationPromise: Promise<void> | null = null;
 
+const STATIC_ASSET_PATHS = new Set([
+  "/",
+  "/favicon.ico",
+  "/manifest.webmanifest",
+  "/sw.js",
+  "/icon-192.svg",
+  "/icon-512.svg",
+]);
+
+function isStaticAssetRequest(request: Request): boolean {
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  const path = new URL(request.url).pathname;
+  return (
+    STATIC_ASSET_PATHS.has(path) ||
+    path.startsWith("/css/") ||
+    path.startsWith("/js/")
+  );
+}
+
 async function ensureConfigValidated(env: Env): Promise<void> {
   if (env._validated) return;
   if (!configValidationPromise) {
@@ -55,7 +74,15 @@ export default {
       initGitHubCircuitBreaker(env as unknown as { DEALS_PROD: KVNamespace });
     }
 
-    return handleRequest(request, env, ctx);
+    const response = await handleRequest(request, env, ctx);
+    if (
+      response.status === 404 &&
+      env.ASSETS &&
+      isStaticAssetRequest(request)
+    ) {
+      return env.ASSETS.fetch(request);
+    }
+    return response;
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
