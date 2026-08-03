@@ -254,6 +254,7 @@ describe("Auth", () => {
   // ============================================================================
 
   describe("listApiKeys()", () => {
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
     const makeMetadata = (
       overrides: Partial<ApiKeyConfig> = {},
     ): ApiKeyConfig => ({
@@ -270,7 +271,7 @@ describe("Auth", () => {
 
     it("should return keyHash from metadata when present", async () => {
       mockList.mockResolvedValue({
-        keys: [{ name: "apikey:abcdef1234567890abcdef1234567890" }],
+        keys: [{ name: "apikey:test-key-hash-0001" }],
       });
       mockGet.mockResolvedValue(
         makeMetadata({ keyHash: "abcdef1234567890abcdef1234567890" }),
@@ -302,8 +303,8 @@ describe("Auth", () => {
     it("should filter out KV entries without metadata", async () => {
       mockList.mockResolvedValue({
         keys: [
-          { name: "apikey:aaaa1111aaaa1111aaaa1111aaaa1111" },
-          { name: "apikey:bbbb2222bbbb2222bbbb2222bbbb2222" },
+          { name: "apikey:test-hash-aaaa1111" },
+          { name: "apikey:test-hash-bbbb2222" },
         ],
       });
       mockGet.mockImplementation((name: string) =>
@@ -315,7 +316,7 @@ describe("Auth", () => {
       const keys = await listApiKeys(mockEnv);
 
       expect(keys).toHaveLength(1);
-      expect(keys[0]?.keyHash).toBe("bbbb2222bbbb2222bbbb2222bbbb2222");
+      expect(keys[0]?.keyHash).toBe("test-hash-bbbb2222");
     });
   });
 

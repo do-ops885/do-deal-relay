@@ -56,12 +56,14 @@ export function splitSqlStatements(sql: string): string[] {
   let beginDepth = 0;
   let word = "";
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
   const flushWord = (): void => {
     if (word === "begin") beginDepth += 1;
     if (word === "end" && beginDepth > 0) beginDepth -= 1;
     word = "";
   };
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
   const pushStatement = (): void => {
     const trimmed = statement.trim();
     if (trimmed && !isCommentOnlyStatement(trimmed)) statements.push(trimmed);

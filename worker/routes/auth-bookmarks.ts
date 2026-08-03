@@ -63,7 +63,8 @@ export async function handleBookmarkDeal(
       request,
       env,
     );
-  } catch {
+  } catch (error) {
+    logger.error("Failed to bookmark deal", toErrCtx(error));
     return errorResponse("Invalid request", 400, undefined, request, env);
   }
 }
@@ -110,7 +111,8 @@ export async function handleRemoveBookmark(
     );
 
     return jsonResponse({ message: "Bookmark removed" }, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.error("Failed to remove bookmark", toErrCtx(error));
     return errorResponse("Invalid request", 400, undefined, request, env);
   }
 }
