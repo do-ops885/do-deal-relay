@@ -94,17 +94,37 @@ export const MIGRATIONS_PART_4: Migration[] = [
 
       DROP TABLE IF EXISTS audit_log_old;
 
-      -- Populate users from old api_keys to maintain foreign key integrity (only if api_keys exists)
+      -- Compatibility fix (kept in-place, not a later migration):
+      -- No earlier migration creates the legacy api_keys table, and SQLite
+      -- resolves FROM-table names before evaluating the WHERE EXISTS guards
+      -- below, so fresh databases fail with "no such table: api_keys".
+      -- A later migration cannot repair this: migrations run in version order,
+      -- so version 7 would fail before any higher version ever executes.
+      -- Already-migrated databases skip this migration and are unaffected.
+      CREATE TABLE IF NOT EXISTS api_keys (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key_hash TEXT NOT NULL UNIQUE,
+          user_id TEXT NOT NULL,
+          role TEXT DEFAULT 'user',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          expires_at TEXT,
+          last_used_at TEXT,
+          is_active INTEGER DEFAULT 1,
+          rate_limit_requests_per_minute INTEGER DEFAULT 60,
+          rate_limit_requests_per_hour INTEGER DEFAULT 1000,
+          metadata TEXT
+      );
+
+      -- Populate users from old api_keys to maintain foreign key integrity
       INSERT OR IGNORE INTO users (id, email, name, password_hash, role, is_active)
       SELECT DISTINCT user_id, user_id || '@placeholder.com', 'Legacy User ' || user_id, 'LEGACY_MIGRATED', role, 1
       FROM api_keys
       WHERE EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='api_keys');
 
-      -- Finalize api_keys (only if api_keys exists)
+      -- Finalize api_keys
       INSERT INTO api_keys_new (id, user_id, key_hash, name, permissions, last_used_at, expires_at, created_at)
       SELECT CAST(id AS TEXT), user_id, key_hash, 'Migrated Key', '[]', last_used_at, expires_at, created_at
-      FROM api_keys
-      WHERE EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND name='api_keys');
+      FROM api_keys;
 
       DROP TABLE IF EXISTS api_keys;
       ALTER TABLE api_keys_new RENAME TO api_keys;
