@@ -1,14 +1,41 @@
 import type { Env } from "../types";
+import {
+  executeReferralResearch,
+  convertResearchToReferrals,
+} from "../lib/research-agent";
+import { VERSION } from "../version";
 import { jsonResponse } from "./utils";
 
+const A2A_TASK_PATH = "/a2a";
+const MAX_TASK_DOMAIN_LENGTH = 253;
+const MAX_TASK_QUERY_LENGTH = 240;
+
+interface A2ATaskRequest {
+  jsonrpc?: unknown;
+  id?: unknown;
+  method?: unknown;
+  params?: unknown;
+}
+
+interface A2ATaskParams {
+  domain?: unknown;
+  query?: unknown;
+  depth?: unknown;
+}
+
+interface A2ATaskRecord {
+  id: string;
+  status: "working" | "completed" | "failed";
+  createdAt: string;
+  updatedAt: string;
+  result?: unknown;
+  error?: string;
+}
+
 /**
- * A2A (Agent-to-Agent) Agent Card
+ * A2A (Agent-to-Agent) Agent Card.
  *
  * Exposed at /.well-known/agent.json per the A2A protocol specification.
- * Describes the do-deal-relay agent's identity, capabilities, and interfaces
- * so other agents can discover and interoperate with it.
- *
- * @see https://a2a-protocol.org/spec
  */
 export async function handleA2AAgentCard(
   request: Request,
@@ -21,7 +48,7 @@ export async function handleA2AAgentCard(
       name: "do-deal-relay",
       description:
         "Autonomous deal discovery agent that finds, validates, and publishes referral codes from financial platforms, crypto exchanges, and e-commerce sites.",
-      version: "0.1.9",
+      version: VERSION,
       provider: {
         name: "do-ops885",
         url: "https://github.com/do-ops885/do-deal-relay",
@@ -32,6 +59,7 @@ export async function handleA2AAgentCard(
       a2a: true,
       nlq: true,
       semanticSearch: true,
+      taskDelegation: true,
     },
     interfaces: [
       {
@@ -44,6 +72,7 @@ export async function handleA2AAgentCard(
     ],
     endpoints: {
       api: `${baseUrl}/api`,
+      a2a: `${baseUrl}${A2A_TASK_PATH}`,
       health: `${baseUrl}/health`,
       docs: `${baseUrl}/docs`,
       metrics: `${baseUrl}/metrics`,
@@ -136,4 +165,218 @@ export async function handleA2AAgentCard(
   };
 
   return jsonResponse(card, 200, request, env);
+}
+
+/**
+ * Handle the intentionally small A2A task surface.
+ *
+ * Supported JSON-RPC methods:
+ * - tasks/send: starts a domain research task and returns its completed result
+ * - tasks/get: retrieves a previously stored task by id
+ *
+ * Unsupported methods return a protocol error instead of pretending to
+ * delegate arbitrary tools.
+ */
+export async function handleA2ATask(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse(
+      { error: "A2A task endpoint requires POST" },
+      405,
+      request,
+      env,
+    );
+  }
+
+  let body: A2ATaskRequest;
+  try {
+    body = (await request.json()) as A2ATaskRequest;
+  } catch {
+    return jsonResponse(
+      { error: "Request body must be valid JSON" },
+      400,
+      request,
+      env,
+    );
+  }
+
+  const requestId =
+    typeof body.id === "string" || typeof body.id === "number" ? body.id : null;
+  const method = typeof body.method === "string" ? body.method : "";
+  if (body.jsonrpc !== "2.0" || requestId === null || !method) {
+    return jsonResponse(
+      {
+        jsonrpc: "2.0",
+        id: requestId,
+        error: { code: -32600, message: "Invalid A2A JSON-RPC request" },
+      },
+      400,
+      request,
+      env,
+    );
+  }
+
+  if (method === "tasks/get") {
+    const params = asParams(body.params);
+    const taskId = typeof params.taskId === "string" ? params.taskId : "";
+    if (!taskId)
+      return protocolError(
+        requestId,
+        "taskId is required",
+        -32602,
+        request,
+        env,
+      );
+    const task = await env.DEALS_LOG.get<A2ATaskRecord>(
+      `a2a:task:${taskId}`,
+      "json",
+    );
+    if (!task)
+      return protocolError(requestId, "Task not found", -32004, request, env);
+    return jsonResponse(
+      { jsonrpc: "2.0", id: requestId, result: task },
+      200,
+      request,
+      env,
+    );
+  }
+
+  if (method !== "tasks/send") {
+    return protocolError(
+      requestId,
+      `Unsupported A2A method: ${method}`,
+      -32601,
+      request,
+      env,
+    );
+  }
+
+  const params = asParams(body.params);
+  const taskParams = asTaskParams(params.message ?? params);
+  const domain =
+    typeof taskParams.domain === "string" ? taskParams.domain.trim() : "";
+  const query =
+    typeof taskParams.query === "string"
+      ? taskParams.query.trim()
+      : `${domain} referral`;
+  const depth =
+    taskParams.depth === "quick" ||
+    taskParams.depth === "thorough" ||
+    taskParams.depth === "deep"
+      ? taskParams.depth
+      : "thorough";
+
+  if (
+    !domain ||
+    domain.length > MAX_TASK_DOMAIN_LENGTH ||
+    !isValidDomain(domain)
+  ) {
+    return protocolError(
+      requestId,
+      "A valid domain is required",
+      -32602,
+      request,
+      env,
+    );
+  }
+  if (!query || query.length > MAX_TASK_QUERY_LENGTH) {
+    return protocolError(
+      requestId,
+      "Query is required and must be short",
+      -32602,
+      request,
+      env,
+    );
+  }
+
+  const taskId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const task: A2ATaskRecord = {
+    id: taskId,
+    status: "working",
+    createdAt: now,
+    updatedAt: now,
+  };
+  await env.DEALS_LOG.put(`a2a:task:${taskId}`, JSON.stringify(task), {
+    expirationTtl: 86_400,
+  });
+
+  try {
+    const research = await executeReferralResearch(env, {
+      query,
+      domain,
+      depth,
+      max_results: 20,
+    });
+    const referrals = await convertResearchToReferrals(env, research, 0.5);
+    const completed: A2ATaskRecord = {
+      ...task,
+      status: "completed",
+      updatedAt: new Date().toISOString(),
+      result: {
+        domain,
+        discovered_codes: research.discovered_codes,
+        stored_referrals: referrals.length,
+        research_metadata: research.research_metadata,
+      },
+    };
+    await env.DEALS_LOG.put(`a2a:task:${taskId}`, JSON.stringify(completed), {
+      expirationTtl: 86_400,
+    });
+    return jsonResponse(
+      { jsonrpc: "2.0", id: requestId, result: completed },
+      200,
+      request,
+      env,
+    );
+  } catch (error) {
+    const failed: A2ATaskRecord = {
+      ...task,
+      status: "failed",
+      updatedAt: new Date().toISOString(),
+      error: error instanceof Error ? error.message : "Task failed",
+    };
+    await env.DEALS_LOG.put(`a2a:task:${taskId}`, JSON.stringify(failed), {
+      expirationTtl: 86_400,
+    });
+    return jsonResponse(
+      { jsonrpc: "2.0", id: requestId, result: failed },
+      200,
+      request,
+      env,
+    );
+  }
+}
+
+function asParams(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asTaskParams(value: unknown): A2ATaskParams {
+  return asParams(value) as A2ATaskParams;
+}
+
+function isValidDomain(domain: string): boolean {
+  return /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(
+    domain,
+  );
+}
+
+function protocolError(
+  id: string | number,
+  message: string,
+  code: number,
+  request: Request,
+  env: Env,
+): Response {
+  return jsonResponse(
+    { jsonrpc: "2.0", id, error: { code, message } },
+    400,
+    request,
+    env,
+  );
 }

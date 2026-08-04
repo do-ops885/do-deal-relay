@@ -21,6 +21,32 @@ export interface PipelineCheckpoint {
 export class PipelineExecutorDO extends DurableObject {
   private checkpoint: PipelineCheckpoint | null = null;
 
+  async fetch(request: Request): Promise<Response> {
+    if (
+      request.method !== "POST" ||
+      new URL(request.url).pathname !== "/execute"
+    ) {
+      return new Response("Not found", { status: 404 });
+    }
+
+    let body: { runId?: unknown };
+    try {
+      body = (await request.json()) as { runId?: unknown };
+    } catch {
+      return Response.json(
+        { error: "Request body must be valid JSON" },
+        { status: 400 },
+      );
+    }
+
+    if (typeof body.runId !== "string" || body.runId.length === 0) {
+      return Response.json({ error: "runId is required" }, { status: 400 });
+    }
+
+    const result = await this.executePipeline(body.runId);
+    return Response.json(result);
+  }
+
   async executePipeline(runId: string): Promise<{
     success: boolean;
     phase: PipelinePhase;

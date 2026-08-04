@@ -11,6 +11,45 @@ import type { Env } from "../../types";
 import { jsonResponse, getAllowedOrigin, SECURITY_HEADERS } from "../utils";
 import { toErrCtx } from "../../lib/errors";
 
+const PIPELINE_EXECUTOR_NAME = "discovery-pipeline";
+
+async function executePipelineWithFallback(env: Env): Promise<{
+  success: boolean;
+  phase: string;
+  error?: string;
+}> {
+  if (env.USE_PIPELINE_EXECUTOR !== "true" || !env.PIPELINE_EXECUTOR) {
+    return executePipeline(env);
+  }
+
+  try {
+    const stub = env.PIPELINE_EXECUTOR.getByName(PIPELINE_EXECUTOR_NAME);
+    const result = await stub.fetch("https://pipeline-executor/execute", {
+      method: "POST",
+      body: JSON.stringify({ runId: `http-${crypto.randomUUID()}` }),
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!result.ok)
+      throw new Error(`Pipeline executor returned ${result.status}`);
+    const execution = (await result.json()) as {
+      success: boolean;
+      phase: string;
+      error?: string;
+    };
+    return {
+      success: execution.success,
+      phase: execution.phase,
+      error: execution.error,
+    };
+  } catch (error) {
+    logger.warn("Durable pipeline executor unavailable; using state machine", {
+      component: "pipeline-route",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return executePipeline(env);
+  }
+}
+
 export async function handleDiscover(
   env: Env,
   request?: Request,
@@ -18,7 +57,7 @@ export async function handleDiscover(
 ): Promise<Response> {
   if (ctx) {
     ctx.waitUntil(
-      executePipeline(env).catch((err) => {
+      executePipelineWithFallback(env).catch((err) => {
         logger.error("Background pipeline error", toErrCtx(err));
       }),
     );
@@ -33,7 +72,7 @@ export async function handleDiscover(
     );
   }
   // Fallback: synchronous execution for scheduled/cron triggers
-  const result = await executePipeline(env);
+  const result = await executePipelineWithFallback(env);
   if (result.success) {
     return jsonResponse(
       {

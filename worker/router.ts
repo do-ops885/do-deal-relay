@@ -14,7 +14,7 @@ import {
 } from "./lib/middleware/pipeline";
 import { handleHealth, handleReady, handleLive } from "./routes/core";
 import { handleD1Request } from "./routes/d1";
-import { handleA2AAgentCard } from "./routes/a2a";
+import { handleA2AAgentCard, handleA2ATask } from "./routes/a2a";
 
 /**
  * Initialize pipeline-registered routes.
@@ -61,6 +61,18 @@ function initPipelineRoutes(): void {
       handler: (req, env) => handleA2AAgentCard(req, env),
       auth: "public",
       description: "A2A agent discovery card",
+    },
+    {
+      method: "POST",
+      path: "/a2a",
+      handler: (req, env) => handleA2ATask(req, env),
+      auth: "api-key",
+      rateLimit: {
+        windowSeconds: 60,
+        maxRequests: 20,
+        keyPrefix: "ratelimit:a2a",
+      },
+      description: "Authenticated A2A research task endpoint",
     },
 
     // -----------------------------------------------------------------------

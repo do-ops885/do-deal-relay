@@ -1,5 +1,12 @@
 import { createRouter } from "./router.js";
 import { api, ApiError } from "./api.js";
+import { renderDealsView } from "./deals.js";
+import { renderReferralsView } from "./referrals.js";
+import { renderAnalyticsView } from "./analytics.js";
+import { renderResearchView } from "./research.js";
+import { renderHealthView } from "./health.js";
+
+const DASHBOARD_VERSION = "0.1.8";
 
 const THEME_KEY = "ddr:theme";
 const SIDEBAR_KEY = "ddr:sidebar";
@@ -257,8 +264,6 @@ function createPlaceholderView({ title, subtitle, body }) {
       body ?? "This view will be implemented in a follow-up task.";
     card.appendChild(cardBody);
     mount.appendChild(card);
-
-    return mount;
   };
 }
 
@@ -318,7 +323,7 @@ function initThemeToggle() {
 function initVersionLabel() {
   const el = $(SELECTORS.appVersion);
   if (!el) return;
-  if (!el.textContent) el.textContent = "v0.1.0";
+  if (!el.textContent) el.textContent = `v${DASHBOARD_VERSION}`;
 }
 
 function initNavDelegation() {
@@ -332,38 +337,18 @@ function initNavDelegation() {
   });
 }
 
-function buildStubViews() {
+function buildViews() {
   return {
-    deals: createPlaceholderView({
-      title: "Deals",
-      subtitle: "Browse and filter available deals",
-      body: "Deals view will be implemented by Agent 2 (Deal Management Views).",
-    }),
+    deals: renderDealsView,
+    referrals: renderReferralsView,
+    analytics: renderAnalyticsView,
     "deal-detail": createPlaceholderView({
       title: "Deal Details",
       subtitle: "Detailed information for a single deal",
-      body: "Deal detail view will be implemented by Agent 2 (Deal Management Views).",
+      body: "Select a deal from the Deals view to see its details.",
     }),
-    referrals: createPlaceholderView({
-      title: "Referrals",
-      subtitle: "Track referral codes and conversions",
-      body: "Referrals view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
-    analytics: createPlaceholderView({
-      title: "Analytics",
-      subtitle: "Pipeline performance and trends",
-      body: "Analytics view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
-    research: createPlaceholderView({
-      title: "Research",
-      subtitle: "Domain research and source analysis",
-      body: "Research view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
-    health: createPlaceholderView({
-      title: "System Health",
-      subtitle: "Service status and metrics overview",
-      body: "System health view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
+    research: renderResearchView,
+    health: renderHealthView,
   };
 }
 
@@ -382,10 +367,10 @@ function bootstrap() {
   initVersionLabel();
   initNavDelegation();
 
-  const stubViews = buildStubViews();
+  const views = buildViews();
   const router = createRouter({
     outlet: viewEl,
-    views: stubViews,
+    views,
     notFound: createNotFoundView(),
     onChange: (result) => {
       NavManager.sync(result.name);
@@ -418,7 +403,7 @@ function bootstrap() {
     router,
     registerView: (name, renderer) => router.registerView(name, renderer),
   };
-  window.__ddrStubViews = stubViews;
+  window.__ddrViews = views;
 
   LoadingManager.show();
   router

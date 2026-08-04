@@ -4,6 +4,7 @@ const ENDPOINTS = {
   referrals: "/api/referrals",
   analytics: "/api/analytics",
   health: "/health",
+  research: (domain) => `/api/research/${encodeURIComponent(domain)}`,
   metrics: "/metrics",
 };
 
@@ -166,6 +167,13 @@ async function getAnalytics({ signal } = {}) {
   return request(ENDPOINTS.analytics, { signal });
 }
 
+async function getResearchResults(domain, { signal } = {}) {
+  if (!domain || typeof domain !== "string") {
+    throw new ApiError("Domain is required", { status: 400, type: "client" });
+  }
+  return request(ENDPOINTS.research(domain), { signal });
+}
+
 async function getHealth({ signal } = {}) {
   try {
     return await request(ENDPOINTS.health, { signal });
@@ -186,6 +194,7 @@ export const api = {
   getDeal,
   getReferrals,
   getAnalytics,
+  getResearchResults,
   getHealth,
   getMetrics,
 };

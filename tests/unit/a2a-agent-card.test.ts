@@ -86,7 +86,7 @@ describe("handleA2AAgentCard", () => {
 
       const agent = body.agent as Record<string, unknown>;
       expect(agent.name).toBe("do-deal-relay");
-      expect(agent.version).toBe("0.1.9");
+      expect(agent.version).toBe("0.1.8");
     });
 
     it("should have a non-empty description", async () => {
@@ -298,14 +298,15 @@ describe("handleA2AAgentCard", () => {
   });
 
   describe("endpoints", () => {
-    it("should list all 6 expected endpoint keys", async () => {
+    it("should list all 7 expected endpoint keys", async () => {
       const request = new Request("https://example.com/.well-known/agent.json");
       const response = await handleA2AAgentCard(request, mockEnv());
       const body = (await parseBody(response)) as Record<string, unknown>;
 
       const endpoints = body.endpoints as Record<string, string>;
-      expect(Object.keys(endpoints)).toHaveLength(6);
+      expect(Object.keys(endpoints)).toHaveLength(7);
       expect(endpoints.api).toBeDefined();
+      expect(endpoints.a2a).toBeDefined();
       expect(endpoints.health).toBeDefined();
       expect(endpoints.docs).toBeDefined();
       expect(endpoints.metrics).toBeDefined();

@@ -2,6 +2,7 @@ import { CONFIG } from "../../config";
 import { logger } from "../global-logger";
 import { toError } from "../sanitize-error";
 import type { ExtractedContent } from "./extractor";
+import { runWorkersAI } from "../ai-gateway/workers-ai";
 
 export interface ResearchSummary {
   deal_title: string;
@@ -133,7 +134,13 @@ function generateSummary(
 }
 
 async function summarizeWithAI(
-  env: { AI?: Ai },
+  env: {
+    AI?: Ai;
+    AI_GATEWAY_URL?: string;
+    AI_GATEWAY_ENABLED?: string;
+    AI_GATEWAY_API_KEY?: string;
+    AI_GATEWAY_MODEL?: string;
+  },
   content: string,
   url: string,
 ): Promise<ResearchSummary | null> {
@@ -157,7 +164,7 @@ Return ONLY valid JSON with these exact fields:
 }`;
 
   try {
-    const result = await (env.AI.run as AiRunFn)(AI_MODEL, {
+    const result = await runWorkersAI(env, AI_MODEL, {
       prompt,
       max_tokens: CONFIG.NLQ_AI_MAX_TOKENS_LONG,
       temperature: 0.2,

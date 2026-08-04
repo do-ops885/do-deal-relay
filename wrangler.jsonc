@@ -143,6 +143,10 @@
         "name": "DEAL_REGISTRY",
         "class_name": "DealRegistry",
       },
+      {
+        "name": "PIPELINE_EXECUTOR",
+        "class_name": "PipelineExecutorDO",
+      },
     ],
   },
   // NOTE: No migrations needed — DOs are already deployed and provisioned.
@@ -159,6 +163,10 @@
       "storage": "sqlite",
     },
     "DealRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PipelineExecutorDO": {
       "type": "durable-object",
       "storage": "sqlite",
     },
@@ -326,6 +334,10 @@
           {
             "name": "DEAL_REGISTRY",
             "class_name": "DealRegistry",
+          },
+          {
+            "name": "PIPELINE_EXECUTOR",
+            "class_name": "PipelineExecutorDO",
           },
         ],
       },

@@ -59,6 +59,9 @@ export interface Env {
   WEBHOOK_API_KEYS?: KVNamespace;
   AI?: Ai;
   AI_GATEWAY_URL: string;
+  AI_GATEWAY_ENABLED?: string;
+  AI_GATEWAY_API_KEY?: string;
+  AI_GATEWAY_MODEL?: string;
   ENVIRONMENT: string;
   GITHUB_REPO: string;
   GITHUB_TOKEN?: string;
@@ -96,6 +99,7 @@ export interface Env {
   PIPELINE_LOCK?: DurableObjectNamespace;
   SOURCE_REGISTRY?: DurableObjectNamespace;
   DEAL_REGISTRY?: DurableObjectNamespace;
+  USE_PIPELINE_EXECUTOR?: string;
   PIPELINE_EXECUTOR?: DurableObjectNamespace;
   ASSETS?: {
     fetch(request: Request): Promise<Response>;
