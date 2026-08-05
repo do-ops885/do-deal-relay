@@ -20,8 +20,11 @@ import { validatedFetch } from "../security";
 
 /**
  * Delivery-related magic numbers and system policy constants.
+ *
+ * Holds system configuration parameters for outgoing webhook dispatch and retry attempts,
+ * including error response size limits, record expiration durations, and exponential backoff jitter.
  */
-const DELIVERY_CONSTANTS = {
+export const DELIVERY_CONSTANTS = {
   /**
    * The maximum error response payload size (10KB) allowed to be read and stored in
    * the attempt record before being truncated, avoiding potential out-of-memory errors.

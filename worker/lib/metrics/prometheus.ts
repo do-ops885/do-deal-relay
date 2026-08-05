@@ -379,6 +379,9 @@ export function logPrometheusExport(metrics: PipelineMetrics): void {
 
 /**
  * Prometheus text exporter constants exported for routing and external layers.
+ *
+ * Provides central access to standard Prometheus Content-Type header formats
+ * and default latency histogram buckets (in seconds) mapped to phase performance tracking.
  */
 export const PROMETHEUS_CONSTANTS = {
   /**
