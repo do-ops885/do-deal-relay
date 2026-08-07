@@ -151,8 +151,10 @@ export async function getRecentStructuredLogs(
     const prefix = STRUCTURED_LOG_PREFIX;
     const listResult = await env.DEALS_LOG.list({ prefix });
 
+    // Performance optimization: direct string lexicographical comparison (< and >)
+    // is significantly faster than localeCompare and avoids locale-aware collation overhead.
     const sortedKeys = listResult.keys
-      .sort((a, b) => b.name.localeCompare(a.name))
+      .sort((a, b) => (b.name < a.name ? -1 : b.name > a.name ? 1 : 0))
       .slice(0, count)
       .map((k) => k.name);
 
