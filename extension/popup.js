@@ -5,43 +5,42 @@
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // State Management
   const state = {
     currentTab: null,
     detections: [],
     selectedDetection: null,
     settings: {
-      apiEndpoint: "http://localhost:8787", // Default local dev endpoint
+      apiEndpoint: "http://localhost:8787",
     },
   };
 
-  // DOM Element References
+  const get = (id) => document.getElementById(id);
   const elements = {
-    pageTitle: document.getElementById("page-title"),
-    pageUrl: document.getElementById("page-url"),
-    favicon: document.getElementById("favicon"),
-    scanStatus: document.getElementById("scan-status"),
-    detectionsSection: document.getElementById("detections-section"),
-    detectionList: document.getElementById("detection-list"),
-    captureBtn: document.getElementById("capture-btn"),
-    manualSection: document.getElementById("manual-section"),
-    manualCode: document.getElementById("manual-code"),
-    manualBtn: document.getElementById("manual-btn"),
-    settingsPanel: document.getElementById("settings-panel"),
-    settingsLink: document.getElementById("settings-link"),
-    apiEndpoint: document.getElementById("api-endpoint"),
-    saveSettingsBtn: document.getElementById("save-settings-btn"),
-    refreshBtn: document.getElementById("refresh-btn"),
-    toast: document.getElementById("toast"),
-    statCaptured: document.getElementById("stat-captured"),
-    statSubmitted: document.getElementById("stat-submitted"),
-    statSuccess: document.getElementById("stat-success"),
-    manualCodeError: document.getElementById("manual-code-error"),
-    copyDetectedBtn: document.getElementById("copy-detected-btn"),
-    copyManualBtn: document.getElementById("copy-manual-btn"),
+    pageTitle: get("page-title"),
+    pageUrl: get("page-url"),
+    favicon: get("favicon"),
+    scanStatus: get("scan-status"),
+    detectionsSection: get("detections-section"),
+    detectionList: get("detection-list"),
+    captureBtn: get("capture-btn"),
+    manualSection: get("manual-section"),
+    manualCode: get("manual-code"),
+    manualBtn: get("manual-btn"),
+    settingsPanel: get("settings-panel"),
+    settingsLink: get("settings-link"),
+    apiEndpoint: get("api-endpoint"),
+    saveSettingsBtn: get("save-settings-btn"),
+    refreshBtn: get("refresh-btn"),
+    toast: get("toast"),
+    statCaptured: get("stat-captured"),
+    statSubmitted: get("stat-submitted"),
+    statSuccess: get("stat-success"),
+    manualCodeError: get("manual-code-error"),
+    copyDetectedBtn: get("copy-detected-btn"),
+    copyManualBtn: get("copy-manual-btn"),
+    apiEndpointError: get("api-endpoint-error"),
   };
 
-  // Initialization
   async function init() {
     await loadSettings();
 
@@ -57,18 +56,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners();
   }
 
-  // Settings Management
+  function validateApiEndpoint(urlStr, forceShow = false) {
+    let isValid = false;
+    try {
+      const url = new URL(urlStr);
+      isValid = url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      isValid = false;
+    }
+
+    const shouldShowError =
+      urlStr.length > 0 && (forceShow || urlStr.length > 5);
+
+    if (shouldShowError) {
+      elements.apiEndpoint.classList.toggle("invalid", !isValid);
+      elements.apiEndpointError.classList.toggle("hidden", isValid);
+      elements.apiEndpoint.setAttribute("aria-invalid", (!isValid).toString());
+    } else {
+      elements.apiEndpoint.classList.remove("invalid");
+      elements.apiEndpointError.classList.add("hidden");
+      elements.apiEndpoint.removeAttribute("aria-invalid");
+    }
+
+    elements.saveSettingsBtn.disabled = !isValid;
+    return isValid;
+  }
+
   async function loadSettings() {
     const result = await chrome.storage.sync.get(["apiEndpoint"]);
     if (result.apiEndpoint) {
       state.settings.apiEndpoint = result.apiEndpoint;
     }
     elements.apiEndpoint.value = state.settings.apiEndpoint;
+    validateApiEndpoint(state.settings.apiEndpoint, false);
   }
 
   async function saveSettings() {
     const endpoint = elements.apiEndpoint.value.trim();
-    if (!endpoint) {
+    if (!validateApiEndpoint(endpoint, true)) {
       showToast("Please enter a valid API endpoint", "error");
       return;
     }
@@ -79,7 +104,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     toggleSettings();
   }
 
-  // Page Information
   function updatePageInfo(tab) {
     elements.pageTitle.textContent = tab.title || "Unknown";
     try {
@@ -87,7 +111,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch {
       elements.pageUrl.textContent = "Invalid URL";
     }
-
     let faviconSet = false;
     if (tab.favIconUrl) {
       try {
@@ -98,24 +121,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ) {
           const img = document.createElement("img");
           img.src = faviconUrl.href;
-          img.width = 32;
-          img.height = 32;
+          img.width = img.height = 32;
           img.style.borderRadius = "6px";
-          img.alt = ""; // Decorative image
+          img.alt = "";
           elements.favicon.textContent = "";
           elements.favicon.appendChild(img);
           faviconSet = true;
         }
-      } catch {
-        // Fallback handled by !faviconSet below
-      }
+      } catch {}
     }
-    if (!faviconSet) {
-      elements.favicon.textContent = "🌐";
-    }
+    if (!faviconSet) elements.favicon.textContent = "🌐";
   }
 
-  // Detection Handling
   async function requestDetections(tab) {
     updateScanStatus("scanning", "Scanning for referral codes...");
     try {
@@ -218,26 +235,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateScanStatus(status, text) {
-    const indicatorClass =
+    const indClass =
       status === "found"
         ? "found"
         : status === "scanning"
           ? "scanning"
           : "none";
     elements.scanStatus.textContent = "";
-
     const indicator = document.createElement("div");
-    indicator.className = `status-indicator ${indicatorClass}`;
-
+    indicator.className = `status-indicator ${indClass}`;
     const statusText = document.createElement("span");
     statusText.className = "status-text";
     statusText.textContent = text;
-
     elements.scanStatus.appendChild(indicator);
     elements.scanStatus.appendChild(statusText);
   }
 
-  // Capture Functionality
   async function captureSelected() {
     if (!state.selectedDetection) {
       showToast("Please select a referral code first", "error");
@@ -308,7 +321,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // API Submission
   async function submitReferral(data) {
     const payload = {
       code: data.code,
@@ -342,7 +354,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return response;
   }
 
-  // Stats Management
   async function loadStats() {
     const stats = await chrome.storage.local.get([
       "captured",
@@ -361,15 +372,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById(`stat-${key}`).textContent = value;
   }
 
-  // UI Helpers
   function showToast(message, type = "") {
-    const toast = elements.toast;
-    toast.textContent = message;
-    toast.className = `toast ${type}`;
-    toast.classList.add("show");
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3000);
+    elements.toast.textContent = message;
+    elements.toast.className = `toast ${type} show`;
+    setTimeout(() => elements.toast.classList.remove("show"), 3000);
   }
 
   async function copyToClipboard(text, buttonElement) {
@@ -418,17 +424,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.settingsLink.setAttribute("aria-expanded", isActive.toString());
 
     if (isActive) {
+      validateApiEndpoint(elements.apiEndpoint.value.trim(), false);
       elements.apiEndpoint.focus();
     } else {
       elements.settingsLink.focus();
     }
   }
 
-  // Event Listeners
   function validateManualCode(code, forceShow = false) {
     const isValid = /^[A-Z0-9]{4,20}$/i.test(code);
     const shouldShowError = code.length > 0 && (forceShow || code.length >= 4);
-
     if (shouldShowError) {
       elements.manualCode.classList.toggle("invalid", !isValid);
       elements.manualCodeError.classList.toggle("hidden", isValid);
@@ -438,7 +443,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       elements.manualCodeError.classList.add("hidden");
       elements.manualCode.removeAttribute("aria-invalid");
     }
-
     elements.manualBtn.disabled = !isValid;
     elements.copyManualBtn.disabled = !isValid;
     return isValid;
@@ -467,21 +471,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     elements.copyDetectedBtn.addEventListener("click", () => {
-      if (state.selectedDetection) {
+      if (state.selectedDetection)
         copyToClipboard(state.selectedDetection.code, elements.copyDetectedBtn);
-      }
     });
 
     elements.copyManualBtn.addEventListener("click", () => {
       const code = elements.manualCode.value.trim();
-      if (code) {
-        copyToClipboard(code.toUpperCase(), elements.copyManualBtn);
-      }
+      if (code) copyToClipboard(code.toUpperCase(), elements.copyManualBtn);
     });
 
     elements.settingsLink.addEventListener("click", (e) => {
       e.preventDefault();
       toggleSettings();
+    });
+
+    elements.apiEndpoint.addEventListener("input", (e) => {
+      validateApiEndpoint(e.target.value.trim(), false);
+    });
+
+    elements.apiEndpoint.addEventListener("blur", (e) => {
+      validateApiEndpoint(e.target.value.trim(), true);
+    });
+
+    elements.apiEndpoint.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && !elements.saveSettingsBtn.disabled) {
+        saveSettings();
+      }
     });
 
     elements.saveSettingsBtn.addEventListener("click", saveSettings);
@@ -493,6 +508,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Start
   init().catch(console.error);
 });
