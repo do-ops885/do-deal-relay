@@ -379,6 +379,7 @@ export function logPrometheusExport(metrics: PipelineMetrics): void {
 
 /**
  * Prometheus text exporter constants exported for routing and external layers.
+ * Houses metrics export configuration constants.
  */
 export const PROMETHEUS_CONSTANTS = {
   /**

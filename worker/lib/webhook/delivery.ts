@@ -20,6 +20,7 @@ import { validatedFetch } from "../security";
 
 /**
  * Delivery-related magic numbers and system policy constants.
+ * Includes payloads size limits, TTL expiration properties, and jitter parameters.
  */
 const DELIVERY_CONSTANTS = {
   /**
