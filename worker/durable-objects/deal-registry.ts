@@ -324,9 +324,10 @@ export class DealRegistry {
    */
   async getStats(): Promise<Record<DealStatus | "total", number>> {
     const rows = this.sql
-      .exec<{ status: string; cnt: number }>(
-        `SELECT status, COUNT(*) as cnt FROM deals GROUP BY status`,
-      )
+      .exec<{
+        status: string;
+        cnt: number;
+      }>(`SELECT status, COUNT(*) as cnt FROM deals GROUP BY status`)
       .toArray();
 
     let total = 0;

@@ -27,12 +27,26 @@ readonly MIN_TRUST_SCORE=0.3
 readonly MIN_CONFIDENCE_SCORE=0.5
 readonly MAX_REWARD_VALUE=10000
 
-# Git/PR configuration
+# Git/PR/Commit Limits
 readonly MAX_COMMIT_SUBJECT_LENGTH=72
+readonly MAX_PR_TITLE_LENGTH=150
+readonly MAX_PR_BODY_LENGTH=1000
 ```
 
 ## Runtime Safety Constraints (Guard Rails)
-Enforced in `worker/lib/guard-rails.ts`.
+Enforced in `worker/lib/guard-rails.ts` and git hooks.
+
+### Hard Stop / Non-Bypassable Conditions
+The following violations CANNOT be bypassed under any circumstances and will result in fatal stop:
+1. **Direct Push**: Pushing directly to protected branches `main` or `develop`.
+2. **Secrets Detection**: Staged code containing potential security secrets, tokens, or credentials (e.g., `ghp_`, `sk_`, private keys).
+3. **Hardcoded Credentials**: Non-environment passwords or private keys in source code.
+
+### Standard Bypassable Conditions
+Standard violations (e.g., TypeScript errors, unit test failures, validation warnings, or file size limits) may only be bypassed using `git commit --no-verify` or `git push --no-verify` IF the agent complies with the **Never-Bypass Validation System**:
+1. Type EXACT confirmation: `I understand and accept the risks`
+2. Provide a minimum **20-character** written justification explaining the emergency.
+3. Allow the bypass to be logged in `.git/guard-rail-audit/bypasses.log`.
 
 ### Resource Limits
 - **Max Deals per Run**: 1000 (`CONFIG.MAX_DEALS_PER_RUN`)
