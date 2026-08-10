@@ -258,8 +258,8 @@ export function validateRedirect(url: string): boolean {
     // 5. Check for common open redirect bypasses (multiple slashes, path traversal, userinfo)
     const urlWithoutProtocol = url.slice(protocolPrefix.length);
     const dangerousPatterns = [
-      /\/\/+/g, // Multiple slashes (e.g. //attacker.com)
-      /\.\./g, // Path traversal (e.g. /../)
+      /\/{2,}/, // Multiple slashes (e.g. //attacker.com)
+      /\.\./, // Path traversal (e.g. /../)
       /^\/\//, // Protocol-relative at the start of remainder
       /@/, // Userinfo in URL (e.g. user:pass@domain.com)
     ];
