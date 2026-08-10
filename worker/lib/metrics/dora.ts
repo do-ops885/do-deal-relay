@@ -219,7 +219,9 @@ function computeDailyBreakdown(metrics: PipelineMetrics[]): DailyBreakdown[] {
     });
   }
 
-  breakdown.sort((a, b) => a.date.localeCompare(b.date));
+  // Performance optimization: direct string lexicographical comparison (< and >)
+  // is significantly faster than localeCompare and avoids locale-aware collation overhead.
+  breakdown.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return breakdown;
 }
 

@@ -302,9 +302,11 @@ export class RequestManager {
     url: string,
     options: FetchOptions,
   ): Promise<string> {
+    // Performance optimization: direct string lexicographical comparison (< and >)
+    // is significantly faster than localeCompare and avoids locale-aware collation overhead.
     const sortedHeaders = options.headers
       ? Object.entries(options.headers)
-          .sort(([a], [b]) => a.localeCompare(b))
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
           .map(([k, v]) => `${k}:${v}`)
           .join("|")
       : "";
