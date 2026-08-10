@@ -473,7 +473,8 @@
         margin-bottom: 10px;
       }
 
-      .manual-input.invalid {
+      .manual-input.invalid,
+      .settings-input.invalid {
         border-color: #ef4444;
       }
 
@@ -641,7 +642,15 @@
             class="settings-input"
             id="api-endpoint"
             placeholder="https://your-worker.workers.dev"
+            aria-describedby="api-endpoint-error"
           />
+        </div>
+        <div
+          id="api-endpoint-error"
+          class="error-text hidden"
+          aria-live="polite"
+        >
+          Please enter a valid HTTP or HTTPS URL (e.g. http://localhost:8787)
         </div>
         <button class="btn btn-secondary" id="save-settings-btn">
           Save Settings
