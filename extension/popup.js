@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const codeSource = document.createElement("span");
       codeSource.className = "code-source";
-      codeSource.textContent = d.source.replace("_", " ");
+      codeSource.textContent = d.source.replaceAll("_", " ");
 
       info.appendChild(codeValue);
       info.appendChild(codeSource);
@@ -462,7 +462,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.manualCode.addEventListener("blur", (e) => {
       validateManualCode(e.target.value, true);
     });
-    elements.manualCode.addEventListener("keypress", (e) => {
+    elements.manualCode.addEventListener("keydown", (e) => {
       if (e.key === "Enter") captureManual();
     });
 
