@@ -286,26 +286,104 @@ describe("Webhook Delivery", () => {
       expect(kv.storage.has(`webhook_dlq:${event.id}:${sub.id}`)).toBe(true);
     });
 
-    it("should calculate backoff within bounds and include jitter", () => {
-      const policy = {
-        initial_delay_ms: 1000,
-        backoff_multiplier: 2,
-        max_delay_ms: 10000,
-      };
+    // ============================================================================
+    // calculateBackoff() Tests
+    // ============================================================================
 
-      // Attempt 1: 1000 * 2^0 + jitter(0-1000) = 1000-2000
-      const b1 = calculateBackoff(1, policy);
-      expect(b1).toBeGreaterThanOrEqual(1000);
-      expect(b1).toBeLessThanOrEqual(2000);
+    describe("calculateBackoff()", () => {
+      it("should calculate backoff within bounds and include jitter", () => {
+        const policy = {
+          initial_delay_ms: 1000,
+          backoff_multiplier: 2,
+          max_delay_ms: 10000,
+        };
 
-      // Attempt 2: 1000 * 2^1 + jitter(0-1000) = 2000-3000
-      const b2 = calculateBackoff(2, policy);
-      expect(b2).toBeGreaterThanOrEqual(2000);
-      expect(b2).toBeLessThanOrEqual(3000);
+        // Attempt 1: 1000 * 2^0 + jitter(0-1000) = 1000-2000
+        const b1 = calculateBackoff(1, policy);
+        expect(b1).toBeGreaterThanOrEqual(1000);
+        expect(b1).toBeLessThanOrEqual(2000);
 
-      // Attempt 5 (Cap): 1000 * 2^4 + jitter = 16000 + jitter -> capped at 10000
-      const b5 = calculateBackoff(5, policy);
-      expect(b5).toBe(10000);
+        // Attempt 2: 1000 * 2^1 + jitter(0-1000) = 2000-3000
+        const b2 = calculateBackoff(2, policy);
+        expect(b2).toBeGreaterThanOrEqual(2000);
+        expect(b2).toBeLessThanOrEqual(3000);
+
+        // Attempt 5 (Cap): 1000 * 2^4 + jitter = 16000 + jitter -> capped at 10000
+        const b5 = calculateBackoff(5, policy);
+        expect(b5).toBe(10000);
+      });
+
+      it("should scale progression exponentially according to the multiplier", () => {
+        const policy = {
+          initial_delay_ms: 500,
+          backoff_multiplier: 3,
+          max_delay_ms: 50000,
+        };
+
+        // Mock random values to get deterministic zero jitter
+        const getRandomValuesSpy = vi
+          .spyOn(globalThis.crypto, "getRandomValues")
+          .mockImplementation((array: any) => {
+            array[0] = 0;
+            return array;
+          });
+
+        try {
+          // Attempt 1: 500 * 3^0 = 500
+          expect(calculateBackoff(1, policy)).toBe(500);
+          // Attempt 2: 500 * 3^1 = 1500
+          expect(calculateBackoff(2, policy)).toBe(1500);
+          // Attempt 3: 500 * 3^2 = 4500
+          expect(calculateBackoff(3, policy)).toBe(4500);
+          // Attempt 4: 500 * 3^3 = 13500
+          expect(calculateBackoff(4, policy)).toBe(13500);
+        } finally {
+          getRandomValuesSpy.mockRestore();
+        }
+      });
+
+      it("should strictly cap the calculated delay at max_delay_ms", () => {
+        const policy = {
+          initial_delay_ms: 1000,
+          backoff_multiplier: 10,
+          max_delay_ms: 5000,
+        };
+
+        // Even with attempt 10 (extremely large delay) it must be capped at 5000
+        const delay = calculateBackoff(10, policy);
+        expect(delay).toBe(5000);
+
+        // Even with attempt 1 where base * multiplier is small, but max_delay_ms is even smaller
+        const policySmallCap = {
+          initial_delay_ms: 1000,
+          backoff_multiplier: 2,
+          max_delay_ms: 500,
+        };
+        expect(calculateBackoff(1, policySmallCap)).toBe(500);
+      });
+
+      it("should distribute randomized jitter properly within mathematical bounds and exhibit variance", () => {
+        const policy = {
+          initial_delay_ms: 1000,
+          backoff_multiplier: 2,
+          max_delay_ms: 10000,
+        };
+
+        const results: number[] = [];
+        const iterations = 50;
+
+        for (let i = 0; i < iterations; i++) {
+          // Attempt 2: 2000 + jitter (0 to 1000 ms)
+          const delay = calculateBackoff(2, policy);
+          expect(delay).toBeGreaterThanOrEqual(2000);
+          expect(delay).toBeLessThanOrEqual(3000);
+          results.push(delay);
+        }
+
+        // Check for distribution variance (results should not be all identical)
+        const uniqueResults = new Set(results);
+        expect(uniqueResults.size).toBeGreaterThan(1);
+      });
     });
   });
 
