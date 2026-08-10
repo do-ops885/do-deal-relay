@@ -198,6 +198,24 @@ function allowedOriginsCheck(
   );
 }
 
+// Security: Define patterns to detect dangerous characters (control characters,
+// backslashes, tabs, null bytes, and their URL-encoded or double-encoded variants)
+// to prevent browser-specific parser differentials, CRLF injections, and bypasses.
+const DANGEROUS_CHARS_RE = /[\x00-\x1f\x7f]/;
+const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
+const ENCODED_BACKSLASH_RE = /%5[cC]/i;
+const DOUBLE_ENCODING_RE = /%25(?:0[0-9a-f]|1[0-9a-f]|5[cC]|7[fF])/i;
+
+function hasDangerousChars(url: string): boolean {
+  return (
+    DANGEROUS_CHARS_RE.test(url) ||
+    ENCODED_CONTROL_RE.test(url) ||
+    ENCODED_BACKSLASH_RE.test(url) ||
+    DOUBLE_ENCODING_RE.test(url) ||
+    url.includes("\\")
+  );
+}
+
 /**
  * Allowed domains for redirects
  */
@@ -208,21 +226,48 @@ export const ALLOWED_REDIRECT_DOMAINS = [
 ];
 
 /**
- * Validate redirect URL to prevent open redirects
+ * Validate redirect URL to prevent open redirects and SSRF bypasses.
+ * Rejects control characters, encoded bypasses, path traversal, userinfo, and multiple slashes.
  */
 export function validateRedirect(url: string): boolean {
   try {
+    // 1. Block dangerous characters (CRLF, backslashes, null bytes, etc.)
+    if (hasDangerousChars(url)) {
+      return false;
+    }
+
     const parsed = new URL(url);
     const hostname = parsed.hostname.replace(/^www\./, "");
 
-    // Allow localhost only if protocol is http or https
+    // 2. Allow localhost only if protocol is http or https
     if (hostname === "localhost") {
       return parsed.protocol === "http:" || parsed.protocol === "https:";
     }
 
-    // Must be HTTPS for production domains
+    // 3. Must be HTTPS for production domains
     if (parsed.protocol !== "https:") {
       return false;
+    }
+
+    // 4. Ensure we have a valid protocol prefix start to avoid protocol-relative or relative bypasses
+    const protocolPrefix = parsed.protocol + "//";
+    if (!url.startsWith(protocolPrefix)) {
+      return false;
+    }
+
+    // 5. Check for common open redirect bypasses (multiple slashes, path traversal, userinfo)
+    const urlWithoutProtocol = url.slice(protocolPrefix.length);
+    const dangerousPatterns = [
+      /\/{2,}/, // Multiple slashes (e.g. //attacker.com)
+      /\.\./, // Path traversal (e.g. /../)
+      /^\/\//, // Protocol-relative at the start of remainder
+      /@/, // Userinfo in URL (e.g. user:pass@domain.com)
+    ];
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(urlWithoutProtocol)) {
+        return false;
+      }
     }
 
     return ALLOWED_REDIRECT_DOMAINS.includes(hostname);

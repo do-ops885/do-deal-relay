@@ -53,8 +53,63 @@ describe("Route Utilities", () => {
   });
 
   it("should validate redirects", () => {
-    expect(typeof validateRedirect("https://example.com")).toBe("boolean");
+    // Valid allowed redirect domains
+    expect(validateRedirect("https://do-deal-relay.com")).toBe(true);
+    expect(validateRedirect("https://do-deal-relay.pages.dev")).toBe(true);
+    expect(validateRedirect("https://localhost")).toBe(true);
+    expect(validateRedirect("http://localhost")).toBe(true);
+    expect(validateRedirect("https://www.do-deal-relay.com")).toBe(true); // leading www. is stripped and allowed
+
+    // Invalid/unallowed redirect domains
+    expect(validateRedirect("https://example.com")).toBe(false);
     expect(validateRedirect("javascript:alert(1)")).toBe(false);
     expect(validateRedirect("not-a-url")).toBe(false);
+
+    // Unsafe: Protocols other than HTTPS (except localhost)
+    expect(validateRedirect("http://do-deal-relay.com")).toBe(false);
+
+    // Security Hardening: Block dangerous characters
+    expect(validateRedirect("https://do-deal-relay.com\\attacker.com")).toBe(
+      false,
+    );
+    expect(validateRedirect("https://do-deal-relay.com\x00attacker.com")).toBe(
+      false,
+    );
+    expect(
+      validateRedirect(
+        "https://do-deal-relay.com\x0d\x0aLocation: https://attacker.com",
+      ),
+    ).toBe(false);
+
+    // Security Hardening: Block URL-encoded and double-encoded dangerous characters
+    expect(validateRedirect("https://do-deal-relay.com%5cattacker.com")).toBe(
+      false,
+    );
+    expect(validateRedirect("https://do-deal-relay.com%00attacker.com")).toBe(
+      false,
+    );
+    expect(
+      validateRedirect(
+        "https://do-deal-relay.com%0d%0aLocation: https://attacker.com",
+      ),
+    ).toBe(false);
+    expect(validateRedirect("https://do-deal-relay.com%255cattacker.com")).toBe(
+      false,
+    );
+
+    // Security Hardening: Block userinfo, path traversal, multiple slashes, and protocol-relative bypasses
+    expect(validateRedirect("https://do-deal-relay.com@attacker.com")).toBe(
+      false,
+    );
+    expect(validateRedirect("https://do-deal-relay.com/../attacker.com")).toBe(
+      false,
+    );
+    expect(validateRedirect("https://do-deal-relay.com//attacker.com")).toBe(
+      false,
+    );
+    expect(
+      validateRedirect("https://do-deal-relay.com/path//to/resource"),
+    ).toBe(false);
+    expect(validateRedirect("//do-deal-relay.com")).toBe(false);
   });
 });
