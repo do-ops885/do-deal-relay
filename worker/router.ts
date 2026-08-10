@@ -65,7 +65,7 @@ function initPipelineRoutes(): void {
     {
       method: "POST",
       path: "/a2a",
-      handler: (req, env) => handleA2ATask(req, env),
+      handler: (req, env, _params, ctx) => handleA2ATask(req, env, ctx),
       auth: "api-key",
       rateLimit: {
         windowSeconds: 60,
@@ -113,7 +113,7 @@ export async function handleRequest(
     // ── Centralized Pipeline (ADR-016) ──────────────────────────────────
     // Try the pipeline first. If a route matches, the pipeline handles it
     // with the full middleware stack. If no match, fall through to legacy.
-    const pipelineResponse = await handlePipelineRequest(request, env);
+    const pipelineResponse = await handlePipelineRequest(request, env, ctx);
     if (pipelineResponse) {
       return withResponseTiming(pipelineResponse, request, env, startTime);
     }

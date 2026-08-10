@@ -8,6 +8,40 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const E2E_FIXTURES_DIR = fileURLToPath(new URL(".", import.meta.url));
+const ADMIN_API_KEY_PATH = resolve(E2E_FIXTURES_DIR, ".admin-api-key");
+const AUTH_FIXTURE_PATH = resolve(E2E_FIXTURES_DIR, ".auth-fixtures");
+
+type AuthFixtureName = "PHASE4_PASSWORD" | "ADMIN_PASSWORD";
+
+function getAuthFixture(name: AuthFixtureName): string {
+  if (!existsSync(AUTH_FIXTURE_PATH)) {
+    throw new Error(
+      "E2E auth fixture is missing; run tests/e2e/setup-auth.sh first",
+    );
+  }
+  const entry = readFileSync(AUTH_FIXTURE_PATH, "utf8")
+    .split("\\n")
+    .find((line) => line.startsWith(`${name}=`));
+  const value = entry?.slice(name.length + 1).trim();
+  if (!value) throw new Error(`E2E auth fixture ${name} is empty`);
+  return value;
+}
+
+function getAdminApiKey(): string {
+  if (!existsSync(ADMIN_API_KEY_PATH)) {
+    throw new Error(
+      "E2E admin API key fixture is missing; run tests/e2e/setup-auth.sh first",
+    );
+  }
+  const key = readFileSync(ADMIN_API_KEY_PATH, "utf8").trim();
+  if (!key) throw new Error("E2E admin API key fixture is empty");
+  return key;
+}
 
 // ---------------------------------------------------------------------------
 // Auth Flow Tests
@@ -20,7 +54,7 @@ test.describe("Auth Flow — Phase 4", () => {
     const response = await request.post("/api/auth/register", {
       data: {
         email: "e2e-phase4@example.com",
-        password: "TestPassword123!",
+        password: getAuthFixture("PHASE4_PASSWORD"),
         name: "Phase 4 E2E User",
       },
     });
@@ -42,7 +76,7 @@ test.describe("Auth Flow — Phase 4", () => {
     const response = await request.post("/api/auth/login", {
       data: {
         email: "e2e-phase4@example.com",
-        password: "TestPassword123!",
+        password: getAuthFixture("PHASE4_PASSWORD"),
       },
     });
     expect(response.status()).toBe(200);
@@ -70,12 +104,9 @@ test.describe("API Key Management — Phase 4", () => {
   // that hook-free describe before this one — a 429 on a beforeAll login
   // would surface here as spurious 401s. These tests cover key CRUD, not the
   // login flow.
-  // biome-ignore lint/security/noSecrets: E2E test fixture, not a real key
-  const ADMIN_API_KEY = "ddr_admin_test_key_0000000000000000";
-
   test("should create a new API key", async ({ request }) => {
     const response = await request.post("/api/admin/keys", {
-      headers: { "X-API-Key": ADMIN_API_KEY },
+      headers: { "X-API-Key": getAdminApiKey() },
       data: {
         userId: "phase4-test-user",
         role: "user",
@@ -91,7 +122,7 @@ test.describe("API Key Management — Phase 4", () => {
 
   test("should list API keys", async ({ request }) => {
     const response = await request.get("/api/admin/keys", {
-      headers: { "X-API-Key": ADMIN_API_KEY },
+      headers: { "X-API-Key": getAdminApiKey() },
     });
     expect(response.status()).toBe(200);
 
@@ -102,7 +133,7 @@ test.describe("API Key Management — Phase 4", () => {
   test("should rotate an API key (NEW-FEAT-4)", async ({ request }) => {
     // First list keys to find one to rotate
     const listResp = await request.get("/api/admin/keys", {
-      headers: { "X-API-Key": ADMIN_API_KEY },
+      headers: { "X-API-Key": getAdminApiKey() },
     });
     const listData = await listResp.json();
     const keys: Array<{ hash: string }> = listData.keys;
@@ -113,7 +144,7 @@ test.describe("API Key Management — Phase 4", () => {
     const response = await request.post(
       `/api/admin/keys/${keyToRotate.hash}/rotate`,
       {
-        headers: { "X-API-Key": ADMIN_API_KEY },
+        headers: { "X-API-Key": getAdminApiKey() },
       },
     );
     expect(response.status()).toBe(201);
@@ -125,7 +156,7 @@ test.describe("API Key Management — Phase 4", () => {
 
   test("should revoke an API key", async ({ request }) => {
     const listResp = await request.get("/api/admin/keys", {
-      headers: { "X-API-Key": ADMIN_API_KEY },
+      headers: { "X-API-Key": getAdminApiKey() },
     });
     const listData = await listResp.json();
     const keys: Array<{ hash: string }> = listData.keys;
@@ -136,7 +167,7 @@ test.describe("API Key Management — Phase 4", () => {
     const response = await request.delete(
       `/api/admin/keys/${keyToRevoke.hash}`,
       {
-        headers: { "X-API-Key": ADMIN_API_KEY },
+        headers: { "X-API-Key": getAdminApiKey() },
       },
     );
     expect(response.status()).toBe(200);
@@ -155,7 +186,7 @@ test.describe("Rate Limiting — Phase 4", () => {
     const response = await request.post("/api/auth/login", {
       data: {
         email: "e2e-phase4@example.com",
-        password: "TestPassword123!",
+        password: getAuthFixture("PHASE4_PASSWORD"),
       },
     });
     const limitHeader = response.headers()["x-ratelimit-limit"];
@@ -173,7 +204,7 @@ test.describe("Rate Limiting — Phase 4", () => {
       const response = await request.post("/api/auth/login", {
         data: {
           email: "e2e-phase4@example.com",
-          password: "wrong-password",
+          password: `${getAuthFixture("PHASE4_PASSWORD")}-invalid`,
         },
       });
       if (response.status() === 429) {
@@ -195,7 +226,7 @@ test.describe("Rate Limiting — Phase 4", () => {
     const loginResp = await request.post("/api/auth/login", {
       data: {
         email: "admin@example.com",
-        password: "AdminPassword123!",
+        password: getAuthFixture("ADMIN_PASSWORD"),
       },
     });
 

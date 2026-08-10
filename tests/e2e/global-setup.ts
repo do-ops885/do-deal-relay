@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,19 +22,10 @@ export default async function globalSetup() {
     writeFileSync(resolve(root, ".dev.vars"), example);
   }
 
-  // Seed KV with test API keys and obtain JWT token.
-  // Prefer the deterministic local JWT mint; fall back to the bash setup
-  // script (which can spin up a temporary wrangler dev server) if needed.
-  console.log("Seeding E2E test API keys and obtaining JWT token...");
-  try {
-    execSync("node tests/e2e/generate-jwt.mjs", {
-      cwd: root,
-      stdio: "inherit",
-    });
-  } catch {
-    console.warn("⚠ Local JWT mint failed — falling back to setup-auth.sh");
-    execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
-  }
+  // Seed all E2E fixtures and obtain a JWT token. The setup script generates
+  // per-run credentials so tests never embed reusable passwords or API keys.
+  console.log("Seeding E2E fixtures and obtaining JWT token...");
+  execSync("bash tests/e2e/setup-auth.sh", { cwd: root, stdio: "inherit" });
 
   // Verify JWT token file is valid and leave it for tests to read.
   // Playwright global-setup runs in a separate process; env vars set here

@@ -171,7 +171,7 @@ export async function handleA2AAgentCard(
  * Handle the intentionally small A2A task surface.
  *
  * Supported JSON-RPC methods:
- * - tasks/send: starts a domain research task and returns its completed result
+ * - tasks/send: starts a domain research task and returns its working task record
  * - tasks/get: retrieves a previously stored task by id
  *
  * Unsupported methods return a protocol error instead of pretending to
@@ -180,6 +180,7 @@ export async function handleA2AAgentCard(
 export async function handleA2ATask(
   request: Request,
   env: Env,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   if (request.method !== "POST") {
     return jsonResponse(
@@ -303,11 +304,39 @@ export async function handleA2ATask(
     expirationTtl: 86_400,
   });
 
+  const completion = completeA2ATask(env, task, {
+    query,
+    domain,
+    depth,
+  });
+  if (ctx) {
+    ctx.waitUntil(completion);
+  } else {
+    await completion;
+  }
+
+  return jsonResponse(
+    { jsonrpc: "2.0", id: requestId, result: task },
+    202,
+    request,
+    env,
+  );
+}
+
+async function completeA2ATask(
+  env: Env,
+  task: A2ATaskRecord,
+  params: {
+    query: string;
+    domain: string;
+    depth: "quick" | "thorough" | "deep";
+  },
+): Promise<void> {
   try {
     const research = await executeReferralResearch(env, {
-      query,
-      domain,
-      depth,
+      query: params.query,
+      domain: params.domain,
+      depth: params.depth,
       max_results: 20,
     });
     const referrals = await convertResearchToReferrals(env, research, 0.5);
@@ -316,21 +345,15 @@ export async function handleA2ATask(
       status: "completed",
       updatedAt: new Date().toISOString(),
       result: {
-        domain,
+        domain: params.domain,
         discovered_codes: research.discovered_codes,
         stored_referrals: referrals.length,
         research_metadata: research.research_metadata,
       },
     };
-    await env.DEALS_LOG.put(`a2a:task:${taskId}`, JSON.stringify(completed), {
+    await env.DEALS_LOG.put(`a2a:task:${task.id}`, JSON.stringify(completed), {
       expirationTtl: 86_400,
     });
-    return jsonResponse(
-      { jsonrpc: "2.0", id: requestId, result: completed },
-      200,
-      request,
-      env,
-    );
   } catch (error) {
     const failed: A2ATaskRecord = {
       ...task,
@@ -338,15 +361,9 @@ export async function handleA2ATask(
       updatedAt: new Date().toISOString(),
       error: error instanceof Error ? error.message : "Task failed",
     };
-    await env.DEALS_LOG.put(`a2a:task:${taskId}`, JSON.stringify(failed), {
+    await env.DEALS_LOG.put(`a2a:task:${task.id}`, JSON.stringify(failed), {
       expirationTtl: 86_400,
     });
-    return jsonResponse(
-      { jsonrpc: "2.0", id: requestId, result: failed },
-      200,
-      request,
-      env,
-    );
   }
 }
 

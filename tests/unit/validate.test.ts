@@ -48,18 +48,21 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 describe("Validation Pipeline", () => {
-  const createContext = (): PipelineContext => ({
-    run_id: "test-run",
-    trace_id: "test-trace",
-    start_time: Date.now(),
-    candidates: [],
-    normalized: [],
-    deduped: [],
-    validated: [],
-    scored: [],
-    errors: [],
-    retry_count: 0,
-  });
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+  function createContext(): PipelineContext {
+    return {
+      run_id: "test-run",
+      trace_id: "test-trace",
+      start_time: Date.now(),
+      candidates: [],
+      normalized: [],
+      deduped: [],
+      validated: [],
+      scored: [],
+      errors: [],
+      retry_count: 0,
+    };
+  }
 
   const mockEnv = {
     DEALS_PROD: {

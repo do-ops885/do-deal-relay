@@ -52,14 +52,18 @@ export async function checkDealUrlHealth(
     : DEFAULT_HEALTH_CHECK_CONCURRENCY;
   const effectiveConcurrency = Math.max(1, requestedConcurrency);
 
-  const timeoutSignal = () => {
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+  function timeoutSignal(): {
+    signal: AbortSignal;
+    cleanup: () => void;
+  } {
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
     return { signal: controller.signal, cleanup: () => clearTimeout(timeout) };
-  };
+  }
 
   // Process in batches with concurrency limit.
   for (let i = 0; i < deals.length; i += effectiveConcurrency) {

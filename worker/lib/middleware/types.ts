@@ -69,6 +69,7 @@ export type RouteHandler = (
   request: Request,
   env: Env,
   params: RouteParams,
+  ctx?: ExecutionContext,
 ) => Promise<Response>;
 
 // ============================================================================
@@ -105,6 +106,7 @@ export type MiddlewareFn = (
   env: Env,
   config: RouteConfig,
   params: RouteParams,
+  ctx?: ExecutionContext,
 ) => Promise<Response | null>;
 
 /**

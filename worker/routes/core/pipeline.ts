@@ -23,7 +23,8 @@ async function executePipelineWithFallback(env: Env): Promise<{
   }
 
   try {
-    const stub = env.PIPELINE_EXECUTOR.getByName(PIPELINE_EXECUTOR_NAME);
+    const executorId = env.PIPELINE_EXECUTOR.idFromName(PIPELINE_EXECUTOR_NAME);
+    const stub = env.PIPELINE_EXECUTOR.get(executorId);
     const result = await stub.fetch("https://pipeline-executor/execute", {
       method: "POST",
       body: JSON.stringify({ runId: `http-${crypto.randomUUID()}` }),

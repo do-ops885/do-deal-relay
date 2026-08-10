@@ -3,9 +3,12 @@
 {
   "name": "do-deal-relay",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-06-13",
+  "compatibility_date": "2026-08-10",
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
+  "ai": {
+    "binding": "AI",
+  },
   // Static dashboard and PWA assets. API routes remain handled by the Worker.
   "assets": {
     "directory": "./public",
@@ -102,6 +105,7 @@
     "ENVIRONMENT": "production",
     "GITHUB_REPO": "do-ops885/do-deal-relay",
     "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+    "AI_GATEWAY_ENABLED": "false",
     "TRUST_THRESHOLD": "0.3",
     "NOTIFICATION_THRESHOLD": "100",
     "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -110,8 +114,6 @@
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
-    // JWT auth secret for local dev / E2E (overridden by real secret in prod via wrangler secret)
-    "JWT_SECRET": "e2e-test-jwt-secret-do-not-use-in-prod",
   },
   "secrets": {
     "required": [
@@ -189,6 +191,7 @@
         "ENVIRONMENT": "development",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
         "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
         "TRUST_THRESHOLD": "0.1",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -212,6 +215,7 @@
         "ENVIRONMENT": "staging",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
         "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
         "TRUST_THRESHOLD": "0.25",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",
@@ -266,10 +270,14 @@
     // Production environment (explicitly defined for --env production flag)
     "production": {
       "name": "do-deal-relay",
+      "ai": {
+        "binding": "AI",
+      },
       "vars": {
         "ENVIRONMENT": "production",
         "GITHUB_REPO": "do-ops885/do-deal-relay",
         "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
         "TRUST_THRESHOLD": "0.3",
         "NOTIFICATION_THRESHOLD": "100",
         "CANDIDATE_BUDGET_GLOBAL": "500",

@@ -1,4 +1,28 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
+
+const AUTH_FIXTURE_PATH = resolve(
+  fileURLToPath(new URL(".", import.meta.url)),
+  ".auth-fixtures",
+);
+
+type AuthFixtureName = "ADMIN_API_KEY" | "USER_API_KEY" | "EXPIRED_API_KEY";
+
+function getAuthFixture(name: AuthFixtureName): string {
+  if (!existsSync(AUTH_FIXTURE_PATH)) {
+    throw new Error(
+      "E2E auth fixture is missing; run tests/e2e/setup-auth.sh first",
+    );
+  }
+  const entry = readFileSync(AUTH_FIXTURE_PATH, "utf8")
+    .split("\\n")
+    .find((line) => line.startsWith(`${name}=`));
+  const value = entry?.slice(name.length + 1).trim();
+  if (!value) throw new Error(`E2E auth fixture ${name} is empty`);
+  return value;
+}
 
 /**
  * E2E tests for API Authentication and Authorization
@@ -6,11 +30,9 @@ import { test, expect } from "@playwright/test";
  * role-based access control, and expiration.
  */
 
-// biome-ignore-start lint/security/noSecrets: test fixtures, not real keys
-const ADMIN_KEY = "ddr_admin_test_key_0000000000000000";
-const USER_KEY = "ddr_user_test_key_0000000000000000";
-const EXPIRED_KEY = "ddr_expired_test_key_0000000000000000";
-// biome-ignore-end lint/security/noSecrets
+const ADMIN_KEY = getAuthFixture("ADMIN_API_KEY");
+const USER_KEY = getAuthFixture("USER_API_KEY");
+const EXPIRED_KEY = getAuthFixture("EXPIRED_API_KEY");
 
 test.describe("Authentication (401)", () => {
   test("GET /metrics returns 401 when unauthenticated", async ({ request }) => {

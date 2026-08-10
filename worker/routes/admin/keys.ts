@@ -4,14 +4,9 @@
  * Handles POST /api/admin/keys, GET /api/admin/keys, DELETE /api/admin/keys/:hash
  */
 
-import { Env } from "../../types";
-import {
-  storeApiKey,
-  listApiKeys,
-  revokeApiKey,
-  ApiKeyConfig,
-  hashApiKey,
-} from "../../lib/auth";
+import type { Env } from "../../types";
+import { storeApiKey, listApiKeys, revokeApiKey } from "../../lib/auth";
+import type { ApiKeyConfig } from "../../lib/auth";
 import { jsonResponse } from "../utils";
 
 export async function handleCreateApiKey(
@@ -138,10 +133,7 @@ export async function handleRotateApiKey(
         new Date(existing.expiresAt).getTime() > Date.now()
           ? existing.expiresAt
           : undefined,
-      rateLimit: existing.rateLimit || {
-        requestsPerMinute: 60,
-        requestsPerHour: 1000,
-      },
+      rateLimit: existing.rateLimit,
     };
 
     const newApiKey = await storeApiKey(env, config);

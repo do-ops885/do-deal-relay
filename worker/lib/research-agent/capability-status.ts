@@ -41,9 +41,10 @@ export async function getResearchCapabilityStatus(
 
   // Check which API keys are configured
   const apiKeysConfigured: string[] = [];
-  const checkKey = (key: string | undefined, name: string) => {
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: Qwik-specific rule; not a Qwik codebase
+  function checkKey(key: string | undefined, name: string): void {
     if (key && key.length > 0) apiKeysConfigured.push(name);
-  };
+  }
   checkKey(
     (env as { PRODUCTHUNT_API_TOKEN?: string }).PRODUCTHUNT_API_TOKEN,
     "PRODUCTHUNT_API_TOKEN",

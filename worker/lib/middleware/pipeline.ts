@@ -159,6 +159,7 @@ export async function executePipeline(
   request: Request,
   env: Env,
   match: RouteMatch,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   const { config, params } = match;
 
@@ -190,7 +191,7 @@ export async function executePipeline(
 
   // 6. Execute handler
   try {
-    const response = await config.handler(request, env, params);
+    const response = await config.handler(request, env, params, ctx);
     return response;
   } catch (error) {
     logger.error("Pipeline handler error", {
@@ -215,11 +216,12 @@ export async function executePipeline(
 export async function handlePipelineRequest(
   request: Request,
   env: Env,
+  ctx?: ExecutionContext,
 ): Promise<Response | null> {
   const url = new URL(request.url);
   const match = matchRoute(request.method, url.pathname);
 
   if (!match) return null;
 
-  return executePipeline(request, env, match);
+  return executePipeline(request, env, match, ctx);
 }

@@ -1,14 +1,102 @@
-import { describe, it, expect } from "vitest";
-import { handleA2AAgentCard } from "../../worker/routes/a2a";
+import { describe, it, expect, vi } from "vitest";
+import {
+  convertResearchToReferrals,
+  executeReferralResearch,
+} from "../../worker/lib/research-agent";
+import { handleA2AAgentCard, handleA2ATask } from "../../worker/routes/a2a";
 import type { Env } from "../../worker/types";
+
+vi.mock("../../worker/lib/research-agent", () => ({
+  convertResearchToReferrals: vi.fn(),
+  executeReferralResearch: vi.fn(),
+}));
 
 function mockEnv(): Env {
   return {} as unknown as Env;
 }
 
+type ResearchResult = Awaited<ReturnType<typeof executeReferralResearch>>;
+
+function mockTaskEnv(): { env: Env; values: Map<string, string> } {
+  const values = new Map<string, string>();
+  const env = {
+    DEALS_LOG: {
+      async get<T>(key: string, type?: string): Promise<T | null> {
+        const value = values.get(key);
+        if (value === undefined) return null;
+        return (type === "json" ? JSON.parse(value) : value) as T;
+      },
+      async put(key: string, value: string): Promise<void> {
+        values.set(key, value);
+      },
+    },
+  } as unknown as Env;
+  return { env, values };
+}
+
 function parseBody(response: Response): Promise<unknown> {
   return response.json();
 }
+
+describe("handleA2ATask", () => {
+  it("returns a working task and schedules completion with waitUntil", async () => {
+    const { env, values } = mockTaskEnv();
+    let resolveResearch: ((value: ResearchResult) => void) | undefined;
+    vi.mocked(executeReferralResearch).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveResearch = resolve;
+      }) as ReturnType<typeof executeReferralResearch>,
+    );
+    vi.mocked(convertResearchToReferrals).mockResolvedValueOnce([]);
+
+    const scheduled: Promise<void>[] = [];
+    const ctx = {
+      waitUntil(promise: Promise<void>) {
+        scheduled.push(promise);
+      },
+    } as unknown as ExecutionContext;
+    const request = new Request("https://example.com/a2a", {
+      method: "POST",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "task-1",
+        method: "tasks/send",
+        params: { domain: "example.com", query: "find referral codes" },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const response = await handleA2ATask(request, env, ctx);
+    const body = (await response.json()) as {
+      result: { id: string; status: string };
+    };
+
+    expect(response.status).toBe(202);
+    expect(body.result.status).toBe("working");
+    expect(scheduled).toHaveLength(1);
+    expect(values.get(`a2a:task:${body.result.id}`)).toContain(
+      '"status":"working"',
+    );
+    expect(convertResearchToReferrals).not.toHaveBeenCalled();
+
+    resolveResearch?.({
+      query: "find referral codes",
+      domain: "example.com",
+      discovered_codes: [],
+      research_metadata: {
+        sources_checked: [],
+        search_queries: [],
+        research_duration_ms: 0,
+        agent_id: "test-agent",
+      },
+    });
+    await scheduled[0];
+    expect(convertResearchToReferrals).toHaveBeenCalled();
+    expect(values.get(`a2a:task:${body.result.id}`)).toContain(
+      '"status":"completed"',
+    );
+  });
+});
 
 describe("handleA2AAgentCard", () => {
   describe("response basics", () => {

@@ -8,9 +8,21 @@ import { fileURLToPath } from "node:url";
  * Tests the Deal Discovery System using Playwright
  */
 
-// biome-ignore-start lint/security/noSecrets: test fixtures, not real keys
-const API_KEY = "ddr_admin_test_key_0000000000000000";
-// biome-ignore-end lint/security/noSecrets
+const ADMIN_API_KEY_PATH = resolve(
+  fileURLToPath(new URL(".", import.meta.url)),
+  ".admin-api-key",
+);
+
+function getApiKey(): string {
+  if (!existsSync(ADMIN_API_KEY_PATH)) {
+    throw new Error(
+      "E2E admin API key fixture is missing; run tests/e2e/setup-auth.sh first",
+    );
+  }
+  const key = readFileSync(ADMIN_API_KEY_PATH, "utf8").trim();
+  if (!key) throw new Error("E2E admin API key fixture is empty");
+  return key;
+}
 
 const JWT_TOKEN_PATH = resolve(
   fileURLToPath(new URL(".", import.meta.url)),
@@ -96,10 +108,10 @@ test.describe("Health Endpoints", () => {
 });
 
 test.describe("Deals API", () => {
-  const authHeaders = { "X-API-Key": API_KEY };
+  const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /deals returns deals list", async ({ request }) => {
-    const response = await request.get("/deals", { headers: authHeaders });
+    const response = await request.get("/deals", { headers: authHeaders() });
 
     expect(response.status()).toBe(200);
 
@@ -109,7 +121,9 @@ test.describe("Deals API", () => {
   });
 
   test("GET /deals.json returns raw deals", async ({ request }) => {
-    const response = await request.get("/deals.json", { headers: authHeaders });
+    const response = await request.get("/deals.json", {
+      headers: authHeaders(),
+    });
 
     expect(response.status()).toBe(200);
 
@@ -124,7 +138,7 @@ test.describe("Deals API", () => {
 
   test("GET /deals supports filtering by category", async ({ request }) => {
     const response = await request.get("/deals?category=finance", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -136,7 +150,7 @@ test.describe("Deals API", () => {
 
   test("GET /deals supports pagination with limit", async ({ request }) => {
     const response = await request.get("/deals?limit=5", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -149,11 +163,11 @@ test.describe("Deals API", () => {
 });
 
 test.describe("Ranked Deals API", () => {
-  const authHeaders = { "X-API-Key": API_KEY };
+  const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /deals/ranked returns ranked deals", async ({ request }) => {
     const response = await request.get("/deals/ranked", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -169,7 +183,7 @@ test.describe("Ranked Deals API", () => {
     request,
   }) => {
     const response = await request.get("/deals/ranked?sort_by=confidence", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -181,7 +195,7 @@ test.describe("Ranked Deals API", () => {
 
   test("GET /deals/highlights returns featured deals", async ({ request }) => {
     const response = await request.get("/deals/highlights", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -195,13 +209,13 @@ test.describe("Ranked Deals API", () => {
 });
 
 test.describe("Protected API Endpoints", () => {
-  const authHeaders = { "X-API-Key": API_KEY };
+  const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /api/analytics returns analytics data (requires auth)", async ({
     request,
   }) => {
     const response = await request.get("/api/analytics", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -214,7 +228,7 @@ test.describe("Protected API Endpoints", () => {
     request,
   }) => {
     const response = await request.get("/api/status", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -227,7 +241,7 @@ test.describe("Protected API Endpoints", () => {
     request,
   }) => {
     const response = await request.get("/api/log", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);
@@ -241,7 +255,7 @@ test.describe("Protected API Endpoints", () => {
     request,
   }) => {
     const response = await request.get("/metrics?format=json", {
-      headers: authHeaders,
+      headers: authHeaders(),
     });
 
     expect(response.status()).toBe(200);

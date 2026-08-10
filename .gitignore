@@ -25,6 +25,8 @@ coverage/
 test-results/
 playwright-report/
 tests/e2e/.jwt-token
+tests/e2e/.admin-api-key
+tests/e2e/.auth-fixtures
 
 # Wrangler
 .wrangler/

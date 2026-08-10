@@ -10,6 +10,8 @@ E2E_JWT_PORT=8788
 E2E_JWT_TIMEOUT=90
 E2E_BASE_URL="${TEST_BASE_URL:-http://localhost:8787}"
 E2E_D1_DATABASE="do-deal-relay"
+E2E_ADMIN_KEY_FILE="tests/e2e/.admin-api-key"
+E2E_AUTH_FIXTURE_FILE="tests/e2e/.auth-fixtures"
 
 # ============================================================================
 # Helper: kill background wrangler process on exit
@@ -52,18 +54,27 @@ ensure_dev_vars
 # ============================================================================
 echo "Seeding E2E test API keys..."
 
-# Admin Key: ddr_admin_test_key_0000000000000000
-ADMIN_HASH="36c3c6ac0ed11d5c316838ec88764dba53d2f790446970e30cc50d30afa79a3c"
+# Generate per-run fixtures instead of embedding reusable credentials.
+ADMIN_API_KEY="${E2E_ADMIN_API_KEY:-ddr_$(openssl rand -hex 16)}"
+USER_API_KEY="${E2E_USER_API_KEY:-ddr_$(openssl rand -hex 16)}"
+EXPIRED_API_KEY="${E2E_EXPIRED_API_KEY:-ddr_$(openssl rand -hex 16)}"
+PHASE4_PASSWORD="${E2E_PHASE4_PASSWORD:-E2EPhase4_$(openssl rand -hex 16)}"
+ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-E2EAdmin_$(openssl rand -hex 16)}"
+SHARED_PASSWORD="${E2E_SHARED_PASSWORD:-E2EShared_$(openssl rand -hex 16)}"
+mkdir -p "$(dirname "$E2E_ADMIN_KEY_FILE")"
+printf '%s\n' "$ADMIN_API_KEY" > "$E2E_ADMIN_KEY_FILE"
+printf 'ADMIN_API_KEY=%s\nUSER_API_KEY=%s\nEXPIRED_API_KEY=%s\nPHASE4_PASSWORD=%s\nADMIN_PASSWORD=%s\n' \
+  "$ADMIN_API_KEY" "$USER_API_KEY" "$EXPIRED_API_KEY" \
+  "$PHASE4_PASSWORD" "$ADMIN_PASSWORD" > "$E2E_AUTH_FIXTURE_FILE"
+ADMIN_HASH=$(printf '%s' "$ADMIN_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
+USER_HASH=$(printf '%s' "$USER_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
+EXPIRED_HASH=$(printf '%s' "$EXPIRED_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
 npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$ADMIN_HASH" \
   '{"userId":"e2e-admin","role":"admin","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":100,"requestsPerHour":5000}}'
 
-# User Key: ddr_user_test_key_0000000000000000
-USER_HASH="6d06b29066b183fe10b2978d8e3ad5c2bac0f57740c7f1978fba0edec32dc414"
 npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$USER_HASH" \
   '{"userId":"e2e-user","role":"user","createdAt":"2025-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":60,"requestsPerHour":1000}}'
 
-# Expired Key: ddr_expired_test_key_0000000000000000
-EXPIRED_HASH="8440f560ecef5acc8a755f55176b2847008907591fab695d3d2e0fd0255502fe"
 npx wrangler kv key put --binding DEALS_SOURCES --local "apikey:$EXPIRED_HASH" \
   '{"userId":"e2e-expired","role":"user","createdAt":"2020-01-01T00:00:00Z","expiresAt":"2021-01-01T00:00:00Z","rateLimit":{"requestsPerMinute":1,"requestsPerHour":10}}'
 
@@ -100,7 +111,7 @@ seed_d1_users() {
 
   echo "Initializing E2E D1 database..."
   init_response=$(curl -sS -X GET "${base_url}/api/d1/migrations?action=init" \
-    -H "X-API-Key: ddr_admin_test_key_0000000000000000" 2>&1) || true
+    -H "X-API-Key: ${ADMIN_API_KEY}" 2>&1) || true
   echo "D1 init: ${init_response}"
   if ! echo "${init_response}" | grep -q '"success"[[:space:]]*:[[:space:]]*true'; then
     echo "✗ E2E D1 initialization failed"
@@ -110,7 +121,7 @@ seed_d1_users() {
   echo "Registering E2E phase 4 user..."
   register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
     -H "Content-Type: application/json" \
-    -d '{"email":"e2e-phase4@example.com","password":"TestPassword123!","name":"Phase 4 E2E User"}' 2>&1) || true
+    -d "{\"email\":\"e2e-phase4@example.com\",\"password\":\"${PHASE4_PASSWORD}\",\"name\":\"Phase 4 E2E User\"}" 2>&1) || true
   echo "Phase 4 registration: ${register_response}"
   if echo "${register_response}" | grep -q '"error"' && \
     ! echo "${register_response}" | grep -qi 'already registered'; then
@@ -121,7 +132,7 @@ seed_d1_users() {
   echo "Registering E2E admin user..."
   admin_register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
     -H "Content-Type: application/json" \
-    -d '{"email":"admin@example.com","password":"AdminPassword123!","name":"E2E Admin"}' 2>&1) || true
+    -d "{\"email\":\"admin@example.com\",\"password\":\"${ADMIN_PASSWORD}\",\"name\":\"E2E Admin\"}" 2>&1) || true
   echo "Admin registration: ${admin_register_response}"
   if echo "${admin_register_response}" | grep -q '"error"' && \
     ! echo "${admin_register_response}" | grep -qi 'already registered'; then
@@ -139,7 +150,7 @@ seed_d1_users() {
 
   admin_status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
     "${base_url}/api/auth/login" -H "Content-Type: application/json" \
-    -d '{"email":"admin@example.com","password":"AdminPassword123!"}' 2>/dev/null) || true
+    -d "{\"email\":\"admin@example.com\",\"password\":\"${ADMIN_PASSWORD}\"}" 2>/dev/null) || true
   if [ "${admin_status}" != "200" ]; then
     echo "✗ E2E admin login verification failed (HTTP ${admin_status})"
     return 1
@@ -148,7 +159,7 @@ seed_d1_users() {
   echo "Registering shared E2E API user..."
   shared_register_response=$(curl -sS -X POST "${base_url}/api/auth/register" \
     -H "Content-Type: application/json" \
-    -d '{"email":"e2e-test@example.com","password":"test-password-123","name":"E2E Test User"}' 2>&1) || true
+    -d "{\"email\":\"e2e-test@example.com\",\"password\":\"${SHARED_PASSWORD}\",\"name\":\"E2E Test User\"}" 2>&1) || true
   echo "Shared user registration: ${shared_register_response}"
   if echo "${shared_register_response}" | grep -q '"error"' && \
     ! echo "${shared_register_response}" | grep -qi 'already registered'; then
@@ -219,7 +230,7 @@ acquire_jwt_token() {
   echo "Logging in E2E phase 4 user..."
   LOGIN_RESPONSE=$(curl -s -X POST "http://localhost:${E2E_JWT_PORT}/api/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"e2e-phase4@example.com","password":"TestPassword123!"}' 2>&1) || true
+    -d "{\"email\":\"e2e-phase4@example.com\",\"password\":\"${PHASE4_PASSWORD}\"}" 2>&1) || true
   echo "Login: $LOGIN_RESPONSE"
 
   # Extract accessToken from login response
