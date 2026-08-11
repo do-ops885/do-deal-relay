@@ -40,7 +40,7 @@
     "@types/node": "^26.2.0",
     "cheerio": "^1.2.0",
     "discord.js": "^14.27.0",
-    "js-yaml": "^5.2.3",
+    "js-yaml": "5.2.3",
     "protobufjs": "8.7.1",
     "telegraf": "^4.16.3",
     "zod": "^3.22.4"
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.19.1",
     "@cloudflare/workers-types": "5.20260808.1",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "1.62.1",
     "@types/js-yaml": "^4.0.9",
     "@vitest/coverage-v8": "^4.1.10",
     "artillery": "^2.0.33",
@@ -68,7 +68,7 @@
     "protobufjs": "8.7.1",
     "undici": "6.27.0",
     "uuid": "14.0.0",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "1.62.1",
     "ws": "8.21.0",
     "engine.io-client": "6.6.5",
     "form-data": "4.0.6",
