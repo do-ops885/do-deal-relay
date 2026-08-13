@@ -6,6 +6,7 @@
 import type { Deal, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { logger } from "../lib/global-logger";
+import { validateFetchUrl } from "../lib/security";
 
 // ============================================================================
 // Security Check Types
@@ -34,6 +35,15 @@ export interface SecurityReport {
   timestamp: string;
 }
 
+export interface SecurityCheck {
+  name: string;
+  description: string;
+  validate: (
+    deal: Deal,
+    env?: Env,
+  ) => Promise<SecurityFinding> | SecurityFinding;
+}
+
 // ============================================================================
 // Security Validators
 // ============================================================================
@@ -41,33 +51,35 @@ export interface SecurityReport {
 /**
  * SSRF protection: blocks requests to internal/private networks.
  */
-const SSRF_CHECK = {
+const SSRF_CHECK: SecurityCheck = {
   name: "ssrf_protection",
   description: "No URLs pointing to internal/private networks",
-  validate: (deal: Deal): SecurityFinding => {
-    const blockedHosts = [...CONFIG.BLOCKED_HOSTS];
-    const blockedRanges = [...CONFIG.BLOCKED_IP_RANGES];
+  validate: async (deal: Deal, env?: Env): Promise<SecurityFinding> => {
     const issues: string[] = [];
 
     const urls = [deal.url, deal.source.url];
     for (const url of urls) {
       try {
         const parsed = new URL(url);
-        const hostname = parsed.hostname;
-
-        // Check blocked hosts
-        if (blockedHosts.includes(hostname as (typeof blockedHosts)[number])) {
-          issues.push(`Blocked host: ${hostname}`);
-        }
-
-        // Check private IP ranges
-        if (isPrivateIP(hostname, blockedRanges)) {
-          issues.push(`Private IP detected: ${hostname}`);
-        }
 
         // Check for non-HTTP schemes
         if (!["http:", "https:"].includes(parsed.protocol)) {
           issues.push(`Suspicious protocol: ${parsed.protocol}`);
+          continue;
+        }
+
+        // Allow localhost only for testing/local development
+        if (
+          (parsed.hostname === "localhost" ||
+            parsed.hostname === "127.0.0.1") &&
+          (env?.ENVIRONMENT === "test" || env?.ENVIRONMENT === "development")
+        ) {
+          continue;
+        }
+
+        const isValid = await validateFetchUrl(url);
+        if (!isValid) {
+          issues.push(`SSRF validation failed or private IP detected: ${url}`);
         }
       } catch {
         issues.push(`Invalid URL: ${url}`);
@@ -304,12 +316,12 @@ const CONTENT_SAFETY_CHECK = {
 // Security Gate Runner
 // ============================================================================
 
-const SECURITY_CHECKS = [
+const SECURITY_CHECKS: SecurityCheck[] = [
   SSRF_CHECK,
-  CREDENTIAL_LEAKAGE_CHECK,
-  INJECTION_CHECK,
-  URL_VALIDATION_CHECK,
-  CONTENT_SAFETY_CHECK,
+  CREDENTIAL_LEAKAGE_CHECK as SecurityCheck,
+  INJECTION_CHECK as SecurityCheck,
+  URL_VALIDATION_CHECK as SecurityCheck,
+  CONTENT_SAFETY_CHECK as SecurityCheck,
 ];
 
 /**
@@ -340,7 +352,7 @@ export async function runSecurityGate(
   for (const deal of deals) {
     for (const check of SECURITY_CHECKS) {
       try {
-        const finding = check.validate(deal);
+        const finding = await check.validate(deal, _env);
         findings.push(finding);
 
         if (!finding.passed) {
