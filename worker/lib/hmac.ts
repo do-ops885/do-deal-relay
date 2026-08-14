@@ -2,14 +2,25 @@
 // HMAC-SHA256 Signature Verification Utilities
 // ============================================================================
 
+/**
+ * Configuration options for HMAC signature validation.
+ */
 export interface HmacConfig {
+  /** The webhook secret key used to compute the expected signature. */
   secret: string;
+  /** The maximum allowed age of the webhook timestamp in seconds to prevent replay attacks. */
   timestampToleranceSeconds: number;
 }
 
+/**
+ * Result structure of a signature verification attempt.
+ */
 export interface SignatureResult {
+  /** Indicates whether the signature is valid. */
   valid: boolean;
+  /** Optional error message describing why verification failed. */
   error?: string;
+  /** Optional computed signature (for debugging or logging purposes). */
   computedSignature?: string;
 }
 

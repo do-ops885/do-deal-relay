@@ -1,11 +1,16 @@
-# Track D — Documentation - 2026-08-05
+# Documentation Audit - 2026-08-14
 
-The documentation audit identifies public constants and objects missing JSDoc comments to improve public API surface understandability and compliance with coding conventions.
+## Findings
 
-## Actionable Findings
-- **File**: `worker/lib/webhook/delivery.ts`
-  - **Target**: `DELIVERY_CONSTANTS`
-  - **Action**: Add standard JSDoc comment explaining its purpose and each constant property.
-- **File**: `worker/lib/metrics/prometheus.ts`
-  - **Target**: `PROMETHEUS_CONSTANTS`
-  - **Action**: Add standard JSDoc comment explaining its purpose and each property.
+The following public interfaces and functions are missing JSDoc comments in our TypeScript files:
+
+1. `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts`
+   - Role: Utility function for safe bounded integer parsing.
+2. `createTimeoutSignal` in `worker/lib/utils.ts`
+   - Role: Utility function for creating an abort controller with timeout.
+3. `HmacConfig` and `SignatureResult` in `worker/lib/hmac.ts`
+   - Role: Configuration interface and result structure for webhook signature verification.
+
+## Action Plan
+
+Add proper JSDoc comments to these functions and interfaces in accordance with TypeScript/JSDoc conventions.

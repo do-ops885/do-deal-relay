@@ -1,6 +1,18 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+/**
+ * Safely parses a bounded integer configuration value from a string.
+ * Falls back to a default value if the input is undefined or empty.
+ *
+ * @param name - The name of the configuration variable (used for error reporting).
+ * @param value - The raw string value to parse.
+ * @param fallback - The default value to return if the input is missing or empty.
+ * @param minimum - The inclusive minimum allowed value.
+ * @param maximum - The inclusive maximum allowed value.
+ * @returns The parsed safe integer value.
+ * @throws An error if the value is not a valid integer or is outside of the allowed range.
+ */
 export function parseBoundedIntegerConfig(
   name: string,
   value: string | undefined,
