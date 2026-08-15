@@ -1,0 +1,359 @@
+// wrangler.e2e.jsonc - Credential-free config for CI E2E/Smoke tests.
+// Omits the root `ai` binding, which forces a remote proxy session and
+// requires CLOUDFLARE_API_TOKEN in `wrangler dev`. CI points `wrangler dev
+// --config wrangler.e2e.jsonc` here so the server boots without Cloudflare
+// credentials. Keep in sync with wrangler.jsonc when bindings change.
+// wrangler.jsonc - Cloudflare Workers Configuration
+// Best practices: JSONC format allows comments for better documentation
+{
+  "name": "do-deal-relay",
+  "main": "worker/index.ts",
+  // Local workerd (wrangler 4.116.0) supports up to 2026-08-06; production
+  // wrangler.jsonc stays at 2026-08-10 (Cloudflare edge supports it).
+  "compatibility_date": "2026-08-06",
+  // Enable Node.js compatibility for better ecosystem support
+  "compatibility_flags": ["nodejs_compat"],
+  // Static dashboard and PWA assets. API routes remain handled by the Worker.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+  },
+  // Observability for monitoring and debugging
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "head_sampling_rate": 1,
+    },
+    "traces": {
+      "enabled": true,
+      // head_sampling_rate: fraction of traces to export (0.0-1.0).
+      // 1.0 = export everything (development/debugging).
+      // 0.1 = export 10% of traces (recommended for production).
+      "head_sampling_rate": 0.1,
+      // OTLP export destinations — add one entry per backend.
+      // Each destination requires a URL and an Authorization header with
+      // the vendor-specific API key stored as a Cloudflare secret.
+      //
+      // Example: Honeycomb
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://api.honeycomb.io/v1/traces",
+      //   "headers": {
+      //     "x-honeycomb-team": "${HONEYCOMB_API_KEY}",
+      //     "x-honeycomb-dataset": "do-deal-relay"
+      //   }
+      // }
+      //
+      // Example: Grafana Cloud
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://otlp-gateway-<zone>.grafana.net/otlp",
+      //   "headers": {
+      //     "Authorization": "${GRAFANA_CLOUD_API_KEY}"
+      //   }
+      // }
+      //
+      // Example: Axiom
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://api.axiom.co/v1/traces",
+      //   "headers": {
+      //     "Authorization": "Bearer ${AXIOM_API_KEY}",
+      //     "X-Axiom-Dataset": "do-deal-relay"
+      //   }
+      // }
+      //
+      // Example: SigNoz (self-hosted or cloud)
+      // "destination": {
+      //   "type": "OTLP",
+      //   "url": "https://ingest.<region>.signoz.cloud/v1/traces",
+      //   "headers": {
+      //     "Authorization": "Bearer ${SIGNOZ_API_KEY}"
+      //   }
+      // }
+      //
+      // See: docs/opentelemetry-setup.md for full setup guide.
+    },
+  },
+  // Scheduled triggers: discovery, Reddit moderation, expiry, and weekly validation
+  "triggers": {
+    "crons": ["0 */6 * * *", "*/30 * * * *", "0 9 * * *", "0 0 * * SUN"],
+  },
+  // KV Namespaces for different data types
+  "kv_namespaces": [
+    {
+      "binding": "DEALS_PROD",
+      "id": "23ee9b8c9e2748e5880f476b8b57a524",
+    },
+    {
+      "binding": "DEALS_STAGING",
+      "id": "b0db85b92fae45c1895152737ab72649",
+    },
+    {
+      "binding": "DEALS_LOG",
+      "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+    },
+    {
+      "binding": "DEALS_LOCK",
+      "id": "e3ab520eafd5430ab72978e78bdd257e",
+    },
+    {
+      "binding": "DEALS_SOURCES",
+      "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+    },
+  ],
+  // Environment variables (non-secrets only - secrets use `wrangler secret`)
+  "vars": {
+    "ENVIRONMENT": "production",
+    "GITHUB_REPO": "do-ops885/do-deal-relay",
+    "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+    "AI_GATEWAY_ENABLED": "false",
+    "TRUST_THRESHOLD": "0.3",
+    "NOTIFICATION_THRESHOLD": "100",
+    "CANDIDATE_BUDGET_GLOBAL": "500",
+    "CANDIDATE_BUDGET_PER_SOURCE": "100",
+    "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
+    // MCP Configuration
+    "MCP_PROTOCOL_VERSION": "2025-11-25",
+    "MCP_RATE_LIMIT_PER_MINUTE": "60",
+  },
+  "secrets": {
+    "required": [
+      "WEBHOOK_SECRET",
+      "EMAIL_WEBHOOK_SECRET",
+      "API_ENCRYPTION_KEY",
+    ],
+  },
+  // D1 Database for advanced queries and full-text search
+  "d1_databases": [
+    {
+      "binding": "DEALS_DB",
+      "database_name": "do-deal-relay",
+      "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+    },
+  ],
+  // Durable Objects for atomic concurrency control and stateful coordination
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PIPELINE_LOCK",
+        "class_name": "PipelineLock",
+      },
+      {
+        "name": "SOURCE_REGISTRY",
+        "class_name": "SourceRegistry",
+      },
+      {
+        "name": "DEAL_REGISTRY",
+        "class_name": "DealRegistry",
+      },
+      {
+        "name": "PIPELINE_EXECUTOR",
+        "class_name": "PipelineExecutorDO",
+      },
+    ],
+  },
+  // NOTE: No migrations needed — DOs are already deployed and provisioned.
+  // migrations blocks MUST be absent for wrangler versions upload (Cloudflare Git Integration).
+  // Live durable-object exports: required so wrangler registers the DO classes
+  // with the Cloudflare API (error code 10061 otherwise). Storage uses SQLite.
+  "exports": {
+    "PipelineLock": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "SourceRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "DealRegistry": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PipelineExecutorDO": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  // Vectorize index for semantic search over deals and referrals
+  // Index name must match SEMANTIC_SEARCH_CONFIG.INDEX_NAME in worker/lib/search/types.ts
+  // Free tier limits: 100 indexes, 1000 namespaces, 1000 vectors/upsert, topK=50
+  "vectorize": [
+    {
+      "binding": "DEAL_EMBEDDINGS",
+      "index_name": "deal-embeddings",
+    },
+  ],
+  // Environment-specific configurations
+  "env": {
+    // Development environment for local testing
+    "dev": {
+      "name": "do-deal-relay-dev",
+      "vars": {
+        "ENVIRONMENT": "development",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
+        "TRUST_THRESHOLD": "0.1",
+        "NOTIFICATION_THRESHOLD": "100",
+        "CANDIDATE_BUDGET_GLOBAL": "500",
+        "CANDIDATE_BUDGET_PER_SOURCE": "100",
+        "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "120",
+      },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
+      },
+    },
+    // Staging environment for pre-production testing
+    "staging": {
+      "name": "do-deal-relay-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
+        "TRUST_THRESHOLD": "0.25",
+        "NOTIFICATION_THRESHOLD": "100",
+        "CANDIDATE_BUDGET_GLOBAL": "500",
+        "CANDIDATE_BUDGET_PER_SOURCE": "100",
+        "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "120",
+      },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
+      },
+      "kv_namespaces": [
+        {
+          "binding": "DEALS_PROD",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "DEALS_STAGING",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "DEALS_LOG",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8-staging",
+        },
+        {
+          "binding": "DEALS_LOCK",
+          "id": "e3ab520eafd5430ab72978e78bdd257e",
+        },
+        {
+          "binding": "DEALS_SOURCES",
+          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DEALS_DB",
+          "database_name": "do-deal-relay",
+          "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+        },
+      ],
+      "vectorize": [
+        {
+          "binding": "DEAL_EMBEDDINGS",
+          "index_name": "deal-embeddings",
+        },
+      ],
+    },
+    // Production environment (explicitly defined for --env production flag)
+    "production": {
+      "name": "do-deal-relay",
+      "ai": {
+        "binding": "AI",
+      },
+      "vars": {
+        "ENVIRONMENT": "production",
+        "GITHUB_REPO": "do-ops885/do-deal-relay",
+        "AI_GATEWAY_URL": "https://gateway.ai.cloudflare.com/v1/do-ops885/deal-relay/openai",
+        "AI_GATEWAY_ENABLED": "false",
+        "TRUST_THRESHOLD": "0.3",
+        "NOTIFICATION_THRESHOLD": "100",
+        "CANDIDATE_BUDGET_GLOBAL": "500",
+        "CANDIDATE_BUDGET_PER_SOURCE": "100",
+        "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
+        "MCP_PROTOCOL_VERSION": "2025-11-25",
+        "MCP_RATE_LIMIT_PER_MINUTE": "60",
+      },
+      "secrets": {
+        "required": [
+          "WEBHOOK_SECRET",
+          "EMAIL_WEBHOOK_SECRET",
+          "API_ENCRYPTION_KEY",
+        ],
+      },
+      "kv_namespaces": [
+        {
+          "binding": "DEALS_PROD",
+          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+        },
+        {
+          "binding": "DEALS_STAGING",
+          "id": "b0db85b92fae45c1895152737ab72649",
+        },
+        {
+          "binding": "DEALS_LOG",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+        },
+        {
+          "binding": "DEALS_LOCK",
+          "id": "e3ab520eafd5430ab72978e78bdd257e",
+        },
+        {
+          "binding": "DEALS_SOURCES",
+          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DEALS_DB",
+          "database_name": "deals-db",
+          "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
+        },
+      ],
+      "vectorize": [
+        {
+          "binding": "DEAL_EMBEDDINGS",
+          "index_name": "deal-embeddings",
+        },
+      ],
+      // Durable Objects for atomic concurrency control and stateful coordination
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PIPELINE_LOCK",
+            "class_name": "PipelineLock",
+          },
+          {
+            "name": "SOURCE_REGISTRY",
+            "class_name": "SourceRegistry",
+          },
+          {
+            "name": "DEAL_REGISTRY",
+            "class_name": "DealRegistry",
+          },
+          {
+            "name": "PIPELINE_EXECUTOR",
+            "class_name": "PipelineExecutorDO",
+          },
+        ],
+      },
+      // No migrations — DOs already provisioned. See note above.
+    },
+  },
+}
