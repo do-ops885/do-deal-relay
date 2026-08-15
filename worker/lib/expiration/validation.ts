@@ -1,6 +1,5 @@
 import type { Deal, Env } from "../../types";
 import { getActiveDeals, getProductionSnapshot } from "../storage";
-import { countDealStatuses } from "../deal-stats";
 import { logger } from "../global-logger";
 import { CONFIG } from "../../config";
 import { notify } from "../../notify";
@@ -195,7 +194,18 @@ export async function deactivateInvalidDeals(env: Env): Promise<{
       const { writeStagingSnapshot, promoteToProduction } =
         await import("../storage");
 
-      const { active, rejected } = countDealStatuses(updatedDeals);
+      // Optimization: compute status stats in a single pass O(N) loop to avoid
+      // traversing the deals array multiple times with .filter() calls.
+      let active = 0;
+      let rejected = 0;
+      for (const d of updatedDeals) {
+        const status = d.metadata.status;
+        if (status === "active") {
+          active++;
+        } else if (status === "rejected") {
+          rejected++;
+        }
+      }
 
       const updatedSnapshot = {
         ...snapshot,
