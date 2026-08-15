@@ -49,6 +49,7 @@ describe("Security Gate - runSecurityGate", () => {
     mockEnv = {} as Env;
   });
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: vitest fixture factory, not a Qwik component
   const createMockDeal = (overrides: Partial<Deal>): Deal => {
     const timestamp = new Date().toISOString();
     return {
