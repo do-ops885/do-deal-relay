@@ -1,11 +1,14 @@
-# Track D — Documentation - 2026-08-05
+# Audit Track D: Documentation Audit
 
-The documentation audit identifies public constants and objects missing JSDoc comments to improve public API surface understandability and compliance with coding conventions.
+Date: 2026-08-15
+Repository: do-deal-relay v0.1.8
 
-## Actionable Findings
-- **File**: `worker/lib/webhook/delivery.ts`
-  - **Target**: `DELIVERY_CONSTANTS`
-  - **Action**: Add standard JSDoc comment explaining its purpose and each constant property.
-- **File**: `worker/lib/metrics/prometheus.ts`
-  - **Target**: `PROMETHEUS_CONSTANTS`
-  - **Action**: Add standard JSDoc comment explaining its purpose and each property.
+## Findings Summary
+- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` lacks JSDoc comments with `@param`, `@returns`, `@throws`.
+- `worker/lib/utils.ts`: `createTimeoutSignal` lacks JSDoc comments describing abort signal creation and cleanup function.
+- `worker/lib/hmac.ts`: `HmacConfig` and `SignatureResult` interfaces lack JSDoc comments.
+
+## Action Plan
+- Add detailed JSDoc comments (@param, @returns, @throws) to `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts`.
+- Add JSDoc comment to `createTimeoutSignal` in `worker/lib/utils.ts`.
+- Add JSDoc comments to `HmacConfig` and `SignatureResult` in `worker/lib/hmac.ts`.

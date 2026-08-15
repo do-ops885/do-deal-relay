@@ -1,10 +1,12 @@
-# Track C — Test Coverage - 2026-08-05
+# Audit Track C: Test Coverage
 
-The test coverage audit targets public functions and core business logic that can benefit from more robust testing coverage and boundary cases.
+Date: 2026-08-15
+Repository: do-deal-relay v0.1.8
 
-## Actionable Findings
-- **File**: `tests/unit/webhook/delivery.test.ts`
-  - **Logic**: Expand test suite for `calculateBackoff` (which computes the backoff duration for webhook delivery retries) to cover the following:
-    1. **Multiplier Scaling Progression**: Ensure exponential progression scale matches expected multiplier value step-by-step.
-    2. **Max Delay Capping**: Ensure the delay calculates and is strictly capped at `max_delay_ms` under high attempt counts and extreme multiplier values.
-    3. **Randomized Jitter Distribution**: Ensure delay varies with randomized jitter across multiple calls while staying within correct mathematical bounds.
+## Findings Summary
+- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` and `getTrustThreshold` edge cases can use explicit unit tests to ensure boundaries and parsing errors are covered.
+- `worker/lib/utils.ts`: `createTimeoutSignal` is an essential worker utility function that lacks direct unit test assertions.
+
+## Action Plan
+- Create `tests/unit/config-validation-enhanced.test.ts` to test `parseBoundedIntegerConfig`, `getTrustThreshold`, and `createTimeoutSignal`.
+- Verify all unit tests pass.
