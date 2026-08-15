@@ -1,5 +1,6 @@
 import type { Deal, Env } from "../../types";
 import { getProductionSnapshot } from "../storage";
+import { countDealStatuses } from "../deal-stats";
 import { logger } from "../global-logger";
 import { sendExpiredNotifications } from "./notifications";
 import {
@@ -53,18 +54,7 @@ export async function markExpiredDeals(env: Env): Promise<number> {
     const { writeStagingSnapshot, promoteToProduction } =
       await import("../storage");
 
-    // Optimization: compute status stats in a single pass O(N) loop to avoid
-    // traversing the deals array multiple times with .filter() calls.
-    let active = 0;
-    let rejected = 0;
-    for (const d of updatedDeals) {
-      const status = d.metadata.status;
-      if (status === "active") {
-        active++;
-      } else if (status === "rejected") {
-        rejected++;
-      }
-    }
+    const { active, rejected } = countDealStatuses(updatedDeals);
 
     // Create updated snapshot
     const updatedSnapshot = {

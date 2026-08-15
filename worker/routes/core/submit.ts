@@ -10,6 +10,7 @@ import {
   writeStagingSnapshot,
 } from "../../lib/storage";
 import { generateDealId } from "../../lib/crypto";
+import { countDealStatuses } from "../../lib/deal-stats";
 import { CONFIG } from "../../config";
 import type { Env, SubmitDealBody, Deal } from "../../types";
 import { SubmitDealBodySchema } from "../../types";
@@ -115,21 +116,7 @@ export async function handleSubmit(
     ? [...stagingSnapshot.deals, newDeal]
     : [newDeal];
 
-  // Optimization: compute status stats in a single pass O(N) loop to avoid
-  // traversing the deals array multiple times with .filter() calls.
-  let active = 0;
-  let quarantined = 0;
-  let rejected = 0;
-  for (const d of deals) {
-    const status = d.metadata.status;
-    if (status === "active") {
-      active++;
-    } else if (status === "quarantined") {
-      quarantined++;
-    } else if (status === "rejected") {
-      rejected++;
-    }
-  }
+  const { active, quarantined, rejected } = countDealStatuses(deals);
 
   const snapshotData = {
     version: stagingSnapshot?.version || CONFIG.VERSION,
