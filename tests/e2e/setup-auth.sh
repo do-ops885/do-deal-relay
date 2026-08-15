@@ -54,18 +54,32 @@ ensure_dev_vars
 # ============================================================================
 echo "Seeding E2E test API keys..."
 
-# Generate per-run fixtures instead of embedding reusable credentials.
-ADMIN_API_KEY="${E2E_ADMIN_API_KEY:-ddr_$(openssl rand -hex 16)}"
-USER_API_KEY="${E2E_USER_API_KEY:-ddr_$(openssl rand -hex 16)}"
-EXPIRED_API_KEY="${E2E_EXPIRED_API_KEY:-ddr_$(openssl rand -hex 16)}"
-PHASE4_PASSWORD="${E2E_PHASE4_PASSWORD:-E2EPhase4_$(openssl rand -hex 16)}"
-ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-E2EAdmin_$(openssl rand -hex 16)}"
-SHARED_PASSWORD="${E2E_SHARED_PASSWORD:-E2EShared_$(openssl rand -hex 16)}"
 mkdir -p "$(dirname "$E2E_ADMIN_KEY_FILE")"
-printf '%s\n' "$ADMIN_API_KEY" > "$E2E_ADMIN_KEY_FILE"
-printf 'ADMIN_API_KEY=%s\nUSER_API_KEY=%s\nEXPIRED_API_KEY=%s\nPHASE4_PASSWORD=%s\nADMIN_PASSWORD=%s\n' \
-  "$ADMIN_API_KEY" "$USER_API_KEY" "$EXPIRED_API_KEY" \
-  "$PHASE4_PASSWORD" "$ADMIN_PASSWORD" > "$E2E_AUTH_FIXTURE_FILE"
+# Reuse per-run fixtures on re-entry. This script runs twice in CI: once via
+# `npm run test:e2e:setup` and once via Playwright's global-setup. Regenerating
+# random credentials on the second pass would no longer match the D1 password
+# hashes seeded on the first pass, causing HTTP 401 on admin login.
+if [ -f "$E2E_AUTH_FIXTURE_FILE" ]; then
+  # shellcheck disable=SC1090
+  . "$E2E_AUTH_FIXTURE_FILE"
+  ADMIN_API_KEY="${E2E_ADMIN_API_KEY:-$ADMIN_API_KEY}"
+  USER_API_KEY="${E2E_USER_API_KEY:-$USER_API_KEY}"
+  EXPIRED_API_KEY="${E2E_EXPIRED_API_KEY:-$EXPIRED_API_KEY}"
+  PHASE4_PASSWORD="${E2E_PHASE4_PASSWORD:-$PHASE4_PASSWORD}"
+  ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-$ADMIN_PASSWORD}"
+  SHARED_PASSWORD="${E2E_SHARED_PASSWORD:-${SHARED_PASSWORD:-E2EShared_$(openssl rand -hex 16)}}"
+else
+  ADMIN_API_KEY="${E2E_ADMIN_API_KEY:-ddr_$(openssl rand -hex 16)}"
+  USER_API_KEY="${E2E_USER_API_KEY:-ddr_$(openssl rand -hex 16)}"
+  EXPIRED_API_KEY="${E2E_EXPIRED_API_KEY:-ddr_$(openssl rand -hex 16)}"
+  PHASE4_PASSWORD="${E2E_PHASE4_PASSWORD:-E2EPhase4_$(openssl rand -hex 16)}"
+  ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-E2EAdmin_$(openssl rand -hex 16)}"
+  SHARED_PASSWORD="${E2E_SHARED_PASSWORD:-E2EShared_$(openssl rand -hex 16)}"
+  printf '%s\n' "$ADMIN_API_KEY" > "$E2E_ADMIN_KEY_FILE"
+  printf 'ADMIN_API_KEY=%s\nUSER_API_KEY=%s\nEXPIRED_API_KEY=%s\nPHASE4_PASSWORD=%s\nADMIN_PASSWORD=%s\nSHARED_PASSWORD=%s\n' \
+    "$ADMIN_API_KEY" "$USER_API_KEY" "$EXPIRED_API_KEY" \
+    "$PHASE4_PASSWORD" "$ADMIN_PASSWORD" "$SHARED_PASSWORD" > "$E2E_AUTH_FIXTURE_FILE"
+fi
 ADMIN_HASH=$(printf '%s' "$ADMIN_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
 USER_HASH=$(printf '%s' "$USER_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
 EXPIRED_HASH=$(printf '%s' "$EXPIRED_API_KEY" | openssl dgst -sha256 | sed 's/.*= //')
@@ -107,6 +121,18 @@ seed_d1_users() {
   if ! curl -sf "${base_url}/health/live" > /dev/null 2>&1; then
     echo "✗ E2E worker is not reachable at ${base_url}"
     return 1
+  fi
+
+  # Idempotency: this script is invoked twice in CI (`test:e2e:setup` and
+  # Playwright global-setup). If the admin can already log in, the users are
+  # seeded — skip registration to avoid tripping the register rate limit
+  # (/api/auth/register allows 5 requests/min).
+  admin_status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
+    "${base_url}/api/auth/login" -H "Content-Type: application/json" \
+    -d "{\"email\":\"admin@example.com\",\"password\":\"${ADMIN_PASSWORD}\"}" 2>/dev/null) || true
+  if [ "${admin_status}" = "200" ]; then
+    echo "✓ E2E D1 users already seeded (admin login verified)"
+    return 0
   fi
 
   echo "Initializing E2E D1 database..."

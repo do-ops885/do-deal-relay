@@ -145,10 +145,6 @@
         "name": "DEAL_REGISTRY",
         "class_name": "DealRegistry",
       },
-      {
-        "name": "PIPELINE_EXECUTOR",
-        "class_name": "PipelineExecutorDO",
-      },
     ],
   },
   // NOTE: No migrations needed — DOs are already deployed and provisioned.
@@ -342,10 +338,6 @@
           {
             "name": "DEAL_REGISTRY",
             "class_name": "DealRegistry",
-          },
-          {
-            "name": "PIPELINE_EXECUTOR",
-            "class_name": "PipelineExecutorDO",
           },
         ],
       },
