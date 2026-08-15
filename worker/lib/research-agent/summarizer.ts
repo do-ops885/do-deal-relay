@@ -13,8 +13,6 @@ export interface ResearchSummary {
   key_points: string[];
 }
 
-type AiRunFn = (model: string, inputs: unknown) => Promise<unknown>;
-
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const TRUNCATED_CONTENT_LENGTH = 4000;
 
