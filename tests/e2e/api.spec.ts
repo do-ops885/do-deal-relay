@@ -108,6 +108,7 @@ test.describe("Health Endpoints", () => {
 });
 
 test.describe("Deals API", () => {
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: playwright helper, not a Qwik component
   const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /deals returns deals list", async ({ request }) => {
@@ -163,6 +164,7 @@ test.describe("Deals API", () => {
 });
 
 test.describe("Ranked Deals API", () => {
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: playwright helper, not a Qwik component
   const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /deals/ranked returns ranked deals", async ({ request }) => {
@@ -209,6 +211,7 @@ test.describe("Ranked Deals API", () => {
 });
 
 test.describe("Protected API Endpoints", () => {
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: playwright helper, not a Qwik component
   const authHeaders = () => ({ "X-API-Key": getApiKey() });
 
   test("GET /api/analytics returns analytics data (requires auth)", async ({

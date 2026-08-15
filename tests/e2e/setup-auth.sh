@@ -197,7 +197,7 @@ acquire_jwt_token() {
   echo "Obtaining E2E JWT token via temporary wrangler dev server..."
 
   # Start temporary wrangler dev server on a dedicated port
-  npx wrangler dev --port "$E2E_JWT_PORT" \
+  npx wrangler dev --config wrangler.e2e.jsonc --port "$E2E_JWT_PORT" \
     > /tmp/e2e-wrangler-${E2E_JWT_PORT}.log 2>&1 &
   WRANGLER_PID=$!
   echo "Started temporary wrangler dev server (PID $WRANGLER_PID) on port $E2E_JWT_PORT"

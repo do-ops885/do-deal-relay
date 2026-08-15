@@ -115,6 +115,9 @@
     "CANDIDATE_BUDGET_GLOBAL": "500",
     "CANDIDATE_BUDGET_PER_SOURCE": "100",
     "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
+    // Test-only JWT secret so auth routes work in local E2E (never used in prod;
+    // production supplies this via wrangler secret).
+    "JWT_SECRET": "e2e-test-jwt-secret-do-not-use-in-prod",
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
