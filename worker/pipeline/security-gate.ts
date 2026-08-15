@@ -4,7 +4,6 @@
 // Prevents SSRF, credential leakage, injection, and other security issues.
 
 import type { Deal, PipelineContext, Env } from "../types";
-import { CONFIG } from "../config";
 import { logger } from "../lib/global-logger";
 import { validateFetchUrl } from "../lib/security";
 
@@ -437,24 +436,4 @@ export function summarizeSecurityFindings(report: SecurityReport): string {
   ];
 
   return lines.join("\n");
-}
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function isPrivateIP(hostname: string, blockedRanges: string[]): boolean {
-  // Simple check for common private IP patterns
-  const privatePatterns = [
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2\d|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /^::1$/,
-    /^fc00:/,
-    /^fe80:/,
-  ];
-
-  return privatePatterns.some((p) => p.test(hostname));
 }
