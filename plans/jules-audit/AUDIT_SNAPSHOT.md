@@ -1,17 +1,9 @@
-# Audit Snapshot - 2026-08-15
+# Audit Snapshot — 2026-08-16
 
-## Repository Info
-- Name: do-deal-relay
+- Date: 2026-08-16
 - Version: 0.1.8
-- Primary Language: TypeScript (Node.js / Cloudflare Workers)
-- Dependency Manifest: package.json
-- Test Runner: vitest (unit: `npm run test:unit`)
-- Quality Gate: `SKIP_TESTS=true ./scripts/quality_gate.sh`
-- Audit Directory: `plans/jules-audit/`
-
-## Key Paths
-- Worker Logic: `worker/`
-- Extension: `extension/`
-- Tests: `tests/`
-- Scripts: `scripts/`
-- Plans: `plans/`
+- Primary Language/Framework: TypeScript / Cloudflare Workers
+- Dependency Manifests: `package.json`, `package-lock.json`
+- Test Runner: `npm run test:unit` (`vitest`)
+- Quality Gate: `bash scripts/quality_gate.sh`
+- Working Directory for Audit: `plans/jules-audit`

@@ -1,13 +1,12 @@
-# Audit Track B: Code Quality
+# Track B — Code Quality Audit
 
-Date: 2026-08-15
-Repository: do-deal-relay v0.1.8
-
-## Findings Summary
-- TODO / FIXME comments: 0 found in source TypeScript/JavaScript files.
-- Dead code / Unused imports: None found in active worker src.
-- Magic numbers: Prior audits extracted MAX_JITTER_MS, MAX_URL_LENGTH, etc. All constants in worker modules remain properly centralized.
-- Line limits: All source files in `worker/` are well under the 500 lines soft limit (max file is `worker/lib/d1/client.ts` at 498 lines).
-
-## Conclusion
-Zero actionable findings for Track B. Track will be skipped (no branch or PR produced).
+- Target File: `worker/lib/ranking.ts`
+- Issue: Magic numbers in scoring and sorting logic:
+  - Composite score weights: `0.25`, `0.2`, `0.2`, `0.2`, `0.15`
+  - Recency decay constant: `30`
+  - Value normalization cap: `500`
+  - Value type multipliers: `1.2` (cash), `1.1` (percent), `1.0` (other)
+  - Expiry days threshold: `90`
+  - Default neutral expiry score: `50`
+  - Default days/limits: `10` (top deals), `7` (expiring/recent days), `50` (high value threshold)
+- Remediation: Extract all magic numbers into a centralized `RANKING_CONSTANTS` object in `worker/lib/ranking.ts`.
