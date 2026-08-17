@@ -26,6 +26,12 @@ interface LockData {
  * - If no lock exists: INSERT succeeds (changes=1)
  * - If lock expired: UPDATE succeeds (changes=1)
  * - If lock held: UPDATE is no-op (changes=0) → ConcurrencyError
+ *
+ * @param env - Worker environment bindings containing DEALS_DB
+ * @param run_id - Unique identifier for current pipeline execution run
+ * @param trace_id - Distributed trace identifier associated with current context
+ * @returns Promise resolving to true if lock was successfully acquired
+ * @throws {PipelineError} If lock is actively held by another run or acquisition fails
  */
 export async function acquireLock(
   env: Env,
@@ -116,6 +122,10 @@ export async function acquireLock(
  * Release distributed lock.
  * Only releases if the lock is owned by the given trace_id.
  * Uses D1 batch for atomic read-then-delete.
+ *
+ * @param env - Worker environment bindings containing DEALS_DB
+ * @param trace_id - Distributed trace identifier requesting lock release
+ * @returns Promise resolving when release operation completes
  */
 export async function releaseLock(env: Env, trace_id: string): Promise<void> {
   try {
@@ -166,6 +176,12 @@ export async function releaseLock(env: Env, trace_id: string): Promise<void> {
 /**
  * Extend lock TTL during long operations.
  * Only the lock owner can extend. Uses D1 for atomic check-and-update.
+ *
+ * @param env - Worker environment bindings containing DEALS_DB
+ * @param trace_id - Distributed trace identifier requesting lock extension
+ * @param additionalSeconds - Additional lock TTL in seconds (defaults to 300)
+ * @returns Promise resolving when extension completes
+ * @throws {PipelineError} If lock is not owned by current trace or update fails
  */
 export async function extendLock(
   env: Env,
@@ -222,7 +238,10 @@ export async function extendLock(
 }
 
 /**
- * Get current lock status
+ * Get current lock status.
+ *
+ * @param env - Worker environment bindings containing DEALS_DB
+ * @returns Promise resolving to object containing lock status and lock owner details
  */
 export async function getLockStatus(env: Env): Promise<{
   locked: boolean;
