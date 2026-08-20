@@ -10,7 +10,7 @@ import type {
   WebhookAttempt,
   DeadLetterEvent,
 } from "./types";
-import { getWebhookKV, generateId, DEFAULT_RETRY_POLICY } from "./types";
+import { getWebhookKV, DEFAULT_RETRY_POLICY } from "./types";
 import { getSubscription } from "./subscriptions";
 import { generateWebhookHeaders } from "../hmac";
 import { toError } from "../sanitize-error";

@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   calculateDealScore,
   calculateDetailedScore,
+  getExpiringDeals,
+  getHighValueDeals,
+  getRecentDeals,
+  getTopDeals,
   rankDeals,
   sortDeals,
 } from "../../worker/lib/ranking";
@@ -127,5 +131,83 @@ describe("Ranking Logic", () => {
 
     const sorted = sortDeals([oldDeal, newDeal], "recency", "desc");
     expect(sorted[0]!.id).toBe("new");
+  });
+
+  describe("Helper Query Functions", () => {
+    it("should return top deals ordered by score and respect limit", () => {
+      const deal1 = createMockDeal("top1", {
+        metadata: { confidence_score: 0.95 } as any,
+        source: { trust_score: 0.95 } as any,
+      });
+      const deal2 = createMockDeal("top2", {
+        metadata: { confidence_score: 0.5 } as any,
+        source: { trust_score: 0.5 } as any,
+      });
+      const deal3 = createMockDeal("top3", {
+        metadata: { confidence_score: 0.1 } as any,
+        source: { trust_score: 0.1 } as any,
+      });
+
+      const top = getTopDeals([deal2, deal3, deal1], 2);
+      expect(top).toHaveLength(2);
+      expect(top[0]!.id).toBe("top1");
+      expect(top[1]!.id).toBe("top2");
+    });
+
+    it("should return deals expiring soon within cutoff", () => {
+      const nowMs = new Date("2026-06-01T12:00:00Z").getTime();
+      const expires5Days = new Date(
+        nowMs + 5 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const expires10Days = new Date(
+        nowMs + 10 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+
+      const dealSoon = createMockDeal("soon", {
+        expiry: { date: expires5Days } as any,
+      });
+      const dealFar = createMockDeal("far", {
+        expiry: { date: expires10Days } as any,
+      });
+      const dealNoExpiry = createMockDeal("none");
+
+      const expiring = getExpiringDeals([dealSoon, dealFar, dealNoExpiry], 7);
+      expect(expiring).toHaveLength(1);
+      expect(expiring[0]!.id).toBe("soon");
+    });
+
+    it("should return recent deals discovered within threshold", () => {
+      const nowMs = new Date("2026-06-01T12:00:00Z").getTime();
+      const discovered2DaysAgo = new Date(
+        nowMs - 2 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const discovered10DaysAgo = new Date(
+        nowMs - 10 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+
+      const dealRecent = createMockDeal("recent", {
+        source: { discovered_at: discovered2DaysAgo } as any,
+      });
+      const dealOld = createMockDeal("old", {
+        source: { discovered_at: discovered10DaysAgo } as any,
+      });
+
+      const recent = getRecentDeals([dealRecent, dealOld], 7);
+      expect(recent).toHaveLength(1);
+      expect(recent[0]!.id).toBe("recent");
+    });
+
+    it("should return high value deals above reward threshold", () => {
+      const dealHigh = createMockDeal("high", {
+        reward: { value: 100 } as any,
+      });
+      const dealLow = createMockDeal("low", {
+        reward: { value: 10 } as any,
+      });
+
+      const highVal = getHighValueDeals([dealHigh, dealLow], 50);
+      expect(highVal).toHaveLength(1);
+      expect(highVal[0]!.id).toBe("high");
+    });
   });
 });

@@ -38,7 +38,7 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
     relatedCategories: ["finance"],
   },
   stock_trading: {
-    keywords: ["stock", "share", "equity", "trade", "trade", "commission free"],
+    keywords: ["stock", "share", "equity", "trade", "commission free"],
     relatedCategories: ["finance"],
   },
   high_value: {
