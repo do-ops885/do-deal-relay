@@ -38,7 +38,7 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
     relatedCategories: ["finance"],
   },
   stock_trading: {
-    keywords: ["stock", "share", "equity", "trade", "trade", "commission free"],
+    keywords: ["stock", "share", "equity", "trade", "commission free"],
     relatedCategories: ["finance"],
   },
   high_value: {
@@ -63,6 +63,38 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
 };
 
 // ============================================================================
+// Pre-computed Lowercased Definitions for High-Performance Iteration
+// ============================================================================
+
+interface PreprocessedCategory {
+  category: string;
+  categoryCodeMatch: string;
+  lowercasedDomains: string[];
+  lowercasedKeywords: string[];
+}
+
+const PREPROCESSED_CATEGORIES: PreprocessedCategory[] = Object.entries(
+  CATEGORY_DEFINITIONS,
+).map(([category, definition]) => ({
+  category,
+  categoryCodeMatch: category.toLowerCase().replace(/_/g, ""),
+  lowercasedDomains: definition.domains.map((d) => d.toLowerCase()),
+  lowercasedKeywords: definition.keywords.map((kw) => kw.toLowerCase()),
+}));
+
+interface PreprocessedTag {
+  tag: string;
+  lowercasedKeywords: string[];
+}
+
+const PREPROCESSED_TAGS: PreprocessedTag[] = Object.entries(
+  TAG_DEFINITIONS,
+).map(([tag, definition]) => ({
+  tag,
+  lowercasedKeywords: definition.keywords.map((kw) => kw.toLowerCase()),
+}));
+
+// ============================================================================
 // Scoring Functions
 // ============================================================================
 
@@ -71,34 +103,38 @@ export function calculateCategoryScores(deal: Deal): Map<string, number> {
   const text =
     `${deal.title} ${deal.description} ${deal.source.domain}`.toLowerCase();
   const code = deal.code.toLowerCase();
+  const sourceDomain = deal.source.domain.toLowerCase();
 
-  // Score each category
-  for (const [category, definition] of Object.entries(CATEGORY_DEFINITIONS)) {
+  // Score each category using preprocessed lowercased structures
+  // to avoid redundant string lowercasing and replace regex operations in hot loops.
+  for (let i = 0; i < PREPROCESSED_CATEGORIES.length; i++) {
+    const item = PREPROCESSED_CATEGORIES[i]!;
     let score = 0;
 
     // Check domain match (highest weight)
-    if (
-      definition.domains.some((d) =>
-        deal.source.domain.toLowerCase().includes(d),
-      )
-    ) {
-      score += 10;
+    const domains = item.lowercasedDomains;
+    for (let d = 0; d < domains.length; d++) {
+      if (sourceDomain.includes(domains[d]!)) {
+        score += 10;
+        break;
+      }
     }
 
     // Check keyword matches
-    for (const keyword of definition.keywords) {
-      if (text.includes(keyword.toLowerCase())) {
+    const keywords = item.lowercasedKeywords;
+    for (let k = 0; k < keywords.length; k++) {
+      if (text.includes(keywords[k]!)) {
         score += 1;
       }
     }
 
     // Bonus for code relevance
-    if (code.includes(category.toLowerCase().replace("_", ""))) {
+    if (code.includes(item.categoryCodeMatch)) {
       score += 0.5;
     }
 
     if (score > 0) {
-      scores.set(category, score);
+      scores.set(item.category, score);
     }
   }
 
@@ -109,19 +145,21 @@ export function calculateTagScores(deal: Deal): Map<string, number> {
   const scores = new Map<string, number>();
   const text = `${deal.title} ${deal.description}`.toLowerCase();
 
-  // Check keyword-based tags
-  for (const [tag, definition] of Object.entries(TAG_DEFINITIONS)) {
+  // Check keyword-based tags using preprocessed lowercased structures
+  for (let i = 0; i < PREPROCESSED_TAGS.length; i++) {
+    const item = PREPROCESSED_TAGS[i]!;
     let score = 0;
 
     // Check keyword matches
-    for (const keyword of definition.keywords) {
-      if (text.includes(keyword.toLowerCase())) {
+    const keywords = item.lowercasedKeywords;
+    for (let k = 0; k < keywords.length; k++) {
+      if (text.includes(keywords[k]!)) {
         score += 1;
       }
     }
 
     if (score > 0) {
-      scores.set(tag, score);
+      scores.set(item.tag, score);
     }
   }
 
