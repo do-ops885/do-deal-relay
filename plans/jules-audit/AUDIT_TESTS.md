@@ -1,12 +1,11 @@
-# Audit Track C: Test Coverage
+# Track C — Test Coverage Audit (2026-08-21)
 
-Date: 2026-08-15
-Repository: do-deal-relay v0.1.8
+## Public Functions / Modules Lacking Coverage Edge Cases
+- Module: `worker/lib/source-expiry.ts`
+  - `sourceSaysExpired(sourceUrl)`: Needs coverage for `null` or empty `sourceUrl` handling, non-200 response handling, and unreadable/empty text bodies.
 
-## Findings Summary
-- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` and `getTrustThreshold` edge cases can use explicit unit tests to ensure boundaries and parsing errors are covered.
-- `worker/lib/utils.ts`: `createTimeoutSignal` is an essential worker utility function that lacks direct unit test assertions.
-
-## Action Plan
-- Create `tests/unit/config-validation-enhanced.test.ts` to test `parseBoundedIntegerConfig`, `getTrustThreshold`, and `createTimeoutSignal`.
-- Verify all unit tests pass.
+## Action Taken
+- Added unit tests in `tests/unit/source-expiry.test.ts` to verify:
+  1. `sourceSaysExpired(null)` returns `false` without making network requests.
+  2. `sourceSaysExpired` returns `false` when response status is non-200 OK (e.g., 404 or 500).
+  3. `sourceSaysExpired` handles empty or unreadable HTTP response bodies gracefully.
