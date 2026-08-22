@@ -348,8 +348,10 @@ export async function renderDealsView() {
       const card = createDealCard(deal, {
         onSelect: (d) => showDealDetail(d.id),
       });
-      card.setAttribute("role", "listitem");
-      grid.appendChild(card);
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("role", "listitem");
+      wrapper.appendChild(card);
+      grid.appendChild(wrapper);
     }
     results.replaceChildren(grid);
     if (totalPages > 1) {

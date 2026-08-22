@@ -64,9 +64,11 @@ export function createDealCard(deal, { onSelect } = {}) {
   article.tabIndex = 0;
   article.setAttribute("role", "button");
   article.dataset.dealId = String(deal.id || "");
+  const ariaTitle = String(deal.title || "Untitled").trim();
+  const ariaSource = String(deal.source || "unknown source").trim();
   article.setAttribute(
     "aria-label",
-    `View deal: ${escapeHtml(deal.title || "Untitled")} from ${escapeHtml(deal.source || "unknown source")}`,
+    `View deal: ${ariaTitle} from ${ariaSource}`,
   );
 
   const title = escapeHtml(deal.title || "Untitled deal");
