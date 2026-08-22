@@ -89,6 +89,8 @@ export interface WebResearchRequest {
   max_results?: number;
   options?: {
     use_real_fetching?: boolean;
+    /** Test-only: force simulated discovery even when real fetching is the default. */
+    use_simulated_results?: boolean;
     skip_cache?: boolean;
     timeout_ms?: number;
   };
@@ -143,6 +145,7 @@ export const WebResearchRequestSchema = z.object({
   options: z
     .object({
       use_real_fetching: z.boolean().optional(),
+      use_simulated_results: z.boolean().optional(),
       skip_cache: z.boolean().optional(),
       timeout_ms: z.number().int().min(1000).max(60000).optional(),
     })

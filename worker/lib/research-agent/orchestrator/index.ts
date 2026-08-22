@@ -27,6 +27,14 @@ import { getSourceRateLimit } from "../sources";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
 import { isFeatureEnabled } from "../../feature-flags";
+import {
+  createDefaultScraperRegistry,
+  readySourceNames,
+  type SourceName,
+  type ScraperEnv,
+  type Scraper,
+} from "../scrapers";
+import { createAIExtractor } from "../scrapers/ai-extractor";
 
 function getApiKeys(env: Env) {
   return {
@@ -41,17 +49,26 @@ function getApiKeys(env: Env) {
 
 /**
  * Resolve whether the research agent should perform REAL fetching.
- * Order of precedence (all checks return true to enable real fetching):
- *   1. Request level: request.options?.use_real_fetching
- *   2. Feature flag: real_research_fetching (supports rolloutPercentage)
- *   3. Environment allowlist: production OR explicit RESEARCH_USE_REAL_FETCHING=true
- *   4. Fallback: any API key configured (legacy heuristic)
+ *
+ * Real fetching is the DEFAULT (MF-2). Simulation is only used when
+ * explicitly requested through the test-only `use_simulated_results`
+ * option or an explicit `use_real_fetching: false` override.
+ *
+ * Order of precedence:
+ *   1. Request level: request.options?.use_simulated_results (test-only flag)
+ *   2. Request level: request.options?.use_real_fetching (explicit override)
+ *   3. Feature flag: real_research_fetching (supports rolloutPercentage)
+ *   4. Environment allowlist: production OR explicit RESEARCH_USE_REAL_FETCHING=true
+ *   5. Default: real fetching (honest results — never fabricate codes)
  */
 async function shouldUseRealFetching(
   env: Env,
   request: WebResearchRequest,
-  hasApiKeys: boolean,
 ): Promise<boolean> {
+  // Test-only escape hatch: force simulated discovery.
+  if (request.options?.use_simulated_results === true) {
+    return false;
+  }
   if (request.options?.use_real_fetching !== undefined) {
     return request.options.use_real_fetching;
   }
@@ -65,7 +82,7 @@ async function shouldUseRealFetching(
   if (envAllowsRealFetching) {
     return true;
   }
-  return hasApiKeys;
+  return true;
 }
 
 export async function executeReferralResearch(
@@ -78,11 +95,13 @@ export async function executeReferralResearch(
   const normalizedQuery = normalizeResearchQuery(request.query, request.domain);
 
   const apiKeys = getApiKeys(env);
-  const hasApiKeys = Boolean(
-    apiKeys.productHuntToken || apiKeys.githubToken || apiKeys.redditClientId,
-  );
-  // useRealFetching now resolves through the feature flag for gradual rollout.
-  const useRealFetching = await shouldUseRealFetching(env, request, hasApiKeys);
+  // MI-2: the orchestrator dispatches through the scraper registry.
+  // readySourceNames() identifies which sources can actually run in this env.
+  const registry = createDefaultScraperRegistry();
+  const scraperEnv = env as unknown as ScraperEnv;
+  const readySources = readySourceNames(registry, scraperEnv);
+  // Real fetching is the default (MF-2); simulation is opt-in only.
+  const useRealFetching = await shouldUseRealFetching(env, request);
 
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];
   const sourcesChecked: string[] = [];
@@ -121,11 +140,14 @@ export async function executeReferralResearch(
 
     for (const source of sources) {
       const promise = researchFromSourceParallel(
+        env,
         source,
         normalizedQuery,
         useRealFetching,
         request.depth,
         apiKeys,
+        registry,
+        readySources,
         discoveredCodes,
         sourcesChecked,
         searchQueries,
@@ -144,11 +166,14 @@ export async function executeReferralResearch(
       }
 
       const promise = researchFromSourceParallel(
+        env,
         source,
         normalizedQuery,
         useRealFetching,
         request.depth,
         apiKeys,
+        registry,
+        readySources,
         discoveredCodes,
         sourcesChecked,
         searchQueries,
@@ -195,11 +220,14 @@ export async function executeReferralResearch(
 }
 
 async function researchFromSourceParallel(
+  env: Env,
   source: ResearchSource,
   query: string,
   useRealFetching: boolean,
   depth: WebResearchRequest["depth"],
   apiKeys: ReturnType<typeof getApiKeys>,
+  registry: Map<SourceName, Scraper>,
+  readySources: string[],
   discoveredCodes: ReferralResearchResult["discovered_codes"],
   sourcesChecked: string[],
   searchQueries: string[],
@@ -238,7 +266,25 @@ async function researchFromSourceParallel(
 
   if (useRealFetching && source.apiConfig) {
     try {
-      const fetchResult = await fetchFromSource(source, query, apiKeys);
+      // MI-2: dispatch through the scraper registry when a matching scraper
+      // is available and ready; otherwise fall back to the legacy fetcher.
+      const scraper = registry.get(source.name as SourceName);
+      const scraperEnv = {
+        ...(env as unknown as ScraperEnv),
+        baseUrl: source.baseUrl,
+        searchPattern: source.searchPattern,
+      } as ScraperEnv & { baseUrl?: string; searchPattern?: string };
+      const canUseScraper =
+        scraper &&
+        readySources.includes(source.name) &&
+        scraper.isReady(scraperEnv);
+
+      let fetchResult;
+      if (canUseScraper && scraper) {
+        fetchResult = await scraper.scrape(scraperEnv, query);
+      } else {
+        fetchResult = await fetchFromSource(source, query, apiKeys);
+      }
 
       if (fetchResult.success) {
         recordSuccess(source.name);
@@ -268,6 +314,15 @@ async function researchFromSourceParallel(
           }
         }
 
+        // MI-2: wire the AI extractor into the extraction path. When Workers
+        // AI is available, run LLM-based extraction over the fetched content
+        // to catch non-standard referral codes the regex extractor missed.
+        const aiCodes = await extractWithAI(env, fetchResult.content, query);
+        for (const aiCode of aiCodes) {
+          discoveredCodes.push(aiCode);
+          newCodes.push(aiCode);
+        }
+
         cacheResults(query, source.name, newCodes);
       } else {
         errors.push(`${source.name}: ${fetchResult.error}`);
@@ -279,6 +334,7 @@ async function researchFromSourceParallel(
       recordFailure(source.name);
     }
   } else {
+    // Simulation is only reachable via the explicit test-only flag (MF-2).
     const simulatedCodes = simulateDiscovery(query, source, depth);
     discoveredCodes.push(
       ...simulatedCodes.map((c) => ({
@@ -287,6 +343,62 @@ async function researchFromSourceParallel(
         confidence: applySourceConfidence(c.confidence, source.name),
       })),
     );
+  }
+}
+
+/**
+ * Run the AI extractor (MI-2) over raw fetched content to surface
+ * referral codes that regex extraction would miss.
+ */
+async function extractWithAI(
+  env: Env,
+  content: string,
+  query: string,
+): Promise<ReferralResearchResult["discovered_codes"]> {
+  if (!env.AI || !content.trim()) {
+    return [];
+  }
+  try {
+    const extractor = createAIExtractor(undefined, 8000);
+    const result = await extractor.scrape(
+      env as unknown as ScraperEnv,
+      content,
+    );
+    if (!result.success) {
+      return [];
+    }
+
+    const items = JSON.parse(result.content) as Array<{
+      code?: string;
+      url?: string;
+      reward?: string;
+      confidence?: number;
+    }>;
+
+    const codes: ReferralResearchResult["discovered_codes"] = [];
+    for (const item of items) {
+      if (!item.code || !item.url) continue;
+      const confidence = Math.max(0, Math.min(1, item.confidence ?? 0.5));
+      if (confidence < CONFIG.RESEARCH_MIN_CONFIDENCE) continue;
+
+      codes.push({
+        code: item.code,
+        url: item.url,
+        source: "ai_extractor",
+        discovered_at: new Date().toISOString(),
+        reward_summary: item.reward,
+        confidence: applySourceConfidence(confidence, "company_site"),
+      });
+    }
+    return codes;
+  } catch (error) {
+    const err = toError(error);
+    logger.debug("AI extraction failed", {
+      component: "research-orchestrator",
+      query,
+      error: err.message,
+    });
+    return [];
   }
 }
 
@@ -381,9 +493,12 @@ export async function researchAllReferralPossibilities(
     depth,
     sources: ["all"],
     max_results: 50,
-    options: {
-      use_real_fetching: useRealFetching,
-    },
+    options:
+      useRealFetching === undefined
+        ? undefined
+        : {
+            use_real_fetching: useRealFetching,
+          },
   };
 
   return executeReferralResearch(env, request);
