@@ -10,7 +10,6 @@ export interface HmacConfig {
 export interface SignatureResult {
   valid: boolean;
   error?: string;
-  computedSignature?: string;
 }
 
 /**
@@ -74,11 +73,11 @@ export async function verifyHmacSignature(
   );
 
   // 3. Constant-time comparison to prevent timing attacks
+  // Security Fix: Do NOT return expectedSignature/computedSignature on failure to prevent signature leakage
   if (!timingSafeEqual(expectedSignature, signature.toLowerCase())) {
     return {
       valid: false,
       error: "Invalid signature",
-      computedSignature: expectedSignature,
     };
   }
 
