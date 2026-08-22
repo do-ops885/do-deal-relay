@@ -55,7 +55,7 @@
 - **D1 Database**: Full-text search and advanced deal queries
 - **MCP Server**: Model Context Protocol 2025-11-25 for AI agent integration
 - **Webhook System**: Event notifications with HMAC signature verification
-- **Cron Triggers**: Discovery every 6 hours (`0 */6 * * *`), expiry check at 9am (`0 9 * * *`)
+- **Cron Triggers**: Discovery (`0 */6 * * *`), Reddit moderation (`*/30 * * * *`), Expirations (`0 9 * * *`), and Weekly validation sweep (`0 0 * * SUN`)
 
 ---
 
