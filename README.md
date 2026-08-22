@@ -124,7 +124,11 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 
 ### Current Settings
 
-- **Cron**: Every 6 hours
+- **Cron Schedules**:
+  - `0 */6 * * *`: Discovery Pipeline (Every 6 hours)
+  - `*/30 * * * *`: Reddit post lifecycle moderation (Every 30 minutes)
+  - `0 9 * * *`: Expiration check & experience aggregation (Daily at 09:00 UTC)
+  - `0 0 * * SUN`: Continuous validation gate sweep (Weekly on Sundays)
 - **KV Namespaces**: 5 (PROD, STAGING, LOG, LOCK, SOURCES)
 - **Max Deals**: 1000 per run
 - **Trust Threshold**: Dev 0.1 / Staging 0.25 / Prod 0.3
