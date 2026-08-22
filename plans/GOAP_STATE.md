@@ -1,10 +1,40 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-15
-**Version**: 0.15.0
-**Status**: Active — Reddit post lifecycle implemented; production gated. Fresh gap analysis (2026-08-15) records 6 missing integrations, 3 partial features, and 8 test-coverage gaps.
+**Last Updated**: 2026-08-22
+**Version**: 0.16.0
+**Status**: Active — PR triage sweep 2026-08-22 resolved the open-PR backlog; P1 gap items (MI-1, MI-5, MI-6, MF-2, T-1) and dead-code removals (N-1, N-2) in progress via [SPEC-pr-triage-and-p1-swarm.md](SPEC-pr-triage-and-p1-swarm.md).
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## PR Triage Sweep — 2026-08-22
+
+Orchestrated via goap-agent skill; scope confirmed by operator.
+
+| ID | Item | Status | Evidence |
+|:---|:---|:---|:---|
+| PRT-1 | Merge fast-track: #695 plans, #699 dependabot CI, #704 a11y deal cards, #705 categorization perf | ✅ COMPLETE | All merged with green checks |
+| PRT-2 | Roast/review #700 health audit | ✅ COMPLETE | Review verdict: real impact (CVE undici bump, dedupe, first ranking-helper tests); 12 as-any casts in fresh test code replaced with typed DealOverrides |
+| PRT-3 | Fix #701 hmac signature-leak security fix | 🟡 IN PROGRESS | Codacy flagged hardcoded secret literal in test fixture; replaced with generateWebhookSecret(); awaiting green re-run |
+| PRT-4 | Close no-impact JSDoc-only PRs #697 #702 #706 | ✅ COMPLETE | Closed with plain-text rationale (zero runtime impact) |
+| PRT-5 | Resolve #696 workers-types bump | ⬜ OPEN | Strictly superseded once #700 lands (5.20260816.1 vs 5.20260820.1); close then |
+
+## New Findings — 2026-08-22 Codebase Analysis
+
+Not covered by GAP-ANALYSIS-2026-08-15:
+
+| ID | Item | Priority | Status |
+|:---|:---|:---|:---|
+| N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | 🟡 IN PROGRESS (deletion in this swarm) |
+| N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | 🟡 IN PROGRESS (deletion in this swarm) |
+| N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
+| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | 🟡 IN PROGRESS (split during MI-1 / MF-2 work) |
+| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ⬜ DEFERRED (needs dedicated sweep) |
+
+Supporting evidence: lint = tsc+prettier only (no ESLint gate), so banned
+patterns are unenforced; zero TODO/FIXME debt found; no as any in worker/
+production code (95 occurrences confined to tests/).
 
 ---
 
