@@ -10,7 +10,7 @@ import { stage } from "./pipeline/stage";
 import { publishSnapshot } from "./publish";
 import { notify } from "./notify";
 import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
-import { runExpirationCheck } from "./lib/expiration-manager";
+import { checkDealExpirations } from "./lib/expiration";
 import type { Env } from "./types";
 import { recordDealCount } from "./lib/metrics/index";
 
@@ -187,20 +187,16 @@ export async function executePhase(
       return "finalize";
 
     case "finalize":
-      if (ctx.snapshot) {
-        const expiryResult = await runExpirationCheck(
-          env,
-          ctx.snapshot.deals,
-          ctx.previous_snapshot?.deals,
-          ctx.run_id,
-        );
-
-        if (expiryResult.errors.length > 0) {
-          logger.warn("Expiration check errors", {
-            component: "state-machine",
-            errors: expiryResult.errors,
-          });
-        }
+      // MI-5: expiration policy consolidated on the modular worker/lib/expiration
+      // package (same entry point as the scheduled cron). Best-effort — a
+      // failure here must not fail the pipeline run.
+      try {
+        await checkDealExpirations(env);
+      } catch (error) {
+        logger.warn("Expiration check failed", {
+          component: "state-machine",
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
 
       await notify(env, {
