@@ -25,36 +25,42 @@ type DealOverrides = Partial<Pick<Deal, "title" | "code" | "url">> & {
   metadata?: Partial<Pick<DealMetadata, "confidence_score" | "status">>;
 };
 
-const createMockDeal = (id: string, overrides: DealOverrides = {}): Deal => ({
-  id,
-  source: {
-    url: "https://example.com/invite",
-    domain: "example.com",
-    discovered_at: overrides.source?.discovered_at || new Date().toISOString(),
-    trust_score: overrides.source?.trust_score ?? 0.7,
-  },
-  title: overrides.title || "Test Deal",
-  description: "Test description",
-  code: overrides.code || "CODE123",
-  url: overrides.url || "https://example.com/invite/CODE123",
-  reward: {
-    type: overrides.reward?.type || "cash",
-    value: overrides.reward?.value ?? 50,
-    currency: "USD",
-  },
-  expiry: {
-    date: overrides.expiry?.date,
-    confidence: 0.8,
-    type: "soft",
-  },
-  metadata: {
-    category: ["test"],
-    tags: ["test"],
-    normalized_at: new Date().toISOString(),
-    confidence_score: overrides.metadata?.confidence_score ?? 0.5,
-    status: overrides.metadata?.status || "active",
-  },
-});
+const createMockDeal = (id: string, overrides?: DealOverrides): Deal => {
+  const source = overrides?.source;
+  const reward = overrides?.reward;
+  const expiry = overrides?.expiry;
+  const metadata = overrides?.metadata;
+  return {
+    id,
+    source: {
+      url: "https://example.com/invite",
+      domain: "example.com",
+      discovered_at: source?.discovered_at || new Date().toISOString(),
+      trust_score: source?.trust_score ?? 0.7,
+    },
+    title: overrides?.title || "Test Deal",
+    description: "Test description",
+    code: overrides?.code || "CODE123",
+    url: overrides?.url || "https://example.com/invite/CODE123",
+    reward: {
+      type: reward?.type || "cash",
+      value: reward?.value ?? 50,
+      currency: "USD",
+    },
+    expiry: {
+      date: expiry?.date,
+      confidence: 0.8,
+      type: "soft",
+    },
+    metadata: {
+      category: ["test"],
+      tags: ["test"],
+      normalized_at: new Date().toISOString(),
+      confidence_score: metadata?.confidence_score ?? 0.5,
+      status: metadata?.status || "active",
+    },
+  };
+};
 
 describe("Ranking Logic", () => {
   beforeEach(() => {
