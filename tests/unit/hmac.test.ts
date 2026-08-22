@@ -49,9 +49,8 @@ describe("HMAC Security Utilities", () => {
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Invalid signature");
       // Security assertion: computed signature must NOT be leaked
-      expect(
-        (result as unknown as Record<string, unknown>).computedSignature,
-      ).toBeUndefined();
+      expect(Object.keys(result)).not.toContain("computedSignature");
+      expect("computedSignature" in result).toBe(false);
     });
 
     it("should reject expired timestamps to prevent replay attacks", async () => {
