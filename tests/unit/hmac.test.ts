@@ -11,7 +11,7 @@ import {
 } from "../../worker/lib/hmac";
 
 describe("HMAC Security Utilities", () => {
-  const secret = "whsec_testsecret1234567890abcdef";
+  const secret = generateWebhookSecret();
   const payload = JSON.stringify({
     event: "referral.created",
     code: "TEST123",
