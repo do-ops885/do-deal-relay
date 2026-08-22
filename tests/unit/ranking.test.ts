@@ -25,7 +25,7 @@ type DealOverrides = Partial<Pick<Deal, "title" | "code" | "url">> & {
   metadata?: Partial<Pick<DealMetadata, "confidence_score" | "status">>;
 };
 
-const createMockDeal = (id: string, overrides?: DealOverrides): Deal => {
+function createMockDeal(id: string, overrides?: DealOverrides): Deal {
   const source = overrides?.source;
   const reward = overrides?.reward;
   const expiry = overrides?.expiry;
@@ -60,7 +60,7 @@ const createMockDeal = (id: string, overrides?: DealOverrides): Deal => {
       status: metadata?.status || "active",
     },
   };
-};
+}
 
 describe("Ranking Logic", () => {
   beforeEach(() => {
