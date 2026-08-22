@@ -1,6 +1,16 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+/**
+ * Safely parse an integer environment variable bounded by minimum and maximum constraints
+ * @param name Parameter name used for error reporting
+ * @param value Raw string configuration value
+ * @param fallback Default fallback integer value when parameter is omitted or empty
+ * @param minimum Inclusive lower bound
+ * @param maximum Inclusive upper bound
+ * @returns Parsed integer value
+ * @throws Error if value is non-integer or outside the [minimum, maximum] range
+ */
 export function parseBoundedIntegerConfig(
   name: string,
   value: string | undefined,

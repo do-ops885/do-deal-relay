@@ -2,14 +2,25 @@
 // HMAC-SHA256 Signature Verification Utilities
 // ============================================================================
 
+/**
+ * Configuration options for HMAC signature verification
+ */
 export interface HmacConfig {
+  /** Webhook signing secret */
   secret: string;
+  /** Maximum allowable difference in seconds between current time and webhook timestamp */
   timestampToleranceSeconds: number;
 }
 
+/**
+ * Result object returned by HMAC signature verification
+ */
 export interface SignatureResult {
+  /** Whether the HMAC signature is valid */
   valid: boolean;
+  /** Optional error message describing validation failure */
   error?: string;
+  /** Optional computed HMAC signature string */
   computedSignature?: string;
 }
 

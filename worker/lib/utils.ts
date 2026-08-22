@@ -1,6 +1,12 @@
 import { CONFIG } from "../config";
 import { logger } from "./global-logger";
 
+/**
+ * Creates an AbortSignal that automatically aborts after a specified duration in milliseconds,
+ * along with a cleanup function to clear the internal timer.
+ * @param ms Timeout duration in milliseconds
+ * @returns Object containing the AbortSignal instance and cleanup function
+ */
 export function createTimeoutSignal(ms: number): {
   signal: AbortSignal;
   cleanup: () => void;
