@@ -11,6 +11,10 @@ This index tracks active implementation plans in `plans/`. Completed and archive
 
 ## Active Plans
 
+- [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — **New (2026-08-15)**.
+  Fresh static audit of missing implementations (6), partial features (3), and
+  test-coverage gaps (8). Canonical tracking of "built-but-not-wired" code and
+  untested module groups since the 2026-04-04 audit.
 - [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
   Implements an opt-in, fail-closed Reddit publication and moderation client.
 - [ADR-020: Fail-Closed Reddit Post Lifecycle](ADR-020-reddit-post-lifecycle.md)
