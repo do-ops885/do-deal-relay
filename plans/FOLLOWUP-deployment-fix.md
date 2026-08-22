@@ -1,6 +1,7 @@
 # Follow-up: Deployment Workflow Fix
 
 **Status**: ✅ Resolved (see plan `FIX-issue-423-worker-host.md`)
+**Re-verified:** 2026-08-22 — scripts/worker-host.sh present; referenced by deploy-production.yml, discovery.yml, canary.yml
 
 ## Issue
 Production deployment fails because staging health check fails.

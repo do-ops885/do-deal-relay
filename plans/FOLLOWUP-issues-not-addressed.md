@@ -3,6 +3,8 @@
 > Created: 2026-06-03
 > Updated: 2026-06-03 (after dependabot merge)
 
+**Re-verified:** 2026-08-22 — rollback-issue wave root cause (wrangler.jsonc migration blocks blocking versions upload) identified and fixed 2026-07-17; migration blocks confirmed absent from wrangler.jsonc today; zero open issues remain on the tracker.
+
 ---
 
 ## Resolved in This Run
