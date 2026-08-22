@@ -1,10 +1,39 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-01
-**Version**: 0.14.0
-**Status**: Active — Reddit post lifecycle implemented; production gated
+**Last Updated**: 2026-08-15
+**Version**: 0.15.0
+**Status**: Active — Reddit post lifecycle implemented; production gated. Fresh gap analysis (2026-08-15) records 6 missing integrations, 3 partial features, and 8 test-coverage gaps.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## Gap Analysis Refresh — 2026-08-15
+
+Fresh static audit (dead-code detection + routing trace + test-import scan)
+recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
+
+| ID | Item | Status |
+|:---|:---|:---|
+| MI-1 | MCP SSE streaming route (`/mcp/stream`) + `mcp/progress.ts` never routed | ⬜ OPEN |
+| MI-2 | Research-agent scraper registry + `AIExtractorScraper` not wired into orchestrator | ⬜ OPEN |
+| MI-3 | AI Gateway client built + tested but never used by NLQ/semantic search | ⬜ OPEN |
+| MI-4 | DealRegistry DO deployed + tested but not called by stage/publish | ⬜ OPEN |
+| MI-5 | Legacy `expiration-manager.ts` duplicates modular `lib/expiration/` | ⬜ OPEN |
+| MI-6 | Orphan `worker/db/schema.sql` not referenced by any code | ⬜ OPEN |
+| MF-1 | Hybrid semantic search accepted but ignored (`filters`/`hybrid` unused) | ⬜ OPEN |
+| MF-2 | Research agent returns simulated codes by default (real fetch gated off) | ⬜ OPEN |
+| MF-3 | MCP progress notifications unreachable (depends on MI-1) | ⬜ OPEN |
+| T-1 | Batch D1 helpers (`audit-log`, `referrals-batch`, `system-metrics`, `research-cache`, `factory`) have zero tests | ⬜ OPEN |
+| T-2 | Email HTTP handlers + route layer untested | ⬜ OPEN |
+| T-3 | NLQ AI enhancer + hybrid classifier untested | ⬜ OPEN |
+| T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ⬜ OPEN |
+| T-5 | MCP progress + SSE streaming untested | ⬜ OPEN |
+| T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ⬜ OPEN |
+| T-7 | D1 `trust.ts` has no direct tests | ⬜ OPEN |
+| T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ⬜ OPEN |
+
+Full evidence and remediation notes: [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md).
 
 ---
 
