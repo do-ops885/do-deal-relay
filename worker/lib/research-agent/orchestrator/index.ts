@@ -13,7 +13,7 @@ import {
 } from "../fetcher";
 import { toError } from "../../sanitize-error";
 import { logger } from "../../global-logger";
-import type { ResearchSource } from "../types";
+import type { FetchResult, ResearchSource } from "../types";
 import { RESEARCH_SOURCES, KNOWN_REFERRAL_PROGRAMS } from "../constants";
 import {
   normalizeResearchQuery,
@@ -279,7 +279,7 @@ async function researchFromSourceParallel(
         readySources.includes(source.name) &&
         scraper.isReady(scraperEnv);
 
-      let fetchResult;
+      let fetchResult: FetchResult | undefined;
       if (canUseScraper && scraper) {
         fetchResult = await scraper.scrape(scraperEnv, query);
       } else {
