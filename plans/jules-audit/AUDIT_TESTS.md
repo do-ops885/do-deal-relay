@@ -1,12 +1,15 @@
-# Audit Track C: Test Coverage
+# Track C — Test Coverage Report — 2026-08-20
 
-Date: 2026-08-15
-Repository: do-deal-relay v0.1.8
+## Summary
+Audited modules for missing unit tests on core business logic.
 
-## Findings Summary
-- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` and `getTrustThreshold` edge cases can use explicit unit tests to ensure boundaries and parsing errors are covered.
-- `worker/lib/utils.ts`: `createTimeoutSignal` is an essential worker utility function that lacks direct unit test assertions.
+## New Tests Added
 
-## Action Plan
-- Create `tests/unit/config-validation-enhanced.test.ts` to test `parseBoundedIntegerConfig`, `getTrustThreshold`, and `createTimeoutSignal`.
-- Verify all unit tests pass.
+### 1. `getTopDeals`, `getExpiringDeals`, `getRecentDeals`, and `getHighValueDeals`
+- **Target File**: `worker/lib/ranking.ts`
+- **Test File**: `tests/unit/ranking.test.ts`
+- **Coverage Added**:
+  - `getTopDeals()`: Verifies deals are sorted by composite score and limited to the specified count.
+  - `getExpiringDeals()`: Verifies filtering of deals expiring within N days and sorted by expiry date.
+  - `getRecentDeals()`: Verifies filtering of deals discovered within N days and sorted newest first.
+  - `getHighValueDeals()`: Verifies filtering of deals meeting or exceeding reward threshold ($50 default) sorted by value.

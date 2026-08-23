@@ -19,6 +19,9 @@ export interface RankOptions {
 /**
  * Calculate deal score for ranking
  * Composite score based on multiple factors
+ *
+ * @param deal - The deal object to score
+ * @returns Numerical composite score
  */
 export function calculateDealScore(deal: Deal): number {
   const { score } = calculateDetailedScore(deal);
@@ -28,6 +31,9 @@ export function calculateDealScore(deal: Deal): number {
 /**
  * Calculate detailed score breakdown for ranking
  * Single-pass calculation to avoid redundant computation
+ *
+ * @param deal - The deal object to evaluate
+ * @returns Object containing overall composite score and individual factor breakdowns
  */
 export function calculateDetailedScore(deal: Deal): {
   score: number;
@@ -133,6 +139,11 @@ function calculateExpiryScore(expiryDate: string | undefined): number {
 
 /**
  * Sort deals by specified field
+ *
+ * @param deals - Array of deals to sort
+ * @param sortBy - The field/criteria to sort by
+ * @param order - Sort direction ('asc' or 'desc')
+ * @returns A new sorted array of deals
  */
 export function sortDeals(
   deals: Deal[],
@@ -208,6 +219,10 @@ function compareExpiry(a: string | undefined, b: string | undefined): number {
 
 /**
  * Rank and filter deals
+ *
+ * @param deals - Array of deals to rank and filter
+ * @param options - Filtering, sorting, and limit parameters
+ * @returns Object containing filtered deals, total count, and score breakdowns
  */
 export function rankDeals(
   deals: Deal[],
@@ -274,6 +289,10 @@ export function rankDeals(
 
 /**
  * Get top deals by composite score
+ *
+ * @param deals - Array of candidate deals
+ * @param limit - Maximum number of top deals to return (default: 10)
+ * @returns Array of top deals sorted descending by score
  */
 export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
   const withScores = deals.map((deal) => ({
@@ -289,6 +308,10 @@ export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
 
 /**
  * Get deals expiring soon (within specified days)
+ *
+ * @param deals - Array of candidate deals
+ * @param days - Number of days ahead to check for expiry (default: 7)
+ * @returns Array of deals expiring within cutoff, sorted by earliest expiry date
  */
 export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
   const now = Date.now();
@@ -308,6 +331,10 @@ export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
 
 /**
  * Get recently added deals (within specified days)
+ *
+ * @param deals - Array of candidate deals
+ * @param days - Discovery window in days (default: 7)
+ * @returns Array of recent deals sorted newest first
  */
 export function getRecentDeals(deals: Deal[], days: number = 7): Deal[] {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
@@ -323,6 +350,10 @@ export function getRecentDeals(deals: Deal[], days: number = 7): Deal[] {
 
 /**
  * Get high value deals (above threshold)
+ *
+ * @param deals - Array of candidate deals
+ * @param threshold - Minimum numerical reward value (default: 50)
+ * @returns Array of high value deals sorted descending by value
  */
 export function getHighValueDeals(
   deals: Deal[],
