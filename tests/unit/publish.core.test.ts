@@ -20,14 +20,16 @@ vi.mock("../../worker/lib/security", () => ({
 // require prepare().bind() and batch() on the database binding.
 // ============================================================================
 
-const createMockStatement = () => ({
-  bind: vi.fn().mockReturnThis(),
-  all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
-  first: vi.fn().mockResolvedValue(null),
-  run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
-});
+function createMockStatement() {
+  return {
+    bind: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+    first: vi.fn().mockResolvedValue(null),
+    run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+  };
+}
 
-const createMockD1 = () => {
+function createMockD1() {
   const statement = createMockStatement();
   return {
     prepare: vi.fn().mockImplementation(() => statement),
@@ -35,7 +37,7 @@ const createMockD1 = () => {
     exec: vi.fn().mockResolvedValue(undefined),
     statement,
   };
-};
+}
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -82,9 +84,11 @@ describe("publishSnapshot", () => {
 
   // Access the underlying vi.fn call log of the KV put mock (typed as
   // KVNamespace on the env object)
-  const getProdPutCalls = (): unknown[][] =>
-    (mockEnv.DEALS_PROD.put as unknown as { mock: { calls: unknown[][] } }).mock
-      .calls;
+  function getProdPutCalls(): unknown[][] {
+    return (
+      mockEnv.DEALS_PROD.put as unknown as { mock: { calls: unknown[][] } }
+    ).mock.calls;
+  }
 
   beforeEach(() => {
     mockKvStorage = new Map();

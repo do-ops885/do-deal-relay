@@ -19,14 +19,16 @@ vi.mock("../../worker/lib/security", () => ({
 // batched D1 helpers requiring prepare().bind() and batch().
 // ============================================================================
 
-const createMockStatement = () => ({
-  bind: vi.fn().mockReturnThis(),
-  all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
-  first: vi.fn().mockResolvedValue(null),
-  run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
-});
+function createMockStatement() {
+  return {
+    bind: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+    first: vi.fn().mockResolvedValue(null),
+    run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+  };
+}
 
-const createMockD1 = () => {
+function createMockD1() {
   const statement = createMockStatement();
   return {
     prepare: vi.fn().mockImplementation(() => statement),
@@ -34,7 +36,7 @@ const createMockD1 = () => {
     exec: vi.fn().mockResolvedValue(undefined),
     statement,
   };
-};
+}
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,

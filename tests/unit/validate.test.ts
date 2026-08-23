@@ -51,18 +51,20 @@ describe("Validation Pipeline", () => {
   // Each validate() call represents one pipeline run; gate 9 stores per-deal
   // integrity hashes on the context, so every test must start from a fresh
   // context just like a fresh run would.
-  const createContext = (): PipelineContext => ({
-    run_id: "test-run",
-    trace_id: "test-trace",
-    start_time: Date.now(),
-    candidates: [],
-    normalized: [],
-    deduped: [],
-    validated: [],
-    scored: [],
-    errors: [],
-    retry_count: 0,
-  });
+  function createContext(): PipelineContext {
+    return {
+      run_id: "test-run",
+      trace_id: "test-trace",
+      start_time: Date.now(),
+      candidates: [],
+      normalized: [],
+      deduped: [],
+      validated: [],
+      scored: [],
+      errors: [],
+      retry_count: 0,
+    };
+  }
 
   const mockEnv = {
     DEALS_PROD: {
