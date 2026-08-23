@@ -1,14 +1,9 @@
-# Audit Track D: Documentation Audit
+# Track D — Documentation Audit Report
 
-Date: 2026-08-15
-Repository: do-deal-relay v0.1.8
+## Audit Findings
 
-## Findings Summary
-- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` lacks JSDoc comments with `@param`, `@returns`, `@throws`.
-- `worker/lib/utils.ts`: `createTimeoutSignal` lacks JSDoc comments describing abort signal creation and cleanup function.
-- `worker/lib/hmac.ts`: `HmacConfig` and `SignatureResult` interfaces lack JSDoc comments.
-
-## Action Plan
-- Add detailed JSDoc comments (@param, @returns, @throws) to `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts`.
-- Add JSDoc comment to `createTimeoutSignal` in `worker/lib/utils.ts`.
-- Add JSDoc comments to `HmacConfig` and `SignatureResult` in `worker/lib/hmac.ts`.
+- Target Module: `worker/lib/reddit-comments.ts`
+- Missing JSDocs:
+  - `MAX_REDDIT_FLAG_CANDIDATES` constant missing JSDoc description.
+  - Public function `collectFlagAuthors` missing `@param` and `@returns` annotations.
+- Actionable Action: Add comprehensive JSDoc comments to `MAX_REDDIT_FLAG_CANDIDATES` and `collectFlagAuthors`.

@@ -1,12 +1,7 @@
-# Audit Track C: Test Coverage
+# Track C — Test Coverage Audit Report
 
-Date: 2026-08-15
-Repository: do-deal-relay v0.1.8
+## Audit Findings
 
-## Findings Summary
-- `worker/lib/config-utils.ts`: `parseBoundedIntegerConfig` and `getTrustThreshold` edge cases can use explicit unit tests to ensure boundaries and parsing errors are covered.
-- `worker/lib/utils.ts`: `createTimeoutSignal` is an essential worker utility function that lacks direct unit test assertions.
-
-## Action Plan
-- Create `tests/unit/config-validation-enhanced.test.ts` to test `parseBoundedIntegerConfig`, `getTrustThreshold`, and `createTimeoutSignal`.
-- Verify all unit tests pass.
+- Target Module: `worker/lib/reddit-comments.ts` (`collectFlagAuthors`)
+- Coverage Gap: `collectFlagAuthors` missing explicit unit test coverage for non-object/primitive inputs (numbers, booleans, null, strings), deleted author strings, case-insensitive bot username filtering, and comment regex matching edge cases (`it doesn't work`, `the code is invalid`, `404.`).
+- Actionable Action: Expand unit test suite in `tests/unit/reddit-comments.test.ts` to cover these edge cases.
