@@ -10,6 +10,9 @@ const HEX_TABLE = Array.from({ length: 256 }, (_, i) =>
 /**
  * Generate SHA-256 hash of input string
  * Optimized with shared TextEncoder and hex lookup table
+ *
+ * @param input - Plaintext string to hash
+ * @returns SHA-256 hex digest string
  */
 export async function sha256(input: string): Promise<string> {
   const data = ENCODER.encode(input);
@@ -26,6 +29,11 @@ export async function sha256(input: string): Promise<string> {
 /**
  * Generate canonical ID for a deal
  * Hash of normalized fields (domain + code + reward type)
+ *
+ * @param domain - The source domain string
+ * @param code - The deal or promo code
+ * @param rewardType - The type of reward
+ * @returns SHA-256 canonical deal ID string
  */
 export async function generateDealId(
   domain: string,
@@ -49,6 +57,9 @@ function getStringProp(value: unknown, prop: string): string {
 /**
  * Generate snapshot hash from deals array
  * Sorts deals by ID to ensure canonical ordering regardless of input order
+ *
+ * @param deals - Array of deal objects
+ * @returns SHA-256 hash of canonically sorted JSON string
  */
 export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
   const sorted = [...deals].sort((a, b) => {
@@ -65,6 +76,9 @@ export async function generateSnapshotHash(deals: unknown[]): Promise<string> {
 /**
  * Generate run ID from timestamp
  * Format: deals-YYYY-MM-DD-HH
+ *
+ * @param date - Optional Date object (defaults to current time)
+ * @returns Formatted run ID string
  */
 export function generateRunId(date: Date = new Date()): string {
   const year = date.getUTCFullYear();
@@ -76,6 +90,8 @@ export function generateRunId(date: Date = new Date()): string {
 
 /**
  * Generate UUID v4
+ *
+ * @returns Randomly generated RFC4122 v4 UUID string
  */
 export function generateUUID(): string {
   return crypto.randomUUID();
@@ -104,6 +120,10 @@ function popcount(v: number): number {
 
 /**
  * Compare two strings for equality after normalization without allocations
+ *
+ * @param a - First string
+ * @param b - Second string
+ * @returns True if normalized alphanumeric characters are equal
  */
 export function normalizedEquals(a: string, b: string): boolean {
   let i = 0;
@@ -146,8 +166,11 @@ export interface BigramBitset {
 
 /**
  * Extracts character bigrams into a bitset for Jaccard similarity.
- * 36 characters (a-z0-9) -> 36*36 = 1296 possible bigrams.
+ * 36 characters (a-z0-9) -\> 36*36 = 1296 possible bigrams.
  * 1296 bits / 32 = 40.5 words. 41 words total.
+ *
+ * @param s - Input string
+ * @returns BigramBitset object containing word array and non-zero bit count
  */
 export function getBigramBitset(s: string): BigramBitset {
   const bits = new Uint32Array(41);
@@ -176,6 +199,10 @@ export function getBigramBitset(s: string): BigramBitset {
 /**
  * Calculate similarity between two precomputed string bigrams (0-1).
  * Avoids any dynamic allocations or string parsing.
+ *
+ * @param resA - First precomputed bigram bitset
+ * @param resB - Second precomputed bigram bitset
+ * @returns Jaccard similarity score between 0.0 and 1.0
  */
 export function calculateStringSimilarityPrecomputed(
   resA: BigramBitset,
@@ -199,6 +226,10 @@ export function calculateStringSimilarityPrecomputed(
  * Calculate similarity between two strings (0-1)
  * Uses Jaccard similarity on character bigrams with zero-allocation bitset normalization.
  * Optimized to avoid Set/Map allocations by using a fixed-size bitset for 36x36 bigrams.
+ *
+ * @param a - First string
+ * @param b - Second string
+ * @returns Jaccard similarity score between 0.0 and 1.0
  */
 export function calculateStringSimilarity(a: string, b: string): number {
   if (a === b) return 1.0;
@@ -215,6 +246,9 @@ export function calculateStringSimilarity(a: string, b: string): number {
  * Uses a chunked approach to convert bytes to a binary string to avoid
  * the O(N^2) overhead of repeated string concatenation while remaining
  * compatible with the standard btoa() function which expects 0-255 range.
+ *
+ * @param input - String or Uint8Array payload to encode
+ * @returns URL-safe base64 string
  */
 export function base64urlEncode(input: string | Uint8Array): string {
   const bytes = typeof input === "string" ? ENCODER.encode(input) : input;
@@ -247,6 +281,9 @@ export interface PrecomputedUrlSimilarityData {
 
 /**
  * Precomputes URL similarity fields once to avoid O(N^2) parsing/allocation overhead in hot loops.
+ *
+ * @param urlInput - String or URL instance
+ * @returns Structured PrecomputedUrlSimilarityData object
  */
 export function precomputeUrlSimilarityData(
   urlInput: string | URL,
@@ -282,6 +319,10 @@ export function precomputeUrlSimilarityData(
 
 /**
  * Calculates similarity between two precomputed URL structures without string-scanning/allocation overhead.
+ *
+ * @param a - First precomputed URL data structure
+ * @param b - Second precomputed URL data structure
+ * @returns Weighted URL similarity score between 0.0 and 1.0
  */
 export function calculateUrlSimilarityPrecomputed(
   a: PrecomputedUrlSimilarityData,
@@ -332,6 +373,10 @@ export function calculateUrlSimilarityPrecomputed(
 
 /**
  * Calculate URL similarity (for semantic deduplication)
+ *
+ * @param urlA - First URL string or object
+ * @param urlB - Second URL string or object
+ * @returns Weighted URL similarity score between 0.0 and 1.0
  */
 export function calculateUrlSimilarity(
   urlA: string | URL,
