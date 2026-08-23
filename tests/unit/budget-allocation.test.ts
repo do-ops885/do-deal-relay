@@ -1,7 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { discover } from "../../worker/pipeline/discover";
+import { validatedFetch } from "../../worker/lib/security";
 import type { PipelineContext, Env, SourceConfig } from "../../worker/types";
 import { logger } from "../../worker/lib/global-logger";
+
+// The exported logger is Object.freeze'd, so vi.spyOn(logger, "info") throws
+// "Cannot redefine property". Module-mock it instead (repo standard).
+vi.mock("../../worker/lib/global-logger", () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+// Bypass SSRF DNS validation for fake test domains while forwarding each
+// request to the per-test global fetch stub.
+vi.mock("../../worker/lib/security", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../worker/lib/security")>();
+  return {
+    ...actual,
+    validatedFetch: vi.fn(),
+  };
+});
 
 describe("Budget Allocation", () => {
   const ctx: PipelineContext = {
@@ -21,14 +44,15 @@ describe("Budget Allocation", () => {
 
   beforeEach(() => {
     mockKvStorage = new Map();
-    vi.stubGlobal("fetch", vi.fn());
-    vi.spyOn(logger, "info");
-    vi.spyOn(logger, "warn");
+    vi.clearAllMocks();
+    vi.mocked(validatedFetch).mockImplementation(
+      (url: string, init?: RequestInit) => global.fetch(url, init),
+    );
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   const createMockSource = (
@@ -235,7 +259,13 @@ describe("Budget Allocation", () => {
 
     const result = await discover(env, ctx);
 
-    // Default PER_SOURCE is 100
-    expect(result.deals).toHaveLength(100);
+    // Missing ENVIRONMENT falls back to production tier defaults:
+    // global=500, perSource=50, highTrustBonus=50.
+    expect(logger.info).toHaveBeenCalledWith(
+      "Starting discovery with budget constraints",
+      expect.objectContaining({ globalBudget: 500 }),
+    );
+    // Per-source default caps the single source at 50 of its 150 deals.
+    expect(result.deals).toHaveLength(50);
   });
 });

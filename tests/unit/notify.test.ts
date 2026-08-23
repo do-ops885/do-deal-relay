@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { notify, notifyHighValueDeals } from "../../worker/notify";
 import { setGitHubToken } from "../../worker/lib/github/index";
+import { validatedFetch } from "../../worker/lib/security";
 import type { Env, NotificationEvent } from "../../worker/types";
+
+// Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 describe("Notification System", () => {
   let mockKvStorage: Map<string, unknown>;
@@ -10,8 +16,8 @@ describe("Notification System", () => {
 
   beforeEach(() => {
     mockKvStorage = new Map();
-    fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+    vi.clearAllMocks();
+    fetchMock = vi.mocked(validatedFetch);
     setGitHubToken("test-token");
 
     mockEnv = {
@@ -42,7 +48,7 @@ describe("Notification System", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   describe("notify", () => {

@@ -1,10 +1,40 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { D1Database } from "@cloudflare/workers-types";
 import { publishSnapshot, rollbackSnapshot } from "../../worker/publish";
 import {
   setGitHubToken,
   initGitHubCircuitBreaker,
 } from "../../worker/lib/github/index";
+import { validatedFetch } from "../../worker/lib/security";
 import type { Snapshot, Deal, Env, PipelineContext } from "../../worker/types";
+
+// Bypass SSRF DNS resolution in validatedFetch (matches github.test.ts seam)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
+
+// ============================================================================
+// D1 Mock Factory
+// publishSnapshot/rollbackSnapshot flush referrals/metrics/audit through
+// batched D1 helpers requiring prepare().bind() and batch().
+// ============================================================================
+
+const createMockStatement = () => ({
+  bind: vi.fn().mockReturnThis(),
+  all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+  first: vi.fn().mockResolvedValue(null),
+  run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+});
+
+const createMockD1 = () => {
+  const statement = createMockStatement();
+  return {
+    prepare: vi.fn().mockImplementation(() => statement),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue(undefined),
+    statement,
+  };
+};
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -45,11 +75,14 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 
 describe("rollbackSnapshot and GitHub integration", () => {
   let mockKvStorage: Map<string, unknown>;
+  let mockDb: ReturnType<typeof createMockD1>;
   let mockEnv: Env;
   let mockContext: PipelineContext;
 
   beforeEach(() => {
     mockKvStorage = new Map();
+    mockDb = createMockD1();
+    vi.mocked(validatedFetch).mockReset();
     vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("console", { log: vi.fn(), error: vi.fn(), warn: vi.fn() });
 
@@ -101,7 +134,7 @@ describe("rollbackSnapshot and GitHub integration", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: mockDb as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -174,14 +207,16 @@ describe("rollbackSnapshot and GitHub integration", () => {
       });
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      const mockFetch = vi
-        .fn()
-        .mockResolvedValueOnce({ ok: true, json: async () => [] })
-        .mockResolvedValueOnce({ status: 404, ok: false })
+      vi.mocked(validatedFetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        } as Response)
+        .mockResolvedValueOnce({ status: 404, ok: false } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ commit: { sha: "new-sha" } }),
-        })
+        } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [
@@ -197,29 +232,44 @@ describe("rollbackSnapshot and GitHub integration", () => {
               },
             },
           ],
-        });
-      vi.stubGlobal("fetch", mockFetch);
+        } as Response);
 
       await publishSnapshot(mockEnv, snapshot, mockContext);
 
-      const commitCall = mockFetch.mock.calls.find(
-        (call: unknown[]) => (call[1] as { method?: string })?.method === "PUT",
-      );
+      const commitCall = vi
+        .mocked(validatedFetch)
+        .mock.calls.find(
+          (call: unknown[]) =>
+            (call[1] as { method?: string })?.method === "PUT",
+        );
       expect(commitCall).toBeDefined();
+      // Commit message carries the snapshot stats
+      const body = JSON.parse(
+        ((commitCall as unknown[])[1] as { body: string }).body,
+      ) as { message: string };
+      expect(body.message).toContain("- Total: 10");
+      expect(body.message).toContain("- Active: 8");
+      // Referral records from the snapshot are batch-upserted into D1
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining("INSERT INTO referrals"),
+      );
+      expect(mockDb.batch).toHaveBeenCalled();
     });
 
     it("should use correct file path from config", async () => {
       const snapshot = createMockSnapshot();
       mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-      const mockFetch = vi
-        .fn()
-        .mockResolvedValueOnce({ ok: true, json: async () => [] })
-        .mockResolvedValueOnce({ status: 404, ok: false })
+      vi.mocked(validatedFetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        } as Response)
+        .mockResolvedValueOnce({ status: 404, ok: false } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ commit: { sha: "sha" } }),
-        })
+        } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [
@@ -235,14 +285,18 @@ describe("rollbackSnapshot and GitHub integration", () => {
               },
             },
           ],
-        });
-      vi.stubGlobal("fetch", mockFetch);
+        } as Response);
 
       await publishSnapshot(mockEnv, snapshot, mockContext);
 
-      const commitCall = mockFetch.mock.calls.find(
-        (call: unknown[]) => (call[1] as { method?: string })?.method === "PUT",
-      );
+      const commitCall = vi
+        .mocked(validatedFetch)
+        .mock.calls.find(
+          (call: unknown[]) =>
+            (call[1] as { method?: string })?.method === "PUT",
+        );
+      expect(commitCall).toBeDefined();
+      // GitHub contents API path targets the configured snapshot file
       expect((commitCall as unknown[])[0]).toContain("deals.json");
     });
   });

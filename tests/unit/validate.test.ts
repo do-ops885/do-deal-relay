@@ -48,7 +48,10 @@ const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
 });
 
 describe("Validation Pipeline", () => {
-  const ctx: PipelineContext = {
+  // Each validate() call represents one pipeline run; gate 9 stores per-deal
+  // integrity hashes on the context, so every test must start from a fresh
+  // context just like a fresh run would.
+  const createContext = (): PipelineContext => ({
     run_id: "test-run",
     trace_id: "test-trace",
     start_time: Date.now(),
@@ -59,7 +62,7 @@ describe("Validation Pipeline", () => {
     scored: [],
     errors: [],
     retry_count: 0,
-  };
+  });
 
   const mockEnv = {
     DEALS_PROD: {
@@ -101,7 +104,7 @@ describe("Validation Pipeline", () => {
 
   it("should validate good deals", async () => {
     const deals = [createMockDeal("1")];
-    const result = await validate(deals, ctx, mockEnv);
+    const result = await validate(deals, createContext(), mockEnv);
     expect(result.valid).toHaveLength(1);
     expect(result.invalid).toHaveLength(0);
   });
@@ -117,7 +120,7 @@ describe("Validation Pipeline", () => {
         },
       }),
     ];
-    const result = await validate(deals, ctx, mockEnv);
+    const result = await validate(deals, createContext(), mockEnv);
     expect(result.valid).toHaveLength(0);
     expect(result.invalid).toHaveLength(1);
   });
@@ -136,13 +139,13 @@ describe("Validation Pipeline", () => {
 
     // Case 1: Strict environment (threshold 0.3) - Should be invalid
     const strictEnv = { ...mockEnv, TRUST_THRESHOLD: "0.3" };
-    const strictResult = await validate(deals, ctx, strictEnv);
+    const strictResult = await validate(deals, createContext(), strictEnv);
     expect(strictResult.valid).toHaveLength(0);
     expect(strictResult.invalid).toHaveLength(1);
 
     // Case 2: Lenient environment (threshold 0.1) - Should be valid
     const lenientEnv = { ...mockEnv, TRUST_THRESHOLD: "0.1" };
-    const lenientResult = await validate(deals, ctx, lenientEnv);
+    const lenientResult = await validate(deals, createContext(), lenientEnv);
     expect(lenientResult.valid).toHaveLength(1);
     expect(lenientResult.invalid).toHaveLength(0);
   });
@@ -159,7 +162,7 @@ describe("Validation Pipeline", () => {
         reward: { type: "cash", value: 150, currency: "USD" },
       }),
     ];
-    const result = await validate(deals, ctx, mockEnv);
+    const result = await validate(deals, createContext(), mockEnv);
     expect(result.quarantined.length).toBeGreaterThan(0);
   });
 
