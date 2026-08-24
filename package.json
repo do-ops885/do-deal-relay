@@ -46,8 +46,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.21.3",
-    "@cloudflare/workers-types": "5.20260820.1",
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "@cloudflare/workers-types": "5.20260821.1",
     "@playwright/test": "^1.62.1",
     "@types/js-yaml": "^4.0.9",
     "@vitest/coverage-v8": "^4.1.11",
@@ -58,7 +58,7 @@
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
-    "wrangler": "4.123.0"
+    "wrangler": "4.125.0"
   },
   "overrides": {
     "esbuild": ">=0.28.1",
