@@ -36,6 +36,7 @@ import {
   handleMCPCall,
   handleMCPInfo,
 } from "../routes/mcp";
+import { tryHandleMCPStreamRoutes } from "./mcp-stream-routes";
 import {
   handleValidateUrl,
   handleValidateBatch,
@@ -366,6 +367,10 @@ export async function tryHandleLegacyRoutes(
   if (path === "/mcp/v1/info") {
     return withAuth(request, env, "user", () => handleMCPInfo(env, request));
   }
+
+  // MCP SSE Streaming (MI-1): extracted to router/mcp-stream-routes.ts.
+  const mcpStreamResponse = await tryHandleMCPStreamRoutes(request, env);
+  if (mcpStreamResponse) return mcpStreamResponse;
 
   // D1 Database API endpoints
   if (path.startsWith("/api/d1/")) {

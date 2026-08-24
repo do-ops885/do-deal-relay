@@ -68,16 +68,16 @@ describe("Research Agent - Real Fetching", () => {
       // Create a large content string that exceeds MAX_PAYLOAD_SIZE_BYTES (1MB)
       const largeContent = "x".repeat(1_500_000); // 1.5MB
 
-      // Mock validateFetchUrl so the SSRF check passes and we test the size limit
-      vi.spyOn(securityModule, "validateFetchUrl").mockResolvedValue(true);
-
-      // Mock fetch to return oversized content
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Headers({ "content-type": "text/html" }),
-        text: () => Promise.resolve(largeContent),
-      });
+      // Spy on validatedFetch at the cross-module seam: page-fetcher imports
+      // it from ../security, so this intercepts before any SSRF/DNS work and
+      // lets the oversized payload reach the size check under test.
+      vi.spyOn(securityModule, "validatedFetch").mockImplementation(
+        async () =>
+          new Response(largeContent, {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          }),
+      );
 
       const result = await fetchGenericPageContent("https://example.com/test");
 

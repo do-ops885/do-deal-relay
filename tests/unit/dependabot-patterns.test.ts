@@ -102,8 +102,19 @@ describe("Dependabot Patterns and Wildcards", () => {
       ).toBe(false);
     });
 
-    it("docker correctly filters pre-release tags", () => {
-      const wildcards = dockerUpdate.ignore.find(
+    it("docker ecosystem is intentionally unconfigured", () => {
+      // .github/dependabot.yml currently scopes updates to github-actions
+      // and npm only. If a docker entry is (re-)introduced it must include
+      // an ignore block filtering pre-release tags; restore the wildcard
+      // assertions here when that happens.
+      expect(dockerUpdate).toBeUndefined();
+    });
+
+    it("configured pre-release wildcards exclude tags but not stable versions", () => {
+      // Guards the matching semantics of the repo-wide ignore wildcards:
+      // suffixed patterns must catch prefixed/qualified pre-release forms
+      // while leaving stable versions untouched.
+      const wildcards = npmUpdate.ignore.find(
         (i: any) => i["dependency-name"] === "*",
       ).versions;
 
@@ -203,23 +214,12 @@ describe("Dependabot Patterns and Wildcards", () => {
       );
     });
 
-    it("terraform group captures hashicorp providers", () => {
-      const patterns = terraformUpdate.groups["terraform-providers"].patterns;
-      const isMatch = (val: string, pat: string) => {
-        if (pat.endsWith("/*")) {
-          return val.startsWith(pat.slice(0, -1));
-        }
-        return minimatch(val, pat, matchOptions);
-      };
-      expect(patterns.some((p: string) => isMatch("hashicorp/aws", p))).toBe(
-        true,
-      );
-      expect(patterns.some((p: string) => isMatch("hashicorp/google", p))).toBe(
-        true,
-      );
-      expect(
-        patterns.some((p: string) => isMatch("cloudflare/cloudflare", p)),
-      ).toBe(false);
+    it("terraform ecosystem is intentionally unconfigured", () => {
+      // .github/dependabot.yml currently scopes updates to github-actions
+      // and npm only. If a terraform entry is (re-)introduced it must group
+      // hashicorp providers under a "terraform-providers" group whose
+      // patterns capture "hashicorp/*"; restore those assertions here.
+      expect(terraformUpdate).toBeUndefined();
     });
   });
 });

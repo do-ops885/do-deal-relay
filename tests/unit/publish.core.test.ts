@@ -1,10 +1,43 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { D1Database } from "@cloudflare/workers-types";
 import { publishSnapshot } from "../../worker/publish";
 import {
   setGitHubToken,
   initGitHubCircuitBreaker,
 } from "../../worker/lib/github/index";
+import { validatedFetch } from "../../worker/lib/security";
 import type { Snapshot, Deal, Env, PipelineContext } from "../../worker/types";
+
+// Bypass SSRF DNS resolution in validatedFetch (matches github.test.ts seam)
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
+
+// ============================================================================
+// D1 Mock Factory
+// publishSnapshot writes referrals/metrics/audit through batched D1 helpers
+// (insertReferralsBatch, writeMetricsBatch, logAuditEventsBatch), which
+// require prepare().bind() and batch() on the database binding.
+// ============================================================================
+
+function createMockStatement() {
+  return {
+    bind: vi.fn().mockReturnThis(),
+    all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+    first: vi.fn().mockResolvedValue(null),
+    run: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+  };
+}
+
+function createMockD1() {
+  const statement = createMockStatement();
+  return {
+    prepare: vi.fn().mockImplementation(() => statement),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue(undefined),
+    statement,
+  };
+}
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -45,11 +78,22 @@ const createMockSnapshot = (overrides: Partial<Snapshot> = {}): Snapshot => ({
 
 describe("publishSnapshot", () => {
   let mockKvStorage: Map<string, unknown>;
+  let mockDb: ReturnType<typeof createMockD1>;
   let mockEnv: Env;
   let mockContext: PipelineContext;
 
+  // Access the underlying vi.fn call log of the KV put mock (typed as
+  // KVNamespace on the env object)
+  function getProdPutCalls(): unknown[][] {
+    return (
+      mockEnv.DEALS_PROD.put as unknown as { mock: { calls: unknown[][] } }
+    ).mock.calls;
+  }
+
   beforeEach(() => {
     mockKvStorage = new Map();
+    mockDb = createMockD1();
+    vi.mocked(validatedFetch).mockReset();
     vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("console", { log: vi.fn(), error: vi.fn(), warn: vi.fn() });
 
@@ -101,7 +145,7 @@ describe("publishSnapshot", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: mockDb as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -134,14 +178,16 @@ describe("publishSnapshot", () => {
     const snapshot = createMockSnapshot();
     mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => [] })
-      .mockResolvedValueOnce({ status: 404, ok: false })
+    vi.mocked(validatedFetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+      .mockResolvedValueOnce({ status: 404, ok: false } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ commit: { sha: "new-sha" } }),
-      })
+      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => [
@@ -157,8 +203,7 @@ describe("publishSnapshot", () => {
             },
           },
         ],
-      });
-    vi.stubGlobal("fetch", mockFetch);
+      } as Response);
 
     await publishSnapshot(mockEnv, snapshot, mockContext);
 
@@ -166,7 +211,15 @@ describe("publishSnapshot", () => {
       "snapshot:prod",
       expect.any(String),
     );
-    expect(mockEnv.DEALS_STAGING.put).toHaveBeenCalledWith(
+
+    // Referral records are batch-upserted into D1 (one statement per deal)
+    expect(mockDb.prepare).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO referrals"),
+    );
+    expect(mockDb.batch).toHaveBeenCalled();
+
+    // Last-run metadata is stored in production KV
+    expect(mockEnv.DEALS_PROD.put).toHaveBeenCalledWith(
       "meta:last_run",
       expect.any(String),
     );
@@ -176,8 +229,7 @@ describe("publishSnapshot", () => {
     const snapshot = createMockSnapshot();
     mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-    const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
-    vi.stubGlobal("fetch", mockFetch);
+    vi.mocked(validatedFetch).mockRejectedValue(new Error("Network error"));
 
     await expect(
       publishSnapshot(mockEnv, snapshot, mockContext),
@@ -188,29 +240,53 @@ describe("publishSnapshot", () => {
     const snapshot = createMockSnapshot({ snapshot_hash: "committed-hash" });
     mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-    const mockFetch = vi.fn().mockResolvedValue({
+    // getRecentCommits maps commit.message, which isSnapshotCommitted checks
+    // for the snapshot hash to detect prior publication.
+    vi.mocked(validatedFetch).mockResolvedValue({
       ok: true,
-      json: async () => [{ name: "deals.json" }],
-    });
-    vi.stubGlobal("fetch", mockFetch);
+      json: async () => [
+        {
+          sha: "existing-sha",
+          commit: {
+            message: "[AUTO] Update deals - committed-hash",
+            author: {
+              name: "Test",
+              email: "test@example.com",
+              date: "2024-03-31T00:00:00Z",
+            },
+          },
+        },
+      ],
+    } as Response);
 
     await publishSnapshot(mockEnv, snapshot, mockContext);
 
-    expect(mockEnv.DEALS_PROD.put).not.toHaveBeenCalled();
+    // Idempotent short-circuit: no snapshot promotion, no last_run update,
+    // and no D1 referral writes (only the GitHub commits cache and the
+    // best-effort audit flush in finally may run)
+    const prodPutKeys = getProdPutCalls().map((call) => call[0]);
+    expect(prodPutKeys).not.toContain("snapshot:prod");
+    expect(prodPutKeys).not.toContain("meta:last_run");
+    const referralPrepares = mockDb.prepare.mock.calls.filter(
+      (call: unknown[]) => String(call[0]).includes("INSERT INTO referrals"),
+    );
+    expect(referralPrepares).toHaveLength(0);
   });
 
   it("should update last_run metadata after publish", async () => {
     const snapshot = createMockSnapshot();
     mockKvStorage.set("staging:snapshot:staging", snapshot);
 
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => [] })
-      .mockResolvedValueOnce({ status: 404, ok: false })
+    vi.mocked(validatedFetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+      .mockResolvedValueOnce({ status: 404, ok: false } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ commit: { sha: "new-sha" } }),
-      })
+      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => [
@@ -226,14 +302,20 @@ describe("publishSnapshot", () => {
             },
           },
         ],
-      });
-    vi.stubGlobal("fetch", mockFetch);
+      } as Response);
 
     await publishSnapshot(mockEnv, snapshot, mockContext);
 
-    expect(mockEnv.DEALS_STAGING.put).toHaveBeenCalledWith(
-      "meta:last_run",
-      expect.any(String),
+    // setLastRunMetadata persists to production KV with run metadata
+    const lastRunCall = getProdPutCalls().find(
+      (call) => call[0] === "meta:last_run",
     );
+    expect(lastRunCall).toBeDefined();
+    const lastRunMeta = JSON.parse((lastRunCall as unknown[])[1] as string) as {
+      run_id: string;
+      deals_count: number;
+    };
+    expect(lastRunMeta.run_id).toBe("test-run");
+    expect(lastRunMeta.deals_count).toBe(1);
   });
 });
