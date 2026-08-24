@@ -163,6 +163,11 @@ function getDefaultPermissions(role: AuthRole): Permission[] {
 
 /**
  * Check if a role has a specific permission.
+ *
+ * @param env Worker environment context containing D1 database bindings
+ * @param role Role to check
+ * @param permission Specific permission string (e.g. "deals:read")
+ * @returns Promise resolving to boolean indicating permission status
  */
 export async function hasPermission(
   env: Env,
@@ -175,6 +180,11 @@ export async function hasPermission(
 
 /**
  * Check if a role has ALL of the specified permissions.
+ *
+ * @param env Worker environment context
+ * @param role Role to evaluate
+ * @param requiredPermissions Array of required permission strings
+ * @returns Promise resolving to RBACResult object with authorization status
  */
 export async function hasAllPermissions(
   env: Env,
@@ -197,6 +207,11 @@ export async function hasAllPermissions(
 
 /**
  * Check if a role has ANY of the specified permissions.
+ *
+ * @param env Worker environment context
+ * @param role Role to evaluate
+ * @param requiredPermissions Array of candidate permission strings
+ * @returns Promise resolving to RBACResult object
  */
 export async function hasAnyPermission(
   env: Env,
@@ -220,6 +235,9 @@ export async function hasAnyPermission(
 /**
  * Middleware factory: require specific permission(s) for a route.
  *
+ * @param env Worker environment context
+ * @param requiredPermissions List of required permissions
+ * @returns Middleware function accepting authentication context and returning access status
  * @example
  * ```typescript
  * const rbacCheck = requirePermission(env, Permissions.DEALS_WRITE);
@@ -257,6 +275,8 @@ export function requirePermission(
 /**
  * Clear the permissions cache for a specific role or all roles.
  * Call after permission changes to ensure fresh data.
+ *
+ * @param role Optional role to invalidate from cache; clears all if omitted
  */
 export function clearPermissionsCache(role?: AuthRole): void {
   if (role) {
@@ -268,6 +288,10 @@ export function clearPermissionsCache(role?: AuthRole): void {
 
 /**
  * Get all permissions for a role (for debugging/admin UI).
+ *
+ * @param env Worker environment context
+ * @param role Role to inspect
+ * @returns Promise resolving to array of assigned permission strings
  */
 export async function listRolePermissions(
   env: Env,
@@ -279,6 +303,12 @@ export async function listRolePermissions(
 /**
  * Check if a user can access a specific resource with an action.
  * Combines RBAC check with role hierarchy (admin overrides all).
+ *
+ * @param env Worker environment context
+ * @param role Role attempting access
+ * @param resource Resource name (e.g., "deals")
+ * @param action Action name (e.g., "read")
+ * @returns Promise resolving to boolean indicating access authorization
  */
 export async function canAccess(
   env: Env,
