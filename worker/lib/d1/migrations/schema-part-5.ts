@@ -1,7 +1,8 @@
 import type { Migration } from "./types";
 
 /**
- * Migrations 9-10: source trust evolution and Reddit post lifecycle state.
+ * Migrations 9-11: source trust evolution, Reddit post lifecycle state,
+ * and the keyed research cache.
  */
 export const MIGRATIONS_PART_5: Migration[] = [
   {
@@ -64,6 +65,26 @@ export const MIGRATIONS_PART_5: Migration[] = [
       DROP INDEX IF EXISTS idx_reddit_posts_deal_id;
       DROP INDEX IF EXISTS idx_reddit_posts_status_checked;
       DROP TABLE IF EXISTS reddit_posts;
+    `,
+  },
+  {
+    version: 11,
+    name: "add_research_cache_kv",
+    up: `
+      -- Key/value cache for worker/lib/d1/research-cache.ts (keyed-JSON
+      -- design). Separate from the legacy query/domain-shaped research_cache
+      -- table, which stays untouched. updated_at has no default because every
+      -- helper write supplies it.
+      CREATE TABLE IF NOT EXISTS research_cache_kv (
+          key TEXT PRIMARY KEY,
+          payload TEXT NOT NULL,
+          expires_at INTEGER,
+          created_at INTEGER DEFAULT (strftime('%s', 'now')),
+          updated_at TEXT
+      );
+    `,
+    down: `
+      DROP TABLE IF EXISTS research_cache_kv;
     `,
   },
 ];
