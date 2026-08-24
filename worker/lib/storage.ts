@@ -182,26 +182,106 @@ export async function updateSourceTrust(
 }
 
 /**
- * Record validation result for source
+ * In-memory tally of source validation results collected during one discovery
+ * run. Counters are keyed by the exact domain string used in the registry
+ * entries (same equality semantics as the previous per-call implementation).
+ */
+export interface ValidationTally {
+  readonly successes: Map<string, number>;
+  readonly failures: Map<string, number>;
+}
+
+/**
+ * Create an empty validation tally for a discovery run
+ */
+export function createValidationTally(): ValidationTally {
+  return { successes: new Map(), failures: new Map() };
+}
+
+/**
+ * Add one validation result to the tally.
+ *
+ * Synchronous and lock-free: safe to call from parallel pattern batches that
+ * all target the same domain. Replaces per-pattern KV read-modify-write,
+ * which lost counter updates under CONCURRENCY>1.
+ */
+export function tallyValidation(
+  tally: ValidationTally,
+  domain: string,
+  success: boolean,
+): void {
+  const bucket = success ? tally.successes : tally.failures;
+  bucket.set(domain, (bucket.get(domain) || 0) + 1);
+}
+
+/**
+ * Flush tallied validation counters to the source registry.
+ *
+ * Performs ONE registry GET + at most ONE PUT for every domain touched
+ * during the run (KV stores the registry as a single JSON blob, so partial
+ * entry updates are not possible; merging into a freshly read registry is
+ * the closest equivalent).
+ *
+ * RESIDUAL RACE WINDOW: Cloudflare KV has no compare-and-swap, so if two
+ * isolates flush concurrently they read-modify-write the same "registry"
+ * key and last-writer-wins can drop the other writer's delta. The window
+ * spans only this function's GET-to-PUT interval (merge is synchronous,
+ * sub-millisecond), instead of the whole discovery run as before, and
+ * per-source flushing keeps concurrent batches on different domains in
+ * practice. A full fix requires serializing writes through a Durable
+ * Object and is out of scope here.
+ */
+export async function flushValidationTally(
+  env: Env,
+  tally: ValidationTally,
+): Promise<void> {
+  const touchedDomains = new Set<string>([
+    ...tally.successes.keys(),
+    ...tally.failures.keys(),
+  ]);
+  if (touchedDomains.size === 0) return;
+
+  const registry = await getSourceRegistry(env);
+  let updatedAnyEntry = false;
+
+  for (const domain of touchedDomains) {
+    const source = registry.find((s) => s.domain === domain);
+    if (!source) continue;
+
+    const successes = tally.successes.get(domain);
+    const failures = tally.failures.get(domain);
+    if (successes !== undefined) {
+      source.validation_success_count =
+        (source.validation_success_count || 0) + successes;
+    }
+    if (failures !== undefined) {
+      source.validation_failure_count =
+        (source.validation_failure_count || 0) + failures;
+    }
+    updatedAnyEntry = true;
+  }
+
+  // Preserve prior semantics: unknown domains are silently skipped and no
+  // write happens when nothing matched.
+  if (updatedAnyEntry) {
+    await updateSourceRegistry(env, registry);
+  }
+}
+
+/**
+ * Record a single validation result for a source.
+ * Convenience wrapper over the batched tally/flush API for callers that
+ * record one result at a time; batched callers should use
+ * createValidationTally + tallyValidation + flushValidationTally instead.
  */
 export async function recordSourceValidation(
   env: Env,
   domain: string,
   success: boolean,
 ): Promise<void> {
-  const registry = await getSourceRegistry(env);
-  const source = registry.find((s) => s.domain === domain);
-
-  if (source) {
-    if (success) {
-      source.validation_success_count =
-        (source.validation_success_count || 0) + 1;
-    } else {
-      source.validation_failure_count =
-        (source.validation_failure_count || 0) + 1;
-    }
-    await updateSourceRegistry(env, registry);
-  }
+  const tally = createValidationTally();
+  tallyValidation(tally, domain, success);
+  await flushValidationTally(env, tally);
 }
 
 /**
