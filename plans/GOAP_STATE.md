@@ -1,10 +1,66 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-15
-**Version**: 0.15.0
-**Status**: Active — Reddit post lifecycle implemented; production gated. Fresh gap analysis (2026-08-15) records 6 missing integrations, 3 partial features, and 8 test-coverage gaps.
+**Last Updated**: 2026-08-22
+**Version**: 0.16.0
+**Status**: Active — PR triage sweep 2026-08-22 resolved the open-PR backlog; P1 gap items (MI-1, MI-5, MI-6, MF-2, T-1) and dead-code removals (N-1, N-2) in progress via [SPEC-pr-triage-and-p1-swarm.md](SPEC-pr-triage-and-p1-swarm.md).
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+
+---
+
+## PR Triage Sweep — 2026-08-22
+
+Orchestrated via goap-agent skill; scope confirmed by operator.
+Spec: [SPEC-pr-triage-and-p1-swarm.md](SPEC-pr-triage-and-p1-swarm.md)
+
+| ID | Item | Status | Evidence |
+|:---|:---|:---|:---|
+| PRT-1 | Merge fast-track: #695 plans, #699 dependabot CI, #704 a11y deal cards, #705 categorization perf, #703 workflow stds, #707 docs sync | ✅ COMPLETE | All merged with green checks |
+| PRT-2 | Roast/review #700 health audit | ✅ COMPLETE | Real impact confirmed (CVE undici bump, dedupe, first ranking-helper tests); 12 as-any casts replaced with typed DealOverrides; non-serializable default param removed |
+| PRT-3 | Fix #701 hmac signature-leak security fix | ✅ COMPLETE | Two Codacy findings fixed at root cause (banned double cast; hardcoded secret literal replaced with generateWebhookSecret()); merged |
+| PRT-4 | Close no-impact JSDoc-only PRs #697 #702 #706 | ✅ COMPLETE | Closed with plain-text rationale (zero runtime impact) |
+| PRT-5 | Resolve #696 workers-types bump | ⬜ OPEN | Strictly superseded once #700 lands (5.20260816.1 vs 5.20260820.1); close then |
+| PRT-6 | Implementation swarm: MI-5, MI-6, MF-2, MI-1+MF-3, T-1, N-1, N-2 | ✅ COMPLETE | PR #708; 10 atomic commits; see gap-item flips below |
+
+### Gap item outcomes delivered by PRT-6
+
+| Item | Outcome | Evidence |
+|:---|:---|:---|
+| MI-5 | ✅ CLOSED | Legacy expiration-manager.ts deleted; pipeline finalize uses modular lib/expiration checkDealExpirations (same entry point as cron) |
+| MI-6 | ✅ CLOSED | Orphan worker/db/schema.sql deleted; no references remain in code |
+| MF-2 | ✅ CLOSED | Orchestrator defaults to real fetching via validatedFetch stack; simulateDiscovery reachable only through explicit use_simulated_results test flag |
+| MI-1 + MF-3 | ✅ CLOSED | GET /mcp/stream and POST /mcp/stream/tools/call routed with auth + rate limiting; progress tracker persists KV state streamed to SSE clients |
+| T-1 | ✅ CLOSED | 57 new unit tests across tests/unit/d1/ covering audit-log, referrals-batch, system-metrics, research-cache, factory |
+| N-1 | ✅ CLOSED | Dead worker/lib/webhook-sdk.ts (488 lines) deleted after symbol-level ref-check |
+| N-2 | ✅ CLOSED | Orphan worker/routes/health.ts + its exclusive test deleted together; live core/health.ts remains covered by funnel/prometheus metric tests |
+
+### Additional fixes shipped in PRT-6
+
+- Production bug: referral-extractor extractWithContext infinite loop
+  (dedupe continue skipped regex advancement); suite now completes instead of
+  hanging - this also resolves the CANTFIX-002 full-suite stall symptom.
+- Test seam: payload-size test re-seated on validatedFetch cross-module seam.
+- lint:md scripts fixed to call the real markdownlint binary (was
+  markdownlint-cli, never installed under that name; broken on main too).
+- FOLLOWUP-deployment-fix / issues-not-addressed / p3-features re-verified
+  with dated markers per Re-Verification Protocol.
+
+## New Findings — 2026-08-22 Codebase Analysis
+
+Not covered by GAP-ANALYSIS-2026-08-15:
+
+| ID | Item | Priority | Status |
+|:---|:---|:---|:---|
+| N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | ✅ CLOSED (deleted in PRT-6) |
+| N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | ✅ CLOSED (deleted with its exclusive test in PRT-6) |
+| N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
+| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | 🟡 PARTIAL - legacy-routes.ts split to 472 lines during MI-1; orchestrator remains 503 |
+| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ⬜ DEFERRED (needs dedicated sweep) |
+| N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ⬜ DEFERRED (dedicated fix sprint; zero regressions from PRT-6 verified by main-vs-branch diff) |
+
+Supporting evidence: lint = tsc+prettier only (no ESLint gate), so banned
+patterns are unenforced; zero TODO/FIXME debt found; no as any in worker/
+production code (95 occurrences confined to tests/).
 
 ---
 
@@ -163,6 +219,9 @@ The 6 Codacy SC2034 unused variable warnings in `scripts/` (detected on `test/sp
 |:---|:---|:---|:---|:---|
 | BLOCKED-1 | **Workers Builds: do-deal-relay** — Cloudflare dashboard auto-deploy fails on every push | CI | Cloudflare dashboard integration misconfigured (not managed via code) | [ADR-018](ADR-018-cloudflare-workers-builds-failure.md) |
 | BLOCKED-2 | **Deploy timeout too low** — Pre-Deploy Validation cancelled (15m timeout, tests take 11m+) | CI | OAuth token lacks `workflow` scope to push workflow file changes | [ADR-019](ADR-019-deploy-timeout-too-low.md) |
+| BLOCKED-3 | **ci-workflow-validator gate fails 14/14 on main and all branches** — gate expects wrangler.jsonc runtime vars to appear as env/secrets references in GitHub workflows, but deploys are provisioned by Cloudflare Workers Builds, not Actions; nightly.yml intentionally hardcodes CI-test credentials | Local PEV gate only | Structural gate premise mismatch; remediation needs dedicated gate rework | [ADR-021](ADR-021-ci-workflow-validator-over-strict.md) |
+
+**Re-verified:** 2026-08-22 — full deferred/blocked inventory re-checked during PR triage swarm.
 
 ---
 

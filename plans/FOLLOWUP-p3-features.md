@@ -3,6 +3,8 @@
 ## Overview
 This document tracks the remaining P3 features that need to be implemented in future sprints.
 
+**Re-verified:** 2026-08-22 — semantic search implementation files confirmed present (worker/lib/search/{types,client,embedding-pipeline}.ts, worker/routes/semantic-search.ts); dashboard items (#298+) remain open as documented future work.
+
 ## P3 Features
 
 ### 1. Semantic Search (#294-#297)

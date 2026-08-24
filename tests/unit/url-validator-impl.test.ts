@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   validateUrl,
   checkUrlStatusBatch,
@@ -6,7 +6,7 @@ import {
   isUrlDead,
   getValidationSummary,
 } from "../../worker/lib/validation/url-validator";
-import { logger } from "../../worker/lib/global-logger";
+import { validatedFetch } from "../../worker/lib/security";
 
 // Mock logger to avoid noise
 vi.mock("../../worker/lib/global-logger", () => ({
@@ -18,23 +18,28 @@ vi.mock("../../worker/lib/global-logger", () => ({
   },
 }));
 
-// Mock fetch
-const globalFetch = global.fetch;
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-afterAll(() => {
-  global.fetch = globalFetch;
-});
+// Mock validatedFetch at the cross-module seam to bypass SSRF DNS-over-HTTPS
+// resolution (matches github.test.ts precedent, plans/GOAP_STATE.md
+// 2026-07-10). Production paths (url-request.ts tryHeadRequest/tryGetRequest
+// and detectRedirects) call validatedFetch, whose DoH lookup would consume
+// global.fetch stubs as DNS responses and block every request.
+vi.mock("../../worker/lib/security", () => ({
+  validatedFetch: vi.fn(),
+}));
 
 describe("url-validator", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    // resetAllMocks (not clearAllMocks): clears pending mockResolvedValueOnce
+    // queues so unconsumed responses cannot leak into the next test.
+    vi.resetAllMocks();
+    fetchMock = vi.mocked(validatedFetch);
   });
 
   describe("validateUrl", () => {
     it("should return valid for 200 OK", async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -44,17 +49,19 @@ describe("url-validator", () => {
       expect(result.valid).toBe(true);
       expect(result.statusCode).toBe(200);
       expect(result.url).toBe("https://example.com/deal");
+      // Successful HEAD short-circuits the GET fallback.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it("should follow redirects", async () => {
       // 301 Redirect
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         status: 301,
         statusText: "Moved Permanently",
         headers: new Map([["location", "https://example.com/new"]]),
       });
       // 200 OK
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -65,17 +72,13 @@ describe("url-validator", () => {
       expect(result.redirectCount).toBe(1);
       expect(result.finalUrl).toBe("https://example.com/new");
       expect(result.redirectChain).toContain("https://example.com/new");
+      // One request per hop along the redirect chain.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("should return invalid for 404", async () => {
-      // HEAD 404
-      mockFetch.mockResolvedValueOnce({
-        status: 404,
-        statusText: "Not Found",
-        headers: new Map(),
-      });
-      // GET 404 (fallback)
-      mockFetch.mockResolvedValueOnce({
+      // HEAD 404 - invalid status short-circuits without GET fallback
+      fetchMock.mockResolvedValueOnce({
         status: 404,
         statusText: "Not Found",
         headers: new Map(),
@@ -84,10 +87,12 @@ describe("url-validator", () => {
       const result = await validateUrl("https://example.com/broken");
       expect(result.valid).toBe(false);
       expect(result.statusCode).toBe(404);
+      // Invalid status on HEAD returns immediately without GET fallback.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it("should handle redirect loops", async () => {
-      mockFetch.mockImplementation(() =>
+      fetchMock.mockImplementation(() =>
         Promise.resolve({
           status: 302,
           statusText: "Found",
@@ -97,23 +102,23 @@ describe("url-validator", () => {
 
       const result = await validateUrl("https://example.com/loop");
       expect(result.valid).toBe(false);
-      // If it doesn't detect loop, it might fail with max redirects or something else
-      // But let's check what it actually returns
-      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Redirect loop detected");
     });
 
     it("should handle network errors", async () => {
-      mockFetch.mockRejectedValue(new Error("Network connection lost"));
+      fetchMock.mockRejectedValue(new Error("Network connection lost"));
 
       const result = await validateUrl("https://example.com/fail");
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Network connection lost");
+      // HEAD failure falls back to GET before the error surfaces.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
   });
 
   describe("checkUrlStatusBatch", () => {
     it("should validate a batch of URLs", async () => {
-      mockFetch.mockResolvedValue({
+      fetchMock.mockResolvedValue({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -129,12 +134,12 @@ describe("url-validator", () => {
 
   describe("detectRedirects", () => {
     it("should detect simple redirect", async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         status: 302,
         statusText: "Found",
         headers: new Map([["location", "https://example.com/final"]]),
       });
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         status: 200,
         statusText: "OK",
         headers: new Map(),
@@ -143,6 +148,8 @@ describe("url-validator", () => {
       const result = await detectRedirects("https://example.com/start");
       expect(result.redirectCount).toBe(1);
       expect(result.finalUrl).toBe("https://example.com/final");
+      // One request per hop: 302 probe then terminal 200.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
   });
 

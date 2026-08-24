@@ -115,21 +115,24 @@ function extractWithContext(
     let match: RegExpExecArray | null = pattern.exec(content);
     while (match !== null) {
       const matchedText = match[1] ?? match[0];
+      const { index } = match;
+
+      // Advance the regex before any continue path; otherwise a repeated or
+      // empty capture would leave lastIndex untouched and spin forever.
+      if (pattern.lastIndex === index) pattern.lastIndex += 1;
+      match = pattern.exec(content);
+
       if (!matchedText) continue;
       const key = matchedText.toLowerCase();
 
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const start = Math.max(0, match.index - 200);
-      const end = Math.min(
-        content.length,
-        match.index + matchedText.length + 200,
-      );
+      const start = Math.max(0, index - 200);
+      const end = Math.min(content.length, index + matchedText.length + 200);
       const context = content.slice(start, end);
 
       matches.push({ match: matchedText, context });
-      match = pattern.exec(content);
     }
   }
 
