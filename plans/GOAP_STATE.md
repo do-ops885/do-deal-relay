@@ -2,8 +2,27 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-08-25
-**Version**: 0.17.1
-**Status**: Active — 2026-08-24 improvement run COMPLETE via PR #713: P0 correctness fixes (research-cache migration, DoH cache, telemetry batching), PipelineLock DO wired per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md), EU AI Act logger live on AI paths, dead security modules removed, silent catches logged. Deferred items tracked below.
+**Version**: 0.18.0
+**Status**: Active — 2026-08-25 improvement swarm IN PROGRESS (spec: [SPEC-improvement-swarm-2026-08-25.md](SPEC-improvement-swarm-2026-08-25.md)). Prior run COMPLETE via PR #713. Deferred items tracked below.
+
+---
+
+## Improvement Run — 2026-08-25 Findings Register
+
+Fresh full-repo scan (line limits, banned patterns, dead-code recheck,
+config-as-code, KV truncation sites). Baseline: pev-gates 12/13 pass
+(only ci-workflow-validator fails = BLOCKED-3/ADR-021); `as any` = 0 in
+worker/, console.* confined to logger implementations.
+
+| ID | Finding | Priority | Workstream | Evidence |
+|:---|:---|:---|:---|:---|
+| R-1 | F-7 confirmed live: 10 KV list() call sites stop at first page (~1000 keys) — includes apikey lookup (auth.ts:112) and webhook DLQ | P2 | WS-A | auth.ts:112, storage.ts:373, delivery.ts:96,315 + 6 more |
+| R-2 | N-5 confirmed: ~55 non-null assertions in worker/ production code | P2 | WS-B (routes, ~19 sites) and WS-C (lib plus pipeline, ~36 sites) | worst: routes/core/deals.ts 8, nlq executor 5, ranking.ts 5, scoring.ts 5 |
+| R-3 | extension/popup.js 512L exceeds MAX_LINES_PER_SOURCE_FILE=500 (only remaining >500 file; orchestrator/index.ts now 438L so N-4 fully closed upstream) | P2 | WS-D | wc -l 512; loaded via plain script tag in popup.html |
+| R-4 | wrangler.jsonc lacks `"ai"` binding block while embedding-pipeline.ts uses env.AI.run — semantic search degrades where config-as-code is the deploy source | P1 | WS-F | embedding-pipeline.ts:63,69; wrangler.jsonc grep no match |
+| R-5 | Test gaps T-6/T-7/T-8 still open (SourceRegistry DO, d1/trust.ts, lib/expiration helpers have no focused coverage) | P2 | WS-E | GAP-ANALYSIS-2026-08-15 table |
+| R-6 | MI-3 re-verified 2026-08-25: ai-gateway client has zero importers outside its module — stays DEFERRED (product/cost gating decision required before wiring into NLQ paths) | P2 | deferred | grep -rln ai-gateway worker → module files only |
+
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -87,7 +106,7 @@ Not covered by GAP-ANALYSIS-2026-08-15:
 | N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | ✅ CLOSED (deleted in PRT-6) |
 | N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | ✅ CLOSED (deleted with its exclusive test in PRT-6) |
 | N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
-| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | 🟡 PARTIAL - legacy-routes.ts split to 472 lines during MI-1; orchestrator remains 503 |
+| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | ✅ CLOSED — legacy-routes.ts split (472L); orchestrator now 438L; residual >500 file (extension/popup.js) re-registered as R-3 |
 | N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ⬜ DEFERRED (needs dedicated sweep) |
 | N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ⬜ DEFERRED (dedicated fix sprint; zero regressions from PRT-6 verified by main-vs-branch diff) |
 
