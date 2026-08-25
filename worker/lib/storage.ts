@@ -135,7 +135,10 @@ export async function getSourceRegistry(env: Env): Promise<SourceConfig[]> {
       "json",
     );
     return data || [];
-  } catch {
+  } catch (error) {
+    logger.warn("storage: getSourceRegistry failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }

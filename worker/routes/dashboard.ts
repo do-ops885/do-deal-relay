@@ -1,5 +1,6 @@
 import type { Env } from "../types";
 import { jsonResponse, errorResponse } from "./utils";
+import { logger } from "../lib/global-logger";
 
 export interface DashboardStats {
   stats: {
@@ -33,7 +34,10 @@ export async function getDashboardStats(env: Env): Promise<DashboardStats> {
       systemHealth: health,
       timestamp: new Date().toISOString(),
     };
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: getDashboardStats failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       stats: { total: 0, active: 0, quarantined: 0, rejected: 0 },
       recentActivity: { runs: 0, dealsFound: 0, errors: 0 },
@@ -50,7 +54,10 @@ export async function handleDashboardStats(
   try {
     const stats = await getDashboardStats(env);
     return jsonResponse(stats, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardStats failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return errorResponse(
       "Failed to get dashboard stats",
       500,
@@ -68,7 +75,10 @@ export async function handleDashboardRecentActivity(
   try {
     const activity = await getRecentActivity(env);
     return jsonResponse(activity, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardRecentActivity failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return errorResponse(
       "Failed to get recent activity",
       500,
@@ -86,7 +96,10 @@ export async function handleDashboardSystemHealth(
   try {
     const health = await getSystemHealth(env);
     return jsonResponse(health, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardHealth failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return errorResponse(
       "Failed to get system health",
       500,
@@ -121,7 +134,10 @@ async function getDealsStats(env: Env): Promise<{
       quarantined: stats.quarantined || 0,
       rejected: stats.rejected || 0,
     };
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardAlerts failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { total: 0, active: 0, quarantined: 0, rejected: 0 };
   }
 }
@@ -151,7 +167,10 @@ async function getRecentActivity(env: Env): Promise<{
       0,
     );
     return { runs, dealsFound, errors };
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardPerformance failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { runs: 0, dealsFound: 0, errors: 0 };
   }
 }
@@ -186,14 +205,20 @@ async function getSystemHealth(env: Env): Promise<{
         typeof ns === "object" &&
         "get" in (ns as Record<string, unknown>)
       );
-    } catch {
+    } catch (error) {
+      logger.warn("dashboard: handleDashboardExport failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       checks[kvKey] = false;
     }
   }
   try {
     await env.DEALS_DB.prepare("SELECT 1").first();
     checks.d1_connection = true;
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardConfig failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     checks.d1_connection = false;
   }
   const allPassed = Object.values(checks).every((v) => v === true);
@@ -207,7 +232,10 @@ export async function getDashboardData(
   try {
     const stats = await getDashboardStats(env);
     return jsonResponse(stats, 200, request, env);
-  } catch {
+  } catch (error) {
+    logger.warn("dashboard: handleDashboardNotifications failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return errorResponse(
       "Failed to get dashboard data",
       500,
