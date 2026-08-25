@@ -1,6 +1,16 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+/**
+ * Parse an integer configuration variable bounded within a specific range
+ * @param name Variable name for error messages
+ * @param value String configuration value to parse
+ * @param fallback Default fallback number if value is missing/empty
+ * @param minimum Minimum acceptable inclusive value
+ * @param maximum Maximum acceptable inclusive value
+ * @returns Parsed bounded integer
+ * @throws Error if value is not an integer or is outside bounds
+ */
 export function parseBoundedIntegerConfig(
   name: string,
   value: string | undefined,
