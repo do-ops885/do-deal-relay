@@ -32,14 +32,13 @@ export async function handleGetDeals(
     return jsonResponse({ error: "No deals available" }, 404, request, env);
   }
 
+  const minRewardParam = url.searchParams.get("min_reward");
+  const limitParam = url.searchParams.get("limit");
   const query: GetDealsQuery = {
     category: url.searchParams.get("category") || undefined,
-    min_reward: url.searchParams.has("min_reward")
-      ? parseFloat(url.searchParams.get("min_reward")!)
-      : undefined,
-    limit: url.searchParams.has("limit")
-      ? parseInt(url.searchParams.get("limit")!, 10)
-      : 100,
+    min_reward:
+      minRewardParam !== null ? parseFloat(minRewardParam) : undefined,
+    limit: limitParam !== null ? parseInt(limitParam, 10) : 100,
   };
 
   const validation = GetDealsQuerySchema.safeParse(query);
@@ -63,10 +62,11 @@ export async function handleGetDeals(
     );
   }
 
-  if (query.min_reward !== undefined) {
+  const minReward = query.min_reward;
+  if (minReward !== undefined) {
     deals = deals.filter((d) => {
       if (typeof d.reward.value === "number") {
-        return d.reward.value >= query.min_reward!;
+        return d.reward.value >= minReward;
       }
       return false;
     });
@@ -91,9 +91,8 @@ export async function handleSimilarDeals(
 ): Promise<Response> {
   const code = url.searchParams.get("code");
   const domain = url.searchParams.get("domain");
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 5;
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 5;
 
   if (!code && !domain) {
     return jsonResponse(
@@ -215,15 +214,14 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
   // Parse query parameters
   const sortBy = (url.searchParams.get("sort_by") || "confidence") as SortField;
   const order = (url.searchParams.get("order") || "desc") as SortOrder;
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 50;
-  const minConfidence = url.searchParams.has("min_confidence")
-    ? parseFloat(url.searchParams.get("min_confidence")!)
-    : undefined;
-  const minTrustScore = url.searchParams.has("min_trust")
-    ? parseFloat(url.searchParams.get("min_trust")!)
-    : undefined;
+  const limitParam = url.searchParams.get("limit");
+  const minConfidenceParam = url.searchParams.get("min_confidence");
+  const minTrustParam = url.searchParams.get("min_trust");
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 50;
+  const minConfidence =
+    minConfidenceParam !== null ? parseFloat(minConfidenceParam) : undefined;
+  const minTrustScore =
+    minTrustParam !== null ? parseFloat(minTrustParam) : undefined;
   const category = url.searchParams.get("category") || undefined;
   const includeScores = url.searchParams.get("include_scores") === "true";
 
@@ -268,9 +266,8 @@ export async function handleDealHighlights(
     return jsonResponse({ error: "No deals available" }, 404, undefined, env);
   }
 
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 5;
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 5;
 
   const topDeals = getTopDeals(snapshot.deals, limit);
   const expiringSoon = getExpiringDeals(snapshot.deals, 7);

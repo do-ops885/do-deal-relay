@@ -184,6 +184,10 @@ async function queryDealsFromD1(
     offset: number;
   },
 ): Promise<{ deals: ReferralInput[]; total: number }> {
+  if (!env.DEALS_DB) {
+    throw new Error("D1 database not configured");
+  }
+
   // Build dynamic query
   let whereConditions = ["1=1"];
   const bindings: (string | number)[] = [];
@@ -201,10 +205,9 @@ async function queryDealsFromD1(
   const whereClause = whereConditions.join(" AND ");
 
   // Get total count
-  const countResult = await env
-    .DEALS_DB!.prepare(
-      `SELECT COUNT(*) as count FROM referrals WHERE ${whereClause}`,
-    )
+  const countResult = await env.DEALS_DB.prepare(
+    `SELECT COUNT(*) as count FROM referrals WHERE ${whereClause}`,
+  )
     .bind(...bindings)
     .first<{ count: number }>();
 
@@ -221,8 +224,7 @@ async function queryDealsFromD1(
     LIMIT ? OFFSET ?
   `;
 
-  const result = await env
-    .DEALS_DB!.prepare(query)
+  const result = await env.DEALS_DB.prepare(query)
     .bind(...bindings, params.limit, params.offset)
     .all<Record<string, unknown>>();
 

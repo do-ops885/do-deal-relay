@@ -47,12 +47,12 @@ export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
   const category = url.searchParams.get("category");
   const status = url.searchParams.get("status") || "active";
   const limit = parseInt(url.searchParams.get("limit") || "50", 10);
-  const minConfidence = url.searchParams.has("min_confidence")
-    ? parseFloat(url.searchParams.get("min_confidence")!)
-    : undefined;
-  const expiringDays = url.searchParams.has("expiring_in")
-    ? parseInt(url.searchParams.get("expiring_in")!, 10)
-    : undefined;
+  const minConfidenceParam = url.searchParams.get("min_confidence");
+  const expiringInParam = url.searchParams.get("expiring_in");
+  const minConfidence =
+    minConfidenceParam !== null ? parseFloat(minConfidenceParam) : undefined;
+  const expiringDays =
+    expiringInParam !== null ? parseInt(expiringInParam, 10) : undefined;
 
   try {
     let results;
@@ -126,9 +126,8 @@ export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
 
 export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
   const dealId = url.searchParams.get("deal_id");
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 5;
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 5;
   const includeExpired = url.searchParams.get("include_expired") === "true";
 
   if (!dealId) {
@@ -186,9 +185,8 @@ export async function handleD1Recommended(
 ): Promise<Response> {
   const domainsParam = url.searchParams.get("domains") || "";
   const domains = domainsParam ? domainsParam.split(",") : [];
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 10;
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 10;
 
   if (!env.DEALS_DB) {
     return jsonResponse(
@@ -227,12 +225,10 @@ export async function handleD1Recommended(
 // ============================================================================
 
 export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
-  const days = url.searchParams.has("days")
-    ? parseInt(url.searchParams.get("days")!, 10)
-    : 7;
-  const limit = url.searchParams.has("limit")
-    ? parseInt(url.searchParams.get("limit")!, 10)
-    : 10;
+  const daysParam = url.searchParams.get("days");
+  const limitParam = url.searchParams.get("limit");
+  const days = daysParam !== null ? parseInt(daysParam, 10) : 7;
+  const limit = limitParam !== null ? parseInt(limitParam, 10) : 10;
 
   if (!env.DEALS_DB) {
     return jsonResponse(
