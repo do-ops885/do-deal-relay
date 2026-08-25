@@ -166,6 +166,10 @@
       "index_name": "deal-embeddings",
     },
   ],
+  // Workers AI binding used by worker/lib/search/embedding-pipeline.ts (env.AI)
+  "ai": {
+    "binding": "AI",
+  },
   // Environment-specific configurations
   "env": {
     // Development environment for local testing
@@ -248,6 +252,9 @@
           "index_name": "deal-embeddings",
         },
       ],
+      "ai": {
+        "binding": "AI",
+      },
     },
     // Production environment (explicitly defined for --env production flag)
     "production": {
@@ -306,6 +313,9 @@
           "index_name": "deal-embeddings",
         },
       ],
+      "ai": {
+        "binding": "AI",
+      },
       // Durable Objects for atomic concurrency control and stateful coordination
       "durable_objects": {
         "bindings": [
