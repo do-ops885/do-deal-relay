@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     state.currentTab = tab;
 
-    updatePageInfo(tab);
+    updatePageInfo(elements, tab);
     await requestDetections(tab);
     loadStats();
     setupEventListeners();
@@ -94,47 +94,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function saveSettings() {
     const endpoint = elements.apiEndpoint.value.trim();
     if (!validateApiEndpoint(endpoint, true)) {
-      showToast("Please enter a valid API endpoint", "error");
+      showToast(elements, "Please enter a valid API endpoint", "error");
       return;
     }
 
     state.settings.apiEndpoint = endpoint;
     await chrome.storage.sync.set({ apiEndpoint: endpoint });
-    showToast("Settings saved!", "success");
+    showToast(elements, "Settings saved!", "success");
     toggleSettings();
   }
 
-  function updatePageInfo(tab) {
-    elements.pageTitle.textContent = tab.title || "Unknown";
-    try {
-      elements.pageUrl.textContent = new URL(tab.url).hostname;
-    } catch {
-      elements.pageUrl.textContent = "Invalid URL";
-    }
-    let faviconSet = false;
-    if (tab.favIconUrl) {
-      try {
-        const faviconUrl = new URL(tab.favIconUrl);
-        if (
-          faviconUrl.protocol === "http:" ||
-          faviconUrl.protocol === "https:"
-        ) {
-          const img = document.createElement("img");
-          img.src = faviconUrl.href;
-          img.width = img.height = 32;
-          img.style.borderRadius = "6px";
-          img.alt = "";
-          elements.favicon.textContent = "";
-          elements.favicon.appendChild(img);
-          faviconSet = true;
-        }
-      } catch {}
-    }
-    if (!faviconSet) elements.favicon.textContent = "🌐";
-  }
-
   async function requestDetections(tab) {
-    updateScanStatus("scanning", "Scanning for referral codes...");
+    updateScanStatus(elements, "scanning", "Scanning for referral codes...");
     try {
       const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -155,105 +126,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (response?.referrals?.length > 0) {
         state.detections = response.referrals;
-        showDetections(response.referrals);
+        showDetections(state, elements, response.referrals);
       } else {
-        showNoDetections();
+        showNoDetections(elements);
       }
     } catch (error) {
       console.error("Error getting detections:", error);
-      showNoDetections();
+      showNoDetections(elements);
     }
-  }
-
-  function showDetections(detections) {
-    elements.detectionsSection.style.display = "block";
-    updateScanStatus(
-      "found",
-      `${detections.length} referral code${detections.length > 1 ? "s" : ""} found`,
-    );
-    elements.detectionList.textContent = "";
-
-    detections.forEach((d, i) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "detection-item";
-      item.dataset.index = i.toString();
-      item.setAttribute("aria-pressed", i === 0 ? "true" : "false");
-
-      const info = document.createElement("div");
-      info.className = "detection-info";
-
-      const codeValue = document.createElement("span");
-      codeValue.className = "code-value";
-      codeValue.textContent = d.code;
-
-      const codeSource = document.createElement("span");
-      codeSource.className = "code-source";
-      codeSource.textContent = d.source.replaceAll("_", " ");
-
-      info.appendChild(codeValue);
-      info.appendChild(codeSource);
-
-      const confidence = document.createElement("span");
-      confidence.className = "confidence";
-      confidence.textContent = `${Math.round(d.confidence * 100)}%`;
-
-      item.appendChild(info);
-      item.appendChild(confidence);
-
-      item.addEventListener("click", () => {
-        elements.detectionList
-          .querySelectorAll(".detection-item")
-          .forEach((el) => {
-            el.classList.remove("selected");
-            el.setAttribute("aria-pressed", "false");
-          });
-        item.classList.add("selected");
-        item.setAttribute("aria-pressed", "true");
-        state.selectedDetection =
-          state.detections[parseInt(item.dataset.index)];
-      });
-
-      elements.detectionList.appendChild(item);
-    });
-
-    if (detections.length > 0) {
-      const firstItem = elements.detectionList.querySelector(".detection-item");
-      if (firstItem) {
-        firstItem.classList.add("selected");
-        firstItem.setAttribute("aria-pressed", "true");
-        state.selectedDetection = detections[0];
-        elements.captureBtn.focus();
-      }
-    }
-  }
-
-  function showNoDetections() {
-    elements.detectionsSection.style.display = "none";
-    updateScanStatus("none", "No referral codes detected on this page");
-    elements.manualCode.focus();
-  }
-
-  function updateScanStatus(status, text) {
-    const indClass =
-      status === "found"
-        ? "found"
-        : status === "scanning"
-          ? "scanning"
-          : "none";
-    elements.scanStatus.textContent = "";
-    const indicator = document.createElement("div");
-    indicator.className = `status-indicator ${indClass}`;
-    const statusText = document.createElement("span");
-    statusText.className = "status-text";
-    statusText.textContent = text;
-    elements.scanStatus.appendChild(indicator);
-    elements.scanStatus.appendChild(statusText);
   }
 
   async function captureSelected() {
     if (!state.selectedDetection) {
-      showToast("Please select a referral code first", "error");
+      showToast(elements, "Please select a referral code first", "error");
       return;
     }
 
@@ -271,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         confidence: state.selectedDetection.confidence,
       });
 
-      showToast("Referral code captured successfully!", "success");
+      showToast(elements, "Referral code captured successfully!", "success");
       incrementStat("captured");
       elements.captureBtn.textContent = "Captured! ✅";
       setTimeout(() => {
@@ -279,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }, 2000);
     } catch (err) {
       console.error("Capture error:", err);
-      showToast(`Failed to capture: ${err.message}`, "error");
+      showToast(elements, `Failed to capture: ${err.message}`, "error");
       elements.captureBtn.textContent = "✨ Capture Selected";
     } finally {
       elements.captureBtn.disabled = false;
@@ -305,7 +190,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         confidence: 1.0,
       });
 
-      showToast("Code added manually!", "success");
+      showToast(elements, "Code added manually!", "success");
       elements.manualCode.value = "";
       incrementStat("captured");
       elements.manualBtn.textContent = "Added! ✅";
@@ -313,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         elements.manualBtn.textContent = "Add Code Manually";
       }, 2000);
     } catch (err) {
-      showToast(`Failed to add: ${err.message}`, "error");
+      showToast(elements, `Failed to add: ${err.message}`, "error");
       elements.manualBtn.textContent = "Add Code Manually";
     } finally {
       elements.manualBtn.disabled = false;
@@ -372,51 +257,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById(`stat-${key}`).textContent = value;
   }
 
-  function showToast(message, type = "") {
-    elements.toast.textContent = message;
-    elements.toast.className = `toast ${type} show`;
-    setTimeout(() => elements.toast.classList.remove("show"), 3000);
-  }
-
-  async function copyToClipboard(text, buttonElement) {
-    if (!text || buttonElement.dataset.copying === "true") return;
-
-    const originalLabel = buttonElement.getAttribute("aria-label");
-    const originalTitle = buttonElement.getAttribute("title");
-
-    try {
-      buttonElement.dataset.copying = "true";
-      await navigator.clipboard.writeText(text);
-      showToast("Copied to clipboard!", "success");
-
-      const children = Array.from(buttonElement.children);
-      buttonElement.textContent = "";
-      const span = document.createElement("span");
-      span.setAttribute("aria-hidden", "true");
-      span.textContent = "✅";
-      buttonElement.appendChild(span);
-
-      buttonElement.setAttribute("aria-label", "Copied!");
-      buttonElement.setAttribute("title", "Copied!");
-
-      setTimeout(() => {
-        buttonElement.textContent = "";
-        children.forEach((child) => buttonElement.appendChild(child));
-        originalLabel
-          ? buttonElement.setAttribute("aria-label", originalLabel)
-          : buttonElement.removeAttribute("aria-label");
-        originalTitle
-          ? buttonElement.setAttribute("title", originalTitle)
-          : buttonElement.removeAttribute("title");
-        buttonElement.removeAttribute("data-copying");
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-      showToast("Failed to copy", "error");
-      buttonElement.removeAttribute("data-copying");
-    }
-  }
-
   function toggleSettings() {
     const isActive = elements.settingsPanel.classList.toggle("active");
     elements.manualSection.classList.toggle("hidden");
@@ -472,12 +312,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     elements.copyDetectedBtn.addEventListener("click", () => {
       if (state.selectedDetection)
-        copyToClipboard(state.selectedDetection.code, elements.copyDetectedBtn);
+        copyToClipboard(
+          elements,
+          state.selectedDetection.code,
+          elements.copyDetectedBtn,
+        );
     });
 
     elements.copyManualBtn.addEventListener("click", () => {
       const code = elements.manualCode.value.trim();
-      if (code) copyToClipboard(code.toUpperCase(), elements.copyManualBtn);
+      if (code)
+        copyToClipboard(elements, code.toUpperCase(), elements.copyManualBtn);
     });
 
     elements.settingsLink.addEventListener("click", (e) => {
@@ -502,9 +347,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.saveSettingsBtn.addEventListener("click", saveSettings);
 
     elements.refreshBtn.addEventListener("click", async () => {
-      updateScanStatus("scanning", "Rescanning...");
+      updateScanStatus(elements, "scanning", "Rescanning...");
       await requestDetections(state.currentTab);
-      showToast("Page rescanned", "success");
+      showToast(elements, "Page rescanned", "success");
     });
   }
 
