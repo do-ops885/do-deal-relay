@@ -90,9 +90,8 @@ export async function handleGetLogs(
   }
 
   const run_id = url.searchParams.get("run_id");
-  const count = url.searchParams.has("count")
-    ? parseInt(url.searchParams.get("count")!, 10)
-    : 100;
+  const countParam = url.searchParams.get("count");
+  const count = countParam !== null ? parseInt(countParam, 10) : 100;
 
   let logs;
   if (run_id) {

@@ -35,6 +35,8 @@ export async function handleGetReferrals(
   request?: Request,
 ): Promise<Response> {
   try {
+    const limitParam = url.searchParams.get("limit");
+    const offsetParam = url.searchParams.get("offset");
     const query: ReferralSearchQuery = {
       domain: url.searchParams.get("domain") || undefined,
       status:
@@ -44,12 +46,8 @@ export async function handleGetReferrals(
       source:
         (url.searchParams.get("source") as ReferralSearchQuery["source"]) ||
         "all",
-      limit: url.searchParams.has("limit")
-        ? parseInt(url.searchParams.get("limit")!, 10)
-        : 100,
-      offset: url.searchParams.has("offset")
-        ? parseInt(url.searchParams.get("offset")!, 10)
-        : 0,
+      limit: limitParam !== null ? parseInt(limitParam, 10) : 100,
+      offset: offsetParam !== null ? parseInt(offsetParam, 10) : 0,
     };
 
     const validation = ReferralSearchQuerySchema.safeParse(query);

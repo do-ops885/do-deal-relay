@@ -22,9 +22,8 @@ export async function handleAnalytics(
   request?: Request,
 ): Promise<Response> {
   const format = url.searchParams.get("format") || "json";
-  const days = url.searchParams.has("days")
-    ? parseInt(url.searchParams.get("days")!, 10)
-    : 30;
+  const daysParam = url.searchParams.get("days");
+  const days = daysParam !== null ? parseInt(daysParam, 10) : 30;
 
   try {
     if (format === "summary") {
