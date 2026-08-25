@@ -106,7 +106,7 @@ describe("d1/research-cache", () => {
 
       await getResearchCacheBatch(rec.db, keys);
 
-      expect(rec.queries[0]?.sql).toContain("FROM research_cache");
+      expect(rec.queries[0]?.sql).toContain("FROM research_cache_kv");
       expect(rec.queries[0]?.sql).toContain("IN (?1, ?2, ?3)");
       expect(rec.queries[0]?.params).toEqual(keys);
     });
@@ -259,7 +259,7 @@ describe("d1/research-cache", () => {
       await putResearchCache(rec.db, "k1", { cached: true });
 
       expect(rec.run).toHaveBeenCalledTimes(1);
-      expect(rec.queries[0]?.sql).toContain("INSERT INTO research_cache");
+      expect(rec.queries[0]?.sql).toContain("INSERT INTO research_cache_kv");
       expect(rec.queries[0]?.sql).toContain("ON CONFLICT(key) DO UPDATE");
       expect(rec.queries[0]?.params[0]).toBe("k1");
       expect(rec.queries[0]?.params[1]).toBe(JSON.stringify({ cached: true }));

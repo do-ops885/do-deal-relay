@@ -50,6 +50,7 @@ const LOCK_ID = "pipeline";
  *   const stub = env.PIPELINE_LOCK.getByName("pipeline");
  *   const acquired = await stub.acquireLock("run-1", "trace-1", 300);
  *   if (acquired) { ... }
+ *   const extended = await stub.extendLock("trace-1", 300);
  *   await stub.releaseLock("trace-1");
  */
 export class PipelineLock {
@@ -144,6 +145,41 @@ export class PipelineLock {
       LOCK_ID,
       trace_id,
     );
+  }
+
+  // --------------------------------------------------------------------------
+  // extendLock
+  // --------------------------------------------------------------------------
+
+  /**
+   * Extend the pipeline lock TTL, but only if owned by the given trace_id.
+   *
+   * Atomic operation: a single UPDATE guarded by both ownership and an
+   * unexpired expiry check. Returns false when the lock is missing, already
+   * expired, or owned by a different trace_id — callers treat false as a
+   * definitive ownership rejection, not an infrastructure failure.
+   *
+   * @param trace_id           - The trace_id that originally acquired the lock.
+   * @param additional_seconds - Seconds added to the current time.
+   * @returns true if the expiry was extended by this call.
+   */
+  async extendLock(
+    trace_id: string,
+    additional_seconds: number,
+  ): Promise<boolean> {
+    const now = Date.now();
+    const expires = now + additional_seconds * 1000;
+
+    const cursor = this.sql.exec(
+      `UPDATE locks SET expires_at = ?
+       WHERE id = ? AND trace_id = ? AND expires_at > ?`,
+      expires,
+      LOCK_ID,
+      trace_id,
+      now,
+    );
+
+    return cursor.rowsWritten > 0;
   }
 
   // --------------------------------------------------------------------------

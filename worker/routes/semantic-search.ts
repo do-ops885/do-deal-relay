@@ -21,6 +21,13 @@ import {
   semanticSearchDeals,
 } from "../lib/search/client";
 import { logger } from "../lib/global-logger";
+import {
+  logAIInteraction,
+  SEMANTIC_SEARCH_COMPLIANCE_OPERATION,
+} from "../lib/research-agent/compliance-log";
+
+/** Workers AI embedding model used for query vectorization. */
+const SEMANTIC_EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
 
 export async function handleSemanticSearch(
   request: Request,
@@ -77,6 +84,26 @@ export async function handleSemanticSearch(
     const filtered = hits.filter((h) => h.score >= min_score);
     const vectorizeMs = Date.now() - vectorizeStart;
 
+    // Article 12 record-keeping for the embedding + vector query. The raw
+    // query text is hashed, never stored verbatim (data minimization).
+    await logAIInteraction(env.DEALS_DB, {
+      operation: SEMANTIC_SEARCH_COMPLIANCE_OPERATION,
+      inputSource: "semantic_search_route",
+      rawInput: query,
+      inputDescription: `embedding_vector_lookup;model=${SEMANTIC_EMBEDDING_MODEL}`,
+      inputMetadata: {
+        model: SEMANTIC_EMBEDDING_MODEL,
+        namespace: namespace ?? null,
+        requested_limit: requestedLimit,
+        hit_count: hits.length,
+        returned_count: filtered.length,
+      },
+      result: `matches:${filtered.length}`,
+      confidence: filtered[0]?.score,
+      explanation: "Workers AI embedding queried against Vectorize index",
+      latencyMs: embeddingMs,
+    });
+
     const response: SemanticSearchResponse = {
       success: true,
       query,
@@ -91,7 +118,7 @@ export async function handleSemanticSearch(
         execution_time_ms: Date.now() - start,
         embedding_time_ms: embeddingMs,
         vectorize_time_ms: vectorizeMs,
-        model: "@cf/baai/bge-base-en-v1.5",
+        model: SEMANTIC_EMBEDDING_MODEL,
         index_name: SEMANTIC_SEARCH_CONFIG.INDEX_NAME,
         filters_applied: namespace ? [`namespace=${namespace}`] : [],
       },

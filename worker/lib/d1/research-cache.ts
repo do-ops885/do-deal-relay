@@ -5,14 +5,16 @@
  * key/payload pattern used by the validation cache but backed by
  * D1 for durability and cross-worker visibility.
  *
- * Schema (research_cache):
+ * Schema (research_cache_kv):
  *   key        TEXT PRIMARY KEY
  *   payload    TEXT NOT NULL  -- JSON
- *   created_at TEXT DEFAULT CURRENT_TIMESTAMP
+ *   expires_at INTEGER
+ *   created_at INTEGER DEFAULT (strftime('%s', 'now'))
  *   updated_at TEXT
  *
- * If the table still uses the legacy query/domain/results columns,
- * run the migration that adds key/payload before using this module.
+ * Created by runtime migration 11 (migrations/0006_research_cache_kv.sql).
+ * The legacy query/domain-shaped research_cache table is unrelated to this
+ * module and remains untouched.
  */
 
 import type { D1Database } from "@cloudflare/workers-types";
@@ -52,7 +54,7 @@ export async function getResearchCacheBatch(
   const { results } = await db
     .prepare(
       `SELECT key, payload
-       FROM research_cache
+       FROM research_cache_kv
        WHERE key IN (${placeholders})`,
     )
     .bind(...safeKeys)
@@ -107,7 +109,7 @@ export async function putResearchCacheBatch(
 
     return db
       .prepare(
-        `INSERT INTO research_cache (key, payload, created_at, updated_at)
+        `INSERT INTO research_cache_kv (key, payload, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?3)
          ON CONFLICT(key) DO UPDATE SET
            payload    = excluded.payload,
@@ -137,7 +139,7 @@ export async function getResearchCache(
   const row = await db
     .prepare(
       `SELECT payload
-       FROM research_cache
+       FROM research_cache_kv
        WHERE key = ?1`,
     )
     .bind(key)
@@ -173,7 +175,7 @@ export async function putResearchCache(
 
   await db
     .prepare(
-      `INSERT INTO research_cache (key, payload, created_at, updated_at)
+      `INSERT INTO research_cache_kv (key, payload, created_at, updated_at)
        VALUES (?1, ?2, ?3, ?3)
        ON CONFLICT(key) DO UPDATE SET
          payload    = excluded.payload,

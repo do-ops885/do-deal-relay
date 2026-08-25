@@ -1,7 +1,12 @@
 import { Deal, SourceConfig, PipelineContext } from "../types";
 import type { Env } from "../types";
 import { CONFIG } from "../config";
-import { getSourceRegistry, recordSourceValidation } from "../lib/storage";
+import {
+  getSourceRegistry,
+  createValidationTally,
+  flushValidationTally,
+  tallyValidation,
+} from "../lib/storage";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
@@ -86,6 +91,11 @@ export async function discover(
 
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
+
+  // Validation results are tallied in memory per source and flushed once
+  // per source (see discoverFromSource). This collapses one KV GET+PUT
+  // pair per URL pattern into one pair per source and removes the lost-update
+  // race between parallel pattern batches writing the shared registry key.
 
   logger.info("Starting discovery with budget constraints", {
     component: "discovery",
@@ -175,6 +185,7 @@ async function discoverFromSource(
   source: SourceConfig,
   limit: number,
 ): Promise<DiscoveryResult> {
+  const validationTally = createValidationTally();
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = []; // Process URL patterns in parallel with a concurrency limit.
   // Uses sequential batch iteration to avoid race conditions on the limit check,
@@ -254,10 +265,13 @@ async function discoverFromSource(
             }
           }
 
-          await recordSourceValidation(env, source.domain, true);
+          // In-memory tally only: the registry is written once per source
+          // after all pattern batches complete, avoiding concurrent
+          // read-modify-write on the shared KV key.
+          tallyValidation(validationTally, source.domain, true);
           return { patternDeals, patternErrors };
         } catch (error) {
-          await recordSourceValidation(env, source.domain, false);
+          tallyValidation(validationTally, source.domain, false);
           return {
             patternDeals: [],
             patternErrors: [
@@ -288,6 +302,12 @@ async function discoverFromSource(
       deals.length = limit;
     }
   }
+
+  // All pattern batches for this source are done: persist tallied validation
+  // counters in a single registry GET+PUT. Sequential per-source flushing
+  // keeps concurrent writers on different domains; see
+  // flushValidationTally for the residual cross-isolate race note.
+  await flushValidationTally(env, validationTally);
 
   return { deals, errors };
 }

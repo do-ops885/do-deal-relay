@@ -51,6 +51,14 @@ const SECURITY_CONSTANTS = {
   ] as const,
 } as const;
 
+/**
+ * TTL and size cap for the per-isolate DoH hostname cache. Successful
+ * resolutions are cached so repeat validatedFetch calls to the same host do
+ * not spend subrequests on duplicate DNS-over-HTTPS lookups.
+ */
+const SECURITY_DNS_CACHE_TTL_MS = 300_000;
+const SECURITY_DNS_CACHE_MAX_ENTRIES = 500;
+
 export function validateUrl(
   url: string,
   allowedDomains?: readonly string[],
@@ -251,19 +259,72 @@ function ipv6ToBigInt(ipv6: string): bigint {
   }
 }
 
+interface DnsCacheEntry {
+  ips: string[];
+  expires: number;
+}
+
+const dnsCache = new Map<string, DnsCacheEntry>();
+
+function evictDnsCacheOnInsert(): void {
+  // Purge expired entries first, then evict oldest insertion until one slot
+  // is free. Map preserves insertion order, so the first key is the oldest.
+  if (dnsCache.size < SECURITY_DNS_CACHE_MAX_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, entry] of dnsCache) {
+    if (entry.expires <= now) {
+      dnsCache.delete(key);
+    }
+  }
+  while (dnsCache.size >= SECURITY_DNS_CACHE_MAX_ENTRIES) {
+    const oldestKey = dnsCache.keys().next().value;
+    if (oldestKey === undefined) return;
+    dnsCache.delete(oldestKey);
+  }
+}
+
+function getCachedDnsEntry(hostname: string): DnsCacheEntry | undefined {
+  const entry = dnsCache.get(hostname);
+  if (!entry) return undefined;
+  if (entry.expires <= Date.now()) {
+    dnsCache.delete(hostname);
+    return undefined;
+  }
+  // Delete+set refreshes recency, keeping hot hosts alive under eviction.
+  dnsCache.delete(hostname);
+  dnsCache.set(hostname, entry);
+  return entry;
+}
+
 /**
  * Resolves a hostname to a list of IP addresses (IPv4 and IPv6).
- * Uses DNS-over-HTTPS (DoH) for secure resolution.
+ * Uses DNS-over-HTTPS (DoH) for secure resolution. Fully successful,
+ * non-empty resolutions are cached for SECURITY_DNS_CACHE_TTL_MS; failures
+ * and empty results stay uncached so they re-resolve on the next call.
  */
 async function resolveHostname(hostname: string): Promise<string[]> {
+  const cached = getCachedDnsEntry(hostname);
+  if (cached) return cached.ips;
+
   try {
-    // Resolve both A and AAAA records in parallel
-    const [ipv4, ipv6] = await Promise.all([
+    const [ipv4Result, ipv6Result] = await Promise.all([
       fetchDns(hostname, "A"),
       fetchDns(hostname, "AAAA"),
     ]);
 
-    return [...ipv4, ...ipv6];
+    // Failed legs contribute no IPs, matching prior merge behavior.
+    const ips = [...(ipv4Result ?? []), ...(ipv6Result ?? [])];
+
+    // Only fully successful, non-empty resolutions are cacheable.
+    if (ipv4Result && ipv6Result && ips.length > 0) {
+      evictDnsCacheOnInsert();
+      dnsCache.set(hostname, {
+        ips,
+        expires: Date.now() + SECURITY_DNS_CACHE_TTL_MS,
+      });
+    }
+
+    return ips;
   } catch (error) {
     const err = toError(error);
     logger.error(`DNS resolution failed for ${hostname}: ${err.message}`, {
@@ -275,12 +336,14 @@ async function resolveHostname(hostname: string): Promise<string[]> {
 }
 
 /**
- * Helper to fetch DNS records of a specific type via DoH.
+ * Helper to fetch DNS records of a specific type via DoH. Returns null when
+ * resolution fails (invalid name, HTTP error, network or timeout); an empty
+ * array means the host legitimately has no records of that type.
  */
 async function fetchDns(
   hostname: string,
   type: "A" | "AAAA",
-): Promise<string[]> {
+): Promise<string[] | null> {
   try {
     // Strict hostname validation to prevent parameter injection and satisfy security scans.
     // Hostnames must only contain alphanumeric characters, dots, and hyphens.
@@ -288,7 +351,7 @@ async function fetchDns(
     const hostnameRegex =
       /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
     if (!hostnameRegex.test(hostname)) {
-      return [];
+      return null;
     }
 
     const params = new URLSearchParams({
@@ -310,7 +373,7 @@ async function fetchDns(
 
     if (!response.ok) {
       cleanup();
-      return [];
+      return null;
     }
 
     const data = (await response.json()) as {
@@ -320,7 +383,7 @@ async function fetchDns(
     cleanup();
     return data.Answer?.map((a) => a.data) || [];
   } catch {
-    return [];
+    return null;
   }
 }
 

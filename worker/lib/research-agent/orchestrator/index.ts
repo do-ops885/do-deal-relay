@@ -34,7 +34,9 @@ import {
   type ScraperEnv,
   type Scraper,
 } from "../scrapers";
-import { createAIExtractor } from "../scrapers/ai-extractor";
+// MI-2 compliance: extractWithAI (and its Article 12 event) lives in
+// compliance-log.ts to keep this file within source-size limits.
+import { applySourceConfidence, extractWithAI } from "../compliance-log";
 
 function getApiKeys(env: Env) {
   return {
@@ -344,78 +346,6 @@ async function researchFromSourceParallel(
       })),
     );
   }
-}
-
-/**
- * Run the AI extractor (MI-2) over raw fetched content to surface
- * referral codes that regex extraction would miss.
- */
-async function extractWithAI(
-  env: Env,
-  content: string,
-  query: string,
-): Promise<ReferralResearchResult["discovered_codes"]> {
-  if (!env.AI || !content.trim()) {
-    return [];
-  }
-  try {
-    const extractor = createAIExtractor(undefined, 8000);
-    const result = await extractor.scrape(
-      env as unknown as ScraperEnv,
-      content,
-    );
-    if (!result.success) {
-      return [];
-    }
-
-    const items = JSON.parse(result.content) as Array<{
-      code?: string;
-      url?: string;
-      reward?: string;
-      confidence?: number;
-    }>;
-
-    const codes: ReferralResearchResult["discovered_codes"] = [];
-    for (const item of items) {
-      if (!item.code || !item.url) continue;
-      const confidence = Math.max(0, Math.min(1, item.confidence ?? 0.5));
-      if (confidence < CONFIG.RESEARCH_MIN_CONFIDENCE) continue;
-
-      codes.push({
-        code: item.code,
-        url: item.url,
-        source: "ai_extractor",
-        discovered_at: new Date().toISOString(),
-        reward_summary: item.reward,
-        confidence: applySourceConfidence(confidence, "company_site"),
-      });
-    }
-    return codes;
-  } catch (error) {
-    const err = toError(error);
-    logger.debug("AI extraction failed", {
-      component: "research-orchestrator",
-      query,
-      error: err.message,
-    });
-    return [];
-  }
-}
-
-function applySourceConfidence(
-  baseConfidence: number,
-  sourceName: string,
-): number {
-  const sourceWeights: { [key: string]: number } = {
-    producthunt: 0.85,
-    github: 0.8,
-    reddit: 0.75,
-    hackernews: 0.8,
-    company_site: 0.7,
-  };
-
-  const weight = sourceWeights[sourceName] || 0.7;
-  return Math.min(0.95, baseConfidence * weight);
 }
 
 export async function convertResearchToReferrals(
