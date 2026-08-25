@@ -24,7 +24,12 @@ import {
   executeStructuredQuery,
   explainQuery,
 } from "../../lib/nlq/query-builder";
-import { generateTraceId, getNLQLogger, getRateLimitConfig } from "./utils";
+import {
+  generateTraceId,
+  getNLQLogger,
+  getRateLimitConfig,
+  recordNlqCompliance,
+} from "./utils";
 
 // Re-export service functions for backwards compatibility
 export { executeNLQ, parseNaturalLanguageQuery } from "./service";
@@ -193,6 +198,16 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
 
     const executionTime = Date.now() - startTime;
 
+    // Article 12 record-keeping for the AI classification + lookup path.
+    await recordNlqCompliance(
+      env,
+      traceId,
+      body.query,
+      parsed,
+      results.length,
+      executionTime,
+    );
+
     // Step 4: Build response with explanation
     const explanation = explainQuery(parsed, structured) as NLQExplanation;
 
@@ -326,6 +341,16 @@ export async function handleNLQGet(
     const results = await executeStructuredQuery(env.DEALS_DB, structured);
 
     const executionTime = Date.now() - startTime;
+
+    // Article 12 record-keeping for the AI classification + lookup path.
+    await recordNlqCompliance(
+      env,
+      traceId,
+      query,
+      parsed,
+      results.length,
+      executionTime,
+    );
 
     return jsonResponse(
       {

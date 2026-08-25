@@ -19,11 +19,13 @@ import { CONFIG } from "../config";
 
 export interface AIActLogEntry {
   timestamp: string;
-  systemId: string;
+  /** Optional; falls back to ComplianceConfig.systemId when omitted. */
+  systemId?: string;
   operationId: string;
   correlationId?: string;
   operation: string;
-  operationVersion: string;
+  /** Optional; falls back to ComplianceConfig.systemVersion when omitted. */
+  operationVersion?: string;
 
   inputData: {
     source: string;
@@ -414,13 +416,20 @@ and limitations, please contact the provider.
    * Hash data for integrity verification
    */
   private async hashData(data: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const buffer = await crypto.subtle.digest("SHA-256", encoder.encode(data));
-    const array = Array.from(new Uint8Array(buffer));
-    return (
-      "sha256:" + array.map((b) => b.toString(16).padStart(2, "0")).join("")
-    );
+    return hashInputData(data);
   }
+}
+
+/**
+ * Hash raw input for integrity verification without persisting content.
+ * Wiring code uses this to satisfy Article 12 record-keeping while keeping
+ * data minimization: the raw text is never stored, only its digest.
+ */
+export async function hashInputData(data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const buffer = await crypto.subtle.digest("SHA-256", encoder.encode(data));
+  const array = Array.from(new Uint8Array(buffer));
+  return "sha256:" + array.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 // ============================================================================
@@ -441,22 +450,27 @@ export function createComplianceLogger(
     providerContact: "compliance@do-ops.dev",
     intendedPurpose: "Autonomous deal discovery and referral code management",
     riskClassification: "limited_risk",
-    defaultRetentionDays: 180, // 6 months minimum per Article 19
+    defaultRetentionDays: DEFAULT_RETENTION_DAYS,
   };
 
   return new EUAIActLogger(db, { ...defaultConfig, ...config });
 }
 
 /**
+ * Default retention period: 6 months minimum per Article 19.
+ */
+const DEFAULT_RETENTION_DAYS = 180;
+
+/**
  * Get retention policy per Article 19
  */
 export function getRetentionPolicy(systemType?: string): number {
   const policies: Record<string, number> = {
-    default: 180, // 6 months
+    default: DEFAULT_RETENTION_DAYS,
     financial: 2555, // 7 years for financial institutions
     healthcare: 2555, // 7 years for healthcare
     legal: 3650, // 10 years for legal proceedings
   };
 
-  return policies[systemType || "default"] ?? policies.default!;
+  return policies[systemType || "default"] ?? DEFAULT_RETENTION_DAYS;
 }
