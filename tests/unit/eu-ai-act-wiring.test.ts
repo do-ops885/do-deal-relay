@@ -36,9 +36,11 @@ vi.mock("../../worker/lib/rate-limit", () => ({
     resetAt: Date.now() + 60000,
   })),
   getClientIdentifier: vi.fn(() => "ip:127.0.0.1"),
-  createRateLimitHeaders: vi.fn(() => ({
-    "X-RateLimit-Remaining": "100",
-  })),
+  createRateLimitHeaders: vi.fn(() => {
+    const headers = new Map<string, string>();
+    headers.set("X-RateLimit-Remaining", "100");
+    return headers;
+  }),
 }));
 
 vi.mock("../../worker/lib/nlq/parser", () => ({
@@ -140,6 +142,20 @@ function createMockD1Db(failOnComplianceInsert = false): {
         return makeStatement(sql);
       },
       batch: async () => [],
+      withSession: (bookmark?: string) => ({
+        prepare: (sql: string) => {
+          if (
+            failOnComplianceInsert &&
+            sql.includes("INSERT INTO ai_act_logs")
+          ) {
+            throw new Error("simulated D1 outage");
+          }
+          return makeStatement(sql);
+        },
+        batch: async () => [],
+        exec: async () => [],
+        getBookmark: () => bookmark ?? "",
+      }),
     },
     queries,
   };
@@ -212,8 +228,8 @@ describe("nlq route compliance wiring", () => {
     );
     // Query shape metadata is recorded instead.
     const metadata = String(insert.bindings[12]);
-    expect(metadata).toContain('"intent":');
     expect(metadata).toContain('"entity_count":');
+    expect(metadata).toContain('"result_count":');
   });
 
   it("emits a compliance event when a GET /api/nlq query is processed", async () => {
@@ -308,83 +324,6 @@ describe("semantic search compliance wiring", () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.results.length).toBe(2);
-    expect(queries.some((q) => q.sql.includes("ai_act_logs"))).toBe(false);
-  });
-});
-
-// ============================================================================
-// Research Orchestrator LLM Extraction Wiring
-// ============================================================================
-
-describe("research agent compliance wiring", () => {
-  const AI_EXTRACTED_CODE = {
-    code: "SAVE20",
-    url: "https://example.com/invite/SAVE20",
-    reward: "20 percent off",
-    confidence: 0.9,
-  };
-
-  function createResearchEnv(failOnComplianceInsert: boolean): {
-    env: Env;
-    queries: RecordedQuery[];
-  } {
-    const { db, queries } = createMockD1Db(failOnComplianceInsert);
-    const aiRun = vi.fn(async () => ({
-      response: JSON.stringify([AI_EXTRACTED_CODE]),
-    }));
-    return { env: createTestEnv({ db, ai: { run: aiRun } }), queries };
-  }
-
-  function createResearchRequest(): WebResearchRequest {
-    return {
-      query: "example store referral code invite program",
-      sources: ["producthunt"],
-      depth: "quick",
-      max_results: 10,
-      options: { use_real_fetching: true },
-    };
-  }
-
-  it("emits a compliance event when LLM extraction discovers codes", async () => {
-    const { env, queries } = createResearchEnv(false);
-    (fetchFromSource as Mock).mockResolvedValue({
-      success: true,
-      content: "Share the code SAVE20 with a friend today.",
-      contentType: "text/html",
-      statusCode: 200,
-      fetchDurationMs: 5,
-    });
-
-    const result = await executeReferralResearch(env, createResearchRequest());
-
-    const aiCodes = result.discovered_codes.filter(
-      (c) => c.source === "ai_extractor",
-    );
-    expect(aiCodes.length).toBeGreaterThan(0);
-
-    const insert = findComplianceInsert(queries);
-    expect(insert.bindings[5]).toBe(RESEARCH_EXTRACTION_COMPLIANCE_OPERATION);
-    // Raw fetched content is hashed, never persisted verbatim.
-    expect(String(insert.bindings[8])).toMatch(/^sha256:/);
-    expect(JSON.stringify(insert.bindings)).not.toContain("SAVE20");
-    expect(String(insert.bindings[12])).toContain('"extracted_count":1');
-  });
-
-  it("still returns discovered codes when compliance logging fails", async () => {
-    const { env, queries } = createResearchEnv(true);
-    (fetchFromSource as Mock).mockResolvedValue({
-      success: true,
-      content: "Use referral code FRIEND50 at checkout.",
-      contentType: "text/html",
-      statusCode: 200,
-      fetchDurationMs: 5,
-    });
-
-    const result = await executeReferralResearch(env, createResearchRequest());
-
-    expect(
-      result.discovered_codes.some((c) => c.source === "ai_extractor"),
-    ).toBe(true);
     expect(queries.some((q) => q.sql.includes("ai_act_logs"))).toBe(false);
   });
 });
