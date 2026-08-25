@@ -8,6 +8,7 @@ import {
   prometheusResponse,
 } from "../../lib/metrics/prometheus";
 import { logger } from "../../lib/global-logger";
+import { listAllKvKeys } from "../../lib/kv-pagination";
 
 export async function handleHealth(
   env: Env,
@@ -297,7 +298,7 @@ async function getLatestSnapshot(env: Env): Promise<boolean> {
 
 async function getRecentLogs(env: Env): Promise<LogEntry[]> {
   try {
-    const result = await env.DEALS_LOG.list();
+    const result = await listAllKvKeys(env.DEALS_LOG);
     return result.keys.map((k) => JSON.parse(k.metadata as string) as LogEntry);
   } catch {
     return [];

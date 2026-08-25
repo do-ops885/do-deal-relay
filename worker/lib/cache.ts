@@ -3,6 +3,7 @@ import type { Env } from "../types";
 import { executeInBatches } from "./utils";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import { listAllKvKeys } from "./kv-pagination";
 
 // ============================================================================
 // Cache Entry Types
@@ -195,7 +196,9 @@ export class KVCache {
    */
   async clear(): Promise<void> {
     try {
-      const list = await this.kv.list({ prefix: `cache:${this.namespace}:` });
+      const list = await listAllKvKeys(this.kv, {
+        prefix: `cache:${this.namespace}:`,
+      });
 
       // Optimization: Parallel batch delete instead of sequential loop
       // This reduces latency from O(N) to O(N/batchSize)

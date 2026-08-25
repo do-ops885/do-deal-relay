@@ -11,6 +11,7 @@
 import type { Env } from "../types";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import { listAllKvKeys } from "./kv-pagination";
 
 // ============================================================================
 // Configuration
@@ -246,7 +247,9 @@ export async function getAllFeatureFlags(
   const flags = new Map<string, FeatureFlag>();
 
   try {
-    const list = await env.DEALS_LOCK.list({ prefix: FEATURE_FLAG_PREFIX });
+    const list = await listAllKvKeys(env.DEALS_LOCK, {
+      prefix: FEATURE_FLAG_PREFIX,
+    });
 
     for (const key of list.keys) {
       const flag = await env.DEALS_LOCK.get<FeatureFlag>(key.name, "json");

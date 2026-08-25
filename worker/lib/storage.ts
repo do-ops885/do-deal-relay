@@ -5,6 +5,7 @@ import { generateSnapshotHash } from "./crypto";
 import { executeInBatches } from "./utils";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import { listAllKvKeys } from "./kv-pagination";
 
 // ============================================================================
 // KV Storage Abstraction Layer
@@ -370,7 +371,7 @@ export async function getLastRunMetadata(env: Env) {
  * Clear all staging data
  */
 export async function clearStaging(env: Env): Promise<void> {
-  const list = await env.DEALS_STAGING.list();
+  const list = await listAllKvKeys(env.DEALS_STAGING);
 
   // Optimization: Parallel batch delete instead of sequential loop
   // This reduces latency from O(N) to O(N/batchSize)

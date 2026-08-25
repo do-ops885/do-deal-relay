@@ -11,6 +11,7 @@
 import type { Env } from "../types";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import { listAllKvKeys } from "./kv-pagination";
 
 // ============================================================================
 // Configuration
@@ -294,7 +295,9 @@ export async function getAllRateLimitStates(
   const states = new Map<string, RateLimitKVState>();
 
   try {
-    const list = await env.DEALS_LOCK.list({ prefix: `${KEY_PREFIX}:` });
+    const list = await listAllKvKeys(env.DEALS_LOCK, {
+      prefix: `${KEY_PREFIX}:`,
+    });
 
     for (const key of list.keys) {
       const state = await env.DEALS_LOCK.get<RateLimitKVState>(
