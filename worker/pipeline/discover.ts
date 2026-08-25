@@ -93,11 +93,10 @@ export async function discover(
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
-  // Validation results are tallied in memory for the whole run and flushed
-  // once per source (see discoverFromSource). This collapses one KV GET+PUT
+  // Validation results are tallied in memory per source and flushed once
+  // per source (see discoverFromSource). This collapses one KV GET+PUT
   // pair per URL pattern into one pair per source and removes the lost-update
   // race between parallel pattern batches writing the shared registry key.
-  const validationTally = createValidationTally();
 
   logger.info("Starting discovery with budget constraints", {
     component: "discovery",
@@ -142,12 +141,7 @@ export async function discover(
     });
 
     try {
-      const result = await discoverFromSource(
-        env,
-        source,
-        effectiveLimit,
-        validationTally,
-      );
+      const result = await discoverFromSource(env, source, effectiveLimit);
       deals.push(...result.deals);
       errors.push(...result.errors);
 
@@ -191,8 +185,8 @@ async function discoverFromSource(
   env: Env,
   source: SourceConfig,
   limit: number,
-  validationTally: ValidationTally,
 ): Promise<DiscoveryResult> {
+  const validationTally = createValidationTally();
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = []; // Process URL patterns in parallel with a concurrency limit.
   // Uses sequential batch iteration to avoid race conditions on the limit check,

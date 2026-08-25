@@ -97,7 +97,7 @@ export async function handleDashboardSystemHealth(
     const health = await getSystemHealth(env);
     return jsonResponse(health, 200, request, env);
   } catch (error) {
-    logger.warn("dashboard: handleDashboardHealth failed", {
+    logger.warn("dashboard: handleDashboardSystemHealth failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     return errorResponse(
@@ -135,7 +135,7 @@ async function getDealsStats(env: Env): Promise<{
       rejected: stats.rejected || 0,
     };
   } catch (error) {
-    logger.warn("dashboard: handleDashboardAlerts failed", {
+    logger.warn("dashboard: getDealsStats failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     return { total: 0, active: 0, quarantined: 0, rejected: 0 };
@@ -168,7 +168,7 @@ async function getRecentActivity(env: Env): Promise<{
     );
     return { runs, dealsFound, errors };
   } catch (error) {
-    logger.warn("dashboard: handleDashboardPerformance failed", {
+    logger.warn("dashboard: getRecentActivity failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     return { runs: 0, dealsFound: 0, errors: 0 };
@@ -206,7 +206,7 @@ async function getSystemHealth(env: Env): Promise<{
         "get" in (ns as Record<string, unknown>)
       );
     } catch (error) {
-      logger.warn("dashboard: handleDashboardExport failed", {
+      logger.warn("dashboard: getSystemHealth kv check failed", {
         error: error instanceof Error ? error.message : String(error),
       });
       checks[kvKey] = false;
@@ -216,7 +216,7 @@ async function getSystemHealth(env: Env): Promise<{
     await env.DEALS_DB.prepare("SELECT 1").first();
     checks.d1_connection = true;
   } catch (error) {
-    logger.warn("dashboard: handleDashboardConfig failed", {
+    logger.warn("dashboard: getSystemHealth d1 check failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     checks.d1_connection = false;
@@ -233,7 +233,7 @@ export async function getDashboardData(
     const stats = await getDashboardStats(env);
     return jsonResponse(stats, 200, request, env);
   } catch (error) {
-    logger.warn("dashboard: handleDashboardNotifications failed", {
+    logger.warn("dashboard: getDashboardData failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     return errorResponse(

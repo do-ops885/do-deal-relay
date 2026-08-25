@@ -112,7 +112,7 @@ function logFallback(stage: string, error: unknown): void {
 /** Raise the same ConcurrencyError shape the D1 CAS path produces. */
 async function throwDoContention(stub: PipelineLockStub): Promise<never> {
   try {
-    const status = await stub.getLockStatus();
+    const status = await raceWithTimeout(stub.getLockStatus());
     const holder = status.run_id ?? "unknown";
     const until =
       status.expires_at !== undefined
