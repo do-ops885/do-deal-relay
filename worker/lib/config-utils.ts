@@ -64,7 +64,7 @@ export function validateConfig(env: Env): void {
     throw new Error(`Missing required config: ${missing.join(", ")}`);
   }
 
-  const threshold = parseFloat(env.TRUST_THRESHOLD!);
+  const threshold = parseFloat(env.TRUST_THRESHOLD);
   if (isNaN(threshold) || threshold < 0 || threshold > 1) {
     throw new Error(`TRUST_THRESHOLD must be a number between 0 and 1`);
   }

@@ -79,16 +79,20 @@ export async function searchReferrals(
   }
 
   // Apply filters
-  if (filters.domain) {
+  const domainFilter = filters.domain;
+  if (domainFilter) {
+    const lowerDomainFilter = domainFilter.toLowerCase();
     referrals = referrals.filter(
-      (r) => (r.domain || "").toLowerCase() === filters.domain!.toLowerCase(),
+      (r) => (r.domain || "").toLowerCase() === lowerDomainFilter,
     );
   }
 
-  if (filters.category) {
+  const categoryFilter = filters.category;
+  if (categoryFilter) {
+    const lowerCategoryFilter = categoryFilter.toLowerCase();
     referrals = referrals.filter((r: ReferralInput) =>
       (r.metadata?.category || []).some(
-        (c: string) => c.toLowerCase() === filters.category!.toLowerCase(),
+        (c: string) => c.toLowerCase() === lowerCategoryFilter,
       ),
     );
   }
