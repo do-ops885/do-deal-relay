@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { fetchInBatches } from "../utils";
 import { logger } from "../global-logger";
+import { listAllKvKeys } from "../kv-pagination";
 
 export async function getRunLogs(
   env: Env,
@@ -149,7 +150,7 @@ export async function getRecentStructuredLogs(
 ): Promise<StructuredLogEntry[]> {
   try {
     const prefix = STRUCTURED_LOG_PREFIX;
-    const listResult = await env.DEALS_LOG.list({ prefix });
+    const listResult = await listAllKvKeys(env.DEALS_LOG, { prefix });
 
     // Performance optimization: direct string lexicographical comparison (< and >)
     // is significantly faster than localeCompare and avoids locale-aware collation overhead.

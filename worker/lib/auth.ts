@@ -13,6 +13,7 @@ import {
 } from "../routes/utils";
 import { checkRateLimit, createRateLimitHeaders } from "./rate-limit";
 import { verifyToken } from "./jwt";
+import { listAllKvKeys } from "./kv-pagination";
 
 const JWT_ROLES: AuthRole[] = ["admin", "user", "readonly", "viewer"];
 
@@ -109,7 +110,7 @@ export async function storeApiKey(
  */
 export async function listApiKeys(env: Env): Promise<ApiKeyConfig[]> {
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
-  const list = await kv.list({ prefix: "apikey:" });
+  const list = await listAllKvKeys(kv, { prefix: "apikey:" });
 
   const results = await Promise.all(
     list.keys.map(async (key) => {

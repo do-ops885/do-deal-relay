@@ -17,6 +17,7 @@ import { toError } from "../sanitize-error";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
 import { validatedFetch } from "../security";
+import { listAllKvKeys } from "../kv-pagination";
 
 /**
  * Delivery-related magic numbers and system policy constants.
@@ -93,7 +94,9 @@ async function getAllActiveSubscriptions(
     if (!kv) return [];
 
     // List all subscription keys
-    const listResult = await kv.list({ prefix: "webhook_subscription:" });
+    const listResult = await listAllKvKeys(kv, {
+      prefix: "webhook_subscription:",
+    });
 
     // Optimization: Parallel batch fetch instead of sequential loop
     // This reduces latency from O(N) to O(N/batchSize)
@@ -312,7 +315,7 @@ export async function getDeadLetterQueue(env: Env): Promise<DeadLetterEvent[]> {
     const kv = getWebhookKV(env);
     if (!kv) return [];
 
-    const listResult = await kv.list({ prefix: "webhook_dlq:" });
+    const listResult = await listAllKvKeys(kv, { prefix: "webhook_dlq:" });
 
     // Optimization: Parallel batch fetch instead of sequential loop
     // This reduces latency from O(N) to O(N/batchSize)

@@ -1,6 +1,7 @@
 import type { Env } from "../types";
 import { jsonResponse, errorResponse } from "./utils";
 import { logger } from "../lib/global-logger";
+import { listAllKvKeys } from "../lib/kv-pagination";
 
 export interface DashboardStats {
   stats: {
@@ -151,7 +152,7 @@ async function getRecentActivity(env: Env): Promise<{
     const twentyFourHoursAgo = new Date(
       Date.now() - 24 * 60 * 60 * 1000,
     ).toISOString();
-    const result = await env.DEALS_LOG.list();
+    const result = await listAllKvKeys(env.DEALS_LOG);
     const logs = result.keys
       .map((k) => JSON.parse(k.metadata as string))
       .filter((l: { ts?: string }) => l.ts && l.ts >= twentyFourHoursAgo);
