@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-24
-**Version**: 0.17.0
-**Status**: Active — 2026-08-22 swarm landed via PR #708 (all 13 PRs of the 2026-08-22 backlog resolved; 2612 unit tests green). New 2026-08-24 analysis registered below as F-items; P0 correctness (F-1..F-3) and mandated wire-ups (PipelineLock DO per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md), EU AI Act logger) in progress.
+**Last Updated**: 2026-08-25
+**Version**: 0.17.1
+**Status**: Active — 2026-08-24 improvement run COMPLETE via PR #713: P0 correctness fixes (research-cache migration, DoH cache, telemetry batching), PipelineLock DO wired per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md), EU AI Act logger live on AI paths, dead security modules removed, silent catches logged. Deferred items tracked below.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
@@ -16,17 +16,17 @@ scope = P0 + quick wins this run.
 
 | ID | Finding | Priority | Status | Evidence |
 |:---|:---|:---|:---|:---|
-| F-1 | research-cache batch helpers query key/payload columns that do not exist (table has query/domain/results; required migration never written) - PR #640 optimization is armed dead code | P0 | 🟡 IN PROGRESS | research-cache.ts:9-15 vs schema-part-2.ts:120-136 |
-| F-2 | Uncached DNS-over-HTTPS adds 2 subrequests per validatedFetch; discovery alone ~60/run vs 50 free-tier limit | P0 | 🟡 IN PROGRESS | security.ts:258-303 |
-| F-3 | recordSourceValidation does full-registry KV GET+PUT per URL pattern (~40 ops/run) with concurrent lost-update race on the registry key | P0 | 🟡 IN PROGRESS | discover.ts:257-260, storage.ts:187-205 |
-| F-4 | All 3 Durable Objects have zero runtime callers; locking runs D1 CAS, staging runs KV | P1 | 🟡 PARTIAL - PipelineLock wiring per ADR-022 | wrangler.jsonc bindings vs worker/lib/lock.ts |
-| F-5 | Dead security twins rbac.ts (291L) + refresh-tokens.ts (297L): zero importers; live paths use middleware/auth.ts and lib/auth | P1 | ⬜ OPEN (delete this run) | grep evidence 2026-08-24 |
-| F-6 | EU AI Act logger (453L, tested) unwired while MCP advertises eu_ai_act_compliant:true and skill docs claim compliance | P1 | 🟡 IN PROGRESS (wire this run) | routes/mcp/index.ts:375, lib/eu-ai-act-logger.ts |
+| F-1 | research-cache batch helpers query key/payload columns that do not exist (table has query/domain/results; required migration never written) - PR #640 optimization is armed dead code | P0 | ✅ CLOSED - migration 0006 + schema-part-5 v11 create research_cache_kv | research-cache.ts repointed; migration pins bumped to 11 |
+| F-2 | Uncached DNS-over-HTTPS adds 2 subrequests per validatedFetch; discovery alone ~60/run vs 50 free-tier limit | P0 | ✅ CLOSED - TTL cache (300s, 500 entries); repeat hosts zero DoH calls | security.ts 495/500 lines; 88/88 security tests green |
+| F-3 | recordSourceValidation does full-registry KV GET+PUT per URL pattern (~40 ops/run) with concurrent lost-update race on the registry key | P0 | ✅ CLOSED - per-source tally API; ~40→~20 KV ops/run; intra-source race eliminated | storage.ts ValidationTally API; residual cross-isolate window documented |
+| F-4 | All 3 Durable Objects have zero runtime callers; locking runs D1 CAS, staging runs KV | P1 | 🟡 PARTIAL - PipelineLock DO now PRIMARY path (D1 CAS fallback, 1s timeout guard) per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md); SourceRegistry/DealRegistry deferred | lock.ts adapter + extendLock RPC; 105/105 lock tests |
+| F-5 | Dead security twins rbac.ts (291L) + refresh-tokens.ts (297L): zero importers; live paths use middleware/auth.ts and lib/auth | P1 | ✅ CLOSED - both deleted (588 lines) | ref-check clean 2026-08-24 |
+| F-6 | EU AI Act logger (453L, tested) unwired while MCP advertises eu_ai_act_compliant:true and skill docs claim compliance | P1 | ✅ CLOSED - wired into NLQ route + semantic search via compliance-log.ts; fire-and-forget with failure isolation | tests/unit/eu-ai-act-wiring.test.ts (7 passing) |
 | F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ⬜ DEFERRED | storage.ts:290, auth.ts:112, et al. |
 | F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ⬜ DEFERRED | publish.ts:63,85, storage.ts:60,87-95, stage.ts:60 |
-| F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ⬜ OPEN (fix this run) | dashboard.ts:36..210, storage.ts:138 |
+| F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ⬜ DEFERRED | discover.ts imports, scheduled.ts:69-130 |
-| F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ⬜ OPEN (flags this run; sweep deferred) | tsconfig.json:2-23 |
+| F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ⬜ DEFERRED - flags surface 416 errors repo-wide; needs dedicated sweep after dead-export cleanup | tsconfig.json:2-23 |
 | F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); wrangler.jsonc missing ai block despite env.AI usage; extension/popup.js 512L; 322 as any in tests | P3 | ⬜ DEFERRED | see analysis notes |
 
 ### Session outcomes already banked (pre-register)
@@ -34,6 +34,7 @@ scope = P0 + quick wins this run.
 | Item | Outcome |
 |:---|:---|
 | PR #708 swarm branch | MERGED - MI-1, MI-5, MI-6, MF-2, MF-3, T-1, N-1, N-2 delivered; referral-extractor infinite loop fixed (also cured CANTFIX-002 suite stall); 25 latent CI failures remediated; lint:md script repaired |
+| PR #713 improvement run | MERGED - F-1..F-3 P0 fixes, PipelineLock DO primary path, EU AI Act wiring, F-5/F-9 hygiene; review found+fixed 3 bugs pre-merge (tally double-count, misnamed dashboard logs, unguarded DO contention RPC) |
 | PR #709 deps | MERGED after conflict resolution (dev-only bumps: vitest 4.1.11, pool-workers 0.22.0, wrangler 4.125.0, types 5.20260823.1) |
 | PR #710 JSDoc-only | CLOSED no-impact per precedent |
 | N-6 test failures | ✅ RESOLVED - 2612/2612 green locally post-remediation |
