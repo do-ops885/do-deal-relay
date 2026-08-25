@@ -5,3 +5,4 @@
 {"timestamp": "2026-08-07T08:00:00Z", "agent": "jules", "task": "perf: optimize sorting by replacing slow localeCompare with direct comparison operators", "status": "completed"}
 {"timestamp": "2026-08-14T05:43:00Z", "agent": "jules", "task": "feat(ux): improve disabled states and BEM modifier button styling in dashboard", "status": "completed"}
 {"timestamp": "2026-08-23T07:15:00Z", "agent": "test-remediation", "task": "re-seat notify.test.ts fetch mocks onto validatedFetch seam (SSRF DoH bypass), all 10 tests green", "status": "completed"}
+{"timestamp": "2026-08-25T09:00:00Z", "agent": "ox-alpha", "task": "improvement run 2026-08-24: F-1..F-3 P0 fixes, PipelineLock DO wire, EU AI Act wiring, hygiene deletions, PR #713 merged after 3-bug review fix", "status": "completed"}
