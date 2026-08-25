@@ -98,15 +98,22 @@ function calculateExpiry(expiresIn: string | number): number {
   if (typeof expiresIn === "number") return nowSeconds + expiresIn;
   const match = expiresIn.match(/^(\d+)([smhd])$/);
   if (!match) throw new Error("Invalid expiresIn format: " + expiresIn);
-  const value = parseInt(match[1]!, 10);
-  const unit = match[2]!;
+  const valueStr = match[1];
+  const unit = match[2];
+  if (valueStr === undefined || unit === undefined) {
+    throw new Error("Invalid expiresIn format: " + expiresIn);
+  }
   const multipliers: Record<string, number> = {
     s: 1,
     m: 60,
     h: 3600,
     d: 86400,
   };
-  return nowSeconds + value * multipliers[unit]!;
+  const multiplier = multipliers[unit];
+  if (multiplier === undefined) {
+    throw new Error("Invalid expiresIn format: " + expiresIn);
+  }
+  return nowSeconds + parseInt(valueStr, 10) * multiplier;
 }
 
 /**

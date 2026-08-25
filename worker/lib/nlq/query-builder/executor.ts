@@ -42,38 +42,39 @@ export async function executeStructuredQuery(
     let filtered = baseResults;
 
     // Filter by category
-    if (query.categories && query.categories.length > 0) {
+    const categories = query.categories;
+    if (categories && categories.length > 0) {
       filtered = filtered.filter((deal) => {
         if (!deal.category) return false;
-        return query.categories!.some((cat) => deal.category.includes(cat));
+        return categories.some((cat) => deal.category.includes(cat));
       });
     }
 
     // Filter by domain
-    if (query.domains && query.domains.length > 0) {
+    const domains = query.domains;
+    if (domains && domains.length > 0) {
       filtered = filtered.filter((deal) =>
-        query.domains!.includes(deal.domain.toLowerCase()),
+        domains.includes(deal.domain.toLowerCase()),
       );
     }
 
     // Filter by reward type
-    if (query.rewardTypes && query.rewardTypes.length > 0) {
+    const rewardTypes = query.rewardTypes;
+    if (rewardTypes && rewardTypes.length > 0) {
       filtered = filtered.filter((deal) =>
-        query.rewardTypes!.includes(deal.reward_type as RewardType),
+        rewardTypes.includes(deal.reward_type as RewardType),
       );
     }
 
     // Filter by reward value
-    if (query.minRewardValue !== undefined) {
-      filtered = filtered.filter(
-        (deal) => deal.reward_value >= query.minRewardValue!,
-      );
+    const minRewardValue = query.minRewardValue;
+    if (minRewardValue !== undefined) {
+      filtered = filtered.filter((deal) => deal.reward_value >= minRewardValue);
     }
 
-    if (query.maxRewardValue !== undefined) {
-      filtered = filtered.filter(
-        (deal) => deal.reward_value <= query.maxRewardValue!,
-      );
+    const maxRewardValue = query.maxRewardValue;
+    if (maxRewardValue !== undefined) {
+      filtered = filtered.filter((deal) => deal.reward_value <= maxRewardValue);
     }
 
     // Apply sorting if not relevance

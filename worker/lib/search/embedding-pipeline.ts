@@ -69,15 +69,26 @@ export async function generateDealEmbeddings(
         env.AI.run as (model: string, inputs: unknown) => Promise<unknown>
       )(EMBEDDING_MODEL, { text: texts })) as { data?: number[][] };
 
-      if (!Array.isArray(result.data) || result.data.length !== batch.length) {
+      const data = result.data;
+      if (!Array.isArray(data) || data.length !== batch.length) {
         failed += batch.length;
         continue;
       }
 
-      const vectors: DealVector[] = batch.map((deal, idx) => {
-        const embedding = result.data![idx];
-        return dealToVector(deal, embedding!);
-      });
+      const vectors: DealVector[] = [];
+      let batchFailed = false;
+      for (const [idx, deal] of batch.entries()) {
+        const embedding = data[idx];
+        if (!Array.isArray(embedding)) {
+          batchFailed = true;
+          break;
+        }
+        vectors.push(dealToVector(deal, embedding));
+      }
+      if (batchFailed) {
+        failed += batch.length;
+        continue;
+      }
 
       await upsertDealVectors(env, vectors, "prod");
       successful += batch.length;

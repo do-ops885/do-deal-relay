@@ -27,10 +27,12 @@ export async function batchScrapeRewards(
   const domainGroups = new Map<string, Deal[]>();
   for (const deal of deals) {
     const domain = extractDomain(deal.url);
-    if (!domainGroups.has(domain)) {
-      domainGroups.set(domain, []);
+    const group = domainGroups.get(domain);
+    if (group) {
+      group.push(deal);
+    } else {
+      domainGroups.set(domain, [deal]);
     }
-    domainGroups.get(domain)!.push(deal);
   }
 
   for (const [, domainDeals] of domainGroups) {

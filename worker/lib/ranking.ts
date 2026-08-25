@@ -240,23 +240,23 @@ export function rankDeals(
   // Filter first
   let filtered = deals.filter((d) => d.metadata.status === "active");
 
-  if (options.minConfidence !== undefined) {
+  const minConfidence = options.minConfidence;
+  if (minConfidence !== undefined) {
     filtered = filtered.filter(
-      (d) => d.metadata.confidence_score >= options.minConfidence!,
+      (d) => d.metadata.confidence_score >= minConfidence,
     );
   }
 
-  if (options.minTrustScore !== undefined) {
-    filtered = filtered.filter(
-      (d) => d.source.trust_score >= options.minTrustScore!,
-    );
+  const minTrustScore = options.minTrustScore;
+  if (minTrustScore !== undefined) {
+    filtered = filtered.filter((d) => d.source.trust_score >= minTrustScore);
   }
 
-  if (options.category) {
+  const category = options.category;
+  if (category) {
+    const lowerCategory = category.toLowerCase();
     filtered = filtered.filter((d) =>
-      d.metadata.category.some(
-        (c) => c.toLowerCase() === options.category!.toLowerCase(),
-      ),
+      d.metadata.category.some((c) => c.toLowerCase() === lowerCategory),
     );
   }
 
@@ -325,7 +325,8 @@ export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
     })
     .sort(
       (a, b) =>
-        new Date(a.expiry.date!).getTime() - new Date(b.expiry.date!).getTime(),
+        new Date(a.expiry.date ?? "").getTime() -
+        new Date(b.expiry.date ?? "").getTime(),
     );
 }
 

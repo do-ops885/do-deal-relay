@@ -127,6 +127,13 @@ export async function executePhase(
 
     case "publish":
       try {
+        const snapshot = ctx.snapshot;
+        if (!snapshot) {
+          throw new Error(
+            `Publish attempted without staged snapshot for run ${ctx.run_id}`,
+          );
+        }
+
         if (ctx.scored.length > 0) {
           const guardRailReport = await runGuardRails(ctx.scored, "output");
 
@@ -155,7 +162,7 @@ export async function executePhase(
           }
         }
 
-        await publishSnapshot(env, ctx.snapshot!, ctx);
+        await publishSnapshot(env, snapshot, ctx);
         if (ctx.metrics)
           recordDealCount(ctx.metrics, "published", ctx.scored.length);
 

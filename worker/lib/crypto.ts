@@ -19,8 +19,8 @@ export async function sha256(input: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = new Uint8Array(hashBuffer);
   let result = "";
-  for (let i = 0; i < hashArray.length; i++) {
-    const hex = HEX_TABLE[hashArray[i]!];
+  for (const byte of hashArray) {
+    const hex = HEX_TABLE[byte];
     if (hex) result += hex;
   }
   return result;

@@ -87,8 +87,9 @@ function matchPath(pattern: string, actual: string): RouteParams | null {
 
   const params: RouteParams = {};
   for (let i = 0; i < patternParts.length; i++) {
-    const pp = patternParts[i]!;
-    const ap = actualParts[i]!;
+    const pp = patternParts[i];
+    const ap = actualParts[i];
+    if (pp === undefined || ap === undefined) return null;
     if (pp.startsWith(":")) {
       params[pp.slice(1)] = decodeURIComponent(ap);
     } else if (pp !== ap) {

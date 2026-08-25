@@ -107,23 +107,20 @@ export function calculateCategoryScores(deal: Deal): Map<string, number> {
 
   // Score each category using preprocessed lowercased structures
   // to avoid redundant string lowercasing and replace regex operations in hot loops.
-  for (let i = 0; i < PREPROCESSED_CATEGORIES.length; i++) {
-    const item = PREPROCESSED_CATEGORIES[i]!;
+  for (const item of PREPROCESSED_CATEGORIES) {
     let score = 0;
 
     // Check domain match (highest weight)
-    const domains = item.lowercasedDomains;
-    for (let d = 0; d < domains.length; d++) {
-      if (sourceDomain.includes(domains[d]!)) {
+    for (const domain of item.lowercasedDomains) {
+      if (sourceDomain.includes(domain)) {
         score += 10;
         break;
       }
     }
 
     // Check keyword matches
-    const keywords = item.lowercasedKeywords;
-    for (let k = 0; k < keywords.length; k++) {
-      if (text.includes(keywords[k]!)) {
+    for (const keyword of item.lowercasedKeywords) {
+      if (text.includes(keyword)) {
         score += 1;
       }
     }
@@ -146,14 +143,12 @@ export function calculateTagScores(deal: Deal): Map<string, number> {
   const text = `${deal.title} ${deal.description}`.toLowerCase();
 
   // Check keyword-based tags using preprocessed lowercased structures
-  for (let i = 0; i < PREPROCESSED_TAGS.length; i++) {
-    const item = PREPROCESSED_TAGS[i]!;
+  for (const item of PREPROCESSED_TAGS) {
     let score = 0;
 
     // Check keyword matches
-    const keywords = item.lowercasedKeywords;
-    for (let k = 0; k < keywords.length; k++) {
-      if (text.includes(keywords[k]!)) {
+    for (const keyword of item.lowercasedKeywords) {
+      if (text.includes(keyword)) {
         score += 1;
       }
     }

@@ -53,7 +53,7 @@ export async function handleScheduled(
         component: "scheduled",
       });
 
-      const aggResult = await runAggregation(env.DEALS_DB!);
+      const aggResult = await runAggregation(env.DEALS_DB);
 
       logger.info("Daily experience aggregation completed", {
         component: "scheduled",

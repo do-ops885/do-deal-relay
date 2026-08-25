@@ -44,16 +44,17 @@ interface CircuitBreakerMetrics {
 const metricsMap = new Map<string, CircuitBreakerMetrics>();
 
 function getMetrics(name: string): CircuitBreakerMetrics {
-  if (!metricsMap.has(name)) {
-    metricsMap.set(name, {
-      stateChanges: 0,
-      totalCalls: 0,
-      successfulCalls: 0,
-      failedCalls: 0,
-      rejectedCalls: 0,
-    });
-  }
-  return metricsMap.get(name)!;
+  const existing = metricsMap.get(name);
+  if (existing) return existing;
+  const metrics: CircuitBreakerMetrics = {
+    stateChanges: 0,
+    totalCalls: 0,
+    successfulCalls: 0,
+    failedCalls: 0,
+    rejectedCalls: 0,
+  };
+  metricsMap.set(name, metrics);
+  return metrics;
 }
 
 function recordStateChange(
@@ -384,19 +385,20 @@ export function getSourceCircuitBreaker(
   domain: string,
   env?: Env,
 ): CircuitBreaker {
-  if (!sourceCircuitBreakers.has(domain)) {
-    const cb = new CircuitBreaker(
-      `source:${domain}`,
-      {
-        failureThreshold: 5,
-        resetTimeoutMs: 300000, // 5 minutes for sources
-        halfOpenMaxCalls: 2,
-      },
-      env,
-    );
-    sourceCircuitBreakers.set(domain, cb);
-  }
-  return sourceCircuitBreakers.get(domain)!;
+  const existing = sourceCircuitBreakers.get(domain);
+  if (existing) return existing;
+
+  const cb = new CircuitBreaker(
+    `source:${domain}`,
+    {
+      failureThreshold: 5,
+      resetTimeoutMs: 300000, // 5 minutes for sources
+      halfOpenMaxCalls: 2,
+    },
+    env,
+  );
+  sourceCircuitBreakers.set(domain, cb);
+  return cb;
 }
 
 // Clear all source circuit breakers (useful for testing)

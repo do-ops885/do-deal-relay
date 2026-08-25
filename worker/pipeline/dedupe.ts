@@ -132,22 +132,22 @@ export function deduplicate(
     seenIds.add(deal.id);
 
     const codeKey = `${deal.source.domain}:${deal.code}`;
-    if (seenCodes.has(codeKey)) {
-      const existing = seenCodes.get(codeKey)!;
+    const existingCodeDeal = seenCodes.get(codeKey);
+    if (existingCodeDeal) {
       result.duplicates.push({
         deal,
-        matched_with: existing.id,
+        matched_with: existingCodeDeal.id,
         reason: "duplicate_code",
       });
       continue;
     }
     seenCodes.set(codeKey, deal);
 
-    if (seenUrls.has(deal.url)) {
-      const existing = seenUrls.get(deal.url)!;
+    const existingUrlDeal = seenUrls.get(deal.url);
+    if (existingUrlDeal) {
       result.duplicates.push({
         deal,
-        matched_with: existing.id,
+        matched_with: existingUrlDeal.id,
         reason: "duplicate_url",
       });
       continue;

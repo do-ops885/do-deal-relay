@@ -19,16 +19,18 @@ export { validateCodeOnPage, testCodeRedemption } from "./page-validation";
 // Provider-Specific Code Formats
 // ============================================================================
 
+const GENERIC_PROVIDER_FORMAT: ProviderFormat = {
+  name: "Generic",
+  patterns: [/^[A-Za-z0-9_-]+$/],
+  minLength: 3,
+  maxLength: 50,
+  allowedChars: /^[A-Za-z0-9_-]+$/,
+  caseSensitive: false,
+  examples: ["REFERRAL123", "FRIEND50", "WELCOME2024"],
+};
+
 const PROVIDER_FORMATS: Record<string, ProviderFormat> = {
-  generic: {
-    name: "Generic",
-    patterns: [/^[A-Za-z0-9_-]+$/],
-    minLength: 3,
-    maxLength: 50,
-    allowedChars: /^[A-Za-z0-9_-]+$/,
-    caseSensitive: false,
-    examples: ["REFERRAL123", "FRIEND50", "WELCOME2024"],
-  },
+  generic: GENERIC_PROVIDER_FORMAT,
   trading212: {
     name: "Trading 212",
     patterns: [/^[A-Z]{2,}[0-9]+[A-Z]*$/i, /^[A-Z0-9]{6,20}$/i],
@@ -105,7 +107,7 @@ export function validateCodeFormat(
     };
   }
 
-  const format = PROVIDER_FORMATS[provider] ?? PROVIDER_FORMATS.generic!;
+  const format = PROVIDER_FORMATS[provider] ?? GENERIC_PROVIDER_FORMAT;
 
   if (trimmedCode.length < format.minLength) {
     errors.push(

@@ -50,15 +50,13 @@ export async function executeSync(
 
   let deals = snapshot.deals;
 
-  if (config.filters?.domains?.length) {
-    deals = deals.filter((d) =>
-      config.filters!.domains!.includes(d.source.domain),
-    );
+  const domainFilters = config.filters?.domains;
+  if (domainFilters?.length) {
+    deals = deals.filter((d) => domainFilters.includes(d.source.domain));
   }
-  if (config.filters?.status?.length) {
-    deals = deals.filter((d) =>
-      config.filters!.status!.includes(d.metadata.status),
-    );
+  const statusFilters = config.filters?.status;
+  if (statusFilters?.length) {
+    deals = deals.filter((d) => statusFilters.includes(d.metadata.status));
   }
 
   const startIndex = state.cursor ? parseInt(state.cursor, 10) || 0 : 0;

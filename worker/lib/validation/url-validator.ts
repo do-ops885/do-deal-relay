@@ -266,10 +266,12 @@ export async function checkUrlStatusBatch(
   const domainGroups = new Map<string, string[]>();
   for (const url of limitedUrls) {
     const domain = extractDomain(url);
-    if (!domainGroups.has(domain)) {
-      domainGroups.set(domain, []);
+    const group = domainGroups.get(domain);
+    if (group) {
+      group.push(url);
+    } else {
+      domainGroups.set(domain, [url]);
     }
-    domainGroups.get(domain)!.push(url);
   }
 
   const results: UrlValidationResult[] = [];
