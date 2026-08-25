@@ -15,15 +15,12 @@ import { describe, it, expect, vi } from "vitest";
 import type { Mock } from "vitest";
 import { handleNLQ, handleNLQGet } from "../../worker/routes/nlq/handlers";
 import { handleSemanticSearch } from "../../worker/routes/semantic-search";
-import { executeReferralResearch } from "../../worker/lib/research-agent/orchestrator/index";
 import {
   logAIInteraction,
   NLQ_COMPLIANCE_OPERATION,
   SEMANTIC_SEARCH_COMPLIANCE_OPERATION,
-  RESEARCH_EXTRACTION_COMPLIANCE_OPERATION,
 } from "../../worker/lib/research-agent/compliance-log";
 import type { Env } from "../../worker/types";
-import type { WebResearchRequest } from "../../worker/types";
 
 // ============================================================================
 // Mocks — mirror the same seams the existing passing handler tests use
@@ -82,17 +79,6 @@ vi.mock("../../worker/lib/nlq/ai", () => ({
   enhanceQueryWithAI: vi.fn(async (q: unknown) => q),
   classifyIntent: vi.fn(() => "search"),
 }));
-
-// Only fetchFromSource is replaced; regex extraction and rate limiting stay real.
-vi.mock("../../worker/lib/research-agent/fetcher", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("../../worker/lib/research-agent/fetcher")
-    >();
-  return { ...actual, fetchFromSource: vi.fn() };
-});
-
-import { fetchFromSource } from "../../worker/lib/research-agent/fetcher";
 
 interface RecordedQuery {
   sql: string;

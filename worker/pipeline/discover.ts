@@ -6,7 +6,6 @@ import {
   createValidationTally,
   flushValidationTally,
   tallyValidation,
-  type ValidationTally,
 } from "../lib/storage";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
