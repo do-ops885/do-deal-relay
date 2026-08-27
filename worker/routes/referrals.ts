@@ -142,6 +142,20 @@ export async function handleCreateReferral(
       );
     }
 
+    // SSRF Hardening: Prevent SSRF attacks against internal network resources and cloud metadata endpoints
+    if (!(await validateFetchUrl(url))) {
+      return jsonResponse(
+        {
+          error: "Disallowed URL",
+          message:
+            "The provided referral URL failed security validation (SSRF protection).",
+        },
+        400,
+        request,
+        env,
+      );
+    }
+
     const existing = await getReferralByCode(env, code);
     if (existing) {
       return jsonResponse(
