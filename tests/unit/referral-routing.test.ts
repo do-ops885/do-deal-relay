@@ -42,3 +42,33 @@ describe("New split regex check", () => {
     expect(match).toBeNull();
   });
 });
+
+describe("handleCreateReferral SSRF Validation", () => {
+  it("should reject creation if URL points to prohibited loopback/private IP", async () => {
+    const { handleCreateReferral } =
+      await import("../../worker/routes/referrals");
+    const mockEnv = {} as any;
+
+    const request = new Request("https://example.com/api/referrals", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        code: "TEST1234",
+        url: "https://127.0.0.1/ref",
+        domain: "127.0.0.1",
+      }),
+    });
+
+    const response = await handleCreateReferral(request, mockEnv);
+    expect(response.status).toBe(400);
+
+    const data = (await response.json()) as {
+      error?: string;
+      message?: string;
+    };
+    expect(data.error).toBe("Disallowed URL");
+    expect(data.message).toContain("SSRF protection");
+  });
+});
