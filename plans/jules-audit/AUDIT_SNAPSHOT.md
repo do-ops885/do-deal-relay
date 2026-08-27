@@ -1,11 +1,9 @@
-# Jules Audit Snapshot — 2026-08-20
+# Codebase Audit Snapshot
+Date: 2026-08-27
+Environment: Node.js 22.22.1, npm 11.11.0, Cloudflare Workers / TypeScript / Vitest
 
 ## Repository Details
-- **Repository Name**: do-deal-relay
-- **Version**: 0.1.8
-- **Primary Language**: TypeScript (Node.js / Cloudflare Workers)
-- **Manifests**: `package.json`, `package-lock.json`, `wrangler.jsonc`, `tsconfig.json`
-- **Test Runner**: `npm run test:unit` (`node scripts/test-unit.js`)
-- **Quality Gate**: `bash scripts/quality_gate.sh` / `SKIP_TESTS=true bash scripts/quality_gate.sh`
+- **Primary Language/Framework**: TypeScript, Cloudflare Workers
+- **Test Runner**: Vitest (`npm run test:unit`)
+- **Quality Gate Command**: `./scripts/quality_gate.sh`
 - **Audit Directory**: `plans/jules-audit/`
-- **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`
