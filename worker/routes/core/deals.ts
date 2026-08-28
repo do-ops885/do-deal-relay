@@ -56,10 +56,10 @@ export async function handleGetDeals(
   deals = deals.filter((d) => d.metadata.status === "active");
 
   if (query.category) {
+    // Pre-compute lowercased target category to avoid allocating strings inside the filter loop.
+    const targetCategory = query.category.toLowerCase();
     deals = deals.filter((d) =>
-      d.metadata.category.some(
-        (c) => c.toLowerCase() === query.category?.toLowerCase(),
-      ),
+      d.metadata.category.some((c) => c.toLowerCase() === targetCategory),
     );
   }
 
