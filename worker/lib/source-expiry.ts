@@ -45,6 +45,12 @@ async function readBoundedText(response: Response): Promise<string> {
   return text + decoder.decode();
 }
 
+/**
+ * Evaluates whether a source URL page content indicates that a deal or offer has expired.
+ *
+ * @param sourceUrl - The source URL to fetch and analyze, or null.
+ * @returns A promise resolving to true if the source content explicitly states expiration, false otherwise.
+ */
 export async function sourceSaysExpired(
   sourceUrl: string | null,
 ): Promise<boolean> {
