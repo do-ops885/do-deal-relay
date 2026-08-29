@@ -1,6 +1,16 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+/**
+ * Parses an optional environment string into a safe integer bounded by min and max values.
+ * @param name Parameter name for error messages
+ * @param value String value from environment variable or undefined
+ * @param fallback Default value to return if value is undefined or empty
+ * @param minimum Minimum permissible integer value (inclusive)
+ * @param maximum Maximum permissible integer value (inclusive)
+ * @returns Parsed bounded integer or fallback
+ * @throws Error if value is not a valid integer or falls outside minimum/maximum limits
+ */
 export function parseBoundedIntegerConfig(
   name: string,
   value: string | undefined,
