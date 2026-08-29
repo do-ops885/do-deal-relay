@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Cron schedules documentation**: Explicitly documented all 4 system background cron schedules (`0 */6 * * *`, `*/30 * * * *`, `0 9 * * *`, `0 0 * * SUN`) in `README.md` and `docs/DEPLOYMENT.md`.
-- **Security controls documentation**: Added Security Architecture & Controls section in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, RBAC, and input hardening.
+- **Security controls documentation**: Added Security Architecture & Controls and PEV Pipeline Security Gate sections in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, PEV security gate (SSRF, credential leakage, injection, URL validation, content safety), RBAC, and input hardening.
 
 ### Security
 - **HMAC signature leakage prevention**: Hardened HMAC verification in `worker/lib/hmac.ts` to omit computed signature return values on verification failures.
