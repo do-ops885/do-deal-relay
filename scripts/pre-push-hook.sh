@@ -306,6 +306,29 @@ fi
 echo ""
 
 # ============================================
+# GUARD RAIL 10: Live CI Status (Main Branch)
+# Prevents pushing/monitoring merges while main CI is red
+# ============================================
+echo "Guard Rail 10: Live CI Status (Main)"
+if command -v gh >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+    if bash scripts/check-ci-status.sh --live 2>&1 | tee /tmp/ci-live-check.log; then
+        success "Live CI on main is passing (or --live check skipped)"
+    else
+        LIVE_EXIT=$?
+        if [ "$LIVE_EXIT" -eq 2 ]; then
+            error "Live CI on main is FAILING — fix CI before pushing"
+            echo "   Run: gh run list --limit 5  and  bash scripts/update-ci-status.sh"
+            echo "   If this is a docs-only change, verify with: gh run view <url> --json jobs"
+        else
+            warning "Live CI check skipped or unavailable (see log)"
+        fi
+    fi
+else
+    info "gh/jq not available — skipping live CI check (rely on local quality_gate.sh)"
+fi
+echo ""
+
+# ============================================
 # SUMMARY
 # ============================================
 echo "=================================="
