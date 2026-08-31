@@ -154,7 +154,14 @@ class ExtensionService {
       if (!uid) {
         uid = self.crypto?.randomUUID
           ? self.crypto.randomUUID()
-          : `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          : (() => {
+              const bytes = new Uint8Array(8);
+              self.crypto.getRandomValues(bytes);
+              const rand = Array.from(bytes, (b) =>
+                b.toString(16).padStart(2, "0"),
+              ).join("");
+              return `ext-${Date.now()}-${rand}`;
+            })();
         await chrome.storage.sync.set({ extensionUserId: uid });
       }
       const payload = {
