@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { validateConfig } from "../../worker/lib/config-utils";
+import {
+  validateConfig,
+  parseBoundedIntegerConfig,
+} from "../../worker/lib/config-utils";
 import type { Env } from "../../worker/types";
 import type { KVNamespace } from "@cloudflare/workers-types";
 
@@ -94,6 +97,42 @@ describe("Enhanced Config Validation", () => {
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
+    });
+  });
+
+  describe("parseBoundedIntegerConfig", () => {
+    it("should return fallback when value is undefined or whitespace", () => {
+      expect(parseBoundedIntegerConfig("TEST_VAR", undefined, 10, 0, 100)).toBe(
+        10,
+      );
+      expect(parseBoundedIntegerConfig("TEST_VAR", "", 10, 0, 100)).toBe(10);
+      expect(parseBoundedIntegerConfig("TEST_VAR", "   ", 10, 0, 100)).toBe(10);
+    });
+
+    it("should parse valid integer within bounds", () => {
+      expect(parseBoundedIntegerConfig("TEST_VAR", "25", 10, 0, 100)).toBe(25);
+      expect(parseBoundedIntegerConfig("TEST_VAR", "0", 10, 0, 100)).toBe(0);
+      expect(parseBoundedIntegerConfig("TEST_VAR", "100", 10, 0, 100)).toBe(
+        100,
+      );
+    });
+
+    it("should throw when value is not an integer", () => {
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "12.34", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "abc", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+    });
+
+    it("should throw when value is out of bounds", () => {
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "-1", 10, 0, 100),
+      ).toThrow("TEST_VAR must be between 0 and 100");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "101", 10, 0, 100),
+      ).toThrow("TEST_VAR must be between 0 and 100");
     });
   });
 
