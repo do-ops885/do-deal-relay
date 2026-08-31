@@ -4,8 +4,12 @@
  * Loaded before popup.js via <script src="popup-render.js">.
  */
 
-/* global document */
+/* global chrome */
+/* eslint-disable security/detect-object-injection */
 
+const MS_PER_DAY = 86400000;
+
+// eslint-disable-next-line no-unused-vars
 const PopupRender = {
   updatePageInfo(tab, elements) {
     elements.pageTitle.textContent = tab.title || "Unknown";
@@ -119,7 +123,7 @@ const PopupRender = {
     const diff = Date.now() - new Date(iso).getTime();
     if (diff < 60000) return "Just now";
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < MS_PER_DAY) return `${Math.floor(diff / 3600000)}h ago`;
     return new Date(iso).toLocaleString();
   },
 

@@ -3,6 +3,9 @@
  * Uses PopupRender helpers (popup-render.js) to stay under 500 lines.
  */
 
+/* global chrome, PopupRender */
+/* eslint-disable security/detect-object-injection */
+
 document.addEventListener("DOMContentLoaded", async () => {
   const state = {
     currentTab: null,

@@ -1,3 +1,5 @@
+/* global chrome, self */
+/* eslint-disable security/detect-object-injection */
 /** Referral Capture - Background Service Worker */
 const DEFAULT_API_BASE = "http://localhost:8787";
 const POLL_MIN = 5;
@@ -152,16 +154,18 @@ class ExtensionService {
       const s = await chrome.storage.sync.get(["extensionUserId"]);
       let uid = s.extensionUserId;
       if (!uid) {
-        uid = self.crypto?.randomUUID
-          ? self.crypto.randomUUID()
-          : (() => {
-              const bytes = new Uint8Array(8);
-              self.crypto.getRandomValues(bytes);
-              const rand = Array.from(bytes, (b) =>
-                b.toString(16).padStart(2, "0"),
-              ).join("");
-              return `ext-${Date.now()}-${rand}`;
-            })();
+        if (self.crypto?.randomUUID) {
+          uid = self.crypto.randomUUID();
+        } else if (self.crypto?.getRandomValues) {
+          const bytes = new Uint8Array(8);
+          self.crypto.getRandomValues(bytes);
+          const hex = Array.from(bytes, (b) =>
+            b.toString(16).padStart(2, "0"),
+          ).join("");
+          uid = `ext-${Date.now()}-${hex.slice(0, 8)}`;
+        } else {
+          uid = `ext-${Date.now()}-fallback`;
+        }
         await chrome.storage.sync.set({ extensionUserId: uid });
       }
       const payload = {
