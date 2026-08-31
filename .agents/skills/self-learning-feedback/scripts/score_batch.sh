@@ -105,7 +105,7 @@ else
     for r in "${RESULTS[@]}"; do
         IFS='|' read -r f n a c cl o g <<< "$r"
         # Shorten path
-        short=$(echo "$f" | sed "s|$DIR/||")
+        short=${f//$DIR\//}
         echo "| $short | $n | $a | $c | $cl | $o | $g |"
     done
     echo ""

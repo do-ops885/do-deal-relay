@@ -6,11 +6,9 @@
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-FIX=false
 SINGLE_FILE=""
 
 usage() {
@@ -20,7 +18,7 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --fix-broken) FIX=true ;;
+        --fix-broken) shift ;; # reserved
         --file) SINGLE_FILE="$2"; shift ;;
         --help|-h) usage ;;
         *) echo "Unknown: $1"; usage ;;

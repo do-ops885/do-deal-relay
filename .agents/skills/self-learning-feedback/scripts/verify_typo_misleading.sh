@@ -51,12 +51,14 @@ check_file() {
             [[ -z "$hits" ]] && continue
             if [[ "$severity" == "HIGH" ]]; then
                 echo -e "${RED}❌ FAIL${NC} $file — pattern '$pat' -> '$suggestion' ($severity)"
-                echo "$hits" | sed 's/^/  /'
+                # shellcheck disable=SC2001
+                echo "${hits}" | sed 's/^/  /'
                 found=true
                 WARNED=$((WARNED+1))
             else
                 echo -e "${YELLOW}⚠ WARN${NC} $file — pattern '$pat' -> '$suggestion'"
-                echo "$hits" | sed 's/^/  /'
+                # shellcheck disable=SC2001
+                echo "${hits}" | sed 's/^/  /'
                 WARNED=$((WARNED+1))
             fi
         fi

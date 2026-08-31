@@ -6,8 +6,6 @@
 
 set -e
 
-VERIFY_REPORT=""
-SCORE_REPORT=""
 OUTPUT=""
 JSON_MODE=false
 
@@ -20,8 +18,8 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --verify-report) VERIFY_REPORT="$2"; shift ;;
-        --score-report) SCORE_REPORT="$2"; shift ;;
+        --verify-report) shift ;; # reserved for future report input
+        --score-report) shift ;; # reserved
         --output) OUTPUT="$2"; shift ;;
         --json) JSON_MODE=true ;;
         --help|-h) usage ;;

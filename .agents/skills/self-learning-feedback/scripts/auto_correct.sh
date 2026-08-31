@@ -6,7 +6,6 @@
 
 set -e
 
-INPUT=""
 DRY_RUN=false
 APPLY=false
 
@@ -17,7 +16,7 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --input) INPUT="$2"; shift ;;
+        --input) shift ;; # input file reserved for future use
         --dry-run) DRY_RUN=true ;;
         --apply) APPLY=true ;;
         --help|-h) usage ;;

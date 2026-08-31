@@ -137,6 +137,7 @@ check_file() {
             local header_version=$(grep -i "version.*:" "$file" | grep -v "Source" | head -1 | sed 's/.*Version.*: *//' | sed 's/<!--.*-->//' | tr -d '[:space:]' | cut -d' ' -f1 | tr -d '"' | tr -d "'" | tr -d ')' | tr -d '(' | tr -d ',' )
             # Only consider pure semver claims
             if echo "$header_version" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
+                # shellcheck disable=SC2001
                 local normalized=$(echo "$header_version" | sed 's/^v//')
                 if [[ "$normalized" != "$SOURCE_VERSION" ]]; then
                     status="FAIL"

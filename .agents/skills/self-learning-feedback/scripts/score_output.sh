@@ -15,7 +15,6 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 FILE=""
-CRITERIA="noise,accuracy,completeness,clarity"
 JSON_OUT=false
 
 usage() {
@@ -25,7 +24,7 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --criteria) CRITERIA="$2"; shift ;;
+        --criteria) shift ;; # criteria reserved for future filtering
         --json) JSON_OUT=true ;;
         --help|-h) usage ;;
         -*) echo "Unknown: $1"; usage ;;
