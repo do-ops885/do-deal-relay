@@ -13,6 +13,7 @@ import type { EnhancedQuery, QueryFilters, AIEnhancerOptions } from "./types";
 import { extractEntities, deduplicateEntities } from "./entities";
 import { classifyIntent, validateIntent } from "./intent";
 import { expandQuery, createEmptyExpansion, SYNONYM_MAP } from "./expansion";
+import { isGatewayEnabled } from "../../ai-gateway/llm";
 
 export type {
   Entity,
@@ -100,11 +101,20 @@ export class AIQueryEnhancer {
     const shouldUseAI = this.shouldUseAI(query);
 
     // Extract entities using rule-based + AI hybrid approach
+    // When AI_GATEWAY_URL is set, LLM calls are routed through the gateway
+    // for caching/retries (see worker/lib/ai-gateway/llm.ts).
+    const gatewayInfo = isGatewayEnabled(this.env)
+      ? "via AI Gateway"
+      : "direct";
+    if (shouldUseAI) {
+      logger.debug(`AI enhancement ${gatewayInfo}`, { query: normalized });
+    }
+
     const [entities, intent, expansion] = await Promise.all([
-      extractEntities(this.ai, normalized, shouldUseAI),
-      classifyIntent(this.ai, normalized),
+      extractEntities(this.ai, normalized, shouldUseAI, this.env),
+      classifyIntent(this.ai, normalized, this.env),
       this.options.enableQueryExpansion
-        ? expandQuery(this.ai, normalized, shouldUseAI)
+        ? expandQuery(this.ai, normalized, shouldUseAI, this.env)
         : Promise.resolve(createEmptyExpansion(normalized)),
     ]);
 

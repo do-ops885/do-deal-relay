@@ -401,6 +401,59 @@
         color: #4f46e5;
       }
 
+      .feed-badge {
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 999px;
+        margin-left: 6px;
+      }
+
+      .feed-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .feed-meta span {
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .btn-small {
+        padding: 6px 10px;
+        font-size: 11px;
+        width: auto;
+        border-radius: 6px;
+      }
+
+      .feed-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 6px;
+        transition: background 0.15s;
+      }
+
+      .feed-item:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+      }
+
+      .feed-item-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
       /* Toast notification */
       .toast {
         position: fixed;
@@ -655,6 +708,42 @@
         <button class="btn btn-secondary" id="save-settings-btn">
           Save Settings
         </button>
+      </div>
+
+      <!-- Live Deal Feed Section -->
+      <div class="section" id="deal-feed-section">
+        <h2 class="section-title">
+          <span aria-hidden="true">⚡</span> Live Deal Feed
+          <span class="feed-badge hidden" id="feed-badge">0 new</span>
+        </h2>
+        <div class="feed-meta">
+          <span id="last-poll-time" aria-live="polite">Never polled</span>
+          <div style="display: flex; gap: 6px">
+            <button
+              class="btn btn-secondary btn-small"
+              id="refresh-deals-btn"
+              type="button"
+              tabindex="-1"
+            >
+              Refresh deals
+            </button>
+            <button
+              class="btn btn-secondary btn-small hidden"
+              id="clear-badge-btn"
+              type="button"
+              aria-label="Clear new deals badge"
+              tabindex="-1"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+        <div class="detection-list" id="deal-feed-list"></div>
+        <div class="empty-state hidden" id="feed-empty">
+          <div class="empty-state-text">
+            No new high-value deals (reward &gt; $100)
+          </div>
+        </div>
       </div>
 
       <!-- Stats Section -->

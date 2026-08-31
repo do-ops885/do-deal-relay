@@ -9,6 +9,7 @@
 
 export { AIGatewayClient } from "./client";
 export { buildGatewayConfig, createDisabledConfig } from "./config";
+export { runLLMWithGateway, isGatewayEnabled } from "./llm";
 export type {
   GatewayConfig,
   GatewayEnv,

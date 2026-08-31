@@ -22,6 +22,7 @@ import {
   METRIC_PUBLISH_REFERRALS_WRITTEN,
   METRIC_PUBLISH_ERRORS,
 } from "./lib/metrics/names";
+import { notifyHighValueDealsWithWebhook } from "./lib/high-value-notifier";
 
 // ============================================================================
 // Production Publish Flow
@@ -120,6 +121,40 @@ export async function publishSnapshot(
       status: deal.metadata.status,
     }));
     await insertReferralsBatch(env.DEALS_DB, referrals);
+
+    // Step 5b: High-value deal notifications (MF-N1) — best-effort, never blocks publish.
+    // Reuses webhook infra (worker/lib/webhook) + push path (notify) from
+    // lib/expiration/notifications.ts pattern. Threshold from NOTIFICATION_THRESHOLD env.
+    try {
+      const hvResult = await notifyHighValueDealsWithWebhook(
+        env,
+        publishedSnapshot.deals,
+        ctx.run_id,
+        ctx.trace_id,
+      );
+      if (hvResult.highValueCount > 0) {
+        auditEvents.push({
+          id: crypto.randomUUID(),
+          action: "publish.high_value_notified",
+          resource: "snapshot",
+          resourceType: "pipeline",
+          resourceId: snapshot.snapshot_hash,
+          details: {
+            run_id: ctx.run_id,
+            threshold: hvResult.threshold,
+            high_value_count: hvResult.highValueCount,
+            notified: hvResult.notified,
+            webhook_sent: hvResult.webhookSent,
+          },
+          correlationId: ctx.trace_id,
+        });
+      }
+    } catch (e) {
+      logger.warn("High-value notification failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
 
     // Step 6: Commit to GitHub
     const commitSha = await commitSnapshot(env.GITHUB_REPO, publishedSnapshot, {

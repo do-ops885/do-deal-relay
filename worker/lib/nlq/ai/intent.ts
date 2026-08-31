@@ -6,7 +6,9 @@
 import { logger } from "../../global-logger";
 import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
+import type { Env } from "../../../types";
 import type { ExtractedIntent } from "./types";
+import { runLLMWithGateway } from "../../ai-gateway/llm";
 
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const AI_MAX_TOKENS_SHORT = CONFIG.NLQ_AI_MAX_TOKENS_SHORT;
@@ -14,10 +16,12 @@ type AiRunFn = (model: string, inputs: unknown) => Promise<unknown>;
 
 /**
  * Classify query intent using AI
+ * When env is provided and AI_GATEWAY_URL is set, routes through gateway for caching/retries.
  */
 export async function classifyIntent(
   ai: Ai,
   query: string,
+  env?: Env,
 ): Promise<ExtractedIntent> {
   const prompt = `Classify the search intent of this query: "${query}"
 
@@ -29,14 +33,18 @@ Return ONLY the intent name and confidence (0-1) as JSON:
 Respond with only valid JSON.`;
 
   try {
-    const result = await (ai.run as AiRunFn)(AI_MODEL, {
-      prompt,
-      max_tokens: AI_MAX_TOKENS_SHORT,
-      temperature: 0.1,
-    });
+    const result: { response: string } = env
+      ? await runLLMWithGateway(env, ai, AI_MODEL, prompt, {
+          max_tokens: AI_MAX_TOKENS_SHORT,
+          temperature: 0.1,
+        })
+      : ((await (ai.run as AiRunFn)(AI_MODEL, {
+          prompt,
+          max_tokens: AI_MAX_TOKENS_SHORT,
+          temperature: 0.1,
+        })) as { response: string });
 
-    const response = result as { response: string };
-    const parsed = JSON.parse(response.response.trim());
+    const parsed = JSON.parse(result.response.trim());
 
     return {
       primary: validateIntent(parsed.intent),

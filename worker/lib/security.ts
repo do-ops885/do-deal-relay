@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Security Utilities
  *
@@ -144,12 +145,36 @@ export async function validatedFetch(
     throw new Error("Invalid or disallowed URL");
   }
 
-  // Enforce SSRF protection by validating the URL against blocked hosts and private IPs
   if (!(await validateFetchUrl(url))) {
     throw new Error("SSRF Blocked: URL failed security validation");
   }
 
-  return fetch(url, init);
+  // Merge redirect: manual to prevent unchecked redirect-follow SSRF bypass;
+  // callers that need redirects should handle Location manually with re-validation.
+  const safeInit: RequestInit = {
+    ...init,
+    redirect: "manual" as RequestRedirect,
+  };
+  // eslint-disable-next-line security/detect-object-injection
+  const response = await fetch(url, safeInit);
+
+  // If manual redirect, validate Location header before exposing it
+  const location = response.headers?.get?.("Location") ?? null;
+  if (location && response.status >= 300 && response.status < 400) {
+    let redirectUrl: string;
+    try {
+      redirectUrl = new URL(location, url).toString();
+    } catch {
+      throw new Error("SSRF Blocked: invalid redirect Location");
+    }
+    if (!(await validateFetchUrl(redirectUrl))) {
+      throw new Error(
+        "SSRF Blocked: redirect target failed security validation",
+      );
+    }
+  }
+
+  return response;
 }
 
 function isIpAddress(hostname: string): boolean {

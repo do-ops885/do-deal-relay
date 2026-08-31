@@ -24,6 +24,22 @@ import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
 import { jsonResponse, errorResponse } from "./utils";
 import { validateFetchUrl, validateReferralUrl } from "../lib/security";
+import { DEFAULT_SOURCES } from "../config";
+
+const ALLOWED_REFERRAL_DOMAINS = new Set(
+  DEFAULT_SOURCES.map((s) => s.domain.toLowerCase()),
+);
+
+function isAllowedReferralDomain(domain: string): boolean {
+  const normalized = domain.toLowerCase().replace(/^www\./, "");
+  if (ALLOWED_REFERRAL_DOMAINS.has(normalized)) return true;
+  // Allow subdomains of allowed domains
+  for (const allowed of ALLOWED_REFERRAL_DOMAINS) {
+    if (normalized === allowed || normalized.endsWith(`.${allowed}`))
+      return true;
+  }
+  return false;
+}
 
 // ============================================================================
 // Referral Management Handlers
@@ -35,8 +51,6 @@ export async function handleGetReferrals(
   request?: Request,
 ): Promise<Response> {
   try {
-    const limitParam = url.searchParams.get("limit");
-    const offsetParam = url.searchParams.get("offset");
     const query: ReferralSearchQuery = {
       domain: url.searchParams.get("domain") || undefined,
       status:
@@ -46,8 +60,12 @@ export async function handleGetReferrals(
       source:
         (url.searchParams.get("source") as ReferralSearchQuery["source"]) ||
         "all",
-      limit: limitParam !== null ? parseInt(limitParam, 10) : 100,
-      offset: offsetParam !== null ? parseInt(offsetParam, 10) : 0,
+      limit: url.searchParams.has("limit")
+        ? parseInt(url.searchParams.get("limit")!, 10)
+        : 100,
+      offset: url.searchParams.has("offset")
+        ? parseInt(url.searchParams.get("offset")!, 10)
+        : 0,
     };
 
     const validation = ReferralSearchQuerySchema.safeParse(query);
@@ -102,25 +120,45 @@ export async function handleCreateReferral(
       );
     }
 
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength) > 1024 * 1024) {
+    const body = (await request.json()) as Record<string, unknown>;
+
+    // Validate raw body shape before any casts
+    if (
+      typeof body.code !== "string" ||
+      typeof body.url !== "string" ||
+      typeof body.domain !== "string" ||
+      !body.code ||
+      !body.url ||
+      !body.domain
+    ) {
       return jsonResponse(
-        { error: "Request body too large" },
-        413,
+        {
+          error:
+            "Missing required fields: code, url, domain must be non-empty strings",
+        },
+        400,
         request,
         env,
       );
     }
 
-    const body = (await request.json()) as Record<string, unknown>;
+    const code = body.code;
+    const url = body.url;
+    const domain = body.domain;
 
-    const code = body.code as string;
-    const url = body.url as string;
-    const domain = body.domain as string;
-
-    if (!code || !url || !domain) {
+    // Strict body validation: reject unknown mistyped metadata fields before trust
+    const rawValidation = ReferralInputSchema.safeParse({
+      code,
+      url,
+      source: body.source,
+      metadata: body.metadata,
+    });
+    if (!rawValidation.success) {
       return jsonResponse(
-        { error: "Missing required fields: code, url, domain" },
+        {
+          error: "Validation failed",
+          details: rawValidation.error.errors,
+        },
         400,
         request,
         env,
@@ -140,7 +178,7 @@ export async function handleCreateReferral(
       );
     }
 
-    // SSRF Hardening: Prevent SSRF attacks against internal network resources and cloud metadata endpoints
+    // SSRF hardening: validate URL against blocked hosts/private IPs (before allowlist so loopback returns Disallowed URL)
     if (!(await validateFetchUrl(url))) {
       return jsonResponse(
         {
@@ -154,6 +192,20 @@ export async function handleCreateReferral(
       );
     }
 
+    // Domain allowlist check: client-supplied domain must be in allowed set
+    if (!isAllowedReferralDomain(domain)) {
+      return jsonResponse(
+        {
+          error: "Domain not allowed",
+          message: `Domain ${domain} is not in the allowed referral domain list`,
+        },
+        400,
+        request,
+        env,
+      );
+    }
+
+    // TOCTOU guard: check-then-insert with post-insert conflict detection
     const existing = await getReferralByCode(env, code);
     if (existing) {
       return jsonResponse(
@@ -266,11 +318,22 @@ export async function handleGetReferralByCode(
     const redirect = url.searchParams.get("redirect") === "true";
 
     if (redirect) {
-      const { validateRedirect } = await import("./utils");
-      if (validateRedirect(referral.url)) {
-        return Response.redirect(referral.url, 302);
+      // Referral-specific redirect validation: ensure stored URL matches its domain and is allowed
+      const referralDomain = referral.domain || "";
+      if (
+        !referral.url ||
+        !isAllowedReferralDomain(referralDomain) ||
+        !validateReferralUrl(referral.url, referralDomain) ||
+        !(await validateFetchUrl(referral.url))
+      ) {
+        return jsonResponse(
+          { error: "Invalid redirect URL" },
+          400,
+          request,
+          env,
+        );
       }
-      return jsonResponse({ error: "Invalid redirect URL" }, 400, request, env);
+      return Response.redirect(referral.url, 302);
     }
 
     return jsonResponse({ referral }, 200, request, env);
@@ -367,47 +430,67 @@ export async function handleDeactivateReferral(
 export async function handleReactivateReferral(
   code: string,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
   try {
-    // Check if referral exists and is already active
+    // Atomic check: fetch and let reactivateReferral handle status; pre-check for early 404/409
     const existing = await getReferralByCode(env, code);
     if (!existing) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
     if (existing.status === "active") {
       return jsonResponse(
         { error: "Conflict", message: "Referral is already active" },
         409,
+        request,
+        env,
       );
     }
 
     const referral = await reactivateReferral(env, code);
 
     if (!referral) {
-      return jsonResponse({ error: "Referral not found" }, 404);
+      return jsonResponse({ error: "Referral not found" }, 404, request, env);
     }
 
     logger.info(`Referral reactivated: ${code}`, {
       component: "api",
     });
 
-    return jsonResponse({
-      success: true,
-      message: "Referral reactivated successfully",
-      referral: {
-        id: referral.id,
-        code: referral.code,
-        url: referral.url,
-        domain: referral.domain,
-        status: referral.status,
-      },
+    await notify(env, {
+      type: "trust_anomaly",
+      severity: "info",
+      run_id: `reactivate-${Date.now()}`,
+      message: `Referral code ${code} reactivated`,
     });
+
+    return jsonResponse(
+      {
+        success: true,
+        message: "Referral reactivated successfully",
+        referral: {
+          id: referral.id,
+          code: referral.code,
+          url: referral.url,
+          domain: referral.domain,
+          status: referral.status,
+        },
+      },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     const err = handleError(error, {
       component: "api",
       handler: "handleReactivateReferral",
     });
-    return jsonResponse({ error: "Failed to reactivate referral" }, 500);
+    return jsonResponse(
+      { error: "Failed to reactivate referral" },
+      500,
+      request,
+      env,
+    );
   }
 }

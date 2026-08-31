@@ -1,11 +1,17 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "default": {
-      "name": "OpenCode Default"
+    "phoenix-grove": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Phoenix Grove",
+      "options": {
+        "baseURL": "https://api.pgsgrove.com/v1",
+        "apiKey": "pgsk_plan_344073fa4e0fcb6b6c8f5774e72317267da9dbbbf2382578fac11b8a32f76027"
+      },
+      "models": {
+        
+        "glm-5.3-flash":         { "name": "glm-5.3-flash" }
+      }
     }
-  },
-  "skills": {
-    "path": ".agents/skills"
   }
 }

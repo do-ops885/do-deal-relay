@@ -14,7 +14,12 @@ import {
 import { generateDashboardHTML } from "./dashboard";
 
 // Re-export types
-export type { DealAnalytics, AnalyticsSummary } from "./types";
+export type {
+  DealAnalytics,
+  AnalyticsSummary,
+  ReferralAnalytics,
+} from "./types";
+export { generateReferralAnalytics } from "./referrals";
 
 // ============================================================================
 // Main Analytics Generator

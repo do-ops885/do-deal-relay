@@ -4,6 +4,7 @@ import { MIGRATIONS_PART_2 } from "./schema-part-2";
 import { MIGRATIONS_PART_3 } from "./schema-part-3";
 import { MIGRATIONS_PART_4 } from "./schema-part-4";
 import { MIGRATIONS_PART_5 } from "./schema-part-5";
+import { MIGRATIONS_PART_6 } from "./schema-part-6";
 
 /**
  * Ordered union of every schema migration. Order MUST be preserved — each
@@ -15,4 +16,5 @@ export const MIGRATIONS: Migration[] = [
   ...MIGRATIONS_PART_3,
   ...MIGRATIONS_PART_4,
   ...MIGRATIONS_PART_5,
+  ...MIGRATIONS_PART_6,
 ];

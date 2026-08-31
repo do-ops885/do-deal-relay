@@ -6,7 +6,9 @@
 import { logger } from "../../global-logger";
 import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
+import type { Env } from "../../../types";
 import type { QueryExpansion } from "./types";
+import { runLLMWithGateway } from "../../ai-gateway/llm";
 
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 type AiRunFn = (model: string, inputs: unknown) => Promise<unknown>;
@@ -23,11 +25,13 @@ export const SYNONYM_MAP: Map<string, string[]> = new Map([
 
 /**
  * Build query expansion with synonyms and AI alternatives
+ * When env provided, routes LLM through AI Gateway for caching/retries.
  */
 export async function expandQuery(
   ai: Ai,
   query: string,
   shouldUseAI: boolean,
+  env?: Env,
 ): Promise<QueryExpansion> {
   const expanded: string[] = [];
   const synonyms = new Map<string, string[]>();
@@ -45,7 +49,7 @@ export async function expandQuery(
   // AI-based expansion for complex queries
   if (shouldUseAI) {
     try {
-      const aiExpansions = await expandWithAI(ai, query);
+      const aiExpansions = await expandWithAI(ai, query, env);
       expanded.push(...aiExpansions);
     } catch (error) {
       const err = toError(error);
@@ -65,7 +69,11 @@ export async function expandQuery(
 /**
  * Expand query using AI
  */
-async function expandWithAI(ai: Ai, query: string): Promise<string[]> {
+async function expandWithAI(
+  ai: Ai,
+  query: string,
+  env?: Env,
+): Promise<string[]> {
   const prompt = `Expand this search query into alternative phrasings: "${query}"
 
 Return ONLY a JSON array of strings:
@@ -74,14 +82,18 @@ Return ONLY a JSON array of strings:
 Respond with only valid JSON.`;
 
   try {
-    const result = await (ai.run as AiRunFn)(AI_MODEL, {
-      prompt,
-      max_tokens: 300,
-      temperature: 0.3,
-    });
+    const result: { response: string } = env
+      ? await runLLMWithGateway(env, ai, AI_MODEL, prompt, {
+          max_tokens: 300,
+          temperature: 0.3,
+        })
+      : ((await (ai.run as AiRunFn)(AI_MODEL, {
+          prompt,
+          max_tokens: 300,
+          temperature: 0.3,
+        })) as { response: string });
 
-    const response = result as { response: string };
-    const parsed = JSON.parse(response.response.trim());
+    const parsed = JSON.parse(result.response.trim());
 
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
