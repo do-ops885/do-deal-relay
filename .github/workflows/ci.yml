@@ -169,7 +169,7 @@ jobs:
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
           echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
-          npx wrangler dev --port 8787 \
+          npx wrangler dev --local --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
             --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
             --var EMAIL_WEBHOOK_SECRET:ci_email_webhook_test_secret > wrangler.log 2>&1 &
@@ -237,7 +237,7 @@ jobs:
           echo "WEBHOOK_SECRET=whsec_ci_test_secret" > .dev.vars
           echo "API_ENCRYPTION_KEY=ci_test_encryption_key_32_chars_long" >> .dev.vars
           echo "EMAIL_WEBHOOK_SECRET=ci_email_webhook_test_secret" >> .dev.vars
-          npx wrangler dev --port 8787 \
+          npx wrangler dev --local --port 8787 \
             --var WEBHOOK_SECRET:whsec_ci_test_secret \
             --var API_ENCRYPTION_KEY:ci_test_encryption_key_32_chars_long \
             --var EMAIL_WEBHOOK_SECRET:ci_email_webhook_test_secret &
