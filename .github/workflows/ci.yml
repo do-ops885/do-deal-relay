@@ -102,7 +102,7 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
-            echo "::notice::Skipping integration tests — CLOUDFLARE_API_TOKEN not set (set secret to enable remote Workers tests)"
+            echo "::notice::Skipping integration tests - token not set"
             exit 0
           fi
           npm run test:integration
