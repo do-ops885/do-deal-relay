@@ -100,9 +100,16 @@ jobs:
           NODE_ENV: test
       - name: Run integration tests
         if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
-        run: npm run test:integration
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::notice::Skipping integration tests — CLOUDFLARE_API_TOKEN not set (set secret to enable remote Workers tests)"
+            exit 0
+          fi
+          npm run test:integration
         env:
           NODE_ENV: test
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Run coverage
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: npm run test:unit -- --coverage
