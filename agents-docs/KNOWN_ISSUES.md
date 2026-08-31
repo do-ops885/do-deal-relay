@@ -82,7 +82,7 @@ Cloudflare D1 is currently in public beta and subject to potential breaking chan
 
 **Documentation**:
 - [worker/lib/d1/](worker/lib/d1/) - D1 abstraction layer
-- [plans/production-readiness.md](plans/production-readiness.md) - Beta status acknowledgment
+- [../plans/production-readiness.md](../plans/production-readiness.md) - Beta status acknowledgment
 
 **External Reference**: [Cloudflare D1 Beta Documentation](https://developers.cloudflare.com/d1/)
 
@@ -121,9 +121,9 @@ Caused by: Error: Worker exited unexpectedly
 - Test script wrapper validates actual test results
 
 **Documentation**:
-- [LESSON-022](agents-docs/LESSONS.md) - Vitest worker crashes
-- [vitest.config.ts](vitest.config.ts) - Configuration comments
-- [plans/PRE_EXISTING_CI_ISSUES.md](plans/PRE_EXISTING_CI_ISSUES.md) - Issue #3
+- [LESSON-022](LESSONS.md) - Vitest worker crashes
+- [vitest.config.unit.ts](../../vitest.config.unit.ts) - Configuration comments
+- [../plans/PRE_EXISTING_CI_ISSUES.md](../plans/PRE_EXISTING_CI_ISSUES.md) - Issue #3
 
 **External Tracking**:
 - Cloudflare workers-sdk repository issues
@@ -161,7 +161,7 @@ Secret detection tools (TruffleHog, custom grep patterns) may flag legitimate co
 
 **Documentation**:
 - [.github/workflows/ci.yml](.github/workflows/ci.yml) - Secret detection step
-- [plans/PRE_EXISTING_CI_ISSUES.md](plans/PRE_EXISTING_CI_ISSUES.md) - Issue #1 (FIXED)
+- [../plans/PRE_EXISTING_CI_ISSUES.md](../plans/PRE_EXISTING_CI_ISSUES.md) - Issue #1 (FIXED)
 
 ---
 
@@ -399,7 +399,7 @@ For issues that cannot be fixed, we monitor and alert:
 
 ## Related Documentation
 
-- [plans/PRE_EXISTING_CI_ISSUES.md](plans/PRE_EXISTING_CI_ISSUES.md) - CI/CD issues
+- [../plans/PRE_EXISTING_CI_ISSUES.md](../plans/PRE_EXISTING_CI_ISSUES.md) - CI/CD issues
 - [agents-docs/LESSONS.md](agents-docs/LESSONS.md) - Lessons learned
 - [agents-docs/SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) - System architecture
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide

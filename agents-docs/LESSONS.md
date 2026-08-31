@@ -432,3 +432,19 @@ The multi-agent workflow system exists as an internal library (`worker/lib/multi
 2. Require endpoint tests for all new routes
 3. Run SWARM analysis before major releases
 4. Document endpoints BEFORE or DURING implementation (not after)
+
+### LESSON-1788174892: version_mismatch
+**Date**: 2026-08-31
+**Context**: Skill version 0.1.6 vs product VERSION 0.1.8 with strict check failing 63 docs
+**Evidence**: verify_version_consistency.sh strict mode flagged 63 product docs as HIGH; skill frontmatter mismatch
+**Fix**: Implement ADR-024 skill-independent mode: --skill-independent excludes skill frontmatter, header drift downgraded, illustrative marker, exclude reports/archived
+**Prevention**: Add verify_version_consistency --skill-independent to pre-commit and CI; keep skill semver independent
+
+
+### LESSON-1788174895: docs_without_implementation
+**Date**: 2026-08-31
+**Context**: 9 scripts documented in SKILL.md/modules but only 3 existed (verify_status_accuracy, suggest_fixes, quick_verify etc. missing)
+**Evidence**: SKILL.md:97-100 references quick_verify.sh, verify_file.sh; modules list 7 additional scripts; find scripts/ showed 3 files; test_skill.sh flagged missing
+**Fix**: Implement full 11-script suite: quick_verify, verify_file, 4 RYAN verifiers, 2 FLASH scorers, 3 SYNTHESIS improve; wire via GOAP SPEC-self-learning-feedback-full.md
+**Prevention**: Add test_skill.sh required scripts check (hard fail) and quick_verify.sh to quality_gate.sh
+

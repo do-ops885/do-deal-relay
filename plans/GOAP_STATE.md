@@ -2,9 +2,29 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-08-31
-**Version**: 0.19.0
-**Status**: Active — 2026-08-24 improvement run COMPLETE via PR #713: P0 correctness fixes (research-cache migration, DoH cache, telemetry batching), PipelineLock DO wired per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md), EU AI Act logger live on AI paths, dead security modules removed, silent catches logged. Deferred items tracked below.
-**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+**Version**: 0.19.1
+**Status**: Active — 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-24 improvement run also COMPLETE via PR #713.
+**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-08-31 Self-Learning-Feedback Full Suite — v0.19.1 (B/Full/Full)
+
+**Spec**: [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) | **ADR**: [ADR-024](ADR-024-skill-version-independence.md) | **Skill**: `.agents/skills/self-learning-feedback` v0.1.6 (independent)
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| SLF-1 | Skill version policy conflict (AGENTS single-source vs skill semver) — strict check flagged 63 docs | P0 | ✅ CLOSED — ADR-024 skill-independent mode (`--skill-independent` excludes `.agents/skills/*/SKILL.md`, header drift non-blocking, illustrative marker, exclude reports/archived) | verify_version_consistency.sh: --skill-independent 819 pass |
+| SLF-2 | 9 scripts documented but only 3 existed (quick_verify, verify_file, 4 RYAN, 2 FLASH, 3 SYNTHESIS missing) | P0 | ✅ CLOSED — 14 scripts now (verify_version_consistency, quick_verify, verify_file, verify_status_accuracy, verify_todo_alignment, verify_cross_references, verify_typo_misleading, score_noise_level, score_output, score_batch, capture_lesson dual-format, suggest_fixes, auto_correct, report_issues); all <500 lines | scripts/ |
+| SLF-3 | evals.json stale (0.1.1 vs skill 0.1.6) and test_skill.sh required strict VERSION match | P1 | ✅ CLOSED — evals 0.1.6, version_is_valid_semver + skill_version_consistent, test_skill.sh skill-independent | evals/evals.json, tests/test_skill.sh |
+| SLF-4 | Missing references/lessons.json and analysis-swarm.md broke cross-references | P1 | ✅ CLOSED — created references/lessons.json + analysis-swarm.md; fixed coordination links (../AGENTS.md → ../../AGENTS.md) | references/ |
+| SLF-5 | Cross-ref false positives (temp/, reports, .ts code refs, table pipes) blocked quick_verify | P1 | ✅ CLOSED — cross_ref filters temp/archived/.ts/code-spans/table pipes; todo/status narrow to product docs; typo filters checklist quotes | verify_* scripts |
+| SLF-6 | Lessons not dual-format (JSONL+LESSONS.md) | P2 | ✅ CLOSED — capture_lesson.sh writes both agents-docs/lessons.jsonl + skill references/lessons.jsonl + LESSONS.md markdown | capture_lesson.sh, LESSONS.md (LESSON-1788174892/4895) |
+| SLF-7 | Scoring lacked 4-dimension overall and batch | P1 | ✅ CLOSED — score_output.sh (noise 25%+accuracy30+completeness25+clarity20) and score_batch.sh with avg/lowest/highest | score_output.sh, score_batch.sh (94 avg, 97 SKILL.md) |
+| SLF-8 | Synthesis missing prioritized fixes and auto-correct | P1 | ✅ CLOSED — suggest_fixes.sh (P0/P1/P2), auto_correct.sh --dry-run/--apply, report_issues.sh markdown | suggest_fixes.sh etc. |
+| SLF-9 | GOAP tracking absent for skill work | P2 | ✅ CLOSED — this register, version bump 0.19.0→0.19.1, lessons captured | GOAP_STATE.md |
+
+Verification: `bash scripts/quick_verify.sh` ✅, `bash tests/test_skill.sh` ✅ 8/8, `bash scripts/score_batch.sh --json` avg 94, `bash scripts/suggest_fixes.sh` 1 P2 healthy.
 
 ---
 

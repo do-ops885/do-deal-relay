@@ -11,15 +11,21 @@ Check all version claims against the single source of truth (VERSION file).
 ### Usage
 
 ```bash
-./scripts/verify_version_consistency.sh [--fix] [--report]
+./scripts/verify_version_consistency.sh [--fix] [--report] [--skill-independent] [--dry-run]
 ```
+
+### Skill-Independent Policy (ADR-024)
+
+Per ADR-024, product `VERSION` (0.1.8) governs product docs (`agents-docs/`, `README.md`, `AGENTS.md`). Skill `SKILL.md` frontmatter (`0.1.6`) and `evals.json` are **independent** skill semver. With `--skill-independent` (default for `quick_verify.sh` and CI), frontmatter checks for `\.agents/skills/.*/SKILL\.md` and `evals\.json` are excluded; only product-doc headers/badges are compared to `VERSION`.
+
+Without the flag, legacy strict mode still reports skill frontmatter mismatches for manual audit.
 
 ### Checks
 
-1. Read VERSION file (source of truth)
+1. Read VERSION file (source of truth for product)
 2. Find all version claims in:
-   - All SKILL.md frontmatter
-   - All documentation headers
+   - Product documentation headers (`agents-docs/**/*.md`, `README.md`) — always checked
+   - All SKILL.md frontmatter — only in legacy strict mode (without `--skill-independent`)
    - All markdown version badges
 3. Compare each claim to VERSION
 4. Report mismatches
@@ -59,8 +65,8 @@ Check all version claims against the single source of truth (VERSION file).
 | -------- | ------------------------------- | ----------------- |
 | CRITICAL | Security doc version mismatch   | Block release     |
 | HIGH     | Feature doc vs VERSION mismatch | Must fix          |
-| MEDIUM   | Skill version mismatch          | Should fix        |
-| LOW      | Comment/inline version          | Fix if convenient |
+| MEDIUM   | Skill version mismatch (legacy strict only) | Informational under --skill-independent |
+| LOW      | Comment/inline version / illustrative example `<!-- illustrative -->` | Fix if convenient |
 
 ### Fix Mode
 

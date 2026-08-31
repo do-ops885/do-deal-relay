@@ -49,18 +49,30 @@ test_modules() {
     done
 }
 
-# Test 2: Version consistency
+# Test 2: Version consistency (skill-independent per ADR-024)
 test_version() {
-    log_section "Test 2: Version Matches Project (Not Template)"
+    log_section "Test 2: Skill Version Is Valid Semver (Skill-Independent per ADR-024)"
 
-    local project_version=$(cat VERSION 2>/dev/null || echo "0.1.1")
-    if grep -q "version: $project_version" "$SKILL_DIR/SKILL.md"; then
-        log_pass "Skill version ($project_version) matches project VERSION"
+    local skill_version=$(grep -E "^version:" "$SKILL_DIR/SKILL.md" 2>/dev/null | sed 's/version: *//' | tr -d '[:space:]')
+    if echo "$skill_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        log_pass "Skill version ($skill_version) is valid semver"
     else
-        log_fail "Version mismatch! Skill should be $project_version, not template default"
-        log_info "Run: ./scripts/verify_version_consistency.sh --fix"
+        log_fail "Skill version missing or not semver: '$skill_version'"
+        ((FAILED++))
+        return
+    fi
+
+    local evals_version=$(python3 -c "import json; print(json.load(open('$SKILL_DIR/evals/evals.json'))['version'])" 2>/dev/null || echo "")
+    if [[ "$skill_version" == "$evals_version" ]]; then
+        log_pass "evals.json version ($evals_version) tracks SKILL.md"
+    else
+        log_fail "evals.json version ($evals_version) != SKILL.md ($skill_version)"
         ((FAILED++))
     fi
+
+    # Product VERSION is independent — informational only
+    local product_version=$(cat VERSION 2>/dev/null | tr -d '[:space:]' || echo "unknown")
+    log_info "Product VERSION is $product_version (independent from skill)"
 }
 
 # Test 3: Frontmatter
@@ -122,16 +134,26 @@ test_scripts() {
     local scripts=(
         "verify_version_consistency.sh"
         "verify_status_accuracy.sh"
+        "verify_todo_alignment.sh"
+        "verify_cross_references.sh"
+        "verify_typo_misleading.sh"
         "score_noise_level.sh"
+        "score_output.sh"
+        "score_batch.sh"
         "capture_lesson.sh"
         "suggest_fixes.sh"
+        "auto_correct.sh"
+        "report_issues.sh"
+        "quick_verify.sh"
+        "verify_file.sh"
     )
 
     for script in "${scripts[@]}"; do
         if [[ -f "$SKILL_DIR/scripts/$script" ]]; then
             log_pass "Script exists: $script"
         else
-            log_info "Script optional: $script (can be implemented)"
+            log_fail "Missing required script: $script"
+            ((FAILED++))
         fi
     done
 }
@@ -140,14 +162,23 @@ test_scripts() {
 test_real_usage() {
     log_section "Test 6: Real Usage - Version Verification"
 
-    # Check for v1.0.0 claims that should be 0.1.1
-    local v1_claims=$(grep -r "v1\.0\.0\|version.*1\.0\.0" --include="*.md" . 2>/dev/null | grep -v node_modules | grep -v ".agents/skills/" | wc -l || echo "0")
+    # Check for v1.0.0 template defaults in product docs (outside skills, excluding historical reports/archived)
+    local v1_claims=$(grep -r "v1\.0\.0\|version.*1\.0\.0" --include="*.md" . 2>/dev/null | grep -v node_modules | grep -v ".agents/skills/" | grep -v "reports/" | grep -v "archived" | wc -l || echo "0")
 
     if [[ $v1_claims -eq 0 ]]; then
-        log_pass "No v1.0.0 version claims found outside skills (consistent with VERSION)"
+        log_pass "No v1.0.0 template claims found outside skills (skill-independent mode, excluding historical)"
     else
-        log_fail "Found $v1_claims v1.0.0 claims that may need updating to match VERSION (0.1.1)"
-        log_info "Run: grep -r 'v1\.0\.0' --include='*.md' . | grep -v node_modules"
+        log_fail "Found $v1_claims v1.0.0 claims outside skills that should be product VERSION"
+        log_info "Run: grep -r 'v1\\.0\\.0' --include='*.md' . | grep -v node_modules | grep -v .agents/skills | grep -v reports"
+        ((FAILED++))
+    fi
+
+    # Also check skill-independent verify passes
+    if bash "$SKILL_DIR/scripts/verify_version_consistency.sh" --skill-independent >/dev/null 2>&1; then
+        log_pass "verify_version_consistency --skill-independent passes"
+    else
+        log_fail "verify_version_consistency --skill-independent reports failures"
+        ((FAILED++))
     fi
 }
 

@@ -67,7 +67,7 @@ See `plans/production-readiness.md` for current tracking of all warnings and pen
 
 | Resource            | Location                                                                                   | Description                    |
 | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------ |
-| Master Coordination | [../AGENTS.md](../AGENTS.md)                                                               | Main project coordination file |
-| Quality Gates       | [../.agents/skills/validation-gates/SKILL.md](../.agents/skills/validation-gates/SKILL.md) | Validation implementation      |
+| Master Coordination | [../../AGENTS.md](../../AGENTS.md)                                                               | Main project coordination file |
+| Quality Gates       | [../../.agents/skills/validation-gates/SKILL.md](../../.agents/skills/validation-gates/SKILL.md) | Validation implementation      |
 | Handoff Protocol    | [input-methods-handoff-protocol.md](input-methods-handoff-protocol.md)                     | Agent handoff procedures       |
 | Swarm Config        | [referral-swarm-config.json](referral-swarm-config.json)                                   | Swarm coordination config      |
