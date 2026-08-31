@@ -179,7 +179,7 @@ export async function tryHandleLegacyRoutes(
       handleGetLogs(url, env, request),
     );
   }
-  if (path === "/api/analytics") {
+  if (path === "/api/analytics" || path.startsWith("/api/analytics/")) {
     return withAuth(request, env, "admin", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,
@@ -226,7 +226,7 @@ export async function tryHandleLegacyRoutes(
     }
     if (code && action === "reactivate") {
       return withAuth(request, env, "user", () =>
-        handleReactivateReferral(code, env),
+        handleReactivateReferral(code, env, request),
       );
     }
   }
@@ -234,16 +234,28 @@ export async function tryHandleLegacyRoutes(
   // Referral API
   if (path === "/api/referrals") {
     if (request.method === "GET") {
-      return withAuth(request, env, undefined, () =>
-        handleGetReferrals(url, env),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/referrals",
+          auth,
+        );
+        return rateLimiter(request, () =>
+          handleGetReferrals(url, env, request),
+        );
+      });
     }
     if (request.method === "POST") {
       const bodyTooLarge = checkBodySize(request, 5 * 1024);
       if (bodyTooLarge) return bodyTooLarge;
-      return withAuth(request, env, "user", () =>
-        handleCreateReferral(request, env),
-      );
+      return withAuth(request, env, "user", (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/referrals",
+          auth,
+        );
+        return rateLimiter(request, () => handleCreateReferral(request, env));
+      });
     }
   }
 
@@ -252,9 +264,16 @@ export async function tryHandleLegacyRoutes(
   if (referralDetailMatch && request.method === "GET") {
     const code = referralDetailMatch[1];
     if (code) {
-      return withAuth(request, env, undefined, () =>
-        handleGetReferralByCode(code, env, request),
-      );
+      return withAuth(request, env, undefined, (auth) => {
+        const rateLimiter = createRateLimitMiddleware(
+          env,
+          "/api/referrals/:code",
+          auth,
+        );
+        return rateLimiter(request, () =>
+          handleGetReferralByCode(code, env, request),
+        );
+      });
     }
   }
 

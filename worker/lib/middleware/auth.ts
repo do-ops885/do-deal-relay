@@ -7,9 +7,20 @@
 
 import type { Env } from "../../types";
 import type { AuthTier, RouteConfig, RouteParams, MiddlewareFn } from "./types";
-import { authenticateRequest } from "../auth";
+import { authenticateRequest, type AuthResult } from "../auth";
 import { unauthorizedResponse, forbiddenResponse } from "../../routes/utils";
 import { logger } from "../global-logger";
+
+// WeakMap to propagate auth context without mutating immutable Request headers
+const authContextStore = new WeakMap<Request, AuthResult>();
+
+export function getAuthContext(request: Request): AuthResult | undefined {
+  return authContextStore.get(request);
+}
+
+export function setAuthContext(request: Request, result: AuthResult): void {
+  authContextStore.set(request, result);
+}
 
 // ============================================================================
 // Auth Middleware
@@ -66,18 +77,8 @@ export const authMiddleware: MiddlewareFn = async (
       }
     }
 
-    // Attach auth result to request headers for downstream handlers
-    // Handlers can read X-Auth-User-Id and X-Auth-Role to access auth context
-    request.headers.set("X-Auth-User-Id", authResult.userId || "");
-    request.headers.set("X-Auth-Role", authResult.role || "");
-    request.headers.set(
-      "X-Auth-Requests-Per-Minute",
-      String(authResult.requestsPerMinute || ""),
-    );
-    request.headers.set(
-      "X-Auth-Requests-Per-Hour",
-      String(authResult.requestsPerHour || ""),
-    );
+    // Store auth context without mutating immutable Request headers (Workers runtime)
+    authContextStore.set(request, authResult);
 
     return null;
   } catch (error) {

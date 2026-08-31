@@ -64,8 +64,54 @@ function createTrustDb(
   }
 
   function applyUpsert(sql: string, params: unknown[]) {
-    // Single-statement upsert (evolveTrust): explicit score is bound.
-    // [domain, newScore, successInc, classification, now, ...]
+    // New evolveTrust atomic increment: [domain, initialScore, successInc, classification, now, adjustment, successInc, adjustment, adjustment, now]
+    if (sql.includes("MAX(0, MIN(1, trust_score + ?))")) {
+      // Distinguish single vs batch by number of params
+      if (params.length === 10) {
+        const domain = String(params[0]);
+        const initialScore = Number(params[1]);
+        const successInc = Number(params[2]);
+        const adjustment = Number(params[5]);
+        const existing = rows.find((r) => r.domain === domain);
+        if (existing) {
+          existing.trust_score = Math.max(
+            TRUST_MIN,
+            Math.min(TRUST_MAX, existing.trust_score + adjustment),
+          );
+          existing.total_deals += 1;
+          existing.successful_deals += successInc;
+        } else {
+          rows.push({
+            domain,
+            trust_score: initialScore,
+            total_deals: 1,
+            successful_deals: successInc,
+          });
+        }
+        return;
+      }
+      // Batch: [domain, successInc, now, adjustment, successInc, adjustment, adjustment, now]
+      const [domain, successInc, , adjustment] = params;
+      const existing = rows.find((r) => r.domain === domain);
+      if (existing) {
+        existing.trust_score = Math.max(
+          TRUST_MIN,
+          Math.min(TRUST_MAX, existing.trust_score + Number(adjustment)),
+        );
+        existing.total_deals += 1;
+        existing.successful_deals += Number(successInc);
+      } else {
+        rows.push({
+          domain: String(domain),
+          trust_score: 0.5,
+          total_deals: 1,
+          successful_deals: Number(successInc),
+        });
+      }
+      return;
+    }
+
+    // Legacy single-statement upsert: [domain, newScore, successInc, classification, now, ...]
     if (sql.includes("VALUES (?, ?")) {
       const [domain, newScore, successInc] = params;
       const existing = rows.find((r) => r.domain === domain);
@@ -84,8 +130,7 @@ function createTrustDb(
       return;
     }
 
-    // Batch upsert (evolveTrustBatch): score evolves from the stored value.
-    // [domain, successInc, now, adjustment, successInc, adjustment, adjustment, now]
+    // Legacy batch fallback
     const [domain, successInc, , adjustment] = params;
     const existing = rows.find((r) => r.domain === domain);
     if (existing) {
@@ -117,6 +162,14 @@ function createTrustDb(
       const found = selectRows(sql, params)[0];
       return (found as T | undefined) ?? null;
     }),
+    all: vi.fn(async <T>() => {
+      const found = selectRows(sql, params);
+      return {
+        results: found as unknown as T[],
+        success: true,
+        error: undefined,
+      };
+    }),
   });
 
   const prepare = vi.fn((sql: string) => {
@@ -128,6 +181,7 @@ function createTrustDb(
       },
       run: root.run,
       first: root.first,
+      all: root.all,
     };
   });
 

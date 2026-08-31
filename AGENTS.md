@@ -32,6 +32,12 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 - **Always-Fix Policy**: Implement incrementally. Resolve all pre-existing CI check/lint/type/formatting failures in current context.
   - *Triage*: If an issue is blocked by external factors, register an ADR in `plans/` and set the task as `blocked` in `plans/GOAP_STATE.md`.
 - **Incremental Verification**: Re-verify older assumptions before executing GOAP items. Apply progressive verification during tasks.
+- **PR Verification Mandate**: Every PR MUST verify all changes end-to-end before merge:
+  - All CI checks must be green (unit, integration, E2E, lint, typecheck, security, quality gates). Do not merge with failing or skipped required checks.
+  - Address every PR review comment (human or bot) — resolve or reply with fix commit. No unresolved threads on merge.
+  - Local pre-push verification: `npm run lint && npm run test:unit` (or `test:ci`) and `./scripts/quality_gate.sh` must pass before `git push`.
+  - If CI fails after push, fix in the same PR (amend/push) — never open a follow-up to fix CI.
+  - For Full Mode, include GOAP_STATE version bump and ADR/spec updates in the same PR; verify `plans/` docs are in sync.
 
 ## 5. Operational Commands & Standards
 - Setup & Quality: `./scripts/agent-toolkit.sh setup` | `./scripts/pev-gates.sh` | `./scripts/quality_gate.sh` (13+ quality gates)

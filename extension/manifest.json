@@ -3,7 +3,14 @@
   "name": "Referral Capture",
   "version": "1.0.0",
   "description": "One-click capture and auto-detection of referral codes from any webpage",
-  "permissions": ["activeTab", "storage", "contextMenus", "scripting"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "scripting",
+    "alarms",
+    "notifications"
+  ],
   "host_permissions": ["http://*/", "https://*/"],
   "action": {
     "default_popup": "popup.html",

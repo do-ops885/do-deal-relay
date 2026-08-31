@@ -26,6 +26,7 @@ export type WebhookEventType =
   | "referral.expired"
   | "referral.validated"
   | "referral.quarantined"
+  | "high_value_deal"
   | "ping";
 
 export interface RetryPolicy {
