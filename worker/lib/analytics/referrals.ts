@@ -272,19 +272,11 @@ async function generateReferralAnalyticsFromSnapshot(
   days: number,
 ): Promise<ReferralAnalytics> {
   const [snapshot, registry] = await Promise.all([
-    getSourceRegistry(env).catch(
-      () => [] as { domain: string; trust_initial: number }[],
-    ),
+    getProductionSnapshot(env).catch(() => null),
     getSourceRegistry(env),
   ]);
-  // getProductionSnapshot may fail; fallback empty
-  let deals: import("../../types").Deal[] = [];
-  try {
-    const snap = await getProductionSnapshot(env);
-    deals = snap?.deals || [];
-  } catch {
-    deals = [];
-  }
+  const deals: import("../../types").Deal[] =
+    (snapshot as { deals?: import("../../types").Deal[] } | null)?.deals || [];
   const trustMap = new Map<string, number>();
   for (const s of (registry as { domain: string; trust_initial: number }[]) ||
     []) {

@@ -83,6 +83,7 @@ export async function runLLMWithGateway(
   prompt: string,
   options: { max_tokens?: number; temperature?: number } = {},
 ): Promise<{ response: string }> {
+  // eslint-disable-next-line @typescript-eslint/require-await
   const directFallback = async (): Promise<{ response: string }> => {
     const result = (await (ai.run as AiRunFn)(model, {
       prompt,

@@ -238,6 +238,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.statSuccess.textContent = s.success || 0;
   }
 
+  // eslint-disable-next-line require-await
   async function incrementStat(key) {
     const r = await chrome.storage.local.get([key]);
     const v = (r[key] || 0) + 1;
@@ -249,6 +250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch {}
   }
 
+  // eslint-disable-next-line require-await
   async function loadDealFeed() {
     try {
       const res = await chrome.runtime.sendMessage({ action: "getDealFeed" });
@@ -334,7 +336,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.setAttribute("title", "Copied!");
       setTimeout(() => {
         btn.textContent = "";
-        children.forEach((c) => btn.appendChild(c));
+        children.forEach((c) => {
+          btn.appendChild(c);
+        });
         origLabel
           ? btn.setAttribute("aria-label", origLabel)
           : btn.removeAttribute("aria-label");

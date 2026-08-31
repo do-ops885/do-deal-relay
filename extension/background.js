@@ -1,4 +1,4 @@
-/* global chrome, self */
+/* global chrome */
 /* eslint-disable security/detect-object-injection */
 /** Referral Capture - Background Service Worker */
 const DEFAULT_API_BASE = "http://localhost:8787";

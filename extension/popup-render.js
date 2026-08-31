@@ -5,9 +5,10 @@
  */
 
 /* global chrome */
+/* exported PopupRender */
 /* eslint-disable security/detect-object-injection */
 
-const MS_PER_DAY = 86400000;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // eslint-disable-next-line no-unused-vars
 const PopupRender = {

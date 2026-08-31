@@ -42,6 +42,7 @@ const ALL_TEMPLATES = Object.values(INTENT_TEMPLATES).flat();
 
 const POPULAR_CATEGORIES = Object.keys(DEFAULT_NLQ_CONFIG.categoryMappings);
 const POPULAR_REWARD_TYPES = Object.keys(DEFAULT_NLQ_CONFIG.rewardTypeMappings);
+void POPULAR_REWARD_TYPES;
 
 export interface Suggestion {
   text: string;

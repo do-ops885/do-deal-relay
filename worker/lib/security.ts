@@ -154,6 +154,7 @@ export async function validatedFetch(
     ...init,
     redirect: "manual" as RequestRedirect,
   };
+  // eslint-disable-next-line security/detect-object-injection
   const response = await fetch(url, safeInit);
 
   // If manual redirect, validate Location header before exposing it

@@ -25,7 +25,7 @@ export async function saveQuery(
   input: SaveQueryInput,
 ): Promise<SavedQueryRow> {
   const client = createD1ReadClient(db);
-  const id = `nlq_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `nlq_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
   const name = input.name?.slice(0, 100) || null;
   const intent = input.intent?.slice(0, 50) || null;
   const query = input.query.trim().slice(0, 500);
