@@ -194,6 +194,43 @@ const quality = GuardRails.quality({
 });
 ```
 
+## Merge Guardrail (NON-NEGOTIABLE)
+
+**Rule: NEVER merge a PR with failing CI.** External quality gates are required and blocking.
+
+```typescript
+Rule.custom({
+  name: 'no-merge-on-red-ci',
+  check: (ctx) => {
+    const required = [
+      'CI Summary', 'Type Check', 'Format Check', 'Docs Validation',
+      'Validation Gates', 'Unit Tests', 'E2E Tests', 'Smoke Tests',
+      'Security Scan', 'Build', 'Quality Gate',
+      'CodeQL (actions, javascript-typescript)', 'Codacy Static Code Analysis',
+      'Workers Builds'
+    ];
+    for (const c of ctx.statusCheckRollup) {
+      if (required.includes(c.name) && c.conclusion !== 'SUCCESS') {
+        return { pass: false, message: `Blocked: ${c.name} is ${c.conclusion} — fix before merge` };
+      }
+    }
+    return { pass: true };
+  }
+});
+```
+
+Pre-merge verification (required):
+```bash
+gh pr view <n> --json statusCheckRollup -q '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
+gh pr checks <n>  # must show 0 failures
+# Do not use --admin or admin bypass
+```
+
+Policy:
+- Any `FAILURE`, `ACTION_REQUIRED`, `TIMED_OUT`, `CANCELLED` blocks merge. `SKIPPED` only for non-required jobs like `auto-merge`.
+- External analysis (Codacy, DeepSource, CodeQL) failures — including `ACTION_REQUIRED` or `Not up to standards` with critical/high findings — must be resolved or explicitly triaged with reviewed suppression before merge.
+- Branch protection MUST require checks above; if missing, file ADR and block merge.
+
 ## Directory Hygiene Policy
 
 | Rule | Pattern | Allowed Location | Severity |
