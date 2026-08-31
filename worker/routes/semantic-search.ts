@@ -3,6 +3,7 @@
  *
  * Exposes /api/semantic-search for natural-language queries over deals.
  * Uses Cloudflare Vectorize + Workers AI for embeddings.
+ * When hybrid=true fuses FTS5 keyword search (D1) and vector search via RRF.
  *
  * Free tier constraints (Vectorize):
  * - topK capped at 50
@@ -20,6 +21,8 @@ import {
   isSemanticSearchAvailable,
   semanticSearchDeals,
 } from "../lib/search/client";
+import { sanitizeFtsQuery, fuseHybridResults } from "../lib/search/hybrid";
+import { searchDeals } from "../lib/d1/search";
 import { logger } from "../lib/global-logger";
 import {
   logAIInteraction,
@@ -59,13 +62,7 @@ export async function handleSemanticSearch(
     );
   }
 
-  const {
-    query,
-    limit,
-    filters: _filters,
-    hybrid: _hybrid,
-    min_score,
-  } = parsed.data;
+  const { query, limit, filters: _filters, hybrid, min_score } = parsed.data;
   const requestedLimit = limit ?? SEMANTIC_SEARCH_CONFIG.DEFAULT_LIMIT;
   const namespace =
     env.ENVIRONMENT === "production"
@@ -73,6 +70,18 @@ export async function handleSemanticSearch(
       : SEMANTIC_SEARCH_CONFIG.STAGING_NAMESPACE;
 
   try {
+    // Hybrid path: run FTS5 + vector in parallel then RRF fuse
+    if (hybrid === true) {
+      return handleHybridSearch(
+        env,
+        query,
+        requestedLimit,
+        min_score,
+        namespace,
+        start,
+      );
+    }
+
     const embeddingStart = Date.now();
     const hits = await semanticSearchDeals(env, {
       query,
@@ -130,4 +139,139 @@ export async function handleSemanticSearch(
     });
     return errorResponse("Semantic search failed", 500);
   }
+}
+
+async function handleHybridSearch(
+  env: Env,
+  query: string,
+  requestedLimit: number,
+  minScore: number,
+  namespace: string | undefined,
+  start: number,
+): Promise<Response> {
+  const hybridStart = Date.now();
+  const ftsQuery = sanitizeFtsQuery(query);
+
+  // Run both searches in parallel; gracefully degrade if one fails.
+  const [vectorResult, ftsResult] = await Promise.all([
+    semanticSearchDeals(env, { query, limit: requestedLimit, namespace })
+      .then((hits) => ({ ok: true as const, hits }))
+      .catch((err) => {
+        logger.warn("Hybrid vector search failed, continuing with FTS only", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return { ok: false as const, hits: [] as never[] };
+      }),
+    ftsQuery && env.DEALS_DB
+      ? searchDeals(env.DEALS_DB, ftsQuery, { limit: requestedLimit })
+          .then((rows) => ({ ok: true as const, rows }))
+          .catch((err) => {
+            logger.warn(
+              "Hybrid FTS search failed, continuing with vector only",
+              {
+                error: err instanceof Error ? err.message : String(err),
+              },
+            );
+            return { ok: false as const, rows: [] as never[] };
+          })
+      : Promise.resolve({ ok: false as const, rows: [] as never[] }),
+  ]);
+
+  const vectorHits = vectorResult.ok ? vectorResult.hits : [];
+  const ftsRows = (ftsResult as { rows?: unknown[] }).rows
+    ? (
+        ftsResult as {
+          ok: boolean;
+          rows: import("../lib/d1/types").DealSearchResult[];
+        }
+      ).rows
+    : [];
+
+  // If both empty but one side expected to have results, fallback to whichever succeeded
+  const fusionStart = Date.now();
+
+  let results: SemanticSearchResponse["results"] = [];
+  let totalFused = 0;
+
+  if (ftsQuery && ftsRows.length > 0) {
+    const fused = fuseHybridResults(vectorHits, ftsRows, {
+      limit: requestedLimit,
+      minScore,
+    });
+    totalFused = fused.length;
+    results = fused.map((f) => ({
+      deal: (f.metadata as import("../lib/search/types").DealEmbeddingMetadata) ?? {
+        deal_id: f.deal_id,
+        domain: f.domain ?? "unknown",
+        category: [],
+        tags: [],
+        status: "active",
+        reward_type: "cash",
+        created_at_bucket: Math.floor(Date.now() / 300000) * 300000,
+      },
+      score: f.score,
+      match_type: f.match_type,
+    }));
+  } else {
+    // No FTS results or query not FTS-able: vector only filtered
+    const filtered = vectorHits
+      .filter((h) => h.score >= minScore)
+      .slice(0, requestedLimit);
+    totalFused = filtered.length;
+    results = filtered.map((h) => ({
+      deal: h.metadata as unknown as import("../lib/search/types").DealEmbeddingMetadata,
+      score: h.score,
+      match_type: "semantic" as const,
+    }));
+  }
+
+  const fusionMs = Date.now() - fusionStart;
+  const totalMs = Date.now() - hybridStart;
+
+  // Compliance log for hybrid path (hashes query)
+  try {
+    await logAIInteraction(env.DEALS_DB, {
+      operation: SEMANTIC_SEARCH_COMPLIANCE_OPERATION,
+      inputSource: "semantic_search_route_hybrid",
+      rawInput: query,
+      inputDescription: `hybrid_fts_vector;model=${SEMANTIC_EMBEDDING_MODEL};fts_q=${ftsQuery}`,
+      inputMetadata: {
+        model: SEMANTIC_EMBEDDING_MODEL,
+        namespace: namespace ?? null,
+        requested_limit: requestedLimit,
+        vector_hit_count: vectorHits.length,
+        fts_hit_count: ftsRows.length,
+        returned_count: results.length,
+        hybrid: true,
+      },
+      result: `matches:${results.length}`,
+      confidence: results[0]?.score,
+      explanation:
+        "RRF fusion of Vectorize semantic scores and D1 FTS5 BM25 ranks",
+      latencyMs: totalMs,
+    });
+  } catch {
+    // best-effort compliance logging
+  }
+
+  const response: SemanticSearchResponse = {
+    success: true,
+    query,
+    results,
+    meta: {
+      total: totalFused,
+      returned: results.length,
+      execution_time_ms: Date.now() - start,
+      embedding_time_ms: totalMs - fusionMs,
+      vectorize_time_ms: fusionMs,
+      model: SEMANTIC_EMBEDDING_MODEL,
+      index_name: SEMANTIC_SEARCH_CONFIG.INDEX_NAME,
+      filters_applied: [
+        ...(namespace ? [`namespace=${namespace}`] : []),
+        "hybrid=rrf",
+        `fts_query=${ftsQuery || "n/a"}`,
+      ],
+    },
+  };
+  return jsonResponse(response);
 }

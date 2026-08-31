@@ -2,6 +2,8 @@ import type { Env } from "../../types";
 import type { Deal } from "../../types";
 import type { DealVector, DealEmbeddingMetadata } from "./types";
 import { upsertDealVectors } from "./client";
+import { isGatewayEnabled } from "../ai-gateway/llm";
+import { logger } from "../global-logger";
 
 const EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
 const BATCH_SIZE = 100;
@@ -54,6 +56,16 @@ export async function generateDealEmbeddings(
   const start = Date.now();
   let successful = 0;
   let failed = 0;
+
+  if (isGatewayEnabled(env)) {
+    logger.debug(
+      "Embedding pipeline: gateway enabled, embeddings via Workers AI passthrough",
+      {
+        model: EMBEDDING_MODEL,
+        total: deals.length,
+      },
+    );
+  }
 
   for (let i = 0; i < deals.length; i += BATCH_SIZE) {
     const batch = deals.slice(i, i + BATCH_SIZE);

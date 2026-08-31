@@ -6,7 +6,9 @@
 import { logger } from "../../global-logger";
 import { toError } from "../../sanitize-error";
 import { CONFIG } from "../../../config";
+import type { Env } from "../../../types";
 import type { Entity } from "./types";
+import { runLLMWithGateway } from "../../ai-gateway/llm";
 
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const AI_MAX_TOKENS_LONG = CONFIG.NLQ_AI_MAX_TOKENS_LONG;
@@ -55,11 +57,13 @@ type ComparatorOp = (typeof VALID_COMPARATOR_OPS)[number];
 
 /**
  * Extract entities using rule-based + AI hybrid approach
+ * When env is provided and gateway is enabled, LLM calls go through AI Gateway.
  */
 export async function extractEntities(
   ai: Ai,
   query: string,
   shouldUseAI: boolean,
+  env?: Env,
 ): Promise<Entity[]> {
   const entities: Entity[] = [];
 
@@ -69,7 +73,7 @@ export async function extractEntities(
   // AI-based entity extraction for complex cases
   if (shouldUseAI) {
     try {
-      const aiEntities = await extractEntitiesWithAI(ai, query);
+      const aiEntities = await extractEntitiesWithAI(ai, query, env);
       entities.push(...aiEntities);
     } catch (error) {
       const err = toError(error);
@@ -167,7 +171,11 @@ export function extractRuleBasedEntities(
 /**
  * Extract entities using AI
  */
-async function extractEntitiesWithAI(ai: Ai, query: string): Promise<Entity[]> {
+async function extractEntitiesWithAI(
+  ai: Ai,
+  query: string,
+  env?: Env,
+): Promise<Entity[]> {
   const prompt = `Extract entities from this query: "${query}"
 
 Return ONLY a JSON object with this structure:
@@ -187,14 +195,18 @@ Guidelines:
 Respond with only valid JSON, no markdown.`;
 
   try {
-    const result = await (ai.run as AiRunFn)(AI_MODEL, {
-      prompt,
-      max_tokens: AI_MAX_TOKENS_LONG,
-      temperature: 0.1,
-    });
+    const result: { response: string } = env
+      ? await runLLMWithGateway(env, ai, AI_MODEL, prompt, {
+          max_tokens: AI_MAX_TOKENS_LONG,
+          temperature: 0.1,
+        })
+      : ((await (ai.run as AiRunFn)(AI_MODEL, {
+          prompt,
+          max_tokens: AI_MAX_TOKENS_LONG,
+          temperature: 0.1,
+        })) as { response: string });
 
-    const response = result as { response: string };
-    const parsed = JSON.parse(response.response.trim());
+    const parsed = JSON.parse(result.response.trim());
 
     return (parsed.entities || []).map((e: Entity) => ({
       type: e.type,

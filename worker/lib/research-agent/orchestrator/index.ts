@@ -84,7 +84,7 @@ async function shouldUseRealFetching(
   if (envAllowsRealFetching) {
     return true;
   }
-  return true;
+  return false;
 }
 
 export async function executeReferralResearch(

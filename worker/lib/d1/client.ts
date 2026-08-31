@@ -111,22 +111,26 @@ export class D1Client {
    * Execute a SELECT query returning multiple rows
    */
   async query<T>(sql: string, params: unknown[] = []): Promise<QueryResult<T>> {
-    const result = await this.executeWithRetry<QueryResult<T>>(async () => {
-      const stmt = this.getDb().prepare(sql);
-      const execResult = await this.bindParams(stmt, params).run<T>();
+    const result = await this.executeWithRetry<QueryResult<T>>(
+      async () => {
+        const stmt = this.getDb().prepare(sql);
+        const execResult = await this.bindParams(stmt, params).run<T>();
 
-      return {
-        success: true,
-        data: execResult.results || [],
-        meta: {
-          rows_read: execResult.meta?.rows_read || 0,
-          rows_written: execResult.meta?.rows_written || 0,
-          last_row_id: execResult.meta?.last_row_id,
-          served_by_region: execResult.meta?.served_by_region as string,
-          served_by_primary: execResult.meta?.served_by_primary,
-        },
-      };
-    }, sql);
+        return {
+          success: true,
+          data: execResult.results || [],
+          meta: {
+            rows_read: execResult.meta?.rows_read || 0,
+            rows_written: execResult.meta?.rows_written || 0,
+            last_row_id: execResult.meta?.last_row_id,
+            served_by_region: execResult.meta?.served_by_region as string,
+            served_by_primary: execResult.meta?.served_by_primary,
+          },
+        };
+      },
+      sql,
+      { isWrite: false },
+    );
 
     return result;
   }
@@ -138,15 +142,19 @@ export class D1Client {
     sql: string,
     params: unknown[] = [],
   ): Promise<SingleResult<T>> {
-    const result = await this.executeWithRetry<SingleResult<T>>(async () => {
-      const stmt = this.getDb().prepare(sql);
-      const execResult = await this.bindParams(stmt, params).first<T>();
+    const result = await this.executeWithRetry<SingleResult<T>>(
+      async () => {
+        const stmt = this.getDb().prepare(sql);
+        const execResult = await this.bindParams(stmt, params).first<T>();
 
-      return {
-        success: true,
-        data: execResult || null,
-      };
-    }, sql);
+        return {
+          success: true,
+          data: execResult || null,
+        };
+      },
+      sql,
+      { isWrite: false },
+    );
 
     return result;
   }
@@ -167,16 +175,20 @@ export class D1Client {
       success: boolean;
       lastRowId?: number;
       changes?: number;
-    }>(async () => {
-      const stmt = this.getDb().prepare(sql);
-      const execResult = await this.bindParams(stmt, params).run();
+    }>(
+      async () => {
+        const stmt = this.getDb().prepare(sql);
+        const execResult = await this.bindParams(stmt, params).run();
 
-      return {
-        success: true,
-        lastRowId: execResult.meta?.last_row_id,
-        changes: execResult.meta?.changes,
-      };
-    }, sql);
+        return {
+          success: true,
+          lastRowId: execResult.meta?.last_row_id,
+          changes: execResult.meta?.changes,
+        };
+      },
+      sql,
+      { isWrite: true },
+    );
 
     return result;
   }
@@ -196,6 +208,7 @@ export class D1Client {
         return { success: true };
       },
       cleanSql,
+      { isWrite: true },
     );
 
     return result;
@@ -216,26 +229,30 @@ export class D1Client {
     const result = await this.executeWithRetry<{
       success: boolean;
       results: Array<QueryResult<T>>;
-    }>(async () => {
-      const statements = queries.map((q) => {
-        const stmt = this.db.prepare(q.sql);
-        return this.bindParams(stmt, q.params || []);
-      });
+    }>(
+      async () => {
+        const statements = queries.map((q) => {
+          const stmt = this.db.prepare(q.sql);
+          return this.bindParams(stmt, q.params || []);
+        });
 
-      const batchResults = await this.db.batch<T>(statements);
+        const batchResults = await this.db.batch<T>(statements);
 
-      const results = batchResults.map((r) => ({
-        success: true,
-        data: r.results || [],
-        meta: {
-          rows_read: r.meta?.rows_read || 0,
-          rows_written: r.meta?.rows_written || 0,
-          last_row_id: r.meta?.last_row_id,
-        },
-      }));
+        const results = batchResults.map((r) => ({
+          success: true,
+          data: r.results || [],
+          meta: {
+            rows_read: r.meta?.rows_read || 0,
+            rows_written: r.meta?.rows_written || 0,
+            last_row_id: r.meta?.last_row_id,
+          },
+        }));
 
-      return { success: true, results };
-    }, "batch");
+        return { success: true, results };
+      },
+      "batch",
+      { isWrite: true },
+    );
 
     return result;
   }
@@ -296,19 +313,23 @@ export class D1Client {
     stmt: D1PreparedStatement,
     params: unknown[],
   ): Promise<QueryResult<T>> {
-    const result = await this.executeWithRetry<QueryResult<T>>(async () => {
-      const execResult = await this.bindParams(stmt, params).run<T>();
+    const result = await this.executeWithRetry<QueryResult<T>>(
+      async () => {
+        const execResult = await this.bindParams(stmt, params).run<T>();
 
-      return {
-        success: true,
-        data: execResult.results || [],
-        meta: {
-          rows_read: execResult.meta?.rows_read || 0,
-          rows_written: execResult.meta?.rows_written || 0,
-          last_row_id: execResult.meta?.last_row_id,
-        },
-      };
-    }, "prepared");
+        return {
+          success: true,
+          data: execResult.results || [],
+          meta: {
+            rows_read: execResult.meta?.rows_read || 0,
+            rows_written: execResult.meta?.rows_written || 0,
+            last_row_id: execResult.meta?.last_row_id,
+          },
+        };
+      },
+      "prepared",
+      { isWrite: false },
+    );
 
     return result;
   }
@@ -447,9 +468,17 @@ export class D1Client {
   private async executeWithRetry<R>(
     operation: () => Promise<R>,
     queryHint: string,
+    options: { isWrite?: boolean } = {},
   ): Promise<R & { error?: string }> {
     let lastError: unknown;
-    const maxAttempts = this.config.enableRetries ? this.config.maxRetries : 1;
+    // Writes are not retried to avoid double-execution of non-idempotent ops
+    const effectiveMaxAttempts =
+      options.isWrite === true
+        ? 1
+        : this.config.enableRetries
+          ? this.config.maxRetries
+          : 1;
+    const maxAttempts = effectiveMaxAttempts;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
@@ -484,6 +513,9 @@ export class D1Client {
       maxAttempts,
     });
 
+    // Return error envelope instead of throwing so callers can
+    // return graceful fallbacks (empty arrays / success:false) — matches
+    // historical behavior expected by unit tests and analytics queries.
     return { error: errorMessage } as R & { error?: string };
   }
 

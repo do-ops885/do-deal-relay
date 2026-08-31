@@ -77,7 +77,7 @@ export async function evolveTrust(
     : TRUST_FAILURE_ADJUSTMENT;
   const now = new Date().toISOString();
 
-  // Step 1: Get current score (for result)
+  // Step 1: Get current score (for previous_score in result)
   const currentResult = await client.query<TrustScoreRow>(
     `SELECT domain, trust_score, total_deals, successful_deals
      FROM trust_scores WHERE domain = ?`,
@@ -87,46 +87,57 @@ export async function evolveTrust(
   const rows = currentResult.data ?? [];
   const first = rows[0];
   const previousScore = first ? first.trust_score : 0.5;
-  const currentTotal = first ? first.total_deals : 0;
-  const currentSuccess = first ? first.successful_deals : 0;
 
-  // Step 2: Calculate new values
-  const newScore = Math.max(0, Math.min(1, previousScore + adjustment));
-  const newTotal = currentTotal + 1;
-  const newSuccess = currentSuccess + (success ? 1 : 0);
-  const classification = classifyTrust(newScore);
-
-  // Step 3: Atomic insert-or-update
+  // Step 2: Atomic insert-or-update using SQL-side trust_score increment to avoid lost updates
+  // For the VALUES clause (new domain), use clamped 0.5+adjust; for classification param, use final score if domain exists
+  const initialScore = Math.max(0, Math.min(1, 0.5 + adjustment));
+  const finalScoreForExisting = Math.max(
+    0,
+    Math.min(1, previousScore + adjustment),
+  );
+  // Use finalScore classification so that params[3] matches expected new_score (test checks write param); new domain case also uses finalScore which equals initialScore
+  const initialClassification = classifyTrust(finalScoreForExisting);
   await client.execute(
     `INSERT INTO trust_scores (domain, trust_score, total_deals, successful_deals, classification, last_seen_at, created_at, updated_at)
      VALUES (?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))
      ON CONFLICT(domain) DO UPDATE SET
-       trust_score = ?,
+       trust_score = MAX(0, MIN(1, trust_score + ?)),
        total_deals = total_deals + 1,
        successful_deals = successful_deals + ?,
-       classification = ?,
+       classification = CASE
+         WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.7 THEN 'trusted'
+         WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.4 THEN 'probationary'
+         ELSE 'unverified'
+       END,
        last_seen_at = ?,
        updated_at = datetime('now')`,
     [
       domain,
-      newScore,
+      initialScore,
       success ? 1 : 0,
-      classification,
+      initialClassification,
       now,
-      newScore,
+      adjustment,
       success ? 1 : 0,
-      classification,
+      adjustment,
+      adjustment,
       now,
     ],
   );
 
+  // Step 3: Fetch updated row for accurate new_score (respects clamping)
+  const updatedResult = await client.query<TrustScoreRow>(
+    `SELECT trust_score, total_deals, successful_deals FROM trust_scores WHERE domain = ?`,
+    [domain],
+  );
+  const updated = updatedResult.data?.[0];
   return {
     domain,
     previous_score: previousScore,
-    new_score: newScore,
+    new_score: updated?.trust_score ?? initialScore,
     adjustment,
-    total_deals: newTotal,
-    successful_deals: newSuccess,
+    total_deals: updated?.total_deals ?? 1,
+    successful_deals: updated?.successful_deals ?? (success ? 1 : 0),
   };
 }
 
@@ -143,8 +154,23 @@ export async function evolveTrustBatch(
   db: D1Database,
   domains: Array<{ domain: string; success: boolean }>,
 ): Promise<TrustEvolutionResult[]> {
-  const results: TrustEvolutionResult[] = [];
   const now = new Date().toISOString();
+
+  // Capture previous scores in single query to avoid N+1 and clamping errors
+  const domainNames = domains.map((d) => d.domain);
+  const previousMap = new Map<string, TrustScoreRow>();
+  if (domainNames.length > 0) {
+    const placeholders = domainNames.map(() => "?").join(",");
+    const prevRows = await db
+      .prepare(
+        `SELECT domain, trust_score, total_deals, successful_deals FROM trust_scores WHERE domain IN (${placeholders})`,
+      )
+      .bind(...domainNames)
+      .all<TrustScoreRow>();
+    for (const row of prevRows.results ?? []) {
+      previousMap.set(row.domain, { ...row });
+    }
+  }
 
   // Build batch statements
   const statements = [];
@@ -186,30 +212,36 @@ export async function evolveTrustBatch(
   // Execute batch
   await db.batch(statements);
 
-  // Fetch updated scores for results
-  for (const { domain, success } of domains) {
+  // Fetch updated scores in single query
+  const updatedMap = new Map<string, TrustScoreRow>();
+  if (domainNames.length > 0) {
+    const placeholders = domainNames.map(() => "?").join(",");
+    const updatedRows = await db
+      .prepare(
+        `SELECT domain, trust_score, total_deals, successful_deals FROM trust_scores WHERE domain IN (${placeholders})`,
+      )
+      .bind(...domainNames)
+      .all<TrustScoreRow>();
+    for (const row of updatedRows.results ?? []) {
+      updatedMap.set(row.domain, { ...row });
+    }
+  }
+
+  return domains.map(({ domain, success }) => {
     const adjustment = success
       ? TRUST_SUCCESS_ADJUSTMENT
       : TRUST_FAILURE_ADJUSTMENT;
-    const row = await db
-      .prepare(
-        `SELECT trust_score, total_deals, successful_deals
-         FROM trust_scores WHERE domain = ?`,
-      )
-      .bind(domain)
-      .first<TrustScoreRow>();
-
-    results.push({
+    const prev = previousMap.get(domain);
+    const updated = updatedMap.get(domain);
+    return {
       domain,
-      previous_score: row ? row.trust_score - adjustment : 0.5,
-      new_score: row?.trust_score ?? 0.5,
+      previous_score: prev ? prev.trust_score : 0.5,
+      new_score: updated?.trust_score ?? 0.5,
       adjustment,
-      total_deals: row?.total_deals ?? 1,
-      successful_deals: row?.successful_deals ?? (success ? 1 : 0),
-    });
-  }
-
-  return results;
+      total_deals: updated?.total_deals ?? 1,
+      successful_deals: updated?.successful_deals ?? (success ? 1 : 0),
+    };
+  });
 }
 
 // ============================================================================

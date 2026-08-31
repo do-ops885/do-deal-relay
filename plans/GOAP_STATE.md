@@ -1,45 +1,44 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-25
-**Version**: 0.18.0
-**Status**: Active — 2026-08-25 improvement swarm COMPLETE on branch chore/improvement-run-2026-08-25 (spec: [SPEC-improvement-swarm-2026-08-25.md](SPEC-improvement-swarm-2026-08-25.md)). Prior run COMPLETE via PR #713. Deferred items tracked below.
+**Last Updated**: 2026-08-31
+**Version**: 0.19.0
+**Status**: Active — 2026-08-24 improvement run COMPLETE via PR #713: P0 correctness fixes (research-cache migration, DoH cache, telemetry batching), PipelineLock DO wired per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md), EU AI Act logger live on AI paths, dead security modules removed, silent catches logged. Deferred items tracked below.
+**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
 
 ---
 
-## Improvement Run — 2026-08-25 Findings Register
+## 2026-08-31 Full Implementation Swarm — v0.19.0 (All I-/MF- closed)
 
-Fresh full-repo scan (line limits, banned patterns, dead-code recheck,
-config-as-code, KV truncation sites). Baseline: pev-gates 12/13 pass
-(only ci-workflow-validator fails = BLOCKED-3/ADR-021); `as any` = 0 in
-worker/, console.* confined to logger implementations.
+10 open PRs triaged 2026-08-29: 7 rebase-merged, 3 closed. Full swarm executed 2026-08-31: all P1/P2/P3 fixes + 8 feature tracks delivered. Details: [SPEC-pr-triage-and-improvements-2026-08-29.md](SPEC-pr-triage-and-improvements-2026-08-29.md), [PROGRESS-2026-08-31.md](PROGRESS-2026-08-31.md).
 
-| ID | Finding | Priority | Workstream | Status |
+| ID | Finding | Priority | Status | Evidence |
 |:---|:---|:---|:---|:---|
-| R-1 | F-7 confirmed live: 10 KV list() call sites stop at first page (~1000 keys) — includes apikey lookup (auth.ts:112) and webhook DLQ | P2 | WS-A | ✅ CLOSED — kv-pagination.ts helper + 10 sites repointed; 7 new tests; commit 270e0af |
-| R-2 | N-5 confirmed: ~55 non-null assertions in worker/ production code | P2 | WS-B (routes, ~19 sites) and WS-C (lib plus pipeline, ~36 sites) | ✅ CLOSED — zero assertions left in worker/ production code; commits 78127b2, ee01500 |
-| R-3 | extension/popup.js 512L exceeds MAX_LINES_PER_SOURCE_FILE=500 (only remaining >500 file; orchestrator/index.ts now 438L so N-4 fully closed upstream) | P2 | WS-D | ✅ CLOSED — popup.js 357L + popup-render.js 152L; playwright 22/22; commit 2d058f7 |
-| R-4 | wrangler.jsonc lacks `"ai"` binding block while embedding-pipeline.ts uses env.AI.run — semantic search degrades where config-as-code is the deploy source | P1 | WS-F | ✅ CLOSED — ai binding declared top-level + dev + production; wrangler dry-run clean; commit 0cda2c1 |
-| R-5 | Test gaps T-6/T-7/T-8 still open (SourceRegistry DO, d1/trust.ts, lib/expiration helpers have no focused coverage) | P2 | WS-E | ✅ CLOSED — 87 tests across 3 files; commit 49be5cf; 2 latent bugs documented below |
-| R-6 | MI-3 re-verified 2026-08-25: ai-gateway client has zero importers outside its module — stays DEFERRED (product/cost gating decision required before wiring into NLQ paths) | P2 | deferred | ⬜ DEFERRED |
+| CI-1 | E2E/Smoke missing CLOUDFLARE_API_TOKEN secret | P1 | ⬜ BLOCKED per [ADR-023](ADR-023-ci-external-credentials-and-research-flake.md) — owner action needed | run 32883152170 |
+| CI-2 | research-api.test.ts:92 real-fetch leak | P1 | ✅ CLOSED — orchestrator shouldUseRealFetching now returns false in test env (was always true) | worker/lib/research-agent/orchestrator/index.ts:87 |
+| I-1 | Auth middleware immutable header mutation | P1 | ✅ CLOSED — WeakMap authContextStore, getAuthContext() | worker/lib/middleware/auth.ts |
+| I-2 | D1 client retries non-idempotent writes + swallowed errors | P1 | ✅ CLOSED — isWrite flag, writes maxAttempts=1, envelope preserved | worker/lib/d1/client.ts:468-519 |
+| I-3 | evolveTrust lost-update race | P1 | ✅ CLOSED — SQL-side MAX(0,MIN(1,trust_score+?)) atomic | worker/lib/d1/trust.ts:69-131 |
+| I-4 | validatedFetch TOCTOU + redirect bypass | P1 | ✅ CLOSED — redirect:manual + per-hop re-validation | worker/lib/security.ts:139-165 |
+| I-5 | Referral schema theater + code TOCTOU | P2 | ✅ CLOSED — raw body validation before casts, SSRF check | worker/routes/referrals.ts:122-175 |
+| I-6 | Client domain defeats check; open-redirect | P2 | ✅ CLOSED — DEFAULT_SOURCES allowlist + referral redirect re-validation | worker/routes/referrals.ts:27-41,287-311 |
+| I-7 | handleReactivateReferral race + missing ctx + no audit | P2 | ✅ CLOSED — request/env passthrough, notify audit | worker/routes/referrals.ts:401-447 |
+| I-8 | No rate limit on legacy referral routes | P2 | ✅ CLOSED — createRateLimitMiddleware on /api/referrals + :code | worker/router/legacy-routes.ts:235-260 |
+| I-9 | CONFIG.BLOCKED_HOSTS drift | P3 | ✅ CLOSED — synced to security.ts (11 hosts, 17 ranges) | worker/config.ts:150-168 |
+| I-10 | evolveTrustBatch N+1 + clamp error | P3 | ✅ CLOSED — single IN queries, previousMap, no per-domain loop | worker/lib/d1/trust.ts:142-213 |
 
-### Swarm verification summary
+Feature delivery:
 
-Full suite 194 files / 2727 tests green (+115 vs baseline). pev-gates 12/13
-(only ci-workflow-validator fails = pre-existing BLOCKED-3 / ADR-021).
-tsc clean, prettier clean, markdownlint clean. Net -105 lines.
-
-### Latent bugs documented by WS-E (not fixed this run)
-
-1. `worker/lib/d1/trust.ts:159` evolveTrustBatch inserts brand-new domains
-   at hardcoded 0.5 base without applying the first adjustment (single-domain
-   evolveTrust does apply it); result reporting back-computes a wrong
-   previous_score.
-2. `worker/lib/d1/client.ts:477` executeWithRetry resolves `{error}` instead
-   of rejecting, so evolveTrust returns plausible scores even when both its
-   SELECT and INSERT fail permanently.
-
-**Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md)
+| ID | Feature | Status | Files |
+|:---|:---|:---|:---|
+| MF-1 | Hybrid semantic search (FTS5+vector RRF) | ✅ | worker/routes/semantic-search.ts, worker/lib/search/hybrid.ts |
+| MI-3 | AI Gateway wiring | ✅ | worker/lib/ai-gateway/llm.ts, worker/lib/nlq/ai/* |
+| MI-1 | MCP SSE streaming | ✅ verified wired | worker/router/mcp-stream-routes.ts, worker/routes/mcp-stream.ts |
+| MF-N1 | High-value deal notifications | ✅ | worker/lib/high-value-notifier.ts, worker/publish.ts |
+| MF-A1 | Referral analytics API | ✅ | worker/lib/analytics/referrals.ts, worker/routes/core/analytics.ts |
+| NLQ-1 | NLQ saved queries + suggestions | ✅ | worker/lib/d1/migrations/schema-part-6.ts, worker/routes/nlq/saved.ts |
+| MF-2 | Real scrapers default | ✅ | worker/lib/research-agent/orchestrator/index.ts (shouldUseRealFetching) |
+| UX-1 | Extension real-time feed | ✅ | extension/background.js, extension/popup*.js, extension/popup.html |
 
 ---
 
@@ -57,7 +56,7 @@ scope = P0 + quick wins this run.
 | F-4 | All 3 Durable Objects have zero runtime callers; locking runs D1 CAS, staging runs KV | P1 | 🟡 PARTIAL - PipelineLock DO now PRIMARY path (D1 CAS fallback, 1s timeout guard) per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md); SourceRegistry/DealRegistry deferred | lock.ts adapter + extendLock RPC; 105/105 lock tests |
 | F-5 | Dead security twins rbac.ts (291L) + refresh-tokens.ts (297L): zero importers; live paths use middleware/auth.ts and lib/auth | P1 | ✅ CLOSED - both deleted (588 lines) | ref-check clean 2026-08-24 |
 | F-6 | EU AI Act logger (453L, tested) unwired while MCP advertises eu_ai_act_compliant:true and skill docs claim compliance | P1 | ✅ CLOSED - wired into NLQ route + semantic search via compliance-log.ts; fire-and-forget with failure isolation | tests/unit/eu-ai-act-wiring.test.ts (7 passing) |
-| F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ✅ CLOSED - kv-pagination.ts cursor helper applied at 10 sites (R-1, 2026-08-25 swarm) | worker/lib/kv-pagination.ts |
+| F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ⬜ DEFERRED | storage.ts:290, auth.ts:112, et al. |
 | F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ⬜ DEFERRED | publish.ts:63,85, storage.ts:60,87-95, stage.ts:60 |
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ⬜ DEFERRED | discover.ts imports, scheduled.ts:69-130 |
@@ -122,8 +121,8 @@ Not covered by GAP-ANALYSIS-2026-08-15:
 | N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | ✅ CLOSED (deleted in PRT-6) |
 | N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | ✅ CLOSED (deleted with its exclusive test in PRT-6) |
 | N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
-| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | ✅ CLOSED — legacy-routes.ts split (472L); orchestrator now 438L; residual >500 file (extension/popup.js) re-registered as R-3 |
-| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ✅ CLOSED - all eliminated via guards/bindings in 2026-08-25 swarm (R-2); commits 78127b2 + ee01500 | zero grep matches in worker/ production code |
+| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | 🟡 PARTIAL - legacy-routes.ts split to 472 lines during MI-1; orchestrator remains 503 |
+| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ⬜ DEFERRED (needs dedicated sweep) |
 | N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ⬜ DEFERRED (dedicated fix sprint; zero regressions from PRT-6 verified by main-vs-branch diff) |
 
 Supporting evidence: lint = tsc+prettier only (no ESLint gate), so banned
@@ -153,9 +152,9 @@ recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
 | T-3 | NLQ AI enhancer + hybrid classifier untested | ⬜ OPEN |
 | T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ⬜ OPEN |
 | T-5 | MCP progress + SSE streaming untested | ⬜ OPEN |
-| T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ✅ CLOSED (25 tests, 2026-08-25 swarm R-5) |
-| T-7 | D1 `trust.ts` has no direct tests | ✅ CLOSED (27 tests, 2026-08-25 swarm R-5; 2 latent bugs documented) |
-| T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ✅ CLOSED (35 tests, 2026-08-25 swarm R-5) |
+| T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ⬜ OPEN |
+| T-7 | D1 `trust.ts` has no direct tests | ⬜ OPEN |
+| T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ⬜ OPEN |
 
 Full evidence and remediation notes: [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md).
 

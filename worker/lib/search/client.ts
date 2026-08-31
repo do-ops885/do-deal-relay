@@ -16,6 +16,8 @@
 import type { Env } from "../../types";
 import type { VectorizeVector } from "@cloudflare/workers-types";
 import { SEMANTIC_SEARCH_CONFIG, type DealVector } from "./types";
+import { logger } from "../global-logger";
+import { isGatewayEnabled } from "../ai-gateway/llm";
 
 const EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
 const VECTORIZE_TOPK_MAX = 50;
@@ -32,6 +34,18 @@ function clampTopK(limit: number): number {
 async function embedTexts(env: Env, texts: string[]): Promise<number[][]> {
   if (!env.AI) {
     throw new Error("AI binding not available");
+  }
+  // If AI Gateway is configured, embeddings still go via Workers AI directly
+  // but we log the routing decision for observability; gateway chat proxy is
+  // handled in worker/lib/ai-gateway/llm.ts for LLM calls.
+  if (isGatewayEnabled(env)) {
+    logger.debug(
+      "Embedding via Workers AI (gateway enabled, embeddings passthrough)",
+      {
+        model: EMBEDDING_MODEL,
+        batch: texts.length,
+      },
+    );
   }
   const result = (await (env.AI.run as AiRunFn)(EMBEDDING_MODEL, {
     text: texts,

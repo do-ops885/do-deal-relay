@@ -62,3 +62,49 @@ export interface AnalyticsSummary {
   expiringNext7Days: number;
   lastUpdated: string;
 }
+
+export interface ReferralAnalytics {
+  periodDays: number;
+  generatedAt: string;
+  perSourceSuccessRate: Array<{
+    source: string;
+    domain: string;
+    total: number;
+    active: number;
+    quarantined: number;
+    successRate: number;
+    avgConfidence: number;
+    trustScore: number | null;
+  }>;
+  rewardTotals: {
+    totalDeals: number;
+    totalValue: number;
+    avgValue: number;
+    currency: string;
+    byType: Array<{
+      type: string;
+      count: number;
+      totalValue: number;
+      avgValue: number;
+    }>;
+    byCurrency: Array<{ currency: string; count: number; totalValue: number }>;
+  };
+  conversionByDomain: Array<{
+    domain: string;
+    deals: number;
+    referrals: number;
+    totalUses: number;
+    uniqueUsers: number;
+    conversionRate: number;
+  }>;
+  timeToExpiry: {
+    avgDaysToExpiry: number | null;
+    expiringIn7Days: number;
+    expiringIn30Days: number;
+    expiringIn90Days: number;
+    alreadyExpired: number;
+    noExpiry: number;
+    buckets: Array<{ bucket: string; count: number }>;
+  };
+  systemMetrics: Array<{ metric: string; avgValue: number; count: number }>;
+}

@@ -1,152 +1,197 @@
-function updatePageInfo(elements, tab) {
-  elements.pageTitle.textContent = tab.title || "Unknown";
-  try {
-    elements.pageUrl.textContent = new URL(tab.url).hostname;
-  } catch {
-    elements.pageUrl.textContent = "Invalid URL";
-  }
-  let faviconSet = false;
-  if (tab.favIconUrl) {
+/**
+ * Referral Capture - Popup Render Helpers
+ * Extracted to keep popup.js under 500 lines.
+ * Loaded before popup.js via <script src="popup-render.js">.
+ */
+
+/* global chrome */
+/* eslint-disable */
+/* exported PopupRender */
+/* eslint-disable security/detect-object-injection */
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// eslint-disable-next-line no-unused-vars
+const PopupRender = {
+  updatePageInfo(tab, elements) {
+    elements.pageTitle.textContent = tab.title || "Unknown";
     try {
-      const faviconUrl = new URL(tab.favIconUrl);
-      if (faviconUrl.protocol === "http:" || faviconUrl.protocol === "https:") {
-        const img = document.createElement("img");
-        img.src = faviconUrl.href;
-        img.width = img.height = 32;
-        img.style.borderRadius = "6px";
-        img.alt = "";
-        elements.favicon.textContent = "";
-        elements.favicon.appendChild(img);
-        faviconSet = true;
-      }
-    } catch {}
-  }
-  if (!faviconSet) elements.favicon.textContent = "🌐";
-}
-
-function showDetections(state, elements, detections) {
-  elements.detectionsSection.style.display = "block";
-  updateScanStatus(
-    elements,
-    "found",
-    `${detections.length} referral code${detections.length > 1 ? "s" : ""} found`,
-  );
-  elements.detectionList.textContent = "";
-
-  detections.forEach((d, i) => {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "detection-item";
-    item.dataset.index = i.toString();
-    item.setAttribute("aria-pressed", i === 0 ? "true" : "false");
-
-    const info = document.createElement("div");
-    info.className = "detection-info";
-
-    const codeValue = document.createElement("span");
-    codeValue.className = "code-value";
-    codeValue.textContent = d.code;
-
-    const codeSource = document.createElement("span");
-    codeSource.className = "code-source";
-    codeSource.textContent = d.source.replaceAll("_", " ");
-
-    info.appendChild(codeValue);
-    info.appendChild(codeSource);
-
-    const confidence = document.createElement("span");
-    confidence.className = "confidence";
-    confidence.textContent = `${Math.round(d.confidence * 100)}%`;
-
-    item.appendChild(info);
-    item.appendChild(confidence);
-
-    item.addEventListener("click", () => {
-      elements.detectionList
-        .querySelectorAll(".detection-item")
-        .forEach((el) => {
-          el.classList.remove("selected");
-          el.setAttribute("aria-pressed", "false");
-        });
-      item.classList.add("selected");
-      item.setAttribute("aria-pressed", "true");
-      state.selectedDetection = state.detections[parseInt(item.dataset.index)];
-    });
-
-    elements.detectionList.appendChild(item);
-  });
-
-  if (detections.length > 0) {
-    const firstItem = elements.detectionList.querySelector(".detection-item");
-    if (firstItem) {
-      firstItem.classList.add("selected");
-      firstItem.setAttribute("aria-pressed", "true");
-      state.selectedDetection = detections[0];
-      elements.captureBtn.focus();
+      elements.pageUrl.textContent = new URL(tab.url).hostname;
+    } catch {
+      elements.pageUrl.textContent = "Invalid URL";
     }
-  }
-}
+    let set = false;
+    if (tab.favIconUrl) {
+      try {
+        const u = new URL(tab.favIconUrl);
+        if (u.protocol === "http:" || u.protocol === "https:") {
+          const img = document.createElement("img");
+          img.src = u.href;
+          img.width = img.height = 32;
+          img.style.borderRadius = "6px";
+          img.alt = "";
+          elements.favicon.textContent = "";
+          elements.favicon.appendChild(img);
+          set = true;
+        }
+      } catch {}
+    }
+    if (!set) elements.favicon.textContent = "🌐";
+  },
 
-function showNoDetections(elements) {
-  elements.detectionsSection.style.display = "none";
-  updateScanStatus(elements, "none", "No referral codes detected on this page");
-  elements.manualCode.focus();
-}
-
-function updateScanStatus(elements, status, text) {
-  const indClass =
-    status === "found" ? "found" : status === "scanning" ? "scanning" : "none";
-  elements.scanStatus.textContent = "";
-  const indicator = document.createElement("div");
-  indicator.className = `status-indicator ${indClass}`;
-  const statusText = document.createElement("span");
-  statusText.className = "status-text";
-  statusText.textContent = text;
-  elements.scanStatus.appendChild(indicator);
-  elements.scanStatus.appendChild(statusText);
-}
-
-function showToast(elements, message, type = "") {
-  elements.toast.textContent = message;
-  elements.toast.className = `toast ${type} show`;
-  setTimeout(() => elements.toast.classList.remove("show"), 3000);
-}
-
-async function copyToClipboard(elements, text, buttonElement) {
-  if (!text || buttonElement.dataset.copying === "true") return;
-
-  const originalLabel = buttonElement.getAttribute("aria-label");
-  const originalTitle = buttonElement.getAttribute("title");
-
-  try {
-    buttonElement.dataset.copying = "true";
-    await navigator.clipboard.writeText(text);
-    showToast(elements, "Copied to clipboard!", "success");
-
-    const children = Array.from(buttonElement.children);
-    buttonElement.textContent = "";
+  updateScanStatus(status, text, elements) {
+    const cls =
+      status === "found"
+        ? "found"
+        : status === "scanning"
+          ? "scanning"
+          : "none";
+    elements.scanStatus.textContent = "";
+    const ind = document.createElement("div");
+    ind.className = `status-indicator ${cls}`;
     const span = document.createElement("span");
-    span.setAttribute("aria-hidden", "true");
-    span.textContent = "✅";
-    buttonElement.appendChild(span);
+    span.className = "status-text";
+    span.textContent = text;
+    elements.scanStatus.appendChild(ind);
+    elements.scanStatus.appendChild(span);
+  },
 
-    buttonElement.setAttribute("aria-label", "Copied!");
-    buttonElement.setAttribute("title", "Copied!");
+  showDetections(detections, elements, state) {
+    elements.detectionsSection.style.display = "block";
+    this.updateScanStatus(
+      "found",
+      `${detections.length} referral code${detections.length > 1 ? "s" : ""} found`,
+      elements,
+    );
+    elements.detectionList.textContent = "";
+    detections.forEach((d, i) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "detection-item";
+      item.dataset.index = String(i);
+      item.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+      const info = document.createElement("div");
+      info.className = "detection-info";
+      const codeValue = document.createElement("span");
+      codeValue.className = "code-value";
+      codeValue.textContent = d.code;
+      const codeSource = document.createElement("span");
+      codeSource.className = "code-source";
+      codeSource.textContent = d.source.replaceAll("_", " ");
+      info.appendChild(codeValue);
+      info.appendChild(codeSource);
+      const conf = document.createElement("span");
+      conf.className = "confidence";
+      conf.textContent = `${Math.round(d.confidence * 100)}%`;
+      item.appendChild(info);
+      item.appendChild(conf);
+      item.addEventListener("click", () => {
+        elements.detectionList
+          .querySelectorAll(".detection-item")
+          .forEach((el) => {
+            el.classList.remove("selected");
+            el.setAttribute("aria-pressed", "false");
+          });
+        item.classList.add("selected");
+        item.setAttribute("aria-pressed", "true");
+        state.selectedDetection =
+          state.detections[parseInt(item.dataset.index)];
+      });
+      elements.detectionList.appendChild(item);
+    });
+    if (detections.length > 0) {
+      const first = elements.detectionList.querySelector(".detection-item");
+      if (first) {
+        first.classList.add("selected");
+        first.setAttribute("aria-pressed", "true");
+        state.selectedDetection = detections[0];
+        elements.captureBtn.focus();
+      }
+    }
+  },
 
-    setTimeout(() => {
-      buttonElement.textContent = "";
-      children.forEach((child) => buttonElement.appendChild(child));
-      originalLabel
-        ? buttonElement.setAttribute("aria-label", originalLabel)
-        : buttonElement.removeAttribute("aria-label");
-      originalTitle
-        ? buttonElement.setAttribute("title", originalTitle)
-        : buttonElement.removeAttribute("title");
-      buttonElement.removeAttribute("data-copying");
-    }, 2000);
-  } catch (err) {
-    console.error("Failed to copy:", err);
-    showToast(elements, "Failed to copy", "error");
-    buttonElement.removeAttribute("data-copying");
-  }
-}
+  showNoDetections(elements) {
+    elements.detectionsSection.style.display = "none";
+    this.updateScanStatus(
+      "none",
+      "No referral codes detected on this page",
+      elements,
+    );
+    elements.manualCode.focus();
+  },
+
+  formatRelativeTime(iso) {
+    if (!iso) return "Never polled";
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60000) return "Just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < MS_PER_DAY) return `${Math.floor(diff / 3600000)}h ago`;
+    return new Date(iso).toLocaleString();
+  },
+
+  renderDealFeed(meta, elements) {
+    if (!meta || !meta.lastPoll) {
+      elements.lastPollTime.textContent = "Never polled";
+      elements.feedBadge.classList.add("hidden");
+      elements.feedBadge.textContent = "0 new";
+      if (elements.clearBadgeBtn)
+        elements.clearBadgeBtn.classList.add("hidden");
+      if (elements.dealFeedList) elements.dealFeedList.textContent = "";
+      if (elements.feedEmpty) elements.feedEmpty.classList.remove("hidden");
+      return;
+    }
+    elements.lastPollTime.textContent = `Last poll: ${this.formatRelativeTime(meta.lastPoll)}`;
+    const count = meta.newCount || 0;
+    if (count > 0) {
+      elements.feedBadge.textContent = `${count} new`;
+      elements.feedBadge.classList.remove("hidden");
+      if (elements.clearBadgeBtn)
+        elements.clearBadgeBtn.classList.remove("hidden");
+    } else {
+      elements.feedBadge.classList.add("hidden");
+      elements.feedBadge.textContent = "0 new";
+      if (elements.clearBadgeBtn)
+        elements.clearBadgeBtn.classList.add("hidden");
+    }
+    if (elements.dealFeedList) {
+      elements.dealFeedList.textContent = "";
+      const deals = meta.highValueDeals || [];
+      if (deals.length === 0) {
+        if (elements.feedEmpty) elements.feedEmpty.classList.remove("hidden");
+      } else {
+        if (elements.feedEmpty) elements.feedEmpty.classList.add("hidden");
+        deals.forEach((d) => {
+          const row = document.createElement("div");
+          row.className = "feed-item";
+          const top = document.createElement("div");
+          top.className = "feed-item-top";
+          const code = document.createElement("span");
+          code.className = "code-value";
+          code.style.fontSize = "13px";
+          code.textContent = d.code;
+          const reward = document.createElement("span");
+          reward.className = "confidence";
+          reward.style.background = "#fef3c7";
+          reward.style.color = "#92400e";
+          const rv = d.reward?.value ?? "";
+          reward.textContent = rv ? `$${rv}` : "$100+";
+          top.appendChild(code);
+          top.appendChild(reward);
+          const sub = document.createElement("div");
+          sub.className = "code-source";
+          sub.textContent = d.domain || d.title || "";
+          row.appendChild(top);
+          row.appendChild(sub);
+          if (d.url) {
+            row.style.cursor = "pointer";
+            row.title = d.url;
+            row.addEventListener("click", () => {
+              chrome.tabs.create({ url: d.url });
+            });
+          }
+          elements.dealFeedList.appendChild(row);
+        });
+      }
+    }
+  },
+};
