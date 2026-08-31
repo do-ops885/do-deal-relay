@@ -19,10 +19,21 @@ DRIFT_DETECTED=false
 CI_STATUS_FILE="${ROOT_DIR}/.github/ci-status/ci-status.json"
 if [ -f "$CI_STATUS_FILE" ]; then
     if grep -q '"overall":\s*"failure"' "$CI_STATUS_FILE" 2>/dev/null || \
-       grep -q '"overall":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null; then
+       grep -q '"overall":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null || \
+       grep -q '"status":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null; then
         DRIFT_DETECTED=true
         WARNINGS+=("⚠ CI drift detected: .github/ci-status/ci-status.json shows CI is failing")
         WARNINGS+=("  Local quality gate may pass while CI is broken. Verify CI status before merging.")
+        WARNINGS+=("  Run: bash scripts/check-ci-status.sh --live  or  bash scripts/update-ci-status.sh")
+    fi
+fi
+# Optional live check: if gh is available and CI is failing on main, hard-fail when --strict is passed
+if [ "${QUALITY_GATE_STRICT:-}" = "1" ]; then
+    if bash "${SCRIPT_DIR}/check-ci-status.sh" --live >/dev/null 2>&1; then
+        :
+    else
+        ERRORS+=("✗ Live CI on main is FAILING — fix CI before merging (QUALITY_GATE_STRICT=1)")
+        ERRORS+=("  Run: bash scripts/check-ci-status.sh --live  and  gh run view --log-failed")
     fi
 fi
 

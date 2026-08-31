@@ -34,6 +34,50 @@
           {
             "context": "CI + Labels Setup",
             "integration_id": 15368
+          },
+          {
+            "context": "CI Summary",
+            "integration_id": 15368
+          },
+          {
+            "context": "Type Check",
+            "integration_id": 15368
+          },
+          {
+            "context": "Format Check",
+            "integration_id": 15368
+          },
+          {
+            "context": "Docs Validation",
+            "integration_id": 15368
+          },
+          {
+            "context": "Validation Gates",
+            "integration_id": 15368
+          },
+          {
+            "context": "Unit Tests",
+            "integration_id": 15368
+          },
+          {
+            "context": "E2E Tests",
+            "integration_id": 15368
+          },
+          {
+            "context": "Smoke Tests",
+            "integration_id": 15368
+          },
+          {
+            "context": "Security Scan",
+            "integration_id": 15368
+          },
+          {
+            "context": "Build",
+            "integration_id": 15368
+          },
+          {
+            "context": "Quality Gate",
+            "integration_id": 15368
           }
         ]
       }

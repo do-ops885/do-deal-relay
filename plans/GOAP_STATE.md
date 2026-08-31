@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-08-31
-**Version**: 0.19.1
-**Status**: Active — 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-24 improvement run also COMPLETE via PR #713.
+**Version**: 0.19.2
+**Status**: Active — 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main` (commits `ebe9323`, `b14380a`, `61dbc87`, `3465d06`, `b89d69d`, `1b251b4`), GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
 ---
@@ -25,6 +25,29 @@
 | SLF-9 | GOAP tracking absent for skill work | P2 | ✅ CLOSED — this register, version bump 0.19.0→0.19.1, lessons captured | GOAP_STATE.md |
 
 Verification: `bash scripts/quick_verify.sh` ✅, `bash tests/test_skill.sh` ✅ 8/8, `bash scripts/score_batch.sh --json` avg 94, `bash scripts/suggest_fixes.sh` 1 P2 healthy.
+
+---
+
+## Improvement Swarm — 2026-08-25 (afternoon) — v0.19.2 Re-sync
+
+**Spec**: [SPEC-improvement-swarm-2026-08-25.md](SPEC-improvement-swarm-2026-08-25.md) | **Branch**: `chore/improvement-run-2026-08-25` | **Progress**: [PROGRESS-2026-08-25.md](PROGRESS-2026-08-25.md)
+
+Code for this swarm landed on `main` via 6 commits (`ebe9323`, `b14380a`, `61dbc87`, `3465d06`, `b89d69d`, `1b251b4`) but the GOAP_STATE doc sync from `920babb` was lost during later merges (`878a007`, `feb5b7d`). This re-sync restores the register without code changes.
+
+| ID | Finding | Priority | Workstream | Status |
+|:---|:---|:---|:---|:---|
+| R-1 | F-7: 10 KV list() call sites stop at first page (~1000 keys) — apikey lookup, webhook DLQ, etc. | P2 | WS-A | ✅ CLOSED — `worker/lib/kv-pagination.ts` helper + 10 sites repointed; 7 new tests; commit `ebe9323` |
+| R-2 | N-5: ~55 non-null assertions in worker/ production code | P2 | WS-B (routes, ~19 sites) + WS-C (lib/pipeline, ~36 sites) | ✅ CLOSED — zero assertions remain in worker/ production code; commits `b14380a`, `61dbc87` |
+| R-3 | extension/popup.js 512L exceeds `MAX_LINES_PER_SOURCE_FILE=500` (only remaining >500 file) | P2 | WS-D | ✅ CLOSED — `popup.js` 448L + `popup-render.js` 197L; `popup.html` script order verified; commit `3465d06` |
+| R-4 | wrangler.jsonc lacks `"ai"` binding block while `embedding-pipeline.ts` uses `env.AI.run` | P1 | WS-F | ✅ CLOSED — `ai` binding declared top-level + dev + staging + production; commit `b89d69d` |
+| R-5 | Test gaps T-6/T-7/T-8 still open (SourceRegistry DO, d1/trust.ts, lib/expiration helpers) | P2 | WS-E | ✅ CLOSED — 87 tests across 3 files (29/40/28); commit `1b251b4`; 2 latent bugs documented in PROGRESS |
+| R-6 | MI-3 re-verified 2026-08-25: ai-gateway client has zero importers outside module — stays DEFERRED | P2 | deferred | ⬜ DEFERRED — product/cost gating required |
+
+Swarm verification: 194 files / 2727 tests green (+115 vs baseline of 2612), pev-gates 12/13 (only `ci-workflow-validator` = `BLOCKED-3` per `ADR-021`), `tsc --noEmit` clean, `prettier` clean, `markdownlint` clean, `wrangler` dry-run clean. Net -105 lines; `as any` = 0 in `worker/`.
+
+Latent bugs documented by WS-E (not fixed this run):
+1. `worker/lib/d1/trust.ts:159` `evolveTrustBatch` inserts brand-new domains at hardcoded `0.5` without first adjustment.
+2. `worker/lib/d1/client.ts:477` `executeWithRetry` resolves `{error}` instead of rejecting, masking permanent write failures.
 
 ---
 
@@ -76,12 +99,12 @@ scope = P0 + quick wins this run.
 | F-4 | All 3 Durable Objects have zero runtime callers; locking runs D1 CAS, staging runs KV | P1 | 🟡 PARTIAL - PipelineLock DO now PRIMARY path (D1 CAS fallback, 1s timeout guard) per [ADR-022](ADR-022-do-disposition-pipelinelock-first.md); SourceRegistry/DealRegistry deferred | lock.ts adapter + extendLock RPC; 105/105 lock tests |
 | F-5 | Dead security twins rbac.ts (291L) + refresh-tokens.ts (297L): zero importers; live paths use middleware/auth.ts and lib/auth | P1 | ✅ CLOSED - both deleted (588 lines) | ref-check clean 2026-08-24 |
 | F-6 | EU AI Act logger (453L, tested) unwired while MCP advertises eu_ai_act_compliant:true and skill docs claim compliance | P1 | ✅ CLOSED - wired into NLQ route + semantic search via compliance-log.ts; fire-and-forget with failure isolation | tests/unit/eu-ai-act-wiring.test.ts (7 passing) |
-| F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ⬜ DEFERRED | storage.ts:290, auth.ts:112, et al. |
+| F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ✅ CLOSED — `worker/lib/kv-pagination.ts` cursor helper applied at 10 sites (R-1, 2026-08-25 swarm `ebe9323`) | `worker/lib/kv-pagination.ts` + 7 tests |
 | F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ⬜ DEFERRED | publish.ts:63,85, storage.ts:60,87-95, stage.ts:60 |
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ⬜ DEFERRED | discover.ts imports, scheduled.ts:69-130 |
 | F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ⬜ DEFERRED - flags surface 416 errors repo-wide; needs dedicated sweep after dead-export cleanup | tsconfig.json:2-23 |
-| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); wrangler.jsonc missing ai block despite env.AI usage; extension/popup.js 512L; 322 as any in tests | P3 | ⬜ DEFERRED | see analysis notes |
+| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | ⬜ PARTIAL — `wrangler.jsonc` `ai` binding + `extension/popup.js` split CLOSED via R-3/R-4 (`3465d06`, `b89d69d`); D1 boilerplate + `as any` cleanup remains DEFERRED | see analysis notes |
 
 ### Session outcomes already banked (pre-register)
 
@@ -141,8 +164,8 @@ Not covered by GAP-ANALYSIS-2026-08-15:
 | N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | ✅ CLOSED (deleted in PRT-6) |
 | N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | ✅ CLOSED (deleted with its exclusive test in PRT-6) |
 | N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
-| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | 🟡 PARTIAL - legacy-routes.ts split to 472 lines during MI-1; orchestrator remains 503 |
-| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ⬜ DEFERRED (needs dedicated sweep) |
+| N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | ✅ CLOSED — `legacy-routes.ts` split (472L); `research-agent/orchestrator/index.ts` now 438L; residual `extension/popup.js` re-registered as R-3 and closed (448L + 197L) |
+| N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ✅ CLOSED — all eliminated via guards/bindings in 2026-08-25 swarm R-2 (commits `b14380a` + `61dbc87`); zero matches in `worker/` production code |
 | N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ⬜ DEFERRED (dedicated fix sprint; zero regressions from PRT-6 verified by main-vs-branch diff) |
 
 Supporting evidence: lint = tsc+prettier only (no ESLint gate), so banned
@@ -172,9 +195,9 @@ recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
 | T-3 | NLQ AI enhancer + hybrid classifier untested | ⬜ OPEN |
 | T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ⬜ OPEN |
 | T-5 | MCP progress + SSE streaming untested | ⬜ OPEN |
-| T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ⬜ OPEN |
-| T-7 | D1 `trust.ts` has no direct tests | ⬜ OPEN |
-| T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ⬜ OPEN |
+| T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ✅ CLOSED — 28 tests in `tests/unit/source-registry.test.ts` (R-5, `1b251b4`) |
+| T-7 | D1 `trust.ts` has no direct tests | ✅ CLOSED — 29 tests in `tests/unit/d1-trust.test.ts` (R-5; 2 latent bugs documented) |
+| T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ✅ CLOSED — 40 tests in `tests/unit/expiration-helpers.test.ts` (R-5) |
 
 Full evidence and remediation notes: [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md).
 
