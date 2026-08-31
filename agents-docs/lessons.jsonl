@@ -66,3 +66,37 @@
   "tags": ["goap", "research", "pattern"],
   "confidence": "HIGH"
 }
+{
+  "lesson_id": "LESSON-1788174892",
+  "timestamp": "2026-08-31T11:14:52Z",
+  "error_type": "version_mismatch",
+  "severity": "HIGH",
+  "context": "Skill version 0.1.6 vs product VERSION 0.1.8 with strict check failing 63 docs",
+  "evidence": {
+    "description": "verify_version_consistency.sh strict mode flagged 63 product docs as HIGH; skill frontmatter mismatch"
+  },
+  "fix_applied": "Implement ADR-024 skill-independent mode: --skill-independent excludes skill frontmatter, header drift downgraded, illustrative marker, exclude reports/archived",
+  "prevention": {
+    "immediate": "Add verify_version_consistency --skill-independent to pre-commit and CI; keep skill semver independent",
+    "long_term": "Add to CI verification"
+  },
+  "tags": ["version_mismatch"],
+  "confidence": "HIGH"
+}
+{
+  "lesson_id": "LESSON-1788174895",
+  "timestamp": "2026-08-31T11:14:55Z",
+  "error_type": "docs_without_implementation",
+  "severity": "HIGH",
+  "context": "9 scripts documented in SKILL.md/modules but only 3 existed (verify_status_accuracy, suggest_fixes, quick_verify etc. missing)",
+  "evidence": {
+    "description": "SKILL.md:97-100 references quick_verify.sh, verify_file.sh; modules list 7 additional scripts; find scripts/ showed 3 files; test_skill.sh flagged missing"
+  },
+  "fix_applied": "Implement full 11-script suite: quick_verify, verify_file, 4 RYAN verifiers, 2 FLASH scorers, 3 SYNTHESIS improve; wire via GOAP SPEC-self-learning-feedback-full.md",
+  "prevention": {
+    "immediate": "Add test_skill.sh required scripts check (hard fail) and quick_verify.sh to quality_gate.sh",
+    "long_term": "Add to CI verification"
+  },
+  "tags": ["docs_without_implementation"],
+  "confidence": "HIGH"
+}

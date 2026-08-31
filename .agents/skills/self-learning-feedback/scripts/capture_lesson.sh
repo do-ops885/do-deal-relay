@@ -94,17 +94,32 @@ if [[ "$DRY_RUN" == true ]]; then
     echo -e "${YELLOW}DRY RUN - Would capture lesson:${NC}"
     echo "$LESSON_JSON" | python3 -m json.tool 2>/dev/null || echo "$LESSON_JSON"
 else
-    # Save to lessons.jsonl (append mode)
-    LESSONS_FILE="agents-docs/lessons.jsonl"
+    # Dual-format per learn.md: JSONL + LESSONS.md
+    LESSONS_JSONL="agents-docs/lessons.jsonl"
+    SKILL_JSONL=".agents/skills/self-learning-feedback/references/lessons.jsonl"
+    LESSONS_MD="agents-docs/LESSONS.md"
 
-    # Ensure directory exists
-    mkdir -p "$(dirname "$LESSONS_FILE")"
+    for f in "$LESSONS_JSONL" "$SKILL_JSONL"; do
+        mkdir -p "$(dirname "$f")"
+        echo "$LESSON_JSON" >> "$f"
+    done
 
-    # Append lesson
-    echo "$LESSON_JSON" >> "$LESSONS_FILE"
+    # Markdown append
+    if [[ -f "$LESSONS_MD" ]]; then
+        cat >> "$LESSONS_MD" <<MD
+
+### $LESSON_ID: $ERROR_TYPE
+**Date**: $(date +%Y-%m-%d)
+**Context**: $CONTEXT
+**Evidence**: $EVIDENCE
+**Fix**: $FIX
+**Prevention**: ${PREVENTION:-Add to CI verification}
+
+MD
+    fi
 
     echo -e "${GREEN}✓ Lesson captured:${NC} $LESSON_ID"
-    echo -e "${BLUE}  Saved to:${NC} $LESSONS_FILE"
+    echo -e "${BLUE}  Saved to:${NC} $LESSONS_JSONL + $SKILL_JSONL + $LESSONS_MD (dual format)"
     echo ""
     echo "Summary:"
     echo "  Error type: $ERROR_TYPE"

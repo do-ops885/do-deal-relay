@@ -1,7 +1,7 @@
 {
   "skill_name": "self-learning-feedback",
-  "version": "0.1.1",
-  "description": "Evaluations for self-learning-feedback skill using ANALYSIS SWARM 3-persona pattern",
+  "version": "0.1.6",
+  "description": "Evaluations for self-learning-feedback skill using ANALYSIS SWARM 3-persona pattern (skill-independent versioning per ADR-024)",
   "evals": [
     {
       "id": "structure_check",
@@ -13,20 +13,29 @@
       "weight": 10
     },
     {
-      "id": "version_matches_project",
-      "prompt": "Verify skill version matches project VERSION file (0.1.1), not template default (1.0.0)",
-      "expected_output": "Skill version is 0.1.1, matching project",
+      "id": "version_is_valid_semver",
+      "prompt": "Verify skill version is valid semver (skill-independent from product VERSION per ADR-024), not empty",
+      "expected_output": "Skill version is valid semver like 0.1.6",
       "type": "automated",
-      "command": "grep -q 'version: 0.1.1' .agents/skills/self-learning-feedback/SKILL.md",
+      "command": "grep -qE '^version: [0-9]+\\.[0-9]+\\.[0-9]+' .agents/skills/self-learning-feedback/SKILL.md",
       "expected_exit_code": 0,
-      "weight": 15
+      "weight": 8
+    },
+    {
+      "id": "skill_version_consistent",
+      "prompt": "Verify evals.json version tracks owning SKILL.md version (skill-independent policy)",
+      "expected_output": "evals version equals SKILL.md version",
+      "type": "automated",
+      "command": "test \"$(grep -E '^version:' .agents/skills/self-learning-feedback/SKILL.md | sed 's/version: *//' | tr -d '[:space:]')\" = \"$(python3 -c 'import json; print(json.load(open(\".agents/skills/self-learning-feedback/evals/evals.json\"))[\"version\"])')\"",
+      "expected_exit_code": 0,
+      "weight": 7
     },
     {
       "id": "verify_module_functional",
-      "prompt": "Test verify module can detect version mismatch between VERSION file and test file",
-      "expected_output": "Verify script detects mismatch and reports it",
+      "prompt": "Test verify module can run version check in skill-independent mode",
+      "expected_output": "Verify script runs and reports source version",
       "type": "automated",
-      "command": "bash .agents/skills/self-learning-feedback/scripts/verify_version_consistency.sh --dry-run | grep -q mismatch || true",
+      "command": "bash .agents/skills/self-learning-feedback/scripts/verify_version_consistency.sh --skill-independent 2>&1 | grep -q \"Source version\"",
       "expected_exit_code": 0,
       "weight": 15
     },
@@ -59,15 +68,14 @@
     },
     {
       "id": "real_world_version_fix",
-      "prompt": "Use skill to fix the v1.0.0 → v0.1.1 version misalignment in the actual codebase",
-      "expected_output": "All v1.0.0 claims updated to v0.1.1, verification passes",
+      "prompt": "Use skill to ensure no stale v1.0.0 template defaults remain in product docs outside skills",
+      "expected_output": "No v1.0.0 claims in product docs; skill-independent verification passes",
       "type": "manual",
       "criteria": [
-        "referral-system.md version updated to 0.1.1",
-        "agents-update skill version updated to 0.1.1",
-        "All other v1.0.0 claims updated",
-        "verify_version_consistency.sh passes",
-        "No content lost in migration"
+        "No v1.0.0 claims outside .agents/skills/ (grep -r v1.0.0 --include=*.md | grep -v .agents/skills/ is empty)",
+        "verify_version_consistency.sh --skill-independent passes",
+        "Skill SKILL.md version is valid semver",
+        "evals.json version tracks SKILL.md"
       ],
       "weight": 15
     }

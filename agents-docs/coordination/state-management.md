@@ -69,4 +69,4 @@ Log of continuous verification loop iterations. Used for:
 
 - [Handoff Protocol](./handoff-protocol.md) - Coordination protocol
 - [Blockers](./blockers.md) - Escalation process
-- [AGENTS.md](../AGENTS.md) - Master coordination hub
+- [AGENTS.md](../../AGENTS.md) - Master coordination hub
