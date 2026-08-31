@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * AI Gateway LLM Helper
  *

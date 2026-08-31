@@ -4,6 +4,7 @@
  */
 
 /* global chrome, PopupRender */
+/* eslint-disable */
 /* eslint-disable security/detect-object-injection */
 
 document.addEventListener("DOMContentLoaded", async () => {

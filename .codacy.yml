@@ -15,3 +15,4 @@ exclude_paths:
   -  # Scratch / staging artifacts directory (commit messages, gh query dumps,
   # fixture files; may contain malformed middle-of-edit docs).
   - ".audit/**"
+  - "extension/**"

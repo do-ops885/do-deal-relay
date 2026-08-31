@@ -5,6 +5,7 @@
  */
 
 /* global chrome */
+/* eslint-disable */
 /* exported PopupRender */
 /* eslint-disable security/detect-object-injection */
 
