@@ -285,7 +285,7 @@ async function acquireLockViaD1(
       env.DEALS_DB.prepare(
         `UPDATE pipeline_locks
          SET run_id = ?2, trace_id = ?3, acquired_at = ?4, expires_at = ?5
-         WHERE lock_name = ?1 AND expires_at < ?6`,
+         WHERE lock_name = ?1 AND expires_at <= ?6`,
       ).bind(LOCK_NAME, run_id, trace_id, nowIso, expiresIso, nowIso),
       env.DEALS_DB.prepare(
         `SELECT run_id, trace_id, acquired_at, expires_at
