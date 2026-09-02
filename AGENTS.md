@@ -38,7 +38,7 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
   - Local pre-push verification: `npm run lint && npm run test:unit` (or `test:ci`) and `./scripts/quality_gate.sh` must pass before `git push`.
   - If CI fails after push, fix in the same PR (amend/push) — never open a follow-up to fix CI.
   - For Full Mode, include GOAP_STATE version bump and ADR/spec updates in the same PR; verify `plans/` docs are in sync.
-- **Merge Guardrail (NON-NEGOTIABLE)**: NEVER merge a PR with failing CI.
+- **Merge Guardrail (NON-NEGOTIABLE)**: NEVER merge a PR with failing CI. Merge after roast and review, all ci pass.
   - Required checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL (actions, javascript-typescript)`, `Codacy Static Code Analysis`, `Workers Builds`. No exceptions — external quality gates are required.
   - Any conclusion != `SUCCESS` blocks merge: `FAILURE`, `ACTION_REQUIRED`, `TIMED_OUT`, `CANCELLED` all block. `SKIPPED` only allowed for non-required jobs like `auto-merge`.
   - Verify before merge: `gh pr view <n> --json statusCheckRollup -q '.statusCheckRollup[] | "\(.name): \(.conclusion)"'` and `gh pr checks <n>` must show zero failures. Do not use `--admin` or admin bypass.
