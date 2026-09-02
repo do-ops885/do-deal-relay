@@ -11,6 +11,7 @@ import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
 import { validatedFetch } from "../lib/security";
+import { getSourceCircuitBreaker } from "../lib/circuit-breaker";
 import {
   parseHTMLContent,
   parseJSONContent,
@@ -185,6 +186,15 @@ async function discoverFromSource(
   source: SourceConfig,
   limit: number,
 ): Promise<DiscoveryResult> {
+  const breaker = getSourceCircuitBreaker(source.domain, env);
+  const breakerState = await breaker.getState();
+  if (breakerState === "open") {
+    return {
+      deals: [],
+      errors: [{ url: source.domain, error: "Circuit breaker is open" }],
+    };
+  }
+
   const validationTally = createValidationTally();
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = []; // Process URL patterns in parallel with a concurrency limit.
@@ -308,6 +318,13 @@ async function discoverFromSource(
   // keeps concurrent writers on different domains; see
   // flushValidationTally for the residual cross-isolate race note.
   await flushValidationTally(env, validationTally);
+
+  // Record breaker outcome: any error means failure for this source run.
+  if (errors.length > 0 && deals.length === 0) {
+    await breaker.recordFailure();
+  } else if (deals.length > 0) {
+    await breaker.recordSuccess();
+  }
 
   return { deals, errors };
 }
