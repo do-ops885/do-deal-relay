@@ -6,7 +6,7 @@
 
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
-import { createStructuredLogger } from "../../lib/logger";
+import { getD1Logger, requireD1Db } from "./helpers";
 import { getMigrationStatus, initDatabase } from "../../lib/d1/migrations";
 import { authenticateRequest } from "../../lib/auth";
 
@@ -28,14 +28,6 @@ export async function authenticateD1Request(
 }
 
 // ============================================================================
-// Logger Helper
-// ============================================================================
-
-function getD1Logger(env: Env) {
-  return createStructuredLogger(env, "d1-routes", `d1-${Date.now()}`);
-}
-
-// ============================================================================
 // Migration Status Endpoint - GET /api/d1/migrations
 // ============================================================================
 
@@ -43,14 +35,8 @@ export async function handleD1Migrations(
   url: URL,
   env: Env,
 ): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   const action = url.searchParams.get("action");
 
@@ -102,14 +88,8 @@ export async function handleD1Migrations(
 // ============================================================================
 
 export async function handleD1Health(env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   try {
     const client = env.DEALS_DB;
