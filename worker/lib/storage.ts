@@ -52,7 +52,28 @@ export async function getStagingSnapshot(env: Env): Promise<Snapshot | null> {
 }
 
 /**
- * Write snapshot to staging (candidate)
+ * Write snapshot to staging (candidate) — direct put without recomputing hash.
+ * Caller must have already computed `snapshot_hash`; validates and writes.
+ * Fixes F-8 double-hash path in stage.ts.
+ */
+export async function putStagingSnapshot(
+  env: Env,
+  snapshot: Snapshot,
+): Promise<void> {
+  const result = SnapshotSchema.safeParse(snapshot);
+  if (!result.success) {
+    throw new Error(`Invalid snapshot: ${result.error.message}`);
+  }
+  await env.DEALS_STAGING.put(
+    CONFIG.KV_KEYS.STAGING_SNAPSHOT,
+    JSON.stringify(snapshot),
+  );
+}
+
+/**
+ * Write snapshot to staging (candidate) — legacy helper that computes hash.
+ * Kept for backward compat; stage.ts now uses putStagingSnapshot to avoid
+ * double hash.
  */
 export async function writeStagingSnapshot(
   env: Env,
@@ -79,7 +100,43 @@ export async function writeStagingSnapshot(
 }
 
 /**
- * Promote staging to production (atomic operation)
+ * Promote staging to production (atomic operation) — cached variant.
+ * If `cachedStaging` / `cachedProd` are supplied, avoids re-fetching
+ * (F-8: publish already has both).
+ */
+export async function promoteStagingToProduction(
+  env: Env,
+  cachedStaging: Snapshot,
+  expectedPreviousHash: string,
+  cachedProd: Snapshot | null | undefined = undefined,
+): Promise<Snapshot> {
+  let staging: Snapshot | null = cachedStaging;
+  if (!staging) {
+    staging = await getStagingSnapshot(env);
+  }
+  if (!staging) {
+    throw new Error("No staging snapshot found to promote");
+  }
+  let currentProd: Snapshot | null | undefined = cachedProd;
+  if (cachedProd === undefined) {
+    currentProd = await getProductionSnapshot(env);
+  }
+  const actualPreviousHash = currentProd?.snapshot_hash || "";
+  if (actualPreviousHash !== expectedPreviousHash) {
+    throw new Error(
+      `Hash chain broken: expected ${expectedPreviousHash}, got ${actualPreviousHash}`,
+    );
+  }
+  await env.DEALS_PROD.put(
+    CONFIG.KV_KEYS.PROD_SNAPSHOT,
+    JSON.stringify(staging),
+  );
+  return staging;
+}
+
+/**
+ * Promote staging to production (atomic operation) — legacy entry point
+ * that re-fetches both snapshots (kept for compat).
  */
 export async function promoteToProduction(
   env: Env,

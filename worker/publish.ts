@@ -1,5 +1,5 @@
 import { Snapshot, PipelineContext, PipelineError } from "./types";
-import { promoteToProduction, revertProduction } from "./lib/storage";
+import { promoteStagingToProduction, revertProduction } from "./lib/storage";
 import {
   commitSnapshot,
   isSnapshotCommitted,
@@ -100,10 +100,12 @@ export async function publishSnapshot(
       return { success: true };
     }
 
-    // Step 4: Promote to production KV
-    const publishedSnapshot = await promoteToProduction(
+    // Step 4: Promote to production KV — reuse cached staging/production (F-8)
+    const publishedSnapshot = await promoteStagingToProduction(
       env,
+      staging,
       expectedPreviousHash,
+      production,
     );
 
     // Step 5: Batch-insert referral records from snapshot into D1
