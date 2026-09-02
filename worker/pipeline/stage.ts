@@ -1,12 +1,8 @@
 import { Deal, Snapshot, PipelineContext } from "../types";
 import { SnapshotSchema } from "../types";
 import { CONFIG } from "../config";
-import {
-  generateSnapshotHash,
-  generateRunId,
-  generateUUID,
-} from "../lib/crypto";
-import { writeStagingSnapshot } from "../lib/storage";
+import { generateSnapshotHash } from "../lib/crypto";
+import { putStagingSnapshot } from "../lib/storage";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -71,10 +67,10 @@ export async function stage(
     throw new Error(`Invalid snapshot: ${validation.error.message}`);
   }
 
-  // Write to staging
-  await writeStagingSnapshot(env, snapshotBase);
+  // Write to staging — use direct put to avoid second hash (F-8)
+  await putStagingSnapshot(env, snapshot);
 
-  // Read-after-write verification
+  // Read-after-write verification (single read, no re-hash)
   const verified = await verifyStaging(env, snapshot);
 
   return {
