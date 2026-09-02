@@ -6,7 +6,7 @@
 
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
-import { createStructuredLogger } from "../../lib/logger";
+import { getD1Logger, requireD1Db } from "./helpers";
 import {
   getDealStats,
   getDomainsWithCounts,
@@ -14,26 +14,12 @@ import {
 } from "../../lib/d1/queries";
 
 // ============================================================================
-// Logger Helper
-// ============================================================================
-
-function getD1Logger(env: Env) {
-  return createStructuredLogger(env, "d1-routes", `d1-${Date.now()}`);
-}
-
-// ============================================================================
 // Database Statistics Endpoint - GET /api/d1/stats
 // ============================================================================
 
 export async function handleD1Stats(env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   try {
     const stats = await getDealStats(env.DEALS_DB);
@@ -62,14 +48,8 @@ export async function handleD1Stats(env: Env): Promise<Response> {
 // ============================================================================
 
 export async function handleD1Domains(env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   try {
     const domains = await getDomainsWithCounts(env.DEALS_DB);
@@ -99,14 +79,8 @@ export async function handleD1Domains(env: Env): Promise<Response> {
 // ============================================================================
 
 export async function handleD1Categories(env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   try {
     const categories = await getCategoriesWithCounts(env.DEALS_DB);

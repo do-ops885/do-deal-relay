@@ -6,30 +6,16 @@
 
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
-import { createStructuredLogger } from "../../lib/logger";
+import { getD1Logger, requireD1Db } from "./helpers";
 import { searchDeals, getSearchSuggestions } from "../../lib/d1/queries";
-
-// ============================================================================
-// Logger Helper
-// ============================================================================
-
-function getD1Logger(env: Env) {
-  return createStructuredLogger(env, "d1-routes", `d1-${Date.now()}`);
-}
 
 // ============================================================================
 // Search Endpoint - GET /api/d1/search
 // ============================================================================
 
 export async function handleD1Search(url: URL, env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   const query = url.searchParams.get("q");
   const limit = parseInt(url.searchParams.get("limit") || "20", 10);
@@ -77,14 +63,8 @@ export async function handleD1Suggestions(
   url: URL,
   env: Env,
 ): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   const partial = url.searchParams.get("q");
   const limit = parseInt(url.searchParams.get("limit") || "10", 10);

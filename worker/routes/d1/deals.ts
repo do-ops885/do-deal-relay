@@ -6,7 +6,7 @@
 
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
-import { createStructuredLogger } from "../../lib/logger";
+import { getD1Logger, requireD1Db } from "./helpers";
 import { logger } from "../../lib/global-logger";
 import { toError } from "../../lib/sanitize-error";
 import {
@@ -22,26 +22,12 @@ import {
 } from "../../lib/d1/queries";
 
 // ============================================================================
-// Logger Helper
-// ============================================================================
-
-function getD1Logger(env: Env) {
-  return createStructuredLogger(env, "d1-routes", `d1-${Date.now()}`);
-}
-
-// ============================================================================
 // Advanced Filtering Endpoint - GET /api/d1/deals
 // ============================================================================
 
 export async function handleD1Deals(url: URL, env: Env): Promise<Response> {
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "D1 database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuard = requireD1Db(env);
+  if (dbGuard) return dbGuard;
 
   const domain = url.searchParams.get("domain");
   const category = url.searchParams.get("category");
@@ -139,20 +125,18 @@ export async function handleD1Similar(url: URL, env: Env): Promise<Response> {
     );
   }
 
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "Database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuardSimilar = requireD1Db(env);
+  if (dbGuardSimilar) return dbGuardSimilar;
 
   try {
-    const deals = await getSimilarDealsD1(env.DEALS_DB, dealId, {
-      limit,
-      includeExpired,
-    });
+    const deals = await getSimilarDealsD1(
+      env.DEALS_DB as NonNullable<Env["DEALS_DB"]>,
+      dealId,
+      {
+        limit,
+        includeExpired,
+      },
+    );
     return jsonResponse(
       { similar: deals, total: deals.length },
       200,
@@ -188,14 +172,8 @@ export async function handleD1Recommended(
   const limitParam = url.searchParams.get("limit");
   const limit = limitParam !== null ? parseInt(limitParam, 10) : 10;
 
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "Database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuardRecommended = requireD1Db(env);
+  if (dbGuardRecommended) return dbGuardRecommended;
 
   try {
     const deals = await getRecommendedDealsD1(env.DEALS_DB, domains, { limit });
@@ -230,14 +208,8 @@ export async function handleD1Trending(url: URL, env: Env): Promise<Response> {
   const days = daysParam !== null ? parseInt(daysParam, 10) : 7;
   const limit = limitParam !== null ? parseInt(limitParam, 10) : 10;
 
-  if (!env.DEALS_DB) {
-    return jsonResponse(
-      { error: "Database not configured" },
-      503,
-      undefined,
-      env,
-    );
-  }
+  const dbGuardTrending = requireD1Db(env);
+  if (dbGuardTrending) return dbGuardTrending;
 
   try {
     const deals = await getTrendingDealsD1(env.DEALS_DB, days, limit);
