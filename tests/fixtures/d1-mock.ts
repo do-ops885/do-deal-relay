@@ -77,11 +77,11 @@ export function createMockD1(storage: Map<string, LockRow>) {
           }
           return { success: true, results: [], meta: { changes: 0 } };
         }
-        if (sql.includes("UPDATE") && sql.includes("expires_at <")) {
+        if (sql.includes("UPDATE") && sql.includes("expires_at <=")) {
           const existing = storage.get(LOCK);
           if (
             existing &&
-            new Date(existing.expires_at) < new Date(params[5] as string)
+            new Date(existing.expires_at) <= new Date(params[5] as string)
           ) {
             storage.set(LOCK, {
               lock_name: LOCK,

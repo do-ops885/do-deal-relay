@@ -92,12 +92,14 @@ describe("PipelineLock — expiry, lifecycle, metadata", () => {
       );
     });
 
-    it("acquireLock: INSERT fails + UPDATE fails for expiring-now lock (strict < boundary)", async () => {
-      // The production code uses `WHERE expires_at < ?6` (strict less-than).
-      // When expires_at equals now, the UPDATE won't match and INSERT won't
-      // insert (row exists). This results in the "unexpected state" error —
-      // a known boundary gap in the current implementation.
-      const nowIso = new Date().toISOString();
+    it("acquireLock: should takeover lock expiring now (inclusive <= boundary)", async () => {
+      // The production code uses `WHERE expires_at <= ?6` (inclusive).
+      // When expires_at equals now, the UPDATE should match and takeover
+      // the expired lock. Use fake timers to make the boundary deterministic.
+      vi.useFakeTimers();
+      const now = new Date("2024-01-02T00:00:00.000Z");
+      vi.setSystemTime(now);
+      const nowIso = now.toISOString();
       storage.set("pipeline:lock", {
         lock_name: "pipeline:lock",
         run_id: "run-boundary",
@@ -106,9 +108,14 @@ describe("PipelineLock — expiry, lifecycle, metadata", () => {
         expires_at: nowIso,
       });
 
-      await expect(acquireLock(env, "run-new", "trace-new")).rejects.toThrow(
-        "Lock acquisition failed",
-      );
+      try {
+        const result = await acquireLock(env, "run-new", "trace-new");
+        expect(result).toBe(true);
+        expect(storage.get("pipeline:lock")!.run_id).toBe("run-new");
+        expect(storage.get("pipeline:lock")!.trace_id).toBe("trace-new");
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
