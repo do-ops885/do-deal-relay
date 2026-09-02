@@ -352,7 +352,11 @@ export class CircuitBreakerOpenError extends Error {
 // Pre-configured Circuit Breakers
 // ============================================================================
 
-// GitHub API circuit breaker
+/**
+ * Create a GitHub API circuit breaker instance
+ * @param env Worker environment bindings
+ * @returns CircuitBreaker instance configured for GitHub API calls
+ */
 export function createGitHubCircuitBreaker(env?: Env): CircuitBreaker {
   return new CircuitBreaker(
     "github-api",
@@ -365,7 +369,11 @@ export function createGitHubCircuitBreaker(env?: Env): CircuitBreaker {
   );
 }
 
-// Telegram notification circuit breaker
+/**
+ * Create a Telegram notification circuit breaker instance
+ * @param env Worker environment bindings
+ * @returns CircuitBreaker instance configured for Telegram notification calls
+ */
 export function createTelegramCircuitBreaker(env?: Env): CircuitBreaker {
   return new CircuitBreaker(
     "telegram",
@@ -381,6 +389,12 @@ export function createTelegramCircuitBreaker(env?: Env): CircuitBreaker {
 // Source discovery circuit breaker (per-domain)
 const sourceCircuitBreakers = new Map<string, CircuitBreaker>();
 
+/**
+ * Get or create a domain-specific discovery source circuit breaker
+ * @param domain Target source domain
+ * @param env Worker environment bindings
+ * @returns CircuitBreaker instance for the domain
+ */
 export function getSourceCircuitBreaker(
   domain: string,
   env?: Env,
@@ -401,7 +415,9 @@ export function getSourceCircuitBreaker(
   return cb;
 }
 
-// Clear all source circuit breakers (useful for testing)
+/**
+ * Clear all cached domain-specific source circuit breakers
+ */
 export function clearSourceCircuitBreakers(): void {
   sourceCircuitBreakers.clear();
 }
@@ -410,6 +426,10 @@ export function clearSourceCircuitBreakers(): void {
 // Metrics Export
 // ============================================================================
 
+/**
+ * Retrieve current metrics for all registered circuit breakers
+ * @returns Record mapping circuit breaker name to its metrics data
+ */
 export function getAllCircuitBreakerMetrics(): Record<
   string,
   CircuitBreakerMetrics
@@ -421,6 +441,9 @@ export function getAllCircuitBreakerMetrics(): Record<
   return result;
 }
 
+/**
+ * Reset stored metrics across all circuit breakers
+ */
 export function resetAllMetrics(): void {
   metricsMap.clear();
 }

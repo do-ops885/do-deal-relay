@@ -1,4 +1,13 @@
-# Documentation Audit - 2026-08-30
+# Track D — Documentation Audit
 
-## Actionable Documentation Additions
-- `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts`: Ensure comprehensive JSDoc `@param`, `@returns`, and `@throws` annotations for exact contract specification.
+## Targeted Surface
+Module: `worker/lib/circuit-breaker.ts`
+
+## Added Documentation Summary
+Added comprehensive JSDoc annotations with `@param` and `@returns` tags for public circuit breaker helper functions:
+- `createGitHubCircuitBreaker`
+- `createTelegramCircuitBreaker`
+- `getSourceCircuitBreaker`
+- `clearSourceCircuitBreakers`
+- `getAllCircuitBreakerMetrics`
+- `resetAllMetrics`
