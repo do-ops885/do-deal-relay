@@ -2,9 +2,37 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-03
-**Version**: 0.19.5
+**Version**: 0.19.6
 **Status**: Active — 2026-09-03 v0.19.5 doc sync: F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6-compatible bypass closed via #742 (`e9dd1d7`), D1 lock inclusive-expiry fix via #739, CI integration guard via #733. WS-E latent bugs #1/#2 stay closed (#741/#743). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-03 Logging Consolidation (N-3) — v0.19.6
+
+Branch: `fix/f11-strict-ts-flags` (stacked worktree; commit separately from F-11). Spec: [SPEC-n3-logging-consolidation.md](SPEC-n3-logging-consolidation.md). ADR: [ADR-025-logging-consolidation.md](ADR-025-logging-consolidation.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| N-3 | Parallel logging subsystems: `global-logger.ts` (~90 importers) vs `lib/logger/*` (4 modules) - divergence risk like MI-5 | P2 | CLOSED - triaged plus narrow consolidation: `lib/logger/*` is durable KV run-log storage (not a console duplicate, already reports via `global-logger`) so it stays layered; true duplication removed via shared `emitConsole` helper (`global-logger.ts` + `structured.ts`) and `bot/lib/logger.ts` 128L duplicate replaced with re-exports (19L) | worker/lib/global-logger.ts, worker/lib/logger/structured.ts, bot/lib/logger.ts, ADR-025 |
+
+Verification: `npx tsc --noEmit` pass, focused logger/bot/eu-ai-act suites 41/41 pass, `npm run test:unit` 2749/2749 pass. Disclosed exception: structured-mirror debug entries move `console.debug` to `console.log` (same stdout stream; no test pins it).
+
+Remaining: RL-1 (KV rate-limit race → DO migration) deferred per ADR-017; CI-1 (CLOUDFLARE_API_TOKEN) blocked per ADR-023; REDDIT-5/6 in-progress/blocked.
+
+---
+
+## 2026-09-03 Strict Unused-Symbol Enforcement (F-11)
+
+Branch: `fix/f11-strict-ts-flags`. Spec: [SPEC-f11-strict-ts-flags.md](SPEC-f11-strict-ts-flags.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| F-11 | tsconfig did not enforce unused locals or parameters, leaving dead-code patterns unenforceable | P1 | CLOSED - removed or safely renamed 408 compiler-reported unused symbols, then enabled `noUnusedLocals` and `noUnusedParameters` | `e90d3bb`, `1405f4f`, `0838884`, `8f9b603`, `tsconfig.json`, `playwright.config.ts` |
+
+Verification: `npx tsc --noEmit` pass, `npm run lint` pass, `npm run test:unit` 2749/2749 pass, `./scripts/quality_gate.sh` pass (warnings only for pre-existing near-limit files).
+
+Remaining: N-3 (parallel logging subsystems) deferred; RL-1 (KV rate-limit race → DO migration) deferred per ADR-017; CI-1 (CLOUDFLARE_API_TOKEN) blocked per ADR-023; REDDIT-5/6 in-progress/blocked.
 
 ---
 

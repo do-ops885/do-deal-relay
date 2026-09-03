@@ -46,6 +46,25 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 };
 
+/**
+ * Single-sourced console routing for all logging paths.
+ * `error` goes to stderr, `warn` to console.warn, everything else to stdout.
+ * Used by `createLogger` and by `worker/lib/logger/structured.ts` so the
+ * level-to-method mapping cannot drift between the two emitters.
+ */
+export function emitConsole(level: LogLevel, output: string): void {
+  switch (level) {
+    case "error":
+      console.error(output);
+      break;
+    case "warn":
+      console.warn(output);
+      break;
+    default:
+      console.log(output);
+  }
+}
+
 export interface Logger {
   debug(message: string, context?: LogContext): void;
   info(message: string, context?: LogContext): void;
@@ -102,16 +121,7 @@ export function createLogger(options: LoggerOptions = {}): Logger {
       ? JSON.stringify(entry)
       : `[${entry.timestamp}] ${entry.level.toUpperCase()} ${entry.message}`;
 
-    switch (level) {
-      case "error":
-        console.error(output);
-        break;
-      case "warn":
-        console.warn(output);
-        break;
-      default:
-        console.log(output);
-    }
+    emitConsole(level, output);
   }
 
   return {
