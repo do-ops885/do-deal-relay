@@ -8,18 +8,14 @@ import { handleError } from "../../lib/error-handler";
 import {
   createSubscription,
   deleteSubscription,
-  getPartnerSubscriptions,
-  createWebhookPartner,
-  getWebhookPartner,
-  getDeadLetterQueue,
-  retryDeadLetterEvent,
+  getUserSubscriptions,
+  getSubscription,
   type WebhookEventType,
 } from "../../lib/webhook/index";
 import {
   jsonResponse,
   VALID_WEBHOOK_EVENTS,
   type SubscribeRequest,
-  type CreatePartnerRequest,
 } from "./types";
 import { requireAuth as unifiedRequireAuth } from "../../lib/auth";
 import { validateFetchUrl } from "../../lib/security";
@@ -45,14 +41,38 @@ export async function requireAuth(
   return null; // Authentication successful
 }
 
+export async function requireAuthenticatedUser(
+  request: Request,
+  env: Env,
+  userId?: string,
+): Promise<string | Response> {
+  if (userId) return userId;
+  const authMiddleware = unifiedRequireAuth(env);
+  const auth = await authMiddleware(request);
+  if (auth instanceof Response) return auth;
+  if (!auth.userId) {
+    return jsonResponse(
+      { error: "A user-bound credential is required for this operation" },
+      403,
+      request,
+      env,
+    );
+  }
+  return auth.userId;
+}
+
 export async function handleSubscribe(
   request: Request,
   env: Env,
+  authenticatedUserId?: string,
 ): Promise<Response> {
   try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
 
     const body = (await request.json()) as SubscribeRequest;
 
@@ -105,6 +125,7 @@ export async function handleSubscribe(
       partnerId,
       body.url,
       body.events as WebhookEventType[],
+      ownerId,
       body.metadata,
       body.retry_policy,
       body.filters,
@@ -149,11 +170,16 @@ export async function handleSubscribe(
 export async function handleUnsubscribe(
   request: Request,
   env: Env,
+  authenticatedUserId?: string,
+  allowAdmin = false,
 ): Promise<Response> {
   try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
 
     const body = (await request.json()) as { subscription_id: string };
 
@@ -166,7 +192,20 @@ export async function handleUnsubscribe(
       );
     }
 
-    const deleted = await deleteSubscription(env, body.subscription_id);
+    const subscription = await getSubscription(env, body.subscription_id);
+    if (
+      !subscription ||
+      !isManagedByOwner(subscription.owner_id, ownerId, allowAdmin)
+    ) {
+      return jsonResponse(
+        { error: "Subscription not found" },
+        404,
+        request,
+        env,
+      );
+    }
+
+    const deleted = await deleteSubscription(env, subscription.id);
 
     if (!deleted) {
       return jsonResponse(
@@ -205,17 +244,38 @@ export async function handleUnsubscribe(
 }
 
 export async function handleUnsubscribeById(
+  request: Request,
   subscriptionId: string,
   env: Env,
+  authenticatedUserId?: string,
+  allowAdmin = false,
 ): Promise<Response> {
   try {
-    const deleted = await deleteSubscription(env, subscriptionId);
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
+    const subscription = await getSubscription(env, subscriptionId);
+    if (
+      !subscription ||
+      !isManagedByOwner(subscription.owner_id, ownerId, allowAdmin)
+    ) {
+      return jsonResponse(
+        { error: "Subscription not found" },
+        404,
+        request,
+        env,
+      );
+    }
+    const deleted = await deleteSubscription(env, subscription.id);
 
     if (!deleted) {
       return jsonResponse(
         { error: "Subscription not found" },
         404,
-        undefined,
+        request,
         env,
       );
     }
@@ -230,7 +290,7 @@ export async function handleUnsubscribeById(
         message: "Subscription deleted successfully",
       },
       200,
-      undefined,
+      request,
       env,
     );
   } catch (error) {
@@ -241,7 +301,7 @@ export async function handleUnsubscribeById(
     return jsonResponse(
       { error: "Failed to delete subscription" },
       500,
-      undefined,
+      request,
       env,
     );
   }
@@ -250,16 +310,26 @@ export async function handleUnsubscribeById(
 export async function handleListSubscriptions(
   request: Request,
   env: Env,
+  authenticatedUserId?: string,
+  allowAdmin = false,
 ): Promise<Response> {
   try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
 
     const url = new URL(request.url);
     const partnerId = url.searchParams.get("partner_id") || "default";
 
-    const subscriptions = await getPartnerSubscriptions(env, partnerId);
+    const subscriptions = await getUserSubscriptions(
+      env,
+      ownerId,
+      partnerId,
+      allowAdmin,
+    );
 
     return jsonResponse(
       {
@@ -290,191 +360,10 @@ export async function handleListSubscriptions(
   }
 }
 
-// ============================================================================
-// Partner Management
-// ============================================================================
-
-export async function handleCreatePartner(
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
-
-    const body = (await request.json()) as CreatePartnerRequest;
-
-    if (!body.name) {
-      return jsonResponse(
-        { error: "Missing required field: name" },
-        400,
-        request,
-        env,
-      );
-    }
-
-    const partner = await createWebhookPartner(
-      env,
-      body.name,
-      body.allowed_events,
-      body.rate_limit_per_minute,
-    );
-
-    logger.info(`Webhook partner created: ${partner.id}`, {
-      component: "webhook",
-      partner_name: body.name,
-    });
-
-    return jsonResponse(
-      {
-        success: true,
-        partner: {
-          id: partner.id,
-          name: partner.name,
-          secret: partner.secret, // Return once for client to store
-          active: partner.active,
-          allowed_events: partner.allowed_events,
-          rate_limit_per_minute: partner.rate_limit_per_minute,
-          created_at: partner.created_at,
-        },
-      },
-      201,
-      request,
-      env,
-    );
-  } catch (error) {
-    const err = handleError(error, {
-      component: "webhook",
-      handler: "handleCreatePartner",
-    });
-    return jsonResponse(
-      { error: "Failed to create partner" },
-      500,
-      request,
-      env,
-    );
-  }
-}
-
-export async function handleGetPartner(
-  request: Request,
-  env: Env,
-  partnerId: string,
-): Promise<Response> {
-  try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
-
-    const partner = await getWebhookPartner(env, partnerId);
-
-    if (!partner) {
-      return jsonResponse({ error: "Partner not found" }, 404, request, env);
-    }
-
-    return jsonResponse(
-      {
-        partner: {
-          id: partner.id,
-          name: partner.name,
-          active: partner.active,
-          allowed_events: partner.allowed_events,
-          rate_limit_per_minute: partner.rate_limit_per_minute,
-          created_at: partner.created_at,
-        },
-      },
-      200,
-      request,
-      env,
-    );
-  } catch (error) {
-    const err = handleError(error, {
-      component: "webhook",
-      handler: "handleGetPartner",
-    });
-    return jsonResponse({ error: "Failed to get partner" }, 500, request, env);
-  }
-}
-
-// ============================================================================
-// Dead Letter Queue
-// ============================================================================
-
-export async function handleGetDeadLetterQueue(
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
-
-    const dlq = await getDeadLetterQueue(env);
-
-    return jsonResponse(
-      {
-        count: dlq.length,
-        events: dlq.map((e) => ({
-          event_id: e.event.id,
-          event_type: e.event.type,
-          subscription_id: e.delivery.subscription_id,
-          attempts: e.delivery.attempts.length,
-          enqueued_at: e.enqueued_at,
-          retryable: e.retryable,
-        })),
-      },
-      200,
-      request,
-      env,
-    );
-  } catch (error) {
-    const err = handleError(error, {
-      component: "webhook",
-      handler: "handleGetDeadLetterQueue",
-    });
-    return jsonResponse({ error: "Failed to get DLQ" }, 500, request, env);
-  }
-}
-
-export async function handleRetryDeadLetter(
-  request: Request,
-  env: Env,
-  eventId: string,
-  subscriptionId: string,
-): Promise<Response> {
-  try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
-
-    const success = await retryDeadLetterEvent(env, eventId, subscriptionId);
-
-    if (!success) {
-      return jsonResponse(
-        { error: "Event not found or subscription inactive" },
-        404,
-        request,
-        env,
-      );
-    }
-
-    return jsonResponse(
-      {
-        success: true,
-        message: "Event queued for retry",
-        event_id: eventId,
-        subscription_id: subscriptionId,
-      },
-      200,
-      request,
-      env,
-    );
-  } catch (error) {
-    const err = handleError(error, {
-      component: "webhook",
-      handler: "handleRetryDeadLetter",
-    });
-    return jsonResponse({ error: "Failed to retry event" }, 500, request, env);
-  }
+function isManagedByOwner(
+  recordOwnerId: unknown,
+  ownerId: string,
+  allowAdmin: boolean,
+): boolean {
+  return recordOwnerId === ownerId || allowAdmin;
 }

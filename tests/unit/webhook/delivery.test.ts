@@ -75,6 +75,7 @@ function createSubscription(
 ): WebhookSubscription {
   return {
     id: "sub_test123",
+    owner_id: "test-user",
     partner_id: "partner_1",
     url: "https://example.com/webhook",
     events: ["referral.created"],

@@ -7,6 +7,7 @@ import {
   createSubscription,
   getSubscription,
   getPartnerSubscriptions,
+  getUserSubscriptions,
 } from "../../../worker/lib/webhook/subscriptions";
 import type {
   WebhookPartner,
@@ -27,13 +28,15 @@ function createMockKv() {
     delete: vi.fn(async (key: string) => {
       storage.delete(key);
     }),
-    list: vi.fn(async ({ prefix }: { prefix: string }) => {
-      const keys: { name: string }[] = [];
-      for (const [key] of storage.entries()) {
-        if (key.startsWith(prefix)) keys.push({ name: key });
-      }
-      return { keys };
-    }),
+    list: vi.fn(
+      async ({ prefix }: { prefix?: string; cursor?: string } = {}) => {
+        const keys: { name: string }[] = [];
+        for (const [key] of storage.entries()) {
+          if (!prefix || key.startsWith(prefix)) keys.push({ name: key });
+        }
+        return { keys };
+      },
+    ),
     storage,
   };
 }
@@ -240,6 +243,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           partnerId,
           "https://example.com/webhook",
           ["referral.created"],
+          "user_1",
         );
 
         expect(sub.partner_id).toBe(partnerId);
@@ -257,6 +261,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           partnerId,
           "https://example.com/webhook",
           ["referral.created"],
+          "user_1",
           undefined,
           { max_attempts: 3 },
         );
@@ -271,6 +276,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           partnerId,
           "https://example.com/webhook",
           ["referral.created"],
+          "user_1",
           undefined,
           undefined,
           { domains: ["example.com"], status: ["active"] },
@@ -288,6 +294,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           partnerId,
           "https://example.com/webhook",
           ["referral.created"],
+          "user_1",
           { source: "test" },
         );
         expect(sub.metadata).toEqual({ source: "test" });
@@ -295,10 +302,26 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
 
       it("should throw when KV is unavailable", async () => {
         await expect(
-          createSubscription({} as any, partnerId, "https://example.com", [
-            "referral.created",
-          ]),
+          createSubscription(
+            {} as any,
+            partnerId,
+            "https://example.com",
+            ["referral.created"],
+            "user_1",
+          ),
         ).rejects.toThrow("No KV namespace available");
+      });
+
+      it("should reject an empty owner ID at the storage boundary", async () => {
+        await expect(
+          createSubscription(
+            createEnv(kv),
+            partnerId,
+            "https://example.com/webhook",
+            ["referral.created"],
+            " ",
+          ),
+        ).rejects.toThrow("Webhook owner_id is required");
       });
     });
 
@@ -310,6 +333,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           partnerId,
           "https://example.com/webhook",
           ["referral.created"],
+          "user_1",
         );
         const sub = await getSubscription(env, created.id);
         expect(sub?.id).toBe(created.id);
@@ -330,12 +354,20 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
     describe("getPartnerSubscriptions()", () => {
       it("should return all subscriptions for a partner", async () => {
         const env = createEnv(kv);
-        await createSubscription(env, partnerId, "https://example.com/1", [
-          "referral.created",
-        ]);
-        await createSubscription(env, partnerId, "https://example.com/2", [
-          "referral.updated",
-        ]);
+        await createSubscription(
+          env,
+          partnerId,
+          "https://example.com/1",
+          ["referral.created"],
+          "user_1",
+        );
+        await createSubscription(
+          env,
+          partnerId,
+          "https://example.com/2",
+          ["referral.updated"],
+          "user_1",
+        );
         expect(await getPartnerSubscriptions(env, partnerId)).toHaveLength(2);
       });
 
@@ -349,6 +381,82 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
         expect(
           await getPartnerSubscriptions(createEnv(kv), "partner_unknown"),
         ).toEqual([]);
+      });
+    });
+
+    describe("getUserSubscriptions()", () => {
+      it("should hide legacy ownerless subscriptions from regular users", async () => {
+        const env = createEnv(kv);
+        kv.storage.set(
+          "webhook_subscription:sub_legacy",
+          JSON.stringify({
+            id: "sub_legacy",
+            partner_id: partnerId,
+            url: "https://example.com/legacy",
+            events: ["referral.created"],
+            secret: "whsec_legacy",
+            active: true,
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          }),
+        );
+        kv.storage.set(
+          `webhook_subscriptions:${partnerId}`,
+          JSON.stringify(["sub_legacy"]),
+        );
+
+        expect(await getUserSubscriptions(env, "user_1", partnerId)).toEqual(
+          [],
+        );
+        expect(
+          await getUserSubscriptions(env, "admin_1", partnerId, true),
+        ).toHaveLength(1);
+      });
+
+      it("should follow KV cursors when listing all subscriptions", async () => {
+        const env = createEnv(kv);
+        const first = await createSubscription(
+          env,
+          partnerId,
+          "https://example.com/first",
+          ["referral.created"],
+          "user_1",
+          undefined,
+          undefined,
+          undefined,
+        );
+        const second = await createSubscription(
+          env,
+          partnerId,
+          "https://example.com/second",
+          ["referral.created"],
+          "user_1",
+          undefined,
+          undefined,
+          undefined,
+        );
+
+        kv.list.mockImplementation(async (options = {}) => {
+          if (options.cursor === "page-2") {
+            return {
+              keys: [{ name: `webhook_subscription:${second.id}` }],
+              list_complete: true,
+            };
+          }
+          return {
+            keys: [{ name: `webhook_subscription:${first.id}` }],
+            cursor: "page-2",
+            list_complete: false,
+          };
+        });
+
+        const subscriptions = await getUserSubscriptions(env, "user_1");
+
+        expect(subscriptions.map((subscription) => subscription.id)).toEqual([
+          first.id,
+          second.id,
+        ]);
+        expect(kv.list).toHaveBeenCalledTimes(2);
       });
     });
   });

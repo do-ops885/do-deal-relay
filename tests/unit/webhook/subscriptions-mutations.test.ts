@@ -6,6 +6,7 @@ import {
   getSubscription,
   getPartnerSubscriptions,
   getSyncState,
+  getSyncConfig,
   saveSyncState,
   createSyncConfig,
   createSubscription,
@@ -71,6 +72,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         partnerId,
         "https://example.com/webhook",
         ["referral.created"],
+        "user_1",
       );
 
       // Ensure time has passed so updated_at differs
@@ -109,6 +111,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         partnerId,
         "https://example.com/webhook",
         ["referral.created"],
+        "user_1",
       );
       const updated = await updateSubscription(env, created.id, {
         events: ["referral.created", "referral.updated", "ping"],
@@ -129,6 +132,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         partnerId,
         "https://example.com/webhook",
         ["referral.created"],
+        "user_1",
       );
 
       expect(await deleteSubscription(env, created.id)).toBe(true);
@@ -153,12 +157,14 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         partnerId,
         "https://example.com/1",
         ["referral.created"],
+        "user_1",
       );
       const sub2 = await createSubscription(
         env,
         partnerId,
         "https://example.com/2",
         ["referral.updated"],
+        "user_1",
       );
 
       await deleteSubscription(env, sub1.id);
@@ -176,16 +182,17 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
   describe("Sync State Management", () => {
     describe("getSyncState()", () => {
       it("should return null when no sync state exists", async () => {
-        expect(await getSyncState(createEnv(kv), "partner_1")).toBeNull();
+        expect(await getSyncState(createEnv(kv), "sync_1")).toBeNull();
       });
 
       it("should return null when KV is unavailable", async () => {
-        expect(await getSyncState({} as any, "partner_1")).toBeNull();
+        expect(await getSyncState({} as any, "sync_1")).toBeNull();
       });
 
       it("should return saved sync state", async () => {
         const env = createEnv(kv);
         const state = {
+          config_id: "sync_1",
           partner_id: "partner_1",
           last_sync_at: "2024-01-01T00:00:00Z",
           sync_version: 5,
@@ -193,7 +200,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
           status: "idle" as const,
         };
         await saveSyncState(env, state);
-        expect(await getSyncState(env, "partner_1")).toEqual(state);
+        expect(await getSyncState(env, "sync_1")).toEqual(state);
       });
     });
 
@@ -201,6 +208,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
       it("should save sync state to KV", async () => {
         const env = createEnv(kv);
         const state = {
+          config_id: "sync_save",
           partner_id: "partner_save",
           last_sync_at: "2024-06-01T00:00:00Z",
           sync_version: 1,
@@ -208,11 +216,12 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
           status: "idle" as const,
         };
         await saveSyncState(env, state);
-        expect(await getSyncState(env, "partner_save")).toEqual(state);
+        expect(await getSyncState(env, "sync_save")).toEqual(state);
       });
 
       it("should do nothing when KV is unavailable", async () => {
         const state = {
+          config_id: "sync_none",
           partner_id: "partner_none",
           last_sync_at: "2024-01-01T00:00:00Z",
           sync_version: 0,
@@ -225,6 +234,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
       it("should overwrite previous sync state", async () => {
         const env = createEnv(kv);
         const s1 = {
+          config_id: "sync_overwrite",
           partner_id: "partner_overwrite",
           last_sync_at: "2024-01-01T00:00:00Z",
           sync_version: 1,
@@ -232,6 +242,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
           status: "idle" as const,
         };
         const s2 = {
+          config_id: "sync_overwrite",
           partner_id: "partner_overwrite",
           last_sync_at: "2024-06-01T00:00:00Z",
           sync_version: 2,
@@ -241,9 +252,41 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         await saveSyncState(env, s1);
         await saveSyncState(env, s2);
 
-        const result = await getSyncState(env, "partner_overwrite");
+        const result = await getSyncState(env, "sync_overwrite");
         expect(result?.sync_version).toBe(2);
         expect(result?.status).toBe("syncing");
+      });
+
+      it("should isolate states for configs that share a partner", async () => {
+        const env = createEnv(kv);
+        const first = await createSyncConfig(env, {
+          owner_id: "user_1",
+          partner_id: "shared_partner",
+          direction: "push",
+          mode: "manual",
+          conflict_resolution: "timestamp",
+          priority: "local",
+        });
+        const second = await createSyncConfig(env, {
+          owner_id: "user_2",
+          partner_id: "shared_partner",
+          direction: "pull",
+          mode: "manual",
+          conflict_resolution: "timestamp",
+          priority: "local",
+        });
+
+        await saveSyncState(env, {
+          config_id: first.id,
+          partner_id: "shared_partner",
+          last_sync_at: "2024-06-01T00:00:00Z",
+          sync_version: 4,
+          pending_changes: 0,
+          status: "idle",
+        });
+
+        expect((await getSyncState(env, first.id))?.sync_version).toBe(4);
+        expect((await getSyncState(env, second.id))?.sync_version).toBe(0);
       });
     });
 
@@ -251,6 +294,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
       it("should create sync config with all fields", async () => {
         const env = createEnv(kv);
         const config: Omit<SyncConfig, "id"> = {
+          owner_id: "test-user",
           partner_id: "partner_sync",
           direction: "bidirectional",
           mode: "realtime",
@@ -262,26 +306,32 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         expect(result.direction).toBe("bidirectional");
         expect(result.mode).toBe("realtime");
         expect(result.id).toMatch(/^sync_/);
+        expect(await getSyncConfig(env, "partner_sync", "test-user")).toEqual(
+          result,
+        );
       });
 
       it("should initialize sync state", async () => {
         const env = createEnv(kv);
         const config: Omit<SyncConfig, "id"> = {
+          owner_id: "test-user",
           partner_id: "partner_init",
           direction: "push",
           mode: "scheduled",
           conflict_resolution: "priority",
           priority: "remote",
         };
-        await createSyncConfig(env, config);
-        const state = await getSyncState(env, "partner_init");
+        const created = await createSyncConfig(env, config);
+        const state = await getSyncState(env, created.id);
         expect(state).not.toBeNull();
+        expect(state?.partner_id).toBe("partner_init");
         expect(state?.status).toBe("idle");
         expect(state?.sync_version).toBe(0);
       });
 
       it("should throw when KV is unavailable", async () => {
         const config: Omit<SyncConfig, "id"> = {
+          owner_id: "test-user",
           partner_id: "partner_fail",
           direction: "pull",
           mode: "manual",
@@ -293,9 +343,47 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
         );
       });
 
+      it("should reject an empty owner ID at the storage boundary", async () => {
+        await expect(
+          createSyncConfig(createEnv(kv), {
+            owner_id: " ",
+            partner_id: "partner_owner_required",
+            direction: "pull",
+            mode: "manual",
+            conflict_resolution: "manual",
+            priority: "local",
+          }),
+        ).rejects.toThrow("Webhook owner_id is required");
+      });
+
+      it("should hide legacy ownerless sync configs from regular users", async () => {
+        const env = createEnv(kv);
+        kv.storage.set(
+          "sync_config:sync_legacy",
+          JSON.stringify({
+            id: "sync_legacy",
+            partner_id: "partner_legacy",
+            direction: "push",
+            mode: "manual",
+            conflict_resolution: "timestamp",
+            priority: "local",
+          }),
+        );
+        kv.storage.set(
+          "sync_configs:partner_legacy",
+          JSON.stringify(["sync_legacy"]),
+        );
+
+        expect(await getSyncConfig(env, "partner_legacy", "user_1")).toBeNull();
+        expect(
+          await getSyncConfig(env, "partner_legacy", "admin_1", true),
+        ).toMatchObject({ id: "sync_legacy" });
+      });
+
       it("should support schedule configuration", async () => {
         const env = createEnv(kv);
         const config: Omit<SyncConfig, "id"> = {
+          owner_id: "test-user",
           partner_id: "partner_schedule",
           direction: "push",
           mode: "scheduled",
@@ -313,6 +401,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
       it("should support filters and field mapping", async () => {
         const env = createEnv(kv);
         const config: Omit<SyncConfig, "id"> = {
+          owner_id: "test-user",
           partner_id: "partner_filters",
           direction: "pull",
           mode: "manual",

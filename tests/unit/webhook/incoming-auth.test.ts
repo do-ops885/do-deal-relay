@@ -33,7 +33,10 @@ import { verifyHmacSignature } from "../../../worker/lib/hmac";
 function createMockKv() {
   const storage = new Map<string, string>();
   return {
-    get: vi.fn(async (key: string) => storage.get(key) ?? null),
+    get: vi.fn(async (key: string, type?: string) => {
+      const value = storage.get(key) ?? null;
+      return type === "json" && value ? JSON.parse(value) : value;
+    }),
     put: vi.fn(async (key: string, value: string) => {
       storage.set(key, value);
     }),
@@ -160,9 +163,10 @@ describe("Webhook Incoming - Auth & Validation", () => {
         JSON.stringify([createPartner({ rate_limit_per_minute: 1 })]),
       );
       const now = Date.now();
+      const windowStart = Math.floor(now / 60000) * 60;
       kv.storage.set(
-        "webhook_ratelimit:partner_test",
-        JSON.stringify({ count: 1, window: Math.floor(now / 60000) * 60000 }),
+        `ratelimit:webhook-incoming:partner:partner_test:${windowStart}`,
+        JSON.stringify({ count: 1, windowStart }),
       );
       const result = await handleIncomingWebhook(
         env,
@@ -180,10 +184,10 @@ describe("Webhook Incoming - Auth & Validation", () => {
         JSON.stringify([createPartner({ rate_limit_per_minute: 1 })]),
       );
       kv.storage.set(
-        "webhook_ratelimit:partner_test",
+        `ratelimit:webhook-incoming:partner:partner_test:${Math.floor(Date.now() / 60000) * 60 - 60}`,
         JSON.stringify({
           count: 999,
-          window: Math.floor(Date.now() / 60000) * 60000 - 60000,
+          windowStart: Math.floor(Date.now() / 60000) * 60 - 60,
         }),
       );
       vi.mocked(verifyHmacSignature).mockResolvedValue({

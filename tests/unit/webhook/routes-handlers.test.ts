@@ -97,6 +97,32 @@ describe("Webhook Route Handlers", () => {
   // ============================================================================
 
   describe("handleSubscribe()", () => {
+    it("rejects API keys that are not bound to a user", async () => {
+      const env = createEnv(kv);
+      const key = "ddr_unbound_key";
+      const hashBuffer = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(key),
+      );
+      const hash = Array.from(new Uint8Array(hashBuffer))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+      kv.storage.set(
+        `apikey:${hash}`,
+        JSON.stringify({ role: "user", createdAt: new Date().toISOString() }),
+      );
+
+      const response = await handleSubscribe(
+        createRequest(
+          "POST",
+          "http://localhost/test",
+          { url: "https://example.com/hook", events: ["referral.created"] },
+          { "X-API-Key": key },
+        ),
+        env,
+      );
+      expect(response.status).toBe(403);
+    });
     it("should reject without API key", async () => {
       const env = createEnv(kv);
       const request = createRequest("POST", "http://localhost/test", {

@@ -36,11 +36,13 @@ export {
   createSubscription,
   getSubscription,
   getPartnerSubscriptions,
+  getUserSubscriptions,
   updateSubscription,
   deleteSubscription,
   getSyncState,
   saveSyncState,
   createSyncConfig,
+  getSyncConfig,
 } from "./subscriptions";
 
 // Delivery and Retry Logic
