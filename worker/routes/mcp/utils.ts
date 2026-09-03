@@ -7,16 +7,11 @@
 import type { Env } from "../../types";
 import { CONFIG } from "../../config";
 import { getAllowedOrigin } from "../utils";
-import {
-  checkRateLimit,
-  getClientIdentifier,
-  createRateLimitHeaders,
-} from "../../lib/rate-limit";
+import { checkRateLimit, getClientIdentifier } from "../../lib/rate-limit";
 import {
   MCP_PROTOCOL_VERSION,
   type JSONRPCRequest,
   type JSONRPCResponse,
-  MCPErrorCodes,
   JSONRPCRequestSchema,
   InitializeParamsSchema,
   ToolCallParamsSchema,
@@ -161,7 +156,7 @@ export function createJSONResponse(
   request: Request,
   status: number = 200,
   extraHeaders: HeadersInit = {},
-  origin?: string | null,
+  _origin?: string | null,
 ): Response {
   return new Response(JSON.stringify(data), {
     status,

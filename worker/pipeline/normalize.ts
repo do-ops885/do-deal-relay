@@ -9,7 +9,7 @@ import { batchAutoCategorize } from "../lib/categorization";
 /**
  * Normalize all deals to canonical format
  */
-export function normalize(deals: Deal[], ctx: PipelineContext): Deal[] {
+export function normalize(deals: Deal[], _ctx: PipelineContext): Deal[] {
   // First apply auto-categorization
   const categorized = batchAutoCategorize(deals);
   // Then normalize each deal

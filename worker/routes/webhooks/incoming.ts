@@ -108,7 +108,7 @@ export async function handleIncomingWebhookRequest(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleIncomingWebhookRequest",
       partner_id: partnerId,

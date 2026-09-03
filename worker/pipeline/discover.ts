@@ -44,7 +44,7 @@ interface ExtractedDeal {
  */
 export async function discover(
   env: Env,
-  ctx: PipelineContext,
+  _ctx: PipelineContext,
 ): Promise<DiscoveryResult> {
   const sources = await getSourceRegistry(env);
   let activeSources = sources.filter((s) => s.active);

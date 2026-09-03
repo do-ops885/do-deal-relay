@@ -11,13 +11,7 @@
 import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
 import { type NLQError } from "../../lib/nlq/types";
-import {
-  handleNLQ,
-  handleNLQGet,
-  handleNLQExplain,
-  executeNLQ,
-  parseNaturalLanguageQuery,
-} from "./handlers";
+import { handleNLQ, handleNLQGet, handleNLQExplain } from "./handlers";
 import { handleSavedPost, handleSavedGet, handleSavedDelete } from "./saved";
 import { handleSuggestions } from "./suggestions";
 
