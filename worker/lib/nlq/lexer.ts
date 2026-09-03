@@ -94,7 +94,7 @@ export function tokenize(
  */
 export function removeStopwords(
   tokens: Token[],
-  config: NLQConfig = DEFAULT_NLQ_CONFIG,
+  _config: NLQConfig = DEFAULT_NLQ_CONFIG,
 ): Token[] {
   return tokens.filter(
     (t) => t.type !== "stopword" && t.type !== "punctuation",

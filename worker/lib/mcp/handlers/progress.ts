@@ -11,7 +11,6 @@ import {
   createProgressTracker,
   listOperations,
 } from "../progress";
-import { getTools } from "../tools";
 
 export async function handleCheckProgress(
   args: Record<string, unknown>,
@@ -139,7 +138,7 @@ export async function handleCancelOperation(
 }
 
 export async function handleListOperations(
-  args: Record<string, unknown>,
+  _args: Record<string, unknown>,
   env: Env,
 ): Promise<ToolCallResult> {
   const ops = await listOperations(env);

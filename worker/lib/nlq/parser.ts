@@ -5,17 +5,10 @@
  * for structured query building.
  */
 
-import {
-  Token,
-  ParsedQuery,
-  ExtractedEntity,
-  NLQConfig,
-  DEFAULT_NLQ_CONFIG,
-} from "./types";
+import { ParsedQuery, NLQConfig, DEFAULT_NLQ_CONFIG } from "./types";
 import { classifyIntent } from "./intent";
-import type { IntentClassification } from "./types";
-import { tokenize, removeStopwords } from "./lexer";
-import { extractEntities, getTopEntities } from "./entities";
+import { tokenize } from "./lexer";
+import { extractEntities } from "./entities";
 
 export { tokenize, removeStopwords } from "./lexer";
 export { extractEntities, getTopEntities } from "./entities";

@@ -5,7 +5,6 @@
 
 import { logger } from "../../global-logger";
 import { toError } from "../../sanitize-error";
-import { CONFIG } from "../../../config";
 import type { Env } from "../../../types";
 import type { QueryExpansion } from "./types";
 import { runLLMWithGateway } from "../../ai-gateway/llm";

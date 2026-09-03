@@ -4,8 +4,6 @@
  * Contains tool definitions and handlers for experience_deal, report_deal, natural_language_query.
  */
 
-import { z } from "zod";
-import type { Env } from "../../../types";
 import type { Tool, ToolHandler } from "../types";
 
 import {

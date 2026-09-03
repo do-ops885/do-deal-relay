@@ -10,9 +10,9 @@ import { CONFIG } from "../../../config";
 import { getTrustThreshold } from "../../config-utils";
 import type { Env } from "../../../types";
 import type { EnhancedQuery, QueryFilters, AIEnhancerOptions } from "./types";
-import { extractEntities, deduplicateEntities } from "./entities";
-import { classifyIntent, validateIntent } from "./intent";
-import { expandQuery, createEmptyExpansion, SYNONYM_MAP } from "./expansion";
+import { extractEntities } from "./entities";
+import { classifyIntent } from "./intent";
+import { expandQuery, createEmptyExpansion } from "./expansion";
 import { isGatewayEnabled } from "../../ai-gateway/llm";
 
 export type {
@@ -30,11 +30,6 @@ export { VALID_COMPARATOR_OPS } from "./entities";
 // ============================================================================
 // Constants
 // ============================================================================
-
-const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
-
-const AI_MAX_TOKENS_LONG = CONFIG.NLQ_AI_MAX_TOKENS_LONG;
-const AI_MAX_TOKENS_SHORT = CONFIG.NLQ_AI_MAX_TOKENS_SHORT;
 
 const CACHE_TTL_SECONDS = CONFIG.NLQ_AI_CACHE_TTL_MINUTES * 60;
 

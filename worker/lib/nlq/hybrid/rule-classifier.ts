@@ -3,7 +3,6 @@
 // ============================================================================
 // Rule-based classification for fast/simple query processing
 
-import { logger } from "../../global-logger";
 import { CONFIG } from "../../../config";
 import { getTrustThreshold } from "../../config-utils";
 import type { Env } from "../../../types";

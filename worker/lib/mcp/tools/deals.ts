@@ -4,9 +4,7 @@
  * Contains tool definitions and handlers for search_deals, get_deal, add_referral.
  */
 
-import { z } from "zod";
-import type { Env } from "../../../types";
-import type { Tool, ToolCallResult, ToolHandler } from "../types";
+import type { Tool, ToolHandler } from "../types";
 
 import { handleSearchDeals, SearchDealsInputSchema } from "../handlers/search";
 import {
