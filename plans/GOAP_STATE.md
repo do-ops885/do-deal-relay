@@ -15,7 +15,7 @@ Branch: `fix/webhook-scoping-rate-limit-trust` (3 atomic commits).
 | ID | Finding | Priority | Status | Evidence |
 |:---|:---|:---|:---|:---|
 | WS-E-1 | `evolveTrustBatch` inserted new domains at hardcoded `0.5` without first adjustment | P1 | ✅ CLOSED — initial score `clamp(0.5+adjustment)` + matching classification on insert | worker/lib/d1/trust.ts, tests/unit/d1-trust.test.ts |
-| RL-1 | KV rate-limit check-then-set race across isolates | P1 | ✅ CLOSED — `SourceRegistry.consumeRateLimit` atomic fixed-window RPC (250ms timeout, fail-closed), KV fallback only without DO binding | worker/lib/rate-limit.ts, worker/durable-objects/source-registry.ts |
+| RL-1 | KV rate-limit check-then-set race across isolates | P1 | ⬜ DEFERRED — DO RPC attempt reverted in review: `SourceRegistry` does not extend `DurableObject`, so stub RPC fails at runtime and fail-closed 503s health checks (E2E proof). Requires `extends DurableObject` migration per ADR-017 before retry. KV path kept + fail-closed on KV errors for sensitive endpoints | worker/lib/rate-limit.ts |
 | AUTH-1 | `JWT_SECRET` in wrangler vars + blank secrets accepted | P1 | ✅ CLOSED — `JWT_SECRET` moved to secrets/required (all envs), blank-string rejection in `validateConfig` + `verifyToken` | wrangler.jsonc, worker/lib/config-utils.ts, worker/lib/jwt.ts |
 | WH-1 | Webhook subscriptions lack owner scoping; partner/DLQ handlers mixed into subscriptions route | P1 | ✅ CLOSED — `owner_id` on subscription/sync types, `getUserSubscriptions` + `requireAuthenticatedUser`, partner/DLQ split to `partners.ts`, incoming SSRF + shared rate limit, sync scoped by config ownership | worker/routes/webhooks/partners.ts, worker/routes/webhooks/subscriptions.ts, worker/routes/webhooks/sync.ts, worker/lib/webhook/* |
 

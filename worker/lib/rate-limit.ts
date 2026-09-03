@@ -2,8 +2,7 @@
  * Rate Limiting Module
  *
  * Implements token bucket rate limiting for API endpoints.
- * Uses sharded Durable Objects for atomic distributed rate limit state, with
- * a KV fallback only when the Durable Object binding is unavailable.
+ * Uses Cloudflare KV for distributed rate limit state across Workers.
  *
  * Rate limits are defined per endpoint and can be configured
  * via environment variables. Supports both IP-based and
@@ -136,16 +135,6 @@ interface RateLimitState {
   windowStart: number;
 }
 
-interface RateLimitActor {
-  consumeRateLimit(
-    rateLimitKey: string,
-    maxRequests: number,
-    windowStart: number,
-  ): Promise<{ allowed: boolean; remaining: number }>;
-}
-
-const RATE_LIMIT_DO_TIMEOUT_MS = 250;
-
 const SENSITIVE_ENDPOINTS = new Set([
   "/api/auth/register",
   "/api/auth/login",
@@ -165,8 +154,7 @@ const SENSITIVE_ENDPOINTS = new Set([
 /**
  * Check if a request should be rate limited.
  *
- * Implements a fixed-window rate limit using an atomic Durable Object when
- * available, falling back to KV only in environments without that binding.
+ * Implements a sliding window rate limit algorithm using KV storage.
  * Each client (identified by IP or API key) gets their own counter
  * within a time window.
  *
@@ -194,35 +182,8 @@ export async function checkRateLimit(
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
   const resetTime = windowStart + config.windowSeconds;
 
-  // The actor name is stable for this client/endpoint. The Durable Object
-  // stores the current window, so a new window must not create a new actor.
-  const actorKey = `${config.keyPrefix}:${identifier}`;
-  const key = `${actorKey}:${windowStart}`;
-
-  if (env.SOURCE_REGISTRY) {
-    try {
-      const actor = env.SOURCE_REGISTRY.getByName(
-        `rate-limit:${actorKey}`,
-      ) as unknown as RateLimitActor;
-      const state = await withTimeout(
-        actor.consumeRateLimit(actorKey, config.maxRequests, windowStart),
-        RATE_LIMIT_DO_TIMEOUT_MS,
-      );
-
-      return {
-        allowed: state.allowed,
-        remaining: state.remaining,
-        resetTime,
-        limit: config.maxRequests,
-      };
-    } catch (error) {
-      logger.error("Atomic rate limit check failed", {
-        component: "rate-limit",
-        error: toErrMessage(error),
-      });
-      return blockedRateLimitResult(config, resetTime);
-    }
-  }
+  // Create unique key for this client + endpoint + window
+  const key = `${config.keyPrefix}:${identifier}:${windowStart}`;
 
   // Some local/test deployments intentionally omit the KV binding. This is
   // not a storage failure; preserve the existing no-rate-limit behavior.
@@ -290,25 +251,6 @@ function blockedRateLimitResult(
     resetTime,
     limit: config.maxRequests,
   };
-}
-
-async function withTimeout<T>(
-  operation: Promise<T>,
-  timeoutMs: number,
-): Promise<T> {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeout = setTimeout(
-      () => reject(new Error("Rate limit Durable Object timed out")),
-      timeoutMs,
-    );
-  });
-
-  try {
-    return await Promise.race([operation, timeoutPromise]);
-  } finally {
-    if (timeout !== undefined) clearTimeout(timeout);
-  }
 }
 
 /**
