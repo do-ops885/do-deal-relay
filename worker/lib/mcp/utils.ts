@@ -62,23 +62,26 @@ export async function withProgress<T extends Record<string, unknown>>(
     return await operation(0, () => {});
   }
 
-  let currentStep = 0;
-  let result: T;
-
-  const reportProgress = (step: number, _message?: string) => {
-    currentStep = step;
+  const progressTracker = {
+    currentStep: 0,
+    report(step: number, _message?: string): void {
+      this.currentStep = step;
+    },
   };
 
-  result = await operation(currentStep, reportProgress);
+  const result = await operation(
+    progressTracker.currentStep,
+    progressTracker.report.bind(progressTracker),
+  );
 
   return {
     ...result,
     _meta: {
       progress: {
         progressToken,
-        progress: currentStep,
+        progress: progressTracker.currentStep,
         total: totalSteps,
-        message: `Completed ${currentStep}/${totalSteps} steps`,
+        message: `Completed ${progressTracker.currentStep}/${totalSteps} steps`,
       },
     },
   };
