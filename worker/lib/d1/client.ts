@@ -279,7 +279,11 @@ export class D1Client {
       params: columns.map((col) => row[col]),
     }));
 
-    let result;
+    let result: {
+      success: boolean;
+      results: Array<QueryResult<unknown>>;
+      error?: string;
+    };
     try {
       result = await this.batch<unknown>(queries);
     } catch (error) {
