@@ -40,7 +40,7 @@ interface ScoringResult {
 export async function score(
   deals: Deal[],
   ctx: PipelineContext,
-  env: Env,
+  _env: Env,
 ): Promise<ScoringResult> {
   const n = deals.length;
   const scoredDeals: ScoredDeal[] = new Array(n);

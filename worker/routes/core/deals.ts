@@ -5,12 +5,10 @@
  */
 
 import { getProductionSnapshot } from "../../lib/storage";
-import type { Env, GetDealsQuery, Deal } from "../../types";
+import type { Env, GetDealsQuery } from "../../types";
 import { GetDealsQuerySchema } from "../../types";
 import { jsonResponse } from "../utils";
 import {
-  calculateDealScore,
-  sortDeals,
   rankDeals,
   getTopDeals,
   getExpiringDeals,

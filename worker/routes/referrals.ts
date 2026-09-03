@@ -4,13 +4,11 @@ import type {
   ReferralInput,
   ReferralDeactivateBody,
   ReferralSearchQuery,
-  WebResearchRequest,
 } from "../types";
 import {
   ReferralInputSchema,
   ReferralDeactivateBodySchema,
   ReferralSearchQuerySchema,
-  WebResearchRequestSchema,
 } from "../types";
 import {
   storeReferralInput,
@@ -22,7 +20,7 @@ import {
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
 import { notify } from "../notify";
-import { jsonResponse, errorResponse } from "./utils";
+import { jsonResponse } from "./utils";
 import { validateFetchUrl, validateReferralUrl } from "../lib/security";
 import { DEFAULT_SOURCES } from "../config";
 
@@ -92,7 +90,7 @@ export async function handleGetReferrals(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleGetReferrals",
     });
@@ -289,7 +287,7 @@ export async function handleCreateReferral(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleCreateReferral",
     });
@@ -338,7 +336,7 @@ export async function handleGetReferralByCode(
 
     return jsonResponse({ referral }, 200, request, env);
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleGetReferralByCode",
     });
@@ -414,7 +412,7 @@ export async function handleDeactivateReferral(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleDeactivateReferral",
     });
@@ -482,7 +480,7 @@ export async function handleReactivateReferral(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleReactivateReferral",
     });

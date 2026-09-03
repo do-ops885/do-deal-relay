@@ -1,6 +1,6 @@
 import { Deal, PipelineContext, Env } from "../types";
 import type { ValidationCacheEntry } from "../types/validation-cache";
-import { VALIDATION_GATES, type ValidationGate, CONFIG } from "../config";
+import { type ValidationGate, CONFIG } from "../config";
 import { getTrustThreshold } from "../lib/config-utils";
 import {
   validateDealFastPath,

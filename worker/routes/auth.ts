@@ -435,23 +435,13 @@ async function getUserById(id: string, env: Env): Promise<User | null> {
   }
 }
 
-async function getUserByEmail(email: string, env: Env): Promise<User | null> {
-  try {
-    return (await env.DEALS_DB.prepare("SELECT * FROM users WHERE email = ?")
-      .bind(email.toLowerCase())
-      .first()) as User | null;
-  } catch {
-    return null;
-  }
-}
-
 async function logAuditAction(
   userId: string | null,
   action: string,
   resource: string,
   request: Request,
   env: Env,
-  context: Record<string, unknown> = {},
+  _context: Record<string, unknown> = {},
 ): Promise<void> {
   try {
     const id = generateUUID();

@@ -1,5 +1,5 @@
 import { Snapshot, PipelineContext, PipelineError } from "./types";
-import { promoteStagingToProduction, revertProduction } from "./lib/storage";
+import { promoteStagingToProduction } from "./lib/storage";
 import {
   commitSnapshot,
   isSnapshotCommitted,

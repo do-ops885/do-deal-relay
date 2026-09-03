@@ -154,7 +154,7 @@ export async function handleSubscribe(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleSubscribe",
     });
@@ -230,7 +230,7 @@ export async function handleUnsubscribe(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleUnsubscribe",
     });
@@ -294,7 +294,7 @@ export async function handleUnsubscribeById(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleUnsubscribeById",
     });
@@ -347,7 +347,7 @@ export async function handleListSubscriptions(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleListSubscriptions",
     });

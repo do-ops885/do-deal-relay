@@ -107,7 +107,7 @@ function partitionByKey(
  */
 export function deduplicate(
   deals: Deal[],
-  ctx: PipelineContext,
+  _ctx: PipelineContext,
   existingDeals?: Deal[],
 ): DedupeResult {
   const result: DedupeResult = {

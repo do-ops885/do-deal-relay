@@ -81,7 +81,7 @@ export async function handleResearch(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleResearch",
     });
@@ -112,7 +112,7 @@ export async function handleGetResearchResults(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "api",
       handler: "handleGetResearchResults",
     });

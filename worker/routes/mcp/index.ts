@@ -313,7 +313,7 @@ export async function handleMCPCall(
       correlationId?: string;
     };
 
-    const { tool, input = {}, correlationId } = body;
+    const { tool, input = {} } = body;
 
     if (!tool) {
       return new Response(JSON.stringify({ error: "Missing 'tool' field" }), {

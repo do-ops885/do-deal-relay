@@ -16,16 +16,6 @@ import type { Env } from "./types";
 // State Machine Implementation
 // ============================================================================
 
-type StateHandler = (
-  ctx: PipelineContext,
-  env: Env,
-) => Promise<PipelinePhase | FailurePath>;
-
-interface StateMachine {
-  current: PipelinePhase;
-  handlers: Record<PipelinePhase, StateHandler>;
-}
-
 const PHASES: PipelinePhase[] = [
   "init",
   "discover",
