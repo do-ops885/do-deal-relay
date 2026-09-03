@@ -2,9 +2,28 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-03
-**Version**: 0.19.4
-**Status**: Active — 2026-09-03 WS-E latent bug #2 closed (branch `fix/d1-write-reject`): D1 writes reject instead of resolving `{error}` envelopes. 2026-09-03 webhook hardening + trust batch fix merged as `fb0c6e5` (PR #741): WS-E latent bug #1 closed, JWT hardening, user-scoped webhook ownership; DO rate-limit attempt reverted (deferred per ADR-017). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
+**Version**: 0.19.5
+**Status**: Active — 2026-09-03 v0.19.5 doc sync: F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6-compatible bypass closed via #742 (`e9dd1d7`), D1 lock inclusive-expiry fix via #739, CI integration guard via #733. WS-E latent bugs #1/#2 stay closed (#741/#743). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-03 Deferred-Drain + SSRF Hardening — v0.19.5
+
+Branch `main` (`f3ec613` → `e9dd1d7`). Specs: [PEV-d1-boilerplate-dry.md](PEV-d1-boilerplate-dry.md), [PEV-discovery-circuit-breaker.md](PEV-discovery-circuit-breaker.md), [PEV-snapshot-optimize.md](PEV-snapshot-optimize.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10) | P3 | ✅ CLOSED — `worker/routes/d1/helpers.ts` centralizes `getD1Logger` + `requireD1Db`; admin/deals/search/stats repointed; net -1 line across routes | `f3ec613` (#736), worker/routes/d1/helpers.ts, PEV-d1-boilerplate-dry.md |
+| F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work | P2 | ✅ CLOSED — per-source breaker via `getSourceCircuitBreaker(source.domain, env)` in discovery path | `9aba3cf` (#737), worker/pipeline/discover.ts:14,189, PEV-discovery-circuit-breaker.md |
+| F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ✅ CLOSED — single-hash stage path (build without hash, one `generateSnapshotHash`), shared storage helpers remove duplicate fetches | `f1d3950` (#738), worker/pipeline/stage.ts, worker/lib/storage.ts, worker/publish.ts, PEV-snapshot-optimize.md |
+| LOCK-1 | D1 lock takeover used exclusive expiry + nondeterministic lifecycle test | P2 | ✅ CLOSED — inclusive expiry in `worker/lib/lock.ts`, deterministic test + mock fix | `db055f6` (#739), worker/lib/lock.ts, tests/fixtures/d1-mock.ts |
+| CI-2 | Integration tests ran without live harness guard | P2 | ✅ CLOSED — integration guard + live CI harness enforcement | `31b26f4` (#733) |
+| SEC-IPv6 | IPv4-compatible IPv6 (`::x.x.x.x`, `::7f00:1`) and unspecified (`::`, `::0`) bypassed SSRF validation; `normalizeIp` only handled `::ffff:` mapped form | P0 | ✅ CLOSED — `normalizeIp` handles mapped + compatible forms (dotted + hex-tail → IPv4), `::` added to BLOCKED_HOSTS, `::/128` to BLOCKED_IP_RANGES in both `security.ts` and `config.ts`; 1 new test (7 vectors) | `e9dd1d7` (#742), worker/lib/security.ts, worker/config.ts, tests/unit/ssrf-bypass.test.ts (5/5 green, tsc clean) |
+
+Verification: `npx tsc --noEmit` ✅ (main + PR worktree), `ssrf-bypass` 5/5 ✅, PR #742 CI rollup 24/24 SUCCESS (1 SKIPPED auto-merge allowed), roast approved on merge.
+
+Remaining: F-11 (tsconfig strict flags, 416-error sweep) deferred; N-3 (parallel logging subsystems) deferred; RL-1 (KV rate-limit race → DO migration) deferred per ADR-017; CI-1 (CLOUDFLARE_API_TOKEN) blocked per ADR-023; REDDIT-5/6 in-progress/blocked.
 
 ---
 

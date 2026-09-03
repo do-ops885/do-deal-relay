@@ -5,3 +5,5 @@
 {"timestamp":"2026-09-02T19:42:52Z","agent":"opencode","task":"implement security and reliability recommendations","status":"completed"}
 {"timestamp":"2026-09-02T19:36:00Z","agent":"opencode","task":"fix rate-limit window reset and scope webhook sync state by config ownership","status":"completed"}
 {"timestamp": "2026-09-03T09:00:00Z", "agent": "opencode", "task": "verify dirty webhook rate-limit trust work and determine next", "status": "completed"}
+{"timestamp": "2026-09-03T10:10:00Z", "agent": "opencode", "task": "fix d1 write rejection ws-e-2 with pr 743 merged", "status": "completed"}
+{"timestamp": "2026-09-03T12:00:00Z", "agent": "opencode", "task": "roast-merge ssrf pr 742 and sync goap to v0.19.5", "status": "completed"}
