@@ -5,7 +5,6 @@ description: Correlation ID logging for distributed tracing. Use for request tra
 
 # Structured Logging
 
-
 ## Quick Start
 
 ```typescript

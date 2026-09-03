@@ -296,36 +296,12 @@ git add .
 git commit -m "feat: template integration"
 # Guard rails fail (template files in root)
 
-# Must bypass with justification
+# Must bypass with justification (same confirmation + audit flow as above)
 git commit --no-verify -m "feat: template integration"
-
-╔════════════════════════════════════════════════════════════════╗
-║           GUARD RAIL BYPASS REQUESTED                          ║
-╚════════════════════════════════════════════════════════════════╝
-
-Hook Type: pre-commit
-Errors Found: 1
-
-⚠️  WARNING: Bypassing guard rails is dangerous!
-
-To proceed, type exactly: 'I understand and accept the risks' >
-I understand and accept the risks
-
-────────────────────────────────────────────────────────────
-JUSTIFICATION REQUIRED
-────────────────────────────────────────────────────────────
-
-You must provide a reason for bypassing pre-commit guard rails.
-Minimum length: 20 characters
-
-Enter justification: Template integration files from official template
-
-📝 BYPASS LOGGED
-   Audit file: .git/guard-rail-audit/bypasses.log
-   Timestamp: 2026-04-01T09:30:15Z
-   Justification: Template integration files from official template
-
-⚠️ Bypass authorized. Proceeding with operation...
+# > type exactly: 'I understand and accept the risks'
+# > justification (20+ chars): Template integration files from official template
+# BYPASS LOGGED to .git/guard-rail-audit/bypasses.log
+# Bypass authorized. Proceeding with operation...
 ```
 
 ### Blocked (Critical Errors)

@@ -116,59 +116,18 @@ if (env.NODE_ENV === 'production') {
 
 ## TypeScript Guard Rules (Codacy Enforcement)
 
-### no-unused-imports
-```typescript
-Rule.custom({
-  name: 'no-unused-imports',
-  check: (code, ctx) => {
-    const importRegex = /^import\s+(?:type\s+)?(?:{[^}]+}|[\w*]+)\s+from\s+['"][^'"]+['"]/gm;
-    const imports = code.match(importRegex) || [];
-    for (const imp of imports) {
-      const namedMatch = imp.match(/\{([^}]+)\}/);
-      if (namedMatch) {
-        const names = namedMatch[1].split(',').map(n => n.trim().split(' as ')[0].trim());
-        for (const name of names) {
-          if (name && !code.includes(name) && name !== 'type') {
-            return { pass: false, message: `Unused import: ${name}` };
-          }
-        }
-      }
-    }
-    return { pass: true };
-  }
-});
-```
+| Rule | Check | Fix |
+|------|-------|-----|
+| no-unused-imports | every named import is referenced | delete the unused import |
+| no-non-null-assertion | no `expr!` outside `!==`/`!=` | type guard, optional chaining, or `??` fallback |
+| no-unnecessary-undefined-check | no `[N] !== undefined` on indexed access | use `??` fallback (informational; `noUncheckedIndexedAccess` makes some checks required) |
 
-### no-non-null-assertion
 ```typescript
 Rule.custom({
   name: 'no-non-null-assertion',
-  check: (code, ctx) => {
-    // Detect pattern: expr! (but not !==, !=, import paths)
-    const nonNullAssertion = /\w+![^=!]/g;
-    const matches = code.match(nonNullAssertion) || [];
-    if (matches.length > 0) {
-      return { pass: false, message: 'Non-null assertion (!) forbidden — use type guard or optional chaining' };
-    }
-    return { pass: true };
-  }
-});
-```
-
-### no-unnecessary-undefined-check
-```typescript
-Rule.custom({
-  name: 'no-unnecessary-undefined-check',
-  check: (code, ctx) => {
-    // Note: With noUncheckedIndexedAccess, regex match groups ARE string | undefined
-    // So `match[N] !== undefined` is actually needed in some cases
-    // This rule is informational only — use ?? instead of explicit undefined check
-    const unnecessaryCheck = /\[(\d+)\]\s*!==\s*undefined/;
-    if (unnecessaryCheck.test(code)) {
-      return { pass: false, message: 'Consider using ?? operator instead of !== undefined check' };
-    }
-    return { pass: true };
-  }
+  check: (code) => /\w+![^=!]/.test(code)
+    ? { pass: false, message: 'Non-null assertion (!) forbidden' }
+    : { pass: true },
 });
 ```
 
