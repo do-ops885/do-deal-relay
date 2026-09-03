@@ -4,19 +4,9 @@
  * Interaction handlers for slash commands and buttons.
  */
 
-import {
-  Client,
-  GatewayIntentBits,
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-  Interaction,
-  ButtonInteraction,
-  REST,
-  Routes,
-} from "discord.js";
+import { ChatInputCommandInteraction, ButtonInteraction } from "discord.js";
 import { DealRelayAPI, initAPIClient, getAPIClient } from "../api-client";
 import { findCommand, hasPermission as checkPermission } from "../commands";
-import { cleanupExpiredConversations } from "../conversations";
 import { DiscordBotConfig } from "./types";
 import { checkRateLimit } from "./ratelimit";
 import { createCommandContext } from "./permissions";
@@ -26,8 +16,6 @@ async function startConversationFlow(
   interaction: ChatInputCommandInteraction,
   conversationName: string,
 ): Promise<void> {
-  const userId = interaction.user.id;
-
   await interaction.reply({
     content: `Starting ${conversationName} flow... (Please use DM for conversation flows)`,
     ephemeral: true,

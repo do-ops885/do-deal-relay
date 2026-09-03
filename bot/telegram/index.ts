@@ -115,16 +115,6 @@ function getUserPermissions(
 // Message Formatting
 // ============================================================================
 
-function escapeMarkdown(text: string): string {
-  // Escape special characters for Telegram MarkdownV2
-  return text.replace(/([_\*\[\]()~`>#+=|{}.!-])/g, "\\$1");
-}
-
-function escapeUrl(url: string): string {
-  // Don't escape the URL itself, just the display text if needed
-  return url;
-}
-
 function formatTelegramMessage(result: CommandResult): string {
   // Note: We don't escape the URL to preserve complete links
   return result.message;

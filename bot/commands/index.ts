@@ -4,13 +4,7 @@
  * Central command registry with lookup utilities.
  */
 
-import {
-  CommandContext,
-  CommandHandler,
-  Permission,
-  CommandResult,
-  Button,
-} from "./types";
+import { CommandContext, CommandHandler, Permission } from "./types";
 
 // Import all command modules
 import {

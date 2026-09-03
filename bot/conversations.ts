@@ -201,7 +201,7 @@ export const conversations: ConversationHandler[] = [
   {
     name: "RESEARCH_FLOW",
     steps: RESEARCH_FLOW,
-    onComplete: async (ctx, data, api) => {
+    onComplete: async (_ctx, data, api) => {
       const domain = data.domain as string;
       const depth = data.depth as "quick" | "thorough" | "deep";
 
