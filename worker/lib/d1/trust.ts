@@ -178,12 +178,14 @@ export async function evolveTrustBatch(
     const adjustment = success
       ? TRUST_SUCCESS_ADJUSTMENT
       : TRUST_FAILURE_ADJUSTMENT;
+    const initialScore = Math.max(0, Math.min(1, 0.5 + adjustment));
+    const initialClassification = classifyTrust(initialScore);
 
     statements.push(
       db
         .prepare(
           `INSERT INTO trust_scores (domain, trust_score, total_deals, successful_deals, classification, last_seen_at, created_at, updated_at)
-           VALUES (?, 0.5, 1, ?, 'unverified', ?, datetime('now'), datetime('now'))
+           VALUES (?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))
            ON CONFLICT(domain) DO UPDATE SET
              trust_score = MAX(0, MIN(1, trust_score + ?)),
              total_deals = total_deals + 1,
@@ -198,7 +200,9 @@ export async function evolveTrustBatch(
         )
         .bind(
           domain,
+          initialScore,
           success ? 1 : 0,
+          initialClassification,
           now,
           adjustment,
           success ? 1 : 0,
