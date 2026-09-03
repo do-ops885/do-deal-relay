@@ -9,6 +9,13 @@ import type {
 } from "@cloudflare/workers-types";
 import { logger } from "../global-logger";
 import { stripSqlComments } from "./factory";
+import type {
+  D1ClientConfig,
+  D1ResolvedConfig,
+  D1Session,
+  QueryResult,
+  SingleResult,
+} from "./client-types";
 
 export {
   createD1Client,
@@ -16,63 +23,20 @@ export {
   createD1WriteClient,
 } from "./factory";
 
-// ============================================================================
-// Error Types
-// ============================================================================
+export type {
+  D1ClientConfig,
+  D1ErrorInfo,
+  D1Session,
+  QueryResult,
+  SingleResult,
+} from "./client-types";
 
-export interface D1ErrorInfo {
-  message: string;
-  cause?: unknown;
-  query?: string;
-}
-
-export interface QueryResult<T> {
-  success: boolean;
-  data?: T[];
-  meta?: {
-    rows_read: number;
-    rows_written: number;
-    last_row_id?: number;
-    served_by_region?: string;
-    served_by_primary?: boolean;
-  };
-  error?: string;
-}
-
-export interface SingleResult<T> {
-  success: boolean;
-  data?: T | null;
-  error?: string;
-}
-
-// ============================================================================
-// Client Configuration
-// ============================================================================
-
-export interface D1ClientConfig {
-  enableRetries?: boolean;
-  maxRetries?: number;
-  retryDelayMs?: number;
-  useSessions?: boolean;
-  sessionBookmark?: string;
-}
-
-type D1Session = ReturnType<D1Database["withSession"]>;
-
-// ============================================================================
 // D1 Client Class
-// ============================================================================
 
 export class D1Client {
   private db: D1Database;
   private session: D1Session | undefined;
-  private config: {
-    enableRetries: boolean;
-    maxRetries: number;
-    retryDelayMs: number;
-    useSessions: boolean;
-    sessionBookmark: string;
-  };
+  private config: D1ResolvedConfig;
 
   constructor(db: D1Database, config: D1ClientConfig = {}) {
     this.db = db;
@@ -103,9 +67,7 @@ export class D1Client {
     return this.session ? this.session.getBookmark() : null;
   }
 
-  // ============================================================================
   // Query Methods with Generics
-  // ============================================================================
 
   /**
    * Execute a SELECT query returning multiple rows
@@ -214,9 +176,7 @@ export class D1Client {
     return result;
   }
 
-  // ============================================================================
   // Batch Operations
-  // ============================================================================
 
   /**
    * Execute multiple queries in a batch
@@ -307,9 +267,7 @@ export class D1Client {
     return { success: true, lastRowIds };
   }
 
-  // ============================================================================
   // Prepared Statement Helpers
-  // ============================================================================
 
   /**
    * Create a prepared statement for reuse
@@ -346,9 +304,7 @@ export class D1Client {
     return result;
   }
 
-  // ============================================================================
   // Transaction-like Operations
-  // ============================================================================
 
   /**
    * Execute multiple operations with compensation on failure
@@ -397,9 +353,7 @@ export class D1Client {
     }
   }
 
-  // ============================================================================
   // JSON Helpers
-  // ============================================================================
 
   /**
    * Query with JSON field extraction
@@ -463,9 +417,7 @@ export class D1Client {
     );
   }
 
-  // ============================================================================
   // Private Helpers
-  // ============================================================================
 
   private bindParams(
     stmt: D1PreparedStatement,
@@ -541,7 +493,4 @@ export class D1Client {
   }
 }
 
-// ============================================================================
-// SQL helper imported from factory.ts to keep this file under 500 lines.
-// Factory functions (createD1Client, etc.) are also in factory.ts.
-// ============================================================================
+// SQL helpers and factory functions live in factory.ts; client types in client-types.ts.

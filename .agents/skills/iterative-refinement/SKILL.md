@@ -17,11 +17,6 @@ Use for tasks requiring iterative refinement:
 
 Don't use for single-pass tasks, purely parallel work, or simple linear workflows.
 
-## Pre-Usage Research (Optional)
-
-
-
-
 ## Core Loop Pattern
 
 Every iteration follows:

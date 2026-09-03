@@ -272,6 +272,9 @@ if [ -f "${ROOT_DIR}/AGENTS.md" ]; then
 fi
 
 while IFS= read -r -d '' skill_file; do
+    case "$skill_file" in
+        ./node_modules/*|./.git/*|./dist/*|./coverage/*|./.tmp/*) continue ;;
+    esac
     skill_lines=$(wc -l < "$skill_file" 2>/dev/null || echo 0)
     if [ "$skill_lines" -ge "$SKILL_MD_WARNING" ]; then
         WARNINGS+=("⚠ $skill_file is $skill_lines lines (recommended max: ${SKILL_MD_WARNING})")
