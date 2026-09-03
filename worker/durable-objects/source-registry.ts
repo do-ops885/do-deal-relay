@@ -25,6 +25,12 @@ export interface TrustScore {
   created_at: number;
 }
 
+/** Result returned by the atomic rate-limit RPC method. */
+export interface AtomicRateLimitResult {
+  allowed: boolean;
+  remaining: number;
+}
+
 /** Row shape stored in the sources table. */
 interface SourceRow extends Record<string, string | number | null> {
   source_id: string;
@@ -88,6 +94,61 @@ export class SourceRegistry {
         created_at      INTEGER
       )`,
     );
+
+    // This table is intentionally independent from trust data so rate-limit
+    // actors can safely share this deployed class without affecting sources.
+    this.sql.exec(
+      `CREATE TABLE IF NOT EXISTS rate_limits (
+        rate_limit_key TEXT PRIMARY KEY,
+        count          INTEGER NOT NULL,
+        window_start   INTEGER NOT NULL
+      )`,
+    );
+  }
+
+  /**
+   * Atomically consumes one request from a fixed-window rate limit.
+   *
+   * Rate-limit callers shard to one SourceRegistry instance per key, so this
+   * synchronous SQLite read/write sequence runs without cross-request races.
+   */
+  async consumeRateLimit(
+    rateLimitKey: string,
+    maxRequests: number,
+    windowStart: number,
+  ): Promise<AtomicRateLimitResult> {
+    if (
+      !rateLimitKey ||
+      !Number.isSafeInteger(maxRequests) ||
+      maxRequests < 1
+    ) {
+      throw new Error("Invalid rate limit request");
+    }
+
+    const rows = this.sql
+      .exec<{ count: number; window_start: number }>(
+        "SELECT count, window_start FROM rate_limits WHERE rate_limit_key = ?",
+        rateLimitKey,
+      )
+      .toArray();
+    const stored = rows[0];
+    const count = stored?.window_start === windowStart ? stored.count : 0;
+
+    if (count >= maxRequests) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    const nextCount = count + 1;
+    this.sql.exec(
+      `INSERT INTO rate_limits (rate_limit_key, count, window_start)
+       VALUES (?, ?, ?)
+       ON CONFLICT(rate_limit_key) DO UPDATE SET count = excluded.count`,
+      rateLimitKey,
+      nextCount,
+      windowStart,
+    );
+
+    return { allowed: true, remaining: maxRequests - nextCount };
   }
 
   // --------------------------------------------------------------------------

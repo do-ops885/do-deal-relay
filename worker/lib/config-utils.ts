@@ -65,11 +65,15 @@ export function validateConfig(env: Env): void {
     "WEBHOOK_SECRET",
     "EMAIL_WEBHOOK_SECRET",
     "API_ENCRYPTION_KEY",
+    "JWT_SECRET",
     "DEALS_DB",
     "ENVIRONMENT",
     "GITHUB_REPO",
   ];
-  const missing = required.filter((k) => !env[k as keyof Env]);
+  const missing = required.filter((key) => {
+    const value = env[key as keyof Env];
+    return typeof value === "string" ? value.trim() === "" : !value;
+  });
   if (missing.length > 0) {
     throw new Error(`Missing required config: ${missing.join(", ")}`);
   }

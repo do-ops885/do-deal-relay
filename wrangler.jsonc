@@ -104,14 +104,13 @@
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
-    // JWT auth secret for local dev / E2E (overridden by real secret in prod via wrangler secret)
-    "JWT_SECRET": "e2e-test-jwt-secret-do-not-use-in-prod",
   },
   "secrets": {
     "required": [
       "WEBHOOK_SECRET",
       "EMAIL_WEBHOOK_SECRET",
       "API_ENCRYPTION_KEY",
+      "JWT_SECRET",
     ],
   },
   // D1 Database for advanced queries and full-text search
@@ -192,6 +191,7 @@
           "WEBHOOK_SECRET",
           "EMAIL_WEBHOOK_SECRET",
           "API_ENCRYPTION_KEY",
+          "JWT_SECRET",
         ],
       },
     },
@@ -215,6 +215,7 @@
           "WEBHOOK_SECRET",
           "EMAIL_WEBHOOK_SECRET",
           "API_ENCRYPTION_KEY",
+          "JWT_SECRET",
         ],
       },
       "kv_namespaces": [
@@ -276,6 +277,7 @@
           "WEBHOOK_SECRET",
           "EMAIL_WEBHOOK_SECRET",
           "API_ENCRYPTION_KEY",
+          "JWT_SECRET",
         ],
       },
       "kv_namespaces": [

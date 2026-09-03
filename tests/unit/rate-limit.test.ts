@@ -116,9 +116,88 @@ describe("Rate Limiting", () => {
         delete: vi.fn(),
       } as any;
 
-      const result = await checkRateLimit(mockEnv, "client-1", "/api/submit");
+      const result = await checkRateLimit(mockEnv, "client-1", "/deals");
 
       expect(result.allowed).toBe(true);
+    });
+
+    it("should fail closed for sensitive requests if KV throws error", async () => {
+      mockEnv.DEALS_LOCK = {
+        get: vi.fn().mockRejectedValue(new Error("KV error")),
+        put: vi.fn(),
+        delete: vi.fn(),
+      } as unknown as Env["DEALS_LOCK"];
+
+      const result = await checkRateLimit(mockEnv, "client-1", "/api/submit");
+
+      expect(result.allowed).toBe(false);
+    });
+
+    it("should atomically enforce a limit for concurrent DO requests", async () => {
+      const counts = new Map<string, number>();
+      const actor = {
+        consumeRateLimit: vi.fn(async (key: string, maxRequests: number) => {
+          const count = counts.get(key) ?? 0;
+          if (count >= maxRequests) {
+            return { allowed: false, remaining: 0 };
+          }
+          const next = count + 1;
+          counts.set(key, next);
+          return { allowed: true, remaining: maxRequests - next };
+        }),
+      };
+      mockEnv.SOURCE_REGISTRY = {
+        getByName: vi.fn(() => actor),
+      } as unknown as NonNullable<Env["SOURCE_REGISTRY"]>;
+
+      const results = await Promise.all(
+        Array.from({ length: 20 }, () =>
+          checkRateLimit(mockEnv, "client-1", "/api/submit"),
+        ),
+      );
+
+      expect(results.filter((result) => result.allowed)).toHaveLength(10);
+      expect(results.filter((result) => !result.allowed)).toHaveLength(10);
+      expect(mockEnv.DEALS_LOCK.get).not.toHaveBeenCalled();
+    });
+
+    it("should use a stable DO actor name across rate-limit windows", async () => {
+      const getByName = vi.fn(() => ({
+        consumeRateLimit: vi
+          .fn()
+          .mockResolvedValue({ allowed: true, remaining: 9 }),
+      }));
+      mockEnv.SOURCE_REGISTRY = {
+        getByName,
+      } as unknown as NonNullable<Env["SOURCE_REGISTRY"]>;
+      const now = vi.spyOn(Date, "now");
+      now.mockReturnValueOnce(1_700_000_000_000);
+      await checkRateLimit(mockEnv, "client-1", "/api/submit");
+      now.mockReturnValueOnce(1_700_000_060_000);
+      await checkRateLimit(mockEnv, "client-1", "/api/submit");
+      now.mockRestore();
+
+      expect(getByName).toHaveBeenNthCalledWith(
+        1,
+        "rate-limit:ratelimit:submit:client-1",
+      );
+      expect(getByName).toHaveBeenNthCalledWith(
+        2,
+        "rate-limit:ratelimit:submit:client-1",
+      );
+    });
+
+    it("should fail closed without falling back to KV when the DO fails", async () => {
+      mockEnv.SOURCE_REGISTRY = {
+        getByName: vi.fn(() => ({
+          consumeRateLimit: vi.fn().mockRejectedValue(new Error("DO error")),
+        })),
+      } as unknown as NonNullable<Env["SOURCE_REGISTRY"]>;
+
+      const result = await checkRateLimit(mockEnv, "client-1", "/deals");
+
+      expect(result.allowed).toBe(false);
+      expect(mockEnv.DEALS_LOCK.get).not.toHaveBeenCalled();
     });
   });
 

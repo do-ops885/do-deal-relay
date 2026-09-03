@@ -24,6 +24,7 @@ describe("Security Gatekeeper", () => {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    JWT_SECRET: "test-jwt-secret",
     DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
