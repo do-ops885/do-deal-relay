@@ -46,14 +46,6 @@ function useD1Reads(env: Env): boolean {
 }
 
 /**
- * Check if dual-write is enabled (write to both KV and D1)
- */
-function useDualWrite(env: Env): boolean {
-  // Always dual-write if D1 is available, unless explicitly disabled
-  return !!env.DEALS_DB && env.DISABLE_DUAL_WRITE !== "true";
-}
-
-/**
  * Check if D1 writes are enabled
  */
 function useD1Writes(env: Env): boolean {

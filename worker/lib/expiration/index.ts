@@ -1,15 +1,10 @@
 import type { Deal, Env } from "../../types";
 import { logger } from "../global-logger";
-import { findExpiringDeals, checkExpiringDeals } from "./finding";
+import { findExpiringDeals } from "./finding";
 import { validateDealsBatch, deactivateInvalidDeals } from "./validation";
 import { sendExpiryNotifications, notifyExpiringDeals } from "./notifications";
 import { markExpiredDeals } from "./mark-expired";
-import {
-  scheduleExpiryCheck,
-  LAST_VALIDATION_KEY,
-  getValidationStats,
-  getLastValidationResults,
-} from "./scheduling";
+import { scheduleExpiryCheck, LAST_VALIDATION_KEY } from "./scheduling";
 
 // Re-export all functions
 export { findExpiringDeals, checkExpiringDeals } from "./finding";

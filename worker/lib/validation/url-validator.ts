@@ -277,7 +277,7 @@ export async function checkUrlStatusBatch(
   const results: UrlValidationResult[] = [];
   const errors: string[] = [];
 
-  for (const [domain, domainUrls] of domainGroups) {
+  for (const [_domain, domainUrls] of domainGroups) {
     for (const url of domainUrls) {
       try {
         const result = await validateUrl(url, env);

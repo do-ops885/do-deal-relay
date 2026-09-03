@@ -6,7 +6,6 @@
  */
 
 import { z } from "zod";
-import type { Deal } from "../../types";
 
 // ============================================================================
 // Vectorize Embedding Types

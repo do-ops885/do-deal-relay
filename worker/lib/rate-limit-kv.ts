@@ -42,16 +42,6 @@ interface RateLimitKVState {
   window_start: number;
 }
 
-interface RateLimitKVStore {
-  get: (key: string, options?: { type?: string }) => Promise<unknown>;
-  put: (
-    key: string,
-    value: string,
-    options?: { expirationTtl?: number },
-  ) => Promise<void>;
-  delete: (key: string) => Promise<void>;
-}
-
 // ============================================================================
 // Store Factory
 // ============================================================================
@@ -274,7 +264,7 @@ export async function getRateLimitKVState(
 export async function resetRateLimitKV(
   env: Env,
   clientId: string,
-  windowSeconds: number = DEFAULT_WINDOW_SECONDS,
+  _windowSeconds: number = DEFAULT_WINDOW_SECONDS,
 ): Promise<void> {
   const key = `${KEY_PREFIX}:${clientId}`;
   await env.DEALS_LOCK.delete(key);

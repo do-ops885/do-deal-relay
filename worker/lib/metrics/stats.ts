@@ -462,7 +462,7 @@ export function getPhaseTimingStats(
     PipelinePhase,
     { min: number; max: number; avg: number; p95: number }
   >;
-  for (const [p, stats] of Object.entries(detailed)) {
+  for (const [p, _stats] of Object.entries(detailed)) {
     const phase = p as PipelinePhase;
     const allTimings = metrics
       .map((m) => m.phase_timings[phase])

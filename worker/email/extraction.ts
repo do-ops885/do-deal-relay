@@ -415,7 +415,7 @@ export function extractReferralFromEmail(email: ParsedEmail): ExtractionResult {
 // Command Parsing
 // ============================================================================
 
-import type { ParsedCommand, EmailCommandType } from "./types";
+import type { EmailCommandType } from "./types";
 
 /**
  * Determine if email is a command email or forwarded referral

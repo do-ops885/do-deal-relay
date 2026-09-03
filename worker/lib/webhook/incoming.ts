@@ -7,7 +7,6 @@ import type {
   IncomingWebhookResult,
   IncomingWebhookPayload,
   ReferralWebhookData,
-  WebhookEvent,
   IdempotencyRecord,
   RateLimitResult,
   IdempotencyCheck,

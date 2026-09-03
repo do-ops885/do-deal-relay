@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
+import { validateUrl, validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type {

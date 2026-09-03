@@ -1,4 +1,4 @@
-import type { Deal, Env, LogEntry } from "../../types";
+import type { Env } from "../../types";
 import { getProductionSnapshot, getSourceRegistry } from "../storage";
 import { getRecentLogs } from "../logger";
 import { getRecentMetrics } from "../metrics/index";
@@ -11,7 +11,6 @@ import {
   calculateExpiringSoon,
   calculateQualityMetrics,
 } from "./calculators";
-import { generateDashboardHTML } from "./dashboard";
 
 // Re-export types
 export type {

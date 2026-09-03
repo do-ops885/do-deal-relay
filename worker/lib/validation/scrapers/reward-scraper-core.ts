@@ -2,7 +2,7 @@ import type { Reward, Env } from "../../../types";
 import { logger } from "../../global-logger";
 import { CircuitBreaker, getSourceCircuitBreaker } from "../../circuit-breaker";
 import { CONFIG } from "../../../config";
-import { validateUrl, validateFetchUrl, validatedFetch } from "../../security";
+import { validateUrl, validatedFetch } from "../../security";
 import type { RewardScrapeResult } from "./types";
 import { SCRAPE_TIMEOUT_MS } from "./types";
 import { extractRewardFromHTML } from "./html-extractor";

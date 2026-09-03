@@ -1,7 +1,6 @@
-import type { Deal, ExpiringDeal, Env } from "../../types";
+import type { ExpiringDeal, Env } from "../../types";
 import { getActiveDeals } from "../storage";
 import { logger } from "../global-logger";
-import { EXPIRY_CHECK_KEY, NOTIFIED_EXPIRING_KEY } from "./scheduling";
 
 // Re-export constants for backwards compatibility
 export {

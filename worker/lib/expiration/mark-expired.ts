@@ -2,12 +2,6 @@ import type { Deal, Env } from "../../types";
 import { getProductionSnapshot } from "../storage";
 import { logger } from "../global-logger";
 import { sendExpiredNotifications } from "./notifications";
-import {
-  EXPIRY_CHECK_KEY,
-  VALIDATION_STATS_KEY,
-  NOTIFIED_EXPIRING_KEY,
-  LAST_VALIDATION_KEY,
-} from "./finding";
 
 // ============================================================================
 // Mark Expired Deals

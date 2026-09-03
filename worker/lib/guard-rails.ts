@@ -1,4 +1,4 @@
-import { Deal, PipelineError, ErrorClass } from "../types";
+import { Deal, PipelineError } from "../types";
 import { CONFIG } from "../config";
 import { logger } from "./global-logger";
 
