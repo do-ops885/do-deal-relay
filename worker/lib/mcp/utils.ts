@@ -6,8 +6,6 @@
  * @module worker/lib/mcp/utils
  */
 
-import type { Env } from "../../types";
-
 // ============================================================================
 // Progress Notification Utilities
 // ============================================================================
@@ -67,7 +65,7 @@ export async function withProgress<T extends Record<string, unknown>>(
   let currentStep = 0;
   let result: T;
 
-  const reportProgress = (step: number, message?: string) => {
+  const reportProgress = (step: number, _message?: string) => {
     currentStep = step;
   };
 

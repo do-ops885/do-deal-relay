@@ -65,27 +65,6 @@ async function ensureProgressIndexTable(env: Env): Promise<void> {
   }
 }
 
-async function updateIndex(env: Env, entry: ProgressIndexEntry): Promise<void> {
-  try {
-    await ensureProgressIndexTable(env);
-    await env.DEALS_DB.prepare(
-      `
-      INSERT INTO ${PROGRESS_INDEX_TABLE} (operationId, toolName, createdAt)
-      VALUES (?, ?, ?)
-      ON CONFLICT(operationId) DO NOTHING
-    `,
-    )
-      .bind(entry.operationId, entry.toolName, entry.createdAt)
-      .run();
-  } catch (err) {
-    logger.warn("MCP Progress: updateIndex failed", {
-      component: "mcp-progress",
-      operationId: entry.operationId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-}
-
 async function removeFromIndex(env: Env, operationId: string): Promise<void> {
   try {
     await ensureProgressIndexTable(env);
@@ -98,21 +77,6 @@ async function removeFromIndex(env: Env, operationId: string): Promise<void> {
     logger.warn("MCP Progress: removeFromIndex failed", {
       component: "mcp-progress",
       operationId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-}
-
-async function cleanupStaleIndex(env: Env): Promise<void> {
-  try {
-    await env.DEALS_DB.prepare(
-      `DELETE FROM ${PROGRESS_INDEX_TABLE} WHERE createdAt < datetime('now', '-' || ? || ' seconds')`,
-    )
-      .bind(PROGRESS_TTL_SECONDS.toString())
-      .run();
-  } catch (err) {
-    logger.warn("MCP Progress: cleanupStaleIndex failed", {
-      component: "mcp-progress",
       error: err instanceof Error ? err.message : String(err),
     });
   }

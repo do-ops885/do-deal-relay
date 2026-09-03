@@ -238,8 +238,6 @@ export function isRankingQuery(query: string): boolean {
 export function extractRankingCriteria(
   query: string,
 ): "reward_value" | "confidence_score" | "relevance" | undefined {
-  const lowerQuery = query.toLowerCase();
-
   // Reward value ranking
   if (
     /\b(highest|lowest|best|most)\s+(bonus|reward|payout|value|cash)\b/i.test(

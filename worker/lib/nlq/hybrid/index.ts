@@ -6,16 +6,10 @@
 import { logger } from "../../global-logger";
 import type { Env } from "../../../types";
 import type { EnhancedQuery, QueryFilters } from "../ai";
-import { AIQueryEnhancer, isComplexQuery } from "../ai";
-import {
-  classifyWithRules,
-  normalizeQuery,
-  buildFiltersFromEntities,
-  calculateRuleConfidence,
-} from "./rule-classifier";
+import { AIQueryEnhancer } from "../ai";
+import { classifyWithRules } from "./rule-classifier";
 import {
   selectMethod,
-  shouldUseAI,
   DEFAULT_CLASSIFIER_OPTIONS,
   type HybridClassifierOptions,
 } from "./ai-decision";

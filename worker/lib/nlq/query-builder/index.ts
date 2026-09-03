@@ -5,7 +5,6 @@
  * Uses FTS5 for full-text search with structured filtering.
  */
 
-import type { D1Database } from "@cloudflare/workers-types";
 import {
   ParsedQuery,
   StructuredQuery,
@@ -14,11 +13,8 @@ import {
   RewardType,
   Token,
 } from "../types";
-import { getTopEntities, cleanQueryForSearch } from "../parser";
+import { getTopEntities } from "../parser";
 import { isRankingQuery, extractRankingCriteria } from "../intent";
-import { buildWhereClause, buildOrderByClause } from "./sql";
-import { executeStructuredQuery } from "./executor";
-import { explainQuery } from "./explanation";
 
 export { buildWhereClause, buildOrderByClause } from "./sql";
 export { executeStructuredQuery } from "./executor";

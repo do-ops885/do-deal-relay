@@ -1,5 +1,3 @@
-import { LogEntry } from "../../types";
-
 export const LOG_KEY_PREFIX = "log:";
 export const LOG_INDEX_KEY = "log:index";
 export const STRUCTURED_LOG_PREFIX = "logs:";

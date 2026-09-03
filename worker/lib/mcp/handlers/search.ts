@@ -74,7 +74,7 @@ export async function handleSearchDeals(
     offset: 0,
   };
 
-  const { referrals, total } = await searchReferrals(env, filters);
+  const { referrals, total: _total } = await searchReferrals(env, filters);
 
   // Convert to Deal format for ranking
   const deals = referrals.map((r) => {

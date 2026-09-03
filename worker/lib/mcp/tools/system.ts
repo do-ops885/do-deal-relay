@@ -5,9 +5,7 @@
  * trigger_discovery, get_similar_deals, get_deal_highlights, get_logs.
  */
 
-import { z } from "zod";
-import type { Env } from "../../../types";
-import type { Tool, ToolHandler, ToolCallResult } from "../types";
+import type { Tool, ToolHandler } from "../types";
 
 import { handleGetStats } from "../handlers/stats";
 import {

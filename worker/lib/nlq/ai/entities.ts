@@ -53,7 +53,6 @@ export const VALID_COMPARATOR_OPS = [
   "similar_to",
   "alternative_to",
 ] as const;
-type ComparatorOp = (typeof VALID_COMPARATOR_OPS)[number];
 
 /**
  * Extract entities using rule-based + AI hybrid approach
