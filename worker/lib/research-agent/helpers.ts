@@ -98,7 +98,7 @@ export function generateSampleCode(domain: string, index: number): string {
 }
 
 export function simulateDiscovery(
-  query: string,
+  _query: string,
   source: ResearchSource,
   depth: WebResearchRequest["depth"],
 ): ReferralResearchResult["discovered_codes"] {

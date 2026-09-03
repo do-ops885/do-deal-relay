@@ -1,9 +1,4 @@
-import {
-  RESEARCH_SELECTOR_CONFIGS,
-  type ExtractSelectorSet,
-} from "../../config";
-
-import { logger } from "../global-logger";
+import { type ExtractSelectorSet } from "../../config";
 
 export interface ExtractionConfig {
   selectors: string[];

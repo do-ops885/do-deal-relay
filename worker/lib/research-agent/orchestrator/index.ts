@@ -23,7 +23,6 @@ import {
   deduplicateCodes,
   extractRewardValue,
 } from "../helpers";
-import { getSourceRateLimit } from "../sources";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
 import { isFeatureEnabled } from "../../feature-flags";
@@ -111,7 +110,6 @@ export async function executeReferralResearch(
   const errors: string[] = [];
 
   if (request.domain && KNOWN_REFERRAL_PROGRAMS[request.domain]) {
-    const knownProgram = KNOWN_REFERRAL_PROGRAMS[request.domain];
     sourcesChecked.push(`known_program:${request.domain}`);
 
     const potentialCodes = generatePotentialCodes(
@@ -240,7 +238,6 @@ async function researchFromSourceParallel(
     return;
   }
 
-  const rateLimit = getSourceRateLimit(source.name);
   if (!researchRateLimiter.canMakeRequest(source.name)) {
     const waitTime = Math.ceil(
       researchRateLimiter.getTimeUntilNextWindow(source.name) / 1000,

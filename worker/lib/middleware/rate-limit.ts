@@ -6,12 +6,11 @@
  */
 
 import type { Env } from "../../types";
-import type { RouteConfig, RouteParams, MiddlewareFn } from "./types";
+import type { RouteConfig, MiddlewareFn } from "./types";
 import {
   checkRateLimit,
   getClientIdentifier,
   createRateLimitHeaders,
-  getPerKeyRateLimitConfig,
 } from "../rate-limit";
 import { logger } from "../global-logger";
 

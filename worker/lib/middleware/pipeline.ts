@@ -11,20 +11,10 @@
  */
 
 import type { Env } from "../../types";
-import type {
-  RouteConfig,
-  RouteMatch,
-  RouteParams,
-  HttpMethod,
-  MiddlewareFn,
-} from "./types";
+import type { RouteConfig, RouteMatch, RouteParams, HttpMethod } from "./types";
 import { authMiddleware } from "./auth";
 import { rateLimitMiddleware } from "./rate-limit";
-import {
-  jsonResponse,
-  getAllowedOrigin,
-  SECURITY_HEADERS,
-} from "../../routes/utils";
+import { jsonResponse, getAllowedOrigin } from "../../routes/utils";
 import { checkBodySize } from "../../middleware/body-limit";
 import { logger } from "../global-logger";
 

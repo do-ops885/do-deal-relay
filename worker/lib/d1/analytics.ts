@@ -110,7 +110,7 @@ export async function getSimilarDealsD1(
   const domain = refResult.data.domain;
 
   const categoryConditions = categories
-    .map((_, i) => `category LIKE ?`)
+    .map((_, _i) => `category LIKE ?`)
     .join(" OR ");
 
   const params: unknown[] = [];

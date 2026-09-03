@@ -29,7 +29,7 @@ export interface DealExplanation {
  */
 export function explainDeal(
   deal: Deal,
-  ctx?: PipelineContext,
+  _ctx?: PipelineContext,
 ): DealExplanation {
   const status = deal.metadata.status;
   const confidence = deal.metadata.confidence_score;

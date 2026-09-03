@@ -6,7 +6,7 @@
  */
 
 import type { Env } from "../../types";
-import type { AuthTier, RouteConfig, RouteParams, MiddlewareFn } from "./types";
+import type { RouteConfig, MiddlewareFn } from "./types";
 import { authenticateRequest, type AuthResult } from "../auth";
 import { unauthorizedResponse, forbiddenResponse } from "../../routes/utils";
 import { logger } from "../global-logger";

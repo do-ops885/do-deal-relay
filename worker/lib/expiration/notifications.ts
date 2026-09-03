@@ -100,7 +100,7 @@ export async function notifyExpiringDeals(env: Env): Promise<{
   };
 
   try {
-    const { deals, byUrgency } = await checkExpiringDeals(env, 30);
+    const { deals, byUrgency: _byUrgency } = await checkExpiringDeals(env, 30);
 
     if (deals.length === 0) {
       return { ...counts, errors };

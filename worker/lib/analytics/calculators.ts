@@ -238,7 +238,7 @@ export function calculateExpiringSoon(
 export function calculateQualityMetrics(
   deals: Deal[],
   logs: LogEntry[],
-  metrics: Awaited<ReturnType<typeof getRecentMetrics>>,
+  _metrics: Awaited<ReturnType<typeof getRecentMetrics>>,
 ): DealAnalytics["qualityMetrics"] {
   // Calculate average confidence
   const avgConfidence =

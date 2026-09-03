@@ -1,7 +1,6 @@
 import type { Env, ReferralInput } from "../../types";
 import type {
   ParsedEmail,
-  ParsedCommand,
   EmailProcessingResult,
   ConfirmationEmailData,
 } from "../types";
@@ -10,7 +9,6 @@ import { generateDealId } from "../../lib/crypto";
 import {
   storeReferralInput,
   getReferralByCode,
-  searchReferrals,
 } from "../../lib/referral-storage";
 import { logger } from "../../lib/global-logger";
 import { extractReferralFromEmail } from "../extraction";

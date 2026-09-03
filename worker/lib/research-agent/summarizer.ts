@@ -101,7 +101,7 @@ function extractDealTitle(content: string): string {
   return firstLine.length > 3 ? firstLine.substring(0, 200) : "Unknown Deal";
 }
 
-function extractSource(content: string, url: string): string {
+function extractSource(_content: string, url: string): string {
   try {
     const parsed = new URL(url);
     return parsed.hostname.replace(/^www\./, "");
