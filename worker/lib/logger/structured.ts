@@ -1,4 +1,5 @@
 import { Env } from "../../types";
+import { emitConsole } from "../global-logger";
 import {
   Logger,
   StructuredLogEntry,
@@ -67,35 +68,43 @@ export class StructuredLogger implements Logger {
       await this.env.DEALS_LOG.put(runListKey, JSON.stringify(runList));
 
       const consoleMessage = `[${level.toUpperCase()}] [${this.runId}] [${this.traceId}]${this.currentPhase ? ` [${this.currentPhase}]` : ""} ${message}`;
-      if (level === "error") {
-        console.error(consoleMessage, context || "", error || "");
-      } else if (level === "warn") {
-        console.warn(consoleMessage, context || "");
-      } else if (level === "debug") {
-        console.debug(consoleMessage, context || "");
-      } else {
-        console.log(consoleMessage, context || "");
-      }
+      emitConsole(
+        level,
+        [consoleMessage, context || "", error || ""]
+          .map((part) =>
+            typeof part === "string" ? part : JSON.stringify(part),
+          )
+          .join(" "),
+      );
     } catch (err) {
-      console.error("Failed to write structured log:", err);
+      emitConsole("error", `Failed to write structured log: ${String(err)}`);
     }
   }
 
   debug(message: string, context?: Record<string, unknown>): void {
     this.log("debug", message, context).catch((err) => {
-      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+      emitConsole(
+        "error",
+        `[LOGGER_FALLBACK] Failed to log: ${message} ${String(err)}`,
+      );
     });
   }
 
   info(message: string, context?: Record<string, unknown>): void {
     this.log("info", message, context).catch((err) => {
-      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+      emitConsole(
+        "error",
+        `[LOGGER_FALLBACK] Failed to log: ${message} ${String(err)}`,
+      );
     });
   }
 
   warn(message: string, context?: Record<string, unknown>): void {
     this.log("warn", message, context).catch((err) => {
-      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+      emitConsole(
+        "error",
+        `[LOGGER_FALLBACK] Failed to log: ${message} ${String(err)}`,
+      );
     });
   }
 
@@ -105,7 +114,10 @@ export class StructuredLogger implements Logger {
     context?: Record<string, unknown>,
   ): void {
     this.log("error", message, context, error).catch((err) => {
-      console.error(`[LOGGER_FALLBACK] Failed to log: ${message}`, err);
+      emitConsole(
+        "error",
+        `[LOGGER_FALLBACK] Failed to log: ${message} ${String(err)}`,
+      );
     });
   }
 
