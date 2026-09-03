@@ -6,6 +6,30 @@ import type { D1Database } from "@cloudflare/workers-types";
 import { createD1Client } from "./client";
 import type { Deal, ReferralInput } from "../../types";
 
+type WriteClient = ReturnType<typeof createD1Client>;
+
+/**
+ * Execute a write and map a rejection to a failure envelope.
+ *
+ * D1Client.execute rejects on write failure so silent divergence is
+ * impossible; mutation helpers translate that into their historical
+ * {success, error} contract.
+ */
+async function executeWrite(
+  client: WriteClient,
+  sql: string,
+  params: unknown[],
+): Promise<{ success: boolean; lastRowId?: number; error?: string }> {
+  try {
+    return await client.execute(sql, params);
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 /**
  * Insert a new deal with conflict handling
  */
@@ -22,7 +46,8 @@ export async function insertDeal(
 
   const now = Math.floor(Date.now() / 1000);
 
-  const result = await client.execute(
+  const result = await executeWrite(
+    client,
     `INSERT INTO deals (
       deal_id, title, description, code, url, domain, 
       source_url, source_trust_score,
@@ -106,7 +131,8 @@ export async function insertReferralCode(
 
   const now = Math.floor(Date.now() / 1000);
 
-  const result = await client.execute(
+  const result = await executeWrite(
+    client,
     `INSERT INTO referral_codes (
       code, deal_id, user_id, submitted_by,
       max_uses, current_uses, use_count,
