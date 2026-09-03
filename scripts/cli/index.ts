@@ -4,9 +4,7 @@
  * This is the main entry point that delegates to command handlers
  */
 
-import { ParsedArgs } from "./types.js";
-import { parseArgs, formatOutput } from "./utils.js";
-import { config } from "./config.js";
+import { parseArgs } from "./utils.js";
 import { handleAuth } from "./commands/auth.js";
 import { handleCodes } from "./commands/codes.js";
 import { handleResearch } from "./commands/research.js";

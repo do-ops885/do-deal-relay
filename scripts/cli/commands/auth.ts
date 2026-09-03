@@ -5,7 +5,7 @@
 
 import { ParsedArgs } from "../types.js";
 import { config, setApiKey, setEndpoint } from "../config.js";
-import { apiRequest, formatOutput } from "../utils.js";
+import { apiRequest } from "../utils.js";
 
 /**
  * Handle auth commands

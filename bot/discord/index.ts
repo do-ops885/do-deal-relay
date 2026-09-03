@@ -168,7 +168,7 @@ export async function launchDiscordBot(
 
 export async function handleDiscordWebhook(
   request: Request,
-  config: DiscordBotConfig,
+  _config: DiscordBotConfig,
 ): Promise<Response> {
   try {
     const signature = request.headers.get("X-Signature-Ed25519");

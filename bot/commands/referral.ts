@@ -107,7 +107,7 @@ export const searchCommand: CommandHandler = {
   aliases: ["find", "query", "lookup"],
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx, args, api) => {
+  execute: async (_ctx, args, api) => {
     if (args.length < 1) {
       return {
         success: false,
@@ -179,7 +179,7 @@ export const getCommand: CommandHandler = {
   aliases: ["details", "info", "view"],
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx, args, api) => {
+  execute: async (_ctx, args, api) => {
     if (args.length < 1) {
       return {
         success: false,

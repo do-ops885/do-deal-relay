@@ -10,7 +10,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { CommandResult, Button } from "../commands/types";
+import { CommandResult } from "../commands/types";
 
 export function createCommandEmbed(result: CommandResult): EmbedBuilder {
   const embed = new EmbedBuilder()

@@ -13,7 +13,7 @@ export const startCommand: CommandHandler = {
   usage: "/start",
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx) => {
+  execute: async (_ctx) => {
     return {
       success: true,
       message:
@@ -35,7 +35,7 @@ export const statsCommand: CommandHandler = {
   aliases: ["status"],
   permissions: ["verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx, args, api) => {
+  execute: async (_ctx, _args, api) => {
     try {
       const health = await api.health();
       const lastRun = health.last_run;

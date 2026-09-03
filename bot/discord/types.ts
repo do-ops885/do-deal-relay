@@ -4,8 +4,6 @@
  * Centralized type definitions for the Discord bot implementation.
  */
 
-import { GuildMember } from "discord.js";
-
 // ============================================================================
 // Configuration Types
 // ============================================================================

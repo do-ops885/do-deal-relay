@@ -14,7 +14,7 @@ export const researchCommand: CommandHandler = {
   aliases: ["scan", "investigate", "discover"],
   permissions: ["public", "verified", "moderator", "admin"],
   platforms: ["telegram", "discord"],
-  execute: async (ctx, args, api) => {
+  execute: async (_ctx, args, api) => {
     if (args.length < 1) {
       return {
         success: false,
