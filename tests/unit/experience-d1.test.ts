@@ -204,5 +204,28 @@ describe("Experience D1 Queries", () => {
       expect(result.dealsProcessed).toBe(0);
       expect(result.eventsProcessed).toBe(0);
     });
+
+    it("should return an error envelope when an aggregate write fails", async () => {
+      currentMockStatement.run
+        .mockResolvedValueOnce({
+          results: [{ deal_code: "DEAL1" }],
+          success: true,
+          meta: { rows_read: 1, rows_written: 0 },
+        })
+        .mockRejectedValueOnce(new Error("D1 write failed"));
+
+      currentMockStatement.first.mockResolvedValueOnce({
+        total: 5,
+        positive: 3,
+        negative: 1,
+        avg: 40,
+      });
+
+      const result = await runAggregation(mockDb as unknown as D1Database);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("D1 write failed");
+      expect(result.dealsProcessed).toBe(0);
+    });
   });
 });

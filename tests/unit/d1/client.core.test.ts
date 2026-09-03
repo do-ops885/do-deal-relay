@@ -273,6 +273,18 @@ describe("d1/client", () => {
       expect(result.lastRowId).toBe(42);
       expect(result.changes).toBe(1);
     });
+
+    it("rejects instead of resolving an error envelope when the write fails", async () => {
+      const { db, mocks } = buildMockDb();
+      (mocks.run as Mock).mockRejectedValueOnce(
+        new Error("constraint failed: UNIQUE"),
+      );
+      const client = new D1Client(db);
+
+      await expect(
+        client.execute("INSERT INTO deals (id) VALUES (?)", [1]),
+      ).rejects.toThrow("constraint failed");
+    });
   });
 
   describe("raw()", () => {
@@ -310,6 +322,16 @@ describe("d1/client", () => {
       expect(result.success).toBe(true);
       expect(mocks.exec).not.toHaveBeenCalled();
     });
+
+    it("rejects when the underlying exec fails", async () => {
+      const { db, mocks } = buildMockDb();
+      (mocks.exec as Mock).mockRejectedValueOnce(new Error("disk I/O error"));
+      const client = new D1Client(db);
+
+      await expect(
+        client.raw("CREATE TABLE foo (id INTEGER);"),
+      ).rejects.toThrow("disk I/O error");
+    });
   });
 
   // ============================================================================
@@ -336,6 +358,20 @@ describe("d1/client", () => {
       expect(result.results[0]?.data).toEqual([{ id: 1 }]);
       expect(result.results[1]?.data).toEqual([{ id: 2 }]);
       expect(mocks.batch).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejects when the underlying batch fails", async () => {
+      const { db, mocks } = buildMockDb();
+      (mocks.batch as Mock).mockRejectedValueOnce(
+        new Error("too many statements"),
+      );
+      const client = new D1Client(db);
+
+      await expect(
+        client.batch([
+          { sql: "INSERT INTO deals (id) VALUES (?)", params: [1] },
+        ]),
+      ).rejects.toThrow("too many statements");
     });
   });
 
