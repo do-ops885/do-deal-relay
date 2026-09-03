@@ -225,7 +225,7 @@ describe("Middleware Pipeline", () => {
       const handler = vi
         .fn()
         .mockImplementation(
-          (req: Request, _env: Env, params: Record<string, string>) =>
+          (_req: Request, _env: Env, params: Record<string, string>) =>
             Promise.resolve(
               new Response(JSON.stringify(params), {
                 status: 200,

@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   checkSafety,
   checkResourceLimits,
   checkDataQuality,
-  runGuardRails,
 } from "../../worker/lib/guard-rails";
 import type { Deal } from "../../worker/types";
 

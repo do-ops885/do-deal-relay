@@ -115,13 +115,13 @@ describe("Feature Flags Middleware", () => {
         mockEnv,
         "custom-user-flag",
         {
-          getUserId: (req) => "custom-user",
+          getUserId: (_req) => "custom-user",
         },
       );
       const handler = vi.fn().mockResolvedValue(new Response("OK"));
 
       const request = new Request("http://localhost/test");
-      const response = await middleware(request, handler);
+      await middleware(request, handler);
 
       expect(handler).toHaveBeenCalled();
     });

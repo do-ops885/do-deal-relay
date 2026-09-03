@@ -3,31 +3,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   CircuitBreaker,
   CircuitBreakerOpenError,
-  createCircuitBreaker,
   callWithCircuitBreaker,
   getCircuitBreakerMetrics,
   resetCircuitBreaker,
-  createGitHubCircuitBreaker,
-  createTelegramCircuitBreaker,
-  getSourceCircuitBreaker,
   clearSourceCircuitBreakers,
   getAllCircuitBreakerMetrics,
   resetAllMetrics,
-  type CircuitState,
 } from "../../worker/lib/circuit-breaker";
 import type { Env } from "../../worker/types";
 
 describe("Circuit Breaker", () => {
   let mockKvStorage: Map<string, unknown>;
   let mockEnv: Env;
-  let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mockKvStorage = new Map();
     resetAllMetrics();
     clearSourceCircuitBreakers();
     vi.useFakeTimers();
-    consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
 
     mockEnv = {
       DEALS_PROD: {

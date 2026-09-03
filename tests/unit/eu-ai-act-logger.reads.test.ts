@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
 import {
   EUAIActLogger,
   createComplianceLogger,
   getRetentionPolicy,
   type ComplianceConfig,
-  type AIActLogEntry,
 } from "../../worker/lib/eu-ai-act-logger";
 
 vi.mock("../../worker/config", () => ({
@@ -46,8 +44,6 @@ describe("EUAIActLogger", () => {
   };
 
   let logger: EUAIActLogger;
-
-  const originalCrypto = global.crypto;
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -1,12 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   KVCache,
-  CacheEntry,
-  createSourceCache,
-  createGitHubCache,
-  createRobotsTxtCache,
-  createSnapshotCache,
-  createStagingSnapshotCache,
   getAllCacheMetrics,
   resetAllCacheMetrics,
   clearAllCaches,
@@ -66,7 +60,6 @@ describe("KVCache", () => {
       const shortTtl = 1; // 1 second
 
       // Mock Date.now to control time
-      const originalDateNow = Date.now;
       let currentTime = 1000000;
       vi.spyOn(Date, "now").mockImplementation(() => currentTime);
 

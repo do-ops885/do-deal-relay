@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   sha256,
   generateDealId,
-  generateSnapshotHash,
-  generateUUID,
   calculateStringSimilarity,
   calculateUrlSimilarity,
   precomputeUrlSimilarityData,

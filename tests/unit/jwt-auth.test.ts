@@ -69,7 +69,7 @@ describe("JWT Utilities", () => {
 
 describe("RBAC Authorization", () => {
   it("should enforce role hierarchy", async () => {
-    const { authorize, hasPermission } =
+    const { authorize: _authorize, hasPermission } =
       await import("../../worker/middleware/authorization");
     expect(hasPermission("admin", "viewer")).toBe(true);
     expect(hasPermission("user", "admin")).toBe(false);

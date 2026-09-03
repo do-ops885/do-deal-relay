@@ -1,11 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { explainQuery } from "../../../../worker/lib/nlq/query-builder/explanation";
 import type {
   ParsedQuery,
   StructuredQuery,
   IntentClassification,
-  Token,
-  ExtractedEntity,
 } from "../../../../worker/lib/nlq/types";
 
 function createParsedQuery(overrides: Partial<ParsedQuery> = {}): ParsedQuery {

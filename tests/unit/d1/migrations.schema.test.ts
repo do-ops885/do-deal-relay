@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   MIGRATIONS,
@@ -330,8 +329,6 @@ describe("factory functions", () => {
 // ============================================================================
 
 describe("edge cases", () => {
-  const mockDb = {} as unknown as D1Database;
-
   beforeEach(() => {
     vi.clearAllMocks();
     resetMocks();

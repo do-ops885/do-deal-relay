@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { buildStructuredQuery } from "../../../../worker/lib/nlq/query-builder/index";
 import type {
   ParsedQuery,
-  StructuredQuery,
-  Token,
   ExtractedEntity,
-  NLQConfig,
 } from "../../../../worker/lib/nlq/types";
 
 vi.mock("../../../../worker/lib/nlq/parser", () => ({
@@ -27,15 +24,6 @@ import {
 const mockedGetTopEntities = vi.mocked(getTopEntities);
 const mockedIsRankingQuery = vi.mocked(isRankingQuery);
 const mockedExtractRankingCriteria = vi.mocked(extractRankingCriteria);
-
-function mockGetTopEntities(type: string, entities: ExtractedEntity[]) {
-  mockedGetTopEntities.mockImplementation(
-    (_entities: ExtractedEntity[], entityType: string) => {
-      if (entityType === type) return entities;
-      return [];
-    },
-  );
-}
 
 function createParsedQuery(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
   return {

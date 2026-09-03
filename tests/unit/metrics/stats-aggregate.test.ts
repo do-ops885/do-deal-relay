@@ -5,7 +5,6 @@ import {
   getCumulativeGateRejections,
   getCumulativeGatePasses,
   getPhaseTimingStats,
-  type PhaseTimingStats,
 } from "../../../worker/lib/metrics/stats";
 import type {
   Env,

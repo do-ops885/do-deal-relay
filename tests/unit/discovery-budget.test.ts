@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  calculateAdaptiveBudget,
-  DISCOVERY_CONSTANTS,
-} from "../../worker/pipeline/discovery-budget";
+import { calculateAdaptiveBudget } from "../../worker/pipeline/discovery-budget";
 import { SourceConfig } from "../../worker/types";
 
 describe("discovery-budget", () => {

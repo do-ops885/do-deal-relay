@@ -1,46 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Mock } from "vitest";
 import { hashApiKey, generateApiKey } from "../../worker/lib/auth";
-import type { Env } from "../../worker/types";
 
 // ============================================================================
 // Test Setup & Mocks
 // ============================================================================
 
 describe("Auth", () => {
-  // Mock KV namespace
-  const mockGet = vi.fn();
-  const mockPut = vi.fn();
-  const mockList = vi.fn();
-
-  const mockEnv = {
-    DEALS_SOURCES: {
-      get: mockGet,
-      put: mockPut,
-      list: mockList,
-    },
-    DEALS_PROD: {
-      get: mockGet,
-      put: mockPut,
-      list: mockList,
-    },
-    DEALS_LOG: {
-      get: mockGet,
-      put: mockPut,
-      list: mockList,
-    },
-    DEALS_LOCK: {
-      get: mockGet,
-      put: mockPut,
-      list: mockList,
-    },
-    AI_GATEWAY_URL: "https://gateway.test",
-    WEBHOOK_SECRET: "test-secret",
-    API_ENCRYPTION_KEY: "test-key",
-    DEALS_DB: {} as any,
-    TRUST_THRESHOLD: "0.3",
-  } as unknown as Env;
-
   // Mock crypto.subtle for deterministic testing
   const originalCrypto = global.crypto;
   let mockCryptoSubtle: {
@@ -56,7 +22,7 @@ describe("Auth", () => {
     mockCryptoSubtle = {
       digest: vi
         .fn()
-        .mockImplementation((algorithm: string, data: ArrayBuffer) => {
+        .mockImplementation((_algorithm: string, data: ArrayBuffer) => {
           // Return a deterministic hash based on input data
           const view = new Uint8Array(data);
           const hash = new Uint8Array(32);

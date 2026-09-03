@@ -1,47 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { discover } from "../../worker/pipeline/discover";
 import { validatedFetch } from "../../worker/lib/security";
-import type {
-  Deal,
-  PipelineContext,
-  Env,
-  SourceConfig,
-} from "../../worker/types";
+import type { PipelineContext, Env, SourceConfig } from "../../worker/types";
 
 // Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
 vi.mock("../../worker/lib/security", () => ({
   validatedFetch: vi.fn(),
 }));
-
-const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
-  id,
-  source: {
-    url: "https://example.com/invite",
-    domain: "example.com",
-    discovered_at: "2024-03-31T00:00:00Z",
-    trust_score: overrides.source?.trust_score || 0.7,
-  },
-  title: "Test Deal",
-  description: "Test description",
-  code: "CODE123",
-  url: "https://example.com/invite/CODE123",
-  reward: {
-    type: "cash",
-    value: 50,
-    currency: "USD",
-  },
-  expiry: {
-    confidence: 0.8,
-    type: "soft",
-  },
-  metadata: {
-    category: ["test"],
-    tags: ["test"],
-    normalized_at: "2024-03-31T00:00:00Z",
-    confidence_score: 0.8,
-    status: "active",
-  },
-});
 
 const createMockSource = (
   overrides: Partial<SourceConfig> = {},
@@ -159,7 +124,7 @@ describe("Discovery Engine", () => {
           ]),
       });
 
-      const result = await discover(env, ctx);
+      await discover(env, ctx);
       expect(_validatedFetch).toHaveBeenCalledTimes(1);
       expect(_validatedFetch).toHaveBeenCalledWith(
         "https://active.com/page",

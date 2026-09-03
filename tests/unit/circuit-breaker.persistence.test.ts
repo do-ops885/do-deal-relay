@@ -3,15 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   CircuitBreaker,
   CircuitBreakerOpenError,
-  createCircuitBreaker,
-  callWithCircuitBreaker,
-  getCircuitBreakerMetrics,
-  resetCircuitBreaker,
-  createGitHubCircuitBreaker,
-  createTelegramCircuitBreaker,
-  getSourceCircuitBreaker,
   clearSourceCircuitBreakers,
-  getAllCircuitBreakerMetrics,
   resetAllMetrics,
   type CircuitState,
 } from "../../worker/lib/circuit-breaker";

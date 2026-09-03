@@ -31,7 +31,7 @@ describe("Auth Security", () => {
     mockCryptoSubtle = {
       digest: vi
         .fn()
-        .mockImplementation((algorithm: string, data: ArrayBuffer) => {
+        .mockImplementation((_algorithm: string, data: ArrayBuffer) => {
           const view = new Uint8Array(data);
           const hash = new Uint8Array(32);
           for (let i = 0; i < 32; i++) {

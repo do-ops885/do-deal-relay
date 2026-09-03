@@ -274,7 +274,7 @@ describe("SERVICE_PATTERNS", () => {
   });
 
   it("should have all required fields for each pattern", () => {
-    for (const [key, pattern] of Object.entries(SERVICE_PATTERNS)) {
+    for (const [_key, pattern] of Object.entries(SERVICE_PATTERNS)) {
       expect(pattern.sender).toBeDefined();
       expect(pattern.subject).toBeDefined();
       expect(pattern.code).toBeDefined();

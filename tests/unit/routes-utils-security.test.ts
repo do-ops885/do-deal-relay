@@ -33,7 +33,6 @@ describe("Routes Utils Security", () => {
   });
 
   it("should fallback to default origin for disallowed origin", () => {
-    const allowedOrigins = getAllowedOrigins();
     const request = new Request("https://example.com", {
       headers: { Origin: "https://evil.com" } as any,
     });
@@ -43,7 +42,6 @@ describe("Routes Utils Security", () => {
   });
 
   it("should fallback to default origin when no Origin header is present", () => {
-    const allowedOrigins = getAllowedOrigins();
     const request = new Request("https://example.com");
 
     const response = jsonResponse(mockData, 200, request);

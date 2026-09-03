@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  acquireLock,
-  releaseLock,
-  extendLock,
-  getLockStatus,
-} from "../../worker/lib/lock";
+import { acquireLock, releaseLock, getLockStatus } from "../../worker/lib/lock";
 import type { Env } from "../../worker/types";
 import { PipelineError } from "../../worker/types";
 import { createMockD1, type LockRow } from "../fixtures/d1-mock";

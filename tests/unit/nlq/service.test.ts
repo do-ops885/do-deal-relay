@@ -87,7 +87,6 @@ vi.mock("../../../worker/lib/nlq/query-builder", () => ({
   ]),
 }));
 
-import { parseQuery } from "../../../worker/lib/nlq/parser";
 import { executeStructuredQuery } from "../../../worker/lib/nlq/query-builder";
 
 /**

@@ -1,17 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Deal, Env } from "../../worker/types";
+import { describe, it, expect, beforeEach } from "vitest";
+import type { Deal } from "../../worker/types";
 import { setGitHubToken } from "../../worker/lib/github/index";
-
-// Mock implementations for validation functions
-const mockValidateUrl = vi.fn();
-const mockCheckUrlStatusBatch = vi.fn();
-const mockDetectRedirects = vi.fn();
-const mockValidateCodeFormat = vi.fn();
-const mockValidateCodeOnPage = vi.fn();
-const mockTestCodeRedemption = vi.fn();
-const mockScrapeCurrentRewards = vi.fn();
-const mockDetectRewardChanges = vi.fn();
-const mockExtractRewardFromHTML = vi.fn();
 
 // ============================================================================
 // Test Fixtures
@@ -65,62 +54,10 @@ const createMockDeal = (
 
 describe("Expiration Manager", () => {
   let mockKvStorage: Map<string, unknown>;
-  let mockEnv: Env;
 
   beforeEach(() => {
     mockKvStorage = new Map();
     setGitHubToken("test-token");
-
-    mockEnv = {
-      DEALS_PROD: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`prod:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async (key: string, value: string) => {
-          mockKvStorage.set(`prod:${key}`, value);
-        }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`prod:${key}`);
-        }),
-      } as unknown as KVNamespace,
-      DEALS_STAGING: {
-        get: vi.fn(async <T>(key: string, type?: string) => {
-          const value = mockKvStorage.get(`staging:${key}`);
-          if (value === undefined) return null;
-          if (type === "json" && typeof value === "string") {
-            return JSON.parse(value) as T;
-          }
-          return value as T;
-        }),
-        put: vi.fn(async (key: string, value: string) => {
-          mockKvStorage.set(`staging:${key}`, value);
-        }),
-        delete: vi.fn(async (key: string) => {
-          mockKvStorage.delete(`staging:${key}`);
-        }),
-      } as unknown as KVNamespace,
-      DEALS_LOG: {
-        put: vi.fn(async () => {}),
-      } as unknown as KVNamespace,
-      DEALS_LOCK: {
-        get: vi.fn(async () => null),
-        put: vi.fn(async () => {}),
-        delete: vi.fn(async () => {}),
-      } as unknown as KVNamespace,
-      DEALS_SOURCES: {
-        get: vi.fn(async () => null),
-        put: vi.fn(async () => {}),
-      } as unknown as KVNamespace,
-      ENVIRONMENT: "test",
-      GITHUB_REPO: "test/repo",
-      GITHUB_TOKEN: "test-token",
-      NOTIFICATION_THRESHOLD: "100",
-    } as Env;
   });
 
   describe("checkExpiringDeals", () => {

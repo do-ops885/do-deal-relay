@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createProgressMeta, withProgress } from "../../worker/lib/mcp/utils";
 
 describe("MCP Utils - Progress Notifications", () => {
@@ -48,7 +48,7 @@ describe("MCP Utils - Progress Notifications", () => {
       const result = await withProgress(
         "test-token",
         5,
-        async (step, reportProgress) => {
+        async (_step, reportProgress) => {
           reportProgress(3, "Almost done");
           return { value: 100 };
         },
@@ -75,7 +75,7 @@ describe("MCP Utils - Progress Notifications", () => {
       const result = await withProgress(
         "async-token",
         3,
-        async (step, reportProgress) => {
+        async (_step, reportProgress) => {
           await new Promise((resolve) => setTimeout(resolve, 10));
           reportProgress(2);
           return { completed: true };

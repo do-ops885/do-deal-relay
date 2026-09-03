@@ -1,8 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  buildWhereClause,
-  buildOrderByClause,
-} from "../../../../worker/lib/nlq/query-builder/sql";
+import { describe, it, expect } from "vitest";
+import { buildWhereClause } from "../../../../worker/lib/nlq/query-builder/sql";
 import type { StructuredQuery } from "../../../../worker/lib/nlq/types";
 
 function createBaseQuery(
@@ -22,12 +19,6 @@ function createBaseQuery(
 }
 
 describe("buildWhereClause", () => {
-  let query: StructuredQuery;
-
-  beforeEach(() => {
-    query = createBaseQuery();
-  });
-
   describe("status filter", () => {
     it("should add status condition when status is active", () => {
       const result = buildWhereClause(createBaseQuery({ status: "active" }));

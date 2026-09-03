@@ -9,14 +9,6 @@ import { defineConfig, devices } from "@playwright/test";
  *   - Or set WEBHOOK_SECRET, EMAIL_WEBHOOK_SECRET, API_ENCRYPTION_KEY
  */
 
-// Allowlist of required env var NAMES (values are never inspected or logged).
-// See .dev.vars.example for what each one is.
-const REQUIRED_ENV_VARS = [
-  "WEBHOOK_SECRET",
-  "EMAIL_WEBHOOK_SECRET",
-  "API_ENCRYPTION_KEY",
-] as const;
-
 // Presence-only check; values are never compared, returned, or logged.
 function getMissingEnvVars(): readonly string[] {
   const missing: string[] = [];

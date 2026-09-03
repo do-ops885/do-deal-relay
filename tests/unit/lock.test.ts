@@ -460,7 +460,6 @@ describe("Lock Mechanism (D1 CAS)", () => {
 
       const beforeExtend = Date.now();
       await extendLock(mockEnv, "trace-1", 600);
-      const afterExtend = Date.now();
 
       const lock = mockD1Storage.get("pipeline:lock") as { expires_at: string };
       const expiresAt = new Date(lock.expires_at).getTime();

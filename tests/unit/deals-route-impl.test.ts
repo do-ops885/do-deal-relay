@@ -7,7 +7,6 @@ import {
   handleExplainDeal,
 } from "../../worker/routes/core/deals";
 import * as storage from "../../worker/lib/storage";
-import { jsonResponse } from "../../worker/routes/utils";
 
 vi.mock("../../worker/lib/storage", () => ({
   getProductionSnapshot: vi.fn(),

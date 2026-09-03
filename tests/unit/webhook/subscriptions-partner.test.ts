@@ -9,10 +9,7 @@ import {
   getPartnerSubscriptions,
   getUserSubscriptions,
 } from "../../../worker/lib/webhook/subscriptions";
-import type {
-  WebhookPartner,
-  WebhookSubscription,
-} from "../../../worker/lib/webhook/types";
+import type { WebhookPartner } from "../../../worker/lib/webhook/types";
 
 // ============================================================================
 // Mock KV Namespace

@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { VALIDATION_GATES } from "../../../worker/config";
-import { validate } from "../../../worker/validation/pipeline";
-import { Deal, PipelineContext } from "../../../worker/types";
 
 describe("Validation Gate Orchestration", () => {
   it("should have all defined validation gates handled in the pipeline", async () => {
