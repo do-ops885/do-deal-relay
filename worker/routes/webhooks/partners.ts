@@ -68,7 +68,7 @@ export async function handleCreatePartner(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleCreatePartner",
     });
@@ -113,7 +113,7 @@ export async function handleGetPartner(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleGetPartner",
     });
@@ -153,7 +153,7 @@ export async function handleGetDeadLetterQueue(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleGetDeadLetterQueue",
     });
@@ -195,7 +195,7 @@ export async function handleRetryDeadLetter(
       env,
     );
   } catch (error) {
-    const err = handleError(error, {
+    handleError(error, {
       component: "webhook",
       handler: "handleRetryDeadLetter",
     });

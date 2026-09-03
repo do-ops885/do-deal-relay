@@ -187,10 +187,15 @@ describe("SourceRegistry", () => {
         string,
         { count: number; windowStart: number }
       >();
-      const cursor = <T>(rows: T[]) => ({
-        one: () => rows[0],
-        toArray: () => rows,
-      });
+      function cursor<T>(rows: T[]): {
+        one: () => T | undefined;
+        toArray: () => T[];
+      } {
+        return {
+          one: () => rows[0],
+          toArray: () => rows,
+        };
+      }
       const exec = vi.fn((sql: string, ...params: unknown[]) => {
         const normalizedSql = sql.trimStart().toUpperCase();
         if (normalizedSql.startsWith("CREATE")) return cursor([]);
@@ -233,10 +238,15 @@ describe("SourceRegistry", () => {
 
     it("should reset a stable rate-limit key when the window changes", async () => {
       const states = new Map<string, { count: number; windowStart: number }>();
-      const cursor = <T>(rows: T[]) => ({
-        one: () => rows[0],
-        toArray: () => rows,
-      });
+      function cursor<T>(rows: T[]): {
+        one: () => T | undefined;
+        toArray: () => T[];
+      } {
+        return {
+          one: () => rows[0],
+          toArray: () => rows,
+        };
+      }
       const exec = vi.fn((sql: string, ...params: unknown[]) => {
         const normalizedSql = sql.trimStart().toUpperCase();
         if (normalizedSql.startsWith("CREATE")) return cursor([]);
