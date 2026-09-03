@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { authenticateD1Request } from "../../worker/routes/d1/admin";
 import { authenticateRequest } from "../../worker/lib/auth";
 import type { Env } from "../../worker/types";

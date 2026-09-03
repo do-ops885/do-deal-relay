@@ -1,8 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import {
-  classifyWithRules,
-  buildFiltersFromEntities,
-} from "../../../worker/lib/nlq/hybrid/rule-classifier";
+import { describe, it, expect } from "vitest";
+import { buildFiltersFromEntities } from "../../../worker/lib/nlq/hybrid/rule-classifier";
 import { AIQueryEnhancer } from "../../../worker/lib/nlq/ai/index";
 import type { Env } from "../../../worker/types";
 

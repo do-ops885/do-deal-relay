@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { validate } from "../../worker/validation/pipeline";
 import { calculateAggregateStats } from "../../worker/lib/metrics/stats";
 import { createMetrics } from "../../worker/lib/metrics/core";

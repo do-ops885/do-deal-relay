@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { score, calculateSourceDiversity } from "../../worker/pipeline/score";
+import { score } from "../../worker/pipeline/score";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({

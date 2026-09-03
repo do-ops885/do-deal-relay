@@ -4,20 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type {
-  D1Database,
-  D1PreparedStatement,
-  D1Result,
-} from "@cloudflare/workers-types";
+import type { D1Database } from "@cloudflare/workers-types";
 import type { Deal, ReferralInput } from "../../worker/types";
 import {
   insertDeal,
   insertReferralCode,
   getReferralCodesByDeal,
   getReferralCodeByString,
-  type DealSearchResult,
-  type DealStats,
-  type ExpiringDealRow,
   type ReferralCodeResult,
 } from "../../worker/lib/d1/queries";
 

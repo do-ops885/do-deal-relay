@@ -363,16 +363,6 @@ describe("State Machine - Status & Guards", () => {
 
   describe("Guard rails", () => {
     it("should enforce guard rails on discovery input", async () => {
-      // Mock too many deals to trigger guard rail
-      const manyDeals = Array(2000)
-        .fill(null)
-        .map((_, i) => ({
-          code: `CODE${i}`,
-          title: `Deal ${i}`,
-          url: "https://example.com/invite",
-          reward_value: 50,
-        }));
-
       mockKvStorage.set(
         "sources:registry",
         JSON.stringify([

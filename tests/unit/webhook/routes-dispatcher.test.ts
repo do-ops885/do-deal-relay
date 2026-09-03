@@ -81,7 +81,7 @@ vi.mock("../../../worker/lib/webhook/index", async (importOriginal) => {
     ...actual,
     handleIncomingWebhook: vi
       .fn()
-      .mockImplementation(async (env, partnerId, payload, opts) => {
+      .mockImplementation(async (_env, _partnerId, payload, opts) => {
         if (payload === "FAIL") throw new Error("Internal Error");
         if (opts && opts.signature === "sig")
           return { success: false, statusCode: 401, message: "Unauthorized" };

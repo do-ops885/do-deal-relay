@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Mock } from "vitest";
-import {
-  D1Client,
-  createD1Client,
-  createD1ReadClient,
-  createD1WriteClient,
-  type QueryResult,
-} from "../../../worker/lib/d1/client";
+import { D1Client } from "../../../worker/lib/d1/client";
 import type { D1Database } from "@cloudflare/workers-types";
 
 // ============================================================================

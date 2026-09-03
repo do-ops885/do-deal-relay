@@ -5,7 +5,7 @@
  * and ranking functionality across unit, integration, and e2e tests.
  */
 
-import type { Deal, Source, DealMetadata } from "../../worker/types";
+import type { Deal } from "../../worker/types";
 
 // ============================================================================
 // Sample Deals

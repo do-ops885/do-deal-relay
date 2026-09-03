@@ -60,7 +60,7 @@ describe("Auth", () => {
     mockCryptoSubtle = {
       digest: vi
         .fn()
-        .mockImplementation((algorithm: string, data: ArrayBuffer) => {
+        .mockImplementation((_algorithm: string, data: ArrayBuffer) => {
           // Return a deterministic hash based on input data
           const view = new Uint8Array(data);
           const hash = new Uint8Array(32);
@@ -126,7 +126,7 @@ describe("Auth", () => {
       expect(key).toMatch(/^ddr_[a-f0-9]{32}_\d+$/);
       expect(mockPut).toHaveBeenCalledOnce();
 
-      const [storedKey, storedValue, options] = mockPut.mock.calls[0]!;
+      const [storedKey, storedValue] = mockPut.mock.calls[0]!;
       expect(storedKey).toMatch(/^apikey:[a-f0-9]{64}$/);
 
       const metadata = JSON.parse(storedValue as string);
@@ -238,7 +238,6 @@ describe("Auth", () => {
 
   describe("verifyApiKey()", () => {
     const validApiKey = "ddr_testkey1234567890123456789012_1705310400";
-    const validKeyHash = "testhash123456789012345678901234567890"; // fake hash
 
     const createMockMetadata = (
       overrides: Partial<ApiKeyConfig> = {},

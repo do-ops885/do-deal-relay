@@ -1,57 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
 import {
   calculateAggregateStats,
   formatMetricsForPrometheus,
   getDetailedPhaseTimingStats,
   type PhaseTimingStats,
 } from "../../../worker/lib/metrics/stats";
-import type {
-  Env,
-  PipelineMetrics,
-  PipelinePhase,
-} from "../../../worker/types";
+import type { PipelineMetrics, PipelinePhase } from "../../../worker/types";
 
 // ============================================================================
 // Test Setup & Mocks
 // ============================================================================
 
 describe("metrics/stats - format and timing", () => {
-  let mockGet: Mock;
-
-  const buildEnv = (): Env => {
-    mockGet = vi.fn();
-    return {
-      DEALS_LOG: {
-        get: mockGet,
-        put: vi.fn(),
-        list: vi.fn(),
-        delete: vi.fn(),
-      },
-      AI_GATEWAY_URL: "https://gateway.test",
-      WEBHOOK_SECRET: "test-secret",
-      API_ENCRYPTION_KEY: "test-key",
-      ENVIRONMENT: "development",
-      CLOUDFLARE_ACCOUNT_ID: "test-account",
-      CLOUDFLARE_API_TOKEN: "test-token",
-      DEALS_DB: {} as unknown as Env["DEALS_DB"],
-      TRUST_THRESHOLD: "0.3",
-      CANDIDATE_BUDGET_GLOBAL: "50",
-      CANDIDATE_BUDGET_PER_SOURCE: "5",
-      CANDIDATE_BUDGET_HIGH_TRUST_BONUS: "10",
-      NOTIFICATION_THRESHOLD: "0.7",
-      GITHUB_REPO: "test/repo",
-      GITHUB_TOKEN: "",
-      JWT_SECRET: "test-jwt",
-      JWT_REFRESH_SECRET: undefined,
-      EMAIL_WEBHOOK_SECRET: "test-email",
-      DEALS_PROD: {} as unknown as Env["DEALS_PROD"],
-      DEALS_STAGING: {} as unknown as Env["DEALS_STAGING"],
-      DEALS_LOCK: {} as unknown as Env["DEALS_LOCK"],
-      DEALS_SOURCES: {} as unknown as Env["DEALS_SOURCES"],
-    } as unknown as Env;
-  };
-
   // Default all-phases template reused by individual tests
   const basePhaseTimings: Record<PipelinePhase, number> = {
     init: 10,

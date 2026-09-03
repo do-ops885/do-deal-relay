@@ -1,11 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   generateId,
   getWebhookKV,
   DEFAULT_RETRY_POLICY,
   WEBHOOK_RATE_LIMIT_TTL,
 } from "../../../worker/lib/webhook/types";
-import type { Env } from "../../../worker/types";
 
 describe("Webhook Types", () => {
   // ============================================================================

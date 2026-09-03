@@ -222,9 +222,7 @@ async function simulateWebhookLoad(config: {
   let delivered = 0;
   let failed = 0;
 
-  const payload = "x".repeat(config.payloadSize || 1024);
-
-  const { results, errors } = await executeConcurrent(
+  const { results: _results, errors: _errors } = await executeConcurrent(
     config.concurrent,
     Math.min(config.concurrent, 20), // Max 20 concurrent
     async () => {
@@ -279,7 +277,7 @@ async function simulateKVLoad(config: {
   let errors = 0;
   let rateLimited = false;
 
-  const { results, errors: errorList } = await executeConcurrent(
+  const { results, errors: _errorList } = await executeConcurrent(
     config.operations,
     config.concurrency,
     async () => {

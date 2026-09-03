@@ -3,10 +3,8 @@ import {
   scrapeCurrentRewards,
   extractRewardFromHTML,
   detectRewardChanges,
-  batchScrapeRewards,
   getScrapingStats,
 } from "../../worker/lib/validation/reward-scraper";
-import { logger } from "../../worker/lib/global-logger";
 
 vi.mock("../../worker/lib/global-logger", () => ({
   logger: {

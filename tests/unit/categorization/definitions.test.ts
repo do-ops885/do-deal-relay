@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  CATEGORY_DEFINITIONS,
-  type CategoryDefinition,
-} from "../../../worker/lib/categorization/definitions";
+import { CATEGORY_DEFINITIONS } from "../../../worker/lib/categorization/definitions";
 
 describe("Category Definitions", () => {
   describe("CATEGORY_DEFINITIONS structure", () => {
@@ -32,7 +29,7 @@ describe("Category Definitions", () => {
     });
 
     it("should have valid structure for each category", () => {
-      Object.entries(CATEGORY_DEFINITIONS).forEach(([name, def]) => {
+      Object.entries(CATEGORY_DEFINITIONS).forEach(([_name, def]) => {
         expect(Array.isArray(def.keywords)).toBe(true);
         expect(Array.isArray(def.domains)).toBe(true);
         expect(typeof def.description).toBe("string");
@@ -41,7 +38,7 @@ describe("Category Definitions", () => {
     });
 
     it("should have non-empty keywords for most categories", () => {
-      Object.entries(CATEGORY_DEFINITIONS).forEach(([name, def]) => {
+      Object.entries(CATEGORY_DEFINITIONS).forEach(([_name, def]) => {
         expect(def.keywords.length).toBeGreaterThan(0);
       });
     });
@@ -245,7 +242,7 @@ describe("Category Definitions", () => {
 
   describe("Category keyword coverage", () => {
     it("should have at least 5 keywords per category", () => {
-      Object.entries(CATEGORY_DEFINITIONS).forEach(([name, def]) => {
+      Object.entries(CATEGORY_DEFINITIONS).forEach(([_name, def]) => {
         expect(def.keywords.length).toBeGreaterThanOrEqual(5);
       });
     });

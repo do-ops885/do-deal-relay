@@ -19,8 +19,6 @@ interface FakePage {
   complete: boolean;
 }
 
-const PAGE_SIZE = 1000;
-
 function key(name: string, metadata?: unknown): KvKey {
   return metadata === undefined ? { name } : { name, metadata };
 }

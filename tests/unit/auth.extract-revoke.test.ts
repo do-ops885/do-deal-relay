@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Mock } from "vitest";
 import { extractApiKey } from "../../worker/lib/auth";
-import type { Env } from "../../worker/types";
 
 describe("Auth", () => {
   const originalCrypto = global.crypto;
@@ -15,7 +14,7 @@ describe("Auth", () => {
     mockCryptoSubtle = {
       digest: vi
         .fn()
-        .mockImplementation((algorithm: string, data: ArrayBuffer) => {
+        .mockImplementation((_algorithm: string, data: ArrayBuffer) => {
           const view = new Uint8Array(data);
           const hash = new Uint8Array(32);
           for (let i = 0; i < 32; i++) {

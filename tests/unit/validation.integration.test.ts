@@ -1,17 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Deal, Env } from "../../worker/types";
-import { setGitHubToken } from "../../worker/lib/github/index";
-
-// Mock implementations for validation functions
-const mockValidateUrl = vi.fn();
-const mockCheckUrlStatusBatch = vi.fn();
-const mockDetectRedirects = vi.fn();
-const mockValidateCodeFormat = vi.fn();
-const mockValidateCodeOnPage = vi.fn();
-const mockTestCodeRedemption = vi.fn();
-const mockScrapeCurrentRewards = vi.fn();
-const mockDetectRewardChanges = vi.fn();
-const mockExtractRewardFromHTML = vi.fn();
+import { describe, it, expect } from "vitest";
+import type { Deal } from "../../worker/types";
 
 // ============================================================================
 // Test Fixtures
@@ -65,7 +53,7 @@ const createMockDeal = (
 
 describe("Validation Integration", () => {
   it("should perform complete deal validation flow", async () => {
-    const deal = createMockDeal("1", {
+    createMockDeal("1", {
       code: "TEST123",
       url: "https://example.com/deal",
     });
@@ -97,7 +85,7 @@ describe("Validation Integration", () => {
   });
 
   it("should detect and report invalid deals", async () => {
-    const deal = createMockDeal("1", {
+    createMockDeal("1", {
       code: "BAD",
       url: "https://broken.com/deal",
     });

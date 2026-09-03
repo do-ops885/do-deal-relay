@@ -9,6 +9,8 @@
     "strictNullChecks": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": false,
     "esModuleInterop": true,

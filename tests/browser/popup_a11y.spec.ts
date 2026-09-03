@@ -109,7 +109,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // focus indicator (box-shadow from :focus-visible, or outline from
     // default :focus). The critical assertion is that the element IS
     // keyboard-focused and reachable.
-    const focusStyle = await manualBtn.evaluate((el) => {
+    await manualBtn.evaluate((el) => {
       const style = window.getComputedStyle(el);
       const isFocused = el.matches(":focus-visible");
       return {
@@ -186,7 +186,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // Verify focus indication when :focus-visible heuristic fires.
     // Headless CI may not trigger :focus-visible; only assert styles
     // when the heuristic actually matched.
-    const focusStyle = await detectionItem.evaluate((el) => {
+    await detectionItem.evaluate((el) => {
       const style = window.getComputedStyle(el);
       return {
         boxShadow: style.boxShadow,

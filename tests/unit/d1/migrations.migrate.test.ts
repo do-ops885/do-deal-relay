@@ -1,19 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
 import type { D1Database } from "@cloudflare/workers-types";
-import {
-  MIGRATIONS,
-  MigrationRunner,
-  createMigrationRunner,
-  initDatabase,
-  getMigrationStatus,
-} from "../../../worker/lib/d1/migrations";
-import type {
-  Migration,
-  MigrationRecord,
-  MigrationResult,
-  MigrationStatus,
-} from "../../../worker/lib/d1/migrations";
+import { MigrationRunner } from "../../../worker/lib/d1/migrations";
 
 const mockQuery = vi.fn();
 const mockRaw = vi.fn();

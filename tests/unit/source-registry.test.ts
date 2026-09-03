@@ -22,13 +22,6 @@ interface MockSourceRow {
   created_at: number;
 }
 
-const TRUST_MIN = 0;
-const TRUST_MAX = 1;
-
-function clamp(score: number): number {
-  return Math.max(TRUST_MIN, Math.min(TRUST_MAX, score));
-}
-
 function classify(score: number): string {
   if (score >= 0.7) return "trusted";
   if (score >= 0.4) return "probationary";

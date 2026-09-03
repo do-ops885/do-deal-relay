@@ -119,7 +119,7 @@ describe("Notification System", () => {
         message: "Test error",
       };
 
-      const result = await notify(mockEnv, event);
+      await notify(mockEnv, event);
 
       // Should fallback to GitHub, which will fail without token
       expect(fetchMock).toHaveBeenCalled();

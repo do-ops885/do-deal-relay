@@ -228,7 +228,7 @@ describe("Tag Scoring", () => {
     });
 
     it("should have valid structure for each tag", () => {
-      Object.entries(TAG_DEFINITIONS).forEach(([name, def]) => {
+      Object.entries(TAG_DEFINITIONS).forEach(([_name, def]) => {
         expect(Array.isArray(def.keywords)).toBe(true);
         expect(Array.isArray(def.relatedCategories)).toBe(true);
       });

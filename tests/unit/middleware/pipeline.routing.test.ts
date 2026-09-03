@@ -5,10 +5,7 @@ import {
   matchRoute,
 } from "../../../worker/lib/middleware/pipeline";
 import { authMiddleware } from "../../../worker/lib/middleware/auth";
-import type {
-  RouteConfig,
-  AuthTier,
-} from "../../../worker/lib/middleware/types";
+import type { RouteConfig } from "../../../worker/lib/middleware/types";
 import type { Env } from "../../../worker/types";
 
 // ============================================================================
@@ -78,7 +75,7 @@ const helloHandler = vi
 const paramHandler = vi
   .fn()
   .mockImplementation(
-    (req: Request, env: Env, params: Record<string, string>) =>
+    (_req: Request, _env: Env, params: Record<string, string>) =>
       Promise.resolve(
         new Response(JSON.stringify(params), {
           status: 200,

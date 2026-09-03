@@ -3,7 +3,6 @@ import {
   getDeadLetterQueue,
   sendOutgoingWebhooks,
 } from "../../worker/lib/webhook/delivery";
-import * as webhookTypes from "../../worker/lib/webhook/types";
 import type { Env } from "../../worker/types";
 
 vi.mock("../../worker/lib/webhook/types", async () => {
@@ -120,7 +119,7 @@ describe("Webhook Delivery Optimization", () => {
 
       mockKv.list.mockResolvedValue({ keys });
 
-      mockKv.get.mockImplementation(async (key: string, type: string) => {
+      mockKv.get.mockImplementation(async (key: string, _type: string) => {
         if (key === "webhook_subscription:sub1") {
           return {
             id: "sub1",
