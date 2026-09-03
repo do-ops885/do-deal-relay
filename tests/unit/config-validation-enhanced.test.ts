@@ -17,6 +17,7 @@ describe("Enhanced Config Validation", () => {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
+    JWT_SECRET: "test-jwt-secret",
     DEALS_DB: {} as any,
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
@@ -66,6 +67,18 @@ describe("Enhanced Config Validation", () => {
     expect(() => validateConfig(env)).toThrow(
       "Missing required config: TRUST_THRESHOLD",
     );
+  });
+
+  it("should throw when JWT_SECRET is missing or blank", () => {
+    const missing = { ...validEnv } as any;
+    delete missing.JWT_SECRET;
+    expect(() => validateConfig(missing)).toThrow(
+      "Missing required config: JWT_SECRET",
+    );
+
+    expect(() =>
+      validateConfig({ ...validEnv, JWT_SECRET: "  " } as any),
+    ).toThrow("Missing required config: JWT_SECRET");
   });
 
   it("should throw when multiple variables are missing", () => {

@@ -15,6 +15,7 @@ import type {
 import { getWebhookKV, generateId, DEFAULT_RETRY_POLICY } from "./types";
 import { generateWebhookSecret } from "../hmac";
 import { logger } from "../global-logger";
+import { listAllKvKeys } from "../kv-pagination";
 
 // ============================================================================
 // Partner Management
@@ -89,15 +90,18 @@ export async function createSubscription(
   partnerId: string,
   url: string,
   events: WebhookEventType[],
+  ownerId: string,
   metadata?: Record<string, unknown>,
   retryPolicy?: Partial<RetryPolicy>,
   filters?: WebhookFilters,
 ): Promise<WebhookSubscription> {
   const kv = getWebhookKV(env);
   if (!kv) throw new Error("No KV namespace available for webhooks");
+  requireOwnerId(ownerId);
 
   const subscription: WebhookSubscription = {
     id: `sub_${generateId()}`,
+    owner_id: ownerId,
     partner_id: partnerId,
     url,
     events,
@@ -156,6 +160,35 @@ export async function getPartnerSubscriptions(
   return subscriptions;
 }
 
+export async function getUserSubscriptions(
+  env: Env,
+  ownerId: string,
+  partnerId?: string,
+  allowAdmin = false,
+): Promise<WebhookSubscription[]> {
+  const subscriptions = partnerId
+    ? await getPartnerSubscriptions(env, partnerId)
+    : await getAllSubscriptions(env);
+  return subscriptions.filter(
+    (subscription) => subscription.owner_id === ownerId || allowAdmin,
+  );
+}
+
+async function getAllSubscriptions(env: Env): Promise<WebhookSubscription[]> {
+  const kv = getWebhookKV(env);
+  if (!kv) return [];
+  const { keys } = await listAllKvKeys(kv, {
+    prefix: "webhook_subscription:",
+  });
+  const subscriptions = await Promise.all(
+    keys.map(async (key) => getSubscription(env, key.name.slice(21))),
+  );
+  return subscriptions.filter(
+    (subscription): subscription is WebhookSubscription =>
+      subscription !== null,
+  );
+}
+
 async function getPartnerSubscriptionIds(
   env: Env,
   partnerId: string,
@@ -169,7 +202,7 @@ async function getPartnerSubscriptionIds(
 export async function updateSubscription(
   env: Env,
   subscriptionId: string,
-  updates: Partial<Omit<WebhookSubscription, "id" | "created_at">>,
+  updates: Partial<Omit<WebhookSubscription, "id" | "created_at" | "owner_id">>,
 ): Promise<WebhookSubscription | null> {
   const kv = getWebhookKV(env);
   if (!kv) return null;
@@ -220,18 +253,19 @@ export async function deleteSubscription(
 
 export async function getSyncState(
   env: Env,
-  partnerId: string,
+  configId: string,
 ): Promise<SyncState | null> {
   const kv = getWebhookKV(env);
   if (!kv) return null;
-  const data = await kv.get(`sync_state:${partnerId}`);
+  const data = await kv.get(`sync_state:${configId}`);
   return data ? JSON.parse(data) : null;
 }
 
 export async function saveSyncState(env: Env, state: SyncState): Promise<void> {
   const kv = getWebhookKV(env);
   if (!kv) return;
-  await kv.put(`sync_state:${state.partner_id}`, JSON.stringify(state));
+  if (!state.config_id.trim()) throw new Error("Sync state requires config_id");
+  await kv.put(`sync_state:${state.config_id}`, JSON.stringify(state));
 }
 
 export async function createSyncConfig(
@@ -240,6 +274,7 @@ export async function createSyncConfig(
 ): Promise<SyncConfig & { id: string }> {
   const kv = getWebhookKV(env);
   if (!kv) throw new Error("No KV namespace available for webhooks");
+  requireOwnerId(config.owner_id);
 
   const id = `sync_${generateId()}`;
   const fullConfig = { ...config, id };
@@ -254,6 +289,7 @@ export async function createSyncConfig(
 
   // Initialize sync state
   const state: SyncState = {
+    config_id: id,
     partner_id: config.partner_id,
     last_sync_at: new Date(0).toISOString(),
     sync_version: 0,
@@ -263,6 +299,34 @@ export async function createSyncConfig(
   await saveSyncState(env, state);
 
   return fullConfig;
+}
+
+export async function getSyncConfig(
+  env: Env,
+  partnerId: string,
+  ownerId: string,
+  allowAdmin = false,
+): Promise<(SyncConfig & { id: string }) | null> {
+  const kv = getWebhookKV(env);
+  if (!kv) return null;
+  const ids = await getPartnerSyncConfigIds(env, partnerId);
+  for (const id of ids) {
+    const data = await kv.get(`sync_config:${id}`);
+    if (!data) continue;
+    const config = JSON.parse(data) as SyncConfig & { id: string };
+    if (config.owner_id === ownerId || allowAdmin) {
+      return config;
+    }
+  }
+  return null;
+}
+
+function requireOwnerId(ownerId: string): void {
+  if (!hasOwnerId(ownerId)) throw new Error("Webhook owner_id is required");
+}
+
+function hasOwnerId(ownerId: unknown): ownerId is string {
+  return typeof ownerId === "string" && ownerId.trim() !== "";
 }
 
 async function getPartnerSyncConfigIds(

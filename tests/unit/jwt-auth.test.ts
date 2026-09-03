@@ -5,6 +5,7 @@ import {
   hashPassword,
   verifyPassword,
 } from "../../worker/lib/jwt";
+import { authenticateRequest } from "../../worker/lib/auth";
 
 describe("JWT Utilities", () => {
   const secret = process.env.JWT_SECRET || "test-secret-key-for-jwt-testing";
@@ -26,6 +27,19 @@ describe("JWT Utilities", () => {
     const token = await createToken(payload, secret, 3600);
     const decoded = await verifyToken(token, "wrong-secret");
     expect(decoded).toBeNull();
+  });
+
+  it("should reject tokens when the JWT secret is absent", async () => {
+    const token = await createToken(payload, secret, 3600);
+    expect(await verifyToken(token, "")).toBeNull();
+
+    const auth = await authenticateRequest(
+      new Request("https://example.com", {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      { JWT_SECRET: "" } as any,
+    );
+    expect(auth.authenticated).toBe(false);
   });
 
   it("should reject tampered token", async () => {

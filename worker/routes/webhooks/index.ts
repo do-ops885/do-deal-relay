@@ -11,11 +11,13 @@ import {
   handleUnsubscribe,
   handleUnsubscribeById,
   handleListSubscriptions,
+} from "./subscriptions";
+import {
   handleCreatePartner,
   handleGetPartner,
   handleGetDeadLetterQueue,
   handleRetryDeadLetter,
-} from "./subscriptions";
+} from "./partners";
 import {
   handleCreateSyncConfig,
   handleGetSyncState,
@@ -44,12 +46,14 @@ export async function handleWebhookRoutes(
 
   // Subscription management (requires API key auth)
   if (path === "/webhooks/subscribe" && request.method === "POST") {
-    return withAuth(request, env, "user", () => handleSubscribe(request, env));
+    return withAuth(request, env, "user", (auth) =>
+      handleSubscribe(request, env, auth.userId),
+    );
   }
 
   if (path === "/webhooks/unsubscribe" && request.method === "POST") {
-    return withAuth(request, env, "user", () =>
-      handleUnsubscribe(request, env),
+    return withAuth(request, env, "user", (auth) =>
+      handleUnsubscribe(request, env, auth.userId, auth.role === "admin"),
     );
   }
 
@@ -59,14 +63,20 @@ export async function handleWebhookRoutes(
   ) {
     const subId = path.replace("/webhooks/unsubscribe/", "").split("/")[0];
     if (subId)
-      return withAuth(request, env, "user", () =>
-        handleUnsubscribeById(subId, env),
+      return withAuth(request, env, "user", (auth) =>
+        handleUnsubscribeById(
+          request,
+          subId,
+          env,
+          auth.userId,
+          auth.role === "admin",
+        ),
       );
   }
 
   if (path === "/webhooks/subscriptions" && request.method === "GET") {
-    return withAuth(request, env, "user", () =>
-      handleListSubscriptions(request, env),
+    return withAuth(request, env, "user", (auth) =>
+      handleListSubscriptions(request, env, auth.userId, auth.role === "admin"),
     );
   }
 
@@ -104,8 +114,8 @@ export async function handleWebhookRoutes(
 
   // Bidirectional sync
   if (path === "/webhooks/sync" && request.method === "POST") {
-    return withAuth(request, env, "user", () =>
-      handleCreateSyncConfig(request, env),
+    return withAuth(request, env, "user", (auth) =>
+      handleCreateSyncConfig(request, env, auth.userId),
     );
   }
 
@@ -118,16 +128,28 @@ export async function handleWebhookRoutes(
       .replace("/webhooks/sync/", "")
       .replace("/trigger", "");
     if (partnerId)
-      return withAuth(request, env, "user", () =>
-        handleTriggerSync(request, env, partnerId),
+      return withAuth(request, env, "user", (auth) =>
+        handleTriggerSync(
+          request,
+          env,
+          partnerId,
+          auth.userId,
+          auth.role === "admin",
+        ),
       );
   }
 
   if (path.startsWith("/webhooks/sync/") && request.method === "GET") {
     const partnerId = path.replace("/webhooks/sync/", "").split("/")[0];
     if (partnerId)
-      return withAuth(request, env, "user", () =>
-        handleGetSyncState(request, env, partnerId),
+      return withAuth(request, env, "user", (auth) =>
+        handleGetSyncState(
+          request,
+          env,
+          partnerId,
+          auth.userId,
+          auth.role === "admin",
+        ),
       );
   }
 
@@ -142,11 +164,13 @@ export {
   handleUnsubscribe,
   handleUnsubscribeById,
   handleListSubscriptions,
+} from "./subscriptions";
+export {
   handleCreatePartner,
   handleGetPartner,
   handleGetDeadLetterQueue,
   handleRetryDeadLetter,
-} from "./subscriptions";
+} from "./partners";
 export {
   handleCreateSyncConfig,
   handleGetSyncState,

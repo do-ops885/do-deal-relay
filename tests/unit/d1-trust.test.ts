@@ -90,8 +90,8 @@ function createTrustDb(
         }
         return;
       }
-      // Batch: [domain, successInc, now, adjustment, successInc, adjustment, adjustment, now]
-      const [domain, successInc, , adjustment] = params;
+      // Batch: [domain, initialScore, successInc, classification, now, adjustment, successInc, adjustment, adjustment, now]
+      const [domain, initialScore, successInc, , , adjustment] = params;
       const existing = rows.find((r) => r.domain === domain);
       if (existing) {
         existing.trust_score = Math.max(
@@ -103,7 +103,7 @@ function createTrustDb(
       } else {
         rows.push({
           domain: String(domain),
-          trust_score: 0.5,
+          trust_score: Number(initialScore),
           total_deals: 1,
           successful_deals: Number(successInc),
         });
@@ -391,11 +391,11 @@ describe("d1/trust", () => {
       ]);
 
       expect(results[0]?.previous_score).toBe(0.5);
-      expect(results[0]?.new_score).toBe(0.5);
+      expect(results[0]?.new_score).toBe(0.55);
       expect(results[0]?.successful_deals).toBe(1);
     });
 
-    it("lands a brand-new batched domain at the 0.5 insert base, not the adjusted score", async () => {
+    it("applies the adjustment when initializing a batched domain", async () => {
       const rec = createTrustDb();
 
       const results = await evolveTrustBatch(rec.db, [
@@ -403,7 +403,7 @@ describe("d1/trust", () => {
       ]);
 
       expect(results[0]?.adjustment).toBe(0.05);
-      expect(results[0]?.new_score).toBeCloseTo(0.5, 10);
+      expect(results[0]?.new_score).toBeCloseTo(0.55, 10);
     });
 
     it("evolves an existing batched domain relative to its stored score", async () => {

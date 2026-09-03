@@ -116,9 +116,21 @@ describe("Rate Limiting", () => {
         delete: vi.fn(),
       } as any;
 
-      const result = await checkRateLimit(mockEnv, "client-1", "/api/submit");
+      const result = await checkRateLimit(mockEnv, "client-1", "/deals");
 
       expect(result.allowed).toBe(true);
+    });
+
+    it("should fail closed for sensitive requests if KV throws error", async () => {
+      mockEnv.DEALS_LOCK = {
+        get: vi.fn().mockRejectedValue(new Error("KV error")),
+        put: vi.fn(),
+        delete: vi.fn(),
+      } as unknown as Env["DEALS_LOCK"];
+
+      const result = await checkRateLimit(mockEnv, "client-1", "/api/submit");
+
+      expect(result.allowed).toBe(false);
     });
   });
 

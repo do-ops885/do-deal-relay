@@ -7,6 +7,7 @@ import type { Env } from "../../types";
 
 export interface WebhookSubscription {
   id: string;
+  owner_id: string;
   partner_id: string;
   url: string;
   events: WebhookEventType[];
@@ -111,6 +112,7 @@ export interface IncomingWebhookResult {
 }
 
 export interface SyncConfig {
+  owner_id: string;
   partner_id: string;
   direction: "push" | "pull" | "bidirectional";
   mode: "realtime" | "scheduled" | "manual";
@@ -129,6 +131,7 @@ export interface SyncConfig {
 }
 
 export interface SyncState {
+  config_id: string;
   partner_id: string;
   last_sync_at: string;
   cursor?: string;

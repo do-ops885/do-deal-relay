@@ -33,7 +33,16 @@ vi.mock("../../../worker/lib/hmac", async (importOriginal) => {
   };
 });
 
+vi.mock("../../../worker/lib/security", () => ({
+  validateReferralUrl: vi.fn(),
+  validateFetchUrl: vi.fn(),
+}));
+
 import { verifyHmacSignature } from "../../../worker/lib/hmac";
+import {
+  validateFetchUrl,
+  validateReferralUrl,
+} from "../../../worker/lib/security";
 
 // ============================================================================
 // Mock KV Namespace
@@ -67,6 +76,7 @@ function createEnv(kv: MockKv) {
     DEALS_STAGING: kv,
     DEALS_PROD: kv,
     DEALS_LOG: kv,
+    DEALS_SOURCES: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
   } as any;
@@ -106,6 +116,8 @@ describe("Webhook Incoming - Event Processing", () => {
   beforeEach(() => {
     kv = createMockKv();
     vi.mocked(verifyHmacSignature).mockReset();
+    vi.mocked(validateReferralUrl).mockReturnValue(true);
+    vi.mocked(validateFetchUrl).mockResolvedValue(true);
   });
 
   // ============================================================================
@@ -119,7 +131,6 @@ describe("Webhook Incoming - Event Processing", () => {
       kv.storage.set("webhook_partners", JSON.stringify([partner]));
 
       vi.mocked(verifyHmacSignature).mockResolvedValue({ valid: true });
-
       const payload = JSON.stringify({ event: "ping", data: {} });
 
       const result = await handleIncomingWebhook(
@@ -140,6 +151,7 @@ describe("Webhook Incoming - Event Processing", () => {
       kv.storage.set("webhook_partners", JSON.stringify([partner]));
 
       vi.mocked(verifyHmacSignature).mockResolvedValue({ valid: true });
+      vi.mocked(validateReferralUrl).mockReturnValue(false);
 
       const payload = JSON.stringify({
         event: "referral.created",
@@ -164,6 +176,7 @@ describe("Webhook Incoming - Event Processing", () => {
       kv.storage.set("webhook_partners", JSON.stringify([partner]));
 
       vi.mocked(verifyHmacSignature).mockResolvedValue({ valid: true });
+      vi.mocked(validateReferralUrl).mockReturnValue(false);
 
       const payload = JSON.stringify({
         event: "referral.created",
@@ -179,7 +192,61 @@ describe("Webhook Incoming - Event Processing", () => {
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(400);
-      expect(result.message).toBe("Invalid URL");
+      expect(result.message).toBe("Invalid referral URL");
+    });
+
+    it("rejects SSRF-unsafe referral URLs", async () => {
+      const env = createEnv(kv);
+      kv.storage.set("webhook_partners", JSON.stringify([createPartner()]));
+      vi.mocked(verifyHmacSignature).mockResolvedValue({ valid: true });
+      vi.mocked(validateFetchUrl).mockResolvedValue(false);
+
+      const result = await handleIncomingWebhook(
+        env,
+        "partner_test",
+        JSON.stringify({
+          event: "referral.created",
+          data: {
+            code: "TEST",
+            url: "https://example.com/deal",
+            domain: "example.com",
+          },
+        }),
+        createHeaders(),
+      );
+
+      expect(result.statusCode).toBe(400);
+      expect(result.message).toBe("Disallowed referral URL");
+    });
+
+    it("always stores accepted referrals as quarantined", async () => {
+      const env = createEnv(kv);
+      kv.storage.set("webhook_partners", JSON.stringify([createPartner()]));
+      vi.mocked(verifyHmacSignature).mockResolvedValue({ valid: true });
+
+      const result = await handleIncomingWebhook(
+        env,
+        "partner_test",
+        JSON.stringify({
+          event: "referral.created",
+          data: {
+            code: "TEST",
+            url: "https://example.com/deal",
+            domain: "example.com",
+            status: "active",
+          },
+        }),
+        createHeaders(),
+      );
+
+      expect(result.statusCode).toBe(201);
+      const stored = [...kv.storage.entries()].find(([key]) =>
+        key.startsWith("referral:"),
+      );
+      expect(stored).toBeDefined();
+      const storedValue = stored?.[1];
+      if (!storedValue) throw new Error("Expected a stored referral");
+      expect(JSON.parse(storedValue).status).toBe("quarantined");
     });
 
     it("should return 400 for missing code in deactivation", async () => {

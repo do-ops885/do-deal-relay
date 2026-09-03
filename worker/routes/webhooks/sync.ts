@@ -7,11 +7,11 @@ import { handleError } from "../../lib/error-handler";
 import {
   createSyncConfig,
   getSyncState,
+  getSyncConfig,
   saveSyncState,
 } from "../../lib/webhook/index";
 import { executeSync } from "../../lib/webhook/sync-executor";
-import { logger } from "../../lib/global-logger";
-import { requireAuth } from "./subscriptions";
+import { requireAuthenticatedUser } from "./subscriptions";
 import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 
 // ============================================================================
@@ -21,11 +21,15 @@ import { jsonResponse, type CreateSyncConfigRequest } from "./types";
 export async function handleCreateSyncConfig(
   request: Request,
   env: Env,
+  authenticatedUserId?: string,
 ): Promise<Response> {
   try {
-    // Check API key authentication
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
 
     const body = (await request.json()) as CreateSyncConfigRequest;
 
@@ -39,6 +43,7 @@ export async function handleCreateSyncConfig(
     }
 
     const config = await createSyncConfig(env, {
+      owner_id: ownerId,
       partner_id: body.partner_id,
       direction: body.direction,
       mode: body.mode,
@@ -82,12 +87,27 @@ export async function handleGetSyncState(
   request: Request,
   env: Env,
   partnerId: string,
+  authenticatedUserId?: string,
+  allowAdmin = false,
 ): Promise<Response> {
   try {
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
+    const config = await getSyncConfig(env, partnerId, ownerId, allowAdmin);
+    if (!config) {
+      return jsonResponse(
+        { error: "Sync config not found" },
+        404,
+        request,
+        env,
+      );
+    }
 
-    const state = await getSyncState(env, partnerId);
+    const state = await getSyncState(env, config.id);
 
     if (!state) {
       return jsonResponse({ error: "Sync state not found" }, 404, request, env);
@@ -112,26 +132,32 @@ export async function handleTriggerSync(
   request: Request,
   env: Env,
   partnerId: string,
+  authenticatedUserId?: string,
+  allowAdmin = false,
 ): Promise<Response> {
   try {
-    const authError = await requireAuth(request, env);
-    if (authError) return authError;
+    const ownerId = await requireAuthenticatedUser(
+      request,
+      env,
+      authenticatedUserId,
+    );
+    if (ownerId instanceof Response) return ownerId;
 
-    const state = await getSyncState(env, partnerId);
-
-    if (!state) {
+    const config = await getSyncConfig(env, partnerId, ownerId, allowAdmin);
+    if (!config) {
       return jsonResponse(
-        { error: "Sync config not found for partner" },
+        { error: "Sync config not found" },
         404,
         request,
         env,
       );
     }
 
-    const config = await getSyncConfig(env, partnerId);
-    if (!config) {
+    const state = await getSyncState(env, config.id);
+
+    if (!state) {
       return jsonResponse(
-        { error: "Sync config not found" },
+        { error: "Sync config not found for partner" },
         404,
         request,
         env,
@@ -183,21 +209,5 @@ export async function handleTriggerSync(
       request,
       env,
     );
-  }
-}
-
-async function getSyncConfig(env: Env, partnerId: string) {
-  try {
-    const raw = await env.DEALS_LOG.get(
-      `webhook:sync_config:${partnerId}`,
-      "json",
-    );
-    return raw as import("../../lib/webhook/types").SyncConfig | null;
-  } catch (error) {
-    logger.warn("Failed to fetch sync config for partner", {
-      partnerId,
-      error: (error as Error).message,
-    });
-    return null;
   }
 }

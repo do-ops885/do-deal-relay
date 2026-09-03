@@ -24,6 +24,11 @@ import {
 import { generateDealId } from "../crypto";
 import { logger } from "../global-logger";
 import { handleError } from "../error-handler";
+import { validateFetchUrl, validateReferralUrl } from "../security";
+import { checkRateLimit as checkSharedRateLimit } from "../rate-limit";
+
+const WEBHOOK_RATE_LIMIT_WINDOW_SECONDS = 60;
+const WEBHOOK_RATE_LIMIT_KEY_PREFIX = "ratelimit:webhook-incoming";
 
 export async function handleIncomingWebhook(
   env: Env,
@@ -217,16 +222,21 @@ async function processReferralCreatedOrUpdated(
     };
   }
 
-  // Verify URL is complete (CRITICAL: URL Preservation Rule)
-  try {
-    const urlObj = new URL(data.url);
-    if (!urlObj.protocol || !urlObj.host) throw new Error("Invalid URL");
-  } catch {
+  if (!validateReferralUrl(data.url, data.domain)) {
     return {
       success: false,
       statusCode: 400,
-      message: "Invalid URL",
-      error: "URL must be complete with protocol (e.g., https://)",
+      message: "Invalid referral URL",
+      error: "URL must be HTTPS and match the supplied domain",
+    };
+  }
+
+  if (!(await validateFetchUrl(data.url))) {
+    return {
+      success: false,
+      statusCode: 400,
+      message: "Disallowed referral URL",
+      error: "URL failed SSRF validation",
     };
   }
 
@@ -259,7 +269,7 @@ async function processReferralCreatedOrUpdated(
     url: data.url,
     domain: data.domain,
     source: "api",
-    status: data.status || "quarantined",
+    status: "quarantined",
     submitted_at: now,
     submitted_by: partnerId,
     expires_at: data.expires_at,
@@ -392,32 +402,28 @@ async function checkRateLimit(
   partnerId: string,
   limitPerMinute: number,
 ): Promise<RateLimitResult> {
-  const kv = getWebhookKV(env);
-  if (!kv) return { allowed: true };
+  const webhookKv = getWebhookKV(env);
+  const rateLimitEnv = webhookKv ? { ...env, DEALS_LOCK: webhookKv } : env;
+  const result = await checkSharedRateLimit(
+    rateLimitEnv,
+    `partner:${partnerId}`,
+    "/webhooks/incoming",
+    {
+      maxRequests: limitPerMinute,
+      windowSeconds: WEBHOOK_RATE_LIMIT_WINDOW_SECONDS,
+      keyPrefix: WEBHOOK_RATE_LIMIT_KEY_PREFIX,
+    },
+  );
 
-  const key = `webhook_ratelimit:${partnerId}`;
-  const now = Date.now();
-  const windowStart = Math.floor(now / 60000) * 60000;
-
-  const stored = await kv.get(key);
-  let count = 0;
-
-  if (stored) {
-    const data = JSON.parse(stored) as { count: number; window: number };
-    if (data.window === windowStart) count = data.count;
-  }
-
-  if (count >= limitPerMinute) {
-    return {
-      allowed: false,
-      retryAfter: Math.ceil((windowStart + 60000 - now) / 1000),
-    };
-  }
-
-  await kv.put(key, JSON.stringify({ count: count + 1, window: windowStart }), {
-    expirationTtl: 120,
-  });
-  return { allowed: true };
+  return result.allowed
+    ? { allowed: true }
+    : {
+        allowed: false,
+        retryAfter: Math.max(
+          0,
+          result.resetTime - Math.floor(Date.now() / 1000),
+        ),
+      };
 }
 
 async function checkIdempotency(

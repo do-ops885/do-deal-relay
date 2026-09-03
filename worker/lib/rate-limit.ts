@@ -12,8 +12,7 @@
  */
 
 import type { Env } from "../types";
-import type { AuthResult, ApiKeyConfig } from "./auth";
-import { hashApiKey } from "./auth";
+import type { AuthResult } from "./auth";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
 
@@ -21,7 +20,7 @@ import { toErrMessage } from "./errors";
 // Configuration
 // ============================================================================
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
   maxRequests: number;
   /** Time window in seconds */
@@ -136,6 +135,18 @@ interface RateLimitState {
   windowStart: number;
 }
 
+const SENSITIVE_ENDPOINTS = new Set([
+  "/api/auth/register",
+  "/api/auth/login",
+  "/api/auth/refresh",
+  "/api/submit",
+  "/api/email/incoming",
+  "/api/email/parse",
+  "/api/validate/url",
+  "/api/validate/batch",
+  "/webhooks/incoming",
+]);
+
 // ============================================================================
 // Rate Limiting Functions
 // ============================================================================
@@ -174,6 +185,17 @@ export async function checkRateLimit(
   // Create unique key for this client + endpoint + window
   const key = `${config.keyPrefix}:${identifier}:${windowStart}`;
 
+  // Some local/test deployments intentionally omit the KV binding. This is
+  // not a storage failure; preserve the existing no-rate-limit behavior.
+  if (!env.DEALS_LOCK) {
+    return {
+      allowed: true,
+      remaining: config.maxRequests,
+      resetTime,
+      limit: config.maxRequests,
+    };
+  }
+
   try {
     // Get current count from KV
     const state = await env.DEALS_LOCK.get<RateLimitState>(key, "json");
@@ -204,18 +226,31 @@ export async function checkRateLimit(
       limit: config.maxRequests,
     };
   } catch (error) {
-    // If KV fails, allow the request (fail open)
     logger.error("Rate limit check failed", {
       component: "rate-limit",
       error: toErrMessage(error),
     });
-    return {
-      allowed: true,
-      remaining: config.maxRequests,
-      resetTime,
-      limit: config.maxRequests,
-    };
+    return SENSITIVE_ENDPOINTS.has(endpoint)
+      ? blockedRateLimitResult(config, resetTime)
+      : {
+          allowed: true,
+          remaining: config.maxRequests,
+          resetTime,
+          limit: config.maxRequests,
+        };
   }
+}
+
+function blockedRateLimitResult(
+  config: RateLimitConfig,
+  resetTime: number,
+): RateLimitResult {
+  return {
+    allowed: false,
+    remaining: 0,
+    resetTime,
+    limit: config.maxRequests,
+  };
 }
 
 /**

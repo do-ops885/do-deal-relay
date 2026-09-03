@@ -42,6 +42,8 @@ export async function verifyToken(
   token: string,
   secret: string,
 ): Promise<Record<string, unknown> | null> {
+  if (secret.trim() === "") return null;
+
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
