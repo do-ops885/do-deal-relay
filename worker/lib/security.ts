@@ -28,6 +28,7 @@ const SECURITY_CONSTANTS = {
     "localhost",
     "127.0.0.1",
     "::1",
+    "::",
     "localhost.localdomain",
   ] as const,
   BLOCKED_IP_RANGES: [
@@ -46,6 +47,7 @@ const SECURITY_CONSTANTS = {
     "224.0.0.0/4",
     "240.0.0.0/4",
     "::1/128",
+    "::/128",
     "fc00::/7",
     "fe80::/10",
     "ff00::/8",
@@ -184,7 +186,10 @@ function isIpAddress(hostname: string): boolean {
 
 function normalizeIp(ip: string): string {
   const normalized = ip.toLowerCase();
-  const mappedMatch = normalized.match(/^(?:[0:]+:ffff:)(.+)$/);
+  // Normalize IPv4-mapped (::ffff:x.x.x.x) and IPv4-compatible (::x.x.x.x) IPv6 addresses
+  const mappedMatch = normalized.match(
+    /^(?:[0:]+(?:ffff:)?)((?:\d{1,3}\.){3}\d{1,3}|[0-9a-f]{1,4}:[0-9a-f]{1,4})$/i,
+  );
   if (mappedMatch?.[1]) {
     const inner = mappedMatch[1];
     if (inner.includes(".")) return inner;

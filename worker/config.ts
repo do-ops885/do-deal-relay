@@ -159,6 +159,7 @@ export const CONFIG = {
     "localhost",
     "127.0.0.1",
     "::1",
+    "::",
     "localhost.localdomain",
   ],
   BLOCKED_IP_RANGES: [
@@ -177,6 +178,7 @@ export const CONFIG = {
     "224.0.0.0/4",
     "240.0.0.0/4",
     "::1/128",
+    "::/128",
     "fc00::/7",
     "fe80::/10",
     "ff00::/8",

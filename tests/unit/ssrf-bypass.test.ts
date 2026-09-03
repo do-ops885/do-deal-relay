@@ -21,6 +21,23 @@ describe("Security Utils - validateFetchUrl SSRF Bypass Prevention", () => {
     }
   });
 
+  it("should block IPv4-compatible IPv6 and unspecified IPv6 addresses", async () => {
+    const compatibleUrls = [
+      "https://[::]/",
+      "https://[::0]/",
+      "https://[::127.0.0.1]/",
+      "https://[0:0:0:0:0:0:127.0.0.1]/",
+      "https://[::7f00:1]/",
+      "https://[0:0:0:0:0:0:7f00:1]/",
+      "https://[::10.0.0.1]/",
+    ];
+
+    for (const url of compatibleUrls) {
+      const result = await validateFetchUrl(url);
+      expect(result).toBe(false);
+    }
+  });
+
   it("should still block standard private IPv6 addresses", async () => {
     const privateIpv6 = [
       "https://[::1]/",
