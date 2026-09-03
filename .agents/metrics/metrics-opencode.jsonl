@@ -1,2 +1,7 @@
 {"timestamp": "2026-08-31T11:20:45Z", "agent": "opencode", "task": "self-learning-feedback full suite B/Full/Full (14 scripts, ADR-024, dual lessons)", "status": "completed"}
 {"timestamp":"2026-08-31T12:00:00Z","agent":"opencode","task":"improvement-swarm-2026-08-25 re-sync goap v0.19.2","status":"completed"}
+{"timestamp":"2026-09-02T19:00:00Z","agent":"opencode","task":"harden jwt and webhook ownership, ingestion, sync, and batch trust","status":"completed"}
+{"timestamp":"2026-09-02T19:12:00Z","agent":"opencode","task":"add atomic SOURCE_REGISTRY-backed rate limiting and paginate subscriptions","status":"completed"}
+{"timestamp":"2026-09-02T19:42:52Z","agent":"opencode","task":"implement security and reliability recommendations","status":"completed"}
+{"timestamp":"2026-09-02T19:36:00Z","agent":"opencode","task":"fix rate-limit window reset and scope webhook sync state by config ownership","status":"completed"}
+{"timestamp": "2026-09-03T09:00:00Z", "agent": "opencode", "task": "verify dirty webhook rate-limit trust work and determine next", "status": "completed"}

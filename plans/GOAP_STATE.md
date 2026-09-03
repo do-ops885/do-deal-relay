@@ -1,10 +1,27 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-08-31
-**Version**: 0.19.2
-**Status**: Active — 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main` (commits `ebe9323`, `b14380a`, `61dbc87`, `3465d06`, `b89d69d`, `1b251b4`), GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
+**Last Updated**: 2026-09-03
+**Version**: 0.19.3
+**Status**: Active — 2026-09-03 webhook hardening + atomic rate limit + trust batch fix (branch `fix/webhook-scoping-rate-limit-trust`): WS-E latent bug #1 closed, DO atomic rate limits, user-scoped webhook ownership. 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main` (commits `ebe9323`, `b14380a`, `61dbc87`, `3465d06`, `b89d69d`, `1b251b4`), GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-03 Webhook Hardening + Atomic Rate Limit + Trust Fix — v0.19.3
+
+Branch: `fix/webhook-scoping-rate-limit-trust` (3 atomic commits).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| WS-E-1 | `evolveTrustBatch` inserted new domains at hardcoded `0.5` without first adjustment | P1 | ✅ CLOSED — initial score `clamp(0.5+adjustment)` + matching classification on insert | worker/lib/d1/trust.ts, tests/unit/d1-trust.test.ts |
+| RL-1 | KV rate-limit check-then-set race across isolates | P1 | ✅ CLOSED — `SourceRegistry.consumeRateLimit` atomic fixed-window RPC (250ms timeout, fail-closed), KV fallback only without DO binding | worker/lib/rate-limit.ts, worker/durable-objects/source-registry.ts |
+| AUTH-1 | `JWT_SECRET` in wrangler vars + blank secrets accepted | P1 | ✅ CLOSED — `JWT_SECRET` moved to secrets/required (all envs), blank-string rejection in `validateConfig` + `verifyToken` | wrangler.jsonc, worker/lib/config-utils.ts, worker/lib/jwt.ts |
+| WH-1 | Webhook subscriptions lack owner scoping; partner/DLQ handlers mixed into subscriptions route | P1 | ✅ CLOSED — `owner_id` on subscription/sync types, `getUserSubscriptions` + `requireAuthenticatedUser`, partner/DLQ split to `partners.ts`, incoming SSRF + shared rate limit, sync scoped by config ownership | worker/routes/webhooks/partners.ts, worker/routes/webhooks/subscriptions.ts, worker/routes/webhooks/sync.ts, worker/lib/webhook/* |
+
+Verification: `npx tsc --noEmit` ✅, `npm run lint` ✅, `npm run validate` 0 errors, `npm run build` ✅, `npm run test:unit` 2749/2749 ✅.
+
+Remaining: WS-E latent bug #2 (`d1/client.ts` `executeWithRetry` resolves `{error}`) still open; F-11/N-3 deferred.
 
 ---
 
