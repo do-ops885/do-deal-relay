@@ -403,9 +403,7 @@ async function checkRateLimit(
   limitPerMinute: number,
 ): Promise<RateLimitResult> {
   const webhookKv = getWebhookKV(env);
-  const rateLimitEnv = webhookKv
-    ? ({ ...env, DEALS_LOCK: webhookKv } as unknown as Env)
-    : env;
+  const rateLimitEnv = webhookKv ? { ...env, DEALS_LOCK: webhookKv } : env;
   const result = await checkSharedRateLimit(
     rateLimitEnv,
     `partner:${partnerId}`,
