@@ -2,9 +2,23 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-03
-**Version**: 0.19.3
-**Status**: Active — 2026-09-03 webhook hardening + atomic rate limit + trust batch fix (branch `fix/webhook-scoping-rate-limit-trust`): WS-E latent bug #1 closed, DO atomic rate limits, user-scoped webhook ownership. 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main` (commits `ebe9323`, `b14380a`, `61dbc87`, `3465d06`, `b89d69d`, `1b251b4`), GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
+**Version**: 0.19.4
+**Status**: Active — 2026-09-03 WS-E latent bug #2 closed (branch `fix/d1-write-reject`): D1 writes reject instead of resolving `{error}` envelopes. 2026-09-03 webhook hardening + trust batch fix merged as `fb0c6e5` (PR #741): WS-E latent bug #1 closed, JWT hardening, user-scoped webhook ownership; DO rate-limit attempt reverted (deferred per ADR-017). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-03 D1 Write Rejection (WS-E-2) — v0.19.4
+
+Branch: `fix/d1-write-reject`.
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| WS-E-2 | `executeWithRetry` resolved `{error}` instead of rejecting, masking permanent write failures (dual-write divergence, trust loss) | P1 | ✅ CLOSED — writes throw after logging; reads keep envelope (pinned by tests). Boundaries map to `{success:false}`: mutations `executeWrite`, experience `executeWrite` + aggregation short-circuit, `batchInsert` catch, `evolveTrust` warn-and-continue. Dual-write/migration catches now actually fire | worker/lib/d1/client.ts, worker/lib/d1/mutations.ts, worker/lib/d1/experience.ts, worker/lib/d1/trust.ts |
+
+Verification: `npx tsc --noEmit` ✅, `npm run lint` ✅, `npm run test:unit` 2748/2748 ✅ (4 new rejection/mapping tests, zero contract changes).
+
+Remaining: F-11/N-3 deferred; RL-1 deferred per ADR-017.
 
 ---
 
@@ -21,7 +35,7 @@ Branch: `fix/webhook-scoping-rate-limit-trust` (3 atomic commits).
 
 Verification: `npx tsc --noEmit` ✅, `npm run lint` ✅, `npm run validate` 0 errors, `npm run build` ✅, `npm run test:unit` 2749/2749 ✅.
 
-Remaining: WS-E latent bug #2 (`d1/client.ts` `executeWithRetry` resolves `{error}`) still open; F-11/N-3 deferred.
+Remaining at the time: WS-E latent bug #2 — now CLOSED above in v0.19.4; F-11/N-3 deferred.
 
 ---
 

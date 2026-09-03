@@ -279,7 +279,19 @@ export class D1Client {
       params: columns.map((col) => row[col]),
     }));
 
-    const result = await this.batch<unknown>(queries);
+    let result: {
+      success: boolean;
+      results: Array<QueryResult<unknown>>;
+      error?: string;
+    };
+    try {
+      result = await this.batch<unknown>(queries);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
 
     if (!result.success || result.error) {
       return { success: false, error: result.error };
@@ -513,9 +525,14 @@ export class D1Client {
       maxAttempts,
     });
 
-    // Return error envelope instead of throwing so callers can
-    // return graceful fallbacks (empty arrays / success:false) — matches
-    // historical behavior expected by unit tests and analytics queries.
+    // Writes reject so permanent failures (e.g. dual-write divergence,
+    // migration bookkeeping) surface to callers instead of resolving
+    // into a silent envelope. Reads keep the historical error envelope
+    // so analytics paths can return graceful fallbacks.
+    if (options.isWrite === true) {
+      throw lastError instanceof Error ? lastError : new Error(errorMessage);
+    }
+
     return { error: errorMessage } as R & { error?: string };
   }
 

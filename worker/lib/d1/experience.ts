@@ -22,6 +22,31 @@ export interface AggregationResult {
   error?: string;
 }
 
+type WriteClient = ReturnType<typeof createD1Client>;
+
+/**
+ * Execute a write and map a rejection to a failure envelope.
+ *
+ * D1Client.execute rejects on write failure so silent divergence is
+ * impossible; experience helpers translate that into their historical
+ * {success, error} contract.
+ */
+async function executeWrite(
+  client: WriteClient,
+  sql: string,
+  params: unknown[],
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await client.execute(sql, params);
+    return { success: result.success, error: result.error };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function submitExperienceEvent(
   db: D1Database,
   event: {
@@ -35,7 +60,8 @@ export async function submitExperienceEvent(
 ): Promise<ExperienceEventResult> {
   const client = createD1Client(db);
 
-  const result = await client.execute(
+  const result = await executeWrite(
+    client,
     `INSERT INTO experience_events (id, deal_code, event_type, agent_id, score, metadata, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -135,7 +161,8 @@ export async function runAggregation(
     const stats = statsResult.data;
     const now = Math.floor(Date.now() / 1000);
 
-    await client.execute(
+    const writeResult = await executeWrite(
+      client,
       `INSERT INTO experience_aggregates (deal_code, total_events, positive_events, negative_events, avg_score, last_updated)
        VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(deal_code) DO UPDATE SET
@@ -153,6 +180,15 @@ export async function runAggregation(
         now,
       ],
     );
+
+    if (!writeResult.success) {
+      return {
+        success: false,
+        dealsProcessed,
+        eventsProcessed,
+        error: writeResult.error || "Failed to write aggregate",
+      };
+    }
 
     dealsProcessed++;
     eventsProcessed += stats.total || 0;

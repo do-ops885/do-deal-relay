@@ -10,6 +10,7 @@
 
 import type { D1Database } from "@cloudflare/workers-types";
 import { createD1Client } from "./client";
+import { logger } from "../global-logger";
 
 // ============================================================================
 // Types
@@ -97,33 +98,41 @@ export async function evolveTrust(
   );
   // Use finalScore classification so that params[3] matches expected new_score (test checks write param); new domain case also uses finalScore which equals initialScore
   const initialClassification = classifyTrust(finalScoreForExisting);
-  await client.execute(
-    `INSERT INTO trust_scores (domain, trust_score, total_deals, successful_deals, classification, last_seen_at, created_at, updated_at)
-     VALUES (?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))
-     ON CONFLICT(domain) DO UPDATE SET
-       trust_score = MAX(0, MIN(1, trust_score + ?)),
-       total_deals = total_deals + 1,
-       successful_deals = successful_deals + ?,
-       classification = CASE
-         WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.7 THEN 'trusted'
-         WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.4 THEN 'probationary'
-         ELSE 'unverified'
-       END,
-       last_seen_at = ?,
-       updated_at = datetime('now')`,
-    [
+  try {
+    await client.execute(
+      `INSERT INTO trust_scores (domain, trust_score, total_deals, successful_deals, classification, last_seen_at, created_at, updated_at)
+      VALUES (?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))
+      ON CONFLICT(domain) DO UPDATE SET
+        trust_score = MAX(0, MIN(1, trust_score + ?)),
+        total_deals = total_deals + 1,
+        successful_deals = successful_deals + ?,
+        classification = CASE
+          WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.7 THEN 'trusted'
+          WHEN MAX(0, MIN(1, trust_score + ?)) >= 0.4 THEN 'probationary'
+          ELSE 'unverified'
+        END,
+        last_seen_at = ?,
+        updated_at = datetime('now')`,
+      [
+        domain,
+        initialScore,
+        success ? 1 : 0,
+        initialClassification,
+        now,
+        adjustment,
+        success ? 1 : 0,
+        adjustment,
+        adjustment,
+        now,
+      ],
+    );
+  } catch (error) {
+    logger.warn("Trust evolution write failed", {
+      component: "d1-trust",
       domain,
-      initialScore,
-      success ? 1 : 0,
-      initialClassification,
-      now,
-      adjustment,
-      success ? 1 : 0,
-      adjustment,
-      adjustment,
-      now,
-    ],
-  );
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   // Step 3: Fetch updated row for accurate new_score (respects clamping)
   const updatedResult = await client.query<TrustScoreRow>(
