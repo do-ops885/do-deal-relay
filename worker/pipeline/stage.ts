@@ -3,6 +3,7 @@ import { SnapshotSchema } from "../types";
 import { CONFIG } from "../config";
 import { generateSnapshotHash } from "../lib/crypto";
 import { putStagingSnapshot } from "../lib/storage";
+import { mirrorStageToDO } from "../lib/do-mirror";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -69,6 +70,9 @@ export async function stage(
 
   // Write to staging — use direct put to avoid second hash (F-8)
   await putStagingSnapshot(env, snapshot);
+
+  // Best-effort DealRegistry DO mirror (KV remains canonical)
+  await mirrorStageToDO(env, deals);
 
   // Read-after-write verification (single read, no re-hash)
   const verified = await verifyStaging(env, snapshot);

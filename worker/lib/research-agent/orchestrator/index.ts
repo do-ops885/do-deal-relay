@@ -51,16 +51,17 @@ function getApiKeys(env: Env) {
 /**
  * Resolve whether the research agent should perform REAL fetching.
  *
- * Real fetching is the DEFAULT (MF-2). Simulation is only used when
- * explicitly requested through the test-only `use_simulated_results`
- * option or an explicit `use_real_fetching: false` override.
+ * Real fetching is used when explicitly enabled (MF-2 rollout guard):
+ * simulation remains the fallback outside production to respect
+ * subrequest budgets and external rate limits. Simulation is also forced
+ * through the test-only `use_simulated_results` option.
  *
  * Order of precedence:
  *   1. Request level: request.options?.use_simulated_results (test-only flag)
  *   2. Request level: request.options?.use_real_fetching (explicit override)
  *   3. Feature flag: real_research_fetching (supports rolloutPercentage)
  *   4. Environment allowlist: production OR explicit RESEARCH_USE_REAL_FETCHING=true
- *   5. Default: real fetching (honest results — never fabricate codes)
+ *   5. Default: simulated discovery (safe fallback — no external calls)
  */
 async function shouldUseRealFetching(
   env: Env,
@@ -101,7 +102,7 @@ export async function executeReferralResearch(
   const registry = createDefaultScraperRegistry();
   const scraperEnv = env as unknown as ScraperEnv;
   const readySources = readySourceNames(registry, scraperEnv);
-  // Real fetching is the default (MF-2); simulation is opt-in only.
+  // MF-2 rollout guard: real fetching only when enabled (flag/env/override).
   const useRealFetching = await shouldUseRealFetching(env, request);
 
   const discoveredCodes: ReferralResearchResult["discovered_codes"] = [];

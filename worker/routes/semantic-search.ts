@@ -15,6 +15,7 @@ import { jsonResponse, errorResponse } from "./utils";
 import {
   SemanticSearchRequestSchema,
   SEMANTIC_SEARCH_CONFIG,
+  type SemanticSearchFilters,
   type SemanticSearchResponse,
 } from "../lib/search/types";
 import {
@@ -31,6 +32,62 @@ import {
 
 /** Workers AI embedding model used for query vectorization. */
 const SEMANTIC_EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
+
+export function matchesSemanticFilters(
+  metadata: Record<string, unknown> | undefined,
+  filters: SemanticSearchFilters | undefined,
+): boolean {
+  if (!filters) return true;
+  if (filters.domain !== undefined) {
+    const domain = typeof metadata?.domain === "string" ? metadata.domain : "";
+    if (domain.toLowerCase() !== filters.domain.toLowerCase()) return false;
+  }
+  if (filters.category !== undefined) {
+    const categories = Array.isArray(metadata?.category)
+      ? (metadata.category as unknown[])
+      : [];
+    const wanted = filters.category.toLowerCase();
+    const hasCategory = categories.some(
+      (c) => typeof c === "string" && c.toLowerCase() === wanted,
+    );
+    if (!hasCategory) return false;
+  }
+  if (filters.status !== undefined && filters.status !== "all") {
+    if (metadata?.status !== filters.status) return false;
+  }
+  if (filters.tags !== undefined && filters.tags.length > 0) {
+    const tags = Array.isArray(metadata?.tags)
+      ? (metadata.tags as unknown[])
+      : [];
+    const normalizedTags = new Set(
+      tags
+        .filter((t): t is string => typeof t === "string")
+        .map((t) => t.toLowerCase()),
+    );
+    const wantsAll = filters.tags.every((t) =>
+      normalizedTags.has(t.toLowerCase()),
+    );
+    if (!wantsAll) return false;
+  }
+  // min_reward has no vector-metadata value field; documented as FTS/hybrid-only.
+  return true;
+}
+
+export function describeSemanticFilters(
+  filters: SemanticSearchFilters | undefined,
+): string[] {
+  if (!filters) return [];
+  const applied: string[] = [];
+  if (filters.domain !== undefined) applied.push(`domain=${filters.domain}`);
+  if (filters.category !== undefined)
+    applied.push(`category=${filters.category}`);
+  if (filters.status !== undefined) applied.push(`status=${filters.status}`);
+  if (filters.tags !== undefined && filters.tags.length > 0)
+    applied.push(`tags=${filters.tags.join(",")}`);
+  if (filters.min_reward !== undefined)
+    applied.push("min_reward=unsupported(vector)");
+  return applied;
+}
 
 export async function handleSemanticSearch(
   request: Request,
@@ -62,7 +119,7 @@ export async function handleSemanticSearch(
     );
   }
 
-  const { query, limit, filters: _filters, hybrid, min_score } = parsed.data;
+  const { query, limit, filters, hybrid, min_score } = parsed.data;
   const requestedLimit = limit ?? SEMANTIC_SEARCH_CONFIG.DEFAULT_LIMIT;
   const namespace =
     env.ENVIRONMENT === "production"
@@ -79,6 +136,7 @@ export async function handleSemanticSearch(
         min_score,
         namespace,
         start,
+        filters,
       );
     }
 
@@ -90,7 +148,10 @@ export async function handleSemanticSearch(
     });
     const embeddingMs = Date.now() - embeddingStart;
     const vectorizeStart = Date.now();
-    const filtered = hits.filter((h) => h.score >= min_score);
+    const filtered = hits.filter(
+      (h) =>
+        h.score >= min_score && matchesSemanticFilters(h.metadata, filters),
+    );
     const vectorizeMs = Date.now() - vectorizeStart;
 
     // Article 12 record-keeping for the embedding + vector query. The raw
@@ -129,7 +190,10 @@ export async function handleSemanticSearch(
         vectorize_time_ms: vectorizeMs,
         model: SEMANTIC_EMBEDDING_MODEL,
         index_name: SEMANTIC_SEARCH_CONFIG.INDEX_NAME,
-        filters_applied: namespace ? [`namespace=${namespace}`] : [],
+        filters_applied: [
+          ...(namespace ? [`namespace=${namespace}`] : []),
+          ...describeSemanticFilters(filters),
+        ],
       },
     };
     return jsonResponse(response);
@@ -148,6 +212,7 @@ async function handleHybridSearch(
   minScore: number,
   namespace: string | undefined,
   start: number,
+  filters?: SemanticSearchFilters,
 ): Promise<Response> {
   const hybridStart = Date.now();
   const ftsQuery = sanitizeFtsQuery(query);
@@ -177,8 +242,12 @@ async function handleHybridSearch(
       : Promise.resolve({ ok: false as const, rows: [] as never[] }),
   ]);
 
-  const vectorHits = vectorResult.ok ? vectorResult.hits : [];
-  const ftsRows = (ftsResult as { rows?: unknown[] }).rows
+  const vectorHits = vectorResult.ok
+    ? vectorResult.hits.filter((h) =>
+        matchesSemanticFilters(h.metadata, filters),
+      )
+    : [];
+  const rawFtsRows = (ftsResult as { rows?: unknown[] }).rows
     ? (
         ftsResult as {
           ok: boolean;
@@ -186,6 +255,19 @@ async function handleHybridSearch(
         }
       ).rows
     : [];
+  const ftsRows = filters
+    ? rawFtsRows.filter((row) =>
+        matchesSemanticFilters(
+          {
+            domain: row.domain,
+            category: row.category,
+            status: row.status,
+            tags: row.tags,
+          },
+          filters,
+        ),
+      )
+    : rawFtsRows;
 
   // If both empty but one side expected to have results, fallback to whichever succeeded
   const fusionStart = Date.now();
@@ -215,7 +297,10 @@ async function handleHybridSearch(
   } else {
     // No FTS results or query not FTS-able: vector only filtered
     const filtered = vectorHits
-      .filter((h) => h.score >= minScore)
+      .filter(
+        (h) =>
+          h.score >= minScore && matchesSemanticFilters(h.metadata, filters),
+      )
       .slice(0, requestedLimit);
     totalFused = filtered.length;
     results = filtered.map((h) => ({
@@ -270,6 +355,7 @@ async function handleHybridSearch(
         ...(namespace ? [`namespace=${namespace}`] : []),
         "hybrid=rrf",
         `fts_query=${ftsQuery || "n/a"}`,
+        ...describeSemanticFilters(filters),
       ],
     },
   };

@@ -78,4 +78,29 @@ export default {
 
     return handleScheduled(event, env);
   },
+
+  async email(
+    message: {
+      from: string;
+      to: string;
+      subject: string;
+      headers: Headers;
+      text?: string;
+      html?: string;
+      raw?: () => Promise<ReadableStream>;
+    },
+    env: Env,
+  ): Promise<void> {
+    try {
+      validateConfig(env);
+    } catch (error) {
+      logger.error("Email execution configuration error", {
+        component: "worker",
+        error_message: toError(error).message,
+      });
+      return;
+    }
+    const { handleEmailWorker } = await import("./routes/email");
+    await handleEmailWorker(message, env);
+  },
 };

@@ -23,6 +23,7 @@ import {
   METRIC_PUBLISH_ERRORS,
 } from "./lib/metrics/names";
 import { notifyHighValueDealsWithWebhook } from "./lib/high-value-notifier";
+import { mirrorPublishToDO } from "./lib/do-mirror";
 
 // ============================================================================
 // Production Publish Flow
@@ -123,6 +124,12 @@ export async function publishSnapshot(
       status: deal.metadata.status,
     }));
     await insertReferralsBatch(env.DEALS_DB, referrals);
+
+    // Step 5a: Best-effort DealRegistry DO mirror (KV + D1 remain canonical)
+    await mirrorPublishToDO(
+      env,
+      publishedSnapshot.deals.map((deal) => deal.id),
+    );
 
     // Step 5b: High-value deal notifications (MF-N1) — best-effort, never blocks publish.
     // Reuses webhook infra (worker/lib/webhook) + push path (notify) from

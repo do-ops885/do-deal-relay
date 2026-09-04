@@ -1,10 +1,31 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-03
-**Version**: 0.19.6
+**Last Updated**: 2026-09-04
+**Version**: 0.19.7
 **Status**: Active — 2026-09-03 v0.19.5 doc sync: F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6-compatible bypass closed via #742 (`e9dd1d7`), D1 lock inclusive-expiry fix via #739, CI integration guard via #733. WS-E latent bugs #1/#2 stay closed (#741/#743). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-04 Missing-Implementation Sweep — v0.19.7
+
+Branch: `feat/missing-impl-sweep`. Spec: [SPEC-missing-impl-sweep.md](SPEC-missing-impl-sweep.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| MI-4 | DealRegistry/SourceRegistry DOs have zero runtime callers | P1 | ✅ CLOSED (mirror) — `worker/lib/do-mirror.ts` best-effort mirrors wired into `pipeline/stage.ts`, `publish.ts`, `pipeline/score.ts`; KV/D1 stay canonical; base-class `extends DurableObject` migration deferred (unit pool + migrations ban) | do-mirror.ts, stage.ts, publish.ts, score.ts |
+| OPS-R | Bulk import/export + dashboard trio exported but never routed | P1 | ✅ CLOSED — `worker/router/ops-routes.ts` (`POST /api/bulk/import`, `GET /api/bulk/export` user auth; `GET /api/dashboard/*` admin-only); `legacy-routes.ts` back to 496L | ops-routes.ts, legacy-routes.ts |
+| MCP-P | Progress tool handlers never registered | P1 | ✅ CLOSED — `check_progress`/`cancel_operation`/`list_operations` in `systemTools` (15→18) | worker/lib/mcp/tools/system.ts |
+| EMAIL-E | Email Workers entrypoint missing | P2 | ✅ CLOSED — `email(message,env)` export in `worker/index.ts` delegates to `handleEmailWorker` (not a fetch route) | worker/index.ts |
+| MF-1f | Semantic-search `filters` accepted but ignored | P1 | ✅ CLOSED — `matchesSemanticFilters` applied to vector + hybrid/FTS paths, `filters_applied` reported; `min_reward` documented unsupported(vector) | worker/routes/semantic-search.ts |
+| MF-2d | Orchestrator docs claim real-default, code falls back to simulation | P2 | ✅ CLOSED (docs) — comments corrected to rollout-guard behavior; code unchanged (subrequest budget) | orchestrator/index.ts |
+| R-2r | 3 non-null assertions regressed in worker/ | P2 | ✅ CLOSED — guarded access in `routes/nlq/index.ts`, `routes/referrals.ts` | nlq/index.ts, referrals.ts |
+| T-5p | MCP progress + sweep wiring untested | P2 | ✅ CLOSED — `tests/unit/missing-impl-sweep.test.ts` 12 tests | missing-impl-sweep.test.ts |
+
+Verification: `npx tsc --noEmit` ✅, `prettier` ✅, `./scripts/quality_gate.sh` ✅ (no warnings), `npm run test:unit` 195 files / 2761 tests ✅.
+
+Deferred: `extends DurableObject` migration + single-source DO cutover (ADR-017 Phase 2); exhaustive T-2/T-3/T-4 suites; `extension/popup.html` split.
 
 ---
 

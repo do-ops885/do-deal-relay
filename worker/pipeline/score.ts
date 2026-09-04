@@ -2,6 +2,7 @@ import { Deal, DealMetadata, PipelineContext, Env } from "../types";
 import { CONFIG } from "../config";
 import { updateSourceTrust } from "../lib/storage";
 import { evolveTrustBatch } from "../lib/d1/trust";
+import { mirrorTrustToDO } from "../lib/do-mirror";
 import { logger } from "../lib/global-logger";
 import { toError } from "../lib/sanitize-error";
 
@@ -230,6 +231,11 @@ export async function evolveSourceTrust(
           allValid,
         });
       }
+      // Best-effort SourceRegistry DO mirror (D1 remains canonical)
+      await mirrorTrustToDO(
+        env,
+        new Map(domains.map((domain) => [domain, allValid])),
+      );
     } catch (error) {
       const err = toError(error);
       logger.error(`D1 batch trust evolution failed, falling back to KV`, {

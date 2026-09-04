@@ -59,10 +59,10 @@ export async function handleGetReferrals(
         (url.searchParams.get("source") as ReferralSearchQuery["source"]) ||
         "all",
       limit: url.searchParams.has("limit")
-        ? parseInt(url.searchParams.get("limit")!, 10)
+        ? parseInt(url.searchParams.get("limit") ?? "100", 10)
         : 100,
       offset: url.searchParams.has("offset")
-        ? parseInt(url.searchParams.get("offset")!, 10)
+        ? parseInt(url.searchParams.get("offset") ?? "0", 10)
         : 0,
     };
 

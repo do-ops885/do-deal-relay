@@ -51,7 +51,19 @@ export async function handleNLQRequest(
   }
   const savedDeleteMatch = path.match(/^\/api\/nlq\/saved\/([^/]+)$/);
   if (savedDeleteMatch && request.method === "DELETE") {
-    const id = savedDeleteMatch[1]!;
+    const id = savedDeleteMatch[1];
+    if (!id) {
+      return jsonResponse(
+        {
+          error: "Not found",
+          message: "Missing saved query id",
+          code: "NOT_FOUND",
+        } as NLQError,
+        404,
+        request,
+        env,
+      );
+    }
     return handleSavedDelete(request, env, id);
   }
 
