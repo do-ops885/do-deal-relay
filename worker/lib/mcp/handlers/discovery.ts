@@ -100,19 +100,29 @@ export async function handleGetSimilarDeals(
     .filter((d) => d.id !== targetDeal.id)
     .map((d) => {
       let score = 0;
-      const dealCategories = new Set(
-        d.metadata.category.map((c) => c.toLowerCase()),
-      );
+
+      // Category match (weight: 3)
+      // Iterate targetCategories Set and check membership with short-circuiting .some()
+      // to avoid allocating intermediate Set and Array objects per deal (O(1) memory overhead vs O(N)).
       for (const cat of targetCategories) {
-        if (dealCategories.has(cat)) score += 3;
+        if (d.metadata.category.some((c) => c.toLowerCase() === cat)) {
+          score += 3;
+        }
       }
+
+      // Domain match (weight: 2)
       if (d.source.domain.toLowerCase() === targetDomain) {
         score += 2;
       }
-      const dealTags = new Set(d.metadata.tags.map((t) => t.toLowerCase()));
+
+      // Tag overlap (weight: 1)
+      // Check membership directly on deal tags without creating per-deal Set/Array allocations.
       for (const tag of targetTags) {
-        if (dealTags.has(tag)) score += 1;
+        if (d.metadata.tags.some((t) => t.toLowerCase() === tag)) {
+          score += 1;
+        }
       }
+
       const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
       score += codeSim;
       return { deal: d, similarity: score };

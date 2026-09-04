@@ -153,11 +153,12 @@ export async function handleSimilarDeals(
       let score = 0;
 
       // Category match (weight: 3)
-      const dealCategories = new Set(
-        d.metadata.category.map((c) => c.toLowerCase()),
-      );
+      // Iterate targetCategories Set and check membership with short-circuiting .some()
+      // to avoid allocating intermediate Set and Array objects per deal (O(1) memory overhead vs O(N)).
       for (const cat of targetCategories) {
-        if (dealCategories.has(cat)) score += 3;
+        if (d.metadata.category.some((c) => c.toLowerCase() === cat)) {
+          score += 3;
+        }
       }
 
       // Domain match (weight: 2)
@@ -166,9 +167,11 @@ export async function handleSimilarDeals(
       }
 
       // Tag overlap (weight: 1)
-      const dealTags = new Set(d.metadata.tags.map((t) => t.toLowerCase()));
+      // Check membership directly on deal tags without creating per-deal Set/Array allocations.
       for (const tag of targetTags) {
-        if (dealTags.has(tag)) score += 1;
+        if (d.metadata.tags.some((t) => t.toLowerCase() === tag)) {
+          score += 1;
+        }
       }
 
       // Code similarity (weight: 1)
