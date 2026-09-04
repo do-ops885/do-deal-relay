@@ -130,4 +130,23 @@ describe("createDealCard Accessibility & Attributes", () => {
     expect(prevented).toBe(true);
     expect(onSelect).toHaveBeenCalledTimes(3);
   });
+
+  it("should render confidence indicator with role='meter' and ARIA range attributes when confidence is present", async () => {
+    // @ts-ignore
+    const { createDealCard } =
+      await import("../../public/js/components/deal-card.js");
+    const deal = {
+      id: "deal-confidence",
+      title: "Confidence Deal",
+      source: "example.com",
+      confidence: 0.85,
+    };
+
+    const card = createDealCard(deal) as unknown as MockElement;
+    expect(card.innerHTML).toContain('role="meter"');
+    expect(card.innerHTML).toContain('aria-valuenow="85"');
+    expect(card.innerHTML).toContain('aria-valuemin="0"');
+    expect(card.innerHTML).toContain('aria-valuemax="100"');
+    expect(card.innerHTML).toContain('aria-label="Match confidence: 85%"');
+  });
 });

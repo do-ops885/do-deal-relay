@@ -77,7 +77,7 @@ export function createDealCard(deal, { onSelect } = {}) {
   const category = escapeHtml(deal.category || "general");
   const confidence = formatConfidence(deal.confidence);
   const confidenceBar = confidence
-    ? `<span class="deal-card__confidence">
+    ? `<span class="deal-card__confidence" role="meter" aria-valuenow="${confidence.pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Match confidence: ${confidence.pct}%">
         <span class="deal-card__confidence-track" aria-hidden="true">
           <span class="deal-card__confidence-fill" style="width: ${confidence.pct}%"></span>
         </span>
