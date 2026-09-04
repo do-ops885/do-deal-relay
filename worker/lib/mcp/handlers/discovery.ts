@@ -4,6 +4,13 @@ import type { ToolCallResult } from "../types";
 import { getProductionSnapshot } from "../../storage";
 import { getTopDeals, getExpiringDeals, getRecentDeals } from "../../ranking";
 import { calculateStringSimilarity } from "../../crypto";
+import {
+  CATEGORY_MATCH_WEIGHT,
+  DOMAIN_MATCH_WEIGHT,
+  TAG_MATCH_WEIGHT,
+  countOverlap,
+  normalizeTerms,
+} from "../../similarity";
 
 export const GetSimilarDealsInputSchema = z.object({
   code: z
@@ -88,40 +95,29 @@ export async function handleGetSimilarDeals(
     };
   }
 
-  const targetCategories = new Set(
-    targetDeal.metadata.category.map((c) => c.toLowerCase()),
-  );
-  const targetTags = new Set(
-    targetDeal.metadata.tags.map((t) => t.toLowerCase()),
-  );
+  const targetCategories = normalizeTerms(targetDeal.metadata.category);
+  const targetTags = normalizeTerms(targetDeal.metadata.tags);
   const targetDomain = targetDeal.source.domain.toLowerCase();
 
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
     .map((d) => {
-      let score = 0;
-
-      // Category match (weight: 3)
-      // Iterate targetCategories Set and check membership with short-circuiting .some()
-      // to avoid allocating intermediate Set and Array objects per deal (O(1) memory overhead vs O(N)).
-      for (const cat of targetCategories) {
-        if (d.metadata.category.some((c) => c.toLowerCase() === cat)) {
-          score += 3;
-        }
-      }
+      // Target sets are built once per request above; the combined deal set
+      // is built once per deal here so each string is lowercased one time.
+      const dealTerms = normalizeTerms([
+        ...d.metadata.category,
+        ...d.metadata.tags,
+      ]);
+      let score =
+        countOverlap(targetCategories, dealTerms) * CATEGORY_MATCH_WEIGHT;
 
       // Domain match (weight: 2)
       if (d.source.domain.toLowerCase() === targetDomain) {
-        score += 2;
+        score += DOMAIN_MATCH_WEIGHT;
       }
 
       // Tag overlap (weight: 1)
-      // Check membership directly on deal tags without creating per-deal Set/Array allocations.
-      for (const tag of targetTags) {
-        if (d.metadata.tags.some((t) => t.toLowerCase() === tag)) {
-          score += 1;
-        }
-      }
+      score += countOverlap(targetTags, dealTerms) * TAG_MATCH_WEIGHT;
 
       const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
       score += codeSim;
