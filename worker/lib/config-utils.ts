@@ -51,9 +51,9 @@ export function getTrustThreshold(env: Env): number {
 }
 
 /**
- * Validate the trust threshold configuration
+ * Validate the required environment configuration and budget parameters
  * @param env Worker environment
- * @throws Error if the threshold is invalid (non-numeric or out of range)
+ * @throws Error if any required environment variable is missing or invalid
  */
 export function validateConfig(env: Env): void {
   const required = [
