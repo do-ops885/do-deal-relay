@@ -8,6 +8,22 @@
 
 ---
 
+## 2026-09-04 PR Triage Sweep — BLOCKED on CI (ADR-026)
+
+Orchestrated via goap-agent + pr-resolver skills (4 parallel review agents).
+
+| PR | Title | Disposition | Evidence |
+|:---|:---|:---|:---|
+| #746 | JSDoc-only annotations | ✅ CLOSED — no impact per #697/#702/#706/#710 precedent | zero runtime diff, comment-only |
+| #747 | Adapt upstream workflow standards | ✅ CLOSED — guardrail regression, self-blocking CI | weakened sections 4/6, version bump vs single-source rule |
+| #748 | Aria meter attributes | 🟡 CODE-COMPLETE, merge-blocked — meter semantics hardened (finite guard, valuetext, label-in-name), 8/8 tests, tsc clean | branch `feat/deal-card-confidence-a11y-1827706011888636877` @ `288cf28` |
+| #749 | Similar-deals string allocations | 🟡 CODE-COMPLETE, merge-blocked — real shared `worker/lib/similarity.ts` helper replaced the pessimizing loops, parity tests, telemetry dropped | branch `perf/optimize-similar-deals-allocations-15641106281631573222` @ `61f5f7b` |
+| #750 | Missing-impl sweep (MI-4/OPS-R/MCP-P/EMAIL-E/MF-1) | 🟡 CODE-COMPLETE, merge-blocked — 2761/2761 unit green locally, tsc/lint/quality-gate clean | branch `feat/missing-impl-sweep`, [spec](SPEC-missing-impl-sweep.md) |
+
+Merge order once CI recovers: 748 → 749 → 750 (rebase each on latest `main`, single retrigger, verify zero non-SUCCESS before merge). No admin bypass. Blocker: [ADR-026](ADR-026-ci-npm-registry-degradation.md) — npm registry ECONNRESET + 5-min job timeouts red since 2026-09-03; `main` itself has no green run.
+
+---
+
 ## 2026-09-04 Missing-Implementation Sweep — v0.19.7
 
 Branch: `feat/missing-impl-sweep`. Spec: [SPEC-missing-impl-sweep.md](SPEC-missing-impl-sweep.md).
