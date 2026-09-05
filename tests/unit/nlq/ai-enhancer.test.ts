@@ -8,7 +8,7 @@
  * or network access is required.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { Env } from "../../../worker/types";
 import {
   AIQueryEnhancer,
