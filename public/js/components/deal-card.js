@@ -29,7 +29,7 @@ function formatDiscount(deal) {
 }
 
 function formatConfidence(confidence) {
-  if (typeof confidence !== "number") return null;
+  if (!Number.isFinite(confidence)) return null;
   const pct = Math.max(0, Math.min(100, Math.round(confidence * 100)));
   return { pct, label: `${pct}% match` };
 }
@@ -77,7 +77,7 @@ export function createDealCard(deal, { onSelect } = {}) {
   const category = escapeHtml(deal.category || "general");
   const confidence = formatConfidence(deal.confidence);
   const confidenceBar = confidence
-    ? `<span class="deal-card__confidence">
+    ? `<span class="deal-card__confidence" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${confidence.pct}" aria-valuetext="${escapeHtml(confidence.label)}" aria-label="${escapeHtml(confidence.label)}">
         <span class="deal-card__confidence-track" aria-hidden="true">
           <span class="deal-card__confidence-fill" style="width: ${confidence.pct}%"></span>
         </span>
