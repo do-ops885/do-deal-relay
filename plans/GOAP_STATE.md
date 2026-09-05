@@ -2,9 +2,25 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-05
-**Version**: 0.19.9
-**Status**: Active — 2026-09-05 merge wave COMPLETE: #748/#749/#750/#751/#752/#753/#754 all MERGED to main @ 872d411, main push CI 5/5 SUCCESS, queue empty (0 open PRs/issues). ADR-026 (npm registry) and ADR-027 (ruleset mismatch) RESOLVED. Prior 2026-09-05 state: v0.19.8 fix-forward #754 blocked; 2026-09-03 v0.19.5 doc sync F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6 bypass closed via #742, D1 lock fix via #739, CI guard via #733; 2026-08-31 self-learning-feedback COMPLETE per ADR-024; 2026-08-25/24 improvement runs COMPLETE.
+**Version**: 0.19.10
+**Status**: Active — 2026-09-05 test gaps T-2/T-3/T-4 CLOSED (95 new unit tests, 2872/2872 green, zero prod change). Prior: v0.19.9 merge wave COMPLETE (#748-#754 MERGED, queue empty, ADR-026/027 RESOLVED).
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-05 Test-Gap Closure (T-2/T-3/T-4) — v0.19.10
+
+Branch: `chore/test-gaps-t2-t3-t4`. Spec: [SPEC-test-gaps-t2-t3-t4.md](SPEC-test-gaps-t2-t3-t4.md). No ADR (zero prod change). No new deps, creds, or bindings.
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| T-2 | Email HTTP handlers + route layer untested | P2 | ✅ CLOSED — `tests/unit/routes/email.test.ts` 12 route tests (real HMAC, missing-secret 500, sig 401s, field 400s, recipient split, worker delegation) + `tests/unit/email/handlers.test.ts` 17 dispatch tests (security gate, ADD/DEACTIVATE/SEARCH/DIGEST/HELP/FORWARDED, duplicates, low-confidence, exception, header mapping) | routes/email.test.ts, email/handlers.test.ts |
+| T-3 | NLQ AI enhancer + hybrid classifier untested | P2 | ✅ CLOSED — `tests/unit/nlq/ai-enhancer.test.ts` 15 tests (shouldUseAI matrix, empty/fast/AI paths, rejection + invalid-JSON fallbacks, confidence clamping, cache hit, truncation, batch, helpers) + `rule-classifier.test.ts` 16 pure-table tests + `hybrid-classifier.test.ts` 14 dispatch tests (routing, ai-null fallback, order restoration, stats) | nlq/ai-enhancer.test.ts, rule-classifier.test.ts, hybrid-classifier.test.ts |
+| T-4 | Validation scraper internals untested | P2 | ✅ CLOSED — `tests/unit/change-detector.test.ts` 13 tests (compare matrix, rounding, string normalization, severity incl. critical) + `tests/unit/batch-processor.test.ts` 8 tests (grouping, change attach, failure passthrough, catch row, stats) | change-detector.test.ts, batch-processor.test.ts |
+
+Verification: `npm run test:unit` 2872/2872 ✅ (2777 + 95 new), `npx tsc --noEmit` ✅, `prettier` ✅, `markdownlint` ✅, quality gate exit 0 ✅. All new files under 500 lines.
+
+Remaining: RL-1 (KV rate-limit race → DO migration) open per ADR-017; REDDIT-5 in progress; CI-1 blocked per ADR-023.
 
 ---
 
@@ -24,7 +40,7 @@ PRs 748/749/750/751/752/753/754 all MERGED to main @ 872d411. Main push CI 5/5 S
 | ADR-027 ruleset mismatch | ✅ RESOLVED — #754 merged, merges no longer blocked | [ADR-027](ADR-027-ruleset-required-check-mismatch.md) |
 | `sync/pr749`, `pr-747`, stale locals | ⛔ DO NOT MERGE — would revert #748/#749/#750; delete locals | merge-order audit 2026-09-05 |
 
-Next: RL-1 DO migration, T-2/T-3/T-4 gaps, REDDIT-5/6, CI-1 secrets (all Full Mode, need spec + ADR).
+Next: RL-1 DO migration, REDDIT-5/6, CI-1 secrets (Full Mode). T-2/T-3/T-4 CLOSED in v0.19.10 above.
 
 ---
 
@@ -76,7 +92,7 @@ Branch: `feat/missing-impl-sweep`. Spec: [SPEC-missing-impl-sweep.md](SPEC-missi
 
 Verification: `npx tsc --noEmit` ✅, `prettier` ✅, quality gate ✅, full unit suite green on CI head before review round 1; review fixes re-verified locally (targeted suites 72/72, sweep file 14/14).
 
-Deferred: `extends DurableObject` migration + single-source DO cutover (ADR-017 Phase 2); exhaustive T-2/T-3/T-4 suites; `extension/popup.html` split.
+Deferred: `extends DurableObject` migration + single-source DO cutover (ADR-017 Phase 2); `extension/popup.html` split.
 
 ---
 
