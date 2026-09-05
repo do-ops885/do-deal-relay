@@ -4,13 +4,7 @@ import type { ToolCallResult } from "../types";
 import { getProductionSnapshot } from "../../storage";
 import { getTopDeals, getExpiringDeals, getRecentDeals } from "../../ranking";
 import { calculateStringSimilarity } from "../../crypto";
-import {
-  CATEGORY_MATCH_WEIGHT,
-  DOMAIN_MATCH_WEIGHT,
-  TAG_MATCH_WEIGHT,
-  countOverlap,
-  normalizeTerms,
-} from "../../similarity";
+import { normalizeTerms, scoreSimilarDeal } from "../../similarity";
 
 export const GetSimilarDealsInputSchema = z.object({
   code: z
@@ -102,22 +96,16 @@ export async function handleGetSimilarDeals(
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
     .map((d) => {
-      // Target sets are built once per request above; the combined deal set
-      // is built once per deal here so each string is lowercased one time.
-      const dealTerms = normalizeTerms([
-        ...d.metadata.category,
-        ...d.metadata.tags,
-      ]);
-      let score =
-        countOverlap(targetCategories, dealTerms) * CATEGORY_MATCH_WEIGHT;
-
-      // Domain match (weight: 2)
-      if (d.source.domain.toLowerCase() === targetDomain) {
-        score += DOMAIN_MATCH_WEIGHT;
-      }
-
-      // Tag overlap (weight: 1)
-      score += countOverlap(targetTags, dealTerms) * TAG_MATCH_WEIGHT;
+      // Split scoring via shared scorer: category-vs-category and
+      // tag-vs-tag stay separate so a tag matching a target category
+      // (or vice versa) adds nothing. Target sets are built once per
+      // request above; dealCategories/dealTags are split inside the scorer.
+      let score = scoreSimilarDeal(
+        targetCategories,
+        targetTags,
+        targetDomain,
+        d,
+      );
 
       const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
       score += codeSim;
