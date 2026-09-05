@@ -9,7 +9,10 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Env } from "../../../worker/types";
-import { generateWebhookHeaders } from "../../../worker/lib/hmac";
+import {
+  generateWebhookHeaders,
+  generateWebhookSecret,
+} from "../../../worker/lib/hmac";
 import type { EmailProcessingResult } from "../../../worker/email/types";
 
 type MockKVNamespace = {
@@ -32,7 +35,7 @@ vi.mock("../../../worker/lib/global-logger", () => ({
   },
 }));
 
-const SECRET = "test-email-webhook-secret";
+const SECRET = generateWebhookSecret();
 
 function makeEnv(withSecret = true): Env {
   const kv = {
