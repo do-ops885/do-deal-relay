@@ -71,8 +71,9 @@ export async function stage(
   // Write to staging — use direct put to avoid second hash (F-8)
   await putStagingSnapshot(env, snapshot);
 
-  // Best-effort DealRegistry DO mirror (KV remains canonical)
-  await mirrorStageToDO(env, deals);
+  // Best-effort DealRegistry DO mirror (KV remains canonical). Detached
+  // (fire-and-forget) so DO RPC timeouts never block the staging hot path.
+  void mirrorStageToDO(env, deals);
 
   // Read-after-write verification (single read, no re-hash)
   const verified = await verifyStaging(env, snapshot);

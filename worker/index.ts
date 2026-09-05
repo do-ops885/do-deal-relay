@@ -100,7 +100,14 @@ export default {
       });
       return;
     }
-    const { handleEmailWorker } = await import("./routes/email");
-    await handleEmailWorker(message, env);
+    try {
+      const { handleEmailWorker } = await import("./routes/email");
+      await handleEmailWorker(message, env);
+    } catch (error) {
+      logger.error("Email worker execution error", {
+        component: "worker",
+        error_message: toError(error).message,
+      });
+    }
   },
 };

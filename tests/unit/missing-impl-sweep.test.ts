@@ -7,6 +7,7 @@ import {
 import {
   matchesSemanticFilters,
   describeSemanticFilters,
+  handleSemanticSearch,
 } from "../../worker/routes/semantic-search";
 import { getTools, executeTool } from "../../worker/lib/mcp/tools/index";
 import { handleBulkImport } from "../../worker/routes/bulk/import";
@@ -101,6 +102,35 @@ describe("do-mirror best-effort wiring", () => {
     expect(publishDeals).toHaveBeenCalledWith(["d1"]);
   });
 
+  it("ignores DO stubs that fail the runtime method guard", async () => {
+    const stageDeals = vi.fn().mockResolvedValue(1);
+    const env = mockEnv({
+      DEAL_REGISTRY: {
+        idFromName: vi.fn().mockReturnValue({}),
+        get: vi.fn().mockReturnValue({ stageDeals }), // validateDeals missing
+      },
+      SOURCE_REGISTRY: {
+        idFromName: vi.fn().mockReturnValue({}),
+        get: vi.fn().mockReturnValue({ evolveTrust: "not-a-function" }),
+      },
+    });
+    await expect(
+      mirrorStageToDO(env, [
+        {
+          id: "d1",
+          source: { domain: "example.com" },
+          title: "t",
+          metadata: { status: "active" },
+        },
+      ] as never),
+    ).resolves.toBeUndefined();
+    expect(stageDeals).not.toHaveBeenCalled();
+    await expect(mirrorPublishToDO(env, ["d1"])).resolves.toBeUndefined();
+    await expect(
+      mirrorTrustToDO(env, new Map([["example.com", true]])),
+    ).resolves.toBeUndefined();
+  });
+
   it("mirrors trust capped and isolated per-domain", async () => {
     const evolveTrust = vi.fn().mockResolvedValue(0.6);
     const env = mockEnv({
@@ -158,10 +188,33 @@ describe("semantic-search filters", () => {
     expect(matchesSemanticFilters(undefined, undefined)).toBe(true);
   });
 
-  it("describes applied filters", () => {
-    expect(
-      describeSemanticFilters({ domain: "x.com", min_reward: 10 }),
-    ).toContain("domain=x.com");
+  it("describes applied filters incl. the D1-backed min_reward", () => {
+    const described = describeSemanticFilters({
+      domain: "x.com",
+      min_reward: 10,
+    });
+    expect(described).toContain("domain=x.com");
+    expect(described).toContain("min_reward=10");
+    expect(described.some((d) => d.includes("unsupported"))).toBe(false);
+  });
+
+  it("rejects min_reward on the pure vector path (no D1 values)", async () => {
+    const env = mockEnv({
+      AI: { run: vi.fn() },
+      DEAL_EMBEDDINGS: {
+        query: vi.fn().mockResolvedValue({ matches: [] }),
+      },
+    });
+    const request = new Request("https://example.com/api/semantic-search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: "cash bonus",
+        filters: { min_reward: 50 },
+      }),
+    });
+    const response = await handleSemanticSearch(request, env);
+    expect(response.status).toBe(400);
   });
 });
 
@@ -195,29 +248,170 @@ describe("mcp progress tools registered", () => {
 });
 
 describe("bulk + dashboard handlers wired", () => {
-  it("bulk handlers are functions", () => {
+  it("bulk import writes a validated referral through storage", async () => {
     expect(typeof handleBulkImport).toBe("function");
     expect(typeof handleBulkExport).toBe("function");
+
+    const putFn = vi.fn().mockResolvedValue(undefined);
+    const env = mockEnv({
+      DEALS_SOURCES: {
+        get: vi.fn().mockResolvedValue(null),
+        put: putFn,
+      },
+    });
+    const request = new Request("http://localhost/api/bulk/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deals: [
+          {
+            code: "WIRE1",
+            url: "https://wire.example.com/invite/WIRE1",
+            domain: "wire.example.com",
+          },
+        ],
+      }),
+    });
+    const response = await handleBulkImport(request, env);
+    const body = (await response.json()) as {
+      success: boolean;
+      total: number;
+      imported: number;
+      failed: number;
+      skipped: number;
+      results: Array<{
+        success: boolean;
+        code: string;
+        message: string;
+        referral_id: string | null;
+        errors: string[] | null;
+      }>;
+    };
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.total).toBe(1);
+    expect(body.imported).toBe(1);
+    expect(body.failed).toBe(0);
+    expect(body.skipped).toBe(0);
+    expect(body.results[0]?.success).toBe(true);
+    expect(body.results[0]?.message).toBe("created");
+    expect(body.results[0]?.referral_id).toBeTruthy();
+
+    // Assert the actual write: a referral:input:<id> KV entry whose payload
+    // matches the normalized referral schema.
+    const inputPuts = putFn.mock.calls.filter(
+      ([key]) => typeof key === "string" && key.startsWith("referral:input:"),
+    );
+    expect(inputPuts).toHaveLength(1);
+    const written = JSON.parse(inputPuts[0]?.[1] as string) as {
+      code: string;
+      domain: string;
+      url: string;
+      status: string;
+      metadata: { title: string };
+    };
+    expect(written.code).toBe("WIRE1");
+    expect(written.domain).toBe("wire.example.com");
+    expect(written.url).toBe("https://wire.example.com/invite/WIRE1");
+    expect(written.status).toBe("quarantined");
+    expect(written.metadata?.title).toBe("wire.example.com Referral");
   });
 
-  it("dashboard handlers return responses with mocked D1", async () => {
+  it("dashboard handlers return computed schema bodies", async () => {
+    const now = Date.now();
+    const inWindow = new Date(now).toISOString();
+    const tooOld = new Date(now - 48 * 60 * 60 * 1000).toISOString();
     const env = mockEnv({
       DEALS_DB: {
         prepare: vi.fn(() => ({
-          bind: vi.fn(() => ({
-            all: vi.fn().mockResolvedValue({ results: [] }),
-            first: vi.fn().mockResolvedValue(null),
-          })),
-          all: vi.fn().mockResolvedValue({ results: [] }),
+          all: vi.fn().mockResolvedValue({
+            results: [
+              { status: "active", count: 4 },
+              { status: "quarantined", count: 1 },
+              { status: "rejected", count: 2 },
+            ],
+          }),
+          first: vi.fn().mockResolvedValue({}),
         })),
       },
+      DEALS_STAGING: { get: vi.fn() },
+      DEALS_LOG: {
+        get: vi.fn(),
+        list: vi.fn().mockResolvedValue({
+          keys: [
+            {
+              name: "run-final",
+              metadata: JSON.stringify({
+                ts: inWindow,
+                phase: "finalize",
+                candidate_count: 10,
+              }),
+            },
+            {
+              name: "run-error",
+              metadata: JSON.stringify({ ts: inWindow, status: "error" }),
+            },
+            {
+              name: "run-too-old",
+              metadata: JSON.stringify({
+                ts: tooOld,
+                phase: "finalize",
+                candidate_count: 99,
+              }),
+            },
+          ],
+          list_complete: true,
+        }),
+      },
+      DEALS_LOCK: { get: vi.fn() },
+      DEALS_SOURCES: { get: vi.fn() },
     });
-    const stats = await handleDashboardStats(env);
-    const activity = await handleDashboardRecentActivity(env);
-    const health = await handleDashboardSystemHealth(env);
-    expect(stats.status).toBe(200);
-    expect(activity.status).toBe(200);
-    expect(health.status).toBe(200);
+
+    const statsResponse = await handleDashboardStats(env);
+    expect(statsResponse.status).toBe(200);
+    const statsBody = (await statsResponse.json()) as {
+      stats: {
+        total: number;
+        active: number;
+        quarantined: number;
+        rejected: number;
+      };
+      recentActivity: { runs: number; dealsFound: number; errors: number };
+      systemHealth: { status: string; checks: Record<string, boolean> };
+      timestamp: string;
+    };
+    expect(statsBody.stats).toEqual({
+      total: 7,
+      active: 4,
+      quarantined: 1,
+      rejected: 2,
+    });
+    expect(statsBody.recentActivity).toEqual({
+      runs: 1,
+      dealsFound: 10,
+      errors: 1,
+    });
+    expect(statsBody.systemHealth.status).toBe("healthy");
+    expect(typeof statsBody.timestamp).toBe("string");
+
+    const activityResponse = await handleDashboardRecentActivity(env);
+    expect(activityResponse.status).toBe(200);
+    const activityBody = (await activityResponse.json()) as {
+      runs: number;
+      dealsFound: number;
+      errors: number;
+    };
+    expect(activityBody).toEqual({ runs: 1, dealsFound: 10, errors: 1 });
+
+    const healthResponse = await handleDashboardSystemHealth(env);
+    expect(healthResponse.status).toBe(200);
+    const healthBody = (await healthResponse.json()) as {
+      status: string;
+      checks: Record<string, boolean>;
+    };
+    expect(healthBody.status).toBe("healthy");
+    expect(healthBody.checks.d1_connection).toBe(true);
+    expect(healthBody.checks.DEALS_PROD).toBe(true);
   });
 });
 

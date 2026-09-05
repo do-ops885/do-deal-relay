@@ -231,8 +231,10 @@ export async function evolveSourceTrust(
           allValid,
         });
       }
-      // Best-effort SourceRegistry DO mirror (D1 remains canonical)
-      await mirrorTrustToDO(
+      // Best-effort SourceRegistry DO mirror (D1 remains canonical).
+      // Detached (fire-and-forget) so DO RPC timeouts never delay trust
+      // evolution or the pipeline phase that awaits it.
+      void mirrorTrustToDO(
         env,
         new Map(domains.map((domain) => [domain, allValid])),
       );

@@ -125,8 +125,9 @@ export async function publishSnapshot(
     }));
     await insertReferralsBatch(env.DEALS_DB, referrals);
 
-    // Step 5a: Best-effort DealRegistry DO mirror (KV + D1 remain canonical)
-    await mirrorPublishToDO(
+    // Step 5a: Best-effort DealRegistry DO mirror (KV + D1 remain canonical).
+    // Detached (fire-and-forget) so DO RPC timeouts never block publishing.
+    void mirrorPublishToDO(
       env,
       publishedSnapshot.deals.map((deal) => deal.id),
     );

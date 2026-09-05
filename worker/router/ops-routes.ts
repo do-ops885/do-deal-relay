@@ -10,6 +10,9 @@ import {
   handleDashboardSystemHealth,
 } from "../routes/dashboard";
 
+/** Max accepted JSON body for bulk import (50 KiB). */
+const BULK_IMPORT_MAX_BODY_BYTES = 50 * 1024;
+
 /**
  * Ops routes (bulk + dashboard), extracted from legacy-routes.ts to keep
  * the legacy dispatcher under the source-size limit.
@@ -26,7 +29,7 @@ export async function tryHandleOpsRoutes(
   path: string,
 ): Promise<Response | null> {
   if (path === "/api/bulk/import" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 50 * 1024);
+    const bodyTooLarge = checkBodySize(request, BULK_IMPORT_MAX_BODY_BYTES);
     if (bodyTooLarge) return bodyTooLarge;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
