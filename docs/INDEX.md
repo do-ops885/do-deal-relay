@@ -11,6 +11,7 @@
 ### Technical Documentation
 
 - **[API.md](API.md)** - Complete API reference and endpoint documentation
+- **[MCP.md](MCP.md)** - Model Context Protocol (MCP) tool and SSE streaming documentation
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Step-by-step deployment guide
 
 ### Legal & Compliance
@@ -53,6 +54,7 @@ See `../agents-docs/` directory for:
 ```
 docs/
 ├── API.md                 # API documentation
+├── MCP.md                 # Model Context Protocol documentation
 ├── DEPLOYMENT.md          # Deployment guide
 ├── LEGAL_COMPLIANCE.md    # Legal requirements
 ├── monitoring-setup.md    # Health, metrics, alerting
@@ -89,6 +91,7 @@ agents-docs/
 | Document                | Status      | Last Updated    |
 | ----------------------- | ----------- | --------------- |
 | API.md                  | ✅ Complete | See git history |
+| MCP.md                  | ✅ Complete | See git history |
 | DEPLOYMENT.md           | ✅ Complete | See git history |
 | LEGAL_COMPLIANCE.md     | ✅ Complete | See git history |
 | AGENTS.md               | ✅ Complete | See git history |
