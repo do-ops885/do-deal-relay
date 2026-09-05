@@ -32,7 +32,7 @@ Returns server information and protocol capabilities.
     "logging": {},
     "completions": {}
   },
-  "tools_available": 8,
+  "tools_available": 15,
   "documentation": "https://do-deal-relay.com/docs/mcp"
 }
 ```
@@ -159,6 +159,47 @@ Get server information and metadata.
     "resources": { "subscribe": false, "listChanged": false }
   }
 }
+```
+
+---
+
+### POST /mcp/stream/tools/call
+
+Initiate execution of an MCP tool in streaming mode via Server-Sent Events (SSE). Returns a `text/event-stream` response emitting progress, result, or error events. Includes an `X-Operation-Id` response header. Requires User role.
+
+**Request Body:**
+
+```json
+{
+  "name": "research_domain",
+  "arguments": {
+    "domain": "dropbox.com",
+    "depth": "deep"
+  }
+}
+```
+
+**SSE Events Emitted:**
+
+- `event: progress` — Current operation status (progress, total, message, operationId)
+- `event: result` — Final tool execution payload upon completion
+- `event: error` — Error payload if execution fails
+
+---
+
+### GET /mcp/stream
+
+Connect to monitor an in-flight streaming tool execution using Server-Sent Events. Requires User role.
+
+**Query Parameters:**
+
+- `operationId` (string, required): The unique operation ID returned in the `X-Operation-Id` header of `POST /mcp/stream/tools/call`.
+
+**Example:**
+
+```bash
+curl -N "https://your-worker.workers.dev/mcp/stream?operationId=550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---
@@ -525,6 +566,206 @@ Search deals using natural language. The AI parses your query into structured se
 - Use categories: "finance", "shopping", "tech", "crypto"
 - Mention time: "expiring in 7 days", "new this week"
 - Specify rewards: "cash bonus", "percentage discount"
+
+---
+
+### 9. report_deal
+
+Report a broken, expired, or fraudulent referral code.
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| code | string | Yes | The referral code to report |
+| reason | string | Yes | Reason: 'broken', 'expired', 'fraudulent', 'inaccurate', 'duplicate' |
+| comment | string | No | Optional details or context |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "report_deal",
+    "arguments": {
+      "code": "EXPIRED123",
+      "reason": "expired",
+      "comment": "Code returned 404 on target site"
+    }
+  }
+}
+```
+
+---
+
+### 10. experience_deal
+
+Report success or failure with a specific referral code. Updates confidence scores based on user feedback.
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| code | string | Yes | The referral code used |
+| success | boolean | Yes | Whether the deal worked successfully |
+| comment | string | No | Optional experience feedback |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "experience_deal",
+    "arguments": {
+      "code": "GcCOCxbo",
+      "success": true,
+      "comment": "Bonus credit received immediately"
+    }
+  }
+}
+```
+
+---
+
+### 11. get_pipeline_status
+
+Get current status and lock state of the deal discovery pipeline.
+
+**Input Parameters:**
+
+None required.
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_pipeline_status",
+    "arguments": {}
+  }
+}
+```
+
+---
+
+### 12. trigger_discovery
+
+Manually trigger an execution of the deal discovery pipeline.
+
+**Input Parameters:**
+
+None required.
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "trigger_discovery",
+    "arguments": {}
+  }
+}
+```
+
+---
+
+### 13. get_similar_deals
+
+Find referral deals similar to a specific code or domain.
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| code | string | No | Referral code to match |
+| domain | string | No | Domain to match |
+| limit | number | No | Max results (1-50, default: 5) |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_similar_deals",
+    "arguments": {
+      "domain": "trading212.com",
+      "limit": 5
+    }
+  }
+}
+```
+
+---
+
+### 14. get_deal_highlights
+
+Get top-rated, recently added, and soon-to-expire deals.
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| limit | number | No | Max deals per section (1-20, default: 5) |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_deal_highlights",
+    "arguments": {
+      "limit": 5
+    }
+  }
+}
+```
+
+---
+
+### 15. get_logs
+
+Retrieve recent or specific run logs for the discovery pipeline.
+
+**Input Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| run_id | string | No | Specific run ID to fetch logs for |
+| count | number | No | Max log lines (1-1000, default: 100) |
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_logs",
+    "arguments": {
+      "count": 50
+    }
+  }
+}
+```
 
 ---
 
