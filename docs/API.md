@@ -1658,6 +1658,16 @@ Main entry point for MCP JSON-RPC requests (Specification 2025-11-25).
 - `analytics://summary`: Deal summary statistics
 - `nlq://results?query={q}`: Natural language query results
 
+### MCP SSE Streaming Endpoints
+
+#### POST /mcp/stream/tools/call
+
+Initiate tool execution in streaming mode via Server-Sent Events. Requires User role. Returns a `text/event-stream` body and `X-Operation-Id` header.
+
+#### GET /mcp/stream
+
+Connect to monitor an in-flight tool execution stream via Server-Sent Events. Requires User role and `operationId` query parameter.
+
 ---
 
 ## NLQ (Natural Language Query) API
