@@ -1,6 +1,6 @@
 # ADR-026: CI Blocked by npm Registry Degradation (2026-09-04)
 
-**Status**: Active (blocking all merges)
+**Status**: Resolved 2026-09-05 (registry recovered; #751 npm cache landed; #748-#754 merged green)
 **Created**: 2026-09-04
 **Decision Maker**: do-deal-relay Platform Team
 **Type**: External blocker

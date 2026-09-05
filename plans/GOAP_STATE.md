@@ -2,13 +2,33 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-05
-**Version**: 0.19.8
-**Status**: Active — 2026-09-05 fix-forward PR #754 CODE-COMPLETE and CI-green but MERGE-BLOCKED by ruleset misconfiguration per [ADR-027](ADR-027-ruleset-required-check-mismatch.md) (admin action required). Prior 2026-09-03 state: v0.19.5 doc sync F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6 bypass closed via #742, D1 lock fix via #739, CI guard via #733; 2026-08-31 self-learning-feedback COMPLETE per ADR-024; 2026-08-25/24 improvement runs COMPLETE.
+**Version**: 0.19.9
+**Status**: Active — 2026-09-05 merge wave COMPLETE: #748/#749/#750/#751/#752/#753/#754 all MERGED to main @ 872d411, main push CI 5/5 SUCCESS, queue empty (0 open PRs/issues). ADR-026 (npm registry) and ADR-027 (ruleset mismatch) RESOLVED. Prior 2026-09-05 state: v0.19.8 fix-forward #754 blocked; 2026-09-03 v0.19.5 doc sync F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6 bypass closed via #742, D1 lock fix via #739, CI guard via #733; 2026-08-31 self-learning-feedback COMPLETE per ADR-024; 2026-08-25/24 improvement runs COMPLETE.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
 ---
 
-## 2026-09-05 Fix-Forward + Merge Triage — BLOCKED on ruleset (ADR-027)
+## 2026-09-05 Merge Wave COMPLETE — v0.19.9 (queue empty)
+
+PRs 748/749/750/751/752/753/754 all MERGED to main @ 872d411. Main push CI 5/5 SUCCESS (CI, Security & Compliance, CodeQL, CI + Labels, Deploy-Production). Zero open PRs/issues.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| #748 aria meter attributes | ✅ MERGED 2026-09-04 | branch feat/deal-card-confidence-a11y, 8/8 tests |
+| #749 similar-deals shared helper | ✅ MERGED 2026-09-04 | worker/lib/similarity.ts, parity tests |
+| #750 missing-impl sweep | ✅ MERGED 2026-09-04 | do-mirror, ops-routes, MCP progress, email entrypoint, semantic filters |
+| #751 npm cache CI fix | ✅ MERGED 2026-09-04 | setup-node cache, resolves ADR-026 install timeouts |
+| #752/#753 JSDoc + MCP docs | ✅ MERGED 2026-09-05 | comment/docs only, zero runtime diff |
+| #754 main CI 503s + #749 split fix | ✅ MERGED 2026-09-05 16:48Z — 24 checks SUCCESS, 2777/2777 green | JWT mock envs, scoreSimilarDeal split sets |
+| ADR-026 npm registry | ✅ RESOLVED — registry recovered + #751 cache | [ADR-026](ADR-026-ci-npm-registry-degradation.md) |
+| ADR-027 ruleset mismatch | ✅ RESOLVED — #754 merged, merges no longer blocked | [ADR-027](ADR-027-ruleset-required-check-mismatch.md) |
+| `sync/pr749`, `pr-747`, stale locals | ⛔ DO NOT MERGE — would revert #748/#749/#750; delete locals | merge-order audit 2026-09-05 |
+
+Next: RL-1 DO migration, T-2/T-3/T-4 gaps, REDDIT-5/6, CI-1 secrets (all Full Mode, need spec + ADR).
+
+---
+
+## 2026-09-05 Fix-Forward + Merge Triage — SUPERSEDED by v0.19.9 merge wave
 
 Swarm (4 parallel agents): all PR comments on #744-#753 read; main CI failure root-caused; #749 regression verified; merge queue audited.
 
