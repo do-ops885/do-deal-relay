@@ -1,10 +1,47 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-03
-**Version**: 0.19.6
+**Last Updated**: 2026-09-04
+**Version**: 0.19.7
 **Status**: Active — 2026-09-03 v0.19.5 doc sync: F-8/F-10/F-12 closed via #736/#737/#738, SSRF IPv6-compatible bypass closed via #742 (`e9dd1d7`), D1 lock inclusive-expiry fix via #739, CI integration guard via #733. WS-E latent bugs #1/#2 stay closed (#741/#743). 2026-08-31 self-learning-feedback full suite COMPLETE per [SPEC-self-learning-feedback-full.md](SPEC-self-learning-feedback-full.md) + [ADR-024](ADR-024-skill-version-independence.md): 14 scripts wired (RYAN/FLASH/SYNTHESIS), skill-independent version policy, 2 lessons captured. 2026-08-25 improvement swarm COMPLETE (F-7/N-5/popup/AI/T-6-T-8) — code already on `main`, GOAP docs re-synced. 2026-08-24 improvement run also COMPLETE via PR #713.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-04 PR Triage Sweep — BLOCKED on CI (ADR-026)
+
+Orchestrated via goap-agent + pr-resolver skills (4 parallel review agents).
+
+| PR | Title | Disposition | Evidence |
+|:---|:---|:---|:---|
+| #746 | JSDoc-only annotations | ✅ CLOSED — no impact per #697/#702/#706/#710 precedent | zero runtime diff, comment-only |
+| #747 | Adapt upstream workflow standards | ✅ CLOSED — guardrail regression, self-blocking CI | weakened sections 4/6, version bump vs single-source rule |
+| #748 | Aria meter attributes | 🟡 CODE-COMPLETE, merge-blocked — meter semantics hardened (finite guard, valuetext, label-in-name), 8/8 tests, tsc clean | branch `feat/deal-card-confidence-a11y-1827706011888636877` @ `288cf28` |
+| #749 | Similar-deals string allocations | 🟡 CODE-COMPLETE, merge-blocked — real shared `worker/lib/similarity.ts` helper replaced the pessimizing loops, parity tests, telemetry dropped | branch `perf/optimize-similar-deals-allocations-15641106281631573222` @ `61f5f7b` |
+| #750 | Missing-impl sweep (MI-4/OPS-R/MCP-P/EMAIL-E/MF-1) | 🟡 CODE-COMPLETE — review round 1 resolved on branch: mirrors detached from hot path, email handler guarded, magic numbers hoisted, min_reward D1-enforced in hybrid + rejected on vector-only, do-mirror runtime guards, tests assert writes/schema; merge-blocked until re-review + full SUCCESS | branch `feat/missing-impl-sweep`, [spec](SPEC-missing-impl-sweep.md) |
+
+Merge order once CI recovers: 748 → 749 → 750 (rebase each on latest `main`, single retrigger, verify zero non-SUCCESS before merge). No admin bypass. Blocker: [ADR-026](ADR-026-ci-npm-registry-degradation.md) — npm registry ECONNRESET + 5-min job timeouts red since 2026-09-03; `main` itself has no green run.
+
+---
+
+## 2026-09-04 Missing-Implementation Sweep — v0.19.7
+
+Branch: `feat/missing-impl-sweep`. Spec: [SPEC-missing-impl-sweep.md](SPEC-missing-impl-sweep.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| MI-4 | DealRegistry/SourceRegistry DOs have zero runtime callers | P1 | ✅ CLOSED (mirror) — `worker/lib/do-mirror.ts` best-effort mirrors wired into `pipeline/stage.ts`, `publish.ts`, `pipeline/score.ts`; KV/D1 stay canonical; base-class `extends DurableObject` migration deferred (unit pool + migrations ban) | do-mirror.ts, stage.ts, publish.ts, score.ts |
+| OPS-R | Bulk import/export + dashboard trio exported but never routed | P1 | ✅ CLOSED — `worker/router/ops-routes.ts` (`POST /api/bulk/import`, `GET /api/bulk/export` user auth; `GET /api/dashboard/*` admin-only); `legacy-routes.ts` back to 496L | ops-routes.ts, legacy-routes.ts |
+| MCP-P | Progress tool handlers never registered | P1 | ✅ CLOSED — `check_progress`/`cancel_operation`/`list_operations` in `systemTools` (15→18) | worker/lib/mcp/tools/system.ts |
+| EMAIL-E | Email Workers entrypoint missing | P2 | ✅ CLOSED — `email(message,env)` export in `worker/index.ts` delegates to `handleEmailWorker` (not a fetch route) | worker/index.ts |
+| MF-1f | Semantic-search `filters` accepted but ignored | P1 | ✅ CLOSED — `matchesSemanticFilters` applied to vector + hybrid/FTS paths, `filters_applied` reported; `min_reward` enforced from D1 `reward_value` in hybrid and rejected (400) on the vector-only path | worker/routes/semantic-search.ts |
+| MF-2d | Orchestrator docs claim real-default, code falls back to simulation | P2 | ✅ CLOSED (docs) — comments corrected to rollout-guard behavior; code unchanged (subrequest budget) | orchestrator/index.ts |
+| R-2r | 3 non-null assertions regressed in worker/ | P2 | ✅ CLOSED — guarded access in `routes/nlq/index.ts`, `routes/referrals.ts` | nlq/index.ts, referrals.ts |
+| T-5p | MCP progress + sweep wiring untested | P2 | ✅ CLOSED — `tests/unit/missing-impl-sweep.test.ts` 14 wiring tests incl. review-round assertions (storage writes, dashboard schema bodies, min_reward rejection, DO runtime guard) | missing-impl-sweep.test.ts |
+
+Verification: `npx tsc --noEmit` ✅, `prettier` ✅, quality gate ✅, full unit suite green on CI head before review round 1; review fixes re-verified locally (targeted suites 72/72, sweep file 14/14).
+
+Deferred: `extends DurableObject` migration + single-source DO cutover (ADR-017 Phase 2); exhaustive T-2/T-3/T-4 suites; `extension/popup.html` split.
 
 ---
 

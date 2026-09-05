@@ -15,6 +15,7 @@ import { jsonResponse, errorResponse } from "./utils";
 import {
   SemanticSearchRequestSchema,
   SEMANTIC_SEARCH_CONFIG,
+  type SemanticSearchFilters,
   type SemanticSearchResponse,
 } from "../lib/search/types";
 import {
@@ -31,6 +32,67 @@ import {
 
 /** Workers AI embedding model used for query vectorization. */
 const SEMANTIC_EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
+
+/** Bucket size (5 minutes) used when synthesizing created_at vector metadata. */
+const CREATED_AT_BUCKET_MS = 5 * 60 * 1000;
+
+export function matchesSemanticFilters(
+  metadata: Record<string, unknown> | undefined,
+  filters: SemanticSearchFilters | undefined,
+): boolean {
+  if (!filters) return true;
+  if (filters.domain !== undefined) {
+    const domain = typeof metadata?.domain === "string" ? metadata.domain : "";
+    if (domain.toLowerCase() !== filters.domain.toLowerCase()) return false;
+  }
+  if (filters.category !== undefined) {
+    const categories = Array.isArray(metadata?.category)
+      ? (metadata.category as unknown[])
+      : [];
+    const wanted = filters.category.toLowerCase();
+    const hasCategory = categories.some(
+      (c) => typeof c === "string" && c.toLowerCase() === wanted,
+    );
+    if (!hasCategory) return false;
+  }
+  if (filters.status !== undefined && filters.status !== "all") {
+    if (metadata?.status !== filters.status) return false;
+  }
+  if (filters.tags !== undefined && filters.tags.length > 0) {
+    const tags = Array.isArray(metadata?.tags)
+      ? (metadata.tags as unknown[])
+      : [];
+    const normalizedTags = new Set(
+      tags
+        .filter((t): t is string => typeof t === "string")
+        .map((t) => t.toLowerCase()),
+    );
+    const wantsAll = filters.tags.every((t) =>
+      normalizedTags.has(t.toLowerCase()),
+    );
+    if (!wantsAll) return false;
+  }
+  // min_reward has no vector-metadata value field. It is enforced separately
+  // from the D1 reward_value column: hybrid search filters FTS rows against
+  // it, and the pure vector path rejects min_reward requests (no D1 values).
+  return true;
+}
+
+export function describeSemanticFilters(
+  filters: SemanticSearchFilters | undefined,
+): string[] {
+  if (!filters) return [];
+  const applied: string[] = [];
+  if (filters.domain !== undefined) applied.push(`domain=${filters.domain}`);
+  if (filters.category !== undefined)
+    applied.push(`category=${filters.category}`);
+  if (filters.status !== undefined) applied.push(`status=${filters.status}`);
+  if (filters.tags !== undefined && filters.tags.length > 0)
+    applied.push(`tags=${filters.tags.join(",")}`);
+  if (filters.min_reward !== undefined)
+    applied.push(`min_reward=${filters.min_reward}`);
+  return applied;
+}
 
 export async function handleSemanticSearch(
   request: Request,
@@ -62,7 +124,17 @@ export async function handleSemanticSearch(
     );
   }
 
-  const { query, limit, filters: _filters, hybrid, min_score } = parsed.data;
+  const { query, limit, filters, hybrid, min_score } = parsed.data;
+
+  // min_reward is a structured D1 attribute that vector metadata does not
+  // carry. Enforcing it requires D1 rows (hybrid), so reject vector-only.
+  if (filters?.min_reward !== undefined && hybrid !== true) {
+    return errorResponse(
+      "min_reward filter requires hybrid=true; pure vector search returns no reward values",
+      400,
+    );
+  }
+
   const requestedLimit = limit ?? SEMANTIC_SEARCH_CONFIG.DEFAULT_LIMIT;
   const namespace =
     env.ENVIRONMENT === "production"
@@ -79,6 +151,7 @@ export async function handleSemanticSearch(
         min_score,
         namespace,
         start,
+        filters,
       );
     }
 
@@ -90,7 +163,10 @@ export async function handleSemanticSearch(
     });
     const embeddingMs = Date.now() - embeddingStart;
     const vectorizeStart = Date.now();
-    const filtered = hits.filter((h) => h.score >= min_score);
+    const filtered = hits.filter(
+      (h) =>
+        h.score >= min_score && matchesSemanticFilters(h.metadata, filters),
+    );
     const vectorizeMs = Date.now() - vectorizeStart;
 
     // Article 12 record-keeping for the embedding + vector query. The raw
@@ -129,7 +205,10 @@ export async function handleSemanticSearch(
         vectorize_time_ms: vectorizeMs,
         model: SEMANTIC_EMBEDDING_MODEL,
         index_name: SEMANTIC_SEARCH_CONFIG.INDEX_NAME,
-        filters_applied: namespace ? [`namespace=${namespace}`] : [],
+        filters_applied: [
+          ...(namespace ? [`namespace=${namespace}`] : []),
+          ...describeSemanticFilters(filters),
+        ],
       },
     };
     return jsonResponse(response);
@@ -148,6 +227,7 @@ async function handleHybridSearch(
   minScore: number,
   namespace: string | undefined,
   start: number,
+  filters?: SemanticSearchFilters,
 ): Promise<Response> {
   const hybridStart = Date.now();
   const ftsQuery = sanitizeFtsQuery(query);
@@ -177,8 +257,12 @@ async function handleHybridSearch(
       : Promise.resolve({ ok: false as const, rows: [] as never[] }),
   ]);
 
-  const vectorHits = vectorResult.ok ? vectorResult.hits : [];
-  const ftsRows = (ftsResult as { rows?: unknown[] }).rows
+  const vectorHits = vectorResult.ok
+    ? vectorResult.hits.filter((h) =>
+        matchesSemanticFilters(h.metadata, filters),
+      )
+    : [];
+  const rawFtsRows = (ftsResult as { rows?: unknown[] }).rows
     ? (
         ftsResult as {
           ok: boolean;
@@ -186,6 +270,47 @@ async function handleHybridSearch(
         }
       ).rows
     : [];
+  const minReward = filters?.min_reward;
+
+  // min_reward is a structured D1 attribute that vector metadata does not
+  // carry, so it is enforced from the FTS rows' D1 reward_value before fusion.
+  const rewardEligibleRows =
+    minReward !== undefined
+      ? rawFtsRows.filter(
+          (row) =>
+            typeof row.reward_value === "number" &&
+            row.reward_value >= minReward,
+        )
+      : rawFtsRows;
+
+  const ftsRows = filters
+    ? rewardEligibleRows.filter((row) =>
+        matchesSemanticFilters(
+          {
+            domain: row.domain,
+            category: row.category,
+            status: row.status,
+            tags: row.tags,
+          },
+          filters,
+        ),
+      )
+    : rewardEligibleRows;
+
+  // When a reward floor is set, only deals verified against D1 (present in the
+  // reward-eligible FTS rows) may be returned; unverifiable vector hits drop.
+  const rewardEligibleIds =
+    minReward !== undefined
+      ? new Set(rewardEligibleRows.map((row) => row.deal_id))
+      : undefined;
+  const fusionVectorHits =
+    rewardEligibleIds !== undefined
+      ? vectorHits.filter((h) => {
+          const dealId =
+            typeof h.metadata?.deal_id === "string" ? h.metadata.deal_id : h.id;
+          return rewardEligibleIds.has(dealId);
+        })
+      : vectorHits;
 
   // If both empty but one side expected to have results, fallback to whichever succeeded
   const fusionStart = Date.now();
@@ -194,7 +319,7 @@ async function handleHybridSearch(
   let totalFused = 0;
 
   if (ftsQuery && ftsRows.length > 0) {
-    const fused = fuseHybridResults(vectorHits, ftsRows, {
+    const fused = fuseHybridResults(fusionVectorHits, ftsRows, {
       limit: requestedLimit,
       minScore,
     });
@@ -207,14 +332,15 @@ async function handleHybridSearch(
         tags: [],
         status: "active",
         reward_type: "cash",
-        created_at_bucket: Math.floor(Date.now() / 300000) * 300000,
+        created_at_bucket:
+          Math.floor(Date.now() / CREATED_AT_BUCKET_MS) * CREATED_AT_BUCKET_MS,
       },
       score: f.score,
       match_type: f.match_type,
     }));
   } else {
     // No FTS results or query not FTS-able: vector only filtered
-    const filtered = vectorHits
+    const filtered = fusionVectorHits
       .filter((h) => h.score >= minScore)
       .slice(0, requestedLimit);
     totalFused = filtered.length;
@@ -270,6 +396,7 @@ async function handleHybridSearch(
         ...(namespace ? [`namespace=${namespace}`] : []),
         "hybrid=rrf",
         `fts_query=${ftsQuery || "n/a"}`,
+        ...describeSemanticFilters(filters),
       ],
     },
   };

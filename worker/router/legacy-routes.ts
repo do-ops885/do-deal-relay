@@ -37,6 +37,7 @@ import {
   handleMCPInfo,
 } from "../routes/mcp";
 import { tryHandleMCPStreamRoutes } from "./mcp-stream-routes";
+import { tryHandleOpsRoutes } from "./ops-routes";
 import {
   handleValidateUrl,
   handleValidateBatch,
@@ -461,6 +462,10 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/email/help" && request.method === "GET") {
     return withAuth(request, env, undefined, () => handleEmailHelp());
   }
+
+  // Bulk + dashboard ops routes (extracted to ops-routes.ts).
+  const opsResponse = await tryHandleOpsRoutes(request, env, path);
+  if (opsResponse) return opsResponse;
 
   // Admin API Key Management
   if (path === "/api/admin/keys") {
