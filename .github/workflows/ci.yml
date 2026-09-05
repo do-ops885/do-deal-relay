@@ -22,7 +22,7 @@ jobs:
   lint:
     name: Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -30,13 +30,14 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npm run typecheck
 
   format:
     name: Format Check
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -44,13 +45,14 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npm run fmt:check
 
   docs:
     name: Docs Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -58,6 +60,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npm run build
       - name: Validate markdown
@@ -69,7 +72,7 @@ jobs:
   validate-codes:
     name: Validation Gates
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -77,6 +80,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npm run validate
 
@@ -93,6 +97,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - name: Run unit tests
         run: npm run test:unit
@@ -142,6 +147,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Prepare Local Environment
@@ -230,7 +236,7 @@ jobs:
     name: Smoke Tests
     needs: [lint]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -238,6 +244,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - name: Run wrangler deploy dry-run
         run: npx wrangler deploy --dry-run
@@ -301,7 +308,7 @@ jobs:
     name: Build
     needs: [lint, format, test]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -309,6 +316,7 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: npm ci
       - run: npm run build
       - name: Upload build artifacts
