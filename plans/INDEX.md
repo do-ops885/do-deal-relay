@@ -1,66 +1,109 @@
 # Plans Index
 
-This index tracks active implementation plans in `plans/`. Completed and archived plans have been moved to `reports/archived_plans/`.
+**Last Updated**: 2026-09-05. Active set is intentionally small; completed
+work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
 
 - `active`: Currently being implemented.
 - `planned`: Approved for future implementation.
-- `completed`: Moved to `reports/archived_plans/`.
+- `completed`: Shipped; spec kept only while linked as GOAP evidence.
 - `archived`: Moved to `reports/archived_plans/`.
 
 ## Active Plans
 
-- [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — **New (2026-08-15)**.
-  Fresh static audit of missing implementations (6), partial features (3), and
-  test-coverage gaps (8). Canonical tracking of "built-but-not-wired" code and
-  untested module groups since the 2026-04-04 audit.
+- [GOAP State](GOAP_STATE.md) — **v0.19.9, single source of truth**.
+  Full inventory (P0–P3, deferred, blocked). Merge wave complete
+  (#748–#756); queue empty. Next candidates: RL-1 DO migration,
+  test gaps T-2/T-3/T-4, REDDIT-5.
+- [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
+  missing implementations and test-coverage gaps behind the 2026-08
+  swarm runs.
 - [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
-  Implements an opt-in, fail-closed Reddit publication and moderation client.
-- [ADR-020: Fail-Closed Reddit Post Lifecycle](ADR-020-reddit-post-lifecycle.md)
-  — **Accepted for implementation; production activation gated**. Corrects
-  API, privacy, SSRF, scheduling, and audit defects in the initial proposal.
-- [GOAP State](GOAP_STATE.md) — **Comprehensive inventory of ALL missing tasks, implementations, features, and gaps** (65+ items across P0–P3 + deferred ADR-015 proposals). Single source of truth for all planned work. **Refreshed 2026-07-29 (v0.12.0)** — All P0-P3 items resolved or documented. PR #640 merged, PR #639 closed.
-- [Progress 2026-07-02](PROGRESS-2026-07-02.md) — Re-verification of the 5 P0 critical bugs from the April audit against current code: all confirmed closed. New focus shifts to P1/P2 items.
-- [ADR-015: Harness & Cloudflare 2026 Best Practices](ADR-015-harness-cloudflare-2026-best-practices.md) — Architecture Decision Record mapping 2026 Harness CI/CD and Cloudflare Agentic Cloud patterns to our codebase. Includes migration roadmap for Durable Objects, Durable Execution, Agent Memory, and AI Gateway. **Proposed** as of 2026-07-02.
-- [ADR-016: Centralized Security & Routing Middleware Architecture](ADR-016-centralized-middleware-architecture.md) — **New** (2026-07-06). Proposes a unified middleware pipeline (auth tiers, rate limiting, validation, logging) to address the recurring pattern of ad-hoc security in route handlers. Directly unblocks P1 items: D1 auth, API rate limiting, submit auth, and webhook route registration. **Proposed** — implementation depends on this ADR being accepted.
-- [GitHub Automation](github-automation-plan.md) — Auto-merge workflow for Dependabot PRs and CI automation. **Verified and mostly complete** as of 2026-06-30; auto-merge workflow is live, remaining polish tracked in follow-up plans below.
+  Opt-in, fail-closed Reddit publication and moderation client.
+  REDDIT-1–4 complete, REDDIT-5 in progress, REDDIT-6 blocked on
+  credentials. Decision: [ADR-020](ADR-020-reddit-post-lifecycle.md).
 
-## Closed PRs (merged)
+## Architecture Decision Records (kept in place)
 
-- ⬜ ~~GOAP Missing Tasks Swarm v2~~ — Swarm 1 (JWT/cheerio/budget tests) closed via **PR #524**; Swarm 2 (70 new tests for `worker/lib/metrics/stats.ts` + `worker/lib/d1/client.ts`) shipped in **PR #527**. Plan archived as `reports/archived_plans/GOAP-missing-tasks-swarm-2026-07-01.md`. Branch `feat/goap-missing-tasks-swarm-v2` is no longer active.
-- ✅ **PR #571** — test: split oversized test files under 500 lines — MERGED `c239211`
-- ✅ **PR #570** — perf(pipeline): optimize snapshot staging and hash generation — MERGED `5fb1381`
-- ✅ **PR #569** — feat(ux): add copy-to-clipboard functionality — MERGED `779122c`
-- ✅ **PR #567** — docs(agent): sync agent contracts — MERGED `096343a`
-- ✅ **PR #566** — docs(plans): GOAP_STATE v0.7.0 — MERGED `f884970`
-- ✅ **`2f290ca`** — fix(tests): resolve 36 test failures (D1 mock + SSRF) — MERGED to main
-- ✅ **PR #640** — perf(pipeline): batch D1 writes, fast pre-filter, and validation gate reorder — MERGED `83bd67e`
-- ✅ **PR #638** — ci(fix): pin checkout action to full sha — MERGED
-- ✅ **PR #637** — chore: bump postcss from 8.5.16 to 8.5.24 — MERGED
-- ✅ **PR #636** — ci(fix): add checkout step to auto-merge workflow — MERGED
-- ✅ **PR #635** — chore: bump dependencies to safe patch versions — MERGED
-- ✅ **PR #631** — chore: bump typescript from 6.0.3 to 7.0.2 — MERGED
+- [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md) — Harness
+  and Cloudflare 2026 patterns roadmap.
+- [ADR-016](ADR-016-centralized-middleware-architecture.md) — Centralized
+  middleware pipeline (shipped; pattern now standard).
+- [ADR-017](ADR-017-durable-objects-migration.md) — Durable Objects
+  migration; Phase 2 (`extends DurableObject` cutover) still open, gates
+  RL-1.
+- [ADR-018](ADR-018-cloudflare-workers-builds-failure.md) /
+  [ADR-018](ADR-018-durable-execution-migration.md) — Workers Builds
+  outage record; durable execution research.
+- [ADR-019](ADR-019-deploy-timeout-too-low.md) — Deploy timeout, needs
+  workflow-scope token (owner action).
+- [ADR-021](ADR-021-ci-workflow-validator-over-strict.md) — Local
+  validator gate premise mismatch (known limitation).
+- [ADR-022](ADR-022-do-disposition-pipelinelock-first.md) — PipelineLock
+  DO as primary lock path (shipped).
+- [ADR-023](ADR-023-ci-external-credentials-and-research-flake.md) —
+  CI-1 blocked on owner secret.
+- [ADR-024](ADR-024-skill-version-independence.md) — Skill version
+  independence (shipped).
+- [ADR-025](ADR-025-logging-consolidation.md) — Logging consolidation
+  N-3 (shipped).
+- [ADR-026](ADR-026-ci-npm-registry-degradation.md) — Resolved 2026-09-05.
+- [ADR-027](ADR-027-ruleset-required-check-mismatch.md) — Resolved
+  2026-09-05.
 
-## Follow-Up Plans (Tracked)
+## Completed Specs (kept as GOAP evidence)
 
-- [FOLLOWUP: Deployment Fix](FOLLOWUP-deployment-fix.md) — Deployment pipeline hardening.
-- [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) — E2E test local environment setup.
-- [FOLLOWUP: P3 Features](FOLLOWUP-p3-features.md) — P3 feature follow-up.
-- [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) — Historical tracking of issues outside this resolution.
+- [SPEC-missing-impl-sweep](SPEC-missing-impl-sweep.md) — Shipped #750.
+- [SPEC-f11-strict-ts-flags](SPEC-f11-strict-ts-flags.md) — Shipped #745.
+- [SPEC-n3-logging-consolidation](SPEC-n3-logging-consolidation.md) —
+  Shipped #745.
+- [SPEC-self-learning-feedback-full](SPEC-self-learning-feedback-full.md)
+  — Shipped v0.19.1.
+- [SPEC-improvement-swarm-2026-08-25](SPEC-improvement-swarm-2026-08-25.md)
+  — Shipped v0.19.2.
+- [SPEC-pr-triage-and-p1-swarm](SPEC-pr-triage-and-p1-swarm.md),
+  [SPEC-pr-triage-and-improvements-2026-08-29](SPEC-pr-triage-and-improvements-2026-08-29.md)
+  — Shipped v0.19.0.
+- [PEV-d1-boilerplate-dry](PEV-d1-boilerplate-dry.md),
+  [PEV-discovery-circuit-breaker](PEV-discovery-circuit-breaker.md),
+  [PEV-snapshot-optimize](PEV-snapshot-optimize.md) — Shipped v0.19.5.
+- [PROGRESS-2026-08-25](PROGRESS-2026-08-25.md),
+  [PROGRESS-2026-08-31](PROGRESS-2026-08-31.md) — Swarm outcome records.
 
-> **GOAP execution completed on 2026-06-30.** All planned phases (Analyze, Decompose, Execute, Synthesize) finished. The GitHub Automation plan reached verified status. See individual plan files for details.
->
-> **Swarm v2 closed on 2026-07-01:** Original 3 swarm tasks re-verified as already complete via PR #524. Swarm 2 (test coverage) shipped in PR #527 (CI: 22+/23 PASS including Unit Tests, Build, E2E, Codacy, Security, Quality Gate). Plan archived to `reports/archived_plans/`.
->
-> **Swarm V3 closed on 2026-07-06:** All 8 deferred items from GOAP_STATE.md resolved. P3-12/P3-13 closed as NO-FIX. P3-17 OTEL config implemented. ⬜-5 Continuous Verification gate (10th gate) implemented. ⬜-6 DORA metrics endpoint implemented. ⬜-1/⬜-2 DO/DE research complete with migration plans. Commits: `feat(dora)` + `docs(observability)` pushed to `develop`.
+## Process Docs (kept in place)
 
-## Completed Specs
+- [SPEC_TEMPLATE](SPEC_TEMPLATE.md) — Required template for Full Mode.
+- [PEV_LOOP](PEV_LOOP.md) — Plan-Execute-Verify spec, referenced by
+  `scripts/pev-gates.sh` and the `pev-loop`, `goap-agent`,
+  `validation-gates`, and `multi-agent-orchestration` skills.
 
-- [Codacy Fix + GOAP State Update](SPEC-codacy-fixes-and-goap-state-update.md) — PEV spec for applying SC2034 fixes and updating plans to current state. **Completed** — SC2034 fixes applied, GOAP_STATE updated to v0.12.0.
+## Historical Reference (kept in place, not active)
 
-## Archived
+- [GitHub Automation](github-automation-plan.md) — Mostly complete since
+  2026-06-30; auto-merge live.
+- [FOLLOWUP: Deployment Fix](FOLLOWUP-deployment-fix.md) — Resolved;
+  staging health-check root cause and options.
+- [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) —
+  Closed; auth setup infrastructure shipped.
+- [FOLLOWUP: P3 Features](FOLLOWUP-p3-features.md) — Semantic search
+  complete; dashboard deferred to separate project.
+- [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) —
+  Rollback-issue wave root-caused 2026-07-17; zero open issues.
+- `jules-audit/` — Dated Jules audit snapshots.
 
-All completed/archived plans (ADRs, GOAP plans, sprints, swarms, Jules audits) have been moved to `reports/archived_plans/`. See that directory for historical records.
+## Archived 2026-09-05
 
-- `jules-audit/` — Jules audit snapshots (pre-check, quality, deps, docs, tests).
+Moved to `reports/archived_plans/` (superseded July swarm snapshots,
+stale merge plans, completed specs):
+
+- `GOAP-SWARM-2026-07-06.md`, `GOAP-SWARM-V3/V4/V5/V6/V7-2026-07-0*.md`
+- `GOAP-FIX-FORMAT-2026-07-06.md`, `GOAP-FIX-PR528.md`
+- `FINAL_SUMMARY.md` (PR #539–#550 era), `MERGE_PLAN.md` (same era)
+- `SPEC-ai-gateway-integration.md` (MI-3 shipped 2026-08-31)
+- `SPEC-codacy-fixes-and-goap-state-update.md` (SC2034 shipped)
+- `SPEC-legacy-routes-codacy-fix.md` (route split shipped)
+- `PROGRESS-2026-07-02.md` (superseded by August progress records)
+
+Older archives (ADRs, GOAP runs, sprints, Jules audits) are already in
+`reports/archived_plans/` — see that directory for history.
