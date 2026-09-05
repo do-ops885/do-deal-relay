@@ -4,6 +4,13 @@ import type { ToolCallResult } from "../types";
 import { getProductionSnapshot } from "../../storage";
 import { getTopDeals, getExpiringDeals, getRecentDeals } from "../../ranking";
 import { calculateStringSimilarity } from "../../crypto";
+import {
+  CATEGORY_MATCH_WEIGHT,
+  DOMAIN_MATCH_WEIGHT,
+  TAG_MATCH_WEIGHT,
+  countOverlap,
+  normalizeTerms,
+} from "../../similarity";
 
 export const GetSimilarDealsInputSchema = z.object({
   code: z
@@ -88,31 +95,30 @@ export async function handleGetSimilarDeals(
     };
   }
 
-  const targetCategories = new Set(
-    targetDeal.metadata.category.map((c) => c.toLowerCase()),
-  );
-  const targetTags = new Set(
-    targetDeal.metadata.tags.map((t) => t.toLowerCase()),
-  );
+  const targetCategories = normalizeTerms(targetDeal.metadata.category);
+  const targetTags = normalizeTerms(targetDeal.metadata.tags);
   const targetDomain = targetDeal.source.domain.toLowerCase();
 
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
     .map((d) => {
-      let score = 0;
-      const dealCategories = new Set(
-        d.metadata.category.map((c) => c.toLowerCase()),
-      );
-      for (const cat of targetCategories) {
-        if (dealCategories.has(cat)) score += 3;
-      }
+      // Target sets are built once per request above; the combined deal set
+      // is built once per deal here so each string is lowercased one time.
+      const dealTerms = normalizeTerms([
+        ...d.metadata.category,
+        ...d.metadata.tags,
+      ]);
+      let score =
+        countOverlap(targetCategories, dealTerms) * CATEGORY_MATCH_WEIGHT;
+
+      // Domain match (weight: 2)
       if (d.source.domain.toLowerCase() === targetDomain) {
-        score += 2;
+        score += DOMAIN_MATCH_WEIGHT;
       }
-      const dealTags = new Set(d.metadata.tags.map((t) => t.toLowerCase()));
-      for (const tag of targetTags) {
-        if (dealTags.has(tag)) score += 1;
-      }
+
+      // Tag overlap (weight: 1)
+      score += countOverlap(targetTags, dealTerms) * TAG_MATCH_WEIGHT;
+
       const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
       score += codeSim;
       return { deal: d, similarity: score };
