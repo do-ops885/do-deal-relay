@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { countOverlap, normalizeTerms } from "../../worker/lib/similarity";
+import {
+  CATEGORY_MATCH_WEIGHT,
+  DOMAIN_MATCH_WEIGHT,
+  TAG_MATCH_WEIGHT,
+  countOverlap,
+  normalizeTerms,
+  scoreSimilarDeal,
+  type SimilarDealCandidate,
+} from "../../worker/lib/similarity";
+
+function makeDeal(
+  category: unknown,
+  tags: unknown,
+  domain: string,
+): SimilarDealCandidate {
+  return { metadata: { category, tags }, source: { domain } };
+}
 
 describe("normalizeTerms", () => {
   it("should lowercase terms for case-insensitive matching", () => {
@@ -42,29 +58,123 @@ describe("normalizeTerms", () => {
   });
 });
 
-describe("countOverlap", () => {
-  it("should match parity spot-check vs inline expectation", () => {
-    const targetRaw = ["Finance", "DeFi", "defi"];
-    const dealCategories = ["finance", "shopping"];
-    const dealTags = ["DEFI", "bonus"];
-
-    const target = normalizeTerms(targetRaw);
-    const dealTerms = normalizeTerms([...dealCategories, ...dealTags]);
-
-    const expected = new Set(
-      targetRaw.map((entry) => entry.trim().toLowerCase()),
+describe("scoreSimilarDeal", () => {
+  it("should match manual split scoring (category*3 + domain*2 + tag*1)", () => {
+    const targetCategories = normalizeTerms(["Finance", "DeFi"]);
+    const targetTags = normalizeTerms(["bonus", "cashback"]);
+    const targetDomain = "example.com";
+    const deal = makeDeal(
+      ["finance", "shopping"],
+      ["BONUS", "extra"],
+      "Example.COM",
     );
-    let inlineCount = 0;
-    for (const term of expected) {
-      const dealLower = [...dealCategories, ...dealTags].map((entry) =>
-        entry.toLowerCase(),
-      );
-      if (dealLower.includes(term)) {
-        inlineCount += 1;
-      }
-    }
 
-    expect(countOverlap(target, dealTerms)).toBe(inlineCount);
-    expect(countOverlap(target, dealTerms)).toBe(2);
+    // Old-split semantics: score each field against its own counterpart.
+    const dealCategories = normalizeTerms(["finance", "shopping"]);
+    const dealTags = normalizeTerms(["BONUS", "extra"]);
+    const expected =
+      countOverlap(targetCategories, dealCategories) * CATEGORY_MATCH_WEIGHT +
+      DOMAIN_MATCH_WEIGHT +
+      countOverlap(targetTags, dealTags) * TAG_MATCH_WEIGHT;
+
+    expect(
+      scoreSimilarDeal(targetCategories, targetTags, targetDomain, deal),
+    ).toBe(expected);
+    expect(expected).toBe(
+      CATEGORY_MATCH_WEIGHT + DOMAIN_MATCH_WEIGHT + TAG_MATCH_WEIGHT,
+    );
+  });
+
+  it("should reject tag-as-category cross-field contamination", () => {
+    // Target wants category "crypto" but the deal only carries it as a tag.
+    // Split scoring must contribute 0 for the category weight; the old
+    // combined dealTerms bug scored +3 here via
+    // countOverlap(targetCategories, combined) * 3.
+    const targetCategories = normalizeTerms(["crypto"]);
+    const targetTags = normalizeTerms([]);
+    const crossDeal = makeDeal(["other"], ["crypto"], "other.com");
+    expect(
+      scoreSimilarDeal(targetCategories, targetTags, "example.com", crossDeal),
+    ).toBe(0);
+
+    // Sanity: the same term as a real category still scores full weight.
+    const positiveDeal = makeDeal(["crypto"], ["other"], "other.com");
+    expect(
+      scoreSimilarDeal(
+        targetCategories,
+        targetTags,
+        "example.com",
+        positiveDeal,
+      ),
+    ).toBe(CATEGORY_MATCH_WEIGHT);
+  });
+
+  it("should reject category-as-tag cross-field contamination", () => {
+    // Target wants tag "bonus" but the deal only carries it as a category.
+    // Split scoring must contribute 0 for the tag weight; the old combined
+    // dealTerms bug scored +1 here via countOverlap(targetTags, combined).
+    const targetCategories = normalizeTerms([]);
+    const targetTags = normalizeTerms(["bonus"]);
+    const crossDeal = makeDeal(["bonus"], ["other"], "other.com");
+    expect(
+      scoreSimilarDeal(targetCategories, targetTags, "example.com", crossDeal),
+    ).toBe(0);
+
+    // Sanity: the same term as a real tag still scores full weight.
+    const positiveDeal = makeDeal(["other"], ["bonus"], "other.com");
+    expect(
+      scoreSimilarDeal(
+        targetCategories,
+        targetTags,
+        "example.com",
+        positiveDeal,
+      ),
+    ).toBe(TAG_MATCH_WEIGHT);
+  });
+
+  it("should trim whitespace before matching (documents trim behavior)", () => {
+    // normalizeTerms trims leading/trailing whitespace then lowercases, so
+    // padded entries such as "  DEFI  " normalize to "defi" and still match.
+    // Without trim, padded entries would miss and under-score.
+    const targetCategories = normalizeTerms(["defi"]);
+    const paddedCategory = makeDeal(["  DEFI  "], [], "other.com");
+    expect(
+      scoreSimilarDeal(
+        targetCategories,
+        normalizeTerms([]),
+        "example.com",
+        paddedCategory,
+      ),
+    ).toBe(CATEGORY_MATCH_WEIGHT);
+
+    const paddedTag = makeDeal([], ["  Bonus "], "other.com");
+    expect(
+      scoreSimilarDeal(
+        normalizeTerms([]),
+        normalizeTerms(["bonus"]),
+        "example.com",
+        paddedTag,
+      ),
+    ).toBe(TAG_MATCH_WEIGHT);
+  });
+
+  it("should score domain case-insensitively", () => {
+    const deal = makeDeal([], [], "Example.COM");
+    expect(
+      scoreSimilarDeal(
+        normalizeTerms([]),
+        normalizeTerms([]),
+        "example.com",
+        deal,
+      ),
+    ).toBe(DOMAIN_MATCH_WEIGHT);
+    expect(
+      scoreSimilarDeal(
+        normalizeTerms([]),
+        normalizeTerms([]),
+        "Example.Com",
+        deal,
+      ),
+    ).toBe(DOMAIN_MATCH_WEIGHT);
   });
 });

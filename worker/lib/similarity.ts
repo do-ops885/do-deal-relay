@@ -9,7 +9,6 @@ export const CATEGORY_MATCH_WEIGHT = 3;
 export const DOMAIN_MATCH_WEIGHT = 2;
 export const TAG_MATCH_WEIGHT = 1;
 
-const INITIAL_OVERLAP_COUNT = 0;
 const SINGLE_MATCH_INCREMENT = 1;
 const EMPTY_TERM_LENGTH = 0;
 
@@ -48,7 +47,7 @@ export function countOverlap(
   target: Set<string>,
   candidate: Set<string>,
 ): number {
-  let overlap = INITIAL_OVERLAP_COUNT;
+  let overlap = 0;
   const targetIsSmaller = target.size <= candidate.size;
   const smaller = targetIsSmaller ? target : candidate;
   const larger = targetIsSmaller ? candidate : target;
@@ -58,4 +57,50 @@ export function countOverlap(
     }
   }
   return overlap;
+}
+
+/**
+ * Minimal candidate shape needed for similarity scoring.
+ * Full Deal objects satisfy this structurally; tests can pass lightweight
+ * mocks without building every Deal field.
+ */
+export interface SimilarDealCandidate {
+  metadata: {
+    category: unknown;
+    tags: unknown;
+  };
+  source: {
+    domain: string;
+  };
+}
+
+/**
+ * Score a candidate deal against pre-normalized target sets with split
+ * field semantics: category-vs-category, domain, tag-vs-tag.
+ * Category and tag sets stay separate so a tag matching a target category
+ * (or vice versa) contributes nothing for that weight.
+ * Code similarity is intentionally excluded; callers add it when present.
+ *
+ * @param targetCategories - Normalized target category terms
+ * @param targetTags - Normalized target tag terms
+ * @param targetDomain - Target domain (compared case-insensitively)
+ * @param deal - Candidate deal with raw category/tags and source domain
+ * @returns Split similarity score without code similarity
+ */
+export function scoreSimilarDeal(
+  targetCategories: Set<string>,
+  targetTags: Set<string>,
+  targetDomain: string,
+  deal: SimilarDealCandidate,
+): number {
+  const dealCategories = normalizeTerms(deal.metadata.category);
+  const dealTags = normalizeTerms(deal.metadata.tags);
+  let score = 0;
+  score +=
+    countOverlap(targetCategories, dealCategories) * CATEGORY_MATCH_WEIGHT;
+  if (deal.source.domain.toLowerCase() === targetDomain.toLowerCase()) {
+    score += DOMAIN_MATCH_WEIGHT;
+  }
+  score += countOverlap(targetTags, dealTags) * TAG_MATCH_WEIGHT;
+  return score;
 }
