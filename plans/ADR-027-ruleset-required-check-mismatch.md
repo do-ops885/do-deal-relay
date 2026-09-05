@@ -1,6 +1,6 @@
 # ADR-027: Merges Blocked by Ruleset Required-Check Mismatch (2026-09-05)
 
-**Status**: Active (blocking all merges)
+**Status**: Resolved 2026-09-05 (PR #754 MERGED 16:48Z, 24 checks SUCCESS; merges no longer blocked)
 **Created**: 2026-09-05
 **Decision Maker**: do-deal-relay Platform Team
 **Type**: External blocker (repository ruleset, not code)
