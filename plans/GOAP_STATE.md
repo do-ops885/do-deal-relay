@@ -2,9 +2,25 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-06
-**Version**: 0.19.12
-**Status**: Active — 2026-09-06 RL-1 CLOSED via native Rate Limiting binding per [ADR-028](ADR-028-rate-limit-binding-over-do.md) (13 new tests, KV fallback retained). Prior: v0.19.11 re-verification swarm closed 5 stale items + 4 near-limit file splits.
+**Version**: 0.19.13
+**Status**: Active — 2026-09-06 deep re-verification: MF-1/MF-2/MI-2/T-1 confirmed CLOSED (landed via #750 wave, table was stale); T-5 CLOSED with 8 new SSE tests; REDDIT-5 CLOSED (full suite verified green). Prior: v0.19.12 RL-1 CLOSED via ADR-028.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-06 Deep Re-Verification + T-5 Closure — v0.19.13
+
+Wave 3 planned to wire MF-2 real fetchers; deep code-read showed the wiring already landed via the #750 wave and the audit table was stale. Only genuine gap was T-5. No prod change except tests.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| MF-2 real fetching | ✅ CLOSED (stale row) — `orchestrator/index.ts` `shouldUseRealFetching()`: production ON by default, `real_research_fetching` feature-flag rollout, per-request override; `simulateDiscovery` only reachable via test flag or non-prod fallback | orchestrator/index.ts:66-88, 337 comment "Simulation is only reachable via the explicit test-only flag (MF-2)" |
+| MI-2 scraper registry + AIExtractorScraper | ✅ CLOSED (stale row) — orchestrator dispatches through `createDefaultScraperRegistry()` + `readySourceNames()`; `extractWithAI` runs over fetched content | orchestrator/index.ts:101-104, 317-324 |
+| MF-1 hybrid filters | ✅ CLOSED (stale row) — filters applied, `hybrid=true` fuses FTS5+vector via RRF, `min_reward` D1-enforced in hybrid and rejected on vector-only (per #750 review round) | routes/semantic-search.ts:41-146 |
+| T-1 batch D1 helper tests | ✅ CLOSED (stale row) — `tests/unit/d1/{audit-log,referrals-batch,research-cache,system-metrics,factory}.test.ts` all exist | tests/unit/d1/ |
+| T-5 MCP progress + SSE untested | ✅ CLOSED — 8 new tests: SSE headers/operation-id, start/complete/result event stream, error event without detail leak, KV tracker persistence, 400/404 paths, completed-op replay, failed-op error event | tests/unit/mcp-stream.test.ts |
+| REDDIT-5 unit coverage + PEV gates | ✅ CLOSED — sole blocker was "full unit suite stalled in the orb"; suite now verified green twice (2895+ passed, only 2 known sandbox-env failures pre-existing on main); reddit tests 16/16 | full-suite runs 2026-09-06 |
+| MI-4 DealRegistry not on hot path | ⬜ OPEN (by design per #750 — mirrors detached from hot path deliberately); candidate for WONTFIX disposition | do-mirror.ts runtime guards |
 
 ---
 
@@ -381,19 +397,19 @@ recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
 | ID | Item | Status |
 |:---|:---|:---|
 | MI-1 | MCP SSE streaming route (`/mcp/stream`) + `mcp/progress.ts` never routed | ✅ CLOSED 2026-09-06 — stale; `worker/router/mcp-stream-routes.ts` routes `/mcp/stream` (GET) + `/mcp/stream/tools/call` (POST) with rate limiting; `mcp/progress` imported by `routes/mcp/tools.ts` (landed via #750) |
-| MI-2 | Research-agent scraper registry + `AIExtractorScraper` not wired into orchestrator | ⬜ OPEN |
+| MI-2 | Research-agent scraper registry + `AIExtractorScraper` not wired into orchestrator | ✅ CLOSED 2026-09-06 — stale; orchestrator uses `createDefaultScraperRegistry()` + `extractWithAI` (landed via #750 wave) |
 | MI-3 | AI Gateway client built + tested but never used by NLQ/semantic search | ✅ CLOSED 2026-09-06 — stale; consumed by `worker/lib/nlq/ai/{entities,expansion,intent,index}.ts` and `worker/lib/search/client.ts` |
 | MI-4 | DealRegistry DO deployed + tested but not called by stage/publish | ⬜ OPEN |
 | MI-5 | Legacy `expiration-manager.ts` duplicates modular `lib/expiration/` | ✅ CLOSED 2026-09-06 — stale; file removed, only modular `worker/lib/expiration/` remains |
 | MI-6 | Orphan `worker/db/schema.sql` not referenced by any code | ✅ CLOSED 2026-09-06 — stale; `worker/db/` directory removed |
-| MF-1 | Hybrid semantic search accepted but ignored (`filters`/`hybrid` unused) | ⬜ OPEN |
-| MF-2 | Research agent returns simulated codes by default (real fetch gated off) | ⬜ OPEN — confirmed 2026-09-06: `orchestrator/index.ts:338` calls `simulateDiscovery`; real SSRF-hardened fetchers (`api-fetchers.ts`, `page-fetcher.ts`, `reddit-fetcher.ts`) exist but unwired |
+| MF-1 | Hybrid semantic search accepted but ignored (`filters`/`hybrid` unused) | ✅ CLOSED 2026-09-06 — stale; filters + RRF hybrid fusion + min_reward enforcement live in `routes/semantic-search.ts` |
+| MF-2 | Research agent returns simulated codes by default (real fetch gated off) | ✅ CLOSED 2026-09-06 — stale; `shouldUseRealFetching()` defaults ON in production with feature-flag rollout; simulation is test-only fallback (v0.19.13 correction of v0.19.11 note, which misread the flag-off branch) |
 | MF-3 | MCP progress notifications unreachable (depends on MI-1) | ✅ CLOSED 2026-09-06 — stale; unblocked by MI-1 closure, progress wired via `routes/mcp/tools.ts` |
-| T-1 | Batch D1 helpers (`audit-log`, `referrals-batch`, `system-metrics`, `research-cache`, `factory`) have zero tests | ⬜ OPEN |
+| T-1 | Batch D1 helpers (`audit-log`, `referrals-batch`, `system-metrics`, `research-cache`, `factory`) have zero tests | ✅ CLOSED 2026-09-06 — stale; all five test files exist in `tests/unit/d1/` |
 | T-2 | Email HTTP handlers + route layer untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (29 tests) |
 | T-3 | NLQ AI enhancer + hybrid classifier untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (45 tests) |
 | T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (21 tests) |
-| T-5 | MCP progress + SSE streaming untested | ⬜ OPEN |
+| T-5 | MCP progress + SSE streaming untested | ✅ CLOSED 2026-09-06 — 8 tests in `tests/unit/mcp-stream.test.ts` (v0.19.13) |
 | T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ✅ CLOSED — 28 tests in `tests/unit/source-registry.test.ts` (R-5, `1b251b4`) |
 | T-7 | D1 `trust.ts` has no direct tests | ✅ CLOSED — 29 tests in `tests/unit/d1-trust.test.ts` (R-5; 2 latent bugs documented) |
 | T-8 | Modular `lib/expiration/*` helpers lack focused coverage | ✅ CLOSED — 40 tests in `tests/unit/expiration-helpers.test.ts` (R-5) |
@@ -413,7 +429,7 @@ negative-score, corroborated community, or source-expiry signal.
 | REDDIT-2 | Add D1 lifecycle schema to external and runtime migrations | REDDIT-1 | ✅ COMPLETE | `migrations/0005_reddit_posts.sql`, migration 10 |
 | REDDIT-3 | Implement SSRF-safe typed Reddit client and three deletion triggers | REDDIT-2 | ✅ COMPLETE | `worker/reddit.ts` |
 | REDDIT-4 | Isolate the 30-minute moderation cron and configuration | REDDIT-3 | ✅ COMPLETE | `worker/scheduled.ts`, `wrangler.jsonc` |
-| REDDIT-5 | Add unit coverage and run PEV gates | REDDIT-4 | 🟡 IN PROGRESS | 98 focused tests, typecheck, format, and Markdown lint pass; full unit suite stalled in the orb |
+| REDDIT-5 | Add unit coverage and run PEV gates | REDDIT-4 | ✅ COMPLETE 2026-09-06 | 98 focused tests landed earlier; full unit suite verified green (v0.19.13), reddit tests 16/16 |
 | REDDIT-6 | Enable production credentials and cron | Reddit app and subreddit approval | ⬜ BLOCKED | External policy/credential prerequisite |
 
 ### Goal State
