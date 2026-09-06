@@ -9,6 +9,7 @@ import type {
 } from "@cloudflare/workers-types";
 import { logger } from "../global-logger";
 import { stripSqlComments } from "./factory";
+import { insertWithJsonFields, queryWithJsonFields } from "./client-json";
 import type {
   D1ClientConfig,
   D1ResolvedConfig,
@@ -353,7 +354,7 @@ export class D1Client {
     }
   }
 
-  // JSON Helpers
+  // JSON Helpers (implementations in client-json.ts)
 
   /**
    * Query with JSON field extraction
@@ -363,31 +364,7 @@ export class D1Client {
     params: unknown[] = [],
     jsonFields: string[] = [],
   ): Promise<QueryResult<T>> {
-    const result = await this.query<Record<string, unknown>>(sql, params);
-
-    if (result.success && result.data && jsonFields.length > 0) {
-      const parsedData = result.data.map((row) => {
-        const parsed = { ...row } as T;
-        for (const field of jsonFields) {
-          const value = row[field];
-          if (typeof value === "string") {
-            try {
-              (parsed as Record<string, unknown>)[field] = JSON.parse(value);
-            } catch {
-              // Keep as string if not valid JSON
-            }
-          }
-        }
-        return parsed;
-      });
-
-      return {
-        ...result,
-        data: parsedData,
-      };
-    }
-
-    return result as QueryResult<T>;
+    return queryWithJsonFields<T>(this, sql, params, jsonFields);
   }
 
   /**
@@ -398,23 +375,7 @@ export class D1Client {
     data: T,
     jsonFields: (keyof T)[] = [],
   ): Promise<{ success: boolean; lastRowId?: number; error?: string }> {
-    const processed: Record<string, unknown> = { ...data };
-
-    for (const field of jsonFields) {
-      const key = field as string;
-      if (key in processed) {
-        processed[key] = JSON.stringify(processed[key]);
-      }
-    }
-
-    const columns = Object.keys(processed);
-    const placeholders = columns.map(() => "?").join(", ");
-    const sql = `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${placeholders})`;
-
-    return this.execute(
-      sql,
-      columns.map((col) => processed[col]),
-    );
+    return insertWithJsonFields<T>(this, table, data, jsonFields);
   }
 
   // Private Helpers
