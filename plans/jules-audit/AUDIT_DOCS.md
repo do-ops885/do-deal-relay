@@ -1,4 +1,7 @@
-# Documentation Audit - 2026-08-30
+# Documentation Audit Artifact (Track D)
 
-## Actionable Documentation Additions
-- `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts`: Ensure comprehensive JSDoc `@param`, `@returns`, and `@throws` annotations for exact contract specification.
+## Undocumented Public Surface Identified
+`worker/lib/research-agent/helpers.ts` exposes public functions (`normalizeResearchQuery`, `generateSearchQueries`, `generatePotentialCodes`, `generateSampleCode`, `simulateDiscovery`, `generateSimulatedCode`, `generateSimulatedReward`, `deduplicateCodes`, `extractRewardValue`, `getDefaultResearchConfig`) missing standard JSDoc comment documentation (`@param`, `@returns`).
+
+## Actions Planned
+Add comprehensive JSDoc `@param` and `@returns` annotations for all exported public functions in `worker/lib/research-agent/helpers.ts`.

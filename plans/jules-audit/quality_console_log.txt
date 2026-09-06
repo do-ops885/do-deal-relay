@@ -1,9 +1,0 @@
-worker/email/README.md:271:console.log(result);
-worker/routes/webhooks-README.md:153:  console.log(result);
-worker/routes/webhooks-README.md:258:    console.log(event.data.url); // https://example.com/invite/ABC123
-worker/lib/rate-limit-kv.ts:139: * console.log(`Remaining: ${result.remaining}`);
-worker/lib/logger/structured.ts:77:        console.log(consoleMessage, context || "");
-worker/lib/webhook-sdk.ts:34://   console.log(event.data.url); // Always a complete URL
-worker/lib/feature-flags.ts:140: * console.log(flag?.rolloutPercentage);
-worker/lib/feature-flags.ts:223: *   console.log(`${name}: ${flag.enabled}`);
-worker/lib/global-logger.ts:98:      console.log(output);

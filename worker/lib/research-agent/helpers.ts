@@ -2,6 +2,14 @@ import type { ReferralResearchResult, WebResearchRequest } from "../../types";
 import type { ResearchSource } from "./types";
 import { KNOWN_REFERRAL_PROGRAMS } from "./constants";
 
+/**
+ * Normalizes a raw web research query by lowercasing, trimming, prepending domain if missing,
+ * and mapping common terms like 'invite' or 'promo' to 'referral'.
+ *
+ * @param query The raw research query string
+ * @param domain Optional domain associated with the query
+ * @returns Normalized research query string
+ */
 export function normalizeResearchQuery(query: string, domain?: string): string {
   let normalized = query.toLowerCase().trim();
 
@@ -17,6 +25,13 @@ export function normalizeResearchQuery(query: string, domain?: string): string {
   return normalized;
 }
 
+/**
+ * Generates platform-specific search query variations for a given source.
+ *
+ * @param normalizedQuery The normalized search query
+ * @param source Target research source name (e.g. 'producthunt', 'reddit', 'hackernews', 'github')
+ * @returns Array of search query strings tailored for the specified source
+ */
 export function generateSearchQueries(
   normalizedQuery: string,
   source: string,
@@ -59,6 +74,13 @@ export function generateSearchQueries(
   return queries;
 }
 
+/**
+ * Generates potential referral codes for known referral programs based on research depth.
+ *
+ * @param domain Target website domain
+ * @param depth Research depth level ('quick', 'thorough', or 'deep')
+ * @returns Array of candidate referral code objects with code, URL, and typical reward
+ */
 export function generatePotentialCodes(
   domain: string,
   depth: WebResearchRequest["depth"],
@@ -86,6 +108,13 @@ export function generatePotentialCodes(
   return codes;
 }
 
+/**
+ * Generates a pseudo-random sample referral code string for testing or fallback discovery.
+ *
+ * @param domain Domain prefix string
+ * @param index Sequence index used to select prefix variations
+ * @returns Formatted sample referral code
+ */
 export function generateSampleCode(domain: string, index: number): string {
   const prefixes = ["REF", "INV", domain.slice(0, 3).toUpperCase()];
   const prefix = prefixes[index % prefixes.length];
@@ -97,6 +126,14 @@ export function generateSampleCode(domain: string, index: number): string {
   return `${prefix}${suffix}`;
 }
 
+/**
+ * Simulates referral code discovery for test or dry-run scenarios.
+ *
+ * @param _query Unused query string
+ * @param source Research source definition
+ * @param depth Research depth level
+ * @returns Array of simulated discovered referral codes with metadata
+ */
 export function simulateDiscovery(
   _query: string,
   source: ResearchSource,
@@ -122,6 +159,13 @@ export function simulateDiscovery(
   return codes;
 }
 
+/**
+ * Generates a simulated referral code string for a given source.
+ *
+ * @param source Target source name
+ * @param index Sequence index
+ * @returns Formatted simulated referral code
+ */
 export function generateSimulatedCode(source: string, index: number): string {
   const prefixes: Record<string, string[]> = {
     producthunt: ["PH", "HUNT"],
@@ -141,6 +185,12 @@ export function generateSimulatedCode(source: string, index: number): string {
   return `${prefix}${suffix}${index}`;
 }
 
+/**
+ * Generates a simulated reward summary string for a given source.
+ *
+ * @param source Target source name
+ * @returns Simulated reward description string
+ */
 export function generateSimulatedReward(source: string): string {
   const rewards: Record<string, string[]> = {
     producthunt: ["20% off", "$50 credit", "Free month"],
@@ -159,6 +209,12 @@ export function generateSimulatedReward(source: string): string {
   return sourceRewards[firstByte % sourceRewards.length] ?? "Unknown reward";
 }
 
+/**
+ * Deduplicates discovered referral codes by lowercased code value.
+ *
+ * @param codes Array of discovered referral codes
+ * @returns Deduplicated array of referral codes
+ */
 export function deduplicateCodes(
   codes: ReferralResearchResult["discovered_codes"],
 ): ReferralResearchResult["discovered_codes"] {
@@ -171,6 +227,12 @@ export function deduplicateCodes(
   });
 }
 
+/**
+ * Extracts a numeric reward value (dollar amount or percentage) from a reward summary string.
+ *
+ * @param rewardSummary Description of reward
+ * @returns Parsed numeric value or undefined if no number found
+ */
 export function extractRewardValue(rewardSummary?: string): number | undefined {
   if (!rewardSummary) return undefined;
 
@@ -187,6 +249,11 @@ export function extractRewardValue(rewardSummary?: string): number | undefined {
   return undefined;
 }
 
+/**
+ * Returns default configuration options for research agent operations.
+ *
+ * @returns Default research configuration object
+ */
 export function getDefaultResearchConfig() {
   return {
     maxRequestsPerMinute: 60,
