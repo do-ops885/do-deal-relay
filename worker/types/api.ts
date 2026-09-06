@@ -95,4 +95,13 @@ export interface Env {
   PIPELINE_LOCK?: DurableObjectNamespace;
   SOURCE_REGISTRY?: DurableObjectNamespace;
   DEAL_REGISTRY?: DurableObjectNamespace;
+  // Native rate limiting bindings (ADR-028); optional so local/test
+  // surfaces without them fall back to the KV path in lib/rate-limit.ts
+  RL_5_60?: RateLimit;
+  RL_10_60?: RateLimit;
+  RL_20_60?: RateLimit;
+  RL_30_60?: RateLimit;
+  RL_50_60?: RateLimit;
+  RL_60_60?: RateLimit;
+  RL_100_60?: RateLimit;
 }
