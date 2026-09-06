@@ -8,7 +8,7 @@ import {
   createRateLimitKVMiddleware,
   batchCheckRateLimitKV,
   getRateLimitKVState,
-} from "../../../worker/lib/rate-limit-kv";
+} from "../../../worker/lib/rate-limit";
 import type { Env } from "../../../worker/types";
 
 // Type for KV namespace mock
