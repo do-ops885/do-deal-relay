@@ -1,2 +1,0 @@
-worker/config.ts:    HACKERNEWS: DEFAULT_HN_RATE_LIMIT,
-worker/routes/webhooks.ts:// DEPRECATED: This file is a thin wrapper. Use worker/routes/webhooks/index.ts
