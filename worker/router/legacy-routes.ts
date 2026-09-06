@@ -3,9 +3,6 @@ import { checkBodySize } from "../middleware/body-limit";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
 import {
-  handleHealth,
-  handleReady,
-  handleLive,
   handleMetrics,
   handleGetDeals,
   handleDiscover,
@@ -45,18 +42,9 @@ import {
   handleValidateDeal,
 } from "../routes/validation";
 import {
-  handleCreateApiKey,
-  handleListApiKeys,
-  handleRevokeApiKey,
-} from "../routes/admin/keys";
-import {
-  handleRegister,
-  handleLogin,
-  handleRefreshToken,
-  handleGetCurrentUser,
-  handleUpdateProfile,
-  handleListUsers,
-} from "../routes/auth";
+  tryHandleLegacyAuthRoutes,
+  tryHandleAdminKeyRoutes,
+} from "./legacy-auth-routes";
 import { handleD1Request } from "../routes/d1";
 import { handleNLQRequest } from "../routes/nlq/index";
 import { handleWebhookRoutes } from "../routes/webhooks/index";
@@ -87,49 +75,9 @@ export async function tryHandleLegacyRoutes(
   url: URL,
   path: string,
 ): Promise<Response | null> {
-  // Health checks (kept as fallback; primary routes now in pipeline)
-  if (path === "/health") return handleHealth(env, request);
-  if (path === "/health/ready") return handleReady(env, request);
-  if (path === "/health/live") return handleLive(env, request);
-
-  // Auth & User Management
-  if (path === "/api/auth/register" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
-    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/register");
-    return rateLimiter(request, () => handleRegister(request, env));
-  }
-  if (path === "/api/auth/login" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
-    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/login");
-    return rateLimiter(request, () => handleLogin(request, env));
-  }
-  if (path === "/api/auth/refresh" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
-    const rateLimiter = createRateLimitMiddleware(env, "/api/auth/refresh");
-    return rateLimiter(request, () => handleRefreshToken(request, env));
-  }
-  if (path === "/api/auth/me" && request.method === "GET") {
-    return withAuth(request, env, undefined, (auth) =>
-      handleGetCurrentUser(auth, request, env),
-    );
-  }
-  if (path === "/api/auth/me" && request.method === "PUT") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
-    return withAuth(request, env, "user", (auth) =>
-      handleUpdateProfile(auth, request, env),
-    );
-  }
-
-  // Admin: User management
-  if (path === "/api/admin/users" && request.method === "GET") {
-    return withAuth(request, env, "admin", (auth) =>
-      handleListUsers(auth, request, env),
-    );
-  }
+  // Health, auth, and admin identity (extracted to legacy-auth-routes.ts).
+  const authResponse = await tryHandleLegacyAuthRoutes(request, env, url, path);
+  if (authResponse) return authResponse;
 
   // Metrics
   if (path === "/metrics") {
@@ -467,29 +415,9 @@ export async function tryHandleLegacyRoutes(
   const opsResponse = await tryHandleOpsRoutes(request, env, path);
   if (opsResponse) return opsResponse;
 
-  // Admin API Key Management
-  if (path === "/api/admin/keys") {
-    if (request.method === "POST") {
-      return withAuth(request, env, "admin", () =>
-        handleCreateApiKey(request, env),
-      );
-    }
-    if (request.method === "GET") {
-      return withAuth(request, env, "admin", () =>
-        handleListApiKeys(request, env),
-      );
-    }
-  }
-
-  const apiKeyRevokeMatch = path.match(/^\/api\/admin\/keys\/([^/]+)$/);
-  if (apiKeyRevokeMatch && request.method === "DELETE") {
-    const hash = apiKeyRevokeMatch[1];
-    if (hash) {
-      return withAuth(request, env, "admin", () =>
-        handleRevokeApiKey(request, hash, env),
-      );
-    }
-  }
+  // Admin API Key Management (extracted to legacy-auth-routes.ts).
+  const adminKeyResponse = await tryHandleAdminKeyRoutes(request, env, path);
+  if (adminKeyResponse) return adminKeyResponse;
 
   // No legacy route matched.
   return null;
