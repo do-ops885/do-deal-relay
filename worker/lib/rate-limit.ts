@@ -1,12 +1,8 @@
 /**
  * Rate Limiting Module
  *
- * Implements token bucket rate limiting for API endpoints.
- * Uses Cloudflare KV for distributed rate limit state across Workers.
- *
- * Rate limits are defined per endpoint and can be configured
- * via environment variables. Supports both IP-based and
- * API key-based rate limiting.
+ * Primary enforcement: Workers Rate Limiting bindings (ADR-028).
+ * Fallback & KV store: Cloudflare KV sliding-window counter.
  *
  * @module worker/lib/rate-limit
  */
@@ -16,18 +12,48 @@ import type { AuthResult } from "./auth";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
 import { checkRateLimitViaBinding } from "./rate-limit-binding";
-
-// ============================================================================
-// Configuration
-// ============================================================================
+import { listAllKvKeys } from "./kv-pagination";
 
 export interface RateLimitConfig {
-  /** Maximum number of requests allowed in the window */
   maxRequests: number;
-  /** Time window in seconds */
   windowSeconds: number;
-  /** Key prefix for KV storage */
   keyPrefix: string;
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetTime: number;
+  limit: number;
+}
+
+export interface RateLimitKVResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: Date;
+  total: number;
+}
+
+export interface RateLimitKVState {
+  client_id: string;
+  request_count: number;
+  window_start: number;
+}
+
+export interface RateLimitStore {
+  checkLimit(
+    id: string,
+    max?: number,
+    win?: number,
+  ): Promise<RateLimitKVResult>;
+  getState(id: string): Promise<RateLimitKVState | null>;
+  reset(id: string): Promise<void>;
+  config: RateLimitConfig;
+}
+
+interface RateLimitState {
+  count: number;
+  windowStart: number;
 }
 
 const DEFAULT_CONFIG: RateLimitConfig = {
@@ -35,106 +61,34 @@ const DEFAULT_CONFIG: RateLimitConfig = {
   windowSeconds: 60,
   keyPrefix: "ratelimit",
 };
+const DEFAULT_KV_MAX_REQUESTS = 100;
+const DEFAULT_KV_WINDOW_SECONDS = 60;
+const KV_KEY_PREFIX = "rl:kv";
 
-// Endpoint-specific rate limits
+const cfg = (max: number, p = "", win = 60): RateLimitConfig => ({
+  maxRequests: max,
+  windowSeconds: win,
+  keyPrefix: p ? `ratelimit:${p}` : "ratelimit",
+});
+
 const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
-  "/api/submit": {
-    maxRequests: 10,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:submit",
-  },
-  "/api/discover": {
-    maxRequests: 5,
-    windowSeconds: 300, // 5 minutes - expensive operation
-    keyPrefix: "ratelimit:discover",
-  },
-  "/api/research": {
-    maxRequests: 20,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:research",
-  },
-  "/api/email/incoming": {
-    maxRequests: 30,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:email",
-  },
-  "/api/email/parse": {
-    maxRequests: 20,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:email-parse",
-  },
-  "/api/validate/url": {
-    maxRequests: 20,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:validate",
-  },
-  "/api/validate/batch": {
-    maxRequests: 5,
-    windowSeconds: 300,
-    keyPrefix: "ratelimit:validate-batch",
-  },
-  "/api/semantic-search": {
-    maxRequests: 10,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:semantic",
-  },
-  "/api/auth/register": {
-    maxRequests: 5,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:auth-register",
-  },
-  "/api/auth/login": {
-    maxRequests: 10,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:auth-login",
-  },
-  "/api/auth/refresh": {
-    maxRequests: 20,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:auth-refresh",
-  },
-  "/api/nlq": {
-    maxRequests: 10,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:nlq",
-  },
-  "/api/experience": {
-    maxRequests: 20,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:experience",
-  },
-  "/deals": {
-    maxRequests: 60,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:deals",
-  },
-  "/webhooks/incoming": {
-    maxRequests: 50,
-    windowSeconds: 60,
-    keyPrefix: "ratelimit:webhook",
-  },
+  "/api/submit": cfg(10, "submit"),
+  "/api/discover": cfg(5, "discover", 300),
+  "/api/research": cfg(20, "research"),
+  "/api/email/incoming": cfg(30, "email"),
+  "/api/email/parse": cfg(20, "email-parse"),
+  "/api/validate/url": cfg(20, "validate"),
+  "/api/validate/batch": cfg(5, "validate-batch", 300),
+  "/api/semantic-search": cfg(10, "semantic"),
+  "/api/auth/register": cfg(5, "auth-register"),
+  "/api/auth/login": cfg(10, "auth-login"),
+  "/api/auth/refresh": cfg(20, "auth-refresh"),
+  "/api/nlq": cfg(10, "nlq"),
+  "/api/experience": cfg(20, "experience"),
+  "/deals": cfg(60, "deals"),
+  "/webhooks/incoming": cfg(50, "webhook"),
   default: DEFAULT_CONFIG,
 };
-
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface RateLimitResult {
-  /** Whether the request is allowed */
-  allowed: boolean;
-  /** Number of requests remaining in the current window */
-  remaining: number;
-  /** Unix timestamp when the current window resets */
-  resetTime: number;
-  /** Total requests allowed per window */
-  limit: number;
-}
-
-interface RateLimitState {
-  count: number;
-  windowStart: number;
-}
 
 const SENSITIVE_ENDPOINTS = new Set([
   "/api/auth/register",
@@ -148,34 +102,34 @@ const SENSITIVE_ENDPOINTS = new Set([
   "/webhooks/incoming",
 ]);
 
-// ============================================================================
-// Rate Limiting Functions
-// ============================================================================
+const rlRes = (
+  allowed: boolean,
+  remaining: number,
+  resetTime: number,
+  limit: number,
+): RateLimitResult => ({
+  allowed,
+  remaining,
+  resetTime,
+  limit,
+});
 
-/**
- * Check if a request should be rate limited.
- *
- * Primary path (ADR-028): the native Workers Rate Limiting binding for
- * standard 60-second endpoint limits — atomic, colo-local counters with no
- * check-then-set race. Fallback path: the original sliding-window KV
- * counter, used for 300s windows, per-key custom limits, deploy surfaces
- * without the bindings, or when a binding call fails.
- *
- * @param env - Worker environment with rate-limit and KV bindings
- * @param identifier - Unique client identifier (IP or API key)
- * @param endpoint - API endpoint being accessed
- * @returns Rate limit check result with remaining quota
- * @example
- * ```typescript
- * const result = await checkRateLimit(env, clientIP, "/api/submit");
- * if (!result.allowed) {
- *   return new Response("Rate limited", { status: 429 });
- * }
- * ```
- */
+const kvRes = (
+  allowed: boolean,
+  remaining: number,
+  resetAt: Date,
+  total: number,
+): RateLimitKVResult => ({
+  allowed,
+  remaining,
+  resetAt,
+  total,
+});
+
+/** Check rate limit via binding (primary) or KV (fallback). */
 export async function checkRateLimit(
   env: Env,
-  identifier: string,
+  id: string,
   endpoint: string,
   perKeyConfig?: RateLimitConfig,
 ): Promise<RateLimitResult> {
@@ -184,23 +138,15 @@ export async function checkRateLimit(
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
   const resetTime = windowStart + config.windowSeconds;
+  const max = config.maxRequests;
 
-  // Primary path: native binding (60s windows, endpoint defaults only —
-  // per-key configs carry arbitrary limits the fixed namespaces can't serve).
   if (!perKeyConfig) {
     try {
-      const outcome = await checkRateLimitViaBinding(env, identifier, config);
+      const outcome = await checkRateLimitViaBinding(env, id, config);
       if (outcome) {
-        // The binding reports only success/failure; Remaining is advisory
-        // on this path (see ADR-028). Reset/Retry-After keep window math.
         return outcome.success
-          ? {
-              allowed: true,
-              remaining: config.maxRequests - 1,
-              resetTime,
-              limit: config.maxRequests,
-            }
-          : blockedRateLimitResult(config, resetTime);
+          ? rlRes(true, max - 1, resetTime, max)
+          : rlRes(false, 0, resetTime, max);
       }
     } catch (error) {
       logger.error("Rate limit binding check failed", {
@@ -208,126 +154,202 @@ export async function checkRateLimit(
         endpoint,
         error: toErrMessage(error),
       });
-      if (SENSITIVE_ENDPOINTS.has(endpoint)) {
-        return blockedRateLimitResult(config, resetTime);
-      }
-      // Non-sensitive: fall through to the KV path below.
+      if (SENSITIVE_ENDPOINTS.has(endpoint))
+        return rlRes(false, 0, resetTime, max);
     }
   }
 
-  // Create unique key for this client + endpoint + window
-  const key = `${config.keyPrefix}:${identifier}:${windowStart}`;
-
-  // Some local/test deployments intentionally omit the KV binding. This is
-  // not a storage failure; preserve the existing no-rate-limit behavior.
-  if (!env.DEALS_LOCK) {
-    return {
-      allowed: true,
-      remaining: config.maxRequests,
-      resetTime,
-      limit: config.maxRequests,
-    };
-  }
+  const key = `${config.keyPrefix}:${id}:${windowStart}`;
+  if (!env.DEALS_LOCK) return rlRes(true, max, resetTime, max);
 
   try {
-    // Get current count from KV
     const state = await env.DEALS_LOCK.get<RateLimitState>(key, "json");
     const currentCount = state?.count || 0;
+    if (currentCount >= max) return rlRes(false, 0, resetTime, max);
 
-    // Check if limit exceeded
-    if (currentCount >= config.maxRequests) {
-      return {
-        allowed: false,
-        remaining: 0,
-        resetTime,
-        limit: config.maxRequests,
-      };
-    }
-
-    // Increment counter
     const newCount = currentCount + 1;
     await env.DEALS_LOCK.put(
       key,
       JSON.stringify({ count: newCount, windowStart }),
       { expirationTtl: config.windowSeconds },
     );
-
-    return {
-      allowed: true,
-      remaining: config.maxRequests - newCount,
-      resetTime,
-      limit: config.maxRequests,
-    };
+    return rlRes(true, max - newCount, resetTime, max);
   } catch (error) {
     logger.error("Rate limit check failed", {
       component: "rate-limit",
       error: toErrMessage(error),
     });
     return SENSITIVE_ENDPOINTS.has(endpoint)
-      ? blockedRateLimitResult(config, resetTime)
-      : {
-          allowed: true,
-          remaining: config.maxRequests,
-          resetTime,
-          limit: config.maxRequests,
-        };
+      ? rlRes(false, 0, resetTime, max)
+      : rlRes(true, max, resetTime, max);
   }
 }
 
-function blockedRateLimitResult(
-  config: RateLimitConfig,
-  resetTime: number,
-): RateLimitResult {
+/** Check rate limit in KV with sliding window semantics. */
+export async function checkRateLimitKV(
+  env: Env,
+  clientId: string,
+  maxRequests = DEFAULT_KV_MAX_REQUESTS,
+  windowSeconds = DEFAULT_KV_WINDOW_SECONDS,
+): Promise<RateLimitKVResult> {
+  const windowStart =
+    Math.floor(Math.floor(Date.now() / 1000) / windowSeconds) * windowSeconds;
+  const resetAt = new Date((windowStart + windowSeconds) * 1000);
+  const key = `${KV_KEY_PREFIX}:${clientId}`;
+
+  if (maxRequests <= 0) return kvRes(false, 0, resetAt, 0);
+
+  try {
+    const state = await env.DEALS_LOCK.get<RateLimitKVState>(key, "json");
+    if (!state || state.window_start !== windowStart) {
+      await env.DEALS_LOCK.put(
+        key,
+        JSON.stringify({
+          client_id: clientId,
+          request_count: 1,
+          window_start: windowStart,
+        } as RateLimitKVState),
+        { expirationTtl: windowSeconds * 2 },
+      );
+      return kvRes(true, maxRequests - 1, resetAt, maxRequests);
+    }
+
+    if (state.request_count >= maxRequests)
+      return kvRes(false, 0, resetAt, maxRequests);
+
+    state.request_count += 1;
+    await env.DEALS_LOCK.put(key, JSON.stringify(state), {
+      expirationTtl: windowSeconds * 2,
+    });
+    return kvRes(true, maxRequests - state.request_count, resetAt, maxRequests);
+  } catch (error) {
+    logger.error("Rate limit KV check failed", {
+      component: "rate-limit-kv",
+      clientId,
+      error: toErrMessage(error),
+    });
+    return kvRes(true, maxRequests, resetAt, maxRequests);
+  }
+}
+
+/** Get client rate limit state from KV. */
+export async function getRateLimitKVState(
+  env: Env,
+  id: string,
+  win = DEFAULT_KV_WINDOW_SECONDS,
+): Promise<RateLimitKVState | null> {
+  const now = Math.floor(Date.now() / 1000 / win) * win;
+  try {
+    const state = await env.DEALS_LOCK.get<RateLimitKVState>(
+      `${KV_KEY_PREFIX}:${id}`,
+      "json",
+    );
+    return state && state.window_start === now ? state : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Reset rate limit entry in KV. */
+export async function resetRateLimitKV(
+  env: Env,
+  id: string,
+  _win = DEFAULT_KV_WINDOW_SECONDS,
+): Promise<void> {
+  await env.DEALS_LOCK.delete(`${KV_KEY_PREFIX}:${id}`);
+}
+
+/** List all rate limit states from KV. */
+export async function getAllRateLimitStates(
+  env: Env,
+): Promise<Map<string, RateLimitKVState>> {
+  const states = new Map<string, RateLimitKVState>();
+  try {
+    const list = await listAllKvKeys(env.DEALS_LOCK, {
+      prefix: `${KV_KEY_PREFIX}:`,
+    });
+    for (const k of list.keys) {
+      const state = await env.DEALS_LOCK.get<RateLimitKVState>(k.name, "json");
+      if (state) states.set(k.name.replace(`${KV_KEY_PREFIX}:`, ""), state);
+    }
+  } catch (error) {
+    logger.error("Failed to list rate limit states", {
+      component: "rate-limit-kv",
+      error: toErrMessage(error),
+    });
+  }
+  return states;
+}
+
+/** Create rate limit store helper for KV operations. */
+export function createRateLimitKVStore(
+  env: Env,
+  options?: {
+    maxRequests?: number;
+    windowSeconds?: number;
+    keyPrefix?: string;
+  },
+): RateLimitStore {
+  const config = {
+    maxRequests: options?.maxRequests ?? DEFAULT_KV_MAX_REQUESTS,
+    windowSeconds: options?.windowSeconds ?? DEFAULT_KV_WINDOW_SECONDS,
+    keyPrefix: options?.keyPrefix ?? KV_KEY_PREFIX,
+  };
   return {
-    allowed: false,
-    remaining: 0,
-    resetTime,
-    limit: config.maxRequests,
+    checkLimit: (id, max = config.maxRequests, win = config.windowSeconds) =>
+      checkRateLimitKV(env, id, max, win),
+    getState: (id) => getRateLimitKVState(env, id, config.windowSeconds),
+    reset: (id) => resetRateLimitKV(env, id, config.windowSeconds),
+    config,
   };
 }
 
-/**
- * Extract client identifier from request.
- *
- * Tries to use authenticated user/key ID first, then falls back to IP address.
- * This allows authenticated users to have separate rate limits from
- * anonymous users.
- *
- * @param request - HTTP request object
- * @param auth - Optional authentication result
- * @returns Client identifier string
- */
+/** Check rate limits for multiple client IDs in parallel. */
+export async function batchCheckRateLimitKV(
+  env: Env,
+  ids: string[],
+  max = DEFAULT_KV_MAX_REQUESTS,
+  win = DEFAULT_KV_WINDOW_SECONDS,
+): Promise<Map<string, RateLimitKVResult>> {
+  const results = new Map<string, RateLimitKVResult>();
+  await Promise.all(
+    ids.map(async (id) =>
+      results.set(id, await checkRateLimitKV(env, id, max, win)),
+    ),
+  );
+  return results;
+}
+
+/** Aggregate statistics across all active rate limit states in KV. */
+export async function getRateLimitStats(env: Env): Promise<{
+  activeClients: number;
+  rateLimitedClients: number;
+  avgRequestsPerClient: number;
+}> {
+  const states = await getAllRateLimitStates(env);
+  let totalRequests = 0;
+  let rateLimited = 0;
+  for (const s of states.values()) {
+    totalRequests += s.request_count;
+    if (s.request_count >= DEFAULT_KV_MAX_REQUESTS) rateLimited++;
+  }
+  return {
+    activeClients: states.size,
+    rateLimitedClients: rateLimited,
+    avgRequestsPerClient: states.size > 0 ? totalRequests / states.size : 0,
+  };
+}
+
+/** Extract client identifier string from request or auth context. */
 export async function getClientIdentifier(
   request: Request,
   auth?: AuthResult,
 ): Promise<string> {
-  // If authenticated, use a hash of the API key or userId
-  if (auth?.authenticated && auth.userId) {
-    return `user:${auth.userId}`;
-  }
-
-  // Fallback to IP address for reliable identification.
-  const forwarded = request.headers.get("CF-Connecting-IP");
-  const ip = forwarded || "unknown";
-
-  return `ip:${ip}`;
+  if (auth?.authenticated && auth.userId) return `user:${auth.userId}`;
+  return `ip:${request.headers.get("CF-Connecting-IP") || "unknown"}`;
 }
 
-/**
- * Create rate limit headers for HTTP response.
- *
- * Returns standard rate limit headers that clients can use to
- * understand their current quota status.
- *
- * @param result - Rate limit check result
- * @returns Headers object with rate limit information
- * @example
- * ```typescript
- * const result = await checkRateLimit(env, clientId, endpoint);
- * const headers = createRateLimitHeaders(result);
- * return new Response(data, { headers });
- * ```
- */
+/** Create standard rate limit HTTP response headers. */
 export function createRateLimitHeaders(result: RateLimitResult): Headers {
   const headers = new Headers();
   headers.set("X-RateLimit-Limit", result.limit.toString());
@@ -336,41 +358,22 @@ export function createRateLimitHeaders(result: RateLimitResult): Headers {
     Math.max(0, result.remaining).toString(),
   );
   headers.set("X-RateLimit-Reset", result.resetTime.toString());
-
   if (!result.allowed) {
     headers.set(
       "Retry-After",
       (result.resetTime - Math.floor(Date.now() / 1000)).toString(),
     );
   }
-
   return headers;
 }
 
-/**
- * Rate limiting middleware factory.
- *
- * Creates a middleware function that can be used to wrap route handlers
- * with rate limiting. Returns 429 Too Many Requests if limit exceeded.
- *
- * @param env - Worker environment
- * @param endpoint - Endpoint identifier for rate limit config
- * @returns Middleware function
- * @example
- * ```typescript
- * const rateLimiter = createRateLimitMiddleware(env, "/api/submit");
- * const response = await rateLimiter(request, () => handleSubmit(body, env));
- * ```
- */
+/** Middleware wrapper for standard route handlers. */
 export function createRateLimitMiddleware(
   env: Env,
   endpoint: string,
   auth?: AuthResult,
 ): (request: Request, handler: () => Promise<Response>) => Promise<Response> {
-  return async (
-    request: Request,
-    handler: () => Promise<Response>,
-  ): Promise<Response> => {
+  return async (request, handler) => {
     const clientId = await getClientIdentifier(request, auth);
     const perKeyConfig = auth?.authenticated
       ? getPerKeyRateLimitConfig(auth)
@@ -393,33 +396,75 @@ export function createRateLimitMiddleware(
       );
     }
 
-    // Execute the handler and add rate limit headers to response
     const response = await handler();
-
-    // Add rate limit headers to successful response
     const headers = createRateLimitHeaders(result);
-    headers.forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-
+    headers.forEach((v, k) => response.headers.set(k, v));
     return response;
   };
 }
 
-// ============================================================================
-// Per-Key Rate Limit Configuration
-// ============================================================================
+/** Middleware wrapper for KV-based rate limiting. */
+export function createRateLimitKVMiddleware(
+  env: Env,
+  options?: {
+    maxRequests?: number;
+    windowSeconds?: number;
+    getClientId?: (r: Request) => string;
+  },
+) {
+  const maxRequests = options?.maxRequests ?? DEFAULT_KV_MAX_REQUESTS;
+  const windowSeconds = options?.windowSeconds ?? DEFAULT_KV_WINDOW_SECONDS;
+  const getClientId =
+    options?.getClientId ??
+    ((r) => r.headers.get("CF-Connecting-IP") ?? "unknown");
 
-/**
- * Get rate limit config from authenticated user's API key metadata.
- * Falls back to endpoint defaults if no per-key config is stored.
- */
+  return async (
+    request: Request,
+    handler: () => Promise<Response>,
+  ): Promise<Response> => {
+    const clientId = getClientId(request);
+    const result = await checkRateLimitKV(
+      env,
+      clientId,
+      maxRequests,
+      windowSeconds,
+    );
+
+    if (!result.allowed) {
+      const retryAfter = Math.ceil(
+        (result.resetAt.getTime() - Date.now()) / 1000,
+      );
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          retry_after: retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": result.total.toString(),
+            "X-RateLimit-Remaining": result.remaining.toString(),
+            "X-RateLimit-Reset": result.resetAt.toISOString(),
+            "Retry-After": retryAfter.toString(),
+          },
+        },
+      );
+    }
+
+    const response = await handler();
+    response.headers.set("X-RateLimit-Limit", result.total.toString());
+    response.headers.set("X-RateLimit-Remaining", result.remaining.toString());
+    response.headers.set("X-RateLimit-Reset", result.resetAt.toISOString());
+    return response;
+  };
+}
+
+/** Parse per-key rate limit config from AuthResult metadata. */
 export function getPerKeyRateLimitConfig(
   auth: AuthResult,
 ): RateLimitConfig | undefined {
-  if (!auth.requestsPerMinute && !auth.requestsPerHour) {
-    return undefined;
-  }
+  if (!auth.requestsPerMinute && !auth.requestsPerHour) return undefined;
   return {
     maxRequests: auth.requestsPerMinute ?? DEFAULT_CONFIG.maxRequests,
     windowSeconds: 60,
@@ -427,29 +472,12 @@ export function getPerKeyRateLimitConfig(
   };
 }
 
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Get rate limit configuration for an endpoint.
- *
- * @param endpoint - API endpoint path
- * @returns Rate limit configuration
- */
+/** Get rate limit configuration for an endpoint. */
 export function getRateLimitConfig(endpoint: string): RateLimitConfig {
   return ENDPOINT_LIMITS[endpoint] ?? DEFAULT_CONFIG;
 }
 
-/**
- * Reset rate limit for a specific client.
- *
- * Useful for testing or manual reset operations.
- *
- * @param env - Worker environment
- * @param identifier - Client identifier
- * @param endpoint - Endpoint to reset
- */
+/** Reset rate limit state for a client and endpoint. */
 export async function resetRateLimit(
   env: Env,
   identifier: string,
@@ -459,7 +487,7 @@ export async function resetRateLimit(
   const now = Math.floor(Date.now() / 1000);
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
-  const key = `${config.keyPrefix}:${identifier}:${windowStart}`;
-
-  await env.DEALS_LOCK.delete(key);
+  await env.DEALS_LOCK.delete(
+    `${config.keyPrefix}:${identifier}:${windowStart}`,
+  );
 }
