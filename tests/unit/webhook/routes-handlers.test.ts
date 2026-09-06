@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock validateFetchUrl in security module to prevent network/DNS dependence in unit tests
 vi.mock("../../../worker/lib/security", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../worker/lib/security")>();
+  const actual =
+    await importOriginal<typeof import("../../../worker/lib/security")>();
   return {
     ...actual,
     validateFetchUrl: vi.fn().mockImplementation(async (url: string) => {
