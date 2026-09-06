@@ -15,6 +15,7 @@ import type { Env } from "../types";
 import type { AuthResult } from "./auth";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import { checkRateLimitViaBinding } from "./rate-limit-binding";
 
 // ============================================================================
 // Configuration
@@ -154,11 +155,13 @@ const SENSITIVE_ENDPOINTS = new Set([
 /**
  * Check if a request should be rate limited.
  *
- * Implements a sliding window rate limit algorithm using KV storage.
- * Each client (identified by IP or API key) gets their own counter
- * within a time window.
+ * Primary path (ADR-028): the native Workers Rate Limiting binding for
+ * standard 60-second endpoint limits — atomic, colo-local counters with no
+ * check-then-set race. Fallback path: the original sliding-window KV
+ * counter, used for 300s windows, per-key custom limits, deploy surfaces
+ * without the bindings, or when a binding call fails.
  *
- * @param env - Worker environment with KV bindings
+ * @param env - Worker environment with rate-limit and KV bindings
  * @param identifier - Unique client identifier (IP or API key)
  * @param endpoint - API endpoint being accessed
  * @returns Rate limit check result with remaining quota
@@ -181,6 +184,36 @@ export async function checkRateLimit(
   const windowStart =
     Math.floor(now / config.windowSeconds) * config.windowSeconds;
   const resetTime = windowStart + config.windowSeconds;
+
+  // Primary path: native binding (60s windows, endpoint defaults only —
+  // per-key configs carry arbitrary limits the fixed namespaces can't serve).
+  if (!perKeyConfig) {
+    try {
+      const outcome = await checkRateLimitViaBinding(env, identifier, config);
+      if (outcome) {
+        // The binding reports only success/failure; Remaining is advisory
+        // on this path (see ADR-028). Reset/Retry-After keep window math.
+        return outcome.success
+          ? {
+              allowed: true,
+              remaining: config.maxRequests - 1,
+              resetTime,
+              limit: config.maxRequests,
+            }
+          : blockedRateLimitResult(config, resetTime);
+      }
+    } catch (error) {
+      logger.error("Rate limit binding check failed", {
+        component: "rate-limit",
+        endpoint,
+        error: toErrMessage(error),
+      });
+      if (SENSITIVE_ENDPOINTS.has(endpoint)) {
+        return blockedRateLimitResult(config, resetTime);
+      }
+      // Non-sensitive: fall through to the KV path below.
+    }
+  }
 
   // Create unique key for this client + endpoint + window
   const key = `${config.keyPrefix}:${identifier}:${windowStart}`;
