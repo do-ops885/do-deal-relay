@@ -1,10 +1,28 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-05
-**Version**: 0.19.10
-**Status**: Active — 2026-09-05 test gaps T-2/T-3/T-4 CLOSED (95 new unit tests, 2872/2872 green, zero prod change). Prior: v0.19.9 merge wave COMPLETE (#748-#754 MERGED, queue empty, ADR-026/027 RESOLVED).
+**Last Updated**: 2026-09-06
+**Version**: 0.19.11
+**Status**: Active — 2026-09-06 re-verification swarm CLOSED 5 stale items (MI-1/MI-3/MI-5/MI-6/MF-3); near-limit file splits landed (lock, d1/client, legacy-routes, routes/referrals). Prior: v0.19.10 test gaps T-2/T-3/T-4 CLOSED (95 new unit tests, 2872/2872 green).
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-06 Re-Verification + Near-Limit File Splits — v0.19.11
+
+Analysis: [improvement-swarm-2026-09-06.md](../reports/analysis/improvement-swarm-2026-09-06.md). Light Mode (housekeeping + zero-behavior-change refactors). No new deps, creds, or bindings.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| MI-1/MF-3 stale | ✅ CLOSED — `/mcp/stream` routed via `router/mcp-stream-routes.ts`, progress wired in `routes/mcp/tools.ts` | code scan 2026-09-06 |
+| MI-3 stale | ✅ CLOSED — AI Gateway consumed by `lib/nlq/ai/*` + `lib/search/client.ts` | code scan 2026-09-06 |
+| MI-5/MI-6 stale | ✅ CLOSED — `expiration-manager.ts` and `worker/db/` no longer exist | filesystem scan 2026-09-06 |
+| SPLIT-1 `worker/lib/lock.ts` (498) | ✅ CLOSED — D1 CAS path extracted to `lock-d1.ts`; public API unchanged | zero-diff typecheck + tests |
+| SPLIT-2 `worker/lib/d1/client.ts` (496) | ✅ CLOSED — JSON helpers extracted to `client-json.ts`; re-exported | zero-diff typecheck + tests |
+| SPLIT-3 `worker/router/legacy-routes.ts` (496) | ✅ CLOSED — auth/health block extracted to `legacy-routes-core.ts` | zero-diff typecheck + tests |
+| SPLIT-4 `worker/routes/referrals.ts` (494, Hot File) | ✅ CLOSED — lifecycle handlers extracted to `referrals-lifecycle.ts`; re-exported | zero-diff typecheck + tests |
+
+Next per analysis report wave order: RL-1 via native Rate Limiting binding (supersede ADR-017 rate-limit scope), then MF-2 real fetchers behind flag, then Workflows migration (ADR-018), then Personalized Deal Alerts feature.
 
 ---
 
@@ -347,19 +365,19 @@ recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
 
 | ID | Item | Status |
 |:---|:---|:---|
-| MI-1 | MCP SSE streaming route (`/mcp/stream`) + `mcp/progress.ts` never routed | ⬜ OPEN |
+| MI-1 | MCP SSE streaming route (`/mcp/stream`) + `mcp/progress.ts` never routed | ✅ CLOSED 2026-09-06 — stale; `worker/router/mcp-stream-routes.ts` routes `/mcp/stream` (GET) + `/mcp/stream/tools/call` (POST) with rate limiting; `mcp/progress` imported by `routes/mcp/tools.ts` (landed via #750) |
 | MI-2 | Research-agent scraper registry + `AIExtractorScraper` not wired into orchestrator | ⬜ OPEN |
-| MI-3 | AI Gateway client built + tested but never used by NLQ/semantic search | ⬜ OPEN |
+| MI-3 | AI Gateway client built + tested but never used by NLQ/semantic search | ✅ CLOSED 2026-09-06 — stale; consumed by `worker/lib/nlq/ai/{entities,expansion,intent,index}.ts` and `worker/lib/search/client.ts` |
 | MI-4 | DealRegistry DO deployed + tested but not called by stage/publish | ⬜ OPEN |
-| MI-5 | Legacy `expiration-manager.ts` duplicates modular `lib/expiration/` | ⬜ OPEN |
-| MI-6 | Orphan `worker/db/schema.sql` not referenced by any code | ⬜ OPEN |
+| MI-5 | Legacy `expiration-manager.ts` duplicates modular `lib/expiration/` | ✅ CLOSED 2026-09-06 — stale; file removed, only modular `worker/lib/expiration/` remains |
+| MI-6 | Orphan `worker/db/schema.sql` not referenced by any code | ✅ CLOSED 2026-09-06 — stale; `worker/db/` directory removed |
 | MF-1 | Hybrid semantic search accepted but ignored (`filters`/`hybrid` unused) | ⬜ OPEN |
-| MF-2 | Research agent returns simulated codes by default (real fetch gated off) | ⬜ OPEN |
-| MF-3 | MCP progress notifications unreachable (depends on MI-1) | ⬜ OPEN |
+| MF-2 | Research agent returns simulated codes by default (real fetch gated off) | ⬜ OPEN — confirmed 2026-09-06: `orchestrator/index.ts:338` calls `simulateDiscovery`; real SSRF-hardened fetchers (`api-fetchers.ts`, `page-fetcher.ts`, `reddit-fetcher.ts`) exist but unwired |
+| MF-3 | MCP progress notifications unreachable (depends on MI-1) | ✅ CLOSED 2026-09-06 — stale; unblocked by MI-1 closure, progress wired via `routes/mcp/tools.ts` |
 | T-1 | Batch D1 helpers (`audit-log`, `referrals-batch`, `system-metrics`, `research-cache`, `factory`) have zero tests | ⬜ OPEN |
-| T-2 | Email HTTP handlers + route layer untested | ⬜ OPEN |
-| T-3 | NLQ AI enhancer + hybrid classifier untested | ⬜ OPEN |
-| T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ⬜ OPEN |
+| T-2 | Email HTTP handlers + route layer untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (29 tests) |
+| T-3 | NLQ AI enhancer + hybrid classifier untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (45 tests) |
+| T-4 | Validation scraper internals (`change-detector`, `html-extractor`, `batch-processor`) untested | ✅ CLOSED 2026-09-05 — see v0.19.10 section (21 tests) |
 | T-5 | MCP progress + SSE streaming untested | ⬜ OPEN |
 | T-6 | SourceRegistry DO untested (only KV `lib/storage` covered) | ✅ CLOSED — 28 tests in `tests/unit/source-registry.test.ts` (R-5, `1b251b4`) |
 | T-7 | D1 `trust.ts` has no direct tests | ✅ CLOSED — 29 tests in `tests/unit/d1-trust.test.ts` (R-5; 2 latent bugs documented) |
