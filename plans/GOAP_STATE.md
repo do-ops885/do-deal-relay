@@ -2,9 +2,24 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-06
-**Version**: 0.19.11
-**Status**: Active — 2026-09-06 re-verification swarm CLOSED 5 stale items (MI-1/MI-3/MI-5/MI-6/MF-3); near-limit file splits landed (lock, d1/client, legacy-routes, routes/referrals). Prior: v0.19.10 test gaps T-2/T-3/T-4 CLOSED (95 new unit tests, 2872/2872 green).
+**Version**: 0.19.12
+**Status**: Active — 2026-09-06 RL-1 CLOSED via native Rate Limiting binding per [ADR-028](ADR-028-rate-limit-binding-over-do.md) (13 new tests, KV fallback retained). Prior: v0.19.11 re-verification swarm closed 5 stale items + 4 near-limit file splits.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-06 RL-1 Closure via Native Rate Limiting Binding — v0.19.12
+
+Full Mode. Spec: [SPEC-rl1-rate-limit-binding.md](SPEC-rl1-rate-limit-binding.md). ADR: [ADR-028](ADR-028-rate-limit-binding-over-do.md) (supersedes ADR-017 rate-limit scope; PipelineLock/ADR-022 unaffected). No new external deps or creds; 7 `ratelimits` bindings added to wrangler.jsonc (all surfaces).
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| RL-1 KV check-then-set race | ✅ CLOSED — 60s endpoint limits now enforced by native binding (atomic colo-local counters); KV retained as fallback for 300s windows, per-key configs, and binding-less surfaces | `worker/lib/rate-limit-binding.ts`, `rate-limit.ts` binding-first path |
+| DO rate-limit migration (ADR-017 scope) | ⛔ RETIRED — global DO limiter is a documented anti-pattern (Rules of Durable Objects); binding is the official primitive | ADR-028 |
+| Fail-closed policy | ✅ PRESERVED — sensitive endpoints block on binding error; non-sensitive fall back to KV | `rate-limit-binding.test.ts` error-path tests |
+| Test coverage | ✅ 13 new tests (selector matrix, key shape, allow/deny, 300s bypass, per-key bypass, absent-binding fallback, error fail-closed/fail-open) | `tests/unit/rate-limit-binding.test.ts` |
+
+Note: `X-RateLimit-Remaining` is advisory on the binding path (binding reports only success/failure); documented in ADR-028. Remaining consolidation of `rate-limit-kv.ts` deferred to hygiene backlog.
 
 ---
 
@@ -182,7 +197,7 @@ Branch: `fix/webhook-scoping-rate-limit-trust` (3 atomic commits).
 | ID | Finding | Priority | Status | Evidence |
 |:---|:---|:---|:---|:---|
 | WS-E-1 | `evolveTrustBatch` inserted new domains at hardcoded `0.5` without first adjustment | P1 | ✅ CLOSED — initial score `clamp(0.5+adjustment)` + matching classification on insert | worker/lib/d1/trust.ts, tests/unit/d1-trust.test.ts |
-| RL-1 | KV rate-limit check-then-set race across isolates | P1 | ⬜ DEFERRED — DO RPC attempt reverted in review: `SourceRegistry` does not extend `DurableObject`, so stub RPC fails at runtime and fail-closed 503s health checks (E2E proof). Requires `extends DurableObject` migration per ADR-017 before retry. KV path kept + fail-closed on KV errors for sensitive endpoints | worker/lib/rate-limit.ts |
+| RL-1 | KV rate-limit check-then-set race across isolates | P1 | ✅ CLOSED 2026-09-06 — native Rate Limiting binding is primary path for 60s limits per [ADR-028](ADR-028-rate-limit-binding-over-do.md); DO migration retired (documented anti-pattern). KV fallback + fail-closed preserved | worker/lib/rate-limit-binding.ts, rate-limit.ts |
 | AUTH-1 | `JWT_SECRET` in wrangler vars + blank secrets accepted | P1 | ✅ CLOSED — `JWT_SECRET` moved to secrets/required (all envs), blank-string rejection in `validateConfig` + `verifyToken` | wrangler.jsonc, worker/lib/config-utils.ts, worker/lib/jwt.ts |
 | WH-1 | Webhook subscriptions lack owner scoping; partner/DLQ handlers mixed into subscriptions route | P1 | ✅ CLOSED — `owner_id` on subscription/sync types, `getUserSubscriptions` + `requireAuthenticatedUser`, partner/DLQ split to `partners.ts`, incoming SSRF + shared rate limit, sync scoped by config ownership | worker/routes/webhooks/partners.ts, worker/routes/webhooks/subscriptions.ts, worker/routes/webhooks/sync.ts, worker/lib/webhook/* |
 
