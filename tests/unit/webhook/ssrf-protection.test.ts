@@ -1,6 +1,24 @@
 import { describe, it, expect, vi } from "vitest";
 import { handleSubscribe } from "../../../worker/routes/webhooks/subscriptions";
 
+// Mock security module validateFetchUrl to ensure test hermeticity without live DNS calls
+vi.mock("../../../worker/lib/security", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../worker/lib/security")>();
+  return {
+    ...actual,
+    validateFetchUrl: vi.fn().mockImplementation(async (url: string) => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== "https:") return false;
+        if (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") return false;
+        return true;
+      } catch {
+        return false;
+      }
+    }),
+  };
+});
+
 // Mock global-logger to avoid pollution
 vi.mock("../../../worker/lib/global-logger", () => ({
   logger: {
