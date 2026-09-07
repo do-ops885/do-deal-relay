@@ -147,7 +147,11 @@ describe("checkRateLimit binding integration", () => {
 
     vi.clearAllMocks();
 
-    const batchResult = await checkRateLimit(env, "user:1", "/api/validate/batch");
+    const batchResult = await checkRateLimit(
+      env,
+      "user:1",
+      "/api/validate/batch",
+    );
     expect(batchResult.allowed).toBe(true);
     expect(env.DEALS_LOCK.put).toHaveBeenCalled();
   });
