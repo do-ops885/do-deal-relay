@@ -61,8 +61,18 @@
     "wrangler": "^4.129.0"
   },
   "overrides": {
+    "esbuild": ">=0.28.1",
+    "joi": "^18.2.1",
+    "fast-xml-parser": "5.7.1",
+    "fast-xml-builder": "1.2.0",
+    "protobufjs": "8.8.0",
     "undici": "6.28.0",
-    "ws": "8.21.0"
+    "uuid": "14.0.0",
+    "@playwright/test": "^1.63.0",
+    "ws": "8.21.0",
+    "engine.io-client": "6.6.5",
+    "form-data": "4.0.6",
+    "@opentelemetry/core": "2.8.0"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -78,9 +88,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/do-ops885/do-deal-relay"
-  },
-  "_overrides_justifications": {
-    "undici": "GHSA-8xcm-r25x-g524 (https://github.com/advisories/GHSA-8xcm-r25x-g524) - pinned to 6.28.0 to prevent miniflare 4.x from resolving to vulnerable undici 7.28.0",
-    "ws": "GHSA-96hv-2xvq-fx4p (https://github.com/advisories/GHSA-96hv-2xvq-fx4p) - pinned to 8.21.0 to prevent transitive dependencies from resolving to ws <8.21.0"
   }
 }
