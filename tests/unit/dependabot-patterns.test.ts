@@ -78,28 +78,24 @@ describe("Dependabot Patterns and Wildcards", () => {
   });
 
   describe("Version Ignore Wildcards", () => {
-    it("npm correctly filters pre-release tags", () => {
-      const wildcards = npmUpdate.ignore.find(
-        (i: any) => i["dependency-name"] === "*",
-      ).versions;
-
-      expect(
-        wildcards.some((w: string) =>
-          minimatch("1.0.0-alpha", w, matchOptions),
-        ),
-      ).toBe(true);
-      expect(
-        wildcards.some((w: string) =>
-          minimatch("2.1.0-beta.1", w, matchOptions),
-        ),
-      ).toBe(true);
-      expect(
-        wildcards.some((w: string) => minimatch("3.0.0-rc.5", w, matchOptions)),
-      ).toBe(true);
-
-      expect(
-        wildcards.some((w: string) => minimatch("1.0.0", w, matchOptions)),
-      ).toBe(false);
+    it("npm does not use invalid prerelease wildcard versions", () => {
+      // Dependabot cloud rejects glob-style prerelease requirements such as
+      // "*-alpha*" for npm ("invalid version requirements for a npm ignore
+      // condition"). Dependabot ignores prereleases by default for stable
+      // dependencies, so no repo-wide "*" versions ignore is needed.
+      const ignores = npmUpdate.ignore ?? [];
+      for (const entry of ignores) {
+        const versions = entry.versions ?? [];
+        for (const v of versions) {
+          expect(
+            v.includes("*") && /alpha|beta|rc|pre/i.test(v),
+            `invalid npm ignore version "${v}"`,
+          ).toBe(false);
+        }
+      }
+      expect(ignores.some((i: any) => i["dependency-name"] === "*")).toBe(
+        false,
+      );
     });
 
     it("docker ecosystem is intentionally unconfigured", () => {
@@ -110,28 +106,22 @@ describe("Dependabot Patterns and Wildcards", () => {
       expect(dockerUpdate).toBeUndefined();
     });
 
-    it("configured pre-release wildcards exclude tags but not stable versions", () => {
-      // Guards the matching semantics of the repo-wide ignore wildcards:
-      // suffixed patterns must catch prefixed/qualified pre-release forms
-      // while leaving stable versions untouched.
-      const wildcards = npmUpdate.ignore.find(
-        (i: any) => i["dependency-name"] === "*",
-      ).versions;
+    it("vitest major pins use valid ranges to prevent eresolve", () => {
+      // vitest 5 conflicts with @cloudflare/vitest-pool-workers 0.22.0
+      // (peers vitest 4). The ignore entries must use standard npm range
+      // syntax accepted by Dependabot cloud (e.g. ">=5").
+      const ignores = npmUpdate.ignore ?? [];
+      const vitest = ignores.find(
+        (i: any) => i["dependency-name"] === "vitest",
+      );
+      const vitestScoped = ignores.find(
+        (i: any) => i["dependency-name"] === "@vitest/*",
+      );
 
-      expect(
-        wildcards.some((w: string) =>
-          minimatch("v1.0.0-alpha", w, matchOptions),
-        ),
-      ).toBe(true);
-      expect(
-        wildcards.some((w: string) =>
-          minimatch("myapp:1.0.0-rc1", w, matchOptions),
-        ),
-      ).toBe(true);
-
-      expect(
-        wildcards.some((w: string) => minimatch("v1.0.0", w, matchOptions)),
-      ).toBe(false);
+      expect(vitest).toBeDefined();
+      expect(vitestScoped).toBeDefined();
+      expect(vitest.versions).toContain(">=5");
+      expect(vitestScoped.versions).toContain(">=5");
     });
   });
 

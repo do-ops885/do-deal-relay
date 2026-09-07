@@ -56,11 +56,6 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      - dependency-name: "*"
-        versions:
-          - "*-alpha*"
-          - "*-beta*"
-          - "*-rc*"
       # Pinned majors until dedicated migration specs land (ADR-029, ADR-030):
       # vitest 5 conflicts with @cloudflare/vitest-pool-workers 0.22.0 (peers vitest 4).
       # zod 4 migration complete (ADR-030); ignore removed.
