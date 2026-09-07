@@ -20,9 +20,9 @@ if ! command -v gh >/dev/null 2>&1; then
     exit 0
 fi
 
-# Fetch latest workflow run (single run, JSON fields we need)
-RAW=$(gh run list --limit 1 \
-    --json conclusion,headBranch,updatedAt,url \
+# Fetch latest main-branch workflow runs (not dependabot branches)
+RAW=$(gh run list --branch main --limit 20 \
+    --json conclusion,headBranch,headSha,updatedAt,url,name \
     2>&1) || {
     echo "⚠ Failed to fetch workflow runs from GitHub — skipping"
     echo "  $RAW"
@@ -43,34 +43,28 @@ EOF
     exit 0
 fi
 
-# Parse fields (first element of the JSON array)
-CONCLUSION=$(echo "$RAW"  | jq -r '.[0].conclusion // "unknown"')
-BRANCH=$(echo "$RAW"      | jq -r '.[0].headBranch // "unknown"')
-UPDATED=$(echo "$RAW"     | jq -r '.[0].updatedAt  // ""')
-URL=$(echo "$RAW"         | jq -r '.[0].url         // ""')
+# Evaluate the newest main commit across all workflows (CI, Security, Labels, Deploy)
+LATEST_SHA=$(echo "$RAW" | jq -r 'sort_by(.updatedAt) | reverse | .[0].headSha // empty')
+BRANCH="main"
+UPDATED=$(echo "$RAW" | jq -r --arg sha "$LATEST_SHA" '[.[] | select(.headSha == $sha)] | sort_by(.updatedAt) | reverse | .[0].updatedAt // ""')
+URL=$(echo "$RAW" | jq -r --arg sha "$LATEST_SHA" '[.[] | select(.headSha == $sha)] | sort_by(.updatedAt) | reverse | .[0].url // ""')
+FAILING_WORKFLOWS=$(echo "$RAW" | jq -r --arg sha "$LATEST_SHA" '[.[] | select(.headSha == $sha and .conclusion == "failure") | .name] | join(", ")')
 
-# Map conclusion to our status vocabulary
-case "${CONCLUSION}" in
-    success)
-        STATUS="passing"
-        FAILING_JOBS="[]"
-        ;;
-    failure)
-        STATUS="failing"
-        # Attempt to pull failing job names from the same run
-        FAILING_JOBS=$(gh run view "${URL}" --json jobs \
-            --jq '[.jobs[] | select(.conclusion == "failure") | .name]' 2>/dev/null) \
-            || FAILING_JOBS="[]"
-        ;;
-    cancelled|skipped)
-        STATUS="passing"   # Treat cancelled/skipped as non-blocking
-        FAILING_JOBS="[]"
-        ;;
-    *)
-        STATUS="passing"
-        FAILING_JOBS="[]"
-        ;;
-esac
+if [ -n "$FAILING_WORKFLOWS" ] && [ "$FAILING_WORKFLOWS" != "" ]; then
+    STATUS="failing"
+    # Collect failing job names from the first failing workflow run
+    FAIL_URL=$(echo "$RAW" | jq -r --arg sha "$LATEST_SHA" '[.[] | select(.headSha == $sha and .conclusion == "failure")] | .[0].url // empty')
+    FAILING_JOBS=$(gh run view "${FAIL_URL}" --json jobs \
+        --jq '[.jobs[] | select(.conclusion == "failure") | .name]' 2>/dev/null) \
+        || FAILING_JOBS="[]"
+    # Fall back to workflow names if job query fails
+    if [ "$FAILING_JOBS" = "[]" ] || [ -z "$FAILING_JOBS" ]; then
+        FAILING_JOBS=$(echo "$RAW" | jq -c --arg sha "$LATEST_SHA" '[.[] | select(.headSha == $sha and .conclusion == "failure") | .name]')
+    fi
+else
+    STATUS="passing"
+    FAILING_JOBS="[]"
+fi
 
 # Write status file
 cat > "${STATUS_FILE}" <<EOF

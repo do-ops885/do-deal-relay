@@ -61,3 +61,12 @@ updates:
           - "*-alpha*"
           - "*-beta*"
           - "*-rc*"
+      # Pinned majors until dedicated migration specs land (ADR-029):
+      # vitest 5 conflicts with @cloudflare/vitest-pool-workers 0.22.0 (peers vitest 4),
+      # zod 4 breaks z.record single-arg + error.errors in 21 files.
+      - dependency-name: "vitest"
+        versions: [">=5"]
+      - dependency-name: "@vitest/*"
+        versions: [">=5"]
+      - dependency-name: "zod"
+        versions: [">=4"]
