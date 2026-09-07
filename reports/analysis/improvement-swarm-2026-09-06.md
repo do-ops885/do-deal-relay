@@ -31,7 +31,7 @@ Claims in `plans/GOAP_STATE.md` were re-verified against code per the AGENTS.md 
 | MI-6 | Orphan `worker/db/schema.sql` | STALE — `worker/db/` no longer exists | CLOSE MI-6 |
 | MF-2 | Research agent returns simulated codes | CONFIRMED — `orchestrator/index.ts:338` calls `simulateDiscovery` while real fetchers (`api-fetchers.ts`, `page-fetcher.ts`, `reddit-fetcher.ts`, all SSRF-hardened via `validatedFetch`) exist and are tested but not on the orchestrator path | OPEN — highest-value wiring gap |
 | MI-2 | Scraper registry + AIExtractorScraper not wired | CONFIRMED — `scrapers/` directory exists, orchestrator does not use it | OPEN |
-| MI-4 | DealRegistry DO not called by stage/publish | CONFIRMED for runtime path (mirrors detached from hot path by #750 by design) | OPEN, low priority |
+| MI-4 | DealRegistry DO not called by stage/publish | CONFIRMED for runtime path (mirrors detached from hot path by #750 by design) | ⛔ WONTFIX (by design per #750 & ADR-022) |
 | VERSION drift | "Single Source of Truth: root VERSION" | `VERSION` = 0.1.8, `package.json` = 0.1.8 (consistent), but GOAP_STATE reports v0.19.10 — the GOAP version counter and system version have diverged semantically | Document distinction in GOAP_STATE header |
 
 Housekeeping: five stale ⬜ OPEN rows (MI-1, MI-3, MI-5, MI-6, MF-3) should be flipped to ✅ CLOSED with evidence pointers — cheap Light-Mode PR.
