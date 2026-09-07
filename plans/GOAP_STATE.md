@@ -2,10 +2,24 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-07
-**Version**: 0.19.15
+**Version**: 0.19.16
 **Status**: Active — 2026-09-07 CI unblock + full hygiene ( vitest/zod pins, webhook hermeticity, CI scripts, circuit-breaker split). Prior: v0.19.13 deep re-verification.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-07 Rate-Limit Config Split + Zod v4 Migration — v0.19.15/v0.19.16
+
+Branch `fix/rate-limit-config-split` (MERGED #782): endpoint-limit table extracted
+to `rate-limit-config.ts` (445 + 79 lines), LOC-496 CLOSED, zero importer changes.
+Branch `fix/zod-v4-migration`: Spec: [SPEC-zod-v4-migration.md](SPEC-zod-v4-migration.md).
+ADR: [ADR-030](ADR-030-zod-v4-migration.md) (supersedes ADR-029 for zod only;
+vitest 5 pin stands).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| CI-ZOD4-MIGRATE | zod v4 migration (21 files: record/issues/datetime) | P1 | ✅ CLOSED — 7x two-arg record, 12x .issues accessor, suite 2905 green with zero test edits | zod 4.5.4, SPEC-zod-v4-migration.md, ADR-030 |
 
 ---
 

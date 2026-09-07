@@ -61,7 +61,7 @@ export const SourceClassificationSchema = z.enum([
 export const SourceConfigSchema = z.object({
   domain: z.string(),
   url_patterns: z.array(z.string()),
-  selectors: z.record(z.string()).optional(),
+  selectors: z.record(z.string(), z.string()).optional(),
   trust_initial: z.number().min(0).max(1),
   classification: SourceClassificationSchema,
   active: z.boolean(),

@@ -323,7 +323,7 @@ export async function processBulkImportItem(
         code: item.code,
         message: "validation failed",
         referral_id: null,
-        errors: validation.error.errors.map(
+        errors: validation.error.issues.map(
           (e) => `${e.path.join(".")}: ${e.message}`,
         ),
       };

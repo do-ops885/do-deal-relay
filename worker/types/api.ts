@@ -20,7 +20,7 @@ export const SubmitDealBodySchema = z.object({
   url: z.string().url(),
   code: z.string().min(1),
   source: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type GetDealsQuery = z.infer<typeof GetDealsQuerySchema>;

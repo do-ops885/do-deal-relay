@@ -17,7 +17,7 @@ export const JSONRPCRequestSchema = z.object({
   jsonrpc: z.literal("2.0"),
   id: z.union([z.string(), z.number()]),
   method: z.string(),
-  params: z.record(z.unknown()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ============================================================================
@@ -46,7 +46,7 @@ export const ToolsListParamsSchema = z.object({
 
 export const ToolCallParamsSchema = z.object({
   name: z.string(),
-  arguments: z.record(z.unknown()).optional(),
+  arguments: z.record(z.string(), z.unknown()).optional(),
   _meta: z
     .object({ progressToken: z.union([z.string(), z.number()]).optional() })
     .optional(),

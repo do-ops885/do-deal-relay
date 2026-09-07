@@ -20,7 +20,7 @@ export const ParsedEmailSchema = z.object({
   subject: z.string(),
   text: z.string().optional(),
   html: z.string().optional(),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   dkimValid: z.boolean().optional(),
   spfValid: z.boolean().optional(),
   spamScore: z.number().optional(),

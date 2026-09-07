@@ -11,6 +11,6 @@ export function validateSchema(deal: Deal): GateResult {
   }
   return {
     passed: false,
-    reason: `Schema validation failed: ${result.error.errors.map((e) => e.message).join(", ")}`,
+    reason: `Schema validation failed: ${result.error.issues.map((e) => e.message).join(", ")}`,
   };
 }

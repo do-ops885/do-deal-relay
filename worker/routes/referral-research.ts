@@ -36,7 +36,7 @@ export async function handleResearch(
       return jsonResponse(
         {
           error: "Invalid request body",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         400,
         request,
