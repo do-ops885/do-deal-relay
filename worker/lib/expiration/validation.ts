@@ -9,6 +9,12 @@ import { storeValidationStats } from "./scheduling";
 // Deal Validation
 // ============================================================================
 
+/**
+ * Validates a batch of active deals for expiration, code availability, URL format, and reward bounds
+ * @param env Worker environment bindings
+ * @param batchSize Number of active deals to evaluate in this batch (default 50)
+ * @returns Summary containing count of validated and invalid deals, error log, and detailed results
+ */
 export async function validateDealsBatch(
   env: Env,
   batchSize: number = 50,
@@ -122,6 +128,11 @@ export async function validateDealsBatch(
   };
 }
 
+/**
+ * Scans active deals in the production snapshot and deactivates any invalid or expired deals
+ * @param env Worker environment bindings
+ * @returns Object summarizing total deactivated count, deactivated deal IDs, and errors encountered
+ */
 export async function deactivateInvalidDeals(env: Env): Promise<{
   deactivated: number;
   deals: string[];
