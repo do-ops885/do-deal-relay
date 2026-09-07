@@ -1,10 +1,29 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-06
-**Version**: 0.19.13
-**Status**: Active — 2026-09-06 deep re-verification: MF-1/MF-2/MI-2/T-1 confirmed CLOSED (landed via #750 wave, table was stale); T-5 CLOSED with 8 new SSE tests; REDDIT-5 CLOSED (full suite verified green). Prior: v0.19.12 RL-1 CLOSED via ADR-028.
+**Last Updated**: 2026-09-07
+**Version**: 0.19.14
+**Status**: Active — 2026-09-07 CI unblock + full hygiene ( vitest/zod pins, webhook hermeticity, CI scripts, circuit-breaker split). Prior: v0.19.13 deep re-verification.
+**Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-07 CI Unblock + Full Hygiene — v0.19.14
+
+Branch: `fix/ci-unblock-eresolve-full-hygiene`. Spec: [SPEC-ci-unblock-full-hygiene.md](SPEC-ci-unblock-full-hygiene.md). ADR: [ADR-029](ADR-029-dependabot-major-pin-policy.md).
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| CI-ERESOLVE | vitest 5 + coverage 5 vs pool-workers 0.22.0 peers vitest 4 breaks every npm ci job | P0 | ✅ CLOSED — pin vitest/coverage to ^4.1.11, regen lock | package.json, package-lock.json, CI/Security/Labels/Deploy green |
+| CI-ZOD4 | zod 3 to 4 major (21 files, record + error.errors breakage) | P1 | ✅ CLOSED (pin) — revert to ^3.22.4; v4 migration deferred to separate spec | package.json, ADR-029 |
+| WH-HERMETIC | beac13e deleted validateFetchUrl hermetic mocks | P2 | ✅ CLOSED — restore 52603c7 mock bodies verbatim | tests/unit/webhook/routes-handlers.test.ts, ssrf-protection.test.ts |
+| CI-SCRIPTS | check/update-ci-status missed main (limit 5, CI-only, any-branch) | P2 | ✅ CLOSED — branch main, limit 20, newest-commit rollup across workflows | scripts/check-ci-status.sh, update-ci-status.sh |
+| DEP-MAJORS | dependabot majors can re-break main | P2 | ✅ CLOSED — ignore vitest>=5, @vitest/*>=5, zod>=4 | .github/dependabot.yml, ADR-029 |
+| LOC-504 | worker/lib/circuit-breaker.ts 504/500 quality-gate warning | P2 | ✅ CLOSED — extract metrics to circuit-breaker-metrics.ts (431 + 75) | worker/lib/circuit-breaker.ts, circuit-breaker-metrics.ts |
+| LOC-496 | worker/lib/rate-limit.ts 496/500 fragile | P3 | ⬜ DEFERRED — passes gate, split only if growth resumes | ADR-029 |
+
+Verification: `npm ci` clean, `npx tsc --noEmit` clean, `npm run test:unit`, `npm run validate`, `npm run build`, `./scripts/quality_gate.sh` exit 0. Full-hygiene scope per operator 2026-09-07.
 
 ---
 

@@ -29,36 +29,35 @@ check_live_ci() {
         return 0
     fi
     local raw
-    raw=$(gh run list --limit 5 --json conclusion,headBranch,workflowName,url 2>/dev/null) || {
+    raw=$(gh run list --branch main --limit 20 --json conclusion,name,url,headSha,createdAt 2>/dev/null) || {
         echo "⚠ Failed to fetch live CI status — using cached file"
         return 0
     }
-    local main_run
-    main_run=$(echo "$raw" | jq -r '[.[] | select(.headBranch == "main" and .workflowName == "CI")] | .[0] // empty' 2>/dev/null)
-    if [ -z "$main_run" ] || [ "$main_run" = "null" ]; then
+    if [ -z "$raw" ] || [ "$raw" = "[]" ]; then
         echo "⚠ No main CI run found — using cached file"
         return 0
     fi
-    local conclusion
-    conclusion=$(echo "$main_run" | jq -r '.conclusion // "unknown"' 2>/dev/null)
-    local url
-    url=$(echo "$main_run" | jq -r '.url // ""' 2>/dev/null)
-    case "$conclusion" in
-        success)
-            echo "✓ Live CI (main): passing — $url"
-            return 0
-            ;;
-        failure)
-            echo "✗ Live CI (main): FAILING — $url"
-            echo "  Latest main CI run is failing. Fix CI before making changes."
-            echo "  Run: gh run view $url --log-failed  for details"
-            return 2
-            ;;
-        *)
-            echo "⚠ Live CI (main): status=$conclusion — $url (treating as passing)"
-            return 0
-            ;;
-    esac
+    local failures
+    failures=$(echo "$raw" | jq -r '[.[] | select(.conclusion == "failure") | "\(.name) \(.url)"] | join("; ")' 2>/dev/null)
+    # Group by headSha: only evaluate the newest main commit to avoid stale failures
+    local latest_sha
+    latest_sha=$(echo "$raw" | jq -r 'sort_by(.createdAt) | reverse | .[0].headSha // empty' 2>/dev/null)
+    local latest_runs
+    latest_runs=$(echo "$raw" | jq -r --arg sha "$latest_sha" '[.[] | select(.headSha == $sha)]' 2>/dev/null)
+    local latest_failures
+    latest_failures=$(echo "$latest_runs" | jq -r '[.[] | select(.conclusion == "failure") | "\(.name) \(.url)"] | join("; ")' 2>/dev/null)
+    if [ -n "$latest_failures" ] && [ "$latest_failures" != "" ]; then
+        echo "✗ Live CI (main): FAILING — $latest_failures"
+        echo "  Latest main commit $latest_sha has failing workflows. Fix CI before making changes."
+        echo "  Run: gh run list --branch main --limit 10  for details"
+        return 2
+    fi
+    if [ -n "$failures" ] && [ "$failures" != "" ]; then
+        echo "⚠ Live CI (main): latest commit passing, older failures present — $failures"
+    else
+        echo "✓ Live CI (main): passing"
+    fi
+    return 0
 }
 
 # If live check requested, run it first (strict)

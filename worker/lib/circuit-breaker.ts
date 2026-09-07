@@ -1,12 +1,26 @@
 import type { Env } from "../types";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
+import {
+  getMetrics,
+  recordCall,
+  recordStateChange,
+} from "./circuit-breaker-metrics";
+import type {
+  CircuitBreakerMetrics,
+  CircuitState,
+} from "./circuit-breaker-metrics";
+
+export type { CircuitState } from "./circuit-breaker-metrics";
+export type { CircuitBreakerMetrics } from "./circuit-breaker-metrics";
+export {
+  getAllCircuitBreakerMetrics,
+  resetAllMetrics,
+} from "./circuit-breaker-metrics";
 
 // ============================================================================
 // Circuit Breaker Pattern for External Service Calls
 // ============================================================================
-
-export type CircuitState = "closed" | "open" | "half-open";
 
 export interface CircuitBreakerOptions {
   failureThreshold: number; // Failures before opening (default: 5)
@@ -27,67 +41,6 @@ const DEFAULT_OPTIONS: CircuitBreakerOptions = {
   resetTimeoutMs: 30000,
   halfOpenMaxCalls: 3,
 };
-
-// ============================================================================
-// Metrics Tracking
-// ============================================================================
-
-interface CircuitBreakerMetrics {
-  stateChanges: number;
-  lastStateChange?: string;
-  totalCalls: number;
-  successfulCalls: number;
-  failedCalls: number;
-  rejectedCalls: number; // Calls rejected due to open circuit
-}
-
-const metricsMap = new Map<string, CircuitBreakerMetrics>();
-
-function getMetrics(name: string): CircuitBreakerMetrics {
-  const existing = metricsMap.get(name);
-  if (existing) return existing;
-  const metrics: CircuitBreakerMetrics = {
-    stateChanges: 0,
-    totalCalls: 0,
-    successfulCalls: 0,
-    failedCalls: 0,
-    rejectedCalls: 0,
-  };
-  metricsMap.set(name, metrics);
-  return metrics;
-}
-
-function recordStateChange(
-  name: string,
-  from: CircuitState,
-  to: CircuitState,
-): void {
-  const metrics = getMetrics(name);
-  metrics.stateChanges++;
-  metrics.lastStateChange = `${from} → ${to} at ${new Date().toISOString()}`;
-  logger.info(`Circuit breaker "${name}" state changed: ${from} → ${to}`, {
-    component: "circuit-breaker",
-    name,
-    from,
-    to,
-  });
-}
-
-function recordCall(
-  name: string,
-  success: boolean,
-  rejected: boolean = false,
-): void {
-  const metrics = getMetrics(name);
-  metrics.totalCalls++;
-  if (rejected) {
-    metrics.rejectedCalls++;
-  } else if (success) {
-    metrics.successfulCalls++;
-  } else {
-    metrics.failedCalls++;
-  }
-}
 
 // ============================================================================
 // Circuit Breaker Implementation
@@ -420,32 +373,6 @@ export function getSourceCircuitBreaker(
  */
 export function clearSourceCircuitBreakers(): void {
   sourceCircuitBreakers.clear();
-}
-
-// ============================================================================
-// Metrics Export
-// ============================================================================
-
-/**
- * Retrieves execution and state transition metrics for all registered circuit breakers
- * @returns Record mapping circuit breaker names to their respective metrics
- */
-export function getAllCircuitBreakerMetrics(): Record<
-  string,
-  CircuitBreakerMetrics
-> {
-  const result: Record<string, CircuitBreakerMetrics> = {};
-  for (const [name, metrics] of metricsMap.entries()) {
-    result[name] = { ...metrics };
-  }
-  return result;
-}
-
-/**
- * Clears all collected circuit breaker metrics
- */
-export function resetAllMetrics(): void {
-  metricsMap.clear();
 }
 
 // ============================================================================
