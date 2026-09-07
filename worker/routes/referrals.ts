@@ -57,7 +57,7 @@ export async function handleGetReferrals(
     const validation = ReferralSearchQuerySchema.safeParse(query);
     if (!validation.success) {
       return jsonResponse(
-        { error: "Invalid query parameters", details: validation.error.errors },
+        { error: "Invalid query parameters", details: validation.error.issues },
         400,
         request,
         env,
@@ -143,7 +143,7 @@ export async function handleCreateReferral(
       return jsonResponse(
         {
           error: "Validation failed",
-          details: rawValidation.error.errors,
+          details: rawValidation.error.issues,
         },
         400,
         request,
@@ -243,7 +243,7 @@ export async function handleCreateReferral(
       return jsonResponse(
         {
           error: "Validation failed",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         400,
         request,

@@ -126,7 +126,7 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
 
     if (!validation.success) {
       logger.warn("Invalid request body", {
-        errors: validation.error.errors,
+        errors: validation.error.issues,
         trace_id: traceId,
       });
 
@@ -136,7 +136,7 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
           message: "Query validation failed",
           code: "VALIDATION_ERROR",
           details: {
-            errors: validation.error.errors,
+            errors: validation.error.issues,
           },
         } as NLQError,
         400,

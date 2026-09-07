@@ -58,7 +58,7 @@ export async function handleSavedPost(
       {
         error: "Validation failed",
         code: "VALIDATION_ERROR",
-        details: parsed.error.errors,
+        details: parsed.error.issues,
       },
       400,
       request,

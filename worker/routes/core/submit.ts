@@ -39,7 +39,7 @@ export async function handleSubmit(
 
   if (!validation.success) {
     return jsonResponse(
-      { error: "Invalid request body", details: validation.error.errors },
+      { error: "Invalid request body", details: validation.error.issues },
       400,
       request,
       env,

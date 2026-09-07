@@ -114,7 +114,7 @@ export const ReferralInputSchema = z.object({
   reward: z.string().optional(),
   expiry_date: z.string().datetime().optional(),
   source: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const ReferralDeactivateBodySchema = z.object({
@@ -170,7 +170,7 @@ export const ExperienceEventInputSchema = z.object({
   event_type: ExperienceEventTypeSchema,
   agent_id: z.string().optional(),
   score: z.number().int().min(-100).max(100).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ExperienceEventInput = z.infer<typeof ExperienceEventInputSchema>;
