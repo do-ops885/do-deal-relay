@@ -66,18 +66,14 @@ tested client exist, but the request path does not route through the gateway
 `worker/lib/ai-gateway` when `AI_GATEWAY_URL` is set, keeping `env.AI` as the
 fallback.
 
-### MI-4: DealRegistry Durable Object is deployed but not called
-**Files**: `worker/durable-objects/deal-registry.ts`
-**Evidence**: `DEAL_REGISTRY` appears only in `worker/types/api.ts` (binding
-type) and `worker/index.ts` (export). `stageDeals`, `publishDeals`, and
-`getCandidatesBySource` are never invoked by `worker/pipeline/stage.ts`,
-`worker/publish.ts`, or `worker/pipeline-executor.ts`. Staging/publish still
-uses KV snapshots. The DO has 48 unit tests but no production caller.
-**Impact**: The staged-deal registry DO (per ADR-017/PR #588) is provisioned
-and tested but does nothing at runtime — staging remains KV-snapshot-based.
-**Fix**: Either wire the DO into the `stage`/`publish` phases (single source of
-truth for staged deals) or retire the DO and its tests to avoid misleading
-coverage.
+### MI-4: DealRegistry Durable Object off hot path (WONTFIX by design)
+**Files**: `worker/durable-objects/deal-registry.ts`, `worker/lib/do-mirror.ts`
+**Evidence**: Best-effort non-blocking mirrors (`mirrorStageToDO`, `mirrorPublishToDO`)
+were wired in PR #750 via `worker/lib/do-mirror.ts`. Direct RPC wiring into the
+canonical stage/publish path was explicitly rejected per ADR-022 and PR #750 code
+review to prevent latency/subrequest bottlenecks.
+**Disposition**: ⛔ WONTFIX (by design per #750 & ADR-022) — KV and D1 remain
+canonical; DO mirrors remain off the critical hot path.
 
 ### MI-5: Legacy expiration manager duplicates the modular refactor
 **Files**: `worker/lib/expiration-manager.ts` vs `worker/lib/expiration/*`
@@ -219,7 +215,7 @@ lands.
 | P2 | MI-2 wire scraper registry + AI extractor | M | Real web research at scale |
 | P2 | MF-1 hybrid semantic search | M | Hybrid retrieval |
 | P3 | MI-3 wire AI Gateway | M | Caching/failover for LLM calls |
-| P3 | MI-4 wire or retire DealRegistry DO | M | DO staging or remove dead DO |
+| P3 | MI-4 DealRegistry DO off hot path | M | ⛔ WONTFIX (by design per #750 & ADR-022) — KV/D1 canonical, DO mirrors off hot path |
 | P3 | MI-6 delete `worker/db/schema.sql` | XS | Repo hygiene |
 | P3 | T-2..T-8 test coverage gaps | M | Coverage for untested modules |
 
