@@ -65,11 +65,13 @@ const DEFAULT_KV_MAX_REQUESTS = 100;
 const DEFAULT_KV_WINDOW_SECONDS = 60;
 const KV_KEY_PREFIX = "rl:kv";
 
-const cfg = (max: number, p = "", win = 60): RateLimitConfig => ({
-  maxRequests: max,
-  windowSeconds: win,
-  keyPrefix: p ? `ratelimit:${p}` : "ratelimit",
-});
+function cfg(
+  maxRequests: number,
+  keySuffix: string,
+  windowSeconds = 60,
+): RateLimitConfig {
+  return { maxRequests, windowSeconds, keyPrefix: "ratelimit:" + keySuffix };
+}
 
 const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/submit": cfg(10, "submit"),
@@ -102,30 +104,6 @@ const SENSITIVE_ENDPOINTS = new Set([
   "/webhooks/incoming",
 ]);
 
-const rlRes = (
-  allowed: boolean,
-  remaining: number,
-  resetTime: number,
-  limit: number,
-): RateLimitResult => ({
-  allowed,
-  remaining,
-  resetTime,
-  limit,
-});
-
-const kvRes = (
-  allowed: boolean,
-  remaining: number,
-  resetAt: Date,
-  total: number,
-): RateLimitKVResult => ({
-  allowed,
-  remaining,
-  resetAt,
-  total,
-});
-
 /** Check rate limit via binding (primary) or KV (fallback). */
 export async function checkRateLimit(
   env: Env,
@@ -145,8 +123,8 @@ export async function checkRateLimit(
       const outcome = await checkRateLimitViaBinding(env, id, config);
       if (outcome) {
         return outcome.success
-          ? rlRes(true, max - 1, resetTime, max)
-          : rlRes(false, 0, resetTime, max);
+          ? { allowed: true, remaining: max - 1, resetTime, limit: max }
+          : { allowed: false, remaining: 0, resetTime, limit: max };
       }
     } catch (error) {
       logger.error("Rate limit binding check failed", {
@@ -154,18 +132,23 @@ export async function checkRateLimit(
         endpoint,
         error: toErrMessage(error),
       });
-      if (SENSITIVE_ENDPOINTS.has(endpoint))
-        return rlRes(false, 0, resetTime, max);
+      if (SENSITIVE_ENDPOINTS.has(endpoint)) {
+        return { allowed: false, remaining: 0, resetTime, limit: max };
+      }
     }
   }
 
   const key = `${config.keyPrefix}:${id}:${windowStart}`;
-  if (!env.DEALS_LOCK) return rlRes(true, max, resetTime, max);
+  if (!env.DEALS_LOCK) {
+    return { allowed: true, remaining: max, resetTime, limit: max };
+  }
 
   try {
     const state = await env.DEALS_LOCK.get<RateLimitState>(key, "json");
     const currentCount = state?.count || 0;
-    if (currentCount >= max) return rlRes(false, 0, resetTime, max);
+    if (currentCount >= max) {
+      return { allowed: false, remaining: 0, resetTime, limit: max };
+    }
 
     const newCount = currentCount + 1;
     await env.DEALS_LOCK.put(
@@ -173,15 +156,15 @@ export async function checkRateLimit(
       JSON.stringify({ count: newCount, windowStart }),
       { expirationTtl: config.windowSeconds },
     );
-    return rlRes(true, max - newCount, resetTime, max);
+    return { allowed: true, remaining: max - newCount, resetTime, limit: max };
   } catch (error) {
     logger.error("Rate limit check failed", {
       component: "rate-limit",
       error: toErrMessage(error),
     });
     return SENSITIVE_ENDPOINTS.has(endpoint)
-      ? rlRes(false, 0, resetTime, max)
-      : rlRes(true, max, resetTime, max);
+      ? { allowed: false, remaining: 0, resetTime, limit: max }
+      : { allowed: true, remaining: max, resetTime, limit: max };
   }
 }
 
@@ -197,7 +180,9 @@ export async function checkRateLimitKV(
   const resetAt = new Date((windowStart + windowSeconds) * 1000);
   const key = `${KV_KEY_PREFIX}:${clientId}`;
 
-  if (maxRequests <= 0) return kvRes(false, 0, resetAt, 0);
+  if (maxRequests <= 0) {
+    return { allowed: false, remaining: 0, resetAt, total: 0 };
+  }
 
   try {
     const state = await env.DEALS_LOCK.get<RateLimitKVState>(key, "json");
@@ -211,24 +196,40 @@ export async function checkRateLimitKV(
         } as RateLimitKVState),
         { expirationTtl: windowSeconds * 2 },
       );
-      return kvRes(true, maxRequests - 1, resetAt, maxRequests);
+      return {
+        allowed: true,
+        remaining: maxRequests - 1,
+        resetAt,
+        total: maxRequests,
+      };
     }
 
-    if (state.request_count >= maxRequests)
-      return kvRes(false, 0, resetAt, maxRequests);
+    if (state.request_count >= maxRequests) {
+      return { allowed: false, remaining: 0, resetAt, total: maxRequests };
+    }
 
     state.request_count += 1;
     await env.DEALS_LOCK.put(key, JSON.stringify(state), {
       expirationTtl: windowSeconds * 2,
     });
-    return kvRes(true, maxRequests - state.request_count, resetAt, maxRequests);
+    return {
+      allowed: true,
+      remaining: maxRequests - state.request_count,
+      resetAt,
+      total: maxRequests,
+    };
   } catch (error) {
     logger.error("Rate limit KV check failed", {
       component: "rate-limit-kv",
       clientId,
       error: toErrMessage(error),
     });
-    return kvRes(true, maxRequests, resetAt, maxRequests);
+    return {
+      allowed: true,
+      remaining: maxRequests,
+      resetAt,
+      total: maxRequests,
+    };
   }
 }
 
@@ -398,7 +399,9 @@ export function createRateLimitMiddleware(
 
     const response = await handler();
     const headers = createRateLimitHeaders(result);
-    headers.forEach((v, k) => response.headers.set(k, v));
+    for (const [k, v] of headers.entries()) {
+      response.headers.set(k, v);
+    }
     return response;
   };
 }
