@@ -7,6 +7,11 @@ import { sendExpiredNotifications } from "./notifications";
 // Mark Expired Deals
 // ============================================================================
 
+/**
+ * Scans production snapshot for active deals past their expiration date, marks them as rejected, and dispatches notifications
+ * @param env Worker environment bindings
+ * @returns Total count of deals marked as expired
+ */
 export async function markExpiredDeals(env: Env): Promise<number> {
   const snapshot = await getProductionSnapshot(env);
   if (!snapshot) {
