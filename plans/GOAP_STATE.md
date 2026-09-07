@@ -20,7 +20,7 @@ Wave 3 planned to wire MF-2 real fetchers; deep code-read showed the wiring alre
 | T-1 batch D1 helper tests | ✅ CLOSED (stale row) — `tests/unit/d1/{audit-log,referrals-batch,research-cache,system-metrics,factory}.test.ts` all exist | tests/unit/d1/ |
 | T-5 MCP progress + SSE untested | ✅ CLOSED — 8 new tests: SSE headers/operation-id, start/complete/result event stream, error event without detail leak, KV tracker persistence, 400/404 paths, completed-op replay, failed-op error event | tests/unit/mcp-stream.test.ts |
 | REDDIT-5 unit coverage + PEV gates | ✅ CLOSED — sole blocker was "full unit suite stalled in the orb"; suite now verified green twice (2895+ passed, only 2 known sandbox-env failures pre-existing on main); reddit tests 16/16 | full-suite runs 2026-09-06 |
-| MI-4 DealRegistry not on hot path | ⬜ OPEN (by design per #750 — mirrors detached from hot path deliberately); candidate for WONTFIX disposition | do-mirror.ts runtime guards |
+| MI-4 DealRegistry not on hot path | ⛔ WONTFIX (by design per #750 & ADR-022) — KV/D1 remain canonical; best-effort DO mirrors detached from critical hot path via `do-mirror.ts` runtime guards | do-mirror.ts, stage.ts, publish.ts |
 
 ---
 
@@ -130,7 +130,7 @@ Branch: `feat/missing-impl-sweep`. Spec: [SPEC-missing-impl-sweep.md](SPEC-missi
 
 | ID | Finding | Priority | Status | Evidence |
 |:---|:---|:---|:---|:---|
-| MI-4 | DealRegistry/SourceRegistry DOs have zero runtime callers | P1 | ✅ CLOSED (mirror) — `worker/lib/do-mirror.ts` best-effort mirrors wired into `pipeline/stage.ts`, `publish.ts`, `pipeline/score.ts`; KV/D1 stay canonical; base-class `extends DurableObject` migration deferred (unit pool + migrations ban) | do-mirror.ts, stage.ts, publish.ts, score.ts |
+| MI-4 | DealRegistry DO on stage/publish hot path | P1 | ⛔ WONTFIX (by design per #750 & ADR-022) — `worker/lib/do-mirror.ts` best-effort mirrors wired off critical path; KV/D1 remain canonical; primary hot-path wiring rejected to prevent subrequest/latency bottlenecks | do-mirror.ts, stage.ts, publish.ts, score.ts |
 | OPS-R | Bulk import/export + dashboard trio exported but never routed | P1 | ✅ CLOSED — `worker/router/ops-routes.ts` (`POST /api/bulk/import`, `GET /api/bulk/export` user auth; `GET /api/dashboard/*` admin-only); `legacy-routes.ts` back to 496L | ops-routes.ts, legacy-routes.ts |
 | MCP-P | Progress tool handlers never registered | P1 | ✅ CLOSED — `check_progress`/`cancel_operation`/`list_operations` in `systemTools` (15→18) | worker/lib/mcp/tools/system.ts |
 | EMAIL-E | Email Workers entrypoint missing | P2 | ✅ CLOSED — `email(message,env)` export in `worker/index.ts` delegates to `handleEmailWorker` (not a fetch route) | worker/index.ts |
@@ -399,7 +399,7 @@ recorded in [GAP-ANALYSIS-2026-08-15.md](GAP-ANALYSIS-2026-08-15.md). Summary:
 | MI-1 | MCP SSE streaming route (`/mcp/stream`) + `mcp/progress.ts` never routed | ✅ CLOSED 2026-09-06 — stale; `worker/router/mcp-stream-routes.ts` routes `/mcp/stream` (GET) + `/mcp/stream/tools/call` (POST) with rate limiting; `mcp/progress` imported by `routes/mcp/tools.ts` (landed via #750) |
 | MI-2 | Research-agent scraper registry + `AIExtractorScraper` not wired into orchestrator | ✅ CLOSED 2026-09-06 — stale; orchestrator uses `createDefaultScraperRegistry()` + `extractWithAI` (landed via #750 wave) |
 | MI-3 | AI Gateway client built + tested but never used by NLQ/semantic search | ✅ CLOSED 2026-09-06 — stale; consumed by `worker/lib/nlq/ai/{entities,expansion,intent,index}.ts` and `worker/lib/search/client.ts` |
-| MI-4 | DealRegistry DO deployed + tested but not called by stage/publish | ⬜ OPEN |
+| MI-4 | DealRegistry DO deployed + tested but not called by stage/publish | ⛔ WONTFIX (by design per #750 & ADR-022) — KV/D1 canonical; non-blocking best-effort mirrors wired in `do-mirror.ts`; direct hot-path dependency deliberately rejected |
 | MI-5 | Legacy `expiration-manager.ts` duplicates modular `lib/expiration/` | ✅ CLOSED 2026-09-06 — stale; file removed, only modular `worker/lib/expiration/` remains |
 | MI-6 | Orphan `worker/db/schema.sql` not referenced by any code | ✅ CLOSED 2026-09-06 — stale; `worker/db/` directory removed |
 | MF-1 | Hybrid semantic search accepted but ignored (`filters`/`hybrid` unused) | ✅ CLOSED 2026-09-06 — stale; filters + RRF hybrid fusion + min_reward enforcement live in `routes/semantic-search.ts` |
