@@ -454,6 +454,10 @@ export function resetAllMetrics(): void {
 
 /**
  * Create a new circuit breaker with the given name and options
+ * @param name Circuit breaker identifier
+ * @param options Optional configuration overrides (threshold, timeout, max calls)
+ * @param env Optional Worker environment bindings
+ * @returns Configured CircuitBreaker instance
  */
 export function createCircuitBreaker(
   name: string,
@@ -465,6 +469,11 @@ export function createCircuitBreaker(
 
 /**
  * Execute a function with circuit breaker protection
+ * @template T Return type of protected function
+ * @param circuitBreaker CircuitBreaker instance to guard execution
+ * @param fn Async operation to perform
+ * @returns Result of the operation if circuit is healthy or half-open trial succeeds
+ * @throws CircuitBreakerOpenError if circuit is open
  */
 export async function callWithCircuitBreaker<T>(
   circuitBreaker: CircuitBreaker,
@@ -475,6 +484,8 @@ export async function callWithCircuitBreaker<T>(
 
 /**
  * Get metrics for a circuit breaker
+ * @param circuitBreaker CircuitBreaker instance
+ * @returns Collected call and state change metrics
  */
 export function getCircuitBreakerMetrics(
   circuitBreaker: CircuitBreaker,
@@ -484,6 +495,7 @@ export function getCircuitBreakerMetrics(
 
 /**
  * Reset a circuit breaker to closed state
+ * @param circuitBreaker CircuitBreaker instance
  */
 export async function resetCircuitBreaker(
   circuitBreaker: CircuitBreaker,
