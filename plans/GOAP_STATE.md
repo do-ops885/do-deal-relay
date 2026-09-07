@@ -2,7 +2,7 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-07
-**Version**: 0.19.14
+**Version**: 0.19.15
 **Status**: Active — 2026-09-07 CI unblock + full hygiene ( vitest/zod pins, webhook hermeticity, CI scripts, circuit-breaker split). Prior: v0.19.13 deep re-verification.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
@@ -21,7 +21,7 @@ Branch: `fix/ci-unblock-eresolve-full-hygiene`. Spec: [SPEC-ci-unblock-full-hygi
 | CI-SCRIPTS | check/update-ci-status missed main (limit 5, CI-only, any-branch) | P2 | ✅ CLOSED — branch main, limit 20, newest-commit rollup across workflows | scripts/check-ci-status.sh, update-ci-status.sh |
 | DEP-MAJORS | dependabot majors can re-break main | P2 | ✅ CLOSED — ignore vitest>=5, @vitest/*>=5, zod>=4 | .github/dependabot.yml, ADR-029 |
 | LOC-504 | worker/lib/circuit-breaker.ts 504/500 quality-gate warning | P2 | ✅ CLOSED — extract metrics to circuit-breaker-metrics.ts (431 + 75) | worker/lib/circuit-breaker.ts, circuit-breaker-metrics.ts |
-| LOC-496 | worker/lib/rate-limit.ts 496/500 fragile | P3 | ⬜ DEFERRED — passes gate, split only if growth resumes | ADR-029 |
+| LOC-496 | worker/lib/rate-limit.ts 496/500 fragile | P3 | ✅ CLOSED — endpoint-limit table extracted to rate-limit-config.ts (445 + 79); public API re-exported, zero importer changes | worker/lib/rate-limit.ts, rate-limit-config.ts |
 
 Verification: `npm ci` clean, `npx tsc --noEmit` clean, `npm run test:unit`, `npm run validate`, `npm run build`, `./scripts/quality_gate.sh` exit 0. Full-hygiene scope per operator 2026-09-07.
 
