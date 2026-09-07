@@ -66,9 +66,30 @@ Negative / accepted trade-offs:
   advisory (limit-1 on allow, 0 on deny) on the binding path. `Retry-After`
   keeps window-boundary arithmetic. No known client parses Remaining for
   flow control.
-- Two enforcement paths exist until the 300s endpoints are rethought
-  (either accept 60s windows with scaled limits, or keep KV permanently).
-  The selector keeps this branch in one module.
+- Two enforcement paths exist because 300s endpoints are intentionally kept
+  on the KV fallback path (see Addendum below). The selector keeps this branch
+  in one module.
+
+## Addendum (2026-09-07): Disposition of 300s Window Rate Limits
+
+### Context
+Following PR #762, two endpoints remained on the KV rate-limiting path due to
+their 300-second window requirements:
+- `POST /api/discover` (5 requests / 300 seconds)
+- `POST /api/validate/batch` (5 requests / 300 seconds)
+
+The Cloudflare Workers Rate Limiting binding natively supports only 10s and 60s
+time windows (`period: 10` or `period: 60`). A decision was required to either:
+(a) Rescale to 1 request / 60s using native Rate Limiting bindings; or
+(b) Keep KV rate limiting permanently for these two endpoints and document as intentional.
+
+### Decision
+Option (b) is selected: **Keep KV rate limiting permanently for `/api/discover` and `/api/validate/batch`**.
+
+### Rationale
+1. **Burst Dynamics vs. Pacing**: `/api/discover` (trigger manual discovery) and `/api/validate/batch` (batch validation) are heavy administrative/pipeline operations. Clients occasionally need to trigger 2–3 successive discovery runs or validation batches when debugging or executing complex workflows. Rescaling to 1 request per 60s would eliminate burst capacity and cause poor developer experience (DX).
+2. **Negligible Race Risk**: The check-then-set race condition in KV is only impactful under high-concurrency throughput. For low-limit endpoints (5 requests per 5 minutes), concurrent race attempts are extremely rare, and any minor undercount during a race condition carries minimal system impact compared to high-volume user endpoints.
+3. **Architectural Simplicity**: Retaining KV fallback logic for 300s windows requires zero runtime schema changes or new bindings, keeping worker configuration minimal while serving custom/extended rate windows cleanly.
 
 ## Verification
 

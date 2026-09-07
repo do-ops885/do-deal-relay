@@ -32,11 +32,13 @@ function cfg(
 
 export const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/submit": cfg(10, "submit"),
+  // 300s window intentionally uses KV fallback path (ADR-028 Addendum)
   "/api/discover": cfg(5, "discover", 300),
   "/api/research": cfg(20, "research"),
   "/api/email/incoming": cfg(30, "email"),
   "/api/email/parse": cfg(20, "email-parse"),
   "/api/validate/url": cfg(20, "validate"),
+  // 300s window intentionally uses KV fallback path (ADR-028 Addendum)
   "/api/validate/batch": cfg(5, "validate-batch", 300),
   "/api/semantic-search": cfg(10, "semantic"),
   "/api/auth/register": cfg(5, "auth-register"),

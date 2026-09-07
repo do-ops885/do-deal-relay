@@ -4,8 +4,8 @@
  * Maps endpoint rate-limit configs to the Workers Rate Limiting bindings
  * declared in wrangler.jsonc (`ratelimits`). The binding is the primary
  * enforcement path for standard 60-second windows; lib/rate-limit.ts falls
- * back to KV when no binding matches (300s windows, per-key overrides,
- * or deploy surfaces without the bindings).
+ * back to KV when no binding matches (intentionally preserved for 300s windows
+ * per ADR-028 Addendum, per-key overrides, or deploy surfaces without bindings).
  *
  * @module worker/lib/rate-limit-binding
  */
