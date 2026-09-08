@@ -41,7 +41,8 @@ Every API response includes rate limit metadata in the headers:
 
 - **Default**: 100 requests per 60 seconds
 - **Deal Submission** (`/api/submit`): 10 requests per 60 seconds
-- **Manual Discovery** (`/api/discover`): 5 requests per 300 seconds
+- **Manual Discovery** (`/api/discover`): 5 requests per 300 seconds (enforced via KV path; see ADR-028 Addendum)
+- **Batch Validation** (`/api/validate/batch`): 5 requests per 300 seconds (enforced via KV path; see ADR-028 Addendum)
 - **Research** (`/api/research`): 20 requests per 60 seconds
 
 ## Endpoints

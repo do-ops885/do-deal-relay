@@ -63,7 +63,7 @@ Full Mode. Spec: [SPEC-rl1-rate-limit-binding.md](SPEC-rl1-rate-limit-binding.md
 
 | Item | Disposition | Evidence |
 |:---|:---|:---|
-| RL-1 KV check-then-set race | ✅ CLOSED — 60s endpoint limits now enforced by native binding (atomic colo-local counters); KV retained as fallback for 300s windows, per-key configs, and binding-less surfaces | `worker/lib/rate-limit-binding.ts`, `rate-limit.ts` binding-first path |
+| RL-1 KV check-then-set race | ✅ CLOSED — 60s endpoint limits now enforced by native binding (atomic colo-local counters); KV permanently retained as fallback for 300s windows (`/api/discover`, `/api/validate/batch` per ADR-028 Addendum), per-key configs, and binding-less surfaces | `worker/lib/rate-limit-binding.ts`, `rate-limit.ts` binding-first path |
 | DO rate-limit migration (ADR-017 scope) | ⛔ RETIRED — global DO limiter is a documented anti-pattern (Rules of Durable Objects); binding is the official primitive | ADR-028 |
 | Fail-closed policy | ✅ PRESERVED — sensitive endpoints block on binding error; non-sensitive fall back to KV | `rate-limit-binding.test.ts` error-path tests |
 | Test coverage | ✅ 13 new tests (selector matrix, key shape, allow/deny, 300s bypass, per-key bypass, absent-binding fallback, error fail-closed/fail-open) | `tests/unit/rate-limit-binding.test.ts` |

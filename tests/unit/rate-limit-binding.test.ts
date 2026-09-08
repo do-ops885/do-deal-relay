@@ -141,8 +141,18 @@ describe("checkRateLimit binding integration", () => {
   });
 
   it("uses KV path for 300s-window endpoints even when bindings exist", async () => {
-    const result = await checkRateLimit(env, "user:1", "/api/discover");
-    expect(result.allowed).toBe(true);
+    const discoverResult = await checkRateLimit(env, "user:1", "/api/discover");
+    expect(discoverResult.allowed).toBe(true);
+    expect(env.DEALS_LOCK.put).toHaveBeenCalled();
+
+    vi.clearAllMocks();
+
+    const batchResult = await checkRateLimit(
+      env,
+      "user:1",
+      "/api/validate/batch",
+    );
+    expect(batchResult.allowed).toBe(true);
     expect(env.DEALS_LOCK.put).toHaveBeenCalled();
   });
 
