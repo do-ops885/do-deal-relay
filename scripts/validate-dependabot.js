@@ -108,6 +108,34 @@ try {
           );
           process.exit(1);
         }
+        // Dependabot cloud rejects glob-style prerelease versions for npm
+        // (e.g. "*-alpha*"). Versions must use the package manager's
+        // standard range syntax (e.g. ">=5", "4.x", "^1.0.0").
+        // See https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#versions-ignore
+        if (ignoreEntry.versions !== undefined) {
+          if (!Array.isArray(ignoreEntry.versions)) {
+            console.error(
+              `${prefix} Ignore entry ${i} "versions" must be a list`,
+            );
+            process.exit(1);
+          }
+          for (const v of ignoreEntry.versions) {
+            if (typeof v !== "string") {
+              console.error(
+                `${prefix} Ignore entry ${i} has non-string version`,
+              );
+              process.exit(1);
+            }
+            if (v.includes("*") && /alpha|beta|rc|pre/i.test(v)) {
+              console.error(
+                `${prefix} Ignore entry ${i} has invalid npm version requirement "${v}": ` +
+                  `glob-style prerelease patterns (e.g. "*-alpha*") are rejected by Dependabot; ` +
+                  `remove the entry (Dependabot ignores prereleases by default) or use a standard range`,
+              );
+              process.exit(1);
+            }
+          }
+        }
       });
     }
   });
