@@ -13,14 +13,30 @@ type KVNamespaceLike = {
   ): Promise<void>;
 };
 
+/**
+ * Repository providing KV storage access for validation cache entries.
+ */
 export class ValidationCacheRepository {
   constructor(private readonly kv: KVNamespaceLike) {}
 
+  /**
+   * Retrieves a cached validation entry by key.
+   *
+   * @param key KV cache key string
+   * @returns Validation cache entry or null if missing/invalid
+   */
   async get(key: string): Promise<ValidationCacheEntry | null> {
     const result = await this.kv.get(key, { type: "json", cacheTtl: 300 });
     return (result as ValidationCacheEntry) ?? null;
   }
 
+  /**
+   * Stores a validation entry in KV cache with explicit TTL.
+   *
+   * @param key KV cache key string
+   * @param entry Validation entry payload to store
+   * @param ttlSeconds Expiration time in seconds
+   */
   async put(
     key: string,
     entry: ValidationCacheEntry,
@@ -32,6 +48,12 @@ export class ValidationCacheRepository {
   }
 }
 
+/**
+ * Calculates appropriate KV cache TTL in seconds based on validation decision status.
+ *
+ * @param status Validation decision status string
+ * @returns TTL duration in seconds
+ */
 export function ttlForStatus(status: ValidationCacheEntry["status"]): number {
   switch (status) {
     case "accepted":
