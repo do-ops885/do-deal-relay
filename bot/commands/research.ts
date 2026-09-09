@@ -40,8 +40,7 @@ export const researchCommand: CommandHandler = {
       // Start research
       const response = await api.research({
         query: `${domain} referral code`,
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- args index access is string|undefined under noUncheckedIndexedAccess; omission required by exactOptionalPropertyTypes
-        ...(domain !== undefined ? { domain } : {}),
+        domain,
         depth,
         sources: ["all"],
         max_results: 20,

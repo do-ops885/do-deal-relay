@@ -184,10 +184,7 @@ export async function handleSemanticSearch(
         returned_count: filtered.length,
       },
       result: `matches:${filtered.length}`,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- empty array makes ?. yield undefined; omission required by exactOptionalPropertyTypes
-      ...(filtered[0]?.score !== undefined
-        ? { confidence: filtered[0]?.score as number }
-        : {}),
+      confidence: filtered[0]?.score,
       explanation: "Workers AI embedding queried against Vectorize index",
       latencyMs: embeddingMs,
     });
