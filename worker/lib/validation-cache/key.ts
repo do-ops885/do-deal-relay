@@ -1,5 +1,11 @@
 // worker/lib/validation-cache/key.ts
 
+/**
+ * Normalizes a URL string by stripping tracking parameters and sorting query parameters.
+ *
+ * @param input Raw URL string to normalize
+ * @returns Clean, canonical URL string
+ */
 export function normalizeUrl(input: string): string {
   try {
     const url = new URL(input);
@@ -35,6 +41,12 @@ export function normalizeUrl(input: string): string {
   }
 }
 
+/**
+ * Computes the SHA-256 hexadecimal hash string for a given text input.
+ *
+ * @param input String input to hash
+ * @returns 64-character lowercase hexadecimal hash string
+ */
 export async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -43,10 +55,22 @@ export async function sha256Hex(input: string): Promise<string> {
     .join("");
 }
 
+/**
+ * Builds a standardized KV cache key for a URL using its normalized SHA-256 hash.
+ *
+ * @param url URL string to build cache key for
+ * @returns Standardized cache key string prefixed with `v:url:`
+ */
 export async function buildUrlCacheKey(url: string): Promise<string> {
   return `v:url:${await sha256Hex(normalizeUrl(url))}`;
 }
 
+/**
+ * Builds a standardized KV cache key for a fingerprint string using SHA-256 hash.
+ *
+ * @param fingerprint Deal fingerprint string
+ * @returns Standardized cache key string prefixed with `v:fingerprint:`
+ */
 export async function buildFingerprintKey(
   fingerprint: string,
 ): Promise<string> {
