@@ -69,11 +69,11 @@ describe("buildStructuredQuery - entity extraction", () => {
       const result = buildStructuredQuery(parsed);
       expect(result).toHaveProperty("textQuery");
       expect(result).toHaveProperty("filters");
-      expect(result).toHaveProperty("categories");
-      expect(result).toHaveProperty("domains");
-      expect(result).toHaveProperty("rewardTypes");
-      expect(result).toHaveProperty("minRewardValue");
-      expect(result).toHaveProperty("maxRewardValue");
+      expect(result.categories).toBeUndefined();
+      expect(result.domains).toBeUndefined();
+      expect(result.rewardTypes).toBeUndefined();
+      expect(result.minRewardValue).toBeUndefined();
+      expect(result.maxRewardValue).toBeUndefined();
       expect(result).toHaveProperty("status");
       expect(result).toHaveProperty("includeExpired");
       expect(result).toHaveProperty("sortBy");

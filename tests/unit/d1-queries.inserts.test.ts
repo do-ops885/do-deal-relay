@@ -368,8 +368,6 @@ describe("D1 Queries — Mutations", () => {
         max_uses: 100,
         current_uses: 0,
         use_count: 0,
-        expires_at: undefined,
-        days_remaining: undefined,
       };
       getMockStatement().first.mockResolvedValue(mockReferral);
 

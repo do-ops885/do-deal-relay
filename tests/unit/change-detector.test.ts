@@ -56,7 +56,7 @@ async function mockScrape(
   vi.mocked(scrapeCurrentRewards).mockResolvedValue({
     url: "https://example.com/deal",
     success,
-    currentReward: currentReward ?? undefined,
+    ...(currentReward === null ? {} : { currentReward }),
     rewardChanged: false,
     scrapedAt: new Date().toISOString(),
   });

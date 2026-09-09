@@ -170,9 +170,9 @@ describe("getReferralStatsD1", () => {
   });
 
   it("should return zeros when DEALS_DB is undefined", async () => {
-    const result = await getReferralStatsD1(
-      createMockEnv({ DEALS_DB: undefined }),
-    );
+    const envWithoutDb = createMockEnv();
+    delete (envWithoutDb as Partial<Env>).DEALS_DB;
+    const result = await getReferralStatsD1(envWithoutDb);
 
     expect(mockD1Client.queryFirst).not.toHaveBeenCalled();
     expect(result).toEqual({ total: 0, active: 0, byDomain: [] });

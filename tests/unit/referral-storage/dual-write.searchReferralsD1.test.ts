@@ -209,10 +209,9 @@ describe("searchReferralsD1", () => {
   });
 
   it("should return empty array when DEALS_DB is undefined", async () => {
-    const results = await searchReferralsD1(
-      createMockEnv({ DEALS_DB: undefined }),
-      "test",
-    );
+    const envWithoutDb = createMockEnv();
+    delete (envWithoutDb as Partial<Env>).DEALS_DB;
+    const results = await searchReferralsD1(envWithoutDb, "test");
 
     expect(mockD1Client.queryWithJson).not.toHaveBeenCalled();
     expect(results).toEqual([]);
