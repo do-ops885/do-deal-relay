@@ -40,7 +40,7 @@ export const researchCommand: CommandHandler = {
       // Start research
       const response = await api.research({
         query: `${domain} referral code`,
-        domain,
+        ...(domain !== undefined ? { domain } : {}),
         depth,
         sources: ["all"],
         max_results: 20,

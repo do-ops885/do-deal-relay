@@ -73,7 +73,7 @@ export const addCommand: CommandHandler = {
         submitted_by: ctx.userId,
         metadata: {
           title: `${domain} Referral`,
-          reward_value: rewardValue,
+          ...(rewardValue !== undefined ? { reward_value: rewardValue } : {}),
           category: ["general"],
           tags: ["bot-added", ctx.platform],
           notes: `Added by ${ctx.username || ctx.userId} via ${ctx.platform} bot`,
@@ -279,7 +279,7 @@ export const deactivateCommand: CommandHandler = {
 
     try {
       const response = await api.deactivateReferral(code, reason, {
-        notes,
+        ...(notes !== undefined ? { notes } : {}),
       });
 
       return {
