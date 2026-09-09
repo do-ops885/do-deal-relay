@@ -28,6 +28,38 @@ interface DiscoveryResult {
   errors: Array<{ url: string; error: string }>;
 }
 
+/**
+ * Resolved discovery budget configuration. Exported for the ADR-018
+ * shadow workflow so it mirrors the main path's budgets exactly.
+ */
+export interface DiscoveryBudgets {
+  globalBudget: number;
+  perSourceBase: number;
+  highTrustBonus: number;
+  trustThreshold: number;
+}
+
+export function getDiscoveryBudgets(env: Env): DiscoveryBudgets {
+  const envName = env.ENVIRONMENT || "production";
+  const budgetDefaults = getDefaultBudgets(envName);
+  return {
+    globalBudget: parseInt(
+      env.CANDIDATE_BUDGET_GLOBAL || String(budgetDefaults.global),
+      10,
+    ),
+    perSourceBase: parseInt(
+      env.CANDIDATE_BUDGET_PER_SOURCE || String(budgetDefaults.perSource),
+      10,
+    ),
+    highTrustBonus: parseInt(
+      env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS ||
+        String(budgetDefaults.highTrustBonus),
+      10,
+    ),
+    trustThreshold: getTrustThreshold(env),
+  };
+}
+
 interface ExtractedDeal {
   code: string;
   url: string;
@@ -54,24 +86,10 @@ export async function discover(
     return { deals: [], errors: [] };
   }
 
-  // Budget configuration
-  const envName = env.ENVIRONMENT || "production";
-  const budgetDefaults = getDefaultBudgets(envName);
-  const globalBudget = parseInt(
-    env.CANDIDATE_BUDGET_GLOBAL || String(budgetDefaults.global),
-    10,
-  );
-  const perSourceBase = parseInt(
-    env.CANDIDATE_BUDGET_PER_SOURCE || String(budgetDefaults.perSource),
-    10,
-  );
-  const highTrustBonus = parseInt(
-    env.CANDIDATE_BUDGET_HIGH_TRUST_BONUS ||
-      String(budgetDefaults.highTrustBonus),
-    10,
-  );
-
-  const trustThreshold = getTrustThreshold(env);
+  // Budget configuration (shared with the ADR-018 shadow path via
+  // getDiscoveryBudgets so both planes resolve identical budgets)
+  const { globalBudget, perSourceBase, highTrustBonus, trustThreshold } =
+    getDiscoveryBudgets(env);
 
   // Filter sources by trust threshold
   activeSources = activeSources.filter((s) => {
@@ -196,102 +214,68 @@ async function discoverFromSource(
   }
 
   const validationTally = createValidationTally();
+  const { deals, errors } = await runPatternBatches(source, limit, (ok) =>
+    tallyValidation(validationTally, source.domain, ok),
+  );
+
+  // All pattern batches for this source are done: persist tallied validation
+  // counters in a single registry GET+PUT. Sequential per-source flushing
+  // keeps concurrent writers on different domains; see
+  // flushValidationTally for the residual cross-isolate race note.
+  await flushValidationTally(env, validationTally);
+
+  // Record breaker outcome: any error means failure for this source run.
+  if (errors.length > 0 && deals.length === 0) {
+    await breaker.recordFailure();
+  } else if (deals.length > 0) {
+    await breaker.recordSuccess();
+  }
+
+  return { deals, errors };
+}
+
+// Parallel pattern fetches per source batch (sequential batches).
+const PATTERN_BATCH_CONCURRENCY = 3;
+
+interface PatternFetchOutcome {
+  patternDeals: Deal[];
+  patternErrors: Array<{ url: string; error: string }>;
+  ok: boolean;
+}
+
+/**
+ * Run pattern batches for one source. Shared by the main path and the
+ * ADR-018 shadow path. The optional hook reports per-pattern success so the
+ * main path can tally validation in memory; the shadow path passes no hook
+ * and is therefore read-only (no tally, no flush, no breaker writes).
+ */
+async function runPatternBatches(
+  source: SourceConfig,
+  limit: number,
+  onPattern?: (ok: boolean) => void,
+): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
-  const errors: Array<{ url: string; error: string }> = []; // Process URL patterns in parallel with a concurrency limit.
+  const errors: Array<{ url: string; error: string }> = [];
+  // Process URL patterns in parallel with a concurrency limit.
   // Uses sequential batch iteration to avoid race conditions on the limit check,
   // while fetching within each batch in parallel. After each batch, the total
   // is truncated if it exceeded the limit (due to concurrent fulfillment).
-  const CONCURRENCY = 3;
   let batchIndex = 0;
   while (batchIndex < source.url_patterns.length && deals.length < limit) {
     const batch = source.url_patterns.slice(
       batchIndex,
-      batchIndex + CONCURRENCY,
+      batchIndex + PATTERN_BATCH_CONCURRENCY,
     );
-    batchIndex += CONCURRENCY;
+    batchIndex += PATTERN_BATCH_CONCURRENCY;
 
     const results = await Promise.allSettled(
       batch.map(async (pattern) => {
-        try {
-          const url = `https://${source.domain}${pattern}`;
-
-          const { signal, cleanup } = createTimeoutSignal(
-            CONFIG.FETCH_TIMEOUT_MS,
-          );
-          let response;
-          try {
-            response = await validatedFetch(url, {
-              method: "GET",
-              headers: {
-                "User-Agent":
-                  "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-                Accept: "text/html,application/json",
-              },
-              signal,
-            });
-          } finally {
-            cleanup();
-          }
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          const contentType = response.headers.get("content-type") || "";
-          const contentLength = response.headers.get("content-length");
-          const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
-
-          let content: string;
-          if (contentLength && parseInt(contentLength, 10) > maxSize) {
-            throw new Error(
-              `Payload exceeds size limit: ${contentLength} bytes (max: ${maxSize})`,
-            );
-          } else {
-            content = await response.text();
-          }
-
-          if (content.length > maxSize) {
-            throw new Error("Payload exceeds size limit");
-          }
-
-          const extracted: ExtractedDeal[] = contentType.includes(
-            "application/json",
-          )
-            ? parseJSONContent(content, source)
-            : parseHTMLContent(content, source);
-
-          const patternDeals: Deal[] = [];
-          const patternErrors: Array<{ url: string; error: string }> = [];
-
-          for (const item of extracted) {
-            try {
-              const deal = await buildDeal(item, source);
-              patternDeals.push(deal);
-            } catch (error) {
-              patternErrors.push({
-                url: item.url,
-                error: `Build failed: ${(error as Error).message}`,
-              });
-            }
-          }
-
-          // In-memory tally only: the registry is written once per source
-          // after all pattern batches complete, avoiding concurrent
-          // read-modify-write on the shared KV key.
-          tallyValidation(validationTally, source.domain, true);
-          return { patternDeals, patternErrors };
-        } catch (error) {
-          tallyValidation(validationTally, source.domain, false);
-          return {
-            patternDeals: [],
-            patternErrors: [
-              {
-                url: `${source.domain}${pattern}`,
-                error: (error as Error).message,
-              },
-            ],
-          };
-        }
+        const outcome = await fetchPatternDeals(source, pattern);
+        onPattern?.(outcome.ok);
+        return {
+          patternDeals: outcome.patternDeals,
+          patternErrors: outcome.patternErrors,
+        };
       }),
     );
 
@@ -313,18 +297,124 @@ async function discoverFromSource(
     }
   }
 
-  // All pattern batches for this source are done: persist tallied validation
-  // counters in a single registry GET+PUT. Sequential per-source flushing
-  // keeps concurrent writers on different domains; see
-  // flushValidationTally for the residual cross-isolate race note.
-  await flushValidationTally(env, validationTally);
-
-  // Record breaker outcome: any error means failure for this source run.
-  if (errors.length > 0 && deals.length === 0) {
-    await breaker.recordFailure();
-  } else if (deals.length > 0) {
-    await breaker.recordSuccess();
-  }
-
   return { deals, errors };
+}
+
+/**
+ * Fetch, parse, and build deals for one URL pattern. Pure fetch+compute:
+ * no tally, no persistence, no breaker interaction (callers own those).
+ */
+async function fetchPatternDeals(
+  source: SourceConfig,
+  pattern: string,
+): Promise<PatternFetchOutcome> {
+  try {
+    const url = `https://${source.domain}${pattern}`;
+
+    const { signal, cleanup } = createTimeoutSignal(CONFIG.FETCH_TIMEOUT_MS);
+    let response;
+    try {
+      response = await validatedFetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+          Accept: "text/html,application/json",
+        },
+        signal,
+      });
+    } finally {
+      cleanup();
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    const contentLength = response.headers.get("content-length");
+    const maxSize = CONFIG.MAX_PAYLOAD_SIZE_BYTES;
+
+    let content: string;
+    if (contentLength && parseInt(contentLength, 10) > maxSize) {
+      throw new Error(
+        `Payload exceeds size limit: ${contentLength} bytes (max: ${maxSize})`,
+      );
+    } else {
+      content = await response.text();
+    }
+
+    if (content.length > maxSize) {
+      throw new Error("Payload exceeds size limit");
+    }
+
+    const extracted: ExtractedDeal[] = contentType.includes("application/json")
+      ? parseJSONContent(content, source)
+      : parseHTMLContent(content, source);
+
+    const patternDeals: Deal[] = [];
+    const patternErrors: Array<{ url: string; error: string }> = [];
+
+    for (const item of extracted) {
+      try {
+        const deal = await buildDeal(item, source);
+        patternDeals.push(deal);
+      } catch (error) {
+        patternErrors.push({
+          url: item.url,
+          error: `Build failed: ${(error as Error).message}`,
+        });
+      }
+    }
+
+    return { patternDeals, patternErrors, ok: true };
+  } catch (error) {
+    return {
+      patternDeals: [],
+      patternErrors: [
+        {
+          url: `${source.domain}${pattern}`,
+          error: (error as Error).message,
+        },
+      ],
+      ok: false,
+    };
+  }
+}
+
+// Shadow step returns stay far under the 1 MiB workflow step limit.
+const MAX_SHADOW_SAMPLE_CODES = 10;
+const MAX_SHADOW_SAMPLE_ERRORS = 3;
+
+/**
+ * Compact per-source shadow result: counts plus small samples. No Deal
+ * objects escape, keeping durable step returns tiny.
+ */
+export interface ShadowSourceSummary {
+  domain: string;
+  deal_count: number;
+  error_count: number;
+  sample_codes: string[];
+  sample_errors: string[];
+}
+
+/**
+ * Read-only single-source discovery for the ADR-018 shadow workflow.
+ * Runs the same fetch+parse+build core as the main path but performs
+ * zero writes: no validation tally, no registry flush, no breaker
+ * interaction, no discovery-count mutation.
+ */
+export async function discoverSourceReadonly(
+  source: SourceConfig,
+  limit: number,
+): Promise<ShadowSourceSummary> {
+  const { deals, errors } = await runPatternBatches(source, limit);
+  return {
+    domain: source.domain,
+    deal_count: deals.length,
+    error_count: errors.length,
+    sample_codes: deals.slice(0, MAX_SHADOW_SAMPLE_CODES).map((d) => d.code),
+    sample_errors: errors
+      .slice(0, MAX_SHADOW_SAMPLE_ERRORS)
+      .map((e) => `${e.url}: ${e.error}`),
+  };
 }
