@@ -4,7 +4,7 @@
  */
 
 import { ParsedArgs } from "../types.js";
-import { config, setApiKey, clearApiKey, setEndpoint } from "../config.js";
+import { clearApiKey, config, setApiKey, setEndpoint } from "../config.js";
 import { apiRequest } from "../utils.js";
 
 /**
