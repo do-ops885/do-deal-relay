@@ -94,9 +94,9 @@ export async function handleSubmitExperience(
     id: eventId,
     deal_code,
     event_type,
-    agent_id,
-    score,
-    metadata: metadataStr,
+    ...(agent_id !== undefined ? { agent_id } : {}),
+    ...(score !== undefined ? { score } : {}),
+    ...(metadataStr !== undefined ? { metadata: metadataStr } : {}),
   });
 
   if (!result.success) {

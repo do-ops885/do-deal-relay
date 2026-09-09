@@ -185,7 +185,11 @@ export async function handleEmailParse(
     };
 
     const extraction = extractReferralFromEmail(email);
-    const command = parseCommand(email);
+    const command = parseCommand({
+      subject: email.subject,
+      to: email.to,
+      ...(email.text !== undefined ? { text: email.text } : {}),
+    });
 
     return jsonResponse(
       {

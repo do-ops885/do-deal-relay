@@ -18,8 +18,8 @@ export interface SecurityFinding {
   severity: Severity;
   passed: boolean;
   message: string;
-  details?: string[];
-  recommendation?: string;
+  details?: string[] | undefined;
+  recommendation?: string | undefined;
   timestamp: string;
 }
 

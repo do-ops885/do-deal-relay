@@ -300,17 +300,19 @@ export async function processBulkImportItem(
       status: "quarantined",
       submitted_at: now,
       submitted_by: item.submitted_by || "bulk_api",
-      expires_at: item.expires_at,
+      ...(item.expires_at !== undefined ? { expires_at: item.expires_at } : {}),
       metadata: {
         title: metadata.title || `${item.domain} Referral`,
         description: metadata.description || `Referral code for ${item.domain}`,
         reward_type: metadata.reward_type || "unknown",
-        reward_value: metadata.reward_value,
+        ...(metadata.reward_value !== undefined
+          ? { reward_value: metadata.reward_value }
+          : {}),
         category: metadata.category || ["general"],
         tags: metadata.tags || ["bulk-added"],
         requirements: metadata.requirements || [],
         confidence_score: metadata.confidence_score || 0.5,
-        notes: metadata.notes,
+        ...(metadata.notes !== undefined ? { notes: metadata.notes } : {}),
       },
     };
 

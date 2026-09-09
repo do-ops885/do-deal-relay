@@ -244,7 +244,7 @@ export async function getHealthStatus(
         d1_database: {
           connected: d1Check.connected,
           latency_ms: d1Check.latencyMs,
-          error: d1Check.error,
+          ...(d1Check.error !== undefined ? { error: d1Check.error } : {}),
         },
         pipeline: {
           last_run: logs.length > 0 ? (logs[0]?.ts ?? "") : "",
@@ -262,15 +262,16 @@ export async function getHealthStatus(
           recentRuns > 0 ? (successfulRuns / recentRuns) * 100 : 0,
         avg_deals_per_run: 0,
       },
-      last_run:
-        logs.length > 0
-          ? {
+      ...(logs.length > 0
+        ? {
+            last_run: {
               run_id: logs[0]?.run_id ?? "",
               timestamp: logs[0]?.ts ?? "",
               duration_ms: logs[0]?.duration_ms || 0,
               deals_count: 0,
-            }
-          : undefined,
+            },
+          }
+        : {}),
     };
 
     return jsonResponse(response, 200, request, env);
