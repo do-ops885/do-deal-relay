@@ -375,10 +375,7 @@ async function handleHybridSearch(
         hybrid: true,
       },
       result: `matches:${results.length}`,
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- empty array makes ?. yield undefined; omission required by exactOptionalPropertyTypes
-      ...(results[0]?.score !== undefined
-        ? { confidence: results[0]?.score as number }
-        : {}),
+      confidence: results[0]?.score,
       explanation:
         "RRF fusion of Vectorize semantic scores and D1 FTS5 BM25 ranks",
       latencyMs: totalMs,
