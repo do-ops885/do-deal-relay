@@ -10,9 +10,18 @@ type D1Like = {
   };
 };
 
+/**
+ * Repository for querying and storing validation index records in D1 database.
+ */
 export class ValidationIndexRepository {
   constructor(private readonly db: D1Like) {}
 
+  /**
+   * Finds an indexed validation record by fingerprint.
+   *
+   * @param fingerprint Deal fingerprint string
+   * @returns Indexed validation record or null if not found
+   */
   async findByFingerprint(fingerprint: string): Promise<any | null> {
     return this.db
       .prepare(
@@ -28,6 +37,11 @@ export class ValidationIndexRepository {
       .first();
   }
 
+  /**
+   * Inserts or updates a validation index entry in D1.
+   *
+   * @param entry Validation cache entry to upsert
+   */
   async upsert(entry: ValidationCacheEntry): Promise<void> {
     await this.db
       .prepare(
