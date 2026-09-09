@@ -1,6 +1,6 @@
 # ADR-018: Durable Execution Migration for Long-Running Pipelines
 
-**Status**: Proposed
+**Status**: In Progress (shadow-mode wave 1, 2026-09-09; was Proposed)
 **Created**: 2026-07-07
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
@@ -155,8 +155,15 @@ export class PipelineWorkflow extends AgentWorkflow<Env> {
 
 ## Migration Steps
 
+Wave 1 (shadow mode, issue #763, spec SPEC-workflow-shadow-763.md):
+read-only `DiscoveryShadowWorkflow` (one durable step per source) runs
+after the main 6h pipeline behind default-off flag
+`workflow_shadow_discovery`; takes no lock, writes nothing, returns
+compact summaries. Proves per-source failure isolation before any cutover.
+
 | Step | Action | Duration |
 |------|--------|----------|
+| 0 | Shadow discovery workflow + parity logging (wave 1) | 1 day |
 | 1 | Create `PipelineAgent` DO + wrangler config | 1 day |
 | 2 | Update `state-machine.ts` to delegate to DO | 1-2 days |
 | 3 | Deploy staging, test eviction recovery | 1 day |
