@@ -1,5 +1,6 @@
 # Agent Coordination Hub - do-deal-relay
-**Version**: 0.2.4 (Adapted Upstream Workflow Standards v0.3.5)
+**Version**: 0.1.8
+**Workflow Standard**: Agent Hub v0.2.5 (Upstream v0.3.5)
 
 ## 1. Named Constants & System Limits
 ```bash

@@ -37,11 +37,12 @@ A transaction rollback is automatically or manually triggered under the followin
 - **Integrity/Corruption Verification Failures**: If any post-publish sanity tests fail, or if a newly merged snapshot is parsed as invalid JSON.
 - **Rollback Execution**: To roll back, the active `snapshot:prod` key in `DEALS_PROD` is restored to its previous snapshot value (retrieved from the daily backup log or Git history). This instantly isolates any faulty deployment without needing server restarts or manual deployments.
 
-## Middleware Pipeline (ADR-016)
+## Middleware Pipeline & Security (ADR-016, ADR-028 Addendum)
 All API routes go through a centralized middleware pipeline in `worker/lib/middleware/pipeline.ts`:
 - **Auth**: JWT/API key verification with role-based access (`user`, `admin`, `internal`)
-- **Rate Limiting**: Config-driven per-route rate limits via `createRateLimitMiddleware`
+- **Rate Limiting**: Config-driven per-route rate limits via `createRateLimitMiddleware`. Endpoints with 300-second windows (`/api/discover` and `/api/validate/batch`) permanently retain the KV rate-limiting fallback path (per ADR-028 Addendum) to preserve 5-request burst capacity.
 - **Body Size**: Maximum request body validation via `checkBodySize`
+- **SSRF Hardening**: Outgoing network calls use `validatedFetch` via `worker/lib/security.ts`. `normalizeIp` resolves hostnames and normalizes IPv4-compatible IPv6 addresses (`[::127.0.0.1]`, `[::7f00:1]`) and unspecified IPv6 (`[::]`) before checking against loopback and private CIDR blocks (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.0/8`, `169.254.0.0/16`, `fc00::/7`, `fe80::/10`).
 
 Route registration follows the pattern: `withAuth → createRateLimitMiddleware → handler`.
 
@@ -115,6 +116,7 @@ The KV namespaces are configured differently depending on the deployment environ
 | Binding | Class | Role |
 | :--- | :--- | :--- |
 | `PIPELINE_LOCK` | `PipelineLock` | Atomic concurrency control via SQLite (replaces KV lock race condition) |
+| `DEAL_REGISTRY` | `DealRegistry` | Asynchronous best-effort state mirror off the hot path (per ADR-022). KV/D1 remain canonical sources of truth. |
 
 ### Vectorize
 

@@ -6,6 +6,17 @@
 ## Behavioral Contract
 Extends [AGENTS.md](AGENTS.md). Qwen must adhere to all Core Constraints and Infrastructure Contracts defined there.
 
+## Tool Signature Mapping
+MCP tools are canonically named in code; agents MUST use canonical tool names when executing tool calls:
+- **`search_deals`** (Alias: `get_deals`): Search referral deals by domain, category, status, query, or threshold parameters.
+- **`get_deal`** (Alias: `get_deal_by_code`): Retrieve full details for a single referral code.
+- **`add_referral`** (Alias: `submit_deal`): Submit a new referral code into staging/quarantine.
+
+## Hard Stop & Non-Bypassable Conditions
+1. **Protected Branch Protection**: Direct pushes to `main` or `develop` are forbidden.
+2. **Secret Leakage**: Hardcoded credentials, tokens, or private keys are strictly forbidden.
+3. **Pipeline Rewrite**: Speculative rewrites of the 9-gate validation pipeline or SSRF `validatedFetch` security controls are strictly forbidden.
+
 ## Operational Focus
 - **Precision**: Follow typed tool signatures in [SYSTEM_REFERENCE.md](agents-docs/SYSTEM_REFERENCE.md) exactly.
 - **Strict Compliance**: Adhere strictly to the shared agent contract in [AGENTS.md](AGENTS.md).
