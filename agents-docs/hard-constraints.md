@@ -41,6 +41,8 @@ The following violations CANNOT be bypassed under any circumstances and will res
 1. **Direct Push**: Pushing directly to protected branches `main` or `develop`.
 2. **Secrets Detection**: Staged code containing potential security secrets, tokens, or credentials (e.g., `ghp_`, `sk_`, private keys).
 3. **Hardcoded Credentials**: Non-environment passwords or private keys in source code.
+4. **SSRF Bypass**: Outgoing HTTP calls bypassing `validateFetchUrl` or attempting loopback/private CIDR access (including IPv4-compatible IPv6 addresses).
+5. **Speculative Pipeline Bypasses**: Bypassing or disabling any of the 9 validation gates in `worker/validation/pipeline.ts`.
 
 ### Standard Bypassable Conditions
 Standard violations (e.g., TypeScript errors, unit test failures, validation warnings, or file size limits) may only be bypassed using `git commit --no-verify` or `git push --no-verify` IF the agent complies with the **Never-Bypass Validation System**:
