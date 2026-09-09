@@ -88,17 +88,17 @@ export async function handleAddCommand(
     status: "quarantined",
     submitted_at: now,
     submitted_by: email.from,
-    expires_at: command.expiry,
+    ...(command.expiry !== undefined ? { expires_at: command.expiry } : {}),
     metadata: {
       title: `${command.service} Referral`,
       description: `Referral code for ${command.service}`,
       reward_type: "unknown",
-      reward_value: command.reward,
+      ...(command.reward !== undefined ? { reward_value: command.reward } : {}),
       category: command.category ? [command.category] : ["general"],
       tags: ["email", "manual-add"],
       requirements: [],
       confidence_score: 0.8,
-      notes: command.notes,
+      ...(command.notes !== undefined ? { notes: command.notes } : {}),
     },
   };
 
