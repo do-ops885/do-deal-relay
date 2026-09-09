@@ -173,9 +173,11 @@ describe("updateReferralStatus", () => {
       status: "inactive",
     });
     mockUpdateInKV.mockResolvedValue(kvResult);
+    const envWithoutDb = createMockEnv();
+    delete (envWithoutDb as Partial<Env>).DEALS_DB;
 
     const result = await updateReferralStatus(
-      createMockEnv({ DEALS_DB: undefined }),
+      envWithoutDb,
       "ref-001",
       "inactive",
     );

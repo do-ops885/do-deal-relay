@@ -247,11 +247,10 @@ describe("Dual-Write getReferral", () => {
     it("should read from KV when USE_D1_READS is true but DEALS_DB is undefined", async () => {
       const kvResult = createMockReferral({ id: "ref-001" });
       mockGetFromKVById.mockResolvedValue(kvResult);
+      const envWithoutDb = createMockEnv({ USE_D1_READS: "true" });
+      delete (envWithoutDb as Partial<Env>).DEALS_DB;
 
-      const result = await getReferralById(
-        createMockEnv({ USE_D1_READS: "true", DEALS_DB: undefined }),
-        "ref-001",
-      );
+      const result = await getReferralById(envWithoutDb, "ref-001");
 
       expect(mockD1Client.queryFirst).not.toHaveBeenCalled();
       expect(mockGetFromKVById).toHaveBeenCalledTimes(1);
@@ -434,11 +433,10 @@ describe("Dual-Write getReferral", () => {
     it("should read from KV when USE_D1_READS is true but DEALS_DB is undefined", async () => {
       const kvResult = createMockReferral({ code: "TESTCODE" });
       mockGetFromKVByCode.mockResolvedValue(kvResult);
+      const envWithoutDbByCode = createMockEnv({ USE_D1_READS: "true" });
+      delete (envWithoutDbByCode as Partial<Env>).DEALS_DB;
 
-      const result = await getReferralByCode(
-        createMockEnv({ USE_D1_READS: "true", DEALS_DB: undefined }),
-        "TESTCODE",
-      );
+      const result = await getReferralByCode(envWithoutDbByCode, "TESTCODE");
 
       expect(mockGetReferralCodeByString).not.toHaveBeenCalled();
       expect(mockGetFromKVByCode).toHaveBeenCalledTimes(1);

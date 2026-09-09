@@ -40,8 +40,25 @@ function makeDeal(overrides: Partial<DealSearchResult> = {}): DealSearchResult {
   };
 }
 
+type StructuredQueryOverrides = Omit<
+  Partial<StructuredQuery>,
+  | "textQuery"
+  | "categories"
+  | "domains"
+  | "rewardTypes"
+  | "minRewardValue"
+  | "maxRewardValue"
+> & {
+  textQuery?: string | undefined;
+  categories?: string[] | undefined;
+  domains?: string[] | undefined;
+  rewardTypes?: StructuredQuery["rewardTypes"] | undefined;
+  minRewardValue?: number | undefined;
+  maxRewardValue?: number | undefined;
+};
+
 function createBaseQuery(
-  overrides: Partial<StructuredQuery> = {},
+  overrides: StructuredQueryOverrides = {},
 ): StructuredQuery {
   return {
     textQuery: "test",
@@ -53,7 +70,7 @@ function createBaseQuery(
     limit: 20,
     offset: 0,
     ...overrides,
-  };
+  } as StructuredQuery;
 }
 
 describe("executeStructuredQuery - filter-only path", () => {

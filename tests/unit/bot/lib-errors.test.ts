@@ -54,7 +54,7 @@ describe("toErrCtx", () => {
       // object even when the underlying Error.stack is undefined — the
       // structural contract is "string | undefined", not "key absent".
       const err = new Error("no-stack");
-      err.stack = undefined;
+      delete err.stack;
       const ctx = toErrCtx(err);
       expect(ctx).toMatchObject({
         name: "Error",

@@ -68,7 +68,8 @@ describe("Experience API Endpoints", () => {
 
   describe("POST /api/experience", () => {
     it("should return 503 when DEALS_DB is missing from env", async () => {
-      const mockEnv = createMockEnv({ DEALS_DB: undefined });
+      const mockEnv = createMockEnv();
+      delete (mockEnv as Partial<Env>).DEALS_DB;
       const request = new Request("http://localhost/api/experience", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

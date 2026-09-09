@@ -35,17 +35,31 @@ function createParsedQuery(overrides: Partial<ParsedQuery> = {}): ParsedQuery {
   };
 }
 
+type StructuredQueryOverrides = Omit<
+  Partial<StructuredQuery>,
+  | "textQuery"
+  | "categories"
+  | "domains"
+  | "rewardTypes"
+  | "minRewardValue"
+  | "maxRewardValue"
+  | "status"
+> & {
+  textQuery?: string | undefined;
+  categories?: string[] | undefined;
+  domains?: string[] | undefined;
+  rewardTypes?: StructuredQuery["rewardTypes"] | undefined;
+  minRewardValue?: number | undefined;
+  maxRewardValue?: number | undefined;
+  status?: StructuredQuery["status"] | undefined;
+};
+
 function createStructuredQuery(
-  overrides: Partial<StructuredQuery> = {},
+  overrides: StructuredQueryOverrides = {},
 ): StructuredQuery {
   return {
     textQuery: "test",
     filters: [],
-    categories: undefined,
-    domains: undefined,
-    rewardTypes: undefined,
-    minRewardValue: undefined,
-    maxRewardValue: undefined,
     status: "active",
     includeExpired: false,
     sortBy: "relevance",
@@ -53,7 +67,7 @@ function createStructuredQuery(
     limit: 20,
     offset: 0,
     ...overrides,
-  };
+  } as StructuredQuery;
 }
 
 function makeParsedFromIntent(overrides: Partial<IntentClassification> = {}) {

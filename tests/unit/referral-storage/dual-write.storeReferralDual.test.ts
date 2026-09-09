@@ -72,26 +72,30 @@ vi.mock("../../../worker/lib/d1/client", () => ({
 
 import { storeReferralDual } from "../../../worker/lib/referral-storage/dual-write";
 
-const createMockReferral = (
-  overrides: Partial<ReferralInput> = {},
-): ReferralInput => ({
-  url: "https://example.com/invite",
-  code: "TESTCODE",
-  domain: "example.com",
-  description: "Test referral description",
-  status: "active",
-  submitted_at: new Date().toISOString(),
-  submitted_by: "test-user",
-  metadata: {
-    title: "Test Referral",
-    reward_type: "cash",
-    reward_value: 50,
-    category: ["referral"],
-    tags: ["test"],
-    confidence_score: 0.8,
-  },
-  ...overrides,
-});
+type ReferralOverrides = Omit<Partial<ReferralInput>, "id" | "domain"> & {
+  id?: string | undefined;
+  domain?: string | undefined;
+};
+
+const createMockReferral = (overrides: ReferralOverrides = {}): ReferralInput =>
+  ({
+    url: "https://example.com/invite",
+    code: "TESTCODE",
+    domain: "example.com",
+    description: "Test referral description",
+    status: "active",
+    submitted_at: new Date().toISOString(),
+    submitted_by: "test-user",
+    metadata: {
+      title: "Test Referral",
+      reward_type: "cash",
+      reward_value: 50,
+      category: ["referral"],
+      tags: ["test"],
+      confidence_score: 0.8,
+    },
+    ...overrides,
+  }) as ReferralInput;
 
 const createMockEnv = (overrides: Partial<Env> = {}): Env => ({
   DEALS_SOURCES: {
@@ -161,11 +165,10 @@ describe("storeReferralDual", () => {
   it("should store to KV only when D1 is unavailable", async () => {
     const referral = createMockReferral();
     mockStoreInKV.mockResolvedValue(referral);
+    const envWithoutDb = createMockEnv();
+    delete (envWithoutDb as Partial<Env>).DEALS_DB;
 
-    const result = await storeReferralDual(
-      createMockEnv({ DEALS_DB: undefined }),
-      referral,
-    );
+    const result = await storeReferralDual(envWithoutDb, referral);
 
     expect(mockStoreInKV).toHaveBeenCalledTimes(1);
     expect(mockInsertDeal).not.toHaveBeenCalled();
