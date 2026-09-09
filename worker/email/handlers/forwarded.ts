@@ -115,11 +115,13 @@ export async function handleForwardedEmail(
     status: "quarantined",
     submitted_at: now,
     submitted_by: email.from,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- extraction.expiry is string|null per ExtractionResultSchema nullable(); null guard required, tsc-verified
     ...(extraction.expiry !== null ? { expires_at: extraction.expiry } : {}),
     metadata: {
       title: `${extraction.service} Referral`,
       description: `Auto-extracted from email forwarded by ${email.from}`,
       reward_type: "unknown",
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- extraction.reward is string|null per ExtractionResultSchema nullable(); null guard required, tsc-verified
       ...(extraction.reward !== null
         ? { reward_value: extraction.reward }
         : {}),
