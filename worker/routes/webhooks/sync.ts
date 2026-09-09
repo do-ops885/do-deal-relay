@@ -47,11 +47,13 @@ export async function handleCreateSyncConfig(
       partner_id: body.partner_id,
       direction: body.direction,
       mode: body.mode,
-      schedule: body.schedule,
+      ...(body.schedule !== undefined ? { schedule: body.schedule } : {}),
       conflict_resolution: body.conflict_resolution || "timestamp",
       priority: body.priority || "local",
-      filters: body.filters,
-      field_mapping: body.field_mapping,
+      ...(body.filters !== undefined ? { filters: body.filters } : {}),
+      ...(body.field_mapping !== undefined
+        ? { field_mapping: body.field_mapping }
+        : {}),
     });
 
     return jsonResponse(
@@ -180,9 +182,13 @@ export async function handleTriggerSync(
       ...state,
       status: syncResult.success ? "idle" : "error",
       last_sync_at: new Date().toISOString(),
-      cursor: syncResult.cursor || state.cursor,
+      ...((syncResult.cursor || state.cursor) !== undefined
+        ? { cursor: (syncResult.cursor || state.cursor) as string }
+        : {}),
       pending_changes: syncResult.failed,
-      last_error: syncResult.error,
+      ...(syncResult.error !== undefined
+        ? { last_error: syncResult.error }
+        : {}),
       sync_version: state.sync_version + 1,
     });
 

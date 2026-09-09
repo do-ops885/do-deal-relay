@@ -33,7 +33,7 @@ export async function handleCreateApiKey(
       userId: body.userId,
       role: body.role,
       createdAt: new Date().toISOString(),
-      expiresAt: body.expiresAt,
+      ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt } : {}),
       rateLimit: body.rateLimit || {
         requestsPerMinute: 60,
         requestsPerHour: 1000,

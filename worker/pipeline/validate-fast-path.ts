@@ -151,8 +151,8 @@ export async function validateDealFastPath(
         ...decision,
         fingerprint: input.fingerprint,
         normalizedUrl,
-        source: input.source,
-        traceId: input.traceId,
+        ...(input.source !== undefined ? { source: input.source } : {}),
+        ...(input.traceId !== undefined ? { traceId: input.traceId } : {}),
         createdAt: new Date().toISOString(),
       };
 

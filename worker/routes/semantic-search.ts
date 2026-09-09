@@ -159,7 +159,7 @@ export async function handleSemanticSearch(
     const hits = await semanticSearchDeals(env, {
       query,
       limit: requestedLimit,
-      namespace,
+      ...(namespace !== undefined ? { namespace } : {}),
     });
     const embeddingMs = Date.now() - embeddingStart;
     const vectorizeStart = Date.now();
@@ -184,7 +184,9 @@ export async function handleSemanticSearch(
         returned_count: filtered.length,
       },
       result: `matches:${filtered.length}`,
-      confidence: filtered[0]?.score,
+      ...(filtered[0]?.score !== undefined
+        ? { confidence: filtered[0]?.score as number }
+        : {}),
       explanation: "Workers AI embedding queried against Vectorize index",
       latencyMs: embeddingMs,
     });
@@ -234,7 +236,11 @@ async function handleHybridSearch(
 
   // Run both searches in parallel; gracefully degrade if one fails.
   const [vectorResult, ftsResult] = await Promise.all([
-    semanticSearchDeals(env, { query, limit: requestedLimit, namespace })
+    semanticSearchDeals(env, {
+      query,
+      limit: requestedLimit,
+      ...(namespace !== undefined ? { namespace } : {}),
+    })
       .then((hits) => ({ ok: true as const, hits }))
       .catch((err) => {
         logger.warn("Hybrid vector search failed, continuing with FTS only", {
@@ -371,7 +377,9 @@ async function handleHybridSearch(
         hybrid: true,
       },
       result: `matches:${results.length}`,
-      confidence: results[0]?.score,
+      ...(results[0]?.score !== undefined
+        ? { confidence: results[0]?.score as number }
+        : {}),
       explanation:
         "RRF fusion of Vectorize semantic scores and D1 FTS5 BM25 ranks",
       latencyMs: totalMs,

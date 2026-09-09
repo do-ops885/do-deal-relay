@@ -215,9 +215,9 @@ export async function handleRankedDeals(url: URL, env: Env): Promise<Response> {
     sortBy,
     order,
     limit,
-    minConfidence,
-    minTrustScore,
-    category,
+    ...(minConfidence !== undefined ? { minConfidence } : {}),
+    ...(minTrustScore !== undefined ? { minTrustScore } : {}),
+    ...(category !== undefined ? { category } : {}),
   });
 
   const response: Record<string, unknown> = {
