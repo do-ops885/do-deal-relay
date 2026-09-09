@@ -159,7 +159,7 @@ export async function handleSemanticSearch(
     const hits = await semanticSearchDeals(env, {
       query,
       limit: requestedLimit,
-      ...(namespace !== undefined ? { namespace } : {}),
+      namespace,
     });
     const embeddingMs = Date.now() - embeddingStart;
     const vectorizeStart = Date.now();
@@ -184,6 +184,7 @@ export async function handleSemanticSearch(
         returned_count: filtered.length,
       },
       result: `matches:${filtered.length}`,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- empty array makes ?. yield undefined; omission required by exactOptionalPropertyTypes
       ...(filtered[0]?.score !== undefined
         ? { confidence: filtered[0]?.score as number }
         : {}),
@@ -377,6 +378,7 @@ async function handleHybridSearch(
         hybrid: true,
       },
       result: `matches:${results.length}`,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- empty array makes ?. yield undefined; omission required by exactOptionalPropertyTypes
       ...(results[0]?.score !== undefined
         ? { confidence: results[0]?.score as number }
         : {}),

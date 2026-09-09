@@ -31,11 +31,11 @@ export function setConfig(newConfig: Partial<Config>): void {
 /**
  * Set the API key
  */
-export function setApiKey(apiKey: string | undefined): void {
-  if (apiKey === undefined) {
+export function setApiKey(value: string | undefined): void {
+  if (value === undefined) {
     delete config.apiKey;
   } else {
-    config.apiKey = apiKey;
+    config.apiKey = value;
   }
 }
 

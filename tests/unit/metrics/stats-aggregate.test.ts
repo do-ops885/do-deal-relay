@@ -81,6 +81,7 @@ describe("metrics/stats - aggregate", () => {
       PipelineMetrics["validation_gate_passes"] | undefined;
   };
 
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: vitest fixture factory, not a Qwik component
   const buildMetric = (overrides: MetricOverrides = {}): PipelineMetrics =>
     ({
       run_id: "run-1",
