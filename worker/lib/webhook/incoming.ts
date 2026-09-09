@@ -95,7 +95,9 @@ export async function handleIncomingWebhook(
           success: true,
           statusCode: 200,
           message: "Duplicate event - already processed",
-          referralId: idempotencyCheck.referralId,
+          ...(idempotencyCheck.referralId !== undefined
+            ? { referralId: idempotencyCheck.referralId }
+            : {}),
         };
       }
     }
@@ -117,7 +119,9 @@ export async function handleIncomingWebhook(
         success: false,
         statusCode: 401,
         message: "Invalid signature",
-        error: signatureResult.error,
+        ...(signatureResult.error !== undefined
+          ? { error: signatureResult.error }
+          : {}),
       };
     }
 
@@ -256,7 +260,7 @@ async function processReferralCreatedOrUpdated(
       success: true,
       statusCode: 200,
       message: "Referral already exists - no changes made",
-      referralId: existing.id,
+      ...(existing.id !== undefined ? { referralId: existing.id } : {}),
     };
   }
 
@@ -271,13 +275,17 @@ async function processReferralCreatedOrUpdated(
     status: "quarantined",
     submitted_at: now,
     submitted_by: partnerId,
-    expires_at: data.expires_at,
+    ...(data.expires_at !== undefined ? { expires_at: data.expires_at } : {}),
     metadata: {
       title: data.title || `${data.domain} Referral`,
       description: data.description || `Referral code for ${data.domain}`,
       reward_type: data.reward?.type || "unknown",
-      reward_value: data.reward?.value,
-      currency: data.reward?.currency,
+      ...(data.reward?.value !== undefined
+        ? { reward_value: data.reward.value }
+        : {}),
+      ...(data.reward?.currency !== undefined
+        ? { currency: data.reward.currency }
+        : {}),
       category: (data.metadata?.category as string[]) || ["general"],
       tags: [
         "webhook",
@@ -324,7 +332,7 @@ async function processReferralCreatedOrUpdated(
     success: true,
     statusCode: 201,
     message: "Referral created successfully",
-    referralId: referral.id,
+    ...(referral.id !== undefined ? { referralId: referral.id } : {}),
   };
 }
 
@@ -356,7 +364,7 @@ async function processReferralDeactivated(
     success: true,
     statusCode: 200,
     message: "Referral deactivated",
-    referralId: referral.id,
+    ...(referral.id !== undefined ? { referralId: referral.id } : {}),
   };
 }
 
@@ -388,7 +396,7 @@ async function processReferralExpired(
     success: true,
     statusCode: 200,
     message: "Referral marked as expired",
-    referralId: referral.id,
+    ...(referral.id !== undefined ? { referralId: referral.id } : {}),
   };
 }
 

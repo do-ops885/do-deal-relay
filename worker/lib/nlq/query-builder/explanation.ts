@@ -21,7 +21,7 @@ export function explainQuery(
   intent_confidence: number;
   entities_found: number;
   filters_applied: string[];
-  search_text?: string;
+  search_text?: string | undefined;
   sort_applied: {
     field: SortField;
     order: SortOrder;

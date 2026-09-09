@@ -11,8 +11,8 @@ export interface ExperienceEventResult {
 
 export interface ExperienceAggregateResult {
   success: boolean;
-  aggregate?: ExperienceAggregate;
-  error?: string;
+  aggregate?: ExperienceAggregate | undefined;
+  error?: string | undefined;
 }
 
 export interface AggregationResult {
@@ -35,7 +35,7 @@ async function executeWrite(
   client: WriteClient,
   sql: string,
   params: unknown[],
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string | undefined }> {
   try {
     const result = await client.execute(sql, params);
     return { success: result.success, error: result.error };

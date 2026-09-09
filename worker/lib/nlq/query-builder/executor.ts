@@ -35,7 +35,7 @@ export async function executeStructuredQuery(
     const baseResults = await searchDeals(db, query.textQuery, {
       limit: query.limit * 2, // Get more results for post-filtering
       includeExpired: query.includeExpired,
-      status: query.status,
+      ...(query.status !== undefined ? { status: query.status } : {}),
     });
 
     // Apply additional filters

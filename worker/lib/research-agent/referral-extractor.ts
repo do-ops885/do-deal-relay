@@ -48,7 +48,7 @@ export function extractReferralsFromContent(
             url,
             source: `${sourceName}_selector`,
             discoveredAt: now,
-            rewardSummary: reward,
+            ...(reward !== undefined ? { rewardSummary: reward } : {}),
             confidence: 0.85,
             context: $(el).text().trim().substring(0, 200),
           });
@@ -92,7 +92,7 @@ export function extractReferralsFromContent(
         url,
         source: sourceName,
         discoveredAt: now,
-        rewardSummary: rewardMatch || undefined,
+        ...(rewardMatch !== null ? { rewardSummary: rewardMatch } : {}),
         confidence,
         context: context.slice(0, 200),
       });

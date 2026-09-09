@@ -200,7 +200,7 @@ export async function executeReferralResearch(
       search_queries: searchQueries,
       research_duration_ms: Date.now() - startTime,
       agent_id: agentId,
-      errors: errors.length > 0 ? errors : undefined,
+      ...(errors.length > 0 ? { errors } : {}),
       used_real_fetching: useRealFetching,
     },
   };
@@ -283,7 +283,20 @@ async function researchFromSourceParallel(
       if (canUseScraper && scraper) {
         fetchResult = await scraper.scrape(scraperEnv, query);
       } else {
-        fetchResult = await fetchFromSource(source, query, apiKeys);
+        fetchResult = await fetchFromSource(source, query, {
+          ...(apiKeys.productHuntToken !== undefined
+            ? { productHuntToken: apiKeys.productHuntToken }
+            : {}),
+          ...(apiKeys.githubToken !== undefined
+            ? { githubToken: apiKeys.githubToken }
+            : {}),
+          ...(apiKeys.redditClientId !== undefined
+            ? { redditClientId: apiKeys.redditClientId }
+            : {}),
+          ...(apiKeys.redditClientSecret !== undefined
+            ? { redditClientSecret: apiKeys.redditClientSecret }
+            : {}),
+        });
       }
 
       if (fetchResult.success) {
@@ -303,7 +316,9 @@ async function researchFromSourceParallel(
               url: referral.url,
               source: referral.source,
               discovered_at: referral.discoveredAt,
-              reward_summary: referral.rewardSummary,
+              ...(referral.rewardSummary !== undefined
+                ? { reward_summary: referral.rewardSummary }
+                : {}),
               confidence: applySourceConfidence(
                 referral.confidence,
                 source.name,
@@ -359,6 +374,7 @@ export async function convertResearchToReferrals(
 
     const idInput = `${researchResult.domain}:${discovered.code}`;
     const id = `web-${btoa(idInput).replace(/[+/=]/g, "").substring(0, 32)}`;
+    const rewardValue = extractRewardValue(discovered.reward_summary);
 
     const referral: ReferralInput = {
       id,
@@ -375,7 +391,7 @@ export async function convertResearchToReferrals(
           discovered.reward_summary ||
           `Referral code discovered via web research`,
         reward_type: "unknown",
-        reward_value: extractRewardValue(discovered.reward_summary),
+        ...(rewardValue !== undefined ? { reward_value: rewardValue } : {}),
         category: ["general"],
         tags: ["discovered", "web_research"],
         requirements: [],
@@ -385,7 +401,6 @@ export async function convertResearchToReferrals(
       },
       validation: {
         last_validated: now,
-        is_valid: undefined,
         checked_urls: [discovered.url],
       },
     };
@@ -421,12 +436,9 @@ export async function researchAllReferralPossibilities(
     depth,
     sources: ["all"],
     max_results: 50,
-    options:
-      useRealFetching === undefined
-        ? undefined
-        : {
-            use_real_fetching: useRealFetching,
-          },
+    ...(useRealFetching !== undefined
+      ? { options: { use_real_fetching: useRealFetching } }
+      : {}),
   };
 
   return executeReferralResearch(env, request);

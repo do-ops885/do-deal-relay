@@ -8,10 +8,10 @@ import { validatedFetch } from "../security";
 
 export async function tryHeadRequest(url: string): Promise<{
   success: boolean;
-  statusCode?: number;
-  statusText?: string;
-  location?: string;
-  error?: string;
+  statusCode?: number | undefined;
+  statusText?: string | undefined;
+  location?: string | undefined;
+  error?: string | undefined;
 }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
@@ -48,9 +48,9 @@ export async function tryHeadRequest(url: string): Promise<{
 
 export async function tryGetRequest(url: string): Promise<{
   success: boolean;
-  statusCode?: number;
-  statusText?: string;
-  error?: string;
+  statusCode?: number | undefined;
+  statusText?: string | undefined;
+  error?: string | undefined;
 }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
