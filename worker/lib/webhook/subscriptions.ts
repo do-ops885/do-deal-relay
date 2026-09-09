@@ -109,9 +109,9 @@ export async function createSubscription(
     active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    metadata,
+    ...(metadata !== undefined ? { metadata } : {}),
     retry_policy: { ...DEFAULT_RETRY_POLICY, ...retryPolicy },
-    filters,
+    ...(filters !== undefined ? { filters } : {}),
   };
 
   await kv.put(

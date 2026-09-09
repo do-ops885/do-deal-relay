@@ -94,9 +94,9 @@ async function fetchAndValidateCode(
 
     return {
       codeFound: found,
-      context,
+      ...(context !== undefined ? { context } : {}),
       similarCodes,
-      pageTitle,
+      ...(pageTitle !== undefined ? { pageTitle } : {}),
       pageAccessible: true,
     };
   } catch (error) {
@@ -113,7 +113,7 @@ function extractTitle(html: string): string | undefined {
 function findCodeInHtml(
   code: string,
   html: string,
-): { found: boolean; context?: string; similarCodes: string[] } {
+): { found: boolean; context?: string | undefined; similarCodes: string[] } {
   const normalizedCode = code.toUpperCase();
   const upperHtml = html.toUpperCase();
 

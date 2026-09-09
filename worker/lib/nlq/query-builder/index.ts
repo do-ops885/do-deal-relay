@@ -160,13 +160,13 @@ export function buildStructuredQuery(
   }
 
   return {
-    textQuery,
+    ...(textQuery !== undefined ? { textQuery } : {}),
     filters,
-    categories: categories.length > 0 ? categories : undefined,
-    domains: domains.length > 0 ? domains : undefined,
-    rewardTypes: rewardTypes.length > 0 ? rewardTypes : undefined,
-    minRewardValue,
-    maxRewardValue,
+    ...(categories.length > 0 ? { categories } : {}),
+    ...(domains.length > 0 ? { domains } : {}),
+    ...(rewardTypes.length > 0 ? { rewardTypes } : {}),
+    ...(minRewardValue !== undefined ? { minRewardValue } : {}),
+    ...(maxRewardValue !== undefined ? { maxRewardValue } : {}),
     status: status as "active" | "quarantined" | "rejected" | "all",
     includeExpired: options.includeExpired || false,
     sortBy,

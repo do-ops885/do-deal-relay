@@ -79,11 +79,19 @@ export async function updateReferralStatus(
   const oldStatus = referral.status || "unknown";
 
   // Update referral
-  referral.status = newStatus;
+  if (newStatus !== undefined) {
+    referral.status = newStatus;
+  } else {
+    delete referral.status;
+  }
 
   if (newStatus === "inactive" || newStatus === "expired") {
     referral.deactivated_at = now;
-    referral.deactivated_reason = reason;
+    if (reason !== undefined) {
+      referral.deactivated_reason = reason;
+    } else {
+      delete referral.deactivated_reason;
+    }
     if (notes) {
       referral.metadata = referral.metadata || {};
       referral.metadata.notes = notes;
@@ -102,9 +110,9 @@ export async function updateReferralStatus(
     code: referral.code || "",
     change_type: "status_update",
     old_value: oldStatus,
-    new_value: newStatus,
-    reason,
-    notes,
+    ...(newStatus !== undefined ? { new_value: newStatus } : {}),
+    ...(reason !== undefined ? { reason } : {}),
+    ...(notes !== undefined ? { notes } : {}),
     timestamp: now,
   });
 
@@ -128,7 +136,11 @@ export async function deactivateReferral(
 
   referral.status = "inactive";
   referral.deactivated_at = now;
-  referral.deactivated_reason = reason;
+  if (reason !== undefined) {
+    referral.deactivated_reason = reason;
+  } else {
+    delete referral.deactivated_reason;
+  }
 
   if (replacedBy) {
     referral.related_codes = [...(referral.related_codes || []), replacedBy];
@@ -144,9 +156,9 @@ export async function deactivateReferral(
     change_type: "deactivation",
     old_value: "active",
     new_value: "inactive",
-    reason,
-    notes,
-    replaced_by: replacedBy,
+    ...(reason !== undefined ? { reason } : {}),
+    ...(notes !== undefined ? { notes } : {}),
+    ...(replacedBy !== undefined ? { replaced_by: replacedBy } : {}),
     timestamp: now,
   });
 
@@ -168,8 +180,8 @@ export async function reactivateReferral(
   const oldStatus = referral.status;
 
   referral.status = "active";
-  referral.deactivated_at = undefined;
-  referral.deactivated_reason = undefined;
+  delete referral.deactivated_at;
+  delete referral.deactivated_reason;
 
   await storeReferralInput(env, referral);
   await updateStatusLists(
@@ -185,7 +197,7 @@ export async function reactivateReferral(
     change_type: "reactivation",
     old_value: oldStatus || "unknown",
     new_value: "active",
-    notes,
+    ...(notes !== undefined ? { notes } : {}),
     timestamp: now,
   });
 

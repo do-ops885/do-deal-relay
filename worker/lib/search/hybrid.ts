@@ -33,13 +33,13 @@ export interface HybridSearchResult {
   deal_id: string;
   score: number;
   match_type: "semantic" | "hybrid" | "keyword";
-  metadata?: DealEmbeddingMetadata;
-  vector_rank?: number;
-  fts_rank?: number;
-  vector_score?: number;
-  fts_relevance?: number;
-  title?: string;
-  domain?: string;
+  metadata?: DealEmbeddingMetadata | undefined;
+  vector_rank?: number | undefined;
+  fts_rank?: number | undefined;
+  vector_score?: number | undefined;
+  fts_relevance?: number | undefined;
+  title?: string | undefined;
+  domain?: string | undefined;
 }
 
 /**

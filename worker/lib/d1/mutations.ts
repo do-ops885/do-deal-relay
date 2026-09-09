@@ -19,7 +19,11 @@ async function executeWrite(
   client: WriteClient,
   sql: string,
   params: unknown[],
-): Promise<{ success: boolean; lastRowId?: number; error?: string }> {
+): Promise<{
+  success: boolean;
+  lastRowId?: number | undefined;
+  error?: string | undefined;
+}> {
   try {
     return await client.execute(sql, params);
   } catch (error) {
@@ -41,7 +45,11 @@ export async function insertDeal(
     url: string;
     domain: string;
   },
-): Promise<{ success: boolean; id?: number; error?: string }> {
+): Promise<{
+  success: boolean;
+  id?: number | undefined;
+  error?: string | undefined;
+}> {
   const client = createD1Client(db);
 
   const now = Math.floor(Date.now() / 1000);
@@ -126,7 +134,11 @@ export async function insertDeal(
 export async function insertReferralCode(
   db: D1Database,
   referral: ReferralInput & { deal_id: number },
-): Promise<{ success: boolean; id?: number; error?: string }> {
+): Promise<{
+  success: boolean;
+  id?: number | undefined;
+  error?: string | undefined;
+}> {
   const client = createD1Client(db);
 
   const now = Math.floor(Date.now() / 1000);

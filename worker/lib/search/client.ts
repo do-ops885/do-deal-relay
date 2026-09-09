@@ -59,7 +59,7 @@ async function embedTexts(env: Env, texts: string[]): Promise<number[][]> {
 export interface SemanticSearchHit {
   id: string;
   score: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | undefined;
 }
 
 export interface SemanticSearchOptions {
@@ -87,7 +87,9 @@ export async function semanticSearchDeals(
   }
   const results = await env.DEAL_EMBEDDINGS.query(queryVector, {
     topK,
-    namespace: options.namespace,
+    ...(options.namespace !== undefined
+      ? { namespace: options.namespace }
+      : {}),
     returnMetadata: "all",
   });
   return results.matches.map((m) => ({
@@ -114,7 +116,9 @@ export async function upsertDealVectors(
   const stamped: VectorizeVector[] = vectors.map((v) => ({
     id: v.id,
     values: v.values,
-    namespace: namespace ?? v.namespace,
+    ...((namespace ?? v.namespace) !== undefined
+      ? { namespace: (namespace ?? v.namespace) as string }
+      : {}),
     metadata: v.metadata as unknown as Record<string, never>,
   }));
   let inserted = 0;

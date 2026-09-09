@@ -87,7 +87,9 @@ export class D1Client {
             rows_written: execResult.meta?.rows_written || 0,
             last_row_id: execResult.meta?.last_row_id,
             served_by_region: execResult.meta?.served_by_region as string,
-            served_by_primary: execResult.meta?.served_by_primary,
+            ...(execResult.meta?.served_by_primary !== undefined
+              ? { served_by_primary: execResult.meta.served_by_primary }
+              : {}),
           },
         };
       },
@@ -224,7 +226,11 @@ export class D1Client {
   async batchInsert<T extends Record<string, unknown>>(
     table: string,
     rows: T[],
-  ): Promise<{ success: boolean; lastRowIds?: number[]; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    lastRowIds?: number[] | undefined;
+    error?: string | undefined;
+  }> {
     if (rows.length === 0) {
       return { success: true, lastRowIds: [] };
     }
