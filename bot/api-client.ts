@@ -11,7 +11,7 @@ import {
 
 export interface APIClientConfig {
   baseUrl: string;
-  apiKey?: string;
+  apiKey?: string | undefined;
   timeoutMs?: number;
 }
 
@@ -112,7 +112,7 @@ export interface APIError {
 
 export class DealRelayAPI {
   private baseUrl: string;
-  private apiKey?: string;
+  private apiKey?: string | undefined;
   private timeoutMs: number;
 
   constructor(config: APIClientConfig) {

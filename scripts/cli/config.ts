@@ -32,7 +32,11 @@ export function setConfig(newConfig: Partial<Config>): void {
  * Set the API key
  */
 export function setApiKey(apiKey: string | undefined): void {
-  config.apiKey = apiKey;
+  if (apiKey === undefined) {
+    delete config.apiKey;
+  } else {
+    config.apiKey = apiKey;
+  }
 }
 
 /**

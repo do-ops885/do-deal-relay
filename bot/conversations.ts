@@ -171,10 +171,10 @@ export const conversations: ConversationHandler[] = [
           submitted_by: ctx.userId,
           metadata: {
             title: `${domain} Referral`,
-            reward_value: finalReward,
+            ...(finalReward !== undefined ? { reward_value: finalReward } : {}),
             category: ["general"],
             tags: ["conversation-flow", ctx.platform],
-            notes: finalNotes,
+            ...(finalNotes !== undefined ? { notes: finalNotes } : {}),
           },
         });
 

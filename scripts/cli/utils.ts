@@ -116,7 +116,7 @@ export async function apiRequest(
     const response = await fetch(url, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
 
     const data = await response.json();
