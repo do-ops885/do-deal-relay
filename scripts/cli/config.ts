@@ -31,13 +31,15 @@ export function setConfig(newConfig: Partial<Config>): void {
 /**
  * Set the API key
  */
-export function setApiKey(value: string | undefined): void {
-  // eslint-disable-next-line security/detect-possible-timing-attacks, security-node/detect-possible-timing-attacks -- undefined-presence check performs no secret comparison; no timing signal exists
-  if (value === undefined) {
-    delete config.apiKey;
-  } else {
-    config.apiKey = value;
-  }
+export function setApiKey(key: string): void {
+  config.apiKey = key;
+}
+
+/**
+ * Clear the API key (logout)
+ */
+export function clearApiKey(): void {
+  delete config.apiKey;
 }
 
 /**
