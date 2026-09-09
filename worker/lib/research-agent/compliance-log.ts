@@ -56,7 +56,7 @@ export interface AIInteractionRecord {
   inputDescription: string;
   inputMetadata?: Record<string, unknown>;
   result: string;
-  confidence?: number;
+  confidence?: number | undefined;
   explanation?: string;
   correlationId?: string;
   latencyMs?: number;
