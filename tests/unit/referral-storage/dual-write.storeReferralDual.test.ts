@@ -77,6 +77,7 @@ type ReferralOverrides = Omit<Partial<ReferralInput>, "id" | "domain"> & {
   domain?: string | undefined;
 };
 
+// biome-ignore lint/correctness/useQwikValidLexicalScope: vitest fixture factory, not a Qwik component
 const createMockReferral = (overrides: ReferralOverrides = {}): ReferralInput =>
   ({
     url: "https://example.com/invite",

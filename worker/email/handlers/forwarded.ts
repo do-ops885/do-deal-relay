@@ -115,14 +115,12 @@ export async function handleForwardedEmail(
     status: "quarantined",
     submitted_at: now,
     submitted_by: email.from,
-    ...(extraction.expiry !== undefined && extraction.expiry !== null
-      ? { expires_at: extraction.expiry }
-      : {}),
+    ...(extraction.expiry !== null ? { expires_at: extraction.expiry } : {}),
     metadata: {
       title: `${extraction.service} Referral`,
       description: `Auto-extracted from email forwarded by ${email.from}`,
       reward_type: "unknown",
-      ...(extraction.reward !== undefined && extraction.reward !== null
+      ...(extraction.reward !== null
         ? { reward_value: extraction.reward }
         : {}),
       category: ["general"],
