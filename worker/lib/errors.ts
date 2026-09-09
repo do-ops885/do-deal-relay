@@ -20,7 +20,8 @@
  * structural contract rather than an open bag of properties.
  */
 export type ErrContext =
-  { name: string; message: string; stack?: string } | { value: string };
+  | { name: string; message: string; stack?: string | undefined }
+  | { value: string };
 
 /**
  * Normalize any thrown value into a structured logger context.
@@ -31,7 +32,11 @@ export type ErrContext =
  */
 export function toErrCtx(err: unknown): ErrContext {
   if (err instanceof Error) {
-    return { name: err.name, message: err.message, stack: err.stack };
+    return {
+      name: err.name,
+      message: err.message,
+      ...(err.stack !== undefined ? { stack: err.stack } : {}),
+    };
   }
   return { value: String(err) };
 }

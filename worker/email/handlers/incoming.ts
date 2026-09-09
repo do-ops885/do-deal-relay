@@ -37,7 +37,11 @@ export async function processEmail(
       };
     }
 
-    const command = parseCommand(email);
+    const command = parseCommand({
+      subject: email.subject,
+      ...(email.text !== undefined ? { text: email.text } : {}),
+      to: email.to,
+    });
     logger.info(`Email type detected: ${command.type}`, {
       component: "email",
       command: command.type,

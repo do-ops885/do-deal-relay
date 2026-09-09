@@ -4,7 +4,7 @@ import type { ToolCallResult } from "../types";
 
 interface Experience {
   success: boolean;
-  comment?: string;
+  comment?: string | undefined;
   timestamp: string;
   source: string;
 }
@@ -52,7 +52,7 @@ export async function handleExperienceDeal(
 
   experiences.push({
     success,
-    comment,
+    ...(comment !== undefined ? { comment } : {}),
     timestamp: new Date().toISOString(),
     source: "mcp_interaction",
   });

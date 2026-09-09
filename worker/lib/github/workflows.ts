@@ -62,7 +62,7 @@ export async function getWorkflowStatusSummary(
     pending_runs: runs.filter(
       (r) => r.status === "queued" || r.status === "in_progress",
     ).length,
-    latest_run: runs[0],
+    ...(runs[0] !== undefined ? { latest_run: runs[0] } : {}),
   };
 }
 
@@ -99,7 +99,9 @@ export async function waitForWorkflowsComplete(
           (r) => r.conclusion === "failure" || r.conclusion === "timed_out",
         ).length,
         pending_runs: 0,
-        latest_run: relevantRuns[0],
+        ...(relevantRuns[0] !== undefined
+          ? { latest_run: relevantRuns[0] }
+          : {}),
       };
       return { success: status.failed_runs === 0, status, attempts: attempt };
     }
@@ -121,7 +123,7 @@ export async function waitForWorkflowsComplete(
     pending_runs: relevantRuns.filter(
       (r) => r.status === "queued" || r.status === "in_progress",
     ).length,
-    latest_run: relevantRuns[0],
+    ...(relevantRuns[0] !== undefined ? { latest_run: relevantRuns[0] } : {}),
   };
   return { success: false, status, attempts: maxAttempts };
 }

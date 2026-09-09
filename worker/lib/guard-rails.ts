@@ -24,7 +24,7 @@ export interface GuardRailReport {
     name: string;
     passed: boolean;
     severity: string;
-    message?: string;
+    message?: string | undefined;
   }>;
   fatalErrors: string[];
   warnings: string[];
@@ -339,7 +339,9 @@ export async function runGuardRails(
       name: "resource_limits",
       passed: resourceCheck.passed,
       severity: "fatal",
-      message: resourceCheck.message,
+      ...(resourceCheck.message !== undefined
+        ? { message: resourceCheck.message }
+        : {}),
     });
     if (!resourceCheck.passed)
       fatalErrors.push(resourceCheck.message || "Resource limit exceeded");
@@ -357,7 +359,9 @@ export async function runGuardRails(
           name: `safety_check_${i}`,
           passed: false,
           severity: "fatal",
-          message: safetyCheck.message,
+          ...(safetyCheck.message !== undefined
+            ? { message: safetyCheck.message }
+            : {}),
         });
         fatalErrors.push(`Deal ${deal.id}: ${safetyCheck.message}`);
       }
@@ -372,7 +376,9 @@ export async function runGuardRails(
       passed: qualityCheck.passed,
       severity:
         qualityCheck.passed && qualityCheck.message ? "warning" : "fatal",
-      message: qualityCheck.message,
+      ...(qualityCheck.message !== undefined
+        ? { message: qualityCheck.message }
+        : {}),
     });
     if (!qualityCheck.passed) {
       fatalErrors.push(qualityCheck.message || "Data quality check failed");

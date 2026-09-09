@@ -21,7 +21,7 @@ export interface CursorState {
 
 export interface PaginatedResult<T> {
   items: T[];
-  nextCursor?: string;
+  nextCursor?: string | undefined;
   total: number;
   hasMore: boolean;
 }
@@ -84,5 +84,10 @@ export function paginateList<T>(
     }
   }
 
-  return { items: slicedItems, nextCursor, total, hasMore };
+  return {
+    items: slicedItems,
+    ...(nextCursor !== undefined ? { nextCursor } : {}),
+    total,
+    hasMore,
+  };
 }
