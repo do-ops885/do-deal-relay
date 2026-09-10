@@ -95,6 +95,18 @@ export async function handleGetResearchResults(
   request?: Request,
 ): Promise<Response> {
   try {
+    // SSRF protection: validate target domain before initiating research fetches
+    const isSafe = await validateFetchUrl(`https://${domain}`);
+    if (!isSafe) {
+      return errorResponse(
+        "Domain is blocked for security reasons",
+        403,
+        undefined,
+        request,
+        env,
+      );
+    }
+
     const researchResult = await researchAllReferralPossibilities(
       env,
       domain,
