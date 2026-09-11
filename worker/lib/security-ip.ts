@@ -52,6 +52,16 @@ export const SECURITY_CONSTANTS = {
   ] as const,
 } as const;
 
+interface ParsedCidrV4 {
+  network: number;
+  mask: number;
+}
+
+interface ParsedCidrV6 {
+  network: bigint;
+  mask: bigint;
+}
+
 export function isIpAddress(hostname: string): boolean {
   const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
   return ipv4Pattern.test(hostname) || hostname.includes(":");
@@ -84,56 +94,13 @@ export function normalizeIp(ip: string): string {
   return normalized;
 }
 
-export function isPrivateIP(ip: string): boolean {
-  const normalizedIp = normalizeIp(ip);
-  for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
-    if (isIpInCidr(normalizedIp, range)) return true;
-  }
-  return false;
-}
-
-/** @internal */
-export function isIpInCidr(ip: string, cidr: string): boolean {
-  try {
-    const parts = cidr.split("/");
-    const range = parts[0];
-    const bitsStr = parts[1];
-    if (!range) return false;
-    if (!isIpAddress(ip)) return false;
-
-    const normalizedIp = normalizeIp(ip);
-    const normalizedRange = normalizeIp(range);
-    const ipIsV4 = !normalizedIp.includes(":");
-    const rangeIsV4 = !normalizedRange.includes(":");
-    if (ipIsV4 && rangeIsV4) {
-      const ipNum = ipToLong(normalizedIp);
-      const rangeNum = ipToLong(normalizedRange);
-      const bitsNum = bitsStr ? Number(bitsStr) : 32;
-      const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
-      return (ipNum & mask) === (rangeNum & mask);
-    }
-    if (!ipIsV4 && !rangeIsV4) {
-      const ipBigInt = ipv6ToBigInt(normalizedIp);
-      const rangeBigInt = ipv6ToBigInt(normalizedRange);
-      const bitsNum = bitsStr ? Number(bitsStr) : 128;
-      if (bitsNum === 0) return true;
-      const mask =
-        (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
-      return (ipBigInt & mask) === (rangeBigInt & mask);
-    }
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 function ipToLong(ip: string): number {
-  const parts = ip.split(".").map((p) => parseInt(p, 10));
+  const parts = ip.split(".");
   if (parts.length !== SECURITY_CONSTANTS.IPV4_PARTS) return 0;
-  const p0 = parts[0] ?? 0;
-  const p1 = parts[1] ?? 0;
-  const p2 = parts[2] ?? 0;
-  const p3 = parts[3] ?? 0;
+  const p0 = parseInt(parts[0] ?? "", 10) || 0;
+  const p1 = parseInt(parts[1] ?? "", 10) || 0;
+  const p2 = parseInt(parts[2] ?? "", 10) || 0;
+  const p3 = parseInt(parts[3] ?? "", 10) || 0;
   return ((p0 << 24) | (p1 << 16) | (p2 << 8) | p3) >>> 0;
 }
 
@@ -156,4 +123,116 @@ function ipv6ToBigInt(ipv6: string): bigint {
   } catch {
     return 0n;
   }
+}
+
+function parseCidrV4(cidr: string): ParsedCidrV4 | null {
+  const parts = cidr.split("/");
+  const range = parts[0];
+  const bitsStr = parts[1];
+  if (!range) return null;
+  const normalizedRange = normalizeIp(range);
+  if (normalizedRange.includes(":")) return null;
+  const rangeNum = ipToLong(normalizedRange);
+  const bitsNum = bitsStr ? Number(bitsStr) : 32;
+  const mask = bitsNum === 0 ? 0 : (~(Math.pow(2, 32 - bitsNum) - 1)) >>> 0;
+  return { network: (rangeNum & mask) >>> 0, mask };
+}
+
+function parseCidrV6(cidr: string): ParsedCidrV6 | null {
+  const parts = cidr.split("/");
+  const range = parts[0];
+  const bitsStr = parts[1];
+  if (!range) return null;
+  const normalizedRange = normalizeIp(range);
+  if (!normalizedRange.includes(":")) return null;
+  const rangeBigInt = ipv6ToBigInt(normalizedRange);
+  const bitsNum = bitsStr ? Number(bitsStr) : 128;
+  const mask =
+    bitsNum === 0
+      ? 0n
+      : (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
+  return { network: rangeBigInt & mask, mask };
+}
+
+const PREPARSED_BLOCKED_V4: ParsedCidrV4[] = [];
+const PREPARSED_BLOCKED_V6: ParsedCidrV6[] = [];
+
+for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
+  const v4 = parseCidrV4(range);
+  if (v4) {
+    PREPARSED_BLOCKED_V4.push(v4);
+  } else {
+    const v6 = parseCidrV6(range);
+    if (v6) {
+      PREPARSED_BLOCKED_V6.push(v6);
+    }
+  }
+}
+
+/**
+ * Fast private IP check using pre-parsed CIDR network bitmasks.
+ * Avoids per-range string splitting, normalization, and parsing allocations.
+ *
+ * @param ip - Target IP address (IPv4 or IPv6)
+ * @returns True if the IP falls within any blocked private/reserved CIDR range
+ */
+export function isPrivateIP(ip: string): boolean {
+  if (!isIpAddress(ip)) return false;
+  const normalizedIp = normalizeIp(ip);
+  const isV4 = !normalizedIp.includes(":");
+
+  if (isV4) {
+    const ipNum = ipToLong(normalizedIp);
+    for (let i = 0; i < PREPARSED_BLOCKED_V4.length; i++) {
+      const cidr = PREPARSED_BLOCKED_V4[i];
+      if (cidr && ((ipNum & cidr.mask) >>> 0) === cidr.network) {
+        return true;
+      }
+    }
+  } else {
+    const ipBigInt = ipv6ToBigInt(normalizedIp);
+    for (let i = 0; i < PREPARSED_BLOCKED_V6.length; i++) {
+      const cidr = PREPARSED_BLOCKED_V6[i];
+      if (cidr && (ipBigInt & cidr.mask) === cidr.network) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** @internal */
+export function isIpInCidr(ip: string, cidr: string): boolean {
+  try {
+    if (!isIpAddress(ip)) return false;
+    const parts = cidr.split("/");
+    const range = parts[0];
+    const bitsStr = parts[1];
+    if (!range) return false;
+
+    const normalizedIp = normalizeIp(ip);
+    const normalizedRange = normalizeIp(range);
+    const ipIsV4 = !normalizedIp.includes(":");
+    const rangeIsV4 = !normalizedRange.includes(":");
+
+    if (ipIsV4 && rangeIsV4) {
+      const ipNum = ipToLong(normalizedIp);
+      const rangeNum = ipToLong(normalizedRange);
+      const bitsNum = bitsStr ? Number(bitsStr) : 32;
+      const mask = bitsNum === 0 ? 0 : (~(Math.pow(2, 32 - bitsNum) - 1)) >>> 0;
+      return ((ipNum & mask) >>> 0) === ((rangeNum & mask) >>> 0);
+    }
+    if (!ipIsV4 && !rangeIsV4) {
+      const ipBigInt = ipv6ToBigInt(normalizedIp);
+      const rangeBigInt = ipv6ToBigInt(normalizedRange);
+      const bitsNum = bitsStr ? Number(bitsStr) : 128;
+      if (bitsNum === 0) return true;
+      const mask =
+        (BigInt(1) << BigInt(128)) - (BigInt(1) << BigInt(128 - bitsNum));
+      return (ipBigInt & mask) === (rangeBigInt & mask);
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
