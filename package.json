@@ -62,7 +62,7 @@
   },
   "overrides": {
     "esbuild": ">=0.28.1",
-    "joi": "^18.2.1",
+    "joi": "^18.2.8",
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.8.0",
