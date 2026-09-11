@@ -66,50 +66,65 @@ describe("metrics/stats - aggregate", () => {
     finalize: 5,
   };
 
-  const buildMetric = (
-    overrides: Partial<PipelineMetrics> = {},
-  ): PipelineMetrics => ({
-    run_id: "run-1",
-    success: true,
-    start_time: 1705310400000,
-    end_time: 1705310400165,
-    final_phase: "finalize",
-    total_duration_ms: 165,
-    phase_timings: basePhaseTimings,
-    deals_processed: {
-      discovered: 100,
-      passed_trust_filter: 90,
-      normalized: 80,
-      deduped: 70,
-      validated: 60,
-      scored: 50,
-      published: 40,
-    },
-    errors: 0,
-    retries: 0,
-    validation_cache: {
-      hit_total: 0,
-      miss_total: 0,
-      write_total: 0,
-      d1_lookup_total: 0,
-      dedup_hit_total: 0,
-    },
-    phase_results: {
-      init: "success",
-      discover: "success",
-      normalize: "success",
-      dedupe: "success",
-      validate: "success",
-      score: "success",
-      stage: "success",
-      publish: "success",
-      verify: "success",
-      finalize: "success",
-    },
-    validation_gate_rejections: {},
-    validation_gate_passes: { trust: 90, schema: 80 },
-    ...overrides,
-  });
+  type MetricOverrides = Omit<
+    Partial<PipelineMetrics>,
+    | "end_time"
+    | "validation_cache"
+    | "validation_gate_rejections"
+    | "validation_gate_passes"
+  > & {
+    end_time?: number | undefined;
+    validation_cache?: PipelineMetrics["validation_cache"] | undefined;
+    validation_gate_rejections?:
+      PipelineMetrics["validation_gate_rejections"] | undefined;
+    validation_gate_passes?:
+      PipelineMetrics["validation_gate_passes"] | undefined;
+  };
+
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: vitest fixture factory, not a Qwik component
+  const buildMetric = (overrides: MetricOverrides = {}): PipelineMetrics =>
+    ({
+      run_id: "run-1",
+      success: true,
+      start_time: 1705310400000,
+      end_time: 1705310400165,
+      final_phase: "finalize",
+      total_duration_ms: 165,
+      phase_timings: basePhaseTimings,
+      deals_processed: {
+        discovered: 100,
+        passed_trust_filter: 90,
+        normalized: 80,
+        deduped: 70,
+        validated: 60,
+        scored: 50,
+        published: 40,
+      },
+      errors: 0,
+      retries: 0,
+      validation_cache: {
+        hit_total: 0,
+        miss_total: 0,
+        write_total: 0,
+        d1_lookup_total: 0,
+        dedup_hit_total: 0,
+      },
+      phase_results: {
+        init: "success",
+        discover: "success",
+        normalize: "success",
+        dedupe: "success",
+        validate: "success",
+        score: "success",
+        stage: "success",
+        publish: "success",
+        verify: "success",
+        finalize: "success",
+      },
+      validation_gate_rejections: {},
+      validation_gate_passes: { trust: 90, schema: 80 },
+      ...overrides,
+    }) as PipelineMetrics;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -400,23 +415,17 @@ describe("metrics/stats - aggregate", () => {
     });
 
     it("handles metrics without validation_gate_rejections field", () => {
-      const metrics: PipelineMetrics[] = [
-        {
-          ...buildMetric(),
-          validation_gate_rejections: undefined,
-        },
-      ];
+      const base = buildMetric();
+      delete (base as Partial<PipelineMetrics>).validation_gate_rejections;
+      const metrics: PipelineMetrics[] = [base];
       const result = calculateAggregateStats(metrics);
       expect(result.total_validation_gate_rejections).toEqual({});
     });
 
     it("handles metrics without validation_gate_passes field", () => {
-      const metrics: PipelineMetrics[] = [
-        {
-          ...buildMetric(),
-          validation_gate_passes: undefined,
-        },
-      ];
+      const base = buildMetric();
+      delete (base as Partial<PipelineMetrics>).validation_gate_passes;
+      const metrics: PipelineMetrics[] = [base];
       const result = calculateAggregateStats(metrics);
       expect(result.total_validation_gate_passes).toEqual({});
     });

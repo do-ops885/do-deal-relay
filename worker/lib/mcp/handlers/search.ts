@@ -66,10 +66,10 @@ export async function handleSearchDeals(
 
   // Build search filters for base search
   const filters = {
-    domain,
-    category,
+    ...(domain !== undefined ? { domain } : {}),
+    ...(category !== undefined ? { category } : {}),
     status: status || "all",
-    q: query,
+    ...(query !== undefined ? { q: query } : {}),
     limit: 1000, // Get more for ranking/filtering
     offset: 0,
   };
@@ -90,9 +90,9 @@ export async function handleSearchDeals(
     sortBy: (sort_by || "confidence") as SortField,
     order: (order || "desc") as SortOrder,
     limit: limit || 10,
-    minConfidence: min_confidence,
-    minTrustScore: min_trust,
-    category: category,
+    ...(min_confidence !== undefined ? { minConfidence: min_confidence } : {}),
+    ...(min_trust !== undefined ? { minTrustScore: min_trust } : {}),
+    ...(category !== undefined ? { category } : {}),
   });
 
   const formattedDeals = rankingResult.deals.map((d) => ({

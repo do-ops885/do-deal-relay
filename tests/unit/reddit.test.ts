@@ -136,7 +136,7 @@ describe("Reddit post lifecycle", () => {
 
   it("checkAndCleanPosts should skip when Reddit is not configured", async () => {
     const { env } = createEnv();
-    env.REDDIT_PASSWORD = undefined;
+    delete env.REDDIT_PASSWORD;
 
     const result = await checkAndCleanPosts(env);
 

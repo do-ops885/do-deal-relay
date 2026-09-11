@@ -15,7 +15,7 @@ export interface TestResult {
   gate: string;
   passed: boolean;
   message: string;
-  details?: string[];
+  details?: string[] | undefined;
   timestamp: string;
 }
 

@@ -35,7 +35,7 @@ interface ExtractedDeal {
   description: string;
   reward_type: string;
   reward_value: string | number;
-  reward_currency?: string;
+  reward_currency?: string | undefined;
   expiry_date?: string;
 }
 

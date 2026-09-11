@@ -36,7 +36,7 @@ interface CVStoredStatus {
   healthy: boolean;
   checks: CVCheckResult;
   timestamp: string;
-  previousTimestamp?: string;
+  previousTimestamp?: string | undefined;
 }
 
 // ============================================================================

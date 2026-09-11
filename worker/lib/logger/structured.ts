@@ -11,7 +11,7 @@ export class StructuredLogger implements Logger {
   private env: Env;
   private runId: string;
   private traceId: string;
-  private currentPhase?: string;
+  private currentPhase?: string | undefined;
   private startTime: number;
 
   constructor(env: Env, runId: string, traceId: string, phase?: string) {
@@ -36,9 +36,9 @@ export class StructuredLogger implements Logger {
       level,
       run_id: this.runId,
       trace_id: this.traceId,
-      phase: this.currentPhase,
+      ...(this.currentPhase !== undefined ? { phase: this.currentPhase } : {}),
       message,
-      context,
+      ...(context !== undefined ? { context } : {}),
       duration_ms,
     };
 
@@ -46,7 +46,7 @@ export class StructuredLogger implements Logger {
       entry.error = {
         name: error.name,
         message: error.message,
-        stack: error.stack,
+        ...(error.stack !== undefined ? { stack: error.stack } : {}),
       };
     }
 

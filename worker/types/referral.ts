@@ -83,7 +83,7 @@ export interface ReferralResearchResult {
 export interface WebResearchRequest {
   query: string;
   url?: string;
-  domain?: string;
+  domain?: string | undefined;
   depth?: "quick" | "thorough" | "deep";
   sources?: string[];
   max_results?: number;

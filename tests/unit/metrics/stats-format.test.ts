@@ -270,12 +270,11 @@ describe("metrics/stats - format and timing", () => {
     });
 
     it("treats metrics with no phase_results as success for all phases", () => {
-      const metrics = [
-        buildMetric({
-          phase_results: undefined,
-          phase_timings: { ...basePhaseTimings, discover: 50 },
-        }),
-      ];
+      const base = buildMetric({
+        phase_timings: { ...basePhaseTimings, discover: 50 },
+      });
+      delete (base as Partial<PipelineMetrics>).phase_results;
+      const metrics = [base];
 
       const stats = getDetailedPhaseTimingStats(metrics);
       expect(stats.discover.success.avg).toBe(50);

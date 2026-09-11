@@ -113,7 +113,9 @@ export async function runLLMWithGateway(
       model: gatewayModel,
       messages: [{ role: "user", content: prompt }],
       temperature: options.temperature ?? 0.1,
-      max_tokens: options.max_tokens,
+      ...(options.max_tokens !== undefined
+        ? { max_tokens: options.max_tokens }
+        : {}),
     };
 
     // Use empty token fallback – gateway client will still send Bearer header.

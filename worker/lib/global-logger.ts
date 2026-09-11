@@ -26,9 +26,9 @@
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
-  component?: string;
-  run_id?: string;
-  trace_id?: string;
+  component?: string | undefined;
+  run_id?: string | undefined;
+  trace_id?: string | undefined;
   [key: string]: unknown;
 }
 
@@ -36,7 +36,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: string;
-  context?: LogContext;
+  context?: LogContext | undefined;
 }
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
@@ -112,7 +112,7 @@ export function createLogger(options: LoggerOptions = {}): Logger {
       level,
       message,
       timestamp: new Date().toISOString(),
-      context: Object.keys(merged).length > 0 ? merged : undefined,
+      ...(Object.keys(merged).length > 0 ? { context: merged } : {}),
     };
 
     const hasContext =

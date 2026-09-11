@@ -16,7 +16,7 @@ interface FetchResponse {
   content: string;
   contentType: string;
   statusCode: number;
-  error?: string;
+  error?: string | undefined;
   fetchDurationMs: number;
   cached: boolean;
 }
@@ -188,8 +188,8 @@ export class RequestManager {
             "Accept-Language": "en-US,en;q=0.9",
             ...options.headers,
           },
-          body: options.body,
-          cf: options.cf,
+          ...(options.body !== undefined ? { body: options.body } : {}),
+          ...(options.cf !== undefined ? { cf: options.cf } : {}),
           signal,
         });
         const contentType = response.headers.get("content-type") || "";

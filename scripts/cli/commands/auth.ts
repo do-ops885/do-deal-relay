@@ -4,7 +4,7 @@
  */
 
 import { ParsedArgs } from "../types.js";
-import { config, setApiKey, setEndpoint } from "../config.js";
+import { clearApiKey, config, setApiKey, setEndpoint } from "../config.js";
 import { apiRequest } from "../utils.js";
 
 /**
@@ -39,7 +39,7 @@ export async function handleAuth(args: ParsedArgs): Promise<void> {
     }
 
     case "logout": {
-      setApiKey(undefined);
+      clearApiKey();
       console.log("[OK] Logged out");
       break;
     }

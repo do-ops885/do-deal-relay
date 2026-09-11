@@ -176,9 +176,11 @@ describe("deactivateReferral and reactivateReferral", () => {
     it("should deactivate in KV only when D1 is unavailable", async () => {
       const kvResult = createMockReferral({ status: "inactive" });
       mockDeactivateInKV.mockResolvedValue(kvResult);
+      const envWithoutDb = createMockEnv();
+      delete (envWithoutDb as Partial<Env>).DEALS_DB;
 
       const result = await deactivateReferral(
-        createMockEnv({ DEALS_DB: undefined }),
+        envWithoutDb,
         "TESTCODE",
         "manual",
       );
@@ -272,9 +274,11 @@ describe("deactivateReferral and reactivateReferral", () => {
     it("should reactivate in KV only when D1 is unavailable", async () => {
       const kvResult = createMockReferral({ status: "active" });
       mockReactivateInKV.mockResolvedValue(kvResult);
+      const envWithoutDbReactivate = createMockEnv();
+      delete (envWithoutDbReactivate as Partial<Env>).DEALS_DB;
 
       const result = await reactivateReferral(
-        createMockEnv({ DEALS_DB: undefined }),
+        envWithoutDbReactivate,
         "TESTCODE",
       );
 

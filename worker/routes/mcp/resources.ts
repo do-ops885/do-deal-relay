@@ -34,7 +34,10 @@ export async function handleResourcesList(params?: {
     (resource) => resource.uri,
   );
 
-  return { resources: items, nextCursor };
+  return {
+    resources: items,
+    ...(nextCursor !== undefined ? { nextCursor } : {}),
+  };
 }
 
 /**

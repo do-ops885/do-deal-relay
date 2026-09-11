@@ -234,7 +234,11 @@ async function handleHybridSearch(
 
   // Run both searches in parallel; gracefully degrade if one fails.
   const [vectorResult, ftsResult] = await Promise.all([
-    semanticSearchDeals(env, { query, limit: requestedLimit, namespace })
+    semanticSearchDeals(env, {
+      query,
+      limit: requestedLimit,
+      ...(namespace !== undefined ? { namespace } : {}),
+    })
       .then((hits) => ({ ok: true as const, hits }))
       .catch((err) => {
         logger.warn("Hybrid vector search failed, continuing with FTS only", {

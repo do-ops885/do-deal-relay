@@ -140,7 +140,7 @@ async function validateSingleDeal(
     );
     await fastPathDecision.persist({
       status: allPassed ? "accepted" : isDuplicate ? "duplicate" : "rejected",
-      reason: allPassed ? undefined : failureReasons.join("; "),
+      ...(allPassed ? {} : { reason: failureReasons.join("; ") }),
       trustScore: deal.source.trust_score,
     });
   }

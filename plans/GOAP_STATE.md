@@ -2,10 +2,31 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-07
-**Version**: 0.19.16
-**Status**: Active — 2026-09-07 CI unblock + full hygiene ( vitest/zod pins, webhook hermeticity, CI scripts, circuit-breaker split). Prior: v0.19.13 deep re-verification.
+**Version**: 0.19.17
+**Status**: Active — 2026-09-08 exactOptionalPropertyTypes sweep (F-11 remainder, closes #768). Prior: v0.19.16 CI unblock + full hygiene.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-08 exactOptionalPropertyTypes sweep (F-11 remainder) — v0.19.17
+
+Branch `fix/exact-optional-property-types-768` (PR: closes #768).
+Spec: [SPEC-exactOptionalPropertyTypes-768.md](SPEC-exactOptionalPropertyTypes-768.md).
+No ADR (type-level only; no architecture decision).
+No new deps, creds, bindings, or migrations.
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| F-11X | tsconfig missing exactOptionalPropertyTypes (last strict gap; 192 errors at triage) | P1 | ✅ CLOSED — 5-agent GOAP swarm with disjoint scopes; patterns per official TS docs: target `\| undefined` widening at boundaries, conditional-spread omission internally, key omission in test fixtures | `npx tsc --noEmit` clean with flag on, `npm run test:unit` 2905/2905, `./scripts/quality_gate.sh` exit 0 |
+
+Notes: `worker/lib/validation/url-validator.ts` held at exactly 500 lines via
+shared `buildStatusFields` helper. One stale presence assertion updated in
+`tests/unit/nlq/query-builder/index.entities.test.ts` (`toHaveProperty` to
+`toBeUndefined` for omitted optionals; consumers use truthy guards only).
+
+Next per wave order: issues #763 (Workflows migration, ADR-018 activation)
+and #764 (personalized deal alerts). Each gets its own Full Mode spec + PR.
 
 ---
 

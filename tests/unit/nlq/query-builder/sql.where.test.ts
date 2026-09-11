@@ -2,8 +2,25 @@ import { describe, it, expect } from "vitest";
 import { buildWhereClause } from "../../../../worker/lib/nlq/query-builder/sql";
 import type { StructuredQuery } from "../../../../worker/lib/nlq/types";
 
+type StructuredQueryOverrides = Omit<
+  Partial<StructuredQuery>,
+  | "categories"
+  | "domains"
+  | "rewardTypes"
+  | "minRewardValue"
+  | "maxRewardValue"
+  | "status"
+> & {
+  categories?: string[] | undefined;
+  domains?: string[] | undefined;
+  rewardTypes?: StructuredQuery["rewardTypes"] | undefined;
+  minRewardValue?: number | undefined;
+  maxRewardValue?: number | undefined;
+  status?: StructuredQuery["status"] | undefined;
+};
+
 function createBaseQuery(
-  overrides: Partial<StructuredQuery> = {},
+  overrides: StructuredQueryOverrides = {},
 ): StructuredQuery {
   return {
     textQuery: "test",
@@ -15,7 +32,7 @@ function createBaseQuery(
     limit: 20,
     offset: 0,
     ...overrides,
-  };
+  } as StructuredQuery;
 }
 
 describe("buildWhereClause", () => {
@@ -351,7 +368,6 @@ describe("buildWhereClause", () => {
 
     it("should return default conditions when minimal query provided", () => {
       const minimal: StructuredQuery = {
-        textQuery: undefined,
         filters: [],
         includeExpired: false,
         sortBy: "relevance",

@@ -45,15 +45,21 @@ export async function batchScrapeRewards(
           results.push({
             ...result,
             rewardChanged: change.changed,
-            previousReward: change.changed ? deal.reward : undefined,
-            changeDetails: change.changed
+            ...(change.changed ? { previousReward: deal.reward } : {}),
+            ...(change.changed
               ? {
-                  typeChanged: change.typeChanged,
-                  valueChanged: change.valueChanged,
-                  oldValue: change.oldValue,
-                  newValue: change.newValue,
+                  changeDetails: {
+                    typeChanged: change.typeChanged,
+                    valueChanged: change.valueChanged,
+                    ...(change.oldValue !== undefined
+                      ? { oldValue: change.oldValue }
+                      : {}),
+                    ...(change.newValue !== undefined
+                      ? { newValue: change.newValue }
+                      : {}),
+                  },
                 }
-              : undefined,
+              : {}),
           });
         } else {
           results.push(result);

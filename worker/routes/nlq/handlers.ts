@@ -190,7 +190,9 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
       limit: body.limit,
       offset: body.offset,
       includeExpired: body.include_expired,
-      minConfidence: body.min_confidence,
+      ...(body.min_confidence !== undefined
+        ? { minConfidence: body.min_confidence }
+        : {}),
     });
 
     // Step 3: Execute the query

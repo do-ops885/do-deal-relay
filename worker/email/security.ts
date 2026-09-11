@@ -89,7 +89,9 @@ export async function validateSecurity(
   if (!contentResult.valid) {
     return {
       valid: false,
-      reason: contentResult.reason,
+      ...(contentResult.reason !== undefined
+        ? { reason: contentResult.reason }
+        : {}),
     };
   }
 
@@ -107,7 +109,7 @@ export async function validateSecurity(
 
 interface DKIMResult {
   valid: boolean;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 function validateDKIM(email: ParsedEmail): DKIMResult {
@@ -143,7 +145,7 @@ function validateDKIM(email: ParsedEmail): DKIMResult {
 
 interface SPFResult {
   valid: boolean;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 function validateSPF(email: ParsedEmail): SPFResult {
@@ -233,7 +235,7 @@ async function checkRateLimit(
 interface SpamResult {
   isSpam: boolean;
   score: number;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 function detectSpam(email: ParsedEmail): SpamResult {
@@ -311,7 +313,7 @@ function detectSpam(email: ParsedEmail): SpamResult {
 
 interface ContentResult {
   valid: boolean;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 function validateContent(email: ParsedEmail): ContentResult {

@@ -107,16 +107,20 @@ export async function handleAddReferral(
     code: args.code,
     url: args.url,
     domain: args.domain,
-    description: args.description,
+    ...(args.description !== undefined
+      ? { description: args.description }
+      : {}),
     source: "mcp_agent",
     status: "quarantined",
     submitted_at: now,
     submitted_by: "mcp_agent",
-    expires_at: args.expiry_date,
+    ...(args.expiry_date !== undefined ? { expires_at: args.expiry_date } : {}),
     metadata: {
-      title: args.title,
+      ...(args.title !== undefined ? { title: args.title } : {}),
       reward_type: args.reward_type,
-      reward_value: args.reward_value,
+      ...(args.reward_value !== undefined
+        ? { reward_value: args.reward_value }
+        : {}),
       category: args.category || ["general"],
       confidence_score: 0.8,
       notes: "Added via MCP protocol",

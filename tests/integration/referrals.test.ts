@@ -188,7 +188,7 @@ describe("Referral Deactivation", () => {
         "Content-Type": "application/json",
         ...authHeader,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
   }
 

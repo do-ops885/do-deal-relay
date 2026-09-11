@@ -26,7 +26,7 @@ export async function validateDealsBatch(
     dealId: string;
     code: string;
     valid: boolean;
-    reason?: string;
+    reason?: string | undefined;
   }>;
 }> {
   const activeDeals = await getActiveDeals(env);
@@ -35,7 +35,7 @@ export async function validateDealsBatch(
     dealId: string;
     code: string;
     valid: boolean;
-    reason?: string;
+    reason?: string | undefined;
   }> = [];
   const errors: string[] = [];
 
@@ -80,12 +80,13 @@ export async function validateDealsBatch(
       }
 
       const valid = issues.length === 0;
+      const reasonText = issues.join(", ");
 
       results.push({
         dealId: deal.id,
         code: deal.code,
         valid,
-        reason: issues.join(", ") || undefined,
+        ...(reasonText ? { reason: reasonText } : {}),
       });
     } catch (error) {
       const errorMessage =

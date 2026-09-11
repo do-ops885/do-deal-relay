@@ -37,9 +37,9 @@ interface AIExtractedItem {
 
 export interface AIExtractOptions {
   /** Optional domain hint to bias extraction (e.g., "trading212.com"). */
-  domain?: string;
+  domain?: string | undefined;
   /** Truncate input text to this many chars to stay within model limits. */
-  maxTextChars?: number;
+  maxTextChars?: number | undefined;
 }
 
 export class AIExtractorScraper implements Scraper {

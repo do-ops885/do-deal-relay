@@ -37,12 +37,14 @@ export async function handleGetReferrals(
   request?: Request,
 ): Promise<Response> {
   try {
+    const domainFilter = url.searchParams.get("domain") || undefined;
+    const categoryFilter = url.searchParams.get("category") || undefined;
     const query: ReferralSearchQuery = {
-      domain: url.searchParams.get("domain") || undefined,
+      ...(domainFilter !== undefined ? { domain: domainFilter } : {}),
       status:
         (url.searchParams.get("status") as ReferralSearchQuery["status"]) ||
         "all",
-      category: url.searchParams.get("category") || undefined,
+      ...(categoryFilter !== undefined ? { category: categoryFilter } : {}),
       source:
         (url.searchParams.get("source") as ReferralSearchQuery["source"]) ||
         "all",
@@ -222,19 +224,27 @@ export async function handleCreateReferral(
       status: "quarantined",
       submitted_at: now,
       submitted_by: (body.submitted_by as string) || "api",
-      expires_at: body.expires_at as string | undefined,
+      ...(body.expires_at !== undefined
+        ? { expires_at: body.expires_at as string }
+        : {}),
       metadata: {
         title: (bodyMetadata.title as string) || `${domain} Referral`,
         description:
           (bodyMetadata.description as string) || `Referral code for ${domain}`,
         reward_type: bodyMetadata.reward_type || "unknown",
-        reward_value: bodyMetadata.reward_value as string | number | undefined,
-        currency: bodyMetadata.currency as string | undefined,
+        ...(bodyMetadata.reward_value !== undefined
+          ? { reward_value: bodyMetadata.reward_value }
+          : {}),
+        ...(bodyMetadata.currency !== undefined
+          ? { currency: bodyMetadata.currency }
+          : {}),
         category: (bodyMetadata.category as string[]) || ["general"],
         tags: (bodyMetadata.tags as string[]) || ["api-added"],
         requirements: (bodyMetadata.requirements as string[]) || [],
         confidence_score: (bodyMetadata.confidence_score as number) || 0.5,
-        notes: bodyMetadata.notes as string | undefined,
+        ...(bodyMetadata.notes !== undefined
+          ? { notes: bodyMetadata.notes }
+          : {}),
       },
     };
 

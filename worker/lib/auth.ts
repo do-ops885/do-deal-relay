@@ -28,9 +28,9 @@ export type AuthRole =
 
 export interface AuthResult {
   authenticated: boolean;
-  userId?: string;
-  role?: AuthRole;
-  email?: string;
+  userId?: string | undefined;
+  role?: AuthRole | undefined;
+  email?: string | undefined;
   error?: string;
   requestsPerMinute?: number;
   requestsPerHour?: number;
@@ -96,10 +96,11 @@ export async function storeApiKey(
 
   const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
   await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
-    expiration: config.expiresAt
-      ? Math.floor(new Date(config.expiresAt).getTime() / 1000)
-      : undefined,
-    expirationTtl: config.expiresAt ? undefined : 365 * 86400, // 1 year default
+    ...(config.expiresAt
+      ? {
+          expiration: Math.floor(new Date(config.expiresAt).getTime() / 1000),
+        }
+      : { expirationTtl: 365 * 86400 }),
   });
 
   return key;

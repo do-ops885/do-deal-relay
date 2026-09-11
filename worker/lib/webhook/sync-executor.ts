@@ -10,7 +10,7 @@ export interface SyncResult {
   success: boolean;
   synced: number;
   failed: number;
-  cursor?: string;
+  cursor?: string | undefined;
   error?: string;
 }
 

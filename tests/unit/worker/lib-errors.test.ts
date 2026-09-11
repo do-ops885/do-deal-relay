@@ -56,7 +56,7 @@ describe("toErrCtx", () => {
       // Future maintainers should not "tighten" this by switching to
       // conditional spread without first re-checking all consumers.
       const err = new Error("no-stack");
-      err.stack = undefined;
+      delete err.stack;
       const ctx = toErrCtx(err);
       expect(ctx).toMatchObject({
         name: "Error",

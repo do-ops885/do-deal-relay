@@ -70,7 +70,7 @@ interface LoadTestResults {
 interface WebhookLoadResults {
   deliverySuccess: number;
   avgProcessingTime: number;
-  retrySuccessRate?: number;
+  retrySuccessRate?: number | undefined;
   totalDelivered: number;
   totalFailed: number;
 }

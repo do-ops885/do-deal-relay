@@ -93,7 +93,7 @@ export async function handleIncomingWebhookRequest(
       signature,
       timestamp,
       webhookId,
-      idempotencyKey,
+      ...(idempotencyKey !== undefined ? { idempotencyKey } : {}),
     });
 
     return jsonResponse(
