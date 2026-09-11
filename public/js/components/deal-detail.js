@@ -55,13 +55,23 @@ function normalizeDeal(raw) {
   };
 }
 
+const STATUS_LABELS = {
+  active: "Active",
+  expired: "Expired",
+  pending: "Pending",
+};
+
 function buildStatusBadge(status) {
   const key = String(status || "active").toLowerCase();
-  return `<span class="badge badge--${escapeHtml(key)}">${escapeHtml(key)}</span>`;
+  const label =
+    STATUS_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
+  return `<span class="badge badge--${escapeHtml(key)}" aria-label="Status: ${escapeHtml(label)}">${escapeHtml(label)}</span>`;
 }
 
 function buildCopyButton(code) {
-  return `<button type="button" class="deal-detail__copy" data-copy="${escapeHtml(code)}" aria-label="Copy referral code ${escapeHtml(code)} to clipboard">Copy code</button>`;
+  const cleanCode = String(code || "").trim();
+  const attrSafeLabel = cleanCode.replace(/"/g, "&quot;");
+  return `<button type="button" class="deal-detail__copy" data-copy="${escapeHtml(cleanCode)}" aria-label="Copy referral code ${attrSafeLabel} to clipboard">Copy code</button>`;
 }
 
 function buildDealContent(deal) {
@@ -210,14 +220,14 @@ function handleCopyClick(dialog, event) {
 
   copyToClipboard(code).then((ok) => {
     if (ok) {
-      target.textContent = "Copied! ✅";
+      target.textContent = "Copied!";
       target.setAttribute("aria-label", "Copied!");
       if (status) {
         status.hidden = false;
         status.textContent = "Code copied to clipboard";
       }
     } else {
-      target.textContent = "Failed! ❌";
+      target.textContent = "Failed!";
       target.setAttribute("aria-label", "Copy failed");
       if (status) {
         status.hidden = false;
@@ -283,6 +293,13 @@ async function loadAndRender(dialog) {
       return;
     }
     renderInto(dialog, buildDealContent(deal));
+    const titleEl = dialog.querySelector("#deal-detail-title");
+    if (titleEl) {
+      titleEl.setAttribute("tabindex", "-1");
+      if (typeof titleEl.focus === "function") {
+        titleEl.focus();
+      }
+    }
   } catch (err) {
     if (err && err.name === "AbortError") return;
     renderInto(dialog, buildError(err && err.message ? err.message : null));

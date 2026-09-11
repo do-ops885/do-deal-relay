@@ -16,3 +16,8 @@ declare module "*public/js/components/deal-card.js" {
     options?: { onSelect?: (deal: any) => void },
   ): HTMLElement;
 }
+
+declare module "*public/js/components/deal-detail.js" {
+  export function showDealDetail(dealId: string): Promise<void>;
+  export function closeDealDetail(): void;
+}
