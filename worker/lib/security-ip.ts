@@ -134,7 +134,7 @@ function parseCidrV4(cidr: string): ParsedCidrV4 | null {
   if (normalizedRange.includes(":")) return null;
   const rangeNum = ipToLong(normalizedRange);
   const bitsNum = bitsStr ? Number(bitsStr) : 32;
-  const mask = bitsNum === 0 ? 0 : (~(Math.pow(2, 32 - bitsNum) - 1)) >>> 0;
+  const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
   return { network: (rangeNum & mask) >>> 0, mask };
 }
 
@@ -185,7 +185,7 @@ export function isPrivateIP(ip: string): boolean {
     const ipNum = ipToLong(normalizedIp);
     for (let i = 0; i < PREPARSED_BLOCKED_V4.length; i++) {
       const cidr = PREPARSED_BLOCKED_V4[i];
-      if (cidr && ((ipNum & cidr.mask) >>> 0) === cidr.network) {
+      if (cidr && (ipNum & cidr.mask) >>> 0 === cidr.network) {
         return true;
       }
     }
@@ -219,8 +219,8 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
       const ipNum = ipToLong(normalizedIp);
       const rangeNum = ipToLong(normalizedRange);
       const bitsNum = bitsStr ? Number(bitsStr) : 32;
-      const mask = bitsNum === 0 ? 0 : (~(Math.pow(2, 32 - bitsNum) - 1)) >>> 0;
-      return ((ipNum & mask) >>> 0) === ((rangeNum & mask) >>> 0);
+      const mask = bitsNum === 0 ? 0 : ~(Math.pow(2, 32 - bitsNum) - 1) >>> 0;
+      return (ipNum & mask) >>> 0 === (rangeNum & mask) >>> 0;
     }
     if (!ipIsV4 && !rangeIsV4) {
       const ipBigInt = ipv6ToBigInt(normalizedIp);
