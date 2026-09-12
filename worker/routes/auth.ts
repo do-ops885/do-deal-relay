@@ -13,6 +13,12 @@ import { createToken, hashPassword, verifyPassword } from "../lib/jwt";
 import { toErrCtx } from "../lib/errors";
 import type { AuthResult } from "../lib/auth";
 
+/**
+ * Retrieve the JWT signing secret from the worker environment.
+ * @param env Worker environment bindings
+ * @returns Secret string for JWT signature verification
+ * @throws Error if JWT_SECRET environment variable is missing
+ */
 function getJwtSecret(env: Env): string {
   const secret = env.JWT_SECRET;
   if (!secret)
@@ -22,6 +28,11 @@ function getJwtSecret(env: Env): string {
   return secret;
 }
 
+/**
+ * Retrieve the refresh token signing secret from environment, falling back to JWT_SECRET.
+ * @param envParam Worker environment bindings
+ * @returns Secret string for refresh token signature verification
+ */
 function getRefreshSecret(envParam: Env): string {
   const refreshSecret = envParam.JWT_REFRESH_SECRET;
   if (refreshSecret) return refreshSecret;
@@ -56,6 +67,12 @@ function getUserResponse(user: UserPublic): object {
 // Handle functions (called by index.ts router)
 // ============================================================================
 
+/**
+ * HTTP route handler for user registration.
+ * @param request HTTP request containing user registration credentials
+ * @param env Worker environment bindings
+ * @returns Response with public user metadata or error
+ */
 export async function handleRegister(
   request: Request,
   env: Env,
@@ -77,6 +94,12 @@ export async function handleRegister(
   }
 }
 
+/**
+ * HTTP route handler for user authentication.
+ * @param request HTTP request containing login credentials
+ * @param env Worker environment bindings
+ * @returns Response containing JWT access and refresh tokens or error
+ */
 export async function handleLogin(
   request: Request,
   env: Env,
@@ -98,6 +121,12 @@ export async function handleLogin(
   }
 }
 
+/**
+ * HTTP route handler for refreshing access tokens.
+ * @param request HTTP request containing refresh token payload
+ * @param env Worker environment bindings
+ * @returns Response containing new JWT access token or error
+ */
 export async function handleRefreshToken(
   request: Request,
   env: Env,
@@ -119,6 +148,13 @@ export async function handleRefreshToken(
   }
 }
 
+/**
+ * HTTP route handler for retrieving current authenticated user profile.
+ * @param auth Authenticated user context
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response containing public user details
+ */
 export async function handleGetCurrentUser(
   auth: AuthResult,
   request: Request,
@@ -137,6 +173,13 @@ export async function handleGetCurrentUser(
   }
 }
 
+/**
+ * HTTP route handler for updating user profile attributes.
+ * @param auth Authenticated user context
+ * @param request HTTP request containing user profile updates
+ * @param env Worker environment bindings
+ * @returns Response containing updated user profile
+ */
 export async function handleUpdateProfile(
   auth: AuthResult,
   request: Request,
@@ -152,6 +195,13 @@ export async function handleUpdateProfile(
   }
 }
 
+/**
+ * HTTP route handler for listing all registered users.
+ * @param auth Authenticated user context
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response listing registered users
+ */
 export async function handleListUsers(
   auth: AuthResult,
   request: Request,
@@ -183,6 +233,13 @@ export async function handleListUsers(
 // Core auth logic
 // ============================================================================
 
+/**
+ * Register a new user in D1 database and log audit event.
+ * @param input User registration input data
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response with created public user profile
+ */
 export async function registerUser(
   input: CreateUserInput,
   request: Request,
@@ -245,6 +302,13 @@ export async function registerUser(
   }
 }
 
+/**
+ * Authenticate user credentials and issue access/refresh JWT tokens.
+ * @param input Login input credentials
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response with access token, refresh token, and token expiration
+ */
 export async function loginUser(
   input: LoginInput,
   request: Request,
@@ -291,6 +355,13 @@ export async function loginUser(
   }
 }
 
+/**
+ * Verify refresh token and generate new access/refresh token pair.
+ * @param token Encoded refresh token string
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response containing new access token and optional refreshed token
+ */
 export async function refreshAccessToken(
   token: string,
   request: Request,
@@ -356,6 +427,13 @@ export async function refreshAccessToken(
   }
 }
 
+/**
+ * Retrieve public profile for given user ID.
+ * @param userId Unique identifier of user
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response containing public user profile
+ */
 export async function getProfile(
   userId: string,
   request: Request,
@@ -372,6 +450,14 @@ export async function getProfile(
   }
 }
 
+/**
+ * Update user attributes in D1 database and write audit record.
+ * @param userId Unique identifier of user
+ * @param input Updatable user attributes
+ * @param request HTTP request
+ * @param env Worker environment bindings
+ * @returns Response with updated public user profile
+ */
 export async function updateProfile(
   userId: string,
   input: UpdateUserInput,

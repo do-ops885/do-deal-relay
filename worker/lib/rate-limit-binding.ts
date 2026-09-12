@@ -20,6 +20,10 @@ const BINDING_PERIOD_SECONDS = 60;
  * Resolve the native binding matching a rate-limit config, or undefined
  * when the config cannot be served by a binding (non-60s window or no
  * binding provisioned for that limit value on this deploy surface).
+ *
+ * @param env - Worker environment bindings
+ * @param config - Rate-limit configuration rule
+ * @returns Matching RateLimit binding object or undefined
  */
 export function getRateLimitBinding(
   env: Env,
@@ -54,6 +58,11 @@ export function getRateLimitBinding(
  * Returns the outcome, or undefined when no binding applies so the caller
  * can fall through to the KV path. Errors are NOT caught here — the caller
  * owns the fail-open/fail-closed policy per endpoint sensitivity.
+ *
+ * @param env - Worker environment bindings
+ * @param identifier - Rate-limiting key identifier (e.g. client IP or user ID)
+ * @param config - Rate-limit configuration rule
+ * @returns Outcome object with success boolean or undefined if no binding applies
  */
 export async function checkRateLimitViaBinding(
   env: Env,

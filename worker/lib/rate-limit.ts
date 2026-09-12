@@ -70,7 +70,14 @@ const DEFAULT_KV_MAX_REQUESTS = 100;
 const DEFAULT_KV_WINDOW_SECONDS = 60;
 const KV_KEY_PREFIX = "rl:kv";
 
-/** Check rate limit via binding (primary) or KV (fallback). */
+/**
+ * Check rate limit via binding (primary) or KV (fallback).
+ * @param env Worker environment bindings
+ * @param id Client or key identifier string
+ * @param endpoint Endpoint identifier string
+ * @param perKeyConfig Optional custom rate limit configuration override
+ * @returns Rate limit check result
+ */
 export async function checkRateLimit(
   env: Env,
   id: string,
@@ -134,7 +141,14 @@ export async function checkRateLimit(
   }
 }
 
-/** Check rate limit in KV with sliding window semantics. */
+/**
+ * Check rate limit in KV with sliding window semantics.
+ * @param env Worker environment bindings
+ * @param clientId Client identifier string
+ * @param maxRequests Maximum allowed requests in window
+ * @param windowSeconds Window duration in seconds
+ * @returns KV rate limit check result
+ */
 export async function checkRateLimitKV(
   env: Env,
   clientId: string,
@@ -199,7 +213,13 @@ export async function checkRateLimitKV(
   }
 }
 
-/** Get client rate limit state from KV. */
+/**
+ * Get client rate limit state from KV.
+ * @param env Worker environment bindings
+ * @param id Client identifier string
+ * @param win Window duration in seconds
+ * @returns Rate limit state or null if expired/absent
+ */
 export async function getRateLimitKVState(
   env: Env,
   id: string,
@@ -217,7 +237,13 @@ export async function getRateLimitKVState(
   }
 }
 
-/** Reset rate limit entry in KV. */
+/**
+ * Reset rate limit entry in KV.
+ * @param env Worker environment bindings
+ * @param id Client identifier string
+ * @param _win Window duration in seconds
+ * @returns Promise resolving when deleted
+ */
 export async function resetRateLimitKV(
   env: Env,
   id: string,
@@ -226,7 +252,11 @@ export async function resetRateLimitKV(
   await env.DEALS_LOCK.delete(`${KV_KEY_PREFIX}:${id}`);
 }
 
-/** List all rate limit states from KV. */
+/**
+ * List all rate limit states from KV.
+ * @param env Worker environment bindings
+ * @returns Map of client IDs to rate limit states
+ */
 export async function getAllRateLimitStates(
   env: Env,
 ): Promise<Map<string, RateLimitKVState>> {
@@ -248,7 +278,12 @@ export async function getAllRateLimitStates(
   return states;
 }
 
-/** Create rate limit store helper for KV operations. */
+/**
+ * Create rate limit store helper for KV operations.
+ * @param env Worker environment bindings
+ * @param options Optional store configuration options
+ * @returns RateLimitStore interface implementation
+ */
 export function createRateLimitKVStore(
   env: Env,
   options?: {
@@ -271,7 +306,14 @@ export function createRateLimitKVStore(
   };
 }
 
-/** Check rate limits for multiple client IDs in parallel. */
+/**
+ * Check rate limits for multiple client IDs in parallel.
+ * @param env Worker environment bindings
+ * @param ids Array of client identifier strings
+ * @param max Maximum allowed requests
+ * @param win Window duration in seconds
+ * @returns Map of client IDs to KV rate limit results
+ */
 export async function batchCheckRateLimitKV(
   env: Env,
   ids: string[],
@@ -287,7 +329,11 @@ export async function batchCheckRateLimitKV(
   return results;
 }
 
-/** Aggregate statistics across all active rate limit states in KV. */
+/**
+ * Aggregate statistics across all active rate limit states in KV.
+ * @param env Worker environment bindings
+ * @returns Aggregated statistics object
+ */
 export async function getRateLimitStats(env: Env): Promise<{
   activeClients: number;
   rateLimitedClients: number;
@@ -307,7 +353,12 @@ export async function getRateLimitStats(env: Env): Promise<{
   };
 }
 
-/** Extract client identifier string from request or auth context. */
+/**
+ * Extract client identifier string from request or auth context.
+ * @param request HTTP Request object
+ * @param auth Optional AuthResult context
+ * @returns Formatted client identifier string
+ */
 export async function getClientIdentifier(
   request: Request,
   auth?: AuthResult,
@@ -316,7 +367,11 @@ export async function getClientIdentifier(
   return `ip:${request.headers.get("CF-Connecting-IP") || "unknown"}`;
 }
 
-/** Create standard rate limit HTTP response headers. */
+/**
+ * Create standard rate limit HTTP response headers.
+ * @param result Rate limit check result
+ * @returns Response Headers object
+ */
 export function createRateLimitHeaders(result: RateLimitResult): Headers {
   const headers = new Headers();
   headers.set("X-RateLimit-Limit", result.limit.toString());
@@ -334,7 +389,13 @@ export function createRateLimitHeaders(result: RateLimitResult): Headers {
   return headers;
 }
 
-/** Middleware wrapper for standard route handlers. */
+/**
+ * Middleware wrapper for standard route handlers.
+ * @param env Worker environment bindings
+ * @param endpoint Endpoint identifier string
+ * @param auth Optional AuthResult context
+ * @returns Handler wrapper function
+ */
 export function createRateLimitMiddleware(
   env: Env,
   endpoint: string,
@@ -372,7 +433,12 @@ export function createRateLimitMiddleware(
   };
 }
 
-/** Middleware wrapper for KV-based rate limiting. */
+/**
+ * Middleware wrapper for KV-based rate limiting.
+ * @param env Worker environment bindings
+ * @param options Middleware configuration options
+ * @returns Handler wrapper function
+ */
 export function createRateLimitKVMiddleware(
   env: Env,
   options?: {
@@ -429,7 +495,13 @@ export function createRateLimitKVMiddleware(
   };
 }
 
-/** Reset rate limit state for a client and endpoint. */
+/**
+ * Reset rate limit state for a client and endpoint.
+ * @param env Worker environment bindings
+ * @param identifier Client or key identifier string
+ * @param endpoint Endpoint path string
+ * @returns Promise resolving when deleted
+ */
 export async function resetRateLimit(
   env: Env,
   identifier: string,
