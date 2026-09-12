@@ -240,7 +240,7 @@ export async function tryHandleLegacyRoutes(
   if (path.startsWith("/api/research/") && request.method === "GET") {
     const domain = path.replace("/api/research/", "");
     return withAuth(request, env, undefined, () =>
-      handleGetResearchResults(domain, env),
+      handleGetResearchResults(domain, env, request),
     );
   }
 

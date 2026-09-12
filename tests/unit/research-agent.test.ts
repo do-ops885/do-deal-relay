@@ -9,6 +9,7 @@ import {
   fetchGenericPageContent,
   RESEARCH_SOURCES,
 } from "../../worker/lib/research-agent";
+import { handleGetResearchResults } from "../../worker/routes/referral-research";
 import type { Env, WebResearchRequest } from "../../worker/types";
 import * as securityModule from "../../worker/lib/security";
 
@@ -377,6 +378,45 @@ describe("Research Agent - Real Fetching", () => {
           s.startsWith("known_pattern:trading212"),
       );
       expect(hasKnownSource).toBe(true);
+    });
+  });
+
+  describe("handleGetResearchResults SSRF Protection", () => {
+    it("should block loopback, private IP, and prohibited metadata hosts with 403", async () => {
+      const prohibitedDomains = [
+        "127.0.0.1",
+        "localhost",
+        "10.0.0.1",
+        "169.254.169.254",
+      ];
+
+      for (const domain of prohibitedDomains) {
+        const req = new Request(`https://example.com/api/research/${domain}`);
+        const response = await handleGetResearchResults(domain, mockEnv, req);
+        expect(response.status).toBe(403);
+
+        const body = (await response.json()) as { error: string };
+        expect(body.error).toBe("Domain is blocked for security reasons");
+      }
+    });
+
+    it("should allow valid public domain and return research results", async () => {
+      const spy = vi
+        .spyOn(securityModule, "validateFetchUrl")
+        .mockResolvedValue(true);
+
+      const req = new Request("https://example.com/api/research/example.com");
+      const response = await handleGetResearchResults(
+        "example.com",
+        mockEnv,
+        req,
+      );
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { domain: string };
+      expect(body.domain).toBe("example.com");
+
+      spy.mockRestore();
     });
   });
 });
