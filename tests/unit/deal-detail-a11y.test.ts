@@ -8,6 +8,24 @@ interface DealDetailMod {
   showDealDetail: ShowDealDetail;
 }
 
+const HTML_ENTITY_DECODE_MAP: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+};
+
+// Browsers decode HTML entities once when parsing attribute values.
+// The mock must do the same, otherwise tests would pin unescaped markup
+// instead of the accessible names users actually get.
+function decodeHtmlEntities(value: string): string {
+  return value.replace(
+    /&(amp|lt|gt|quot|#39);/g,
+    (match, entity: string) => HTML_ENTITY_DECODE_MAP[entity] ?? match,
+  );
+}
+
 function parseTagAttributes(tag: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   const attrPattern = /([\w:-]+)="([^"]*)"/g;
@@ -16,7 +34,7 @@ function parseTagAttributes(tag: string): Record<string, string> {
     const name = match[1];
     const value = match[2];
     if (name !== undefined && value !== undefined) {
-      attrs[name] = value;
+      attrs[name] = decodeHtmlEntities(value);
     }
     match = attrPattern.exec(tag);
   }
@@ -202,6 +220,38 @@ describe("showDealDetail Accessibility & Attributes", () => {
       "Copy referral code SAVE&WIN to clipboard",
     );
     expect(copyBtn?.getAttribute("aria-label")).not.toContain("&amp;");
+  });
+
+  it("should fully escape quotes and ampersands in copy button markup without attribute breakout", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockResolvedValue({
+        id: "deal-4",
+        title: "Quote Deal",
+        status: "active",
+        code: 'SAVE"X&Y',
+      }),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("deal-4");
+
+    const dialog = createdDialogs[0];
+    // Raw markup must carry the escaped form so no quote can break out.
+    expect(dialog?.innerHTML ?? "").toContain(
+      "Copy referral code SAVE&quot;X&amp;Y to clipboard",
+    );
+    // The parsed accessible name decodes back to the literal code.
+    const copyBtn = dialog?.querySelector(".deal-detail__copy");
+    expect(copyBtn).not.toBeNull();
+    expect(copyBtn?.getAttribute("aria-label")).toBe(
+      'Copy referral code SAVE"X&Y to clipboard',
+    );
   });
 
   it("should capitalize unknown status strings in badge aria-label", async () => {
