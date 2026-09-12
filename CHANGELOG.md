@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - **HMAC signature leakage prevention**: Hardened HMAC verification in `worker/lib/hmac.ts` to omit computed signature return values on verification failures.
+- **SSRF protection in research endpoints**: Hardened referral research endpoints (`GET /api/research/:domain` and `POST /api/research`) against SSRF attacks by enforcing host/IP validation via `validateFetchUrl` and returning 403 Forbidden on blocked domains.
 
 ## [0.1.8] - 2026-07-03
 

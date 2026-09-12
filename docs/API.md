@@ -863,7 +863,7 @@ Create a new referral code. Requires User role.
 
 ### GET /api/research/:domain
 
-Get research results for a specific domain.
+Get research results for a specific domain. Enforces host and IP SSRF validation (`validateFetchUrl`).
 
 **Parameters:**
 
@@ -896,6 +896,7 @@ Get research results for a specific domain.
 **Status Codes:**
 
 - 200: Success
+- 403: Domain is blocked for security reasons (SSRF protection)
 - 500: Failed to get research results
 
 ---
@@ -1043,7 +1044,7 @@ Reactivate a previously deactivated referral code. Requires User role.
 
 ### POST /api/research
 
-Research referral codes for a specific domain or query.
+Research referral codes for a specific domain or query. Enforces host and IP SSRF validation (`validateFetchUrl`) when a target domain is provided.
 
 **Request Body:**
 
@@ -1104,6 +1105,7 @@ When `sources` is set to `["all"]` or specific sources, the system searches:
 
 - 200: Research completed
 - 400: Invalid request
+- 403: Domain is blocked for security reasons (SSRF protection)
 - 415: Content-Type must be application/json
 - 500: Research failed
 
