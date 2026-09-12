@@ -70,8 +70,7 @@ function buildStatusBadge(status) {
 
 function buildCopyButton(code) {
   const cleanCode = String(code || "").trim();
-  const attrSafeLabel = cleanCode.replace(/"/g, "&quot;");
-  return `<button type="button" class="deal-detail__copy" data-copy="${escapeHtml(cleanCode)}" aria-label="Copy referral code ${attrSafeLabel} to clipboard">Copy code</button>`;
+  return `<button type="button" class="deal-detail__copy" data-copy="${escapeHtml(cleanCode)}" aria-label="Copy referral code ${escapeHtml(cleanCode)} to clipboard">Copy code</button>`;
 }
 
 function buildDealContent(deal) {
