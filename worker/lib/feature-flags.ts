@@ -61,6 +61,13 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
     description:
       "Workers AI-based referral code extractor (gradual rollout via setFeatureFlag)",
   },
+  {
+    name: "workflow_shadow_discovery",
+    enabled: false,
+    rolloutPercentage: 0,
+    description:
+      "Shadow-mode discovery workflow run after the main pipeline (read-only, no state writes)",
+  },
 ];
 
 // ============================================================================

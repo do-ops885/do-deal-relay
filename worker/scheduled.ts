@@ -7,6 +7,7 @@ import { runAggregation } from "./lib/d1/experience";
 import { toError } from "./lib/sanitize-error";
 import { runContinuousVerification } from "./validation/gates/continuous-verification";
 import { checkAndCleanPosts } from "./reddit";
+import { maybeTriggerShadowDiscovery } from "./workflows/shadow-trigger";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -158,6 +159,18 @@ export async function handleScheduled(
         phase: result.phase,
       });
     }
+
+    // ADR-018 wave 1 shadow workflow: read-only parity run, flag-gated
+    // (default off) and fully isolated — never throws into the cron path.
+    const shadowResult = await maybeTriggerShadowDiscovery(
+      env,
+      `cron-${Date.now()}`,
+    );
+    logger.info("Shadow discovery trigger evaluated", {
+      component: "scheduled",
+      triggered: shadowResult.triggered,
+      reason: shadowResult.reason,
+    });
 
     // Run continuous verification on recently published deals
     logger.info("Running continuous verification", {

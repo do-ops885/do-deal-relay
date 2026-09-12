@@ -2,10 +2,24 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-07
-**Version**: 0.19.16
-**Status**: Active — 2026-09-07 CI unblock + full hygiene ( vitest/zod pins, webhook hermeticity, CI scripts, circuit-breaker split). Prior: v0.19.13 deep re-verification.
+**Version**: 0.19.18
+**Status**: Active — 2026-09-09 Workflows shadow wave 1 (#763) in progress. Prior: v0.19.16 CI unblock + full hygiene (PR #788 exactOptional sweep open).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-09 Workflows shadow wave 1 (#763) — v0.19.18
+
+Branch `feat/workflow-shadow-763`.
+Spec: [SPEC-workflow-shadow-763.md](SPEC-workflow-shadow-763.md).
+ADR: [ADR-018](ADR-018-durable-execution-migration.md) (Proposed → In
+Progress; wave-1 shadow step prepended).
+
+Scope: read-only `DiscoveryShadowWorkflow` (one durable step per source),
+flag-gated (`workflow_shadow_discovery`, default off) fire-and-forget
+trigger after the 6h pipeline. No lock, no writes, compact step returns.
+Wave order next: issue #764 deal alerts (own spec + PR).
 
 ---
 

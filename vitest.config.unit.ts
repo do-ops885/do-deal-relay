@@ -1,6 +1,19 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    // Unit tests run on plain Node where the Workers runtime specifier
+    // does not resolve; map it to a behavior-free stub (fixtures only).
+    alias: [
+      {
+        find: "cloudflare:workers",
+        replacement: new URL(
+          "./tests/fixtures/cloudflare-workers-stub.ts",
+          import.meta.url,
+        ).pathname,
+      },
+    ],
+  },
   test: {
     globals: true,
     testTimeout: 10000,

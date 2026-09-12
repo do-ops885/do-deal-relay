@@ -4,6 +4,7 @@ import type {
   D1Database,
   VectorizeIndex,
   DurableObjectNamespace,
+  Workflow,
 } from "@cloudflare/workers-types";
 
 // ============================================================================
@@ -25,6 +26,12 @@ export const SubmitDealBodySchema = z.object({
 
 export type GetDealsQuery = z.infer<typeof GetDealsQuerySchema>;
 export type SubmitDealBody = z.infer<typeof SubmitDealBodySchema>;
+
+// Shadow-mode discovery workflow params (ADR-018 wave 1). Sources are
+// resolved inside the planning step so params stay tiny and deterministic.
+export interface ShadowDiscoveryParams {
+  run_id: string;
+}
 
 // ============================================================================
 // Environment Types
@@ -104,4 +111,7 @@ export interface Env {
   RL_50_60?: RateLimit;
   RL_60_60?: RateLimit;
   RL_100_60?: RateLimit;
+  // Shadow-mode discovery workflow (ADR-018 wave 1); optional so local/test
+  // envs without the binding still compile
+  DISCOVERY_WORKFLOW?: Workflow<ShadowDiscoveryParams>;
 }

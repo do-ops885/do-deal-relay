@@ -138,6 +138,14 @@
       },
     ],
   },
+  // Workflows for shadow-mode discovery (ADR-018 wave 1, default-off)
+  "workflows": [
+    {
+      "name": "discovery-shadow",
+      "binding": "DISCOVERY_WORKFLOW",
+      "class_name": "DiscoveryShadowWorkflow",
+    },
+  ],
   // NOTE: No migrations needed — DOs are already deployed and provisioned.
   // migrations blocks MUST be absent for wrangler versions upload (Cloudflare Git Integration).
   // Live durable-object exports: required so wrangler registers the DO classes
