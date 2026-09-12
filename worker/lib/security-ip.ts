@@ -52,11 +52,24 @@ export const SECURITY_CONSTANTS = {
   ] as const,
 } as const;
 
+/**
+ * Checks whether a hostname is an IPv4 or IPv6 address literal.
+ *
+ * @param hostname - The host string to check
+ * @returns True if the string is an IPv4 or IPv6 literal, false otherwise
+ */
 export function isIpAddress(hostname: string): boolean {
   const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
   return ipv4Pattern.test(hostname) || hostname.includes(":");
 }
 
+/**
+ * Normalizes an IP string into standard lowercase IPv4 or IPv6 format.
+ * Converts IPv4-mapped IPv6 addresses (e.g., ::ffff:127.0.0.1) to dotted decimal format.
+ *
+ * @param ip - Raw IP address string
+ * @returns Normalized IP string
+ */
 export function normalizeIp(ip: string): string {
   const normalized = ip.toLowerCase();
   const mappedMatch = normalized.match(
@@ -84,6 +97,12 @@ export function normalizeIp(ip: string): string {
   return normalized;
 }
 
+/**
+ * Evaluates whether an IP address falls within any blocked private or loopback CIDR range.
+ *
+ * @param ip - IP address string to check
+ * @returns True if the IP is private/loopback/reserved, false otherwise
+ */
 export function isPrivateIP(ip: string): boolean {
   const normalizedIp = normalizeIp(ip);
   for (const range of SECURITY_CONSTANTS.BLOCKED_IP_RANGES) {
@@ -92,7 +111,14 @@ export function isPrivateIP(ip: string): boolean {
   return false;
 }
 
-/** @internal */
+/**
+ * Evaluates whether an IP address belongs to a specific CIDR range.
+ *
+ * @param ip - IP address string to test
+ * @param cidr - CIDR range string (e.g. "10.0.0.0/8" or "fc00::/7")
+ * @returns True if the IP falls inside the given CIDR block, false otherwise
+ * @internal
+ */
 export function isIpInCidr(ip: string, cidr: string): boolean {
   try {
     const parts = cidr.split("/");
