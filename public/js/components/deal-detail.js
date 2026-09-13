@@ -55,17 +55,16 @@ function normalizeDeal(raw) {
   };
 }
 
-const STATUS_LABELS = {
-  active: "Active",
-  expired: "Expired",
-  pending: "Pending",
-};
+const STATUS_LABELS = new Map([
+  ["active", "Active"],
+  ["expired", "Expired"],
+  ["pending", "Pending"],
+]);
 
 function buildStatusBadge(status) {
   const key = String(status || "active").toLowerCase();
-  const label = Object.prototype.hasOwnProperty.call(STATUS_LABELS, key)
-    ? STATUS_LABELS[key]
-    : key.charAt(0).toUpperCase() + key.slice(1);
+  const label =
+    STATUS_LABELS.get(key) ?? key.charAt(0).toUpperCase() + key.slice(1);
   return `<span class="badge badge--${escapeHtml(key)}" aria-label="Status: ${escapeHtml(label)}">${escapeHtml(label)}</span>`;
 }
 
