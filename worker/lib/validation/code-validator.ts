@@ -252,13 +252,19 @@ export async function validateCodeComplete(
     valid,
     formatValid: formatResult.valid,
     existsOnPage: pageResult.codeFound,
-    redeemable: redemptionResult.redeemable,
+    ...(redemptionResult.redeemable !== undefined
+      ? { redeemable: redemptionResult.redeemable }
+      : {}),
     errors,
     warnings,
     metadata: {
-      normalizedCode: formatResult.metadata?.normalizedCode,
+      ...(formatResult.metadata?.normalizedCode !== undefined
+        ? { normalizedCode: formatResult.metadata.normalizedCode }
+        : {}),
       similarCodes: pageResult.similarCodes,
-      detectedProvider: formatResult.metadata?.detectedProvider,
+      ...(formatResult.metadata?.detectedProvider !== undefined
+        ? { detectedProvider: formatResult.metadata.detectedProvider }
+        : {}),
     },
     timestamp,
   };

@@ -177,9 +177,9 @@ export async function handleBulkExport(
 async function queryDealsFromD1(
   env: Env,
   params: {
-    domain?: string;
-    category?: string;
-    status?: string;
+    domain?: string | undefined;
+    category?: string | undefined;
+    status?: string | undefined;
     limit: number;
     offset: number;
   },
@@ -237,8 +237,12 @@ async function queryDealsFromD1(
     source: row.source as string,
     submitted_at: row.submitted_at as string,
     submitted_by: row.submitted_by as string,
-    expires_at: row.expires_at as string | undefined,
-    description: row.description as string | undefined,
+    ...(row.expires_at !== undefined
+      ? { expires_at: row.expires_at as string }
+      : {}),
+    ...(row.description !== undefined
+      ? { description: row.description as string }
+      : {}),
     metadata:
       typeof row.metadata === "string"
         ? JSON.parse(row.metadata)
@@ -258,9 +262,9 @@ async function queryDealsFromD1(
 async function queryDealsFromKV(
   env: Env,
   params: {
-    domain?: string;
-    category?: string;
-    status?: string;
+    domain?: string | undefined;
+    category?: string | undefined;
+    status?: string | undefined;
     limit: number;
     offset: number;
   },
@@ -268,9 +272,11 @@ async function queryDealsFromKV(
   // Build query without schema validation for internal use
   // (limit is already capped in the handler)
   const query: ReferralSearchQuery = {
-    domain: params.domain,
-    category: params.category,
-    status: params.status as ReferralSearchQuery["status"],
+    ...(params.domain !== undefined ? { domain: params.domain } : {}),
+    ...(params.category !== undefined ? { category: params.category } : {}),
+    ...(params.status !== undefined
+      ? { status: params.status as NonNullable<ReferralSearchQuery["status"]> }
+      : {}),
     limit: params.limit,
     offset: params.offset,
   };

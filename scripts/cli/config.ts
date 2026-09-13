@@ -31,8 +31,15 @@ export function setConfig(newConfig: Partial<Config>): void {
 /**
  * Set the API key
  */
-export function setApiKey(apiKey: string | undefined): void {
-  config.apiKey = apiKey;
+export function setApiKey(key: string): void {
+  config.apiKey = key;
+}
+
+/**
+ * Clear the API key (logout)
+ */
+export function clearApiKey(): void {
+  delete config.apiKey;
 }
 
 /**

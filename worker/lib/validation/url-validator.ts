@@ -29,6 +29,21 @@ import { validatedFetch } from "../security";
 // URL Validation
 // ============================================================================
 
+/**
+ * Build conditional spreads for optional HTTP status fields. Keeps result
+ * objects free of explicit undefined values under exactOptionalPropertyTypes.
+ */
+function buildStatusFields(source: {
+  statusCode?: number | undefined;
+  statusText?: string | undefined;
+}): { statusCode?: number; statusText?: string } {
+  const { statusCode, statusText } = source;
+  return {
+    ...(statusCode !== undefined ? { statusCode } : {}),
+    ...(statusText !== undefined ? { statusText } : {}),
+  };
+}
+
 export async function validateUrl(
   url: string,
   env?: Env,
@@ -143,7 +158,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
             url,
             valid: false,
             statusCode: headResult.statusCode,
-            statusText: headResult.statusText,
+            ...buildStatusFields(headResult),
             redirectCount,
             redirectChain,
             finalUrl: currentUrl,
@@ -156,8 +171,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
         return {
           url,
           valid: true,
-          statusCode: headResult.statusCode,
-          statusText: headResult.statusText,
+          ...buildStatusFields(headResult),
           redirectCount,
           redirectChain,
           finalUrl: currentUrl,
@@ -180,7 +194,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
             url,
             valid: false,
             statusCode: getResult.statusCode,
-            statusText: getResult.statusText,
+            ...buildStatusFields(getResult),
             redirectCount,
             redirectChain,
             finalUrl: currentUrl,
@@ -193,8 +207,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
         return {
           url,
           valid: true,
-          statusCode: getResult.statusCode,
-          statusText: getResult.statusText,
+          ...buildStatusFields(getResult),
           redirectCount,
           redirectChain,
           finalUrl: currentUrl,
@@ -206,8 +219,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
       return {
         url,
         valid: false,
-        statusCode: getResult.statusCode,
-        statusText: getResult.statusText,
+        ...buildStatusFields(getResult),
         redirectCount,
         redirectChain,
         finalUrl: currentUrl,
@@ -235,8 +247,10 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
   return {
     url,
     valid: false,
-    statusCode: finalStatusCode,
-    statusText: finalStatusText,
+    ...buildStatusFields({
+      statusCode: finalStatusCode,
+      statusText: finalStatusText,
+    }),
     redirectCount,
     redirectChain,
     finalUrl: currentUrl,

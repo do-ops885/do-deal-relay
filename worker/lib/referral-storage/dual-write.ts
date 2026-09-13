@@ -126,13 +126,15 @@ export async function storeReferralDual(
           discovered_at: referral.submitted_at || new Date().toISOString(),
           trust_score: 0.5,
         },
-        expiry: referral.expires_at
+        ...(referral.expires_at
           ? {
-              date: referral.expires_at,
-              confidence: 0.5,
-              type: "soft" as const,
+              expiry: {
+                date: referral.expires_at,
+                confidence: 0.5,
+                type: "soft" as const,
+              },
             }
-          : undefined,
+          : {}),
       });
 
       // Then insert the referral code if deal was successful

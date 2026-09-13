@@ -203,12 +203,14 @@ export async function executePipeline(env: Env): Promise<{
  */
 export async function getPipelineStatus(env: Env): Promise<{
   locked: boolean;
-  current_run?: string;
-  last_run?: {
-    run_id: string;
-    timestamp: string;
-    success: boolean;
-  };
+  current_run?: string | undefined;
+  last_run?:
+    | {
+        run_id: string;
+        timestamp: string;
+        success: boolean;
+      }
+    | undefined;
 }> {
   const { getLockStatus } = await import("./lib/lock");
   const { getLastRunMetadata } = await import("./lib/storage");

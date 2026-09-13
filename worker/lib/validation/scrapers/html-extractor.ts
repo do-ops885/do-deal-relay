@@ -108,7 +108,7 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
       candidates.push({
         type: "cash",
         value,
-        currency,
+        ...(currency !== undefined ? { currency } : {}),
         confidence: 0.8,
       });
     }
@@ -152,10 +152,18 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
   const structuredReward = extractFromStructuredData(html);
   if (structuredReward) {
     candidates.push({
-      type: structuredReward.type,
-      value: structuredReward.value,
-      currency: structuredReward.currency,
-      description: structuredReward.description,
+      ...(structuredReward.type !== undefined
+        ? { type: structuredReward.type }
+        : {}),
+      ...(structuredReward.value !== undefined
+        ? { value: structuredReward.value }
+        : {}),
+      ...(structuredReward.currency !== undefined
+        ? { currency: structuredReward.currency }
+        : {}),
+      ...(structuredReward.description !== undefined
+        ? { description: structuredReward.description }
+        : {}),
       confidence: 0.9,
     });
   }
@@ -172,6 +180,6 @@ export function extractRewardFromHTML(html: string): ExtractedReward | null {
 
   return {
     ...best,
-    description,
+    ...(description !== undefined ? { description } : {}),
   };
 }

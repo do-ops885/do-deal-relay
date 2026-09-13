@@ -115,12 +115,13 @@ export async function handleForwardedEmail(
     status: "quarantined",
     submitted_at: now,
     submitted_by: email.from,
-    expires_at: extraction.expiry || undefined,
+    // Omit empty extraction results; ReferralInput optional props reject explicit null/undefined.
+    ...(extraction.expiry ? { expires_at: extraction.expiry } : {}),
     metadata: {
       title: `${extraction.service} Referral`,
       description: `Auto-extracted from email forwarded by ${email.from}`,
       reward_type: "unknown",
-      reward_value: extraction.reward || undefined,
+      ...(extraction.reward ? { reward_value: extraction.reward } : {}),
       category: ["general"],
       tags: ["email", "auto-extracted"],
       requirements: [],

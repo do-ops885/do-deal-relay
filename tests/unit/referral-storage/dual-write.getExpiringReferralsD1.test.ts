@@ -163,10 +163,9 @@ describe("getExpiringReferralsD1", () => {
   });
 
   it("should return empty array when DEALS_DB is undefined", async () => {
-    const results = await getExpiringReferralsD1(
-      createMockEnv({ DEALS_DB: undefined }),
-      30,
-    );
+    const envWithoutDb = createMockEnv();
+    delete (envWithoutDb as Partial<Env>).DEALS_DB;
+    const results = await getExpiringReferralsD1(envWithoutDb, 30);
 
     expect(mockD1Client.query).not.toHaveBeenCalled();
     expect(results).toEqual([]);

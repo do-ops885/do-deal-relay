@@ -35,7 +35,7 @@ export async function handleD1Search(url: URL, env: Env): Promise<Response> {
     const results = await searchDeals(env.DEALS_DB, query, {
       limit,
       includeExpired,
-      status,
+      ...(status !== undefined ? { status } : {}),
     });
 
     return jsonResponse({

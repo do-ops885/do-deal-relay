@@ -20,27 +20,27 @@ import { CONFIG } from "../config";
 export interface AIActLogEntry {
   timestamp: string;
   /** Optional; falls back to ComplianceConfig.systemId when omitted. */
-  systemId?: string;
+  systemId?: string | undefined;
   operationId: string;
-  correlationId?: string;
+  correlationId?: string | undefined;
   operation: string;
   /** Optional; falls back to ComplianceConfig.systemVersion when omitted. */
-  operationVersion?: string;
+  operationVersion?: string | undefined;
 
   inputData: {
     source: string;
     hash: string;
     description: string;
-    referenceDatabase?: string;
-    inputMatch?: string;
-    metadata?: Record<string, unknown>;
+    referenceDatabase?: string | undefined;
+    inputMatch?: string | undefined;
+    metadata?: Record<string, unknown> | undefined;
   };
 
   outputData: {
     result: string;
-    confidence?: number;
-    explanation?: string;
-    decisionBasis?: string;
+    confidence?: number | undefined;
+    explanation?: string | undefined;
+    decisionBasis?: string | undefined;
   };
 
   humanOversight?: {
@@ -48,16 +48,18 @@ export interface AIActLogEntry {
     reviewerRole: string;
     decision: "approved" | "rejected" | "modified" | "overridden";
     timestamp: string;
-    notes?: string;
+    notes?: string | undefined;
   };
 
-  riskFlags?: string[];
-  anomalies?: string[];
-  performanceMetrics?: {
-    accuracy?: number;
-    latencyMs?: number;
-    resourceUsage?: Record<string, number>;
-  };
+  riskFlags?: string[] | undefined;
+  anomalies?: string[] | undefined;
+  performanceMetrics?:
+    | {
+        accuracy?: number;
+        latencyMs?: number;
+        resourceUsage?: Record<string, number>;
+      }
+    | undefined;
 
   retentionDays?: number;
 }
@@ -167,7 +169,9 @@ export class EUAIActLogger {
       timestamp: new Date().toISOString(),
       systemId: this.config.systemId,
       operationId: params.operationId,
-      correlationId: params.correlationId,
+      ...(params.correlationId !== undefined
+        ? { correlationId: params.correlationId }
+        : {}),
       operation: "human_oversight",
       operationVersion: this.config.systemVersion,
       inputData: {
@@ -176,7 +180,9 @@ export class EUAIActLogger {
           ? await this.hashData(JSON.stringify(params.originalOutput))
           : "no_original",
         description: `Human ${params.decision} of AI output`,
-        metadata: params.modifiedOutput,
+        ...(params.modifiedOutput !== undefined
+          ? { metadata: params.modifiedOutput }
+          : {}),
       },
       outputData: {
         result: params.decision,
@@ -188,7 +194,7 @@ export class EUAIActLogger {
         reviewerRole: params.reviewerRole,
         decision: params.decision,
         timestamp: new Date().toISOString(),
-        notes: params.reason,
+        ...(params.reason !== undefined ? { notes: params.reason } : {}),
       },
     });
   }
@@ -208,7 +214,9 @@ export class EUAIActLogger {
       timestamp: new Date().toISOString(),
       systemId: this.config.systemId,
       operationId: crypto.randomUUID(),
-      correlationId: params.correlationId,
+      ...(params.correlationId !== undefined
+        ? { correlationId: params.correlationId }
+        : {}),
       operation: params.operation,
       operationVersion: this.config.systemVersion,
       inputData: {
@@ -346,7 +354,7 @@ and limitations, please contact the provider.
     operationsByType: Record<string, number>;
     humanOversightCount: number;
     riskFlaggedCount: number;
-    averageConfidence?: number;
+    averageConfidence?: number | undefined;
   }> {
     const result = await this.db
       .prepare(
@@ -391,8 +399,9 @@ and limitations, please contact the provider.
       operationsByType,
       humanOversightCount,
       riskFlaggedCount,
-      averageConfidence:
-        confidenceCount > 0 ? totalConfidence / confidenceCount : undefined,
+      ...(confidenceCount > 0
+        ? { averageConfidence: totalConfidence / confidenceCount }
+        : {}),
     };
   }
 

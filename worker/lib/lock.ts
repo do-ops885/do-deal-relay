@@ -228,9 +228,9 @@ export async function extendLock(
  */
 export async function getLockStatus(env: Env): Promise<{
   locked: boolean;
-  run_id?: string;
-  trace_id?: string;
-  expires_at?: string;
+  run_id?: string | undefined;
+  trace_id?: string | undefined;
+  expires_at?: string | undefined;
 }> {
   const stub = getPipelineLockStub(env);
   if (stub) {
@@ -241,8 +241,8 @@ export async function getLockStatus(env: Env): Promise<{
       }
       return {
         locked: true,
-        run_id: status.run_id,
-        trace_id: status.trace_id,
+        ...(status.run_id !== undefined ? { run_id: status.run_id } : {}),
+        ...(status.trace_id !== undefined ? { trace_id: status.trace_id } : {}),
         expires_at: new Date(status.expires_at).toISOString(),
       };
     } catch (error) {

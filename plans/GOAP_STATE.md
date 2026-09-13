@@ -23,6 +23,27 @@ Wave order next: issue #764 deal alerts (own spec + PR).
 
 ---
 
+## 2026-09-08 exactOptionalPropertyTypes sweep (F-11 remainder) — v0.19.17
+
+Branch `fix/exact-optional-property-types-768` (PR: closes #768).
+Spec: [SPEC-exactOptionalPropertyTypes-768.md](SPEC-exactOptionalPropertyTypes-768.md).
+No ADR (type-level only; no architecture decision).
+No new deps, creds, bindings, or migrations.
+
+| ID | Finding | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| F-11X | tsconfig missing exactOptionalPropertyTypes (last strict gap; 192 errors at triage) | P1 | ✅ CLOSED — 5-agent GOAP swarm with disjoint scopes; patterns per official TS docs: target `\| undefined` widening at boundaries, conditional-spread omission internally, key omission in test fixtures | `npx tsc --noEmit` clean with flag on, `npm run test:unit` 2905/2905, `./scripts/quality_gate.sh` exit 0 |
+
+Notes: `worker/lib/validation/url-validator.ts` held at exactly 500 lines via
+shared `buildStatusFields` helper. One stale presence assertion updated in
+`tests/unit/nlq/query-builder/index.entities.test.ts` (`toHaveProperty` to
+`toBeUndefined` for omitted optionals; consumers use truthy guards only).
+
+Next per wave order: issues #763 (Workflows migration, ADR-018 activation)
+and #764 (personalized deal alerts). Each gets its own Full Mode spec + PR.
+
+---
+
 ## 2026-09-07 Rate-Limit Config Split + Zod v4 Migration — v0.19.15/v0.19.16
 
 Branch `fix/rate-limit-config-split` (MERGED #782): endpoint-limit table extracted

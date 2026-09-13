@@ -29,8 +29,8 @@ export async function executeNLQ(
   };
   count: number;
   results: unknown[];
-  suggestions?: string[];
-  sql?: string;
+  suggestions?: string[] | undefined;
+  sql?: string | undefined;
 }> {
   if (!env.DEALS_DB) {
     return {

@@ -56,7 +56,7 @@ export interface AIInteractionRecord {
   inputDescription: string;
   inputMetadata?: Record<string, unknown>;
   result: string;
-  confidence?: number;
+  confidence?: number | undefined;
   explanation?: string;
   correlationId?: string;
   latencyMs?: number;
@@ -81,23 +81,30 @@ export async function logAIInteraction(
     await createComplianceLogger(db).logOperation({
       timestamp: new Date().toISOString(),
       operationId: record.correlationId ?? crypto.randomUUID(),
-      correlationId: record.correlationId,
+      ...(record.correlationId !== undefined
+        ? { correlationId: record.correlationId }
+        : {}),
       operation: record.operation,
       inputData: {
         source: record.inputSource,
         hash,
         description: record.inputDescription,
-        metadata: record.inputMetadata,
+        ...(record.inputMetadata !== undefined
+          ? { metadata: record.inputMetadata }
+          : {}),
       },
       outputData: {
         result: record.result,
-        confidence: record.confidence,
-        explanation: record.explanation,
+        ...(record.confidence !== undefined
+          ? { confidence: record.confidence }
+          : {}),
+        ...(record.explanation !== undefined
+          ? { explanation: record.explanation }
+          : {}),
       },
-      performanceMetrics:
-        record.latencyMs === undefined
-          ? undefined
-          : { latencyMs: record.latencyMs },
+      ...(record.latencyMs !== undefined
+        ? { performanceMetrics: { latencyMs: record.latencyMs } }
+        : {}),
     });
   } catch (error) {
     reportComplianceFailure(record.operation, error);
@@ -181,7 +188,7 @@ export async function extractWithAI(
         url: item.url,
         source: "ai_extractor",
         discovered_at: new Date().toISOString(),
-        reward_summary: item.reward,
+        ...(item.reward !== undefined ? { reward_summary: item.reward } : {}),
         confidence: applySourceConfidence(confidence, "company_site"),
       });
     }

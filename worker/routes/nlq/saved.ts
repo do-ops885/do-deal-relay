@@ -71,7 +71,7 @@ export async function handleSavedPost(
     const row = await saveQuery(env.DEALS_DB, {
       userId,
       query: parsed.data.query,
-      name: parsed.data.name,
+      ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
       intent,
     });
     return jsonResponse({ success: true, saved: row }, 201, request, env);

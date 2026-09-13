@@ -120,7 +120,9 @@ export async function publishSnapshot(
       description: deal.description,
       rewardType: deal.reward.type,
       rewardValue: String(deal.reward.value),
-      currency: deal.reward.currency,
+      ...(deal.reward.currency !== undefined
+        ? { currency: deal.reward.currency }
+        : {}),
       status: deal.metadata.status,
     }));
     await insertReferralsBatch(env.DEALS_DB, referrals);

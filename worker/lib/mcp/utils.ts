@@ -16,8 +16,8 @@
 export interface ProgressNotification {
   progressToken: string | number;
   progress: number;
-  total?: number;
-  message?: string;
+  total?: number | undefined;
+  message?: string | undefined;
 }
 
 /**
@@ -37,8 +37,8 @@ export function createProgressMeta(
       progress: {
         progressToken,
         progress,
-        total,
-        message,
+        ...(total !== undefined ? { total } : {}),
+        ...(message !== undefined ? { message } : {}),
       },
     },
   };

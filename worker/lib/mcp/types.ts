@@ -242,8 +242,8 @@ export interface ToolCallResult {
     progress?: {
       progressToken: string | number;
       progress: number;
-      total?: number;
-      message?: string;
+      total?: number | undefined;
+      message?: string | undefined;
     };
     [key: string]: unknown;
   };
