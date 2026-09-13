@@ -278,6 +278,30 @@ describe("showDealDetail Accessibility & Attributes", () => {
     expect(badge?.getAttribute("aria-label")).toBe("Status: Quarantined");
   });
 
+  it("should not resolve prototype names through the status label map", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockResolvedValue({
+        id: "deal-5",
+        title: "Prototype Status Deal",
+        status: "constructor",
+      }),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("deal-5");
+
+    const dialog = createdDialogs[0];
+    const badge = dialog?.querySelector(".badge");
+    expect(badge).not.toBeNull();
+    expect(badge?.getAttribute("aria-label")).toBe("Status: Constructor");
+  });
+
   it("should set tabindex='-1' and focus heading on content load", async () => {
     const apiMock = {
       getDeal: vi.fn().mockResolvedValue({

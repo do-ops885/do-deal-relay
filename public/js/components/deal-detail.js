@@ -63,8 +63,9 @@ const STATUS_LABELS = {
 
 function buildStatusBadge(status) {
   const key = String(status || "active").toLowerCase();
-  const label =
-    STATUS_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
+  const label = Object.prototype.hasOwnProperty.call(STATUS_LABELS, key)
+    ? STATUS_LABELS[key]
+    : key.charAt(0).toUpperCase() + key.slice(1);
   return `<span class="badge badge--${escapeHtml(key)}" aria-label="Status: ${escapeHtml(label)}">${escapeHtml(label)}</span>`;
 }
 
