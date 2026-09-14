@@ -1,5 +1,6 @@
 # Audit Precheck
+
 Status: PASS
-Issues Found and Fixed:
-- Installed missing `.git/hooks/pre-commit` hook required by quality gate script in local dev environment.
-- Ran quality gate (`bash scripts/quality_gate.sh`) and confirmed all 16 checks pass.
+
+Issues found and fixed:
+- Installed missing pre-commit git hook (`cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`) to fulfill `./scripts/quality_gate.sh` requirements.

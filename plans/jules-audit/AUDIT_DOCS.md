@@ -1,7 +1,7 @@
-# Documentation Audit Artifact (Track D)
+# Documentation Audit (Track D)
 
-## Undocumented Public Surface Identified
-`worker/lib/research-agent/helpers.ts` exposes public functions (`normalizeResearchQuery`, `generateSearchQueries`, `generatePotentialCodes`, `generateSampleCode`, `simulateDiscovery`, `generateSimulatedCode`, `generateSimulatedReward`, `deduplicateCodes`, `extractRewardValue`, `getDefaultResearchConfig`) missing standard JSDoc comment documentation (`@param`, `@returns`).
+## Uncovered Public Functions / Exported Functions
+- `extractContent`, `extractTitle`, `extractDescription`, `parseHTMLContent`, `parseJSONContent`, `buildDeal` in `worker/pipeline/discover-parsers.ts`.
 
-## Actions Planned
-Add comprehensive JSDoc `@param` and `@returns` annotations for all exported public functions in `worker/lib/research-agent/helpers.ts`.
+## Documentation Added
+- Added JSDoc comments (`@param`, `@returns`, `@throws`) for exported parsing helper functions in `worker/pipeline/discover-parsers.ts`.
