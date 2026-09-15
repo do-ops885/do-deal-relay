@@ -8,6 +8,12 @@ import {
   type ShadowSourceSummary,
 } from "../pipeline/discover";
 import { buildShadowPlan, shadowStepName } from "./shadow-plan";
+import {
+  chunkShadowKeys,
+  validateBatchReadonly,
+  validateBatchStepName,
+  type ShadowValidateSummary,
+} from "./validate-shadow";
 import { logger } from "../lib/global-logger";
 
 /**
@@ -20,14 +26,17 @@ export interface ShadowRunSummary {
   total_deals: number;
   total_errors: number;
   sources: ShadowSourceSummary[];
+  validate: ShadowValidateSummary;
 }
 
 /**
  * ADR-018 wave 1: read-only shadow discovery. One durable step plans the
  * run, then one durable step per source replays the fetch+parse+build core.
+ * ADR-018 wave 2: `validate-batch-{n}` dry-run steps replay the fast-path
+ * validation cache lookups over shadow-discovered keys.
  * Steps never write: no tally flush, no breaker writes, no KV/D1 writes,
- * no PipelineLock. Per-source failure isolation: one source throwing fails
- * only its own step (recorded in its summary) while the run continues.
+ * no PipelineLock. Per-source and per-batch failure isolation: a failing
+ * source or batch is recorded in its summary while the run continues.
  */
 export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
   Env,
@@ -59,6 +68,7 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
               error_count: 1,
               sample_codes: [],
               sample_errors: [`${item.domain}: source vanished mid-run`],
+              sample_keys: [],
             };
           }
           try {
@@ -73,6 +83,7 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
               sample_errors: [
                 `${item.domain}: ${error instanceof Error ? error.message : String(error)}`,
               ],
+              sample_keys: [],
             };
           }
         },
@@ -86,7 +97,38 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
       total_deals: sources.reduce((n, s) => n + s.deal_count, 0),
       total_errors: sources.reduce((n, s) => n + s.error_count, 0),
       sources,
+      validate: { batches: 0, checked: 0, hits: 0, misses: 0, batch_errors: 0 },
     };
+
+    // ADR-018 wave 2: dry-run validate-batch steps over the in-memory
+    // summaries (no refetch, no extra source traffic). Read-only:
+    // gets/selects only, never KV puts or D1 writes (no persist, no
+    // D1-to-KV repopulation). A failing batch is
+    // recorded, never thrown, so one bad batch cannot fail the run.
+    const batches = chunkShadowKeys(sources);
+    let batch_errors = 0;
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i] ?? [];
+      try {
+        const batchSummary = await step.do(
+          validateBatchStepName(i, run_id),
+          async () => validateBatchReadonly(this.env, i, batch),
+        );
+        summary.validate.batches += 1;
+        summary.validate.checked += batchSummary.checked;
+        summary.validate.hits += batchSummary.hits;
+        summary.validate.misses += batchSummary.misses;
+      } catch (error) {
+        batch_errors += 1;
+        logger.warn("Shadow validate batch failed (isolated)", {
+          component: "workflow-shadow",
+          run_id,
+          batch_index: i,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    summary.validate.batch_errors = batch_errors;
 
     logger.info("Shadow discovery run completed", {
       component: "workflow-shadow",
@@ -94,6 +136,9 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
       source_count: summary.source_count,
       total_deals: summary.total_deals,
       total_errors: summary.total_errors,
+      validate_checked: summary.validate.checked,
+      validate_hits: summary.validate.hits,
+      validate_batch_errors: summary.validate.batch_errors,
     });
 
     return summary;

@@ -384,6 +384,19 @@ async function fetchPatternDeals(
 // Shadow step returns stay far under the 1 MiB workflow step limit.
 const MAX_SHADOW_SAMPLE_CODES = 10;
 const MAX_SHADOW_SAMPLE_ERRORS = 3;
+// Validation keys are small scalar pairs; 25/source keeps batch steps tiny
+// even on high-volume sources.
+const MAX_SHADOW_SAMPLE_KEYS = 25;
+
+/**
+ * Minimal dry-run validation input for one shadow-discovered deal.
+ * `fingerprint` is the deal id, identical to the main validation path
+ * (`worker/validation/pipeline.ts` passes `fingerprint: deal.id`).
+ */
+export interface ShadowSampleKey {
+  url: string;
+  fingerprint: string;
+}
 
 /**
  * Compact per-source shadow result: counts plus small samples. No Deal
@@ -395,6 +408,7 @@ export interface ShadowSourceSummary {
   error_count: number;
   sample_codes: string[];
   sample_errors: string[];
+  sample_keys: ShadowSampleKey[];
 }
 
 /**
@@ -416,5 +430,8 @@ export async function discoverSourceReadonly(
     sample_errors: errors
       .slice(0, MAX_SHADOW_SAMPLE_ERRORS)
       .map((e) => `${e.url}: ${e.error}`),
+    sample_keys: deals
+      .slice(0, MAX_SHADOW_SAMPLE_KEYS)
+      .map((d) => ({ url: d.url, fingerprint: d.id })),
   };
 }

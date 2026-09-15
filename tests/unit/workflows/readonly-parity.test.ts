@@ -149,6 +149,9 @@ describe("discoverSourceReadonly parity", () => {
     expect(main.deals).toHaveLength(readonly.deal_count);
     expect(main.errors).toHaveLength(readonly.error_count);
     expect(readonly.sample_codes).toEqual(main.deals.map((deal) => deal.code));
+    expect(readonly.sample_keys).toEqual(
+      main.deals.map((deal) => ({ url: deal.url, fingerprint: deal.id })),
+    );
   });
 
   it("should succeed with zero writes even when the flush path throws", async (): Promise<void> => {
