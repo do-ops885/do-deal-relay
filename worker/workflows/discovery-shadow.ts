@@ -59,19 +59,21 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
         async () => {
           // Full config is re-read inside the step so the callback is
           // self-contained and idempotent across replays and retries.
-          const registry = await getSourceRegistry(this.env);
-          const source = registry.find((s) => s.domain === item.domain);
-          if (!source) {
-            return {
-              domain: item.domain,
-              deal_count: 0,
-              error_count: 1,
-              sample_codes: [],
-              sample_errors: [`${item.domain}: source vanished mid-run`],
-              sample_keys: [],
-            };
-          }
+          // Registry read stays inside the try so a registry failure is
+          // isolated to this source summary instead of failing the run.
           try {
+            const registry = await getSourceRegistry(this.env);
+            const source = registry.find((s) => s.domain === item.domain);
+            if (!source) {
+              return {
+                domain: item.domain,
+                deal_count: 0,
+                error_count: 1,
+                sample_codes: [],
+                sample_errors: [`${item.domain}: source vanished mid-run`],
+                sample_keys: [],
+              };
+            }
             return await discoverSourceReadonly(source, item.limit);
           } catch (error) {
             // Isolated: a source failure is recorded, never thrown.

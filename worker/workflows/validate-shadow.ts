@@ -43,10 +43,12 @@ export interface ShadowValidateSummary {
 
 /**
  * Deterministic durable step name. Index plus run id form a stable cache
- * key (Rules of Workflows: no Date.now/random in names).
+ * key (Rules of Workflows: no Date.now/random in names). Run id is
+ * sanitized like `shadowStepName` so names stay stable cache keys.
  */
 export function validateBatchStepName(index: number, run_id: string): string {
-  return `validate-batch-${index}-${run_id}`;
+  const safeRunId = run_id.replace(/[^a-zA-Z0-9-]/g, "-");
+  return `validate-batch-${index}-${safeRunId}`;
 }
 
 /**
@@ -57,6 +59,9 @@ export function chunkShadowKeys(
   summaries: ShadowSourceSummary[],
   batchSize: number = SHADOW_VALIDATE_BATCH_SIZE,
 ): ShadowSampleKey[][] {
+  if (!Number.isFinite(batchSize) || batchSize < 1) {
+    return [];
+  }
   const keys: ShadowSampleKey[] = [];
   for (const summary of summaries) {
     for (const key of summary.sample_keys ?? []) {
@@ -115,6 +120,11 @@ export async function validateBatchReadonly(
       by_source[host] = (by_source[host] ?? 0) + 1;
     }
   } else {
+    logger.warn("Shadow validate batch degraded: bindings absent", {
+      component: "workflow-shadow",
+      batch_index,
+      checked: keys.length,
+    });
     for (const key of keys) {
       const host = hostOf(key.url);
       by_source[host] = (by_source[host] ?? 0) + 1;

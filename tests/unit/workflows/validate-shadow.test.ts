@@ -78,6 +78,12 @@ describe("validateBatchStepName", () => {
       validateBatchStepName(BATCH_INDEX, RUN_ID),
     );
   });
+
+  it("should sanitize unsafe run id characters in step names", (): void => {
+    expect(validateBatchStepName(0, "run/1:2")).toBe(
+      "validate-batch-0-run-1-2",
+    );
+  });
 });
 
 describe("chunkShadowKeys", () => {
@@ -112,6 +118,13 @@ describe("chunkShadowKeys", () => {
     const summaries = [createSummary("a.com", [createKey("a.com", "1")])];
 
     expect(chunkShadowKeys(summaries)).toHaveLength(1);
+  });
+
+  it("should return no batches for non-positive batch sizes", (): void => {
+    const summaries = [createSummary("a.com", [createKey("a.com", "1")])];
+
+    expect(chunkShadowKeys(summaries, 0)).toEqual([]);
+    expect(chunkShadowKeys(summaries, -1)).toEqual([]);
   });
 });
 
