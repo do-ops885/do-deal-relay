@@ -2,10 +2,25 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-16
-**Version**: 0.19.22
-**Status**: Active — 2026-09-16 Pipeline cutover wave 4 (#763) in progress on `feat/workflow-cutover-wave4-763`. Prior: shadow wave 3 merged (#808).
+**Version**: 0.19.23
+**Status**: Active — 2026-09-16 Workflows migration (#763) close-out, wave 4 merged (#809). PR queue empty. Next: #764 deal alerts Full Mode spec.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-16 Workflows migration close-out (#763) — v0.19.23
+
+Branch `chore/close-763-wave4-merged`. Docs-only register update, zero prod change.
+
+| PR | Disposition | Evidence |
+|:---|:---|:---|
+| #789 shadow discovery wave 1 | MERGED — read-only `DiscoveryShadowWorkflow`, flag `workflow_shadow_discovery` default off, per-source isolation | `worker/workflows/discovery-shadow.ts`, ADR-018 wave-1 note |
+| #805 shadow validate-batch wave 2 | MERGED (`0c6966b`) — `validate-batch-{n}` dry-run, read-only gets/selects, 25/source cap, 50/batch, per-batch isolation | 23 checks SUCCESS, SPEC-wave2, ADR-018 wave-2 note |
+| #808 shadow publish/notify wave 3 | MERGED (`571e83b`) — `publish-dry-run` + `notify-dry-run` steps, zero sends/writes, strict `>` parity | checks SUCCESS, SPEC-wave3, ADR-018 wave-3 note |
+| #809 pipeline cutover wave 4 | MERGED (`c12852e`) — flag-gated `PipelineWorkflow` (`workflow_pipeline_cutover` default off), per-phase durable steps, KV `wf:{run_id}` handoffs, lock acquire/release every path | 23 checks SUCCESS + 1 SKIPPED, SPEC-wave4, `pipeline-workflow.test.ts` |
+
+Open issues: #763 closable (all waves merged, shadow parity + failure isolation demonstrated, ADR-018 Completed); #764 remains open (deal alerts need Full Mode spec, 4-6 atomic PRs). PR queue empty. Legacy path + PipelineLock retained per wave-4 non-goals (transition period).
 
 ---
 
