@@ -2,10 +2,27 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-16
-**Version**: 0.19.21
-**Status**: Active — 2026-09-16 Workflows shadow wave 3 (#763) in progress on `feat/workflow-shadow-wave3-763`. Prior: wave 2 merged (#805), PR queue empty.
+**Version**: 0.19.22
+**Status**: Active — 2026-09-16 Pipeline cutover wave 4 (#763) in progress on `feat/workflow-cutover-wave4-763`. Prior: shadow wave 3 merged (#808).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-16 Pipeline cutover wave 4 (#763) — v0.19.22
+
+Branch `feat/workflow-cutover-wave4-763`.
+Spec: [SPEC-workflow-cutover-wave4-763.md](SPEC-workflow-cutover-wave4-763.md).
+ADR: [ADR-018](ADR-018-durable-execution-migration.md) (wave-4 note added).
+
+Scope: flag-gated `PipelineWorkflow` cutover per official Rules of
+Workflows (per-phase durable steps, no single-step encapsulation, state
+from step returns + `wf:{run_id}` KV handoffs for deal arrays under the
+1MiB cap, deterministic names, in-step retry mirroring
+`state-machine.ts` with engine retries outside). `scheduled()` creates
+the instance behind `workflow_pipeline_cutover` (default off); legacy
+direct path unchanged as fallback. PipelineLock retained (init acquire,
+release on every path, TTL backstop). Docs: SPEC + ADR-018 wave-4 note.
 
 ---
 

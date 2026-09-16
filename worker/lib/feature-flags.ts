@@ -68,6 +68,13 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
     description:
       "Shadow-mode discovery workflow run after the main pipeline (read-only, no state writes)",
   },
+  {
+    name: "workflow_pipeline_cutover",
+    enabled: false,
+    rolloutPercentage: 0,
+    description:
+      "Route the 6h cron pipeline through the durable PipelineWorkflow instead of direct execution (ADR-018 wave 4)",
+  },
 ];
 
 // ============================================================================
