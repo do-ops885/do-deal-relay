@@ -1,6 +1,6 @@
 # ADR-018: Durable Execution Migration for Long-Running Pipelines
 
-**Status**: In Progress (shadow-mode wave 2, 2026-09-13; wave 1 merged #789)
+**Status**: In Progress (shadow-mode wave 3, 2026-09-16; wave 2 merged #805, wave 1 merged #789)
 **Created**: 2026-07-07
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
@@ -168,6 +168,17 @@ Read-only via gets/selects only: mirrors `validateDealFastPath` hit/miss
 decisions without `persist` and without D1-to-KV repopulation, so zero
 KV/D1 writes. Per-batch failure isolation: a throwing batch is recorded,
 never thrown.
+
+Wave 3 (shadow mode, issue #763, spec SPEC-workflow-shadow-wave3-763.md):
+`publish-dry-run-{run_id}` step reads staging + production snapshots via
+KV gets only and reports `would_publish` (staging present and hash differs
+from production) without promoting, inserting referrals, committing to
+GitHub, or writing metrics/audit. `notify-dry-run-{run_id}` step counts
+sample keys with `reward_value > threshold` via the shared
+`getNotificationThreshold`/`getRewardNumericValue` helpers (strict `>`
+parity with `filterHighValueDeals`) without calling `notify` or sending
+webhooks. Per-step failure isolation: a throwing step is recorded, never
+thrown.
 
 | Step | Action | Duration |
 |------|--------|----------|

@@ -18,6 +18,7 @@ import {
   buildDeal,
 } from "./discover-parsers";
 import { calculateAdaptiveBudget, getDefaultBudgets } from "./discovery-budget";
+import { getRewardNumericValue } from "../lib/high-value-notifier";
 
 // ============================================================================
 // Discovery Engine
@@ -392,10 +393,13 @@ const MAX_SHADOW_SAMPLE_KEYS = 25;
  * Minimal dry-run validation input for one shadow-discovered deal.
  * `fingerprint` is the deal id, identical to the main validation path
  * (`worker/validation/pipeline.ts` passes `fingerprint: deal.id`).
+ * `reward_value` uses the shared `getRewardNumericValue` helper so the
+ * notify dry-run mirrors the main high-value filter by construction.
  */
 export interface ShadowSampleKey {
   url: string;
   fingerprint: string;
+  reward_value: number | null;
 }
 
 /**
@@ -430,8 +434,10 @@ export async function discoverSourceReadonly(
     sample_errors: errors
       .slice(0, MAX_SHADOW_SAMPLE_ERRORS)
       .map((e) => `${e.url}: ${e.error}`),
-    sample_keys: deals
-      .slice(0, MAX_SHADOW_SAMPLE_KEYS)
-      .map((d) => ({ url: d.url, fingerprint: d.id })),
+    sample_keys: deals.slice(0, MAX_SHADOW_SAMPLE_KEYS).map((d) => ({
+      url: d.url,
+      fingerprint: d.id,
+      reward_value: getRewardNumericValue(d.reward),
+    })),
   };
 }

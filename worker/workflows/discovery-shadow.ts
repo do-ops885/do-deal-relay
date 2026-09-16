@@ -14,6 +14,16 @@ import {
   validateBatchStepName,
   type ShadowValidateSummary,
 } from "./validate-shadow";
+import {
+  planPublishReadonly,
+  publishStepName,
+  type PublishDryRunSummary,
+} from "./publish-shadow";
+import {
+  planNotifyReadonly,
+  notifyStepName,
+  type NotifyDryRunSummary,
+} from "./notify-shadow";
 import { logger } from "../lib/global-logger";
 
 /**
@@ -27,6 +37,8 @@ export interface ShadowRunSummary {
   total_errors: number;
   sources: ShadowSourceSummary[];
   validate: ShadowValidateSummary;
+  publish: PublishDryRunSummary;
+  notify: NotifyDryRunSummary;
 }
 
 /**
@@ -34,9 +46,11 @@ export interface ShadowRunSummary {
  * run, then one durable step per source replays the fetch+parse+build core.
  * ADR-018 wave 2: `validate-batch-{n}` dry-run steps replay the fast-path
  * validation cache lookups over shadow-discovered keys.
+ * ADR-018 wave 3: `publish-dry-run-{run_id}` and `notify-dry-run-{run_id}`
+ * steps dry-run the publish and notify decisions with zero writes/sends.
  * Steps never write: no tally flush, no breaker writes, no KV/D1 writes,
- * no PipelineLock. Per-source and per-batch failure isolation: a failing
- * source or batch is recorded in its summary while the run continues.
+ * no PipelineLock, no notifications. Per-source, per-batch, and per-step
+ * failure isolation: a failing unit is recorded while the run continues.
  */
 export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
   Env,
@@ -100,6 +114,14 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
       total_errors: sources.reduce((n, s) => n + s.error_count, 0),
       sources,
       validate: { batches: 0, checked: 0, hits: 0, misses: 0, batch_errors: 0 },
+      publish: {
+        staging_present: false,
+        production_present: false,
+        hashes_match: false,
+        would_publish: false,
+        sampled_deals: 0,
+      },
+      notify: { checked: 0, would_notify: 0, threshold: 0, by_source: {} },
     };
 
     // ADR-018 wave 2: dry-run validate-batch steps over the in-memory
@@ -132,6 +154,33 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
     }
     summary.validate.batch_errors = batch_errors;
 
+    // ADR-018 wave 3: publish + notify dry-run steps. Read-only and
+    // send-free: snapshot KV gets only, pure candidate counting. A
+    // failing step is recorded, never thrown, so it cannot fail the run.
+    const shadowKeys = sources.flatMap((s) => s.sample_keys ?? []);
+    try {
+      summary.publish = await step.do(publishStepName(run_id), async () =>
+        planPublishReadonly(this.env, summary.total_deals),
+      );
+    } catch (error) {
+      logger.warn("Shadow publish dry-run failed (isolated)", {
+        component: "workflow-shadow",
+        run_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    try {
+      summary.notify = await step.do(notifyStepName(run_id), async () =>
+        planNotifyReadonly(this.env, shadowKeys),
+      );
+    } catch (error) {
+      logger.warn("Shadow notify dry-run failed (isolated)", {
+        component: "workflow-shadow",
+        run_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
     logger.info("Shadow discovery run completed", {
       component: "workflow-shadow",
       run_id,
@@ -141,6 +190,8 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
       validate_checked: summary.validate.checked,
       validate_hits: summary.validate.hits,
       validate_batch_errors: summary.validate.batch_errors,
+      publish_would_publish: summary.publish.would_publish,
+      notify_would_notify: summary.notify.would_notify,
     });
 
     return summary;
