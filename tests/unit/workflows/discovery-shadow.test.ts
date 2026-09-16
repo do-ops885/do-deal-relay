@@ -4,6 +4,7 @@ import {
   buildShadowPlan,
   shadowStepName,
 } from "../../../worker/workflows/shadow-plan";
+import { validateBatchStepName } from "../../../worker/workflows/validate-shadow";
 import {
   discoverSourceReadonly,
   type ShadowSourceSummary,
@@ -91,6 +92,10 @@ function setupPlanAndReadonly(): void {
           error_count: 0,
           sample_codes: ["GOOD1", "GOOD2"],
           sample_errors: [],
+          sample_keys: [
+            { url: "https://good.com/a/1", fingerprint: "fp-good-1" },
+            { url: "https://good.com/a/2", fingerprint: "fp-good-2" },
+          ],
         };
       }
       throw new Error(READONLY_FAILURE);
@@ -132,15 +137,20 @@ describe("DiscoveryShadowWorkflow run", () => {
       `plan-${RUN_ID}`,
       shadowStepName(GOOD_DOMAIN, RUN_ID),
       shadowStepName(BAD_DOMAIN, RUN_ID),
+      validateBatchStepName(0, RUN_ID),
     ]);
     expect(shadowStepName(GOOD_DOMAIN, RUN_ID)).toBe("discover-good-com-r1");
     expect(shadowStepName(BAD_DOMAIN, RUN_ID)).toBe("discover-bad-com-r1");
+    expect(validateBatchStepName(0, RUN_ID)).toBe("validate-batch-0-r1");
     expect(summary.run_id).toBe(RUN_ID);
     expect(summary.source_count).toBe(EXPECTED_SOURCE_COUNT);
     expect(summary.total_deals).toBe(GOOD_DEAL_COUNT);
     expect(summary.total_errors).toBe(1);
     expect(summary.sources).toHaveLength(EXPECTED_SOURCE_COUNT);
     expect(summary.sources[0]?.deal_count).toBe(GOOD_DEAL_COUNT);
+    expect(summary.validate.batches).toBe(1);
+    expect(summary.validate.checked).toBe(GOOD_DEAL_COUNT);
+    expect(summary.validate.batch_errors).toBe(0);
   });
 
   it("should record a failing source instead of throwing", async (): Promise<void> => {

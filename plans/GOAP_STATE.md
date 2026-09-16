@@ -1,11 +1,26 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-07
-**Version**: 0.19.18
-**Status**: Active — 2026-09-09 Workflows shadow wave 1 (#763) in progress. Prior: v0.19.16 CI unblock + full hygiene (PR #788 exactOptional sweep open).
+**Last Updated**: 2026-09-15
+**Version**: 0.19.19
+**Status**: Active — 2026-09-15 Workflows shadow wave 2 (#763) in progress on `feat/workflow-shadow-wave2-763`. Prior: wave 1 merged (#789).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-15 Workflows shadow wave 2 (#763) — v0.19.19
+
+Branch `feat/workflow-shadow-wave2-763`.
+Spec: [SPEC-workflow-shadow-wave2-763.md](SPEC-workflow-shadow-wave2-763.md).
+ADR: [ADR-018](ADR-018-durable-execution-migration.md) (wave-2 note added).
+
+Scope: `validate-batch-{n}` dry-run steps over shadow-discovered keys
+(capped 25/source samples, 50/batch). Read-only via gets/selects only —
+mirrors `validateDealFastPath` decisions without `persist` and without
+D1-to-KV repopulation, so zero KV/D1 writes. Per-batch failure isolation.
+Fixes from retry: missing `sample_keys` on failure summaries (tsc), true
+read-only (main-path D1 hits repopulate KV), D1-hit no-write regression test.
 
 ---
 

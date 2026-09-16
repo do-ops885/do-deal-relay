@@ -1,6 +1,6 @@
 # ADR-018: Durable Execution Migration for Long-Running Pipelines
 
-**Status**: In Progress (shadow-mode wave 1, 2026-09-09; was Proposed)
+**Status**: In Progress (shadow-mode wave 2, 2026-09-13; wave 1 merged #789)
 **Created**: 2026-07-07
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
@@ -160,6 +160,14 @@ read-only `DiscoveryShadowWorkflow` (one durable step per source) runs
 after the main 6h pipeline behind default-off flag
 `workflow_shadow_discovery`; takes no lock, writes nothing, returns
 compact summaries. Proves per-source failure isolation before any cutover.
+
+Wave 2 (shadow mode, issue #763, spec SPEC-workflow-shadow-wave2-763.md):
+`validate-batch-{n}` dry-run steps replay the fast-path validation cache
+lookups over shadow-discovered keys (capped 25/source samples, 50/batch).
+Read-only via gets/selects only: mirrors `validateDealFastPath` hit/miss
+decisions without `persist` and without D1-to-KV repopulation, so zero
+KV/D1 writes. Per-batch failure isolation: a throwing batch is recorded,
+never thrown.
 
 | Step | Action | Duration |
 |------|--------|----------|
