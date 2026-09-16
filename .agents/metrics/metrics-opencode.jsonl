@@ -16,3 +16,9 @@
 {"timestamp": "2026-09-07T11:05:00Z", "agent": "opencode", "task": "ci unblock eresolve full hygiene sweep pr780", "status": "completed"}
 {"timestamp": "2026-09-07T11:20:00Z", "agent": "opencode", "task": "metrics v0.19.14 sync pr781", "status": "completed"}
 {"timestamp": "2026-09-07T11:40:00Z", "agent": "opencode", "task": "rate-limit config split pr782", "status": "completed"}
+{"timestamp": "2026-09-07T13:20:00Z", "agent": "opencode", "task": "fix dependabot invalid prerelease wildcards pr784", "status": "completed"}
+{"timestamp": "2026-09-09T10:53:09.673569+00:00", "agent": "opencode", "task": "goap-swarm exactoptionalpropertytypes sweep issue 768, PR 788", "status": "completed"}
+{"timestamp": "2026-09-09T12:19:32.320005+00:00", "agent": "opencode", "task": "goap-swarm workflow shadow wave1 issue 763, PR 789 all green", "status": "completed"}
+{"timestamp": "2026-09-12T00:00:00Z", "agent": "opencode", "task": "switch to main", "status": "completed"}
+{"timestamp": "2026-09-15T07:00:00Z", "agent": "opencode", "task": "workflow shadow wave2 retry fix read-only commit push pr805", "status": "completed"}
+{"timestamp": "2026-09-16T00:00:00Z", "agent": "opencode", "task": "pr triage all open prs roast close merge wave2 pr805", "status": "completed"}
