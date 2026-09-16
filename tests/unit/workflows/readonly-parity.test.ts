@@ -3,6 +3,7 @@ import {
   discover,
   discoverSourceReadonly,
 } from "../../../worker/pipeline/discover";
+import { getRewardNumericValue } from "../../../worker/lib/high-value-notifier";
 import { validatedFetch } from "../../../worker/lib/security";
 import { flushValidationTally } from "../../../worker/lib/storage";
 import type { Env, PipelineContext, SourceConfig } from "../../../worker/types";
@@ -150,7 +151,11 @@ describe("discoverSourceReadonly parity", () => {
     expect(main.errors).toHaveLength(readonly.error_count);
     expect(readonly.sample_codes).toEqual(main.deals.map((deal) => deal.code));
     expect(readonly.sample_keys).toEqual(
-      main.deals.map((deal) => ({ url: deal.url, fingerprint: deal.id })),
+      main.deals.map((deal) => ({
+        url: deal.url,
+        fingerprint: deal.id,
+        reward_value: getRewardNumericValue(deal.reward),
+      })),
     );
   });
 

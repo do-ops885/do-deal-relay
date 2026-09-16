@@ -40,8 +40,16 @@ function createSummary(
   };
 }
 
-function createKey(domain: string, name: string): ShadowSampleKey {
-  return { url: `https://${domain}/deal/${name}`, fingerprint: `fp-${name}` };
+function createKey(
+  domain: string,
+  name: string,
+  reward_value: number | null = null,
+): ShadowSampleKey {
+  return {
+    url: `https://${domain}/deal/${name}`,
+    fingerprint: `fp-${name}`,
+    reward_value,
+  };
 }
 
 function createValidateEnv(options?: {
@@ -195,7 +203,7 @@ describe("validateBatchReadonly", () => {
   it("should bucket invalid urls under unknown without throwing", async (): Promise<void> => {
     const { env } = createValidateEnv();
     const keys: ShadowSampleKey[] = [
-      { url: "not-a-url", fingerprint: "fp-bad" },
+      { url: "not-a-url", fingerprint: "fp-bad", reward_value: null },
     ];
 
     const summary = await validateBatchReadonly(env, 0, keys);

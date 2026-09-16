@@ -2,10 +2,27 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-16
-**Version**: 0.19.20
-**Status**: Active — 2026-09-16 PR triage complete (queue empty) and Workflows shadow wave 2 (#763) MERGED (#805). Next: ADR-018 wave 3 (publish/notify shadow) and issue #764 deal alerts (own Full Mode spec + PR).
+**Version**: 0.19.21
+**Status**: Active — 2026-09-16 Workflows shadow wave 3 (#763) in progress on `feat/workflow-shadow-wave3-763`. Prior: wave 2 merged (#805), PR queue empty.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-16 Workflows shadow wave 3 (#763) — v0.19.21
+
+Branch `feat/workflow-shadow-wave3-763`.
+Spec: [SPEC-workflow-shadow-wave3-763.md](SPEC-workflow-shadow-wave3-763.md).
+ADR: [ADR-018](ADR-018-durable-execution-migration.md) (wave-3 note added).
+
+Scope: `publish-dry-run-{run_id}` step (staging + production KV gets
+only, reports `would_publish` without promoting, inserting referrals,
+committing to GitHub, or writing metrics/audit) and
+`notify-dry-run-{run_id}` step (pure high-value candidate count via
+shared `getNotificationThreshold`/`getRewardNumericValue`, strict `>`
+parity with `filterHighValueDeals`, zero sends). `ShadowSampleKey`
+extended with `reward_value` (one scalar, 25/source cap unchanged).
+Per-step failure isolation.
 
 ---
 
