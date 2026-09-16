@@ -1,11 +1,26 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-15
-**Version**: 0.19.19
-**Status**: Active — 2026-09-15 Workflows shadow wave 2 (#763) in progress on `feat/workflow-shadow-wave2-763`. Prior: wave 1 merged (#789).
+**Last Updated**: 2026-09-16
+**Version**: 0.19.20
+**Status**: Active — 2026-09-16 PR triage complete (queue empty) and Workflows shadow wave 2 (#763) MERGED (#805). Next: ADR-018 wave 3 (publish/notify shadow) and issue #764 deal alerts (own Full Mode spec + PR).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-16 PR triage + wave-2 merge — v0.19.20
+
+Branch `chore/pr-triage-wave2-merge-805`. Docs-only register update, zero prod change.
+
+| PR | Disposition | Evidence |
+|:---|:---|:---|
+| #801 Jules deps patch | CLOSED superseded — `js-yaml 5.4.2` already on main via dependabot (`0442dbe`), exact pins without caret, branch dirty vs main | close comment on PR |
+| #804 JSDoc-only `config-utils.ts` | CLOSED no-impact per #746/#710 precedent (comment-only, zero runtime diff) | close comment on PR |
+| #806 JSDoc-only `config-utils.ts` | CLOSED no-impact — body claimed dep upgrades but diff held docs only, duplicate of #804 scope | close comment on PR |
+| #805 shadow validate-batch wave 2 | MERGED (`0c6966b`) — rebased on `0442dbe` (dropped `js-yaml`/CodeQL drift), roast hardening: `batchSize<1` guard, `run_id` sanitize, registry read inside per-source try, degraded-bindings warn + 2 new tests | 23 checks SUCCESS, Codacy/CodeQL pass, `test:unit` 2941 green, quality gate exit 0 |
+
+Open issues: #763 remains open (wave 3 publish/notify shadow + wave 4 cutover per ADR-018); #764 remains open (deal alerts need Full Mode spec, 4–6 atomic PRs). PR queue empty.
 
 ---
 
