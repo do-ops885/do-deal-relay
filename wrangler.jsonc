@@ -139,11 +139,17 @@
     ],
   },
   // Workflows for shadow-mode discovery (ADR-018 wave 1, default-off)
+  // and production pipeline cutover (ADR-018 wave 4, default-off)
   "workflows": [
     {
       "name": "discovery-shadow",
       "binding": "DISCOVERY_WORKFLOW",
       "class_name": "DiscoveryShadowWorkflow",
+    },
+    {
+      "name": "pipeline",
+      "binding": "PIPELINE_WORKFLOW",
+      "class_name": "PipelineWorkflow",
     },
   ],
   // NOTE: No migrations needed — DOs are already deployed and provisioned.

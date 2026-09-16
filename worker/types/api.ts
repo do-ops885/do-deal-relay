@@ -33,6 +33,13 @@ export interface ShadowDiscoveryParams {
   run_id: string;
 }
 
+// Production pipeline workflow params (ADR-018 wave 4). The workflow
+// rebuilds all run state from these params plus step returns.
+export interface PipelineWorkflowParams {
+  run_id: string;
+  cron: string;
+}
+
 // ============================================================================
 // Environment Types
 // ============================================================================
@@ -114,4 +121,7 @@ export interface Env {
   // Shadow-mode discovery workflow (ADR-018 wave 1); optional so local/test
   // envs without the binding still compile
   DISCOVERY_WORKFLOW?: Workflow<ShadowDiscoveryParams>;
+  // Production pipeline workflow (ADR-018 wave 4); optional so local/test
+  // envs without the binding fall back to the legacy direct path
+  PIPELINE_WORKFLOW?: Workflow<PipelineWorkflowParams>;
 }

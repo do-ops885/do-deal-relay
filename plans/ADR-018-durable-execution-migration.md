@@ -1,6 +1,6 @@
 # ADR-018: Durable Execution Migration for Long-Running Pipelines
 
-**Status**: In Progress (shadow-mode wave 3, 2026-09-16; wave 2 merged #805, wave 1 merged #789)
+**Status**: In Progress (cutover wave 4, 2026-09-16; shadow waves 1–3 merged #789/#805/#808)
 **Created**: 2026-07-07
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
@@ -179,6 +179,20 @@ sample keys with `reward_value > threshold` via the shared
 parity with `filterHighValueDeals`) without calling `notify` or sending
 webhooks. Per-step failure isolation: a throwing step is recorded, never
 thrown.
+
+Wave 4 (cutover, issue #763, spec SPEC-workflow-cutover-wave4-763.md):
+`scheduled()` creates a `PipelineWorkflow` instance behind default-off
+flag `workflow_pipeline_cutover` instead of calling `executePipeline`
+inline; flag off or binding missing falls back to the legacy path
+unchanged. Per official Rules of Workflows: one durable step per phase
+group (no single-step encapsulation), top-level state built from step
+returns plus KV handoff keys (`wf:{run_id}:{deduped,validated,scored}`)
+because the 500-deal production budget risks the 1MiB step-return cap,
+deterministic sanitized step names, in-step bounded retry mirroring the
+`state-machine.ts` policy with engine retries as the outer layer.
+PipelineLock stays as the idempotency guard (acquired in init step,
+released on every path, TTL expiry backstop). Legacy removal + lock
+retirement deferred to a follow-up once the workflow path proves itself.
 
 | Step | Action | Duration |
 |------|--------|----------|

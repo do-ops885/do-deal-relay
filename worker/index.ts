@@ -11,6 +11,7 @@ import { PipelineLock } from "./durable-objects/pipeline-lock";
 import { SourceRegistry } from "./durable-objects/source-registry";
 import { DealRegistry } from "./durable-objects/deal-registry";
 import { DiscoveryShadowWorkflow } from "./workflows/discovery-shadow";
+import { PipelineWorkflow } from "./workflows/pipeline-workflow";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -33,7 +34,7 @@ async function ensureConfigValidated(env: Env): Promise<void> {
 // Named export for Durable Objects — required by wrangler
 export { PipelineLock, SourceRegistry, DealRegistry };
 // Named export for Workflows — required by wrangler to register the class
-export { DiscoveryShadowWorkflow };
+export { DiscoveryShadowWorkflow, PipelineWorkflow };
 
 export default {
   async fetch(

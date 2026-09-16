@@ -8,6 +8,7 @@ import { toError } from "./lib/sanitize-error";
 import { runContinuousVerification } from "./validation/gates/continuous-verification";
 import { checkAndCleanPosts } from "./reddit";
 import { maybeTriggerShadowDiscovery } from "./workflows/shadow-trigger";
+import { maybeTriggerPipelineWorkflow } from "./workflows/pipeline-trigger";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -136,28 +137,46 @@ export async function handleScheduled(
       component: "scheduled",
     });
 
-    const result = await executePipeline(env);
-    if (!result.success) {
-      logger.error(`Pipeline failed at ${result.phase}: ${result.error}`, {
+    // ADR-018 wave 4 cutover: flag-gated durable execution. When the
+    // workflow takes the run, it owns execute + failure notify; the cron
+    // continues with shadow + verification below. Legacy direct execution
+    // is the fallback for flag_disabled / binding_missing / error.
+    const cutover = await maybeTriggerPipelineWorkflow(
+      env,
+      `pipeline-${Date.now()}`,
+      cron,
+    );
+    if (cutover.triggered) {
+      logger.info("Pipeline delegated to workflow", {
         component: "scheduled",
-        phase: result.phase,
-        error: result.error,
+        reason: cutover.reason,
       });
-      await notify(env, {
-        type: "system_error",
-        severity: "critical",
-        run_id: `pipeline-${Date.now()}`,
-        message: `Pipeline failed at ${result.phase}: ${result.error}`,
-        context: {
+    }
+
+    if (!cutover.triggered) {
+      const result = await executePipeline(env);
+      if (!result.success) {
+        logger.error(`Pipeline failed at ${result.phase}: ${result.error}`, {
+          component: "scheduled",
           phase: result.phase,
           error: result.error,
-        },
-      });
-    } else {
-      logger.info("Pipeline execution completed successfully", {
-        component: "scheduled",
-        phase: result.phase,
-      });
+        });
+        await notify(env, {
+          type: "system_error",
+          severity: "critical",
+          run_id: `pipeline-${Date.now()}`,
+          message: `Pipeline failed at ${result.phase}: ${result.error}`,
+          context: {
+            phase: result.phase,
+            error: result.error,
+          },
+        });
+      } else {
+        logger.info("Pipeline execution completed successfully", {
+          component: "scheduled",
+          phase: result.phase,
+        });
+      }
     }
 
     // ADR-018 wave 1 shadow workflow: read-only parity run, flag-gated
