@@ -1,6 +1,6 @@
 # ADR-018: Durable Execution Migration for Long-Running Pipelines
 
-**Status**: In Progress (cutover wave 4, 2026-09-16; shadow waves 1–3 merged #789/#805/#808)
+**Status**: Completed (waves 1–4 merged #789/#805/#808/#809, 2026-09-16; flag-gated cutover live behind default-off flag, legacy path + PipelineLock retained for transition)
 **Created**: 2026-07-07
 **Version**: 0.1.8
 **Decision Maker**: do-deal-relay Platform Team
