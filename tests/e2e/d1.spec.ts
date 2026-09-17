@@ -83,8 +83,7 @@ interface SavedGetBody {
 }
 
 function uniqueSuffix(): string {
-  const randomPart = Math.floor(Math.random() * 1296).toString(36);
-  return `${Date.now().toString(36)}${randomPart}`;
+  return `${Date.now().toString(36)}${randomUUID().slice(0, 8)}`;
 }
 
 async function ensureD1Initialized(
