@@ -9,14 +9,16 @@ import { test, expect } from "@playwright/test";
  * local dev server and fail loudly if D1 init does not report success.
  */
 
-// biome-ignore-start lint/security/noSecrets: test fixtures, not real keys
-const ADMIN_KEY = "ddr_admin_test_key_0000000000000000";
-// biome-ignore-end lint/security/noSecrets
+// Test-only credentials, sourced from env with clearly-labeled fallbacks.
+// Never real secrets (repo rule: process.env.X || "e2e-test-...").
+const ADMIN_KEY =
+  process.env.E2E_ADMIN_API_KEY || "e2e-test-ddr-admin-key-do-not-use-in-prod";
 
 const HTTP_OK = 200;
 const HTTP_CREATED = 201;
 const HTTP_BAD_REQUEST = 400;
-const E2E_PASSWORD = "test-password-123";
+const E2E_PASSWORD =
+  process.env.E2E_TEST_PASSWORD || "e2e-test-password-do-not-use-in-prod";
 const E2E_USER_NAME = "D1 E2E User";
 
 interface D1StatusBody {
