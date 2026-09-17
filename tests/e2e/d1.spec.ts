@@ -1,4 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 
 /**
  * D1-backed route E2E coverage (Wave A1).
@@ -7,19 +10,29 @@ import { test, expect } from "@playwright/test";
  * to fail locally with "incomplete input" (GET /api/d1/migrations 500,
  * POST /api/nlq/saved 503 MIGRATION_PENDING). These specs run against the
  * local dev server and fail loudly if D1 init does not report success.
+ *
+ * Auth carries zero hardcoded secrets: admin calls reuse the admin JWT
+ * minted by global-setup (tests/e2e/.jwt-token, role admin), and the
+ * register/login password is random per run.
  */
-
-// Test-only credentials, sourced from env with clearly-labeled fallbacks.
-// Never real secrets (repo rule: process.env.X || "e2e-test-...").
-const ADMIN_KEY =
-  process.env.E2E_ADMIN_API_KEY || "e2e-test-ddr-admin-key-do-not-use-in-prod";
 
 const HTTP_OK = 200;
 const HTTP_CREATED = 201;
 const HTTP_BAD_REQUEST = 400;
-const E2E_PASSWORD =
-  process.env.E2E_TEST_PASSWORD || "e2e-test-password-do-not-use-in-prod";
 const E2E_USER_NAME = "D1 E2E User";
+const JWT_TOKEN_CANDIDATES = [
+  join(process.cwd(), "tests", "e2e", ".jwt-token"),
+  join(process.cwd(), ".jwt-token"),
+];
+
+function readAdminToken(): string | null {
+  for (const candidate of JWT_TOKEN_CANDIDATES) {
+    if (!existsSync(candidate)) continue;
+    const token = readFileSync(candidate, "utf-8").trim();
+    if (token.split(".").length === 3) return token;
+  }
+  return null;
+}
 
 interface D1StatusBody {
   success: boolean;
@@ -77,8 +90,13 @@ function uniqueSuffix(): string {
 async function ensureD1Initialized(
   request: import("@playwright/test").APIRequestContext,
 ): Promise<void> {
+  const adminToken = readAdminToken();
+  test.skip(
+    adminToken === null,
+    "No admin JWT at tests/e2e/.jwt-token — JWT-based E2E tests skipped",
+  );
   const response = await request.get("/api/d1/migrations?action=init", {
-    headers: { "X-API-Key": ADMIN_KEY },
+    headers: { Authorization: `Bearer ${adminToken as string}` },
   });
   expect(response.status()).toBe(HTTP_OK);
   const body = (await response.json()) as unknown as D1InitBody;
@@ -93,16 +111,17 @@ async function registerAndLogin(
 ): Promise<string> {
   const suffix = uniqueSuffix();
   const email = `d1-e2e-${suffix}@example.com`;
+  const password = randomUUID();
 
   const registerResponse = await request.post("/api/auth/register", {
-    data: { email, password: E2E_PASSWORD, name: E2E_USER_NAME },
+    data: { email, password, name: E2E_USER_NAME },
   });
   expect([HTTP_OK, HTTP_CREATED, HTTP_BAD_REQUEST]).toContain(
     registerResponse.status(),
   );
 
   const loginResponse = await request.post("/api/auth/login", {
-    data: { email, password: E2E_PASSWORD },
+    data: { email, password },
   });
   expect(loginResponse.status()).toBe(HTTP_OK);
   const loginBody = (await loginResponse.json()) as unknown as LoginBody;
@@ -115,8 +134,13 @@ async function registerAndLogin(
 
 test.describe("D1 migrations (local runner)", () => {
   test("GET /api/d1/migrations returns 200, not 500", async ({ request }) => {
+    const adminToken = readAdminToken();
+    test.skip(
+      adminToken === null,
+      "No admin JWT at tests/e2e/.jwt-token — JWT-based E2E tests skipped",
+    );
     const response = await request.get("/api/d1/migrations", {
-      headers: { "X-API-Key": ADMIN_KEY },
+      headers: { Authorization: `Bearer ${adminToken as string}` },
     });
 
     expect(response.status()).toBe(HTTP_OK);
