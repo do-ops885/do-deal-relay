@@ -35,14 +35,24 @@ Current webhook retry blocks the worker (`sleep(backoff)` in
    `worker/routes/nlq/saved.ts`. Zod validation only; deal gates
    untouched. Owner-scoped `WHERE user_id = ?`; `saved_query_id`
    validated via existing `getSavedQuery`.
-3. Matcher runs at publish on the new-deal batch only: each active
-   subscription evaluated via hybrid search, strict `score >=
-   threshold` parity with shared helpers. Emits `deal_alert_match`
-   via `logAIInteraction` (hashed query, no PII).
-4. Cloudflare Queues for fan-out: `ALERT_QUEUE` producer + consumer
-   with DLQ, `alert_deliveries(alert_id, subscription_id)` unique
-   idempotency guard, `instant` enqueues immediately while
-   `daily-digest` accumulates for the `0 9 * * *` cron drain.
+3. Matcher runs at publish on the new-deal batch only, on the
+   free-tier path: D1 FTS5 plus precomputed subscription-query
+   embeddings with in-worker cosine match (zero Vectorize queries at
+   publish — per-subscription Vectorize queries exceed the free
+   queried-dimensions budget). Strict `score >= threshold` parity
+   with shared helpers. Emits `deal_alert_match` via
+   `logAIInteraction` (hashed query, no PII). Vectorize stays
+   reserved for interactive `/api/semantic-search` and `/api/nlq`.
+4. Cloudflare Queues for fan-out (free since 2026-02-04, 10k
+   ops/day): `ALERT_QUEUE` producer + consumer with DLQ,
+   `alert_deliveries(alert_id, subscription_id)` unique idempotency
+   guard, `instant` enqueues immediately while `daily-digest`
+   accumulates in D1 keyed by run date for the `0 9 * * *` cron
+   drain. Hard caps: `MAX_ALERT_QUEUE_MESSAGES_PER_PUBLISH = 500`,
+   `MAX_MATCHES_PER_SUBSCRIPTION_PER_PUBLISH = 10` with digest
+   rollover (never silent drop); payload is IDs only. Binding
+   missing or budget exhausted falls back to inline best-effort
+   plus the existing KV-DLQ.
 5. `Sender` interface per channel; reuse telegram and webhook paths
    via `validatedFetch`; new discord webhook sender via
    `validatedFetch`; outbound email behind env provider binding
@@ -66,6 +76,25 @@ Negative / accepted:
   tests plus `validatedFetch` SSRF coverage.
 - One more D1 table and cron responsibility; bounded by per-user cap
   constant and batch-only matching.
+
+## Addendum — free-tier compliance (2026-09-17)
+
+Audited against official `developers.cloudflare.com` pricing/limits
+pages. Workers, KV, D1, Durable Objects (SQLite), Workflows
+(default-off), Workers AI (embeddings are neuron-trivial), AI
+Gateway, and 4 crons all FIT free. Queues FITS only under the caps
+above (about 3.3k messages/day at 3 ops each; worst case 500 msgs x
+4 publishes = 6k ops/day with headroom for retries). KV writes
+(1k/day) are the tightest budget: digest and DLQ rows live in D1,
+KV-DLQ is overflow only; log per batch, never per message; prod
+observability sampling lowered to 0.1; cron count frozen at 4.
+
+Open uncertainties (no guessing): Vectorize free availability is
+self-contradictory across official pages (dashboard check required;
+D1-FTS5 path is the default until confirmed); rate-limit binding
+free quota is unpublished (KV fallback stays primary on free);
+free cron CPU (10 ms) needs one dashboard check before matcher load
+lands.
 
 ## Verification
 
