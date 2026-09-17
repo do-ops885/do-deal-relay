@@ -2,10 +2,27 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-09-16
-**Version**: 0.19.23
-**Status**: Active — 2026-09-16 Workflows migration (#763) close-out, wave 4 merged (#809). PR queue empty. Next: #764 deal alerts Full Mode spec.
+**Version**: 0.19.24
+**Status**: Active — 2026-09-16 Deal alerts (#764) Full Mode spec open on `feat/deal-alerts-764-spec`. Prior: #763 closed.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-09-16 Deal alerts Full Mode spec (#764) — v0.19.24
+
+Branch `feat/deal-alerts-764-spec`.
+Spec: [SPEC-deal-alerts-764.md](SPEC-deal-alerts-764.md).
+ADR: [ADR-031](ADR-031-deal-alerts.md) (Proposed).
+
+Scope: spec + ADR only, zero prod change. Saved-search subscriptions
+with instant and daily-digest delivery: D1 `alert_subscriptions` v13,
+CRUD under `/api/nlq/alerts` (user role), publish-stage matcher on the
+new-deal batch, Queues fan-out with DLQ and idempotency guard, digest
+drain on `0 9 * * *`, `deal_alert_match` compliance event. Atomic build
+order: migration and lib, CRUD API, matcher, queues and consumer,
+channels with digest and bots, verification and docs. Open: discord
+shape, email provider, per-user cap.
 
 ---
 
