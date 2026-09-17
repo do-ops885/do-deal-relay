@@ -29,6 +29,129 @@ export function stripSqlComments(sql: string): string {
     .join("\n");
 }
 
+const SQL_INLINE_COMMENT_START = "--";
+const SQL_BLOCK_COMMENT_START = "/*";
+const SQL_BLOCK_COMMENT_END = "*/";
+const SQL_STATEMENT_TERMINATOR = ";";
+const SQL_SINGLE_QUOTE = "'";
+const SQL_DOUBLE_QUOTE = '"';
+const SQL_SPACE = " ";
+const SQL_EMPTY = "";
+
+/**
+ * Normalize SQL for D1 exec() so local (workerd/miniflare) and remote
+ * engines accept identical input.
+ *
+ * Local D1 exec() splits input on line breaks (docs: "one or multiple
+ * queries separated by \n"), so a multi-line single statement such as
+ * `CREATE TABLE ... (\n ... )` is executed as an incomplete first line
+ * (`incomplete input`). Flattening newlines to spaces keeps multi-statement
+ * scripts (`;`-separated, including trigger bodies) intact on one line.
+ *
+ * Also strips inline `--` comments (outside string literals) which would
+ * otherwise comment out the flattened remainder, strips block comments,
+ * trims leading/trailing whitespace, and ensures a trailing semicolon so
+ * the statement is complete on every engine path.
+ */
+export function normalizeExecSql(sql: string): string {
+  const withoutFullLineComments = stripSqlComments(sql);
+  const inputLength = withoutFullLineComments.length;
+  let normalized = SQL_EMPTY;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let index = 0;
+
+  while (index < inputLength) {
+    const current = withoutFullLineComments.charAt(index);
+    const next = withoutFullLineComments.charAt(index + 1);
+
+    if (!inDoubleQuote && current === SQL_SINGLE_QUOTE) {
+      if (inSingleQuote && next === SQL_SINGLE_QUOTE) {
+        normalized += SQL_SINGLE_QUOTE + SQL_SINGLE_QUOTE;
+        index += 2;
+        continue;
+      }
+      inSingleQuote = !inSingleQuote;
+      normalized += current;
+      index += 1;
+      continue;
+    }
+
+    if (!inSingleQuote && current === SQL_DOUBLE_QUOTE) {
+      inDoubleQuote = !inDoubleQuote;
+      normalized += current;
+      index += 1;
+      continue;
+    }
+
+    if (inSingleQuote || inDoubleQuote) {
+      normalized += current;
+      index += 1;
+      continue;
+    }
+
+    if (
+      current === SQL_INLINE_COMMENT_START.charAt(0) &&
+      next === SQL_INLINE_COMMENT_START.charAt(1)
+    ) {
+      while (
+        index < inputLength &&
+        withoutFullLineComments.charAt(index) !== "\n"
+      ) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (
+      current === SQL_BLOCK_COMMENT_START.charAt(0) &&
+      next === SQL_BLOCK_COMMENT_START.charAt(1)
+    ) {
+      index += 2;
+      while (index < inputLength) {
+        const inner = withoutFullLineComments.charAt(index);
+        const innerNext = withoutFullLineComments.charAt(index + 1);
+        if (
+          inner === SQL_BLOCK_COMMENT_END.charAt(0) &&
+          innerNext === SQL_BLOCK_COMMENT_END.charAt(1)
+        ) {
+          index += 2;
+          break;
+        }
+        index += 1;
+      }
+      if (normalized.length > 0 && !normalized.endsWith(SQL_SPACE)) {
+        normalized += SQL_SPACE;
+      }
+      continue;
+    }
+
+    if (current === "\r" || current === "\n") {
+      if (normalized.length > 0 && !normalized.endsWith(SQL_SPACE)) {
+        normalized += SQL_SPACE;
+      }
+      if (current === "\r" && next === "\n") {
+        index += 2;
+      } else {
+        index += 1;
+      }
+      continue;
+    }
+
+    normalized += current;
+    index += 1;
+  }
+
+  const trimmed = normalized.trim();
+  if (trimmed.length === 0) {
+    return SQL_EMPTY;
+  }
+  if (trimmed.endsWith(SQL_STATEMENT_TERMINATOR)) {
+    return trimmed;
+  }
+  return trimmed + SQL_STATEMENT_TERMINATOR;
+}
+
 // ============================================================================
 // Factory Functions
 // ============================================================================

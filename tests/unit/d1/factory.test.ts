@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   stripSqlComments,
+  normalizeExecSql,
   createD1Client,
   createD1ReadClient,
   createD1WriteClient,
@@ -97,6 +98,77 @@ describe("d1/factory", () => {
 
     it("returns an empty string for empty input", () => {
       expect(stripSqlComments("")).toBe("");
+    });
+  });
+
+  // ==========================================================================
+  // normalizeExecSql (local workerd exec compatibility)
+  // ==========================================================================
+
+  describe("normalizeExecSql", () => {
+    it("trims whitespace and appends a trailing semicolon when missing", () => {
+      const normalized = normalizeExecSql(
+        "\n      CREATE TABLE IF NOT EXISTS schema_migrations (\n" +
+          "          version INTEGER PRIMARY KEY\n" +
+          "      )\n    ",
+      );
+      expect(normalized).not.toContain("\n");
+      expect(normalized).not.toContain("\r");
+      expect(normalized).toBe(normalized.trim());
+      expect(normalized.endsWith(";")).toBe(true);
+      expect(normalized).toContain("CREATE TABLE IF NOT EXISTS");
+      expect(normalized).toContain("version INTEGER PRIMARY KEY");
+    });
+
+    it("flattens multi-line statements to a single line for local exec", () => {
+      const normalized = normalizeExecSql(
+        "CREATE TABLE t (\n  id INTEGER PRIMARY KEY,\n  name TEXT\n);",
+      );
+      expect(normalized).not.toContain("\n");
+      expect(normalized.endsWith(";")).toBe(true);
+      expect(normalized).toContain("CREATE TABLE t (");
+    });
+
+    it("keeps an existing trailing semicolon without duplicating it", () => {
+      expect(normalizeExecSql("SELECT 1;")).toBe("SELECT 1;");
+      expect(normalizeExecSql("SELECT 1;;")).toBe("SELECT 1;;");
+    });
+
+    it("strips inline line comments outside string literals", () => {
+      const normalized = normalizeExecSql("SELECT 1 -- trailing note\nFROM t;");
+      expect(normalized).not.toContain("--");
+      expect(normalized).toContain("SELECT 1");
+      expect(normalized).toContain("FROM t;");
+    });
+
+    it("preserves comment-like text inside single-quoted strings", () => {
+      const normalized = normalizeExecSql("SELECT '-- not a comment';");
+      expect(normalized).toContain("'-- not a comment'");
+    });
+
+    it("strips block comments without merging adjacent tokens", () => {
+      const normalized = normalizeExecSql("SELECT /* hidden */ 1;");
+      expect(normalized).not.toContain("/*");
+      expect(normalized).toContain("SELECT");
+    });
+
+    it("preserves inner semicolons of trigger bodies on one line", () => {
+      const normalized = normalizeExecSql(
+        "CREATE TRIGGER trg AFTER INSERT ON t BEGIN\n" +
+          "  UPDATE t SET n = 1 WHERE id = new.id;\n" +
+          "END;",
+      );
+      expect(normalized).not.toContain("\n");
+      expect(normalized).toContain("BEGIN");
+      expect(normalized).toContain("END;");
+    });
+
+    it("returns an empty string for comment-only input", () => {
+      expect(normalizeExecSql("-- only a comment\n-- nothing else\n")).toBe("");
+    });
+
+    it("returns an empty string for empty input", () => {
+      expect(normalizeExecSql("   \n  ")).toBe("");
     });
   });
 

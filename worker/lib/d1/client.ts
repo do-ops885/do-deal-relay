@@ -8,7 +8,7 @@ import type {
   D1PreparedStatement,
 } from "@cloudflare/workers-types";
 import { logger } from "../global-logger";
-import { stripSqlComments } from "./factory";
+import { normalizeExecSql } from "./factory";
 import { insertWithJsonFields, queryWithJsonFields } from "./client-json";
 import type {
   D1ClientConfig,
@@ -159,11 +159,13 @@ export class D1Client {
   }
 
   /**
-   * Execute a raw SQL statement without parameters
+   * Execute a raw SQL statement without parameters.
+   * Normalizes newlines/comments so local workerd exec() (which splits on
+   * line breaks) accepts the same multi-line scripts as remote D1.
    */
   async raw(sql: string): Promise<{ success: boolean; error?: string }> {
-    const cleanSql = stripSqlComments(sql);
-    if (cleanSql.trim().length === 0) {
+    const cleanSql = normalizeExecSql(sql);
+    if (cleanSql.length === 0) {
       return { success: true };
     }
     const result = await this.executeWithRetry<{ success: boolean }>(

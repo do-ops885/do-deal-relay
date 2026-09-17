@@ -121,11 +121,22 @@ acquire_jwt_token() {
     return 1
   fi
 
-  # Initialize D1 database (creates users table via migrations)
+  # Initialize D1 database (creates users table via migrations).
+  # D1 init is required for D1-backed routes; fail loudly (non-zero) so a
+  # broken local database never degrades into silent E2E skips.
   echo "Initializing D1 database..."
   INIT_RESPONSE=$(curl -s -X GET "http://localhost:${E2E_JWT_PORT}/api/d1/migrations?action=init" \
-    -H "X-API-Key: ddr_admin_test_key_0000000000000000" 2>&1) || true
+    -H "X-API-Key: ddr_admin_test_key_0000000000000000" 2>&1) || {
+    echo "✗ D1 init request failed (curl error)" >&2
+    return 1
+  }
   echo "D1 init: $INIT_RESPONSE"
+  if ! echo "$INIT_RESPONSE" | grep -q '"success": *true'; then
+    echo "✗ D1 initialization failed — expected '\"success\":true' in init response" >&2
+    echo "  Response was: $INIT_RESPONSE" >&2
+    return 1
+  fi
+  echo "✓ D1 database initialized"
 
   # Register a test user (idempotent – re-registration returns 400 "already registered")
   echo "Registering E2E test user..."
