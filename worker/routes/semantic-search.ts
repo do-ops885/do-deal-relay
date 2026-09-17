@@ -36,29 +36,6 @@ const SEMANTIC_EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5";
 /** Bucket size (5 minutes) used when synthesizing created_at vector metadata. */
 const CREATED_AT_BUCKET_MS = 5 * 60 * 1000;
 
-/** Machine-readable code for remote-only Vectorize/AI binding failures. */
-const REMOTE_BINDING_REQUIRED_CODE = "REMOTE_BINDING_REQUIRED";
-
-/** Miniflare remote-binding error fragment (e.g. "Binding AI needs to be run remotely"). */
-const REMOTE_BINDING_ERROR_FRAGMENT = "needs to be run remotely";
-
-/** Human-readable 503 message when bindings require remote execution. */
-const REMOTE_BINDING_REQUIRED_MESSAGE =
-  "Semantic search unavailable: AI or DEAL_EMBEDDINGS binding requires remote execution";
-
-/** HTTP status for remote-only binding failures. */
-const HTTP_SERVICE_UNAVAILABLE = 503;
-
-/**
- * Detects Miniflare remote-only binding errors.
- * Vectorize and Workers AI have no local simulation; without remote execution
- * they throw "Binding <NAME> needs to be run remotely".
- */
-function isRemoteBindingError(err: unknown): boolean {
-  const message = err instanceof Error ? err.message : String(err);
-  return message.includes(REMOTE_BINDING_ERROR_FRAGMENT);
-}
-
 export function matchesSemanticFilters(
   metadata: Record<string, unknown> | undefined,
   filters: SemanticSearchFilters | undefined,
@@ -239,15 +216,6 @@ export async function handleSemanticSearch(
     logger.error("Semantic search failed", {
       error: err instanceof Error ? err.message : String(err),
     });
-    if (isRemoteBindingError(err)) {
-      return jsonResponse(
-        {
-          error: REMOTE_BINDING_REQUIRED_MESSAGE,
-          code: REMOTE_BINDING_REQUIRED_CODE,
-        },
-        HTTP_SERVICE_UNAVAILABLE,
-      );
-    }
     return errorResponse("Semantic search failed", 500);
   }
 }
