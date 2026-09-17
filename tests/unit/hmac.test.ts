@@ -69,12 +69,7 @@ describe("HMAC Security Utilities", () => {
 
     it("should reject NaN and non-finite timestamps", async () => {
       const sig = await generateHmacSignature(payload, secret, timestamp);
-      const nanResult = await verifyHmacSignature(
-        payload,
-        sig,
-        secret,
-        NaN,
-      );
+      const nanResult = await verifyHmacSignature(payload, sig, secret, NaN);
       expect(nanResult.valid).toBe(false);
       expect(nanResult.error).toBe("Invalid timestamp or tolerance");
 
