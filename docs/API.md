@@ -1931,6 +1931,20 @@ Execute a semantic search query.
 - 200: Success
 - 400: Invalid request body
 - 503: Semantic search unavailable (missing bindings)
+- 503: Remote binding required (`code: REMOTE_BINDING_REQUIRED`) when Vectorize or Workers AI bindings exist but require remote execution
+
+**Local development:**
+
+Vectorize and Workers AI have no local simulation. Under local `wrangler dev` without remote bindings the endpoint returns 503 with `code: REMOTE_BINDING_REQUIRED`. Configure `remote: true` for the `DEAL_EMBEDDINGS` and `AI` bindings or run `wrangler dev --remote`.
+
+Example remote-only response:
+
+```json
+{
+  "error": "Semantic search unavailable: AI or DEAL_EMBEDDINGS binding requires remote execution",
+  "code": "REMOTE_BINDING_REQUIRED"
+}
+```
 
 ---
 
