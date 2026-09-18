@@ -1,14 +1,12 @@
-# Dependency Audit Artifact (Track A)
+# Track A — Dependency Audit
+Date: 2026-09-18
 
 | Package | Current | Available | Risk | Upgrade Safe? |
 |---|---|---|---|---|
-| `@cloudflare/workers-types` | `5.20260828.1` | `5.20260906.1` | Low | Yes (minor/patch API compatible) |
-| `@playwright/test` | `1.62.1` | `1.63.0` | Low | Yes (minor/patch API compatible) |
-| `@types/node` | `26.4.0` | `26.4.1` | Low | Yes (minor/patch API compatible) |
-| `wrangler` | `4.127.0` | `4.129.0` | Low | Yes (minor/patch API compatible) |
+| `@cloudflare/workers-types` | `^5.20260911.1` | `5.20260918.1` | Low | Yes (patch) |
+| `@types/node` | `^26.5.1` | `26.6.1` | Low | Yes (minor) |
+| `prettier` | `^3.9.6` | `3.9.8` | Low | Yes (patch) |
+| `wrangler` | `^4.131.1` | `4.134.0` | Low | Yes (minor) |
+| `zod` | `^4.6.2` | `4.6.5` | Low | Yes (patch) |
 
-## Human Review Required (Skipped Major Upgrades)
-- `@vitest/coverage-v8`: `4.1.11` -> `5.0.0` (Major version bump)
-- `vitest`: `4.1.11` -> `5.0.0` (Major version bump)
-- `zod`: `3.25.76` -> `4.5.4` (Major version bump)
-- `miniflare`: `4.20260730.0` -> `5.20260903.0-alpha` (Alpha / Major version bump)
+Note: `miniflare` has `5.20260917.0-alpha` available (major/alpha release - human review required, deferred). `vitest` and `@vitest/coverage-v8` have `5.0.1` available (major release - human review required, deferred).
