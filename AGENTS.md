@@ -16,18 +16,19 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 - **Single Source of Truth**: System version is maintained solely in the root `VERSION` file. Never edit version strings elsewhere.
 
 ## 2. Analyze-First Mandate & Zero Low-Value Questions
-1. **Analyze First**: Prior to asking ANY clarification questions, deeply analyze the repository structure, local tooling, sub-agent setups, and workflows.
-2. **Zero Low-Value Questions**: Do not ask if quality gates, skills systems, sub-agents, or validation scripts exist—they are fully operational.
-3. **Infer Conventions**: Infer solutions from existing codebase patterns (Centralized Middleware Router, SQLite/D1 schema, strict TypeScript, and Cloudflare Durable Objects) before seeking external clarification.
+1. **Analyze First**: Prior to asking ANY clarification questions, deeply analyze the repository structure, existing agent infrastructure, local tooling, sub-agent setups, skills system, quality gates, validation scripts, CI workflows, test commands, runtime/deployment targets, package structure, and operational safeguards.
+2. **Zero Low-Value Questions**: Do NOT ask low-value questions that can be answered by inspecting the codebase itself—such as whether quality gates, skills systems, sub-agents, validation scripts, act/local CI rehearsal, or incremental workflows exist. They are fully operational.
+3. **Infer Conventions**: Infer solutions and architectural conventions from existing codebase patterns (Centralized Middleware Router, SQLite/D1 schema, strict TypeScript, Cloudflare Workers/Durable Objects, Two-Phase Publishing) before seeking external clarification.
 
 ## 3. Production Reliability & Operational Safeguards
-- **SSRF Hardening**: Outgoing network calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass DNS/CIDR checks.
-- **Validation Pipeline**: Submissions MUST pass all 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites are strictly forbidden.
+- **Architectural Consistency**: Preserve existing architecture (Two-Phase Publishing: DEALS_STAGING KV → 9-Gate Pipeline → DEALS_PROD KV + Git Sync) and production patterns. Avoid speculative rewrites or introducing generic abstractions that do not fit this codebase.
+- **SSRF Hardening**: Outgoing network calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass DNS/CIDR checks or IP normalization.
+- **Validation Pipeline**: Submissions MUST pass all 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites of validation gates or security controls are strictly forbidden.
 - **RBAC Controls**: Admin role required for `/metrics`, `/api/dora-metrics`, `/dora`, and `/api/d1/*`. User role required for `/api/nlq` and referral management (Create/Deactivate/Reactivate).
-- **Banned Patterns**: No hardcoded secrets, no magic numbers, no `!` assertions, and no unused imports. Maintain high operational safety.
+- **Banned Patterns**: No hardcoded secrets, no magic numbers, no `!` assertions, and no unused imports. Maintain strict operational safety.
 
 ## 4. Process Modes & PEV Loop (Plan-Execute-Verify)
-- **Light Mode** (Small fixes, docs): Run Quality gate (`./scripts/quality_gate.sh`) → atomic commit → PR.
+- **Light Mode** (Small fixes, docs): Run Quality gate (`./scripts/quality_gate.sh`) → atomic incremental commit → PR.
 - **Full Mode** (Refactors, systems): Requires spec in `plans/` (using `SPEC_TEMPLATE.md`), GOAP tracking in `plans/GOAP_STATE.md`, and ADR creation.
 - **CI Precheck**: Before starting in Full Mode, verify `.github/ci-status/ci-status.json` is "passing". Pause if failing.
 - **Always-Fix Policy**: Implement incrementally. Resolve all pre-existing CI check/lint/type/formatting failures in current context.
@@ -50,7 +51,7 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 - Setup & Quality: `./scripts/agent-toolkit.sh setup` | `./scripts/pev-gates.sh` | `./scripts/quality_gate.sh` (13+ quality gates)
 - Lint & Tests: `npm run lint` | `npm run fmt:fix` | `npm run test:unit`
 - Context Control & Sub-Agents: Use specialized sub-agents in `.opencode/agents/` or `.claude/agents/` as context firewalls.
-- Skills: Canonical skills live in `.agents/skills/`. Load only as needed via `skill <name>` to optimize token budget.
+- Skills: Canonical skills live in `.agents/skills/`. Load only as needed via `skill <name>` to optimize token budget (progressive disclosure).
 
 ## 6. PR & Commit Standards (Zero Slop)
 - **Zero Slop**: Conversational filler, markdown formatting in commit messages, or emojis are strictly forbidden.
