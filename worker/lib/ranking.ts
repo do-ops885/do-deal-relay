@@ -263,18 +263,55 @@ export function rankDeals(
   const total = deals.length;
   const filteredCount = filtered.length;
 
-  // Sort
-  const sorted = sortDeals(filtered, options.sortBy, options.order);
-
-  // Calculate scores with breakdown (single-pass optimization)
-  const scores = sorted.map((deal) => {
-    const { score, breakdown } = calculateDetailedScore(deal);
+  // Performance optimization: Pre-calculate detailed score & breakdown for each
+  // filtered deal in a single O(N) pass. Re-using precomputed values avoids
+  // recalculating exponential recency and date parses inside sorting / mapping.
+  const annotated = filtered.map((deal) => {
+    const detailed = calculateDetailedScore(deal);
     return {
-      dealId: deal.id,
-      score,
-      breakdown,
+      deal,
+      score: detailed.score,
+      breakdown: detailed.breakdown,
     };
   });
+
+  const isDesc = options.order === "desc";
+  const sortBy = options.sortBy;
+
+  annotated.sort((a, b) => {
+    let comparison = 0;
+    switch (sortBy) {
+      case "confidence":
+        comparison =
+          a.deal.metadata.confidence_score - b.deal.metadata.confidence_score;
+        break;
+      case "recency":
+        comparison =
+          Date.parse(a.deal.source.discovered_at) -
+          Date.parse(b.deal.source.discovered_at);
+        break;
+      case "value":
+        comparison =
+          getNumericValue(a.deal.reward) - getNumericValue(b.deal.reward);
+        break;
+      case "expiry":
+        comparison = compareExpiry(a.deal.expiry.date, b.deal.expiry.date);
+        break;
+      case "trust":
+        comparison = a.deal.source.trust_score - b.deal.source.trust_score;
+        break;
+      default:
+        comparison = a.score - b.score;
+    }
+    return isDesc ? -comparison : comparison;
+  });
+
+  const sorted = annotated.map((item) => item.deal);
+  const scores = annotated.map((item) => ({
+    dealId: item.deal.id,
+    score: item.score,
+    breakdown: item.breakdown,
+  }));
 
   // Apply limit
   const limited = options.limit ? sorted.slice(0, options.limit) : sorted;
