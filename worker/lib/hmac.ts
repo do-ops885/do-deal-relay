@@ -54,6 +54,29 @@ export async function verifyHmacSignature(
   timestamp: number,
   toleranceSeconds: number = 300, // 5 minutes default
 ): Promise<SignatureResult> {
+  // Security Fix: Validate parameter types and verify timestamp is a finite number.
+  // Unvalidated NaN timestamps evaluate (timeDiff > toleranceSeconds) to false,
+  // allowing attackers sending NaN timestamps to bypass the replay window check.
+  if (
+    typeof payload !== "string" ||
+    typeof signature !== "string" ||
+    typeof secret !== "string" ||
+    !signature.trim() ||
+    !secret.trim()
+  ) {
+    return { valid: false, error: "Invalid parameters" };
+  }
+
+  if (
+    typeof timestamp !== "number" ||
+    !Number.isFinite(timestamp) ||
+    typeof toleranceSeconds !== "number" ||
+    !Number.isFinite(toleranceSeconds) ||
+    toleranceSeconds < 0
+  ) {
+    return { valid: false, error: "Invalid timestamp or tolerance" };
+  }
+
   // 1. Validate timestamp (prevent replay attacks)
   const now = Math.floor(Date.now() / 1000);
   const timeDiff = Math.abs(now - timestamp);
