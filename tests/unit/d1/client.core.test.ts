@@ -326,6 +326,22 @@ describe("d1/client", () => {
         client.raw("CREATE TABLE foo (id INTEGER);"),
       ).rejects.toThrow("disk I/O error");
     });
+
+    it("normalizes multi-line SQL to a single line for local exec", async () => {
+      const { db, mocks } = buildMockDb({ execResult: undefined });
+      const client = new D1Client(db);
+
+      await client.raw(
+        "\n      CREATE TABLE IF NOT EXISTS schema_migrations (\n" +
+          "          version INTEGER PRIMARY KEY\n" +
+          "      )\n    ",
+      );
+
+      const execArg = (mocks.exec as Mock).mock.calls[0]?.[0] as string;
+      expect(execArg).not.toContain("\n");
+      expect(execArg.endsWith(";")).toBe(true);
+      expect(execArg).toContain("CREATE TABLE IF NOT EXISTS");
+    });
   });
 
   // ============================================================================

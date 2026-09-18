@@ -53,6 +53,15 @@ export class MigrationRunner {
       );
     }
 
+    // Clean-DB compatibility: migration 7 reads legacy `api_keys` behind a
+    // WHERE EXISTS(sqlite_master) guard, but SQLite still raises
+    // `no such table` when the table is absent. Ensure an empty legacy stub
+    // so fresh local init can proceed; migration 7 drops/renames it to the
+    // new schema when it runs.
+    if (migrationsToApply.some((m) => m.version === 7)) {
+      await this.ensureLegacyApiKeysStub();
+    }
+
     for (const migration of migrationsToApply) {
       try {
         const result = await this.client.raw(migration.up);
@@ -182,7 +191,25 @@ export class MigrationRunner {
           version INTEGER PRIMARY KEY,
           name TEXT NOT NULL,
           applied_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-      )
+      );
+    `);
+  }
+
+  private async ensureLegacyApiKeysStub(): Promise<void> {
+    await this.client.raw(`
+      CREATE TABLE IF NOT EXISTS api_keys (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key_hash TEXT NOT NULL UNIQUE,
+          user_id TEXT NOT NULL,
+          role TEXT DEFAULT 'user',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          expires_at TEXT,
+          last_used_at TEXT,
+          is_active INTEGER DEFAULT 1,
+          rate_limit_requests_per_minute INTEGER DEFAULT 60,
+          rate_limit_requests_per_hour INTEGER DEFAULT 1000,
+          metadata TEXT
+      );
     `);
   }
 }

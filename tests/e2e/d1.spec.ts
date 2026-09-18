@@ -1,0 +1,187 @@
+import { test, expect } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { join } from "node:path";
+
+/**
+ * D1-backed route E2E coverage (Wave A1).
+ *
+ * Guards the local D1 migration-runner fix: multi-line SQL via exec() used
+ * to fail locally with "incomplete input" (GET /api/d1/migrations 500,
+ * POST /api/nlq/saved 503 MIGRATION_PENDING). These specs run against the
+ * local dev server and fail loudly if D1 init does not report success.
+ *
+ * Auth carries zero hardcoded secrets: admin calls reuse the admin JWT
+ * minted by global-setup (tests/e2e/.jwt-token, role admin), and the
+ * register/login password is random per run.
+ */
+
+const HTTP_OK = 200;
+const HTTP_CREATED = 201;
+const HTTP_BAD_REQUEST = 400;
+const E2E_USER_NAME = "D1 E2E User";
+const JWT_TOKEN_CANDIDATES = [
+  join(process.cwd(), "tests", "e2e", ".jwt-token"),
+  join(process.cwd(), ".jwt-token"),
+];
+
+function readAdminToken(): string | null {
+  for (const candidate of JWT_TOKEN_CANDIDATES) {
+    if (!existsSync(candidate)) continue;
+    const token = readFileSync(candidate, "utf-8").trim();
+    if (token.split(".").length === 3) return token;
+  }
+  return null;
+}
+
+interface D1StatusBody {
+  success: boolean;
+  status?: {
+    currentVersion: number;
+    latestVersion: number;
+    pendingCount: number;
+    pending: number[];
+    appliedCount: number;
+  };
+  error?: string;
+}
+
+interface D1InitBody {
+  success: boolean;
+  message?: string;
+  applied?: number[];
+  error?: string;
+}
+
+interface LoginBody {
+  accessToken?: string;
+  user?: { id: string };
+}
+
+interface SavedRow {
+  id: string;
+  user_id: string;
+  query: string;
+  name: string | null;
+  intent: string | null;
+}
+
+interface SavedPostBody {
+  success: boolean;
+  saved?: SavedRow;
+  error?: string;
+  code?: string;
+}
+
+interface SavedGetBody {
+  success: boolean;
+  total: number;
+  count: number;
+  saved: SavedRow[];
+  error?: string;
+  code?: string;
+}
+
+function uniqueSuffix(): string {
+  return `${Date.now().toString(36)}${randomUUID().slice(0, 8)}`;
+}
+
+async function ensureD1Initialized(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<void> {
+  const adminToken = readAdminToken();
+  test.skip(
+    adminToken === null,
+    "No admin JWT at tests/e2e/.jwt-token — JWT-based E2E tests skipped",
+  );
+  const response = await request.get("/api/d1/migrations?action=init", {
+    headers: { Authorization: `Bearer ${adminToken as string}` },
+  });
+  expect(response.status()).toBe(HTTP_OK);
+  const body = (await response.json()) as unknown as D1InitBody;
+  expect(
+    body.success,
+    `D1 init must report success, got: ${JSON.stringify(body)}`,
+  ).toBe(true);
+}
+
+async function registerAndLogin(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<string> {
+  const suffix = uniqueSuffix();
+  const email = `d1-e2e-${suffix}@example.com`;
+  const password = randomUUID();
+
+  const registerResponse = await request.post("/api/auth/register", {
+    data: { email, password, name: E2E_USER_NAME },
+  });
+  expect([HTTP_OK, HTTP_CREATED, HTTP_BAD_REQUEST]).toContain(
+    registerResponse.status(),
+  );
+
+  const loginResponse = await request.post("/api/auth/login", {
+    data: { email, password },
+  });
+  expect(loginResponse.status()).toBe(HTTP_OK);
+  const loginBody = (await loginResponse.json()) as unknown as LoginBody;
+  expect(loginBody.accessToken).toBeDefined();
+  const token = loginBody.accessToken;
+  expect(typeof token).toBe("string");
+  expect((token as string).length).toBeGreaterThan(0);
+  return token as string;
+}
+
+test.describe("D1 migrations (local runner)", () => {
+  test("GET /api/d1/migrations returns 200, not 500", async ({ request }) => {
+    const adminToken = readAdminToken();
+    test.skip(
+      adminToken === null,
+      "No admin JWT at tests/e2e/.jwt-token — JWT-based E2E tests skipped",
+    );
+    const response = await request.get("/api/d1/migrations", {
+      headers: { Authorization: `Bearer ${adminToken as string}` },
+    });
+
+    expect(response.status()).toBe(HTTP_OK);
+    const body = (await response.json()) as unknown as D1StatusBody;
+    expect(body.success).toBe(true);
+    expect(body.error).toBeUndefined();
+  });
+
+  test("D1 init reports success", async ({ request }) => {
+    await ensureD1Initialized(request);
+  });
+});
+
+test.describe("NLQ saved queries (D1-backed)", () => {
+  test("POST then GET /api/nlq/saved roundtrip", async ({ request }) => {
+    await ensureD1Initialized(request);
+    const token = await registerAndLogin(request);
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    const suffix = uniqueSuffix();
+    const query = `find trading deals with bonus ${suffix}`;
+
+    const postResponse = await request.post("/api/nlq/saved", {
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      data: { query, name: `e2e-${suffix}` },
+    });
+
+    expect(postResponse.status()).toBe(HTTP_CREATED);
+    const postBody = (await postResponse.json()) as unknown as SavedPostBody;
+    expect(postBody.success).toBe(true);
+    expect(postBody.code).toBeUndefined();
+    expect(postBody.saved).toBeDefined();
+    expect(postBody.saved?.query).toBe(query);
+
+    const getResponse = await request.get("/api/nlq/saved", {
+      headers: authHeaders,
+    });
+
+    expect(getResponse.status()).toBe(HTTP_OK);
+    const getBody = (await getResponse.json()) as unknown as SavedGetBody;
+    expect(getBody.success).toBe(true);
+    expect(getBody.code).toBeUndefined();
+    expect(getBody.total).toBeGreaterThanOrEqual(1);
+    expect(getBody.saved.map((row) => row.query)).toContain(query);
+  });
+});
