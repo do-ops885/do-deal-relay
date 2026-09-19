@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP Documentation synchronization**: Updated `docs/MCP.md`, `docs/API.md`, and `docs/INDEX.md` to document all 15 available MCP tools and the MCP SSE streaming endpoints (`POST /mcp/stream/tools/call` and `GET /mcp/stream`).
 - **Cron schedules documentation**: Explicitly documented all 4 system background cron schedules (`0 */6 * * *`, `*/30 * * * *`, `0 9 * * *`, `0 0 * * SUN`) in `README.md` and `docs/DEPLOYMENT.md`.
 - **Security controls documentation**: Added Security Architecture & Controls and PEV Pipeline Security Gate sections in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, PEV security gate (SSRF, credential leakage, injection, URL validation, content safety), RBAC, and input hardening.
+- **Performance documentation**: Updated `docs/PERFORMANCE.md` with single-pass deal ranking score pre-computation, module load time IP CIDR bitmask caching, and KV rate-limiting module consolidation.
+
+### Performance
+- **Deal ranking optimization**: Pre-calculated composite deal scores and detailed breakdowns during `rankDeals` (`worker/lib/ranking.ts`) in a single O(N) pass before sorting and mapping, avoiding exponential decay math and array allocations inside comparison loops.
+- **SSRF IP validation bitmasking**: Pre-parsed `SECURITY_CONSTANTS.BLOCKED_IP_RANGES` in `worker/lib/security-ip.ts` into IPv4/IPv6 bitmasks at module load time to accelerate CIDR checks and eliminate per-request string parsing.
+
+### Refactoring
+- **Rate limit module consolidation**: Consolidated `worker/lib/rate-limit-kv.ts` into `worker/lib/rate-limit.ts`, streamlining KV rate-limiting helpers into a single module.
 
 ### Security
 - **HMAC signature leakage prevention**: Hardened HMAC verification in `worker/lib/hmac.ts` to omit computed signature return values on verification failures.

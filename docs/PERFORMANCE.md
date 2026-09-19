@@ -22,9 +22,19 @@ The following areas are the most computationally or I/O intensive parts of the p
 - **Bottleneck**: Sequential execution of gates for each deal.
 
 ### 4. Ranking & Scoring
-- **File**: `worker/pipeline/score.ts`
-- **Description**: Calculating weighted confidence scores based on 7+ metrics.
-- **Bottleneck**: Frequent metadata updates and floating-point math in hot loops.
+- **File**: `worker/pipeline/score.ts` and `worker/lib/ranking.ts`
+- **Description**: Calculating weighted confidence scores based on 7+ metrics and ranking active deals.
+- **Optimization**: Pre-calculating composite scores and detailed breakdowns in a single O(N) pass during `rankDeals` before sorting and mapping. Re-using precomputed values avoids recalculating exponential recency decay and date parsing inside comparison loops, eliminating intermediate array allocations.
+
+### 5. Security IP Resolution & Validation
+- **File**: `worker/lib/security-ip.ts`
+- **Description**: Verifying incoming requests and outgoing URLs against blocked/private IP CIDR ranges for SSRF protection.
+- **Optimization**: `SECURITY_CONSTANTS.BLOCKED_IP_RANGES` are pre-parsed at module load time into pre-computed IPv4 and IPv6 bitmasks. `ipToLong` avoids `.map()` allocations, eliminating redundant string parsing and object allocations on every `isPrivateIP` invocation.
+
+### 6. Rate Limiting & KV Consolidation
+- **File**: `worker/lib/rate-limit.ts`
+- **Description**: Multi-tier rate limiting (Workers Rate Limiting bindings with KV fallback).
+- **Optimization**: All KV rate-limiting state management and helpers are consolidated directly in `worker/lib/rate-limit.ts`, reducing module import overhead and preserving the 5-request burst capacity for 300-second window endpoints.
 
 ---
 
