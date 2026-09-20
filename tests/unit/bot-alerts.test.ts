@@ -17,6 +17,8 @@ describe("Bot Alert Command Unit Tests", () => {
     getReferral: vi.fn(),
     deactivateReferral: vi.fn(),
     reactivateReferral: vi.fn(),
+    getAlertSubscriptions: vi.fn(),
+    deleteAlertSubscription: vi.fn(),
   } as any;
 
   it("should be discoverable via findCommand", () => {
@@ -26,40 +28,38 @@ describe("Bot Alert Command Unit Tests", () => {
   });
 
   it("should execute list subcommand successfully", async () => {
-    const mockFetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          subscriptions: [
-            {
-              id: "sub_999",
-              query: "developer credits",
-              channel: "telegram",
-              frequency: "instant",
-              threshold: 0.7,
-            },
-          ],
-        }),
-        { status: 200 },
-      ),
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    mockApi.getAlertSubscriptions.mockResolvedValue({
+      success: true,
+      total: 1,
+      count: 1,
+      subscriptions: [
+        {
+          id: "sub_999",
+          user_id: "user_test_456",
+          saved_query_id: "q_1",
+          query: "developer credits",
+          channel: "telegram",
+          destination: "123",
+          frequency: "instant",
+          threshold: 0.7,
+          active: 1,
+          created_at: 1000,
+          updated_at: 1000,
+        },
+      ],
+    });
 
     const res = await alertCommand.execute(mockCtx, ["list"], mockApi);
     expect(res.message).toContain("Your Deal Alerts");
     expect(res.message).toContain("sub_999");
     expect(res.message).toContain("developer credits");
-
-    vi.unstubAllGlobals();
   });
 
   it("should execute delete subcommand successfully", async () => {
-    const mockFetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ success: true, deleted: "sub_999" }), {
-        status: 200,
-      }),
-    );
-    vi.stubGlobal("fetch", mockFetch);
+    mockApi.deleteAlertSubscription.mockResolvedValue({
+      success: true,
+      deleted: "sub_999",
+    });
 
     const res = await alertCommand.execute(
       mockCtx,
@@ -67,7 +67,5 @@ describe("Bot Alert Command Unit Tests", () => {
       mockApi,
     );
     expect(res.message).toContain("deleted successfully");
-
-    vi.unstubAllGlobals();
   });
 });

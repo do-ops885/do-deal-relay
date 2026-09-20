@@ -312,6 +312,69 @@ export class DealRelayAPI {
   }
 
   /**
+   * Get alert subscriptions for user
+   */
+  async getAlertSubscriptions(userId: string): Promise<{
+    success: boolean;
+    total: number;
+    count: number;
+    subscriptions: Array<{
+      id: string;
+      user_id: string;
+      saved_query_id: string;
+      channel: string;
+      destination: string;
+      threshold: number;
+      frequency: string;
+      active: number;
+      created_at: number;
+      updated_at: number;
+      query?: string;
+    }>;
+  }> {
+    return this.request<{
+      success: boolean;
+      total: number;
+      count: number;
+      subscriptions: Array<{
+        id: string;
+        user_id: string;
+        saved_query_id: string;
+        channel: string;
+        destination: string;
+        threshold: number;
+        frequency: string;
+        active: number;
+        created_at: number;
+        updated_at: number;
+        query?: string;
+      }>;
+    }>("/api/nlq/alerts", {
+      headers: {
+        "X-User-Id": userId,
+      },
+    });
+  }
+
+  /**
+   * Delete alert subscription
+   */
+  async deleteAlertSubscription(
+    userId: string,
+    id: string,
+  ): Promise<{ success: boolean; deleted: string }> {
+    return this.request<{ success: boolean; deleted: string }>(
+      `/api/nlq/alerts/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "X-User-Id": userId,
+        },
+      },
+    );
+  }
+
+  /**
    * Execute web research for a domain/query
    */
   async research(request: WebResearchRequest): Promise<ResearchResponse> {

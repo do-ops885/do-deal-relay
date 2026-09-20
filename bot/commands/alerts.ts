@@ -13,30 +13,15 @@ export const alertCommand: CommandHandler = {
   async execute(
     ctx: CommandContext,
     args: string[],
-    _api: DealRelayAPI,
+    api: DealRelayAPI,
   ): Promise<CommandResult> {
     const subAction = (args[0] || "list").toLowerCase();
 
     if (subAction === "list") {
       try {
-        const url = "/api/nlq/alerts";
-        // Call API endpoint
-        const res = await fetch(url, {
-          method: "GET",
-          headers: {
-            "X-User-Id": ctx.userId,
-          },
-        });
+        const res = await api.getAlertSubscriptions(ctx.userId);
 
-        if (!res.ok) {
-          return {
-            success: false,
-            message: "❌ Failed to retrieve deal alerts.",
-          };
-        }
-
-        const data = (await res.json()) as any;
-        const subs = data.subscriptions || [];
+        const subs = res.subscriptions || [];
 
         if (subs.length === 0) {
           return {
@@ -47,7 +32,7 @@ export const alertCommand: CommandHandler = {
 
         const alertLines = subs
           .map(
-            (s: any) =>
+            (s) =>
               `• **ID**: \`${s.id}\` | Query: _"${s.query || "Saved Query"}"_\n  Channel: \`${s.channel}\` | Freq: \`${s.frequency}\` | Threshold: ${s.threshold}`,
           )
           .join("\n\n");
@@ -75,20 +60,7 @@ export const alertCommand: CommandHandler = {
       }
 
       try {
-        const url = `/api/nlq/alerts/${id}`;
-        const res = await fetch(url, {
-          method: "DELETE",
-          headers: {
-            "X-User-Id": ctx.userId,
-          },
-        });
-
-        if (!res.ok) {
-          return {
-            success: false,
-            message: `❌ Failed to delete alert \`${id}\`.`,
-          };
-        }
+        await api.deleteAlertSubscription(ctx.userId, id);
 
         return {
           success: true,
