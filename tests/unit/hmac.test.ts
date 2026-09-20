@@ -66,6 +66,64 @@ describe("HMAC Security Utilities", () => {
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Webhook timestamp too old");
     });
+
+    it("should reject NaN and non-finite timestamps", async () => {
+      const sig = await generateHmacSignature(payload, secret, timestamp);
+      const nanResult = await verifyHmacSignature(payload, sig, secret, NaN);
+      expect(nanResult.valid).toBe(false);
+      expect(nanResult.error).toBe("Invalid timestamp or tolerance");
+
+      const infinityResult = await verifyHmacSignature(
+        payload,
+        sig,
+        secret,
+        Infinity,
+      );
+      expect(infinityResult.valid).toBe(false);
+      expect(infinityResult.error).toBe("Invalid timestamp or tolerance");
+    });
+
+    it("should reject invalid or non-string parameters gracefully", async () => {
+      const emptySigResult = await verifyHmacSignature(
+        payload,
+        "",
+        secret,
+        timestamp,
+      );
+      expect(emptySigResult.valid).toBe(false);
+      expect(emptySigResult.error).toBe("Invalid parameters");
+
+      const emptySecretResult = await verifyHmacSignature(
+        payload,
+        "sig",
+        "  ",
+        timestamp,
+      );
+      expect(emptySecretResult.valid).toBe(false);
+      expect(emptySecretResult.error).toBe("Invalid parameters");
+
+      const nonStringResult = await verifyHmacSignature(
+        null as unknown as string,
+        "sig",
+        secret,
+        timestamp,
+      );
+      expect(nonStringResult.valid).toBe(false);
+      expect(nonStringResult.error).toBe("Invalid parameters");
+    });
+
+    it("should reject negative or non-finite tolerance seconds", async () => {
+      const sig = await generateHmacSignature(payload, secret, timestamp);
+      const negativeResult = await verifyHmacSignature(
+        payload,
+        sig,
+        secret,
+        timestamp,
+        -1,
+      );
+      expect(negativeResult.valid).toBe(false);
+      expect(negativeResult.error).toBe("Invalid timestamp or tolerance");
+    });
   });
 
   describe("timingSafeEqual", () => {
