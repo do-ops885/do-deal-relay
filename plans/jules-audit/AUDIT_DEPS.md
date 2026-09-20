@@ -1,14 +1,15 @@
-# Dependency Audit Artifact (Track A)
+# Track A — Dependency Audit (2026-09-20)
 
 | Package | Current | Available | Risk | Upgrade Safe? |
 |---|---|---|---|---|
-| `@cloudflare/workers-types` | `5.20260828.1` | `5.20260906.1` | Low | Yes (minor/patch API compatible) |
-| `@playwright/test` | `1.62.1` | `1.63.0` | Low | Yes (minor/patch API compatible) |
-| `@types/node` | `26.4.0` | `26.4.1` | Low | Yes (minor/patch API compatible) |
-| `wrangler` | `4.127.0` | `4.129.0` | Low | Yes (minor/patch API compatible) |
+| `@cloudflare/workers-types` | `5.20260911.1` | `5.20260920.1` | Low (Patch) | Yes |
+| `@types/node` | `26.5.1` | `26.6.2` | Low (Minor) | Yes |
+| `prettier` | `3.9.6` | `3.9.8` | Low (Patch) | Yes |
+| `wrangler` | `4.131.1` | `4.135.0` | Low (Minor) | Yes |
+| `zod` | `4.6.2` | `4.6.5` | Low (Patch) | Yes |
+| `vitest` | `4.1.11` | `5.0.1` | Medium (Major) | Human Review Required |
+| `@vitest/coverage-v8` | `4.1.11` | `5.0.1` | Medium (Major) | Human Review Required |
+| `miniflare` | `4.20260730.0` | `5.20260918.0-alpha` | High (Alpha/Major) | Human Review Required |
 
-## Human Review Required (Skipped Major Upgrades)
-- `@vitest/coverage-v8`: `4.1.11` -> `5.0.0` (Major version bump)
-- `vitest`: `4.1.11` -> `5.0.0` (Major version bump)
-- `zod`: `3.25.76` -> `4.5.4` (Major version bump)
-- `miniflare`: `4.20260730.0` -> `5.20260903.0-alpha` (Alpha / Major version bump)
+## Changes Applied
+Updated safe patch and minor packages in `package.json` and updated `package-lock.json` via `npm install`.
