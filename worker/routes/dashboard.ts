@@ -22,6 +22,12 @@ export interface DashboardStats {
   timestamp: string;
 }
 
+/**
+ * Fetches consolidated dashboard statistics including deal counts, recent activity, and system health.
+ *
+ * @param env - Worker environment bindings
+ * @returns Promise resolving to consolidated dashboard statistics object
+ */
 export async function getDashboardStats(env: Env): Promise<DashboardStats> {
   try {
     const [dealsStats, activity, health] = await Promise.all([
@@ -48,6 +54,13 @@ export async function getDashboardStats(env: Env): Promise<DashboardStats> {
   }
 }
 
+/**
+ * HTTP handler for retrieving full dashboard statistics.
+ *
+ * @param env - Worker environment bindings
+ * @param request - Optional incoming HTTP request
+ * @returns Promise resolving to JSON response with dashboard statistics
+ */
 export async function handleDashboardStats(
   env: Env,
   request?: Request,
@@ -69,6 +82,13 @@ export async function handleDashboardStats(
   }
 }
 
+/**
+ * HTTP handler for retrieving recent execution logs and activity metrics.
+ *
+ * @param env - Worker environment bindings
+ * @param request - Optional incoming HTTP request
+ * @returns Promise resolving to JSON response with recent activity summary
+ */
 export async function handleDashboardRecentActivity(
   env: Env,
   request?: Request,
@@ -90,6 +110,13 @@ export async function handleDashboardRecentActivity(
   }
 }
 
+/**
+ * HTTP handler for retrieving system health check statuses across KV and D1 bindings.
+ *
+ * @param env - Worker environment bindings
+ * @param request - Optional incoming HTTP request
+ * @returns Promise resolving to JSON response with health check results
+ */
 export async function handleDashboardSystemHealth(
   env: Env,
   request?: Request,
@@ -226,6 +253,13 @@ async function getSystemHealth(env: Env): Promise<{
   return { status: allPassed ? "healthy" : "degraded", checks };
 }
 
+/**
+ * Consolidated HTTP handler endpoint for dashboard stats data.
+ *
+ * @param request - Incoming HTTP request
+ * @param env - Worker environment bindings
+ * @returns Promise resolving to JSON response containing full dashboard data
+ */
 export async function getDashboardData(
   request: Request,
   env: Env,
