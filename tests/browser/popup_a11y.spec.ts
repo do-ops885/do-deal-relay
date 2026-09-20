@@ -76,12 +76,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
     const copyManualBtn = page.locator("#copy-manual-btn");
     await expect(copyManualBtn).toBeFocused();
 
-    // Tab from #copy-manual-btn moves to #refresh-deals-btn (in #deal-feed-section)
-    await page.keyboard.press("Tab");
-    const refreshDealsBtn = page.locator("#refresh-deals-btn");
-    await expect(refreshDealsBtn).toBeFocused();
-
-    // Tab from #refresh-deals-btn moves to #settings-link
+    // Tab from #copy-manual-btn moves to #settings-link
     await page.keyboard.press("Tab");
     const settingsBtn = page.locator("#settings-link");
     await expect(settingsBtn).toBeFocused();

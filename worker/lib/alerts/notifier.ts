@@ -73,19 +73,18 @@ export async function sendAlertNotification(
         }
 
         const cb = createTelegramCircuitBreaker(env);
+        const telegramUrl =
+          "https://api.telegram.org/bot" + botToken + "/sendMessage";
         const execute = async () => {
-          const res = await validatedFetch(
-            `https://api.telegram.org/bot${botToken}/sendMessage`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: messageText,
-                parse_mode: "Markdown",
-              }),
-            },
-          );
+          const res = await validatedFetch(telegramUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: messageText,
+              parse_mode: "Markdown",
+            }),
+          });
           if (!res.ok) throw new Error(`Telegram error HTTP ${res.status}`);
           return true;
         };
