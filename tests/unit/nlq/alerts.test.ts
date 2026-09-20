@@ -16,32 +16,24 @@ describe("NLQ Alert Subscription Endpoints", () => {
   beforeEach(() => {
     const prep = vi.fn().mockImplementation(() => ({
       bind: vi.fn().mockImplementation(() => ({
-        run: vi
-          .fn()
-          .mockResolvedValue({
-            results: [],
-            meta: { changes: 1, rows_read: 0, rows_written: 0 },
-          }),
-        all: vi
-          .fn()
-          .mockResolvedValue({
-            results: [],
-            meta: { rows_read: 0, rows_written: 0 },
-          }),
-        first: vi.fn().mockResolvedValue({ cnt: 0 }),
-      })),
-      run: vi
-        .fn()
-        .mockResolvedValue({
+        run: vi.fn().mockResolvedValue({
           results: [],
           meta: { changes: 1, rows_read: 0, rows_written: 0 },
         }),
-      all: vi
-        .fn()
-        .mockResolvedValue({
+        all: vi.fn().mockResolvedValue({
           results: [],
           meta: { rows_read: 0, rows_written: 0 },
         }),
+        first: vi.fn().mockResolvedValue({ cnt: 0 }),
+      })),
+      run: vi.fn().mockResolvedValue({
+        results: [],
+        meta: { changes: 1, rows_read: 0, rows_written: 0 },
+      }),
+      all: vi.fn().mockResolvedValue({
+        results: [],
+        meta: { rows_read: 0, rows_written: 0 },
+      }),
       first: vi.fn().mockResolvedValue({ cnt: 0 }),
     }));
 
