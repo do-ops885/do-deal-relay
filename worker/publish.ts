@@ -134,6 +134,22 @@ export async function publishSnapshot(
       publishedSnapshot.deals.map((deal) => deal.id),
     );
 
+    // Step 5c: Personalized deal alert matching (wave 5) — best-effort, never blocks publish.
+    try {
+      const { matchAndNotifySubscriptions } = await import("./lib/alerts/matcher");
+      void matchAndNotifySubscriptions(env, publishedSnapshot.deals, "instant").catch((e) => {
+        logger.warn("Instant deal alert matching async error (non-critical)", {
+          component: "publish",
+          error: toError(e).message,
+        });
+      });
+    } catch (e) {
+      logger.warn("Instant deal alert matching failed (non-critical)", {
+        component: "publish",
+        error: toError(e).message,
+      });
+    }
+
     // Step 5b: High-value deal notifications (MF-N1) — best-effort, never blocks publish.
     // Reuses webhook infra (worker/lib/webhook) + push path (notify) from
     // lib/expiration/notifications.ts pattern. Threshold from NOTIFICATION_THRESHOLD env.

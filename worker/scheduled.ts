@@ -63,6 +63,30 @@ export async function handleScheduled(
         eventsProcessed: aggResult.eventsProcessed,
       });
 
+      // Daily digest personalized deal alerts
+      try {
+        const { getProductionSnapshot } = await import("./lib/storage");
+        const { matchAndNotifySubscriptions } = await import("./lib/alerts/matcher");
+        const snapshot = await getProductionSnapshot(env);
+        if (snapshot && snapshot.deals.length > 0) {
+          const digestSummary = await matchAndNotifySubscriptions(
+            env,
+            snapshot.deals,
+            "daily-digest",
+          );
+          logger.info("Daily digest alert processing completed", {
+            component: "scheduled",
+            subscriptionsProcessed: digestSummary.subscriptionsProcessed,
+            notificationsSent: digestSummary.notificationsSent,
+          });
+        }
+      } catch (error) {
+        logger.warn("Daily digest alert processing failed (non-critical)", {
+          component: "scheduled",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       return;
     }
 

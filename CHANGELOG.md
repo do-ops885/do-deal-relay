@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Personalized Deal Alerts (Saved-Search Subscriptions)**: Added `alert_subscriptions` D1 migration (`0007_alert_subscriptions.sql`), D1 CRUD access layer (`worker/lib/d1/alert-subscriptions.ts`), Alert Subscription API routes (`/api/nlq/alerts`), Alert Matcher and Fan-out notifier engine (`worker/lib/alerts/matcher.ts`, `worker/lib/alerts/notifier.ts`), publish-stage matching, daily-digest cron processing (`0 9 * * *`), bot commands (`/alert list`, `/alert delete`), and EU AI Act Article 12 compliance logging.
 - **MCP Documentation synchronization**: Updated `docs/MCP.md`, `docs/API.md`, and `docs/INDEX.md` to document all 15 available MCP tools and the MCP SSE streaming endpoints (`POST /mcp/stream/tools/call` and `GET /mcp/stream`).
 - **Cron schedules documentation**: Explicitly documented all 4 system background cron schedules (`0 */6 * * *`, `*/30 * * * *`, `0 9 * * *`, `0 0 * * SUN`) in `README.md` and `docs/DEPLOYMENT.md`.
 - **Security controls documentation**: Added Security Architecture & Controls and PEV Pipeline Security Gate sections in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, PEV security gate (SSRF, credential leakage, injection, URL validation, content safety), RBAC, and input hardening.
