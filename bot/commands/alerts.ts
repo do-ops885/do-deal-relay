@@ -1,5 +1,6 @@
 import type { CommandHandler, CommandContext, CommandResult } from "./types";
 import { getErrorMessage } from "./utils";
+import type { DealRelayAPI } from "../api-client";
 
 export const alertCommand: CommandHandler = {
   name: "alert",
@@ -7,31 +8,41 @@ export const alertCommand: CommandHandler = {
   description: "Manage deal alerts and saved queries",
   usage: "/alert [list | delete <id>]",
   platforms: ["telegram", "discord"],
-  requiredPermissions: ["read"],
+  permissions: ["public", "verified", "moderator", "admin"],
 
-  async execute(ctx: CommandContext, args: string[]): Promise<CommandResult> {
+  async execute(
+    ctx: CommandContext,
+    args: string[],
+    _api: DealRelayAPI,
+  ): Promise<CommandResult> {
     const subAction = (args[0] || "list").toLowerCase();
 
     if (subAction === "list") {
       try {
-        const url = `${ctx.env.API_BASE_URL || "http://localhost:8787"}/api/nlq/alerts`;
+        const url = "/api/nlq/alerts";
+        // Call API endpoint
         const res = await fetch(url, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${ctx.env.JWT_SECRET || ""}`,
             "X-User-Id": ctx.userId,
           },
         });
 
         if (!res.ok) {
-          return { text: "❌ Failed to retrieve deal alerts." };
+          return {
+            success: false,
+            message: "❌ Failed to retrieve deal alerts.",
+          };
         }
 
         const data = (await res.json()) as any;
         const subs = data.subscriptions || [];
 
         if (subs.length === 0) {
-          return { text: "ℹ️ You have no active deal alerts configured." };
+          return {
+            success: true,
+            message: "ℹ️ You have no active deal alerts configured.",
+          };
         }
 
         const alertLines = subs
@@ -42,41 +53,59 @@ export const alertCommand: CommandHandler = {
           .join("\n\n");
 
         return {
-          text: `🔔 **Your Deal Alerts** (${subs.length}):\n\n${alertLines}`,
+          success: true,
+          message: `🔔 **Your Deal Alerts** (${subs.length}):\n\n${alertLines}`,
         };
       } catch (e) {
-        return { text: `❌ Error: ${getErrorMessage(e)}` };
+        return {
+          success: false,
+          message: `❌ Error: ${getErrorMessage(e)}`,
+        };
       }
     }
 
     if (subAction === "delete" || subAction === "remove") {
       const id = args[1];
       if (!id) {
-        return { text: "❌ Please specify the alert subscription ID to delete.\nUsage: `/alert delete <id>`" };
+        return {
+          success: false,
+          message:
+            "❌ Please specify the alert subscription ID to delete.\nUsage: `/alert delete <id>`",
+        };
       }
 
       try {
-        const url = `${ctx.env.API_BASE_URL || "http://localhost:8787"}/api/nlq/alerts/${id}`;
+        const url = `/api/nlq/alerts/${id}`;
         const res = await fetch(url, {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${ctx.env.JWT_SECRET || ""}`,
             "X-User-Id": ctx.userId,
           },
         });
 
         if (!res.ok) {
-          return { text: `❌ Failed to delete alert \`${id}\`.` };
+          return {
+            success: false,
+            message: `❌ Failed to delete alert \`${id}\`.`,
+          };
         }
 
-        return { text: `✅ Alert subscription \`${id}\` deleted successfully.` };
+        return {
+          success: true,
+          message: `✅ Alert subscription \`${id}\` deleted successfully.`,
+        };
       } catch (e) {
-        return { text: `❌ Error: ${getErrorMessage(e)}` };
+        return {
+          success: false,
+          message: `❌ Error: ${getErrorMessage(e)}`,
+        };
       }
     }
 
     return {
-      text: "ℹ️ Unknown alert command.\nUsage:\n• `/alert list` - List your alert subscriptions\n• `/alert delete <id>` - Remove an alert subscription",
+      success: false,
+      message:
+        "ℹ️ Unknown alert command.\nUsage:\n• `/alert list` - List your alert subscriptions\n• `/alert delete <id>` - Remove an alert subscription",
     };
   },
 };

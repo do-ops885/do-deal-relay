@@ -8,12 +8,16 @@ describe("Bot Alert Command Unit Tests", () => {
     userId: "user_test_456",
     platform: "telegram",
     isAdmin: false,
-    permissions: ["read"],
-    env: {
-      API_BASE_URL: "http://localhost:8787",
-      JWT_SECRET: "test-jwt-secret",
-    },
+    permissions: ["verified"],
   };
+
+  const mockApi = {
+    createReferral: vi.fn(),
+    searchReferrals: vi.fn(),
+    getReferral: vi.fn(),
+    deactivateReferral: vi.fn(),
+    reactivateReferral: vi.fn(),
+  } as any;
 
   it("should be discoverable via findCommand", () => {
     const cmd = findCommand("alert", "telegram");
@@ -41,10 +45,10 @@ describe("Bot Alert Command Unit Tests", () => {
     );
     vi.stubGlobal("fetch", mockFetch);
 
-    const res = await alertCommand.execute(mockCtx, ["list"]);
-    expect(res.text).toContain("Your Deal Alerts");
-    expect(res.text).toContain("sub_999");
-    expect(res.text).toContain("developer credits");
+    const res = await alertCommand.execute(mockCtx, ["list"], mockApi);
+    expect(res.message).toContain("Your Deal Alerts");
+    expect(res.message).toContain("sub_999");
+    expect(res.message).toContain("developer credits");
 
     vi.unstubAllGlobals();
   });
@@ -57,8 +61,12 @@ describe("Bot Alert Command Unit Tests", () => {
     );
     vi.stubGlobal("fetch", mockFetch);
 
-    const res = await alertCommand.execute(mockCtx, ["delete", "sub_999"]);
-    expect(res.text).toContain("deleted successfully");
+    const res = await alertCommand.execute(
+      mockCtx,
+      ["delete", "sub_999"],
+      mockApi,
+    );
+    expect(res.message).toContain("deleted successfully");
 
     vi.unstubAllGlobals();
   });

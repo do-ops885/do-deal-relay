@@ -5,7 +5,10 @@ import {
   type AlertFrequency,
   type AlertSubscriptionRow,
 } from "../d1/alert-subscriptions";
-import { sendAlertNotification, type AlertNotificationResult } from "./notifier";
+import {
+  sendAlertNotification,
+  type AlertNotificationResult,
+} from "./notifier";
 import { createComplianceLogger } from "../eu-ai-act-logger";
 import { logger } from "../global-logger";
 
@@ -34,8 +37,12 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
   const dealDescription = (deal.description || "").toLowerCase();
   const dealCode = (deal.code || "").toLowerCase();
   const dealDomain = (deal.source?.domain || "").toLowerCase();
-  const dealCategories = (deal.category || []).map((c) => c.toLowerCase()).join(" ");
-  const dealTags = (deal.tags || []).map((t) => t.toLowerCase()).join(" ");
+  const dealCategories = Array.isArray(deal.metadata?.category)
+    ? (deal.metadata.category as string[]).map((c) => c.toLowerCase()).join(" ")
+    : "";
+  const dealTags = Array.isArray(deal.metadata?.tags)
+    ? (deal.metadata.tags as string[]).map((t) => t.toLowerCase()).join(" ")
+    : "";
 
   const combinedDealText = `${dealTitle} ${dealDescription} ${dealCode} ${dealDomain} ${dealCategories} ${dealTags}`;
 
@@ -80,7 +87,10 @@ export async function matchAndNotifySubscriptions(
 
   let subscriptions: AlertSubscriptionRow[] = [];
   try {
-    subscriptions = await getActiveSubscriptionsByFrequency(env.DEALS_DB, frequency);
+    subscriptions = await getActiveSubscriptionsByFrequency(
+      env.DEALS_DB,
+      frequency,
+    );
   } catch (err) {
     logger.warn("Failed to fetch active alert subscriptions", {
       component: "alerts-matcher",
@@ -126,7 +136,11 @@ export async function matchAndNotifySubscriptions(
             source: "pipeline_published_deals",
             hash: sub.saved_query_id,
             description: `Matched query "${query}" against ${deals.length} deals`,
-            metadata: { subscriptionId: sub.id, userId: sub.user_id, channel: sub.channel },
+            metadata: {
+              subscriptionId: sub.id,
+              userId: sub.user_id,
+              channel: sub.channel,
+            },
           },
           outputData: {
             result: notifyResult.success ? "notified" : "failed",

@@ -71,7 +71,8 @@ export async function handleNLQRequest(
       );
     }
     if (request.method === "PATCH") return handleAlertsPatch(request, env, id);
-    if (request.method === "DELETE") return handleAlertsDelete(request, env, id);
+    if (request.method === "DELETE")
+      return handleAlertsDelete(request, env, id);
     return jsonResponse(
       {
         error: "Method not allowed",

@@ -66,7 +66,8 @@ export async function handleScheduled(
       // Daily digest personalized deal alerts
       try {
         const { getProductionSnapshot } = await import("./lib/storage");
-        const { matchAndNotifySubscriptions } = await import("./lib/alerts/matcher");
+        const { matchAndNotifySubscriptions } =
+          await import("./lib/alerts/matcher");
         const snapshot = await getProductionSnapshot(env);
         if (snapshot && snapshot.deals.length > 0) {
           const digestSummary = await matchAndNotifySubscriptions(

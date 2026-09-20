@@ -5,11 +5,11 @@ import { z } from "zod";
 import {
   createAlertSubscription,
   listAlertSubscriptions,
-  getAlertSubscription,
   updateAlertSubscription,
   deleteAlertSubscription,
   type AlertChannel,
   type AlertFrequency,
+  type UpdateAlertSubscriptionInput,
 } from "../../lib/d1/alert-subscriptions";
 
 const CreateAlertSchema = z.object({
@@ -90,7 +90,12 @@ export async function handleAlertsPost(
       threshold: parsed.data.threshold,
       frequency: parsed.data.frequency as AlertFrequency,
     });
-    return jsonResponse({ success: true, subscription: sub }, 201, request, env);
+    return jsonResponse(
+      { success: true, subscription: sub },
+      201,
+      request,
+      env,
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("no such table")) {
@@ -236,11 +241,21 @@ export async function handleAlertsPatch(
   }
 
   try {
+    const patchInput: UpdateAlertSubscriptionInput = {};
+    if (parsed.data.threshold !== undefined)
+      patchInput.threshold = parsed.data.threshold;
+    if (parsed.data.frequency !== undefined)
+      patchInput.frequency = parsed.data.frequency;
+    if (parsed.data.active !== undefined)
+      patchInput.active = parsed.data.active;
+    if (parsed.data.destination !== undefined)
+      patchInput.destination = parsed.data.destination;
+
     const updated = await updateAlertSubscription(
       env.DEALS_DB,
       userId,
       id,
-      parsed.data,
+      patchInput,
     );
     if (!updated) {
       return jsonResponse(
@@ -250,7 +265,12 @@ export async function handleAlertsPatch(
         env,
       );
     }
-    return jsonResponse({ success: true, subscription: updated }, 200, request, env);
+    return jsonResponse(
+      { success: true, subscription: updated },
+      200,
+      request,
+      env,
+    );
   } catch {
     return jsonResponse(
       { error: "Failed to update subscription", code: "UPDATE_FAILED" },

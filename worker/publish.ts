@@ -136,8 +136,13 @@ export async function publishSnapshot(
 
     // Step 5c: Personalized deal alert matching (wave 5) — best-effort, never blocks publish.
     try {
-      const { matchAndNotifySubscriptions } = await import("./lib/alerts/matcher");
-      void matchAndNotifySubscriptions(env, publishedSnapshot.deals, "instant").catch((e) => {
+      const { matchAndNotifySubscriptions } =
+        await import("./lib/alerts/matcher");
+      void matchAndNotifySubscriptions(
+        env,
+        publishedSnapshot.deals,
+        "instant",
+      ).catch((e) => {
         logger.warn("Instant deal alert matching async error (non-critical)", {
           component: "publish",
           error: toError(e).message,

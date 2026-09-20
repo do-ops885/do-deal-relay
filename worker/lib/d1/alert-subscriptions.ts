@@ -88,7 +88,8 @@ export async function createAlertSubscription(
      WHERE a.id = ?`,
     [id],
   );
-  if (!row.success || !row.data) throw new Error("Failed to create alert subscription");
+  if (!row.success || !row.data)
+    throw new Error("Failed to create alert subscription");
   return row.data;
 }
 
@@ -148,7 +149,8 @@ export async function updateAlertSubscription(
       ? Math.min(Math.max(input.threshold, 0), 1)
       : existing.threshold;
   const frequency = input.frequency || existing.frequency;
-  const active = input.active !== undefined ? (input.active ? 1 : 0) : existing.active;
+  const active =
+    input.active !== undefined ? (input.active ? 1 : 0) : existing.active;
   const destination = input.destination || existing.destination;
 
   await db

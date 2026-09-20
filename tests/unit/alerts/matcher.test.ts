@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { scoreDealAgainstQuery } from "../../../worker/lib/alerts/matcher";
-import { formatAlertMessage, sendAlertNotification } from "../../../worker/lib/alerts/notifier";
+import {
+  formatAlertMessage,
+  sendAlertNotification,
+} from "../../../worker/lib/alerts/notifier";
 import type { Deal } from "../../../worker/types/deal";
 import type { AlertSubscriptionRow } from "../../../worker/lib/d1/alert-subscriptions";
 import type { Env } from "../../../worker/types";
@@ -13,21 +16,26 @@ describe("Alert Matcher and Notifier Unit Tests", () => {
     description: "Get $500 in cloud credits for startups",
     url: "https://example.com/aws",
     source: {
-      type: "manual",
       url: "https://example.com",
       domain: "example.com",
+      discovered_at: "2026-09-20T00:00:00Z",
+      trust_score: 0.9,
     },
-    category: ["cloud", "hosting"],
-    tags: ["aws", "credits"],
     reward: {
       type: "cash",
       value: 500,
       currency: "USD",
     },
+    expiry: {
+      confidence: 1.0,
+      type: "unknown",
+    },
     metadata: {
       status: "active",
-      confidence: 0.9,
-      updated_at: new Date().toISOString(),
+      confidence_score: 0.9,
+      normalized_at: "2026-09-20T00:00:00Z",
+      category: ["cloud", "hosting"],
+      tags: ["aws", "credits"],
     },
   };
 
@@ -46,7 +54,9 @@ describe("Alert Matcher and Notifier Unit Tests", () => {
   };
 
   it("should score deal correctly against query string", () => {
-    expect(scoreDealAgainstQuery(sampleDeal, "cloud credits")).toBeGreaterThanOrEqual(0.5);
+    expect(
+      scoreDealAgainstQuery(sampleDeal, "cloud credits"),
+    ).toBeGreaterThanOrEqual(0.5);
     expect(scoreDealAgainstQuery(sampleDeal, "unrelated query xyz")).toBe(0);
     expect(scoreDealAgainstQuery(sampleDeal, "")).toBe(0);
   });
@@ -58,8 +68,10 @@ describe("Alert Matcher and Notifier Unit Tests", () => {
     expect(msg).toContain("AWS500");
   });
 
-  it("should execute sendAlertNotification for webhook channel", async () => {
-    const mockFetch = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
+  it("should execute sendAlertNotification for email channel", async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValue(new Response("ok", { status: 200 }));
     vi.stubGlobal("fetch", mockFetch);
 
     const mockEnv = {

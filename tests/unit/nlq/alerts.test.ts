@@ -14,14 +14,34 @@ describe("NLQ Alert Subscription Endpoints", () => {
   let mockD1: any;
 
   beforeEach(() => {
-    const prep = vi.fn().mockImplementation((query: string) => ({
-      bind: vi.fn().mockImplementation((...params: any[]) => ({
-        run: vi.fn().mockResolvedValue({ results: [], meta: { changes: 1, rows_read: 0, rows_written: 0 } }),
-        all: vi.fn().mockResolvedValue({ results: [], meta: { rows_read: 0, rows_written: 0 } }),
+    const prep = vi.fn().mockImplementation(() => ({
+      bind: vi.fn().mockImplementation(() => ({
+        run: vi
+          .fn()
+          .mockResolvedValue({
+            results: [],
+            meta: { changes: 1, rows_read: 0, rows_written: 0 },
+          }),
+        all: vi
+          .fn()
+          .mockResolvedValue({
+            results: [],
+            meta: { rows_read: 0, rows_written: 0 },
+          }),
         first: vi.fn().mockResolvedValue({ cnt: 0 }),
       })),
-      run: vi.fn().mockResolvedValue({ results: [], meta: { changes: 1, rows_read: 0, rows_written: 0 } }),
-      all: vi.fn().mockResolvedValue({ results: [], meta: { rows_read: 0, rows_written: 0 } }),
+      run: vi
+        .fn()
+        .mockResolvedValue({
+          results: [],
+          meta: { changes: 1, rows_read: 0, rows_written: 0 },
+        }),
+      all: vi
+        .fn()
+        .mockResolvedValue({
+          results: [],
+          meta: { rows_read: 0, rows_written: 0 },
+        }),
       first: vi.fn().mockResolvedValue({ cnt: 0 }),
     }));
 

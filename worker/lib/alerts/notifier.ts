@@ -2,7 +2,10 @@ import type { Env } from "../../types";
 import type { AlertSubscriptionRow } from "../d1/alert-subscriptions";
 import { validatedFetch } from "../security";
 import { logger } from "../global-logger";
-import { createTelegramCircuitBreaker, CircuitBreakerOpenError } from "../circuit-breaker";
+import {
+  createTelegramCircuitBreaker,
+  CircuitBreakerOpenError,
+} from "../circuit-breaker";
 import type { Deal } from "../../types/deal";
 
 export interface AlertNotificationResult {
@@ -32,7 +35,8 @@ export function formatAlertMessage(
     })
     .join("\n\n");
 
-  const footer = deals.length > 5 ? `\n\n...and ${deals.length - 5} more deal(s).` : "";
+  const footer =
+    deals.length > 5 ? `\n\n...and ${deals.length - 5} more deal(s).` : "";
   return `${header}${dealSummaries}${footer}`;
 }
 
@@ -45,7 +49,11 @@ export async function sendAlertNotification(
   deals: Deal[],
 ): Promise<AlertNotificationResult> {
   if (deals.length === 0) {
-    return { subscriptionId: subscription.id, channel: subscription.channel, success: true };
+    return {
+      subscriptionId: subscription.id,
+      channel: subscription.channel,
+      success: true,
+    };
   }
 
   const messageText = formatAlertMessage(subscription, deals);
@@ -146,7 +154,11 @@ export async function sendAlertNotification(
         };
     }
 
-    return { subscriptionId: subscription.id, channel: subscription.channel, success: true };
+    return {
+      subscriptionId: subscription.id,
+      channel: subscription.channel,
+      success: true,
+    };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     if (error instanceof CircuitBreakerOpenError) {
