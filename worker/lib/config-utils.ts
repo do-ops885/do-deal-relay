@@ -9,7 +9,7 @@ import type { Env } from "../types";
  * @param minimum The minimum allowable integer value
  * @param maximum The maximum allowable integer value
  * @returns The parsed integer within bounds
- * @throws Error if value is non-integer or out of bounds
+ * @throws {Error} If value is non-integer or out of bounds
  */
 export function parseBoundedIntegerConfig(
   name: string,
@@ -53,7 +53,7 @@ export function getTrustThreshold(env: Env): number {
 /**
  * Validate required environment bindings and configuration values
  * @param env Worker environment bindings
- * @throws Error if required variables are missing or threshold/budget configs are invalid
+ * @throws {Error} If required variables are missing or threshold/budget configs are invalid
  */
 export function validateConfig(env: Env): void {
   const required = [
