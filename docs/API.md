@@ -1883,6 +1883,145 @@ curl "https://your-worker.workers.dev/api/nlq/explain?q=trading%20deals%20with%2
 
 ---
 
+### Alert Subscriptions API
+
+Manage personalized deal alerts based on saved NLQ search queries.
+
+#### POST /api/nlq/alerts
+
+Create a new alert subscription for a saved query. Requires User role.
+
+**Request Body:**
+
+```json
+{
+  "saved_query_id": "nlq_123abc",
+  "channel": "telegram",
+  "destination": "123456789",
+  "threshold": 0.7,
+  "frequency": "instant"
+}
+```
+
+**Parameters:**
+
+- `saved_query_id` (string, required): ID of the saved query
+- `channel` (string, required): 'telegram' | 'discord' | 'email' | 'webhook'
+- `destination` (string, required): Telegram Chat ID, Discord Webhook URL, Email address, or Webhook URL
+- `threshold` (number, optional): Minimum match confidence threshold between 0.0 and 1.0 (default: 0.7)
+- `frequency` (string, optional): 'instant' | 'daily-digest' (default: 'instant')
+
+**Response (201 Created):**
+
+```json
+{
+  "success": true,
+  "subscription": {
+    "id": "sub_m123_abc",
+    "user_id": "user_123",
+    "saved_query_id": "nlq_123abc",
+    "channel": "telegram",
+    "destination": "123456789",
+    "threshold": 0.7,
+    "frequency": "instant",
+    "active": 1,
+    "created_at": 1711886400,
+    "updated_at": 1711886400,
+    "query": "cloud credits"
+  }
+}
+```
+
+---
+
+#### GET /api/nlq/alerts
+
+List active alert subscriptions for the authenticated user. Requires User role.
+
+**Query Parameters:**
+
+- `limit` (number, optional): Max results (default: 20)
+- `offset` (number, optional): Pagination offset (default: 0)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "total": 1,
+  "count": 1,
+  "subscriptions": [
+    {
+      "id": "sub_m123_abc",
+      "user_id": "user_123",
+      "saved_query_id": "nlq_123abc",
+      "channel": "telegram",
+      "destination": "123456789",
+      "threshold": 0.7,
+      "frequency": "instant",
+      "active": 1,
+      "created_at": 1711886400,
+      "updated_at": 1711886400,
+      "query": "cloud credits"
+    }
+  ]
+}
+```
+
+---
+
+#### PATCH /api/nlq/alerts/:id
+
+Update an alert subscription (threshold, frequency, active status, destination). Requires User role.
+
+**Request Body:**
+
+```json
+{
+  "threshold": 0.8,
+  "frequency": "daily-digest",
+  "active": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "subscription": {
+    "id": "sub_m123_abc",
+    "user_id": "user_123",
+    "saved_query_id": "nlq_123abc",
+    "channel": "telegram",
+    "destination": "123456789",
+    "threshold": 0.8,
+    "frequency": "daily-digest",
+    "active": 0,
+    "created_at": 1711886400,
+    "updated_at": 1711886450,
+    "query": "cloud credits"
+  }
+}
+```
+
+---
+
+#### DELETE /api/nlq/alerts/:id
+
+Delete an alert subscription. Requires User role.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "deleted": "sub_m123_abc"
+}
+```
+
+---
+
 ## Semantic Search API
 
 Natural language search using Cloudflare Vectorize and Workers AI embeddings. Requires User role.

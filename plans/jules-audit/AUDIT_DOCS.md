@@ -1,8 +1,7 @@
-# Track D — Documentation Audit (2026-09-20)
+# Documentation Audit Artifact (Track D)
 
-## Findings
-- `validateConfig` in `worker/lib/config-utils.ts`:
-  The JSDoc comment for `validateConfig` had an incomplete `@throws` tag that only mentioned trust threshold invalidity, omitting errors thrown when required worker environment variables are missing or candidate budget configuration variables are invalid.
+## Undocumented Public Surface Identified
+`worker/lib/research-agent/helpers.ts` exposes public functions (`normalizeResearchQuery`, `generateSearchQueries`, `generatePotentialCodes`, `generateSampleCode`, `simulateDiscovery`, `generateSimulatedCode`, `generateSimulatedReward`, `deduplicateCodes`, `extractRewardValue`, `getDefaultResearchConfig`) missing standard JSDoc comment documentation (`@param`, `@returns`).
 
-## Changes Applied
-- Updated JSDoc comment for `validateConfig` in `worker/lib/config-utils.ts` to document that it validates required environment bindings, trust threshold values, and candidate budget configurations.
+## Actions Planned
+Add comprehensive JSDoc `@param` and `@returns` annotations for all exported public functions in `worker/lib/research-agent/helpers.ts`.

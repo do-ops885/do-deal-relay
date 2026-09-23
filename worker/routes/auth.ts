@@ -13,9 +13,6 @@ import { createToken, hashPassword, verifyPassword } from "../lib/jwt";
 import { toErrCtx } from "../lib/errors";
 import type { AuthResult } from "../lib/auth";
 
-/** Standard JWT expiration window in seconds (24 hours) */
-export const JWT_EXPIRATION_SECONDS = 86400;
-
 /**
  * Retrieve the JWT signing secret from the worker environment.
  * @param env Worker environment bindings
@@ -346,7 +343,7 @@ export async function loginUser(
         user: getUserResponse(toPublicUser(user)),
         accessToken,
         refreshToken,
-        expiresIn: JWT_EXPIRATION_SECONDS,
+        expiresIn: 86400,
       },
       200,
       request,
@@ -412,7 +409,7 @@ export async function refreshAccessToken(
       {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
-        expiresIn: JWT_EXPIRATION_SECONDS,
+        expiresIn: 86400,
       },
       200,
       request,
