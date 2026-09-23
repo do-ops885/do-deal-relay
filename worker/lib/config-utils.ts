@@ -53,6 +53,7 @@ export function getTrustThreshold(env: Env): number {
 /**
  * Validate required environment bindings and configuration values
  * @param env Worker environment bindings
+ * @returns {void}
  * @throws Error if required variables are missing or threshold/budget configs are invalid
  */
 export function validateConfig(env: Env): void {
