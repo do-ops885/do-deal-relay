@@ -12,6 +12,12 @@ function getExperienceLogger(env: Env): Logger {
   return createStructuredLogger(env, "experience-routes", `exp-${Date.now()}`);
 }
 
+/**
+ * Handle experience event submission for a deal
+ * @param request HTTP request containing experience event payload
+ * @param env Worker environment bindings
+ * @returns JSON HTTP response indicating submission success or failure
+ */
 export async function handleSubmitExperience(
   request: Request,
   env: Env,
@@ -128,6 +134,13 @@ export async function handleSubmitExperience(
   );
 }
 
+/**
+ * Retrieve experience aggregation data for a specific deal
+ * @param dealCode The canonical deal identifier code
+ * @param env Worker environment bindings
+ * @param request Optional HTTP request context
+ * @returns JSON HTTP response containing experience metrics
+ */
 export async function handleGetExperience(
   dealCode: string,
   env: Env,
@@ -184,6 +197,12 @@ export async function handleGetExperience(
   );
 }
 
+/**
+ * Trigger experience metrics aggregation across raw events in D1
+ * @param env Worker environment bindings
+ * @param request Optional HTTP request context
+ * @returns JSON HTTP response with aggregation results
+ */
 export async function handleRunAggregation(
   env: Env,
   request?: Request,
