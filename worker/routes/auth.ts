@@ -16,6 +16,10 @@ import type { AuthResult } from "../lib/auth";
 /** Standard JWT expiration window in seconds (24 hours) */
 export const JWT_EXPIRATION_SECONDS = 86400;
 
+/** Dummy PBKDF2 hash (16-byte salt + 32-byte hash) for constant-time verification when user is missing */
+const DUMMY_PASSWORD_HASH =
+  "AAAAAAAAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
 /**
  * Retrieve the JWT signing secret from the worker environment.
  * @param env Worker environment bindings
@@ -323,10 +327,10 @@ export async function loginUser(
     )
       .bind(input.email.toLowerCase())
       .first<User>();
-    if (!user)
-      return errorResponse("Invalid credentials", 401, undefined, request, env);
-    const isValid = await verifyPassword(input.password, user.password_hash);
-    if (!isValid)
+    // Execute verifyPassword even if user is not found to prevent user enumeration via timing side-channels
+    const hashToVerify = user ? user.password_hash : DUMMY_PASSWORD_HASH;
+    const isValid = await verifyPassword(input.password, hashToVerify);
+    if (!user || !isValid)
       return errorResponse("Invalid credentials", 401, undefined, request, env);
     const accessToken = await createToken(
       { sub: user.id, role: user.role, email: user.email },
