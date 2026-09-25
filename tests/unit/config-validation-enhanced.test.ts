@@ -139,6 +139,18 @@ describe("Enhanced Config Validation", () => {
       ).toThrow("TEST_VAR must be an integer");
     });
 
+    it("should throw when value uses non-decimal string representations", () => {
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "0x10", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "0b1010", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "0o12", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+    });
+
     it("should throw when value is out of bounds", () => {
       expect(() =>
         parseBoundedIntegerConfig("TEST_VAR", "-1", 10, 0, 100),
