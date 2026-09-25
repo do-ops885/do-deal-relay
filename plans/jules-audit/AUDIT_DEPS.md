@@ -1,15 +1,10 @@
-# Track A — Dependency Audit (2026-09-20)
+# Dependency Audit (2026-09-25)
 
-| Package | Current | Available | Risk | Upgrade Safe? |
-|---|---|---|---|---|
-| `@cloudflare/workers-types` | `5.20260911.1` | `5.20260920.1` | Low (Patch) | Yes |
-| `@types/node` | `26.5.1` | `26.6.2` | Low (Minor) | Yes |
-| `prettier` | `3.9.6` | `3.9.8` | Low (Patch) | Yes |
-| `wrangler` | `4.131.1` | `4.135.0` | Low (Minor) | Yes |
-| `zod` | `4.6.2` | `4.6.5` | Low (Patch) | Yes |
-| `vitest` | `4.1.11` | `5.0.1` | Medium (Major) | Human Review Required |
-| `@vitest/coverage-v8` | `4.1.11` | `5.0.1` | Medium (Major) | Human Review Required |
-| `miniflare` | `4.20260730.0` | `5.20260918.0-alpha` | High (Alpha/Major) | Human Review Required |
-
-## Changes Applied
-Updated safe patch and minor packages in `package.json` and updated `package-lock.json` via `npm install`.
+| Package | Current | Available | Risk | Safe Upgrade? |
+| --- | --- | --- | --- | --- |
+| `@cloudflare/workers-types` | `5.20260920.1` | `5.20260925.1` | Low | Yes (patch update) |
+| `prettier` | `3.9.8` | `3.9.9` | Low | Yes (patch update) |
+| `wrangler` | `4.135.0` | `4.139.0` | Low | Yes (minor update) |
+| `vitest` | `4.1.11` | `5.0.1` | High | No (major update - human review required) |
+| `@vitest/coverage-v8` | `4.1.11` | `5.0.1` | High | No (major update - human review required) |
+| `miniflare` | `4.20260730.0` | `5.20260923.0-alpha` | High | No (alpha release - human review required) |

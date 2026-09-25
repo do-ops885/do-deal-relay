@@ -1,8 +1,5 @@
-# Track D — Documentation Audit (2026-09-20)
+# Documentation Audit (2026-09-25)
 
-## Findings
-- `validateConfig` in `worker/lib/config-utils.ts`:
-  The JSDoc comment for `validateConfig` had an incomplete `@throws` tag that only mentioned trust threshold invalidity, omitting errors thrown when required worker environment variables are missing or candidate budget configuration variables are invalid.
-
-## Changes Applied
-- Updated JSDoc comment for `validateConfig` in `worker/lib/config-utils.ts` to document that it validates required environment bindings, trust threshold values, and candidate budget configurations.
+- **Target**: Public exported configuration utilities in `worker/lib/config-utils.ts`
+- **Gaps identified**: `validateConfig` and `parseBoundedIntegerConfig` JSDoc annotations required updates for `@param`, `@returns`, and `@throws` tags.
+- **Added Documentation**: Updated JSDoc tags for `parseBoundedIntegerConfig` and `validateConfig` in `worker/lib/config-utils.ts`.

@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.22.0",
-    "@cloudflare/workers-types": "^5.20260920.1",
+    "@cloudflare/workers-types": "^5.20260925.1",
     "@playwright/test": "^1.63.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.6.2",
@@ -55,10 +55,10 @@
     "js-yaml": "^5.4.2",
     "markdownlint-cli": "^0.49.1",
     "miniflare": "4.20260730.0",
-    "prettier": "^3.9.8",
+    "prettier": "^3.9.9",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
-    "wrangler": "^4.135.0"
+    "wrangler": "^4.139.0"
   },
   "overrides": {
     "esbuild": ">=0.28.1",
