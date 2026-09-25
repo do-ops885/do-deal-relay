@@ -64,7 +64,10 @@ export function autoCategorize(deal: Deal): DealMetadata {
     );
     const topTagCount = Math.min(5, sortedTagEntries.length);
     for (let i = 0; i < topTagCount; i++) {
-      tags.push(sortedTagEntries[i][0]);
+      const entry = sortedTagEntries[i];
+      if (entry) {
+        tags.push(entry[0]);
+      }
     }
   }
 
