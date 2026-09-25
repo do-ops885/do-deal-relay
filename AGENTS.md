@@ -1,8 +1,8 @@
 # Agent Coordination Hub - do-deal-relay
 **Version**: 0.1.8
-**Workflow Standard**: Agent Hub v0.2.5 (Upstream v0.3.5)
+**Workflow Standard**: Agent Hub v0.2.5 (Adapting Upstream Reference v0.3.5)
 
-## 1. Named Constants & System Limits
+## 1. System Constants & Operational Limits
 ```bash
 readonly MAX_LINES_PER_SOURCE_FILE=500
 readonly MAX_LINES_AGENTS_MD=200
@@ -13,48 +13,43 @@ readonly TRUST_THRESHOLD=0.3
 readonly DEFAULT_TIMEOUT_SECONDS=1800
 ```
 - **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`.
-- **Single Source of Truth**: System version is maintained solely in the root `VERSION` file. Never edit version strings elsewhere.
+- **Single Source of Truth**: Version string maintained exclusively in root `VERSION` file (`0.1.8`). Do not edit version strings elsewhere.
 
 ## 2. Analyze-First Mandate & Zero Low-Value Questions
-1. **Analyze First**: Prior to asking ANY clarification questions, deeply analyze the repository structure, local tooling, sub-agent setups, and workflows.
-2. **Zero Low-Value Questions**: Do not ask if quality gates, skills systems, sub-agents, or validation scripts exist—they are fully operational.
-3. **Infer Conventions**: Infer solutions from existing codebase patterns (Centralized Middleware Router, SQLite/D1 schema, strict TypeScript, and Cloudflare Durable Objects) before seeking external clarification.
+1. **Analyze First**: Prior to asking ANY clarification questions, agents MUST deeply analyze repository structure, local tooling, sub-agents, CI/CD workflows, validation gates, documentation, and conventions.
+2. **Zero Low-Value Questions**: Do not ask if quality gates, skills systems, sub-agents, act/local CI rehearsal, or validation scripts exist—they are fully operational.
+3. **Infer Patterns**: Infer solutions from existing codebase patterns (Cloudflare Workers, D1 SQLite, KV, Durable Objects, 9-gate pipeline, Centralized Router) before asking questions.
+4. **Clarification Threshold**: Ask questions ONLY if information cannot be derived from codebase analysis, multiple valid interpretations exist, or the decision is explicitly organizational/product-oriented.
 
 ## 3. Production Reliability & Operational Safeguards
-- **SSRF Hardening**: Outgoing network calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass DNS/CIDR checks.
-- **Validation Pipeline**: Submissions MUST pass all 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites are strictly forbidden.
-- **RBAC Controls**: Admin role required for `/metrics`, `/api/dora-metrics`, `/dora`, and `/api/d1/*`. User role required for `/api/nlq` and referral management (Create/Deactivate/Reactivate).
-- **Banned Patterns**: No hardcoded secrets, no magic numbers, no `!` assertions, and no unused imports. Maintain high operational safety.
+- **SSRF Protection**: Outgoing HTTP calls MUST use `validatedFetch` via `worker/lib/security.ts`. Bypassing DNS/CIDR checks or IPv4-compatible IPv6 validation is strictly forbidden.
+- **Validation Pipeline**: Deal submissions MUST pass all 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites of validation gates or security controls are forbidden.
+- **RBAC Controls**: Admin role required for `/metrics`, `/api/dora-metrics`, `/dora`, `/api/d1/*`. User role required for `/api/nlq` and referral management (Create/Deactivate/Reactivate).
+- **Quality Safeguards**: No hardcoded secrets, no magic numbers, no `!` non-null assertions, and no unused imports. Max 500 lines per TypeScript source file.
 
 ## 4. Process Modes & PEV Loop (Plan-Execute-Verify)
-- **Light Mode** (Small fixes, docs): Run Quality gate (`./scripts/quality_gate.sh`) → atomic commit → PR.
-- **Full Mode** (Refactors, systems): Requires spec in `plans/` (using `SPEC_TEMPLATE.md`), GOAP tracking in `plans/GOAP_STATE.md`, and ADR creation.
-- **CI Precheck**: Before starting in Full Mode, verify `.github/ci-status/ci-status.json` is "passing". Pause if failing.
-- **Always-Fix Policy**: Implement incrementally. Resolve all pre-existing CI check/lint/type/formatting failures in current context.
-  - *Triage*: If an issue is blocked by external factors, register an ADR in `plans/` and set the task as `blocked` in `plans/GOAP_STATE.md`.
+- **Light Mode** (Small fixes, docs): Run Quality Gate (`./scripts/quality_gate.sh`) -> atomic commit -> PR.
+- **Full Mode** (Refactors, systems): Requires spec in `plans/` (`SPEC_TEMPLATE.md`), GOAP tracking in `plans/GOAP_STATE.md`, and ADR creation.
+- **CI Precheck**: Before starting Full Mode, verify `.github/ci-status/ci-status.json` is "passing". Pause if failing.
+- **Always-Fix Policy**: Implement incrementally. Resolve all pre-existing CI check/lint/type/formatting failures in touched context.
+  - *Triage*: If blocked by external factors, register an ADR in `plans/` and mark task as `blocked` in `plans/GOAP_STATE.md`.
 - **Incremental Verification**: Re-verify older assumptions before executing GOAP items. Apply progressive verification during tasks.
 - **PR Verification Mandate**: Every PR MUST verify all changes end-to-end before merge:
-  - All CI checks must be green (unit, integration, E2E, lint, typecheck, security, quality gates). Do not merge with failing or skipped required checks.
-  - Address every PR review comment (human or bot) — resolve or reply with fix commit. No unresolved threads on merge.
-  - Local pre-push verification: `npm run lint && npm run test:unit` (or `test:ci`) and `./scripts/quality_gate.sh` must pass before `git push`.
-  - If CI fails after push, fix in the same PR (amend/push) — never open a follow-up to fix CI.
-  - For Full Mode, include GOAP_STATE version bump and ADR/spec updates in the same PR; verify `plans/` docs are in sync.
-- **Merge Guardrail (NON-NEGOTIABLE)**: NEVER merge a PR with failing CI. Merge after roast and review, all ci pass.
-  - Required checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL (actions, javascript-typescript)`, `Codacy Static Code Analysis`, `Workers Builds`. No exceptions — external quality gates are required.
-  - Any conclusion != `SUCCESS` blocks merge: `FAILURE`, `ACTION_REQUIRED`, `TIMED_OUT`, `CANCELLED` all block. `SKIPPED` only allowed for non-required jobs like `auto-merge`.
-  - Verify before merge: `gh pr view <n> --json statusCheckRollup -q '.statusCheckRollup[] | "\(.name): \(.conclusion)"'` and `gh pr checks <n>` must show zero failures. Do not use `--admin` or admin bypass.
-  - External analysis (Codacy, DeepSource, CodeQL) failures — including `ACTION_REQUIRED` or `Not up to standards` with critical/high findings — must be resolved or explicitly triaged with reviewed suppression before merge.
-  - Branch protection MUST require the checks above; if missing, block merge and file ADR.
+  - All CI checks green (unit, integration, E2E, lint, typecheck, security, quality gates).
+  - Local verification: `npm run lint && npm run test:unit` and `./scripts/quality_gate.sh` must pass before `git push`.
+  - Address every PR review comment (human or bot) — resolve or reply with fix commit.
+  - For Full Mode, sync `plans/` docs, GOAP_STATE version bump, and ADRs in the same PR.
+- **Merge Guardrail (NON-NEGOTIABLE)**: NEVER merge a PR with failing CI (`gh pr checks` must show zero failures).
 
-## 5. Operational Commands & Standards
-- Setup & Quality: `./scripts/agent-toolkit.sh setup` | `./scripts/pev-gates.sh` | `./scripts/quality_gate.sh` (13+ quality gates)
+## 5. Operational Commands & Context Hygiene
+- Setup & Quality: `./scripts/agent-toolkit.sh setup` | `./scripts/pev-gates.sh` | `./scripts/quality_gate.sh` (13 quality gates)
 - Lint & Tests: `npm run lint` | `npm run fmt:fix` | `npm run test:unit`
 - Context Control & Sub-Agents: Use specialized sub-agents in `.opencode/agents/` or `.claude/agents/` as context firewalls.
 - Skills: Canonical skills live in `.agents/skills/`. Load only as needed via `skill <name>` to optimize token budget.
 
 ## 6. PR & Commit Standards (Zero Slop)
 - **Zero Slop**: Conversational filler, markdown formatting in commit messages, or emojis are strictly forbidden.
-- **PR Descriptions**: Plain-text only, detailing 'What', 'Why', and 'Impact' (highlighting performance or metrics changes). Max PR title 150 chars, max body 1000 chars.
+- **PR Descriptions**: Plain-text only, detailing 'What', 'Why', and 'Impact'. Max PR title 150 chars, max body 1000 chars.
 - **Commit Format**: MUST be `type(scope): subject` in **strictly lowercase** (e.g., `fix(security): resolve SSRF validation`). Max 72 chars.
 - **YAML Workflows**: All new `.github/workflows/*.yml` files must have `# yamllint disable-line rule:truthy` on line 4 (`on:` line).
 
