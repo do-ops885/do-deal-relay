@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **NLQ API documentation synchronization**: Documented missing NLQ saved queries and suggestions endpoints (`POST /api/nlq/saved`, `GET /api/nlq/saved`, `DELETE /api/nlq/saved/:id`, `GET /api/nlq/suggestions`) with request/response schemas, parameter bounds, JWT auth rules, and curl examples in `docs/API.md`.
 - **MCP Documentation synchronization**: Updated `docs/MCP.md`, `docs/API.md`, and `docs/INDEX.md` to document all 15 available MCP tools and the MCP SSE streaming endpoints (`POST /mcp/stream/tools/call` and `GET /mcp/stream`).
 - **Cron schedules documentation**: Explicitly documented all 4 system background cron schedules (`0 */6 * * *`, `*/30 * * * *`, `0 9 * * *`, `0 0 * * SUN`) in `README.md` and `docs/DEPLOYMENT.md`.
 - **Security controls documentation**: Added Security Architecture & Controls and PEV Pipeline Security Gate sections in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, PEV security gate (SSRF, credential leakage, injection, URL validation, content safety), RBAC, and input hardening.
