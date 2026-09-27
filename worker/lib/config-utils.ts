@@ -1,6 +1,28 @@
 import { CONFIG } from "../config";
 import type { Env } from "../types";
 
+/** Minimum allowable lower bound for the trust threshold */
+export const MIN_TRUST_THRESHOLD_BOUND = 0;
+
+/** Maximum allowable upper bound for the trust threshold */
+export const MAX_TRUST_THRESHOLD_BOUND = 1;
+
+/** List of required environment variable binding keys */
+export const REQUIRED_CONFIG_KEYS = [
+  "DEALS_PROD",
+  "DEALS_LOG",
+  "DEALS_LOCK",
+  "AI_GATEWAY_URL",
+  "TRUST_THRESHOLD",
+  "WEBHOOK_SECRET",
+  "EMAIL_WEBHOOK_SECRET",
+  "API_ENCRYPTION_KEY",
+  "JWT_SECRET",
+  "DEALS_DB",
+  "ENVIRONMENT",
+  "GITHUB_REPO",
+] as const;
+
 /**
  * Safely parse an integer environment variable bounded by minimum and maximum constraints
  * @param name The environment variable name
@@ -47,7 +69,10 @@ export function getTrustThreshold(env: Env): number {
   }
 
   // Ensure it's within [0, 1] range
-  return Math.max(0, Math.min(1, parsed));
+  return Math.max(
+    MIN_TRUST_THRESHOLD_BOUND,
+    Math.min(MAX_TRUST_THRESHOLD_BOUND, parsed),
+  );
 }
 
 /**
@@ -57,21 +82,7 @@ export function getTrustThreshold(env: Env): number {
  * @throws Error if required variables are missing or threshold/budget configs are invalid
  */
 export function validateConfig(env: Env): void {
-  const required = [
-    "DEALS_PROD",
-    "DEALS_LOG",
-    "DEALS_LOCK",
-    "AI_GATEWAY_URL",
-    "TRUST_THRESHOLD",
-    "WEBHOOK_SECRET",
-    "EMAIL_WEBHOOK_SECRET",
-    "API_ENCRYPTION_KEY",
-    "JWT_SECRET",
-    "DEALS_DB",
-    "ENVIRONMENT",
-    "GITHUB_REPO",
-  ];
-  const missing = required.filter((key) => {
+  const missing = REQUIRED_CONFIG_KEYS.filter((key) => {
     const value = env[key as keyof Env];
     return typeof value === "string" ? value.trim() === "" : !value;
   });
@@ -80,7 +91,11 @@ export function validateConfig(env: Env): void {
   }
 
   const threshold = parseFloat(env.TRUST_THRESHOLD);
-  if (isNaN(threshold) || threshold < 0 || threshold > 1) {
+  if (
+    isNaN(threshold) ||
+    threshold < MIN_TRUST_THRESHOLD_BOUND ||
+    threshold > MAX_TRUST_THRESHOLD_BOUND
+  ) {
     throw new Error(`TRUST_THRESHOLD must be a number between 0 and 1`);
   }
 

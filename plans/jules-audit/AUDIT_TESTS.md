@@ -1,9 +1,10 @@
-# Track C — Test Coverage Audit (2026-09-20)
+# Track C — Test Coverage Audit (2026-09-27)
 
-## Summary
-Added unit tests covering edge cases for `parseBoundedIntegerConfig` in `tests/unit/config-validation-enhanced.test.ts`.
+## Uncovered / Low Coverage Target
+- `getTrustThreshold` in `worker/lib/config-utils.ts` lacks explicit unit tests in `tests/unit/config-validation-enhanced.test.ts` covering:
+  1. Fallback to `CONFIG.MIN_TRUST_SCORE` when `env.TRUST_THRESHOLD` is missing or empty.
+  2. Fallback to `CONFIG.MIN_TRUST_SCORE` when `env.TRUST_THRESHOLD` is not a valid float (NaN).
+  3. Value clamping to the `[0, 1]` range for values `< 0` and `> 1`.
 
-## Tests Added
-1. `should parse valid integer with surrounding whitespace`: verifies that leading and trailing whitespace are trimmed properly when parsing valid integer strings (e.g. `"  42  "`).
-2. `should parse valid negative integers within negative bounds`: verifies that negative integers within negative boundaries are correctly validated (e.g., minimum = -100, maximum = -1, input = `" -50 "`).
-3. `should throw when integer exceeds Number.MAX_SAFE_INTEGER`: verifies that values exceeding safe integer bounds throw an out of bounds error (e.g. `"9007199254740992"`).
+## Actionable Tests Added
+- Added unit test block `describe("getTrustThreshold", ...)` in `tests/unit/config-validation-enhanced.test.ts`.
