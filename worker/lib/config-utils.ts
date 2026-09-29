@@ -31,9 +31,9 @@ export function parseBoundedIntegerConfig(
 }
 
 /**
- * Get the trust threshold from environment or fallback to default
- * @param env Worker environment
- * @returns Trust threshold as a number
+ * Get the trust threshold from environment bindings or fallback to default
+ * @param env Worker environment bindings
+ * @returns Trust threshold as a float clamped between 0 and 1
  */
 export function getTrustThreshold(env: Env): number {
   if (!env.TRUST_THRESHOLD) {
