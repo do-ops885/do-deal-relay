@@ -1,12 +1,9 @@
-# Track B — Code Quality Audit (2026-09-27)
+# Track B — Code Quality Audit (2026-09-20)
 
 ## Findings
-- `worker/lib/config-utils.ts`:
-  - Magic numbers `0` and `1` used directly in `getTrustThreshold` (`Math.max(0, Math.min(1, parsed))`) and `validateConfig` bounds check.
-  - Hardcoded inline string array of required env configuration keys in `validateConfig`.
+- **Magic Number in `worker/routes/auth.ts`**:
+  The integer literal `86400` was hardcoded twice in `registerUser` (line 346) and `refreshAccessToken` (line 412) when constructing token responses with `expiresIn: 86400`.
 
-## Actionable Refactoring
-- Extract constants in `worker/lib/config-utils.ts`:
-  - `MIN_TRUST_THRESHOLD_BOUND = 0`
-  - `MAX_TRUST_THRESHOLD_BOUND = 1`
-  - `REQUIRED_CONFIG_KEYS` constant array
+## Changes Applied
+- Extracted `export const JWT_EXPIRATION_SECONDS = 86400;` constant at module level in `worker/routes/auth.ts`.
+- Replaced hardcoded `86400` literals with `JWT_EXPIRATION_SECONDS`.

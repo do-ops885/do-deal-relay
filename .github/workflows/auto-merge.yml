@@ -1,6 +1,6 @@
 name: Auto-merge Dependabot PRs
 
-on:
+"on":
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, ready_for_review]
@@ -13,12 +13,24 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]'
+    # Gate on the pull request author, not on github.actor. github.actor is
+    # whoever triggered the run, so any branch update by a human or another
+    # bot would skip the job and leave auto-merge unarmed.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     timeout-minutes: 5
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Update pull request branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Required by the strict up-to-date status check policy on main:
+          # auto-merge waits for requirements, it does not update the branch.
+          gh pr update-branch "${PR_NUMBER}" || echo "Branch update skipped (already up to date or not permitted)."
 
       - name: Enable auto-merge for Dependabot PRs
         env:
