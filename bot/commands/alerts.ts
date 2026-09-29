@@ -6,7 +6,7 @@ export const alertCommand: CommandHandler = {
   name: "alert",
   aliases: ["alerts"],
   description: "Manage deal alerts and saved queries",
-  usage: "/alert [list | delete <id>]",
+  usage: "/alert [list | delete id]",
   platforms: ["telegram", "discord"],
   permissions: ["public", "verified", "moderator", "admin"],
 
@@ -21,7 +21,7 @@ export const alertCommand: CommandHandler = {
       try {
         const res = await api.getAlertSubscriptions(ctx.userId);
 
-        const subs = res.subscriptions || [];
+        const subs = res.subscriptions;
 
         if (subs.length === 0) {
           return {
@@ -55,7 +55,7 @@ export const alertCommand: CommandHandler = {
         return {
           success: false,
           message:
-            "❌ Please specify the alert subscription ID to delete.\nUsage: `/alert delete <id>`",
+            "❌ Please specify the alert subscription ID to delete.\nUsage: `/alert delete [id]`",
         };
       }
 
@@ -77,7 +77,7 @@ export const alertCommand: CommandHandler = {
     return {
       success: false,
       message:
-        "ℹ️ Unknown alert command.\nUsage:\n• `/alert list` - List your alert subscriptions\n• `/alert delete <id>` - Remove an alert subscription",
+        "ℹ️ Unknown alert command.\nUsage:\n• `/alert list` - List your alert subscriptions\n• `/alert delete [id]` - Remove an alert subscription",
     };
   },
 };
