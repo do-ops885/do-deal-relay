@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createContext, Script } from "node:vm";
 
 interface MockElement {
   tagName: string;
@@ -69,6 +70,34 @@ function createMockElement(tagName: string): MockElement {
   return el;
 }
 
+interface PopupRenderApi {
+  renderDealFeed: (meta: unknown, elements: unknown) => void;
+}
+
+/**
+ * Loads the classic browser script extension/popup-render.js inside an isolated
+ * VM context and returns its top-level `PopupRender` binding.
+ *
+ * The script is a plain <script> include with no module exports, so it cannot
+ * be imported directly; evaluating it in a context keeps the test free of
+ * dynamic code generation.
+ */
+async function loadPopupRender(): Promise<PopupRenderApi> {
+  const source = await (
+    await import("node:fs/promises")
+  ).readFile("extension/popup-render.js", "utf-8");
+
+  const context = createContext({
+    chrome: (globalThis as unknown as Record<string, unknown>).chrome,
+    document: (globalThis as unknown as Record<string, unknown>).document,
+    URL,
+  });
+
+  return new Script(`${source}\nPopupRender;`).runInContext(
+    context,
+  ) as PopupRenderApi;
+}
+
 describe("PopupRender.renderDealFeed accessibility", () => {
   let mockChromeTabsCreate: ReturnType<typeof vi.fn>;
 
@@ -85,21 +114,7 @@ describe("PopupRender.renderDealFeed accessibility", () => {
   });
 
   it("should render interactive feed items as <button type='button'> with descriptive aria-label", async () => {
-    // Load popup-render.js in a scope where PopupRender is exposed
-    const code = await import("node:fs/promises").then((fs) =>
-      fs.readFile("extension/popup-render.js", "utf-8"),
-    );
-
-    // Evaluate in function scope
-    const fn = new Function(
-      "chrome",
-      "document",
-      `${code}; return PopupRender;`,
-    );
-    const PopupRender = fn(
-      (globalThis as unknown as Record<string, unknown>).chrome,
-      (globalThis as unknown as Record<string, unknown>).document,
-    );
+    const PopupRender = await loadPopupRender();
 
     const dealFeedList = createMockElement("div");
     const lastPollTime = createMockElement("span");
@@ -149,19 +164,7 @@ describe("PopupRender.renderDealFeed accessibility", () => {
   });
 
   it("should render non-interactive feed items as <div> when url is missing", async () => {
-    const code = await import("node:fs/promises").then((fs) =>
-      fs.readFile("extension/popup-render.js", "utf-8"),
-    );
-
-    const fn = new Function(
-      "chrome",
-      "document",
-      `${code}; return PopupRender;`,
-    );
-    const PopupRender = fn(
-      (globalThis as unknown as Record<string, unknown>).chrome,
-      (globalThis as unknown as Record<string, unknown>).document,
-    );
+    const PopupRender = await loadPopupRender();
 
     const dealFeedList = createMockElement("div");
     const lastPollTime = createMockElement("span");
