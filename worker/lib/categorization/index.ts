@@ -9,25 +9,32 @@ export function autoCategorize(deal: Deal): DealMetadata {
   const categoryScores = calculateCategoryScores(deal);
   const tagScores = calculateTagScores(deal);
 
-  // Get top categories (score >= 2)
   const categories: string[] = [];
-  const sortedCategories = Array.from(categoryScores.entries()).sort(
-    (a, b) => b[1] - a[1],
-  );
 
-  // Always include top category if score >= 2
-  const topCategory = sortedCategories[0];
-  if (topCategory && topCategory[1] >= 2) {
-    categories.push(topCategory[0]);
+  // Performance optimization: Track top two categories in a single O(N) pass
+  // without allocating intermediate arrays via Array.from(categoryScores.entries()).sort().
+  let topCat: string | null = null;
+  let topScore = -1;
+  let secondCat: string | null = null;
+  let secondScore = -1;
 
-    // Include second category if score is close (within 50%)
-    const secondCategory = sortedCategories[1];
-    if (secondCategory) {
-      const topScore = topCategory[1];
-      const secondScore = secondCategory[1];
-      if (secondScore >= topScore * 0.5 && secondScore >= 2) {
-        categories.push(secondCategory[0]);
-      }
+  for (const [cat, score] of categoryScores) {
+    if (score > topScore) {
+      secondCat = topCat;
+      secondScore = topScore;
+      topCat = cat;
+      topScore = score;
+    } else if (score > secondScore) {
+      secondCat = cat;
+      secondScore = score;
+    }
+  }
+
+  if (topCat && topScore >= 2) {
+    categories.push(topCat);
+
+    if (secondCat && secondScore >= topScore * 0.5 && secondScore >= 2) {
+      categories.push(secondCat);
     }
   }
 
@@ -41,12 +48,7 @@ export function autoCategorize(deal: Deal): DealMetadata {
     categories.push("referral");
   }
 
-  // Get top tags (score >= 1, max 5 tags)
   const tags: string[] = [];
-  const sortedTags = Array.from(tagScores.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([tag]) => tag);
 
   // Add domain as tag
   tags.push(deal.source.domain.replace(/\.[a-z]+$/, ""));
@@ -54,8 +56,20 @@ export function autoCategorize(deal: Deal): DealMetadata {
   // Add source type
   tags.push("auto-categorized");
 
-  // Add high-scoring tags
-  tags.push(...sortedTags);
+  // Performance optimization: Extract top 5 high-scoring tags directly without
+  // intermediate .slice().map() array allocations.
+  if (tagScores.size > 0) {
+    const sortedTagEntries = Array.from(tagScores.entries()).sort(
+      (a, b) => b[1] - a[1],
+    );
+    const topTagCount = Math.min(5, sortedTagEntries.length);
+    for (let i = 0; i < topTagCount; i++) {
+      const entry = sortedTagEntries[i];
+      if (entry) {
+        tags.push(entry[0]);
+      }
+    }
+  }
 
   // Remove duplicates and limit
   const uniqueTags = [...new Set(tags)].slice(0, 8);

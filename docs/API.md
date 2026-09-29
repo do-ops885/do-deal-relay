@@ -1883,6 +1883,185 @@ curl "https://your-worker.workers.dev/api/nlq/explain?q=trading%20deals%20with%2
 
 ---
 
+### POST /api/nlq/saved
+
+Save an NLQ query for the authenticated user. Requires JWT authentication.
+
+**Request Body:**
+
+```json
+{
+  "query": "trading platforms with $100 bonus",
+  "name": "Trading $100+ Deals"
+}
+```
+
+**Parameters:**
+
+- `query` (string, required): Natural language query string (1-500 characters)
+- `name` (string, optional): Custom name for the saved query (1-100 characters)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "saved": {
+    "id": "sq_1234567890",
+    "user_id": "usr_987654321",
+    "query": "trading platforms with $100 bonus",
+    "name": "Trading $100+ Deals",
+    "intent": "search",
+    "created_at": "2026-09-26T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- 201: Saved query created successfully
+- 400: Validation error or invalid JSON
+- 401: Unauthorized (missing or invalid JWT token)
+- 500: Failed to save query
+- 503: D1 database unavailable or migration pending
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/api/nlq/saved" \
+  -H "Authorization: Bearer <jwt_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "crypto exchanges with high signup bonuses", "name": "Crypto Signup"}'
+```
+
+---
+
+### GET /api/nlq/saved
+
+List saved NLQ queries for the authenticated user. Requires JWT authentication.
+
+**Query Parameters:**
+
+- `limit` (number, optional): Max results to return (default: 20)
+- `offset` (number, optional): Pagination offset (default: 0)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "total": 1,
+  "count": 1,
+  "saved": [
+    {
+      "id": "sq_1234567890",
+      "user_id": "usr_987654321",
+      "query": "trading platforms with $100 bonus",
+      "name": "Trading $100+ Deals",
+      "intent": "search",
+      "created_at": "2026-09-26T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: Saved queries listed successfully
+- 401: Unauthorized (missing or invalid JWT token)
+- 500: Failed to list saved queries
+- 503: D1 database unavailable
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/nlq/saved?limit=10&offset=0" \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+---
+
+### DELETE /api/nlq/saved/:id
+
+Delete a saved NLQ query by ID for the authenticated user. Requires JWT authentication.
+
+**Path Parameters:**
+
+- `id` (string, required): ID of the saved query to delete
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "deleted": "sq_1234567890"
+}
+```
+
+**Status Codes:**
+
+- 200: Saved query deleted successfully
+- 401: Unauthorized (missing or invalid JWT token)
+- 404: Saved query not found or does not belong to user
+- 503: D1 database unavailable
+
+**Example:**
+
+```bash
+curl -X DELETE "https://your-worker.workers.dev/api/nlq/saved/sq_1234567890" \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+---
+
+### GET /api/nlq/suggestions
+
+Get NLQ query completion suggestions and query intent classification.
+
+**Query Parameters:**
+
+- `q` (string, optional): Input prefix for query completion suggestions (max 500 characters)
+- `limit` (number, optional): Max suggestions to return (default: 8, range: 1-20)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "trad",
+  "intent": {
+    "intent": "search",
+    "confidence": 0.85
+  },
+  "count": 3,
+  "suggestions": [
+    "trading platforms with $100 bonus",
+    "trading accounts zero commission",
+    "trading signup deals"
+  ],
+  "detailed": [
+    {
+      "text": "trading platforms with $100 bonus",
+      "score": 0.95,
+      "category": "trading"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- 200: Suggestions retrieved successfully
+- 400: Query string exceeds maximum length (500 characters)
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/nlq/suggestions?q=trad&limit=5"
+```
+
+---
+
 ## Semantic Search API
 
 Natural language search using Cloudflare Vectorize and Workers AI embeddings. Requires User role.
