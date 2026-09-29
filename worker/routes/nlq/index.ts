@@ -14,6 +14,12 @@ import { type NLQError } from "../../lib/nlq/types";
 import { handleNLQ, handleNLQGet, handleNLQExplain } from "./handlers";
 import { handleSavedPost, handleSavedGet, handleSavedDelete } from "./saved";
 import { handleSuggestions } from "./suggestions";
+import {
+  handleAlertsPost,
+  handleAlertsGet,
+  handleAlertsPatch,
+  handleAlertsDelete,
+} from "./alerts";
 
 export { executeNLQ, parseNaturalLanguageQuery } from "./handlers";
 
@@ -33,6 +39,51 @@ export async function handleNLQRequest(
   env: Env,
 ): Promise<Response> {
   const path = url.pathname;
+
+  // Alert subscriptions endpoints
+  if (path === "/api/nlq/alerts") {
+    if (request.method === "POST") return handleAlertsPost(request, env);
+    if (request.method === "GET") return handleAlertsGet(request, url, env);
+    return jsonResponse(
+      {
+        error: "Method not allowed",
+        message: "Only GET and POST supported",
+        code: "METHOD_NOT_ALLOWED",
+      } as NLQError,
+      405,
+      request,
+      env,
+    );
+  }
+  const alertDetailMatch = path.match(/^\/api\/nlq\/alerts\/([^/]+)$/);
+  if (alertDetailMatch) {
+    const id = alertDetailMatch[1];
+    if (!id) {
+      return jsonResponse(
+        {
+          error: "Not found",
+          message: "Missing alert subscription id",
+          code: "NOT_FOUND",
+        } as NLQError,
+        404,
+        request,
+        env,
+      );
+    }
+    if (request.method === "PATCH") return handleAlertsPatch(request, env, id);
+    if (request.method === "DELETE")
+      return handleAlertsDelete(request, env, id);
+    return jsonResponse(
+      {
+        error: "Method not allowed",
+        message: "Only PATCH and DELETE supported",
+        code: "METHOD_NOT_ALLOWED",
+      } as NLQError,
+      405,
+      request,
+      env,
+    );
+  }
 
   // Saved queries endpoints
   if (path === "/api/nlq/saved") {

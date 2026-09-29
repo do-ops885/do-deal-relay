@@ -16,6 +16,7 @@ import {
 } from "./referral";
 import { researchCommand } from "./research";
 import { statsCommand, helpCommand, startCommand } from "./admin";
+import { alertCommand } from "./alerts";
 
 // Re-export types
 export type {
@@ -58,6 +59,7 @@ export const commands: CommandHandler[] = [
   statsCommand,
   helpCommand,
   startCommand,
+  alertCommand,
 ];
 
 // ============================================================================
