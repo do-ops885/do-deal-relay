@@ -1,12 +1,9 @@
-# Test Coverage Audit Artifact (Track C)
+# Track C — Test Coverage Audit (2026-09-20)
 
-## Uncovered / Under-tested Modules Identified
-`worker/lib/research-agent/helpers.ts` contains utility functions used by research agent pipelines (`normalizeResearchQuery`, `generateSearchQueries`, `generatePotentialCodes`, `extractRewardValue`, `getDefaultResearchConfig`) that lack isolated unit test coverage.
+## Summary
+Added unit tests covering edge cases for `parseBoundedIntegerConfig` in `tests/unit/config-validation-enhanced.test.ts`.
 
-## Actions Planned
-Write comprehensive unit tests in `tests/unit/research-agent-helpers.test.ts` covering:
-1. `normalizeResearchQuery` - lowercasing, domain prefixing, and term normalization (`invite` -> `referral`, `promo` -> `referral`, `promotion` -> `referral program`).
-2. `generateSearchQueries` - source-specific query generation for producthunt, reddit, hackernews, github, and default sources.
-3. `generatePotentialCodes` - code generation count based on depth (`quick`, `thorough`, `deep`) for known vs unknown programs.
-4. `extractRewardValue` - parsing dollar amounts, percentages, and missing reward summaries.
-5. `getDefaultResearchConfig` - default configuration values and source weights.
+## Tests Added
+1. `should parse valid integer with surrounding whitespace`: verifies that leading and trailing whitespace are trimmed properly when parsing valid integer strings (e.g. `"  42  "`).
+2. `should parse valid negative integers within negative bounds`: verifies that negative integers within negative boundaries are correctly validated (e.g., minimum = -100, maximum = -1, input = `" -50 "`).
+3. `should throw when integer exceeds Number.MAX_SAFE_INTEGER`: verifies that values exceeding safe integer bounds throw an out of bounds error (e.g. `"9007199254740992"`).

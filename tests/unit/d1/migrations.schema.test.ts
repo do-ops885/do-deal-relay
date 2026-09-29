@@ -58,7 +58,7 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -148,6 +148,15 @@ describe("schema", () => {
     expect(v7!.up).toContain("CREATE TABLE IF NOT EXISTS sessions");
     expect(v7!.up).toContain("CREATE TABLE IF NOT EXISTS api_keys_new");
   });
+
+  it("version 13 creates alert_subscriptions for personalized deal alerts", () => {
+    const v13 = MIGRATIONS[12];
+    expect(v13!.name).toBe("add_alert_subscriptions");
+    expect(v13!.up).toContain("CREATE TABLE IF NOT EXISTS alert_subscriptions");
+    expect(v13!.up).toContain("idx_alert_subscriptions_user");
+    expect(v13!.up).toContain("idx_alert_subscriptions_active_freq");
+    expect(v13!.down).toContain("DROP TABLE IF EXISTS alert_subscriptions");
+  });
 });
 
 // ============================================================================
@@ -220,7 +229,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(12);
+    expect(MIGRATIONS.length).toBe(13);
   });
 });
 
@@ -247,7 +256,7 @@ describe("factory functions", () => {
     const result = await initDatabase(mockDb);
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 
   it("initDatabase returns already-migrated result when DB is up to date", async () => {
@@ -270,6 +279,11 @@ describe("factory functions", () => {
         { version: 10, name: "add_reddit_posts", applied_at: 10000 },
         { version: 11, name: "add_research_cache_kv", applied_at: 11000 },
         { version: 12, name: "add_nlq_saved_queries", applied_at: 12000 },
+        {
+          version: 13,
+          name: "add_alert_subscriptions",
+          applied_at: 13000,
+        },
       ],
     });
 
@@ -277,7 +291,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(12);
+    expect(result.currentVersion).toBe(13);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -290,8 +304,8 @@ describe("factory functions", () => {
 
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
-    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(status.latestVersion).toBe(12);
+    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.latestVersion).toBe(13);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -314,13 +328,18 @@ describe("factory functions", () => {
         { version: 10, name: "add_reddit_posts", applied_at: 10000 },
         { version: 11, name: "add_research_cache_kv", applied_at: 11000 },
         { version: 12, name: "add_nlq_saved_queries", applied_at: 12000 },
+        {
+          version: 13,
+          name: "add_alert_subscriptions",
+          applied_at: 13000,
+        },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(12);
+    expect(status.currentVersion).toBe(13);
   });
 });
 

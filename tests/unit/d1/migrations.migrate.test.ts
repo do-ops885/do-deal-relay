@@ -41,9 +41,9 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(result.rolledBack).toEqual([]);
-    expect(result.currentVersion).toBe(12);
+    expect(result.currentVersion).toBe(13);
     expect(result.error).toBeUndefined();
   });
 
@@ -57,8 +57,8 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(result.currentVersion).toBe(12);
+    expect(result.applied).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.currentVersion).toBe(13);
   });
 
   it("applies nothing when already at latest version", async () => {
@@ -81,6 +81,11 @@ describe("MigrationRunner migrate", () => {
         { version: 10, name: "add_reddit_posts", applied_at: 10000 },
         { version: 11, name: "add_research_cache_kv", applied_at: 11000 },
         { version: 12, name: "add_nlq_saved_queries", applied_at: 12000 },
+        {
+          version: 13,
+          name: "add_alert_subscriptions",
+          applied_at: 13000,
+        },
       ],
     });
     const runner = new MigrationRunner(mockDb);
@@ -89,7 +94,7 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(12);
+    expect(result.currentVersion).toBe(13);
   });
 
   it("respects targetVersion and only applies up to that version", async () => {
@@ -339,8 +344,8 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-    expect(result.currentVersion).toBe(12);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.currentVersion).toBe(13);
   });
 
   it("returns reset failure without attempting migrate", async () => {
@@ -366,7 +371,7 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 });
 
@@ -446,6 +451,11 @@ describe("edge cases", () => {
             { version: 10, name: "add_reddit_posts", applied_at: 10000 },
             { version: 11, name: "add_research_cache_kv", applied_at: 11000 },
             { version: 12, name: "add_nlq_saved_queries", applied_at: 12000 },
+            {
+              version: 13,
+              name: "add_alert_subscriptions",
+              applied_at: 13000,
+            },
           ],
         };
       }
@@ -456,6 +466,6 @@ describe("edge cases", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 });

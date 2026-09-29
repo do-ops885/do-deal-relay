@@ -161,7 +161,11 @@ const PopupRender = {
       } else {
         if (elements.feedEmpty) elements.feedEmpty.classList.add("hidden");
         deals.forEach((d) => {
-          const row = document.createElement("div");
+          const isInteractive = Boolean(d.url);
+          const row = document.createElement(isInteractive ? "button" : "div");
+          if (isInteractive) {
+            row.type = "button";
+          }
           row.className = "feed-item";
           const top = document.createElement("div");
           top.className = "feed-item-top";
@@ -182,9 +186,13 @@ const PopupRender = {
           sub.textContent = d.domain || d.title || "";
           row.appendChild(top);
           row.appendChild(sub);
-          if (d.url) {
-            row.style.cursor = "pointer";
+          if (isInteractive) {
             row.title = d.url;
+            const target = d.domain || d.title || "deal";
+            row.setAttribute(
+              "aria-label",
+              `Open ${target} deal ${d.code || ""} in new tab`,
+            );
             row.addEventListener("click", () => {
               chrome.tabs.create({ url: d.url });
             });

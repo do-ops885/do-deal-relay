@@ -147,6 +147,30 @@ describe("Enhanced Config Validation", () => {
         parseBoundedIntegerConfig("TEST_VAR", "101", 10, 0, 100),
       ).toThrow("TEST_VAR must be between 0 and 100");
     });
+
+    it("should parse valid integer with surrounding whitespace", () => {
+      expect(parseBoundedIntegerConfig("TEST_VAR", "  42  ", 10, 0, 100)).toBe(
+        42,
+      );
+    });
+
+    it("should parse valid negative integers within negative bounds", () => {
+      expect(
+        parseBoundedIntegerConfig("TEST_VAR", " -50 ", -10, -100, -1),
+      ).toBe(-50);
+    });
+
+    it("should throw when integer exceeds Number.MAX_SAFE_INTEGER", () => {
+      expect(() =>
+        parseBoundedIntegerConfig(
+          "TEST_VAR",
+          "9007199254740992",
+          10,
+          0,
+          10000000000000000,
+        ),
+      ).toThrow("TEST_VAR must be between 0 and 10000000000000000");
+    });
   });
 
   describe("Budget variable validation (retained logic)", () => {

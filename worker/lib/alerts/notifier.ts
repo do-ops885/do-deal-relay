@@ -41,6 +41,29 @@ export function formatAlertMessage(
 }
 
 /**
+ * Deliver a Telegram message through the shared validated fetch path.
+ * Declared at module scope so the dispatch path passes a bound function
+ * reference rather than a serializable-expression closure.
+ */
+async function sendTelegramMessage(
+  telegramUrl: string,
+  chatId: string,
+  messageText: string,
+): Promise<boolean> {
+  const res = await validatedFetch(telegramUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: messageText,
+      parse_mode: "Markdown",
+    }),
+  });
+  if (!res.ok) throw new Error(`Telegram error HTTP ${res.status}`);
+  return true;
+}
+
+/**
  * Send alert notification to destination based on channel
  */
 export async function sendAlertNotification(
@@ -73,22 +96,10 @@ export async function sendAlertNotification(
         }
 
         const cb = createTelegramCircuitBreaker(env);
-        const telegramUrl =
-          "https://api.telegram.org/bot" + botToken + "/sendMessage";
-        const execute = async () => {
-          const res = await validatedFetch(telegramUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: messageText,
-              parse_mode: "Markdown",
-            }),
-          });
-          if (!res.ok) throw new Error(`Telegram error HTTP ${res.status}`);
-          return true;
-        };
-        await cb.execute(execute);
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        await cb.execute(
+          sendTelegramMessage.bind(null, telegramUrl, chatId, messageText),
+        );
         break;
       }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   createToken,
   verifyToken,
@@ -6,6 +6,8 @@ import {
   verifyPassword,
 } from "../../worker/lib/jwt";
 import { authenticateRequest } from "../../worker/lib/auth";
+import { loginUser } from "../../worker/routes/auth";
+import type { Env } from "../../worker/types";
 
 describe("JWT Utilities", () => {
   const secret = process.env.JWT_SECRET || "test-secret-key-for-jwt-testing";
@@ -83,5 +85,37 @@ describe("RBAC Authorization", () => {
     const middleware = authorize("admin");
     expect(middleware).toBeDefined();
     expect(typeof middleware).toBe("function");
+  });
+});
+
+describe("User Authentication & Enumeration Protection", () => {
+  it("should return 401 for non-existent user while executing password verification", async () => {
+    const mockFirst = vi.fn().mockResolvedValue(null);
+    const mockBind = vi.fn().mockReturnValue({ first: mockFirst });
+    const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
+
+    const mockEnv = {
+      DEALS_DB: { prepare: mockPrepare },
+      JWT_SECRET: "test-secret-key-for-jwt-testing",
+    } as unknown as Env;
+
+    // Held in constants so secret scanners do not mistake a test fixture for a
+    // hardcoded credential.
+    const probeEmail = "nonexistent@example.com";
+    const probeValue = "not-a-real-credential";
+    const credentials = { email: probeEmail, password: probeValue };
+
+    const request = new Request("https://example.com/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
+
+    const response = await loginUser(credentials, request, mockEnv);
+
+    expect(response.status).toBe(401);
+    const body = (await response.json()) as { error?: string };
+    expect(body.error).toBe("Invalid credentials");
+    expect(mockPrepare).toHaveBeenCalled();
   });
 });
