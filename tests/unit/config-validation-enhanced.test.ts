@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { CONFIG } from "../../worker/config";
 import {
   validateConfig,
   parseBoundedIntegerConfig,
+  getTrustThreshold,
 } from "../../worker/lib/config-utils";
 import type { Env } from "../../worker/types";
 import type { KVNamespace } from "@cloudflare/workers-types";
@@ -170,6 +172,30 @@ describe("Enhanced Config Validation", () => {
           10000000000000000,
         ),
       ).toThrow("TEST_VAR must be between 0 and 10000000000000000");
+    });
+  });
+
+  describe("getTrustThreshold", () => {
+    it("should return fallback min trust score when TRUST_THRESHOLD is missing or empty", () => {
+      expect(getTrustThreshold({} as Env)).toBe(CONFIG.MIN_TRUST_SCORE);
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "" } as Env)).toBe(
+        CONFIG.MIN_TRUST_SCORE,
+      );
+    });
+
+    it("should return fallback min trust score when TRUST_THRESHOLD is invalid NaN", () => {
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "invalid" } as Env)).toBe(
+        CONFIG.MIN_TRUST_SCORE,
+      );
+    });
+
+    it("should parse valid trust threshold string within bounds", () => {
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "0.75" } as Env)).toBe(0.75);
+    });
+
+    it("should clamp values below 0 to 0 and above 1 to 1", () => {
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "-0.5" } as Env)).toBe(0);
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "1.5" } as Env)).toBe(1);
     });
   });
 
