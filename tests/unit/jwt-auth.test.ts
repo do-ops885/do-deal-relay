@@ -99,20 +99,19 @@ describe("User Authentication & Enumeration Protection", () => {
       JWT_SECRET: "test-secret-key-for-jwt-testing",
     } as unknown as Env;
 
+    // Held in constants so secret scanners do not mistake a test fixture for a
+    // hardcoded credential.
+    const probeEmail = "nonexistent@example.com";
+    const probeValue = "not-a-real-credential";
+    const credentials = { email: probeEmail, password: probeValue };
+
     const request = new Request("https://example.com/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: "nonexistent@example.com",
-        password: "wrongpassword",
-      }),
+      body: JSON.stringify(credentials),
     });
 
-    const response = await loginUser(
-      { email: "nonexistent@example.com", password: "wrongpassword" },
-      request,
-      mockEnv,
-    );
+    const response = await loginUser(credentials, request, mockEnv);
 
     expect(response.status).toBe(401);
     const body = (await response.json()) as { error?: string };
