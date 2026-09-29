@@ -40,8 +40,11 @@ npx wrangler deploy --env staging  # or without --env for production
 STAGING_URL="https://do-deal-relay-staging.<subdomain>.workers.dev"
 curl -s "$STAGING_URL/health" | jq .
 
-# If staging is healthy, copy staging code to production
-git checkout staging  # If using git branch
+# If staging is healthy, redeploy the current main build to production.
+# Deploy from a clean main checkout only. Long-lived side branches can be
+# months behind main, and deploying from one silently rolls production back.
+git checkout main
+git pull --ff-only origin main
 npx wrangler deploy
 
 # Option B: Revert to last known good commit
