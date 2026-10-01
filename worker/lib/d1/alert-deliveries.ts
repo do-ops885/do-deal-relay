@@ -15,6 +15,22 @@ export interface RecordDeliveryInput {
 const MAX_DEAL_IDS_JSON_LENGTH = 10000;
 
 /**
+ * Serialize deal ids to a JSON array string bounded by
+ * MAX_DEAL_IDS_JSON_LENGTH. Truncation removes whole elements so the
+ * stored value is always valid JSON; it never slices the serialized
+ * string mid-token.
+ */
+function toBoundedDealIdsJson(dealIds: string[]): string {
+  let json = JSON.stringify(dealIds);
+  let count = dealIds.length;
+  while (json.length > MAX_DEAL_IDS_JSON_LENGTH && count > 0) {
+    count -= 1;
+    json = JSON.stringify(dealIds.slice(0, count));
+  }
+  return json;
+}
+
+/**
  * Idempotency guard for queue redelivery. INSERT OR IGNORE on the
  * (alert_id, subscription_id) primary key: first insert returns true,
  * duplicates return false so the consumer skips resends.
@@ -23,10 +39,7 @@ export async function recordDelivery(
   db: D1Database,
   input: RecordDeliveryInput,
 ): Promise<boolean> {
-  const dealIdsJson = JSON.stringify(input.dealIds).slice(
-    0,
-    MAX_DEAL_IDS_JSON_LENGTH,
-  );
+  const dealIdsJson = toBoundedDealIdsJson(input.dealIds);
   const result = await db
     .prepare(
       `INSERT OR IGNORE INTO alert_deliveries

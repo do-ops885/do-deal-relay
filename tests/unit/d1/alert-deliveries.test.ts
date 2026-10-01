@@ -100,6 +100,40 @@ describe("d1/alert-deliveries", () => {
         "INSERT OR IGNORE INTO alert_deliveries",
       );
     });
+
+    it("bounds oversized deal ids to valid JSON under the size limit", async () => {
+      const { db, queries } = createScriptedDb({ runChanges: [1] });
+      const dealIds = Array.from({ length: 2000 }, (_, i) => `deal-${i}-pad`);
+
+      const result = await recordDelivery(db, {
+        alertId: "alert-1",
+        subscriptionId: "sub-1",
+        dealIds,
+        channel: "telegram",
+        status: "sent",
+      });
+
+      expect(result).toBe(true);
+      const stored = queries[0]?.params[2];
+      expect(typeof stored).toBe("string");
+      const parsed = JSON.parse(stored as string) as string[];
+      expect(Array.isArray(parsed)).toBe(true);
+      expect((stored as string).length).toBeLessThanOrEqual(10000);
+    });
+
+    it("falls back to an empty JSON array when a single id exceeds the limit", async () => {
+      const { db, queries } = createScriptedDb({ runChanges: [1] });
+
+      await recordDelivery(db, {
+        alertId: "alert-1",
+        subscriptionId: "sub-1",
+        dealIds: ["x".repeat(20000)],
+        channel: "telegram",
+        status: "sent",
+      });
+
+      expect(queries[0]?.params[2]).toBe("[]");
+    });
   });
 
   describe("hasDelivered", () => {
