@@ -39,6 +39,45 @@ describe("validateReferralUrl", () => {
         ),
       ).toBe(true);
     });
+
+    it("should block unlisted query params pointing to external domain", () => {
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?dest=https://evil.com",
+          "example.com",
+        ),
+      ).toBe(false);
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?target=https://evil.com",
+          "example.com",
+        ),
+      ).toBe(false);
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?goto=//evil.com",
+          "example.com",
+        ),
+      ).toBe(false);
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?continue=https://evil.com/login",
+          "example.com",
+        ),
+      ).toBe(false);
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?r=ftp://evil.com",
+          "example.com",
+        ),
+      ).toBe(false);
+      expect(
+        validateReferralUrl(
+          "https://example.com/ref?to=\\evil.com",
+          "example.com",
+        ),
+      ).toBe(false);
+    });
   });
 
   describe("protocol enforcement", () => {
