@@ -23,6 +23,13 @@ export const REQUIRED_CONFIG_KEYS = [
   "GITHUB_REPO",
 ] as const;
 
+/** List of optional budget configuration variable keys */
+export const BUDGET_CONFIG_KEYS = [
+  "CANDIDATE_BUDGET_GLOBAL",
+  "CANDIDATE_BUDGET_PER_SOURCE",
+  "CANDIDATE_BUDGET_HIGH_TRUST_BONUS",
+] as const;
+
 /**
  * Safely parse an integer environment variable bounded by minimum and maximum constraints
  * @param name The environment variable name
@@ -79,7 +86,7 @@ export function getTrustThreshold(env: Env): number {
  * Validate required environment bindings and configuration values
  * @param env Worker environment bindings
  * @returns {void}
- * @throws Error if required variables are missing or threshold/budget configs are invalid
+ * @throws Error if required variables are missing or if threshold/budget configs are invalid or negative
  */
 export function validateConfig(env: Env): void {
   const missing = REQUIRED_CONFIG_KEYS.filter((key) => {
@@ -99,14 +106,7 @@ export function validateConfig(env: Env): void {
     throw new Error(`TRUST_THRESHOLD must be a number between 0 and 1`);
   }
 
-  // Validate budget configurations
-  const budgetVars = [
-    "CANDIDATE_BUDGET_GLOBAL",
-    "CANDIDATE_BUDGET_PER_SOURCE",
-    "CANDIDATE_BUDGET_HIGH_TRUST_BONUS",
-  ] as const;
-
-  for (const varName of budgetVars) {
+  for (const varName of BUDGET_CONFIG_KEYS) {
     const value = env[varName];
     if (value) {
       const parsed = parseInt(value, 10);

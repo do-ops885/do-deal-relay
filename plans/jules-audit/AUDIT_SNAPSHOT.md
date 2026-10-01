@@ -1,4 +1,4 @@
-# Audit Snapshot — 2026-09-20
+# Audit Snapshot — 2026-09-30
 
 ## Repository Details
 - **Project**: do-deal-relay
@@ -10,7 +10,7 @@
 - **Audit Directory**: `plans/jules-audit/`
 
 ## Context
-Overnight codebase health and improvement run for 2026-09-20.
+Overnight codebase health and improvement run for 2026-09-30.
 Evaluating 4 independent tracks:
 1. Track A — Dependency Audit
 2. Track B — Code Quality

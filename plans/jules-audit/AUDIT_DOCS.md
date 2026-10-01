@@ -1,8 +1,10 @@
-# Track D — Documentation Audit (2026-09-20)
+# Documentation Audit Findings (Track D)
 
-## Findings
-- `validateConfig` in `worker/lib/config-utils.ts`:
-  The JSDoc comment for `validateConfig` had an incomplete `@throws` tag that only mentioned trust threshold invalidity, omitting errors thrown when required worker environment variables are missing or candidate budget configuration variables are invalid.
+**Timestamp**: 2026-09-30
 
-## Changes Applied
-- Updated JSDoc comment for `validateConfig` in `worker/lib/config-utils.ts` to document that it validates required environment bindings, trust threshold values, and candidate budget configurations.
+## Audit Findings & Public Surfacing Analysis
+1. `validateConfig` in `worker/lib/config-utils.ts` validates required system environment keys and optional budget configuration keys (`CANDIDATE_BUDGET_GLOBAL`, `CANDIDATE_BUDGET_PER_SOURCE`, `CANDIDATE_BUDGET_HIGH_TRUST_BONUS`). Updating its JSDoc `@throws` tag to explicitly document throw conditions for invalid budget variables provides complete documentation for system startup checks.
+2. `getTrustThreshold` JSDoc annotations in `worker/lib/config-utils.ts` were reviewed and confirmed up to date.
+
+## Action Plan
+Enhance JSDoc `@throws` annotations for `validateConfig` in `worker/lib/config-utils.ts`.
