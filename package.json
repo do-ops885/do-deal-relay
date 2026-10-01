@@ -66,7 +66,7 @@
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
     "protobufjs": "8.8.0",
-    "undici": "6.28.0",
+    "undici": "6.28.1",
     "uuid": "14.0.0",
     "@playwright/test": "^1.63.0",
     "ws": "8.21.0",
