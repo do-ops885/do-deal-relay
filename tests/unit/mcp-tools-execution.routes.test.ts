@@ -5,7 +5,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../../worker/types";
-import { jsonRecord, recordArray } from "../fixtures/mcp-assert";
+import { jsonRecord, recordArray } from "../fixtures/typed-assert";
 
 // ============================================================================
 // Mock Factory
