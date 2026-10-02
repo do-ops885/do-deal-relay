@@ -12,7 +12,7 @@ import {
   firstText,
   recordArray,
   structuredPayload,
-} from "../fixtures/mcp-assert";
+} from "../fixtures/typed-assert";
 
 vi.mock("../../worker/lib/research-agent/orchestrator", () => ({
   executeReferralResearch: vi.fn().mockResolvedValue({

@@ -15,7 +15,7 @@ import {
 } from "../../worker/lib/mcp/resources";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
-import { firstJson, recordArray } from "../fixtures/mcp-assert";
+import { firstJson, recordArray } from "../fixtures/typed-assert";
 
 // ============================================================================
 // Mock Factory
