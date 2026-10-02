@@ -16,3 +16,10 @@ exclude_paths:
   # fixture files; may contain malformed middle-of-edit docs).
   - ".audit/**"
   - "extension/**"
+  # Reviewed suppression (PR 853): raw SQL migrations target SQLite
+  # (Cloudflare D1). Codacy's SQL linter parses with a Postgres dialect and
+  # rejects valid SQLite syntax such as CREATE TRIGGER IF NOT EXISTS,
+  # producing only false positives. The authoritative dual-write schema
+  # lives in worker/lib/d1/migrations/schema-part-*.ts, which is exercised
+  # by the unit, E2E, and smoke suites.
+  - "migrations/**"
