@@ -16,7 +16,10 @@ import {
   type SortField,
   type SortOrder,
 } from "../../lib/ranking";
-import { calculateStringSimilarity } from "../../lib/crypto";
+import {
+  getBigramBitset,
+  calculateStringSimilarityWithPrecomputedTarget,
+} from "../../lib/crypto";
 import { explainDeal } from "../../lib/explainability";
 import { normalizeTerms, scoreSimilarDeal } from "../../lib/similarity";
 
@@ -143,6 +146,7 @@ export async function handleSimilarDeals(
   const targetCategories = normalizeTerms(targetDeal.metadata.category);
   const targetTags = normalizeTerms(targetDeal.metadata.tags);
   const targetDomain = targetDeal.source.domain.toLowerCase();
+  const targetCodeBitset = getBigramBitset(targetDeal.code);
 
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
@@ -158,8 +162,12 @@ export async function handleSimilarDeals(
         d,
       );
 
-      // Code similarity (weight: 1)
-      const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
+      // Code similarity (weight: 1) with precomputed target bigram bitset
+      const codeSim = calculateStringSimilarityWithPrecomputedTarget(
+        targetDeal.code,
+        targetCodeBitset,
+        d.code,
+      );
       score += codeSim;
 
       return { deal: d, similarity: score };
