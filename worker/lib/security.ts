@@ -327,42 +327,38 @@ export function validateReferralUrl(url: string, domain: string): boolean {
       return false;
     }
 
-    // 3. Block common redirect bypasses in search params
-    const suspiciousParams = ["redirect", "url", "next", "return", "callback"];
-    for (const param of suspiciousParams) {
-      if (parsed.searchParams.has(param)) {
-        const val = parsed.searchParams.get(param);
-        if (
-          val &&
-          (val.includes("://") || val.startsWith("//") || val.includes("\\"))
-        ) {
-          // If it looks like a full URL, ensure it's on the same domain
-          try {
-            const nestedUrl = new URL(val);
-            const nestedHostname = nestedUrl.hostname
-              .toLowerCase()
-              .replace(/^www\./, "");
-            if (nestedHostname !== targetDomain) {
-              logger.warn(
-                "Referral URL rejected: suspicious param points to external domain",
-                {
-                  component: "security",
-                  param,
-                  nestedHostname,
-                  targetDomain,
-                  url,
-                },
-              );
-              return false;
-            }
-          } catch {
-            // If it's not a valid URL but contains protocol markers, block it
+    // 3. Block open redirect bypasses across all search params
+    for (const [param, val] of parsed.searchParams.entries()) {
+      if (
+        val &&
+        (val.includes("://") || val.startsWith("//") || val.includes("\\"))
+      ) {
+        // If it looks like a full URL, ensure it's on the same domain
+        try {
+          const nestedUrl = new URL(val);
+          const nestedHostname = nestedUrl.hostname
+            .toLowerCase()
+            .replace(/^www\./, "");
+          if (nestedHostname !== targetDomain) {
             logger.warn(
-              "Referral URL rejected: suspicious param contains unparseable URL",
-              { component: "security", param, url },
+              "Referral URL rejected: suspicious param points to external domain",
+              {
+                component: "security",
+                param,
+                nestedHostname,
+                targetDomain,
+                url,
+              },
             );
             return false;
           }
+        } catch {
+          // If it's not a valid URL but contains protocol markers, block it
+          logger.warn(
+            "Referral URL rejected: suspicious param contains unparseable URL",
+            { component: "security", param, url },
+          );
+          return false;
         }
       }
     }

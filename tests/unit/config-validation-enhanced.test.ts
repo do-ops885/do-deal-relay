@@ -137,6 +137,9 @@ describe("Enhanced Config Validation", () => {
         parseBoundedIntegerConfig("TEST_VAR", "12.34", 10, 0, 100),
       ).toThrow("TEST_VAR must be an integer");
       expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "25.0", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
         parseBoundedIntegerConfig("TEST_VAR", "abc", 10, 0, 100),
       ).toThrow("TEST_VAR must be an integer");
     });
