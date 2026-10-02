@@ -43,7 +43,7 @@ Branch `cline/e8n3d346`. Register correction, zero prod change.
 |:---|:---|:---|
 | F-8 publish re-parses | CLOSED — shipped v0.19.5 (PEV-snapshot-optimize): `putStagingSnapshot`/`promoteStagingToProduction` wired into `stage.ts`/`publish.ts`; zero snapshot parses in `publish.ts` | `worker/lib/storage.ts:59,107`, grep publish.ts = 0 |
 | F-10 discovery circuit breaker | CLOSED — shipped v0.19.5 (PEV-discovery-circuit-breaker): `getSourceCircuitBreaker` wired in `discover.ts` (skip-on-open, record per batch); cron handlers are separate triggers, in-tick sequencing by design | `worker/pipeline/discover.ts:14,208-213`, `worker/lib/circuit-breaker.ts` |
-| F-12 D1 boilerplate | CLOSED — all `routes/d1/*` import `getD1Logger`/`requireD1Db` from `./helpers`; residue re-scoped to test `as any` only: 330 in tests/, 0 in worker prod code; `simulateDiscovery` export is intentional (MF-2 test flag) | `worker/routes/d1/helpers.ts`, grep counts 2026-10-02 |
+| F-12 D1 boilerplate | CLOSED — all `routes/d1/*` import `getD1Logger`/`requireD1Db` from `./helpers`; residue re-scoped to test `as any` only: 263 of 330 left in tests/ (MCP + NLQ clusters cleaned), 0 in worker prod code; `simulateDiscovery` export is intentional (MF-2 test flag) | `worker/routes/d1/helpers.ts`, grep counts 2026-10-02 |
 
 Deferred menu after verification: N-3 (logging migration, ~107
 importers), test `as any` residue (330 casts, P3), F-4 DO cutover
@@ -577,7 +577,7 @@ scope = P0 + quick wins this run.
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ✅ CLOSED 2026-10-02 — breaker shipped v0.19.5 (skip-on-open in discover.ts); cron handlers are separate triggers, in-tick sequencing by design | discover.ts:14,208-213, circuit-breaker.ts |
 | F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ✅ CLOSED 2026-10-02 — noUnusedLocals/noUnusedParameters enabled (416-error sweep completed); exactOptionalPropertyTypes remainder closed via #768 (2026-09-13) | tsconfig.json:12-15 |
-| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | 🟡 PARTIAL — ai binding + popup split + D1 boilerplate CLOSED (R-3/R-4, routes/d1/helpers.ts); residue: test `as any` cleanup IN PROGRESS — 286 left of 330 (MCP cluster done via `tests/fixtures/mcp-assert.ts`, 2026-10-02); simulateDiscovery export intentional (MF-2 flag) | grep counts 2026-10-02 |
+| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | 🟡 PARTIAL — ai binding + popup split + D1 boilerplate CLOSED (R-3/R-4, routes/d1/helpers.ts); residue: test `as any` cleanup IN PROGRESS — 263 left of 330 (MCP + NLQ clusters done via `tests/fixtures/typed-assert.ts`, 2026-10-02); simulateDiscovery export intentional (MF-2 flag) | grep counts 2026-10-02 |
 
 ### Session outcomes already banked (pre-register)
 
