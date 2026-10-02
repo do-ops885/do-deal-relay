@@ -2,10 +2,25 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.33
-**Status**: Active — F-2 queues alert delivery implemented (ADR-032, branch `cline/zrc5khrc`: `ALERT_QUEUE` binding + consumer + DLQ, matcher queue-first dispatch with inline fallback, 16 unit tests); Wave-1 hygiene shipped (auth/rate-limit file splits close the 500-line violations, dead barrel re-exports removed). Prior: #764 deal alerts delivered; RL-1 closed (v0.19.12), F-8/F-10 shipped (v0.19.5). Remaining: owner-blocked ops + deferred menu (N-3, test as-any residue, F-4 DO cutover, gated R-6/P3-17, cache-family dead exports).
+**Version**: 0.19.34
+**Status**: Active — F-1 feedback capture shipped (ADR-033 slice 1: D1 v15 `deal_feedback` + `POST /api/deals/:code/feedback` + 15 tests); F-2 queues alert delivery shipped (ADR-032); Wave-1 hygiene shipped (500-line violations closed). Prior: #764 deal alerts, RL-1, F-8/F-10. Next: F-1 slices 2-4 (bot commands, trust/ranking, metrics). Deferred: N-3, test as-any residue, F-4 DO cutover, R-6/P3-17, cache-family dead exports. Owner-blocked: prod D1 v13/v14/v15 apply, queue provisioning, CI-1 secret, REDDIT-6 creds.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-02 F-1 deal feedback slice 1 (capture) — v0.19.34
+
+Branch `cline/zrc5khrc`. Sources: improvement report F-1,
+[ADR-033](ADR-033-deal-feedback.md), [SPEC-deal-feedback.md](SPEC-deal-feedback.md).
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| F-1 slice 1: feedback capture | CLOSED — D1 migration v15 `deal_feedback` (runtime `schema-part-9.ts` + SQL mirror `migrations/0009_deal_feedback.sql`, UNIQUE(user_id, referral_code), upsert semantics); helper `worker/lib/d1/deal-feedback.ts` (recordDealFeedback upsert + getDealFeedbackStats ratio); route `POST /api/deals/:code/feedback` (JWT user role, Zod body, 404 unknown code, Article 12 `deal_feedback_recorded` log) in `worker/routes/core/deal-feedback.ts` + `router/legacy-routes.ts` wiring; API.md documented; 15 unit tests | tsc clean, full suite green |
+| F-1 slices 2-4 | REGISTERED NEXT — slice 2: bot commands `/worked` `/failed` (source_channel "bot"); slice 3: trust/ranking integration (needs scoring-design review, Article 12 obligations); slice 4: `/metrics` feedback ratios | ADR-033 deferred-slices section |
+
+Prod D1 migration v15 apply joins the owner ops list (same runbook as
+v13/v14; route surfaces honest 5xx until applied).
 
 ---
 

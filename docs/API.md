@@ -189,6 +189,49 @@ Get an explanation of why a deal was ranked or scored as it was.
 
 ---
 
+### POST /api/deals/:code/feedback
+
+Report whether a deal worked. Records a per-user outcome (upsert: re-submitting
+the same code revises the previous report) and returns the code's aggregate
+feedback stats. Requires JWT authentication with the `user` role (ADR-033).
+
+**Parameters:**
+
+- `code` (string): The referral code
+
+**Body:**
+
+- `outcome` (string, required): one of `success`, `expired`, `invalid`
+- `comment` (string, optional, max 500 chars)
+- `source_channel` (string, optional, max 32 chars; defaults to `api`)
+
+**Response:**
+
+```json
+{
+  "code": "AWS500",
+  "outcome": "success",
+  "inserted": true,
+  "feedback": {
+    "total": 4,
+    "success": 3,
+    "expired": 1,
+    "invalid": 0,
+    "successRatio": 0.75
+  }
+}
+```
+
+**Errors:**
+
+- `400`: invalid outcome vocabulary or oversized comment
+- `401`: missing/invalid JWT user context
+- `404`: unknown code
+- `429`: rate limit exceeded
+- `500`: D1 write failure
+
+---
+
 ### GET /deals/ranked
 
 Get ranked and sorted deals with composite scoring.

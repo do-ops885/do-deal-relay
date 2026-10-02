@@ -119,7 +119,7 @@ Fixed in this changeset via pointer to `agents-docs/SKILLS-DISTILLED.md`.
 Ranked by value-to-risk (favoring "wiring over building", the proven
 highest-yield pattern from the alerts feature).
 
-### F-1: Deal success-feedback loop ("worked for me") — HIGH VALUE, M effort
+### F-1: Deal success-feedback loop ("worked for me") — HIGH VALUE — SLICE 1 DONE 2026-10-02
 The system discovers and ranks deals but never learns whether a deal actually
 worked. Infrastructure exists: referral redirect endpoint, D1, trust model,
 bots, metrics.
@@ -136,6 +136,11 @@ Design sketch:
 4. EU AI Act Article 12 logging via existing logger (ranking input from
    user-reported data).
 5. Metrics: `feedback_ratio`, `median_time_to_feedback` in `/metrics`.
+
+Status: slice 1 (capture) shipped as ADR-033 — migration v15, upsert helper,
+`POST /api/deals/:code/feedback`, Article 12 logging, 15 tests. Slices
+2-4 (bot commands, trust/ranking wiring, metrics) registered in GOAP_STATE
+and ADR-033's deferred-slices section.
 
 Value: turns the platform from a discovery tool into a quality-ranked one;
 directly improves the "deal freshness / no dead codes" success metric.
