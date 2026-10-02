@@ -1,7 +1,7 @@
 # ADR-031: Personalized Deal Alerts via Queues Fan-Out (2026-09-16)
 
 **Date**: 2026-09-16
-**Status**: Proposed
+**Status**: Implemented 2026-10-02 (see as-built note)
 **Related**: SPEC-deal-alerts-764.md, issue #764
 **Branch**: feat/deal-alerts-764-spec
 
@@ -101,3 +101,27 @@ lands.
 - `npx tsc --noEmit` clean, full unit suite green, `./scripts/quality_gate.sh` exit 0.
 - Migration v13 forward and rollback covered; CRUD RBAC matrix covered.
 - Matcher parity, idempotent redelivery, digest drain timing covered.
+
+## Implementation note — as built (2026-10-02)
+
+Shipped in #824 (v13) and #853 (v14); issue #764 closed COMPLETED
+2026-09-29. Deviations from the Decision section:
+
+- Decision 4 (Queues fan-out) descoped: matching runs inline
+  best-effort at publish (`worker/publish.ts` step 5c, never blocks
+  publish) and the daily digest drains on the existing `0 9 * * *`
+  cron (`worker/scheduled.ts`). No `queues` binding in
+  `wrangler.jsonc`, no `queue()` export. `alert_deliveries` (v14)
+  remains as the idempotency guard for a future queue cutover.
+- Decision 3 matcher is keyword/token scoring
+  (`worker/lib/alerts/matcher.ts`), not FTS5 + cosine embeddings; it
+  emits `deal_alert_match` via the EU AI Act logger as specified.
+- Decision 5 shipped as one notifier (`worker/lib/alerts/notifier.ts`)
+  covering telegram, discord, email, and webhook via `validatedFetch`
+  plus the Telegram circuit breaker; bot command in
+  `bot/commands/alerts.ts`.
+- v14 `add_alert_deliveries_aiact` (#853) also created `ai_act_logs`,
+  closing the EU Act missing-table gap recorded in GOAP.
+
+Open from spec step 6: alerts e2e spec (`tests/e2e/alerts.spec.ts`)
+not yet added; queued for the T-2/T-3/T-4 test-gaps sprint.
