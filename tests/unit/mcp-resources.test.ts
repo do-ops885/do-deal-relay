@@ -15,6 +15,7 @@ import {
 } from "../../worker/lib/mcp/resources";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
+import { firstJson, recordArray } from "../fixtures/mcp-assert";
 
 // ============================================================================
 // Mock Factory
@@ -58,7 +59,7 @@ function createMockEnv(): Env {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     D1: {} as D1Database,
   } as unknown as Env;
@@ -269,7 +270,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("deals://RESOURCE1", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.code).toBe("RESOURCE1");
       expect(content.domain).toBe("resource-test.com");
     });
@@ -281,7 +282,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource(`deals://${referral.id}`, env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.code).toBe("BYID");
     });
 
@@ -289,7 +290,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("deals://nonexistent", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.error).toBe("Deal not found");
       expect(content.dealId).toBe("nonexistent");
     });
@@ -312,7 +313,7 @@ describe("MCP Resources - readResource", () => {
 
       const result = await readResource("deals://STRUCT", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content).toHaveProperty("id");
       expect(content).toHaveProperty("code");
       expect(content).toHaveProperty("url");
@@ -329,20 +330,20 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("categories://list", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content).toHaveProperty("categories");
       expect(content).toHaveProperty("total_categories");
       expect(content).toHaveProperty("total_active_deals");
       expect(content).toHaveProperty("last_updated");
       expect(Array.isArray(content.categories)).toBe(true);
-      expect(content.categories.length).toBeGreaterThan(0);
+      expect(recordArray(content.categories).length).toBeGreaterThan(0);
     });
 
     it("should include category details", async () => {
       const result = await readResource("categories://list", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
-      const firstCategory = content.categories[0];
+      const content = firstJson(result.contents);
+      const firstCategory = recordArray(content.categories)[0];
       expect(firstCategory).toHaveProperty("name");
       expect(firstCategory).toHaveProperty("description");
       expect(firstCategory).toHaveProperty("keywords");
@@ -368,11 +369,13 @@ describe("MCP Resources - readResource", () => {
 
       const result = await readResource("categories://list", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
-      const financeCategory = content.categories.find(
-        (c: { name: string }) => c.name === "finance",
+      const content = firstJson(result.contents);
+      const financeCategory = recordArray(content.categories).find(
+        (c) => c.name === "finance",
       );
-      expect(financeCategory).toBeDefined();
+      if (!financeCategory) {
+        throw new Error("expected finance category in list");
+      }
       expect(financeCategory.active_deals).toBeGreaterThanOrEqual(2);
     });
   });
@@ -382,7 +385,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("analytics://summary", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content).toHaveProperty("summary");
       expect(content).toHaveProperty("generated_at");
       expect(content).toHaveProperty("period_days");
@@ -393,7 +396,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("analytics://full", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       if (content.error) {
         expect(content.error).toBeDefined();
       } else {
@@ -406,7 +409,7 @@ describe("MCP Resources - readResource", () => {
     it("should return detailed analytics", async () => {
       const result = await readResource("analytics://detailed", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       if (content.error) {
         expect(content.error).toBeDefined();
       } else {
@@ -418,7 +421,7 @@ describe("MCP Resources - readResource", () => {
     it("should return trends analytics", async () => {
       const result = await readResource("analytics://trends", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       if (content.error) {
         expect(content.error).toBeDefined();
       } else {
@@ -432,7 +435,7 @@ describe("MCP Resources - readResource", () => {
     it("should return error for unknown analytics type", async () => {
       const result = await readResource("analytics://unknown", env);
 
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.error).toBe("Unknown analytics type");
       expect(content.available_types).toContain("summary");
       expect(content.available_types).toContain("full");
@@ -445,7 +448,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("unknown://test", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.error).toBe("Resource not found");
       expect(content.uri).toBe("unknown://test");
       expect(content.available_resources).toBeDefined();
@@ -456,7 +459,7 @@ describe("MCP Resources - readResource", () => {
       const result = await readResource("categories://other", env);
 
       expect(result.contents).toHaveLength(1);
-      const content = JSON.parse((result.contents[0] as any).text);
+      const content = firstJson(result.contents);
       expect(content.error).toBe("Resource not found");
     });
   });
