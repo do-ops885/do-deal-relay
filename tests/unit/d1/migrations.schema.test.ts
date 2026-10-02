@@ -58,7 +58,7 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -157,6 +157,16 @@ describe("schema", () => {
     expect(v13!.up).toContain("idx_alert_subscriptions_active_freq");
     expect(v13!.down).toContain("DROP TABLE IF EXISTS alert_subscriptions");
   });
+
+  it("version 14 creates deliveries guard and ai_act_logs without triggers", () => {
+    const v14 = MIGRATIONS[13];
+    expect(v14?.name).toBe("add_alert_deliveries_aiact");
+    expect(v14?.up).toContain("CREATE TABLE IF NOT EXISTS alert_deliveries");
+    expect(v14?.up).toContain("CREATE TABLE IF NOT EXISTS ai_act_logs");
+    expect(v14?.up).not.toContain("CREATE TRIGGER");
+    expect(v14?.down).toContain("DROP TABLE IF EXISTS alert_deliveries");
+    expect(v14?.down).toContain("DROP TABLE IF EXISTS ai_act_logs");
+  });
 });
 
 // ============================================================================
@@ -229,7 +239,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(13);
+    expect(MIGRATIONS.length).toBe(14);
   });
 });
 
@@ -256,7 +266,9 @@ describe("factory functions", () => {
     const result = await initDatabase(mockDb);
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 
   it("initDatabase returns already-migrated result when DB is up to date", async () => {
@@ -284,6 +296,11 @@ describe("factory functions", () => {
           name: "add_alert_subscriptions",
           applied_at: 13000,
         },
+        {
+          version: 14,
+          name: "add_alert_deliveries_aiact",
+          applied_at: 14000,
+        },
       ],
     });
 
@@ -291,7 +308,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(13);
+    expect(result.currentVersion).toBe(14);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -304,8 +321,10 @@ describe("factory functions", () => {
 
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
-    expect(status.pending).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(status.latestVersion).toBe(13);
+    expect(status.pending).toEqual([
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
+    expect(status.latestVersion).toBe(14);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -333,13 +352,18 @@ describe("factory functions", () => {
           name: "add_alert_subscriptions",
           applied_at: 13000,
         },
+        {
+          version: 14,
+          name: "add_alert_deliveries_aiact",
+          applied_at: 14000,
+        },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(13);
+    expect(status.currentVersion).toBe(14);
   });
 });
 
