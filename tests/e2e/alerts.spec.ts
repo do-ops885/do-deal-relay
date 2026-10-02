@@ -9,9 +9,12 @@ import { join } from "node:path";
  * Exercises /api/nlq/alerts against the local dev server: unauthenticated
  * 401s, Zod 400s, saved-query ownership 404, the full
  * create -> list -> patch -> delete lifecycle, cross-user isolation, and
- * the 405 method contract on the detail path. Runs against local D1 via
- * the migration runner; zero hardcoded secrets (admin JWT from
- * global-setup, user passwords random per run).
+ * the detail-path error contracts (PATCH 400, GET 405).
+ *
+ * Rate-limit aware: /api/nlq is 10 req/60s per user and /api/auth/register
+ * is 5 req/60s, so the file runs serial with two registered users plus the
+ * seeded admin JWT (lifecycle). Zero hardcoded secrets: admin JWT from
+ * global-setup, user passwords random per run.
  */
 
 const HTTP_OK = 200;
@@ -117,6 +120,17 @@ async function ensureD1Initialized(
   ).toBe(true);
 }
 
+async function adminUser(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<string> {
+  await ensureD1Initialized(request);
+  const adminToken = readAdminToken();
+  if (adminToken === null) {
+    throw new Error("admin JWT missing after D1 init guard");
+  }
+  return adminToken;
+}
+
 async function registerAndLogin(
   request: import("@playwright/test").APIRequestContext,
 ): Promise<string> {
@@ -141,6 +155,29 @@ async function registerAndLogin(
   expect(typeof token).toBe("string");
   expect((token as string).length).toBeGreaterThan(0);
   return token as string;
+}
+
+// Serial mode shares one module instance, so cached tokens stay per-file
+// and register calls total two, well under the 5/60s register budget.
+let primaryToken: string | undefined;
+let secondaryToken: string | undefined;
+
+async function primaryUser(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<string> {
+  if (primaryToken === undefined) {
+    primaryToken = await registerAndLogin(request);
+  }
+  return primaryToken;
+}
+
+async function secondaryUser(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<string> {
+  if (secondaryToken === undefined) {
+    secondaryToken = await registerAndLogin(request);
+  }
+  return secondaryToken;
 }
 
 function bearer(token: string): Record<string, string> {
@@ -188,6 +225,8 @@ async function createAlert(
   return sub as AlertRow;
 }
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("NLQ alert subscriptions (D1-backed)", () => {
   test("POST /api/nlq/alerts rejects unauthenticated requests", async ({
     request,
@@ -201,12 +240,14 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
     });
     expect(response.status()).toBe(HTTP_UNAUTHORIZED);
     const body = (await response.json()) as unknown as ErrorBody;
-    expect(body.code).toBe("UNAUTHORIZED");
+    // The outer withAuth gate returns { error } without a code field.
+    expect(typeof body.error).toBe("string");
+    expect((body.error as string).length).toBeGreaterThan(0);
   });
 
   test("POST /api/nlq/alerts validates request body", async ({ request }) => {
     await ensureD1Initialized(request);
-    const token = await registerAndLogin(request);
+    const token = await primaryUser(request);
 
     const response = await request.post("/api/nlq/alerts", {
       headers: { ...bearer(token), "Content-Type": "application/json" },
@@ -221,7 +262,7 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
     request,
   }) => {
     await ensureD1Initialized(request);
-    const token = await registerAndLogin(request);
+    const token = await primaryUser(request);
 
     const response = await request.post("/api/nlq/alerts", {
       headers: { ...bearer(token), "Content-Type": "application/json" },
@@ -239,8 +280,7 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
   test("alert subscription lifecycle: create, list, patch, delete", async ({
     request,
   }) => {
-    await ensureD1Initialized(request);
-    const token = await registerAndLogin(request);
+    const token = await adminUser(request);
     const savedQueryId = await createSavedQuery(request, token, uniqueSuffix());
 
     const created = await createAlert(request, token, savedQueryId);
@@ -297,8 +337,8 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
 
   test("cross-user access returns 404", async ({ request }) => {
     await ensureD1Initialized(request);
-    const ownerToken = await registerAndLogin(request);
-    const otherToken = await registerAndLogin(request);
+    const ownerToken = await secondaryUser(request);
+    const otherToken = await primaryUser(request);
     const savedQueryId = await createSavedQuery(
       request,
       ownerToken,
@@ -331,40 +371,28 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
     expect(cleanup.status()).toBe(HTTP_OK);
   });
 
-  test("PATCH /api/nlq/alerts/:id validates threshold range", async ({
+  test("detail path error contracts: PATCH 400, GET 405", async ({
     request,
   }) => {
     await ensureD1Initialized(request);
-    const token = await registerAndLogin(request);
+    const token = await secondaryUser(request);
     const savedQueryId = await createSavedQuery(request, token, uniqueSuffix());
     const created = await createAlert(request, token, savedQueryId);
 
-    const response = await request.patch(`/api/nlq/alerts/${created.id}`, {
+    const badPatch = await request.patch(`/api/nlq/alerts/${created.id}`, {
       headers: { ...bearer(token), "Content-Type": "application/json" },
       data: { threshold: OUT_OF_RANGE_THRESHOLD },
     });
-    expect(response.status()).toBe(HTTP_BAD_REQUEST);
-    const body = (await response.json()) as unknown as ErrorBody;
-    expect(body.code).toBe("VALIDATION_ERROR");
+    expect(badPatch.status()).toBe(HTTP_BAD_REQUEST);
+    const badPatchBody = (await badPatch.json()) as unknown as ErrorBody;
+    expect(badPatchBody.code).toBe("VALIDATION_ERROR");
 
-    const cleanup = await request.delete(`/api/nlq/alerts/${created.id}`, {
+    const getDetail = await request.get(`/api/nlq/alerts/${created.id}`, {
       headers: bearer(token),
     });
-    expect(cleanup.status()).toBe(HTTP_OK);
-  });
-
-  test("GET /api/nlq/alerts/:id is method not allowed", async ({ request }) => {
-    await ensureD1Initialized(request);
-    const token = await registerAndLogin(request);
-    const savedQueryId = await createSavedQuery(request, token, uniqueSuffix());
-    const created = await createAlert(request, token, savedQueryId);
-
-    const response = await request.get(`/api/nlq/alerts/${created.id}`, {
-      headers: bearer(token),
-    });
-    expect(response.status()).toBe(HTTP_METHOD_NOT_ALLOWED);
-    const body = (await response.json()) as unknown as ErrorBody;
-    expect(body.code).toBe("METHOD_NOT_ALLOWED");
+    expect(getDetail.status()).toBe(HTTP_METHOD_NOT_ALLOWED);
+    const getDetailBody = (await getDetail.json()) as unknown as ErrorBody;
+    expect(getDetailBody.code).toBe("METHOD_NOT_ALLOWED");
 
     const cleanup = await request.delete(`/api/nlq/alerts/${created.id}`, {
       headers: bearer(token),
