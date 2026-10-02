@@ -1,9 +1,9 @@
 # ADR-031: Personalized Deal Alerts via Queues Fan-Out (2026-09-16)
 
 **Date**: 2026-09-16
-**Status**: Implemented 2026-10-02 (see as-built note)
+**Status**: Implemented 2026-10-02; Queues fan-out restored on feat/alerts-step2-queues-digest (see as-built addendum)
 **Related**: SPEC-deal-alerts-764.md, issue #764
-**Branch**: feat/deal-alerts-764-spec
+**Branch**: feat/alerts-step2-queues-digest
 
 ## Context
 
