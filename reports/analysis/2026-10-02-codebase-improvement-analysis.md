@@ -99,12 +99,14 @@ fallback. Record the shadow-diff review as an ADR before flipping.
 response caching and provider failover remain unused. Prod KV/D1 are empty per
 the 2026-09-17 audit, so there is no cost case yet — gate on real traffic.
 
-### I-7: Queues adoption for alert/webhook delivery — P2 feature-grade
+### I-7: Queues adoption for alert/webhook delivery — P2 — DONE 2026-10-02 (see F-2)
 ADR-031 descoped Queues to inline best-effort fan-out in `publish.ts`. Inline
 fan-out means a slow Telegram/webhook endpoint can stall the publish stage
-(worst case: cron wall-clock budget). `wrangler.jsonc` has **no queue
-bindings** yet. Cloudflare Queues (consumer + max_retries + DLQ) is the
-documented fit and also hardens `lib/webhook/delivery.ts`. See F-2.
+(worst case: cron wall-clock budget). `wrangler.jsonc` had **no queue
+bindings**. Resolved by ADR-032: `deal-alerts` queue + DLQ added, matcher
+dispatches queue-first with inline fallback, consumer idempotent via the
+`alert_deliveries` ledger. Generic webhook retry path migration remains a
+future candidate.
 
 ### I-8: Skills README drift — P3, docs
 `.agents/skills/README.md` lists only 10 of 58 skills in its inventory table.
@@ -138,12 +140,15 @@ Design sketch:
 Value: turns the platform from a discovery tool into a quality-ranked one;
 directly improves the "deal freshness / no dead codes" success metric.
 
-### F-2: Queues-based alert & webhook delivery with DLQ — HIGH VALUE, S-M effort
+### F-2: Queues-based alert & webhook delivery with DLQ — HIGH VALUE — DONE 2026-10-02
 Un-descopes ADR-031's known limitation (see I-7). Reuses the DLQ pattern
-already proven in `lib/webhook`. Steps: add `queues` binding + consumer
-worker entry, move `matchAndNotifySubscriptions` fan-out behind `queue.send()`
-with idempotency keys, wire `alert_deliveries` (v14 table, already shipped) as
-the delivery ledger.
+already proven in `lib/webhook`. Shipped as ADR-032 + SPEC-alert-queues-delivery:
+`queues` producers/consumers in `wrangler.jsonc` (`deal-alerts`, max_retries 3,
+DLQ `deal-alerts-dlq`), `worker/lib/alerts/queue.ts` (queue-first dispatch
+with inline fallback, idempotent consumer keyed by the deterministic
+`alertId` against the v14 `alert_deliveries` ledger, DLQ failure recorder),
+matcher wiring, `queue` handler in `worker/index.ts`, 16 unit tests. The
+generic webhook retry path migration is the remaining follow-up.
 
 ### F-3: Trending & deal-comparison API — MEDIUM VALUE, S effort
 Pure D1 analytics over existing data: `GET /api/deals/trending?window=7d`

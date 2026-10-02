@@ -2,10 +2,27 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.31
-**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Queue EMPTY: RL-1 closed (v0.19.12), F-8/F-10 shipped (v0.19.5). Remaining: owner-blocked ops + small deferred menu (N-3, test as-any residue, F-4 DO cutover, gated R-6/P3-17).
+**Version**: 0.19.33
+**Status**: Active — F-2 queues alert delivery implemented (ADR-032, branch `cline/zrc5khrc`: `ALERT_QUEUE` binding + consumer + DLQ, matcher queue-first dispatch with inline fallback, 16 unit tests); Wave-1 hygiene shipped (auth/rate-limit file splits close the 500-line violations, dead barrel re-exports removed). Prior: #764 deal alerts delivered; RL-1 closed (v0.19.12), F-8/F-10 shipped (v0.19.5). Remaining: owner-blocked ops + deferred menu (N-3, test as-any residue, F-4 DO cutover, gated R-6/P3-17, cache-family dead exports).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-02 Wave-1 hygiene + F-2 queues alert delivery — v0.19.32/0.19.33
+
+Branch `cline/zrc5khrc`. Sources: improvement report
+`reports/analysis/2026-10-02-codebase-improvement-analysis.md` (Wave 1 + Wave 2).
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| I-1 500-line violations (auth.ts 565, rate-limit.ts 517) | CLOSED — auth helpers split to `worker/routes/auth-helpers.ts` (129 lines, auth.ts 476); KV subsystem extracted to `worker/lib/rate-limit-kv.ts` (318 lines, rate-limit.ts 232) with barrel re-exports; quality gate now flags only url-validator.ts (at-limit by design) | `wc -l`, gate output |
+| I-2 dead barrel re-exports | CLOSED — `simulateDiscovery`/`generateSimulatedCode`/`generateSimulatedReward` removed from research-agent barrel (zero importers). `checkRateLimitKV` corrected as NOT dead (internal consumers). similarity.ts exports kept (scoring tests). cache-family deferred (test-infra entanglement) | grep import-trace 2026-10-02 |
+| F-2 Queues-based alert delivery (ADR-031 descope) | CLOSED — [ADR-032](ADR-032-queues-alert-delivery.md) + [SPEC-alert-queues-delivery.md](SPEC-alert-queues-delivery.md): `ALERT_QUEUE` producer binding (optional in Env), `deal-alerts` consumer (max_retries 3) + `deal-alerts-dlq` (max_retries 0) in wrangler.jsonc; `worker/lib/alerts/queue.ts` (dispatchAlertNotification queue-first w/ inline fallback, processAlertQueueBatch idempotent via `alert_deliveries` ledger, processAlertDLQBatch terminal-failure recorder); matcher routes through dispatch; `queue` handler in worker/index.ts; 16 unit tests (`tests/unit/alerts/queue.test.ts`) | tsc clean, 3017+16 tests green |
+
+New deferred item: cache-family dead exports (see report I-2) — needs test
+rework, not Light Mode. Queue provisioning (`deal-alerts` + DLQ) joins the
+owner-blocked ops list alongside prod D1 v13/v14 apply.
 
 ---
 
