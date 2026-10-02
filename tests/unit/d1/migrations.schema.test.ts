@@ -158,14 +158,12 @@ describe("schema", () => {
     expect(v13!.down).toContain("DROP TABLE IF EXISTS alert_subscriptions");
   });
 
-  it("version 14 creates deliveries guard, trigger, and ai_act_logs", () => {
+  it("version 14 creates deliveries guard and ai_act_logs without triggers", () => {
     const v14 = MIGRATIONS[13];
     expect(v14?.name).toBe("add_alert_deliveries_aiact");
     expect(v14?.up).toContain("CREATE TABLE IF NOT EXISTS alert_deliveries");
-    expect(v14?.up).toContain(
-      "CREATE TRIGGER IF NOT EXISTS alert_subscriptions_updated_at",
-    );
     expect(v14?.up).toContain("CREATE TABLE IF NOT EXISTS ai_act_logs");
+    expect(v14?.up).not.toContain("CREATE TRIGGER");
     expect(v14?.down).toContain("DROP TABLE IF EXISTS alert_deliveries");
     expect(v14?.down).toContain("DROP TABLE IF EXISTS ai_act_logs");
   });

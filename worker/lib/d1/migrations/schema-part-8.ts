@@ -4,8 +4,11 @@ import type { Migration } from "./types";
  * Migration 14: alert deliveries idempotency guard + AI Act logs.
  * v13 created alert_subscriptions only; the queue consumer needs the
  * alert_deliveries unique guard and matcher.ts already calls
- * EUAIActLogger which requires ai_act_logs. Also adds the updated_at
- * trigger v13 omitted. Mirrors migrations/0008_alert_deliveries_aiact.sql.
+ * EUAIActLogger which requires ai_act_logs. updated_at maintenance for
+ * alert_subscriptions stays in the application layer
+ * (worker/lib/d1/alert-subscriptions.ts) — a schema trigger was rejected
+ * because its SQLite syntax is unparseable by the Postgres-dialect SQL
+ * linters in external analysis. Mirrors migrations/0008_alert_deliveries_aiact.sql.
  */
 export const MIGRATIONS_PART_8: Migration[] = [
   {
@@ -25,13 +28,6 @@ export const MIGRATIONS_PART_8: Migration[] = [
 
       CREATE INDEX IF NOT EXISTS idx_alert_deliveries_subscription
         ON alert_deliveries(subscription_id);
-
-      CREATE TRIGGER IF NOT EXISTS alert_subscriptions_updated_at
-      AFTER UPDATE ON alert_subscriptions
-      BEGIN
-          UPDATE alert_subscriptions SET updated_at = strftime('%s', 'now')
-          WHERE id = new.id;
-      END;
 
       CREATE TABLE IF NOT EXISTS ai_act_logs (
           id TEXT PRIMARY KEY,
@@ -77,7 +73,6 @@ export const MIGRATIONS_PART_8: Migration[] = [
       DROP INDEX IF EXISTS idx_ai_act_timestamp;
       DROP INDEX IF EXISTS idx_ai_act_operation_timestamp;
       DROP TABLE IF EXISTS ai_act_logs;
-      DROP TRIGGER IF EXISTS alert_subscriptions_updated_at;
       DROP INDEX IF EXISTS idx_alert_deliveries_subscription;
       DROP TABLE IF EXISTS alert_deliveries;
     `,

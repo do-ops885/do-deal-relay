@@ -1,4 +1,4 @@
--- Migration 0008: Alert deliveries + AI Act logs + subscriptions trigger
+-- Migration 0008: Alert deliveries + AI Act logs
 -- Mirrors runtime migration v14 (add_alert_deliveries_aiact) in
 -- worker/lib/d1/migrations/schema-part-8.ts. Dual-write pattern:
 -- every runtime version has a raw SQL mirror here.
@@ -6,10 +6,11 @@
 -- guard table the queue consumer needs and the ai_act_logs table backing
 -- EUAIActLogger (Article 12) that matcher.ts already calls.
 --
--- Dialect: SQLite (Cloudflare D1). This file is intentionally excluded
--- from Codacy static analysis (see .codacy.yml); Codacy's SQL linter
--- parses a Postgres dialect and cannot accept valid SQLite syntax such
--- as CREATE TRIGGER IF NOT EXISTS.
+-- Dialect: SQLite (Cloudflare D1). The migrations tree is excluded from
+-- Codacy static analysis (see .codacy.yml); Codacy's SQL linter parses a
+-- Postgres dialect and cannot reliably validate SQLite DDL.
+-- Note: updated_at maintenance for alert_subscriptions is handled by the
+-- application layer (worker/lib/d1/alert-subscriptions.ts UPDATE statement).
 
 CREATE TABLE IF NOT EXISTS alert_deliveries (
     alert_id TEXT NOT NULL,
@@ -24,13 +25,6 @@ CREATE TABLE IF NOT EXISTS alert_deliveries (
 
 CREATE INDEX IF NOT EXISTS idx_alert_deliveries_subscription
   ON alert_deliveries(subscription_id);
-
-CREATE TRIGGER IF NOT EXISTS alert_subscriptions_updated_at
-AFTER UPDATE ON alert_subscriptions
-BEGIN
-    UPDATE alert_subscriptions SET updated_at = strftime('%s', 'now')
-    WHERE id = new.id;
-END;
 
 CREATE TABLE IF NOT EXISTS ai_act_logs (
     id TEXT PRIMARY KEY,
