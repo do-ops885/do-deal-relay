@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.30
-**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Queue EMPTY: RL-1 verified closed (v0.19.12 binding, 13/13 tests). Remaining: owner-blocked ops + deferred menu only.
+**Version**: 0.19.31
+**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Queue EMPTY: RL-1 closed (v0.19.12), F-8/F-10 shipped (v0.19.5). Remaining: owner-blocked ops + small deferred menu (N-3, test as-any residue, F-4 DO cutover, gated R-6/P3-17).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
@@ -35,6 +35,23 @@ T-2/T-3/T-4, REDDIT-5, and RL-1 all verified closed 2026-10-02
 
 ---
 
+## 2026-10-02 Deferred-menu verification (F-8, F-10, F-12) — v0.19.31
+
+Branch `cline/e8n3d346`. Register correction, zero prod change.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| F-8 publish re-parses | CLOSED — shipped v0.19.5 (PEV-snapshot-optimize): `putStagingSnapshot`/`promoteStagingToProduction` wired into `stage.ts`/`publish.ts`; zero snapshot parses in `publish.ts` | `worker/lib/storage.ts:59,107`, grep publish.ts = 0 |
+| F-10 discovery circuit breaker | CLOSED — shipped v0.19.5 (PEV-discovery-circuit-breaker): `getSourceCircuitBreaker` wired in `discover.ts` (skip-on-open, record per batch); cron handlers are separate triggers, in-tick sequencing by design | `worker/pipeline/discover.ts:14,208-213`, `worker/lib/circuit-breaker.ts` |
+| F-12 D1 boilerplate | CLOSED — all `routes/d1/*` import `getD1Logger`/`requireD1Db` from `./helpers`; residue re-scoped to test `as any` only: 330 in tests/, 0 in worker prod code; `simulateDiscovery` export is intentional (MF-2 test flag) | `worker/routes/d1/helpers.ts`, grep counts 2026-10-02 |
+
+Deferred menu after verification: N-3 (logging migration, ~107
+importers), test `as any` residue (330 casts, P3), F-4 DO cutover
+remainder (SourceRegistry/DealRegistry, ADR-017 phase 2 — reverted
+once, needs care), R-6 + P3-17 (product/cost gated).
+
+---
+
 ## 2026-10-02 RL-1 verified closed; queue empty — v0.19.30
 
 Branch `cline/e8n3d346`. Register correction, zero prod change.
@@ -47,9 +64,9 @@ Branch `cline/e8n3d346`. Register correction, zero prod change.
 Queue status: EMPTY — no unblocked active work remains. Owner-blocked:
 prod D1 v13/v14 apply, CI-1 secret (ADR-023), REDDIT-6 credentials,
 prod seeding decision, Vectorize dashboard check. Deferred menu
-(operator decision required to schedule): F-8, F-10, F-12 remainder,
-N-3, R-6, P3-17, F-4 DO cutover remainder (SourceRegistry/DealRegistry,
-ADR-017 phase 2).
+(operator decision required to schedule): N-3, test as-any residue,
+R-6, P3-17, F-4 DO cutover remainder (SourceRegistry/DealRegistry,
+ADR-017 phase 2). F-8/F-10/F-12-boilerplate verified shipped (v0.19.31).
 
 ---
 
@@ -556,9 +573,9 @@ scope = P0 + quick wins this run.
 | F-5 | Dead security twins rbac.ts (291L) + refresh-tokens.ts (297L): zero importers; live paths use middleware/auth.ts and lib/auth | P1 | ✅ CLOSED - both deleted (588 lines) | ref-check clean 2026-08-24 |
 | F-6 | EU AI Act logger (453L, tested) unwired while MCP advertises eu_ai_act_compliant:true and skill docs claim compliance | P1 | ✅ CLOSED - wired into NLQ route + semantic search via compliance-log.ts; fire-and-forget with failure isolation | tests/unit/eu-ai-act-wiring.test.ts (7 passing) |
 | F-7 | KV list() single-page truncation at 8 sites (staging cleanup, webhook DLQ, apikey lookup, feature flags, cache clear) | P2 | ✅ CLOSED — `worker/lib/kv-pagination.ts` cursor helper applied at 10 sites (R-1, 2026-08-25 swarm `ebe9323`) | `worker/lib/kv-pagination.ts` + 7 tests |
-| F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ⬜ DEFERRED | publish.ts:63,85, storage.ts:60,87-95, stage.ts:60 |
+| F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ✅ CLOSED 2026-10-02 — shipped v0.19.5: cached helpers wired; publish.ts has zero snapshot parses | storage.ts:59,107, stage.ts:72, publish.ts:2 |
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
-| F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ⬜ DEFERRED | discover.ts imports, scheduled.ts:69-130 |
+| F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ✅ CLOSED 2026-10-02 — breaker shipped v0.19.5 (skip-on-open in discover.ts); cron handlers are separate triggers, in-tick sequencing by design | discover.ts:14,208-213, circuit-breaker.ts |
 | F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ✅ CLOSED 2026-10-02 — noUnusedLocals/noUnusedParameters enabled (416-error sweep completed); exactOptionalPropertyTypes remainder closed via #768 (2026-09-13) | tsconfig.json:12-15 |
 | F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | ⬜ PARTIAL — `wrangler.jsonc` `ai` binding + `extension/popup.js` split CLOSED via R-3/R-4 (`3465d06`, `b89d69d`); D1 boilerplate + `as any` cleanup remains DEFERRED | see analysis notes |
 
