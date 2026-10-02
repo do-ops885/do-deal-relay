@@ -3,6 +3,8 @@ import {
   sha256,
   generateDealId,
   calculateStringSimilarity,
+  getBigramBitset,
+  calculateStringSimilarityWithPrecomputedTarget,
   calculateUrlSimilarity,
   precomputeUrlSimilarityData,
   calculateUrlSimilarityPrecomputed,
@@ -51,6 +53,45 @@ describe("Crypto Utilities", () => {
       const similarity = calculateStringSimilarity("hello", "helo");
       expect(similarity).toBeGreaterThan(0);
       expect(similarity).toBeLessThan(1);
+    });
+  });
+
+  describe("calculateStringSimilarityWithPrecomputedTarget", () => {
+    it("should return 1.0 for identical strings", () => {
+      const target = "SAVE50";
+      const targetBitset = getBigramBitset(target);
+      expect(
+        calculateStringSimilarityWithPrecomputedTarget(
+          target,
+          targetBitset,
+          "SAVE50",
+        ),
+      ).toBe(1.0);
+    });
+
+    it("should return 0.0 for completely different strings", () => {
+      const target = "abc";
+      const targetBitset = getBigramBitset(target);
+      expect(
+        calculateStringSimilarityWithPrecomputedTarget(
+          target,
+          targetBitset,
+          "xyz",
+        ),
+      ).toBe(0.0);
+    });
+
+    it("should match regular similarity for similar strings", () => {
+      const target = "DISCOUNT20";
+      const candidate = "DISCOUNT50";
+      const targetBitset = getBigramBitset(target);
+      const precomputed = calculateStringSimilarityWithPrecomputedTarget(
+        target,
+        targetBitset,
+        candidate,
+      );
+      const regular = calculateStringSimilarity(target, candidate);
+      expect(precomputed).toBe(regular);
     });
   });
 

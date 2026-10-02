@@ -242,6 +242,27 @@ export function calculateStringSimilarity(a: string, b: string): number {
 }
 
 /**
+ * Calculate similarity between a precomputed target bigram bitset and candidate string (0-1).
+ * Avoids recalculating bigrams and allocating bitsets for the target string in hot loops.
+ *
+ * @param target - Target string
+ * @param targetBitset - Precomputed target bigram bitset
+ * @param candidate - Candidate string to compare against
+ * @returns Jaccard similarity score between 0.0 and 1.0
+ */
+export function calculateStringSimilarityWithPrecomputedTarget(
+  target: string,
+  targetBitset: BigramBitset,
+  candidate: string,
+): number {
+  if (target === candidate) return 1.0;
+  if (normalizedEquals(target, candidate)) return 1.0;
+
+  const candidateBitset = getBigramBitset(candidate);
+  return calculateStringSimilarityPrecomputed(targetBitset, candidateBitset);
+}
+
+/**
  * Encode a string or Uint8Array to base64url format.
  * Uses a chunked approach to convert bytes to a binary string to avoid
  * the O(N^2) overhead of repeated string concatenation while remaining

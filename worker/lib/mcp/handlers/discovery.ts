@@ -3,7 +3,10 @@ import type { Env } from "../../../types";
 import type { ToolCallResult } from "../types";
 import { getProductionSnapshot } from "../../storage";
 import { getTopDeals, getExpiringDeals, getRecentDeals } from "../../ranking";
-import { calculateStringSimilarity } from "../../crypto";
+import {
+  getBigramBitset,
+  calculateStringSimilarityWithPrecomputedTarget,
+} from "../../crypto";
 import { normalizeTerms, scoreSimilarDeal } from "../../similarity";
 
 export const GetSimilarDealsInputSchema = z.object({
@@ -92,6 +95,7 @@ export async function handleGetSimilarDeals(
   const targetCategories = normalizeTerms(targetDeal.metadata.category);
   const targetTags = normalizeTerms(targetDeal.metadata.tags);
   const targetDomain = targetDeal.source.domain.toLowerCase();
+  const targetCodeBitset = getBigramBitset(targetDeal.code);
 
   const similar = snapshot.deals
     .filter((d) => d.id !== targetDeal.id)
@@ -107,7 +111,11 @@ export async function handleGetSimilarDeals(
         d,
       );
 
-      const codeSim = calculateStringSimilarity(targetDeal.code, d.code);
+      const codeSim = calculateStringSimilarityWithPrecomputedTarget(
+        targetDeal.code,
+        targetCodeBitset,
+        d.code,
+      );
       score += codeSim;
       return { deal: d, similarity: score };
     })
