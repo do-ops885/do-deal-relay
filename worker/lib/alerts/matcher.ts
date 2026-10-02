@@ -131,7 +131,7 @@ export async function matchAndNotifySubscriptions(
         await complianceLogger.logOperation({
           timestamp: new Date().toISOString(),
           operationId: `alert_match_${sub.id}_${Date.now()}`,
-          operation: "personalized_deal_alert_match",
+          operation: "deal_alert_match",
           inputData: {
             source: "pipeline_published_deals",
             hash: sub.saved_query_id,
