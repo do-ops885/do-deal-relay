@@ -70,8 +70,6 @@ durable-objects, sandbox-sdk, turnstile-spin, web-perf). Evals coverage:
 | `pre-commit` | Multi-language pre-commit hook management | y |
 | `anti-ai-slop` | Reject filler, formatting noise, low-value output | y |
 
-| `anti-ai-slop` | Reject filler, formatting noise, low-value output | y |
-
 ## E. Agent Process & Orchestration
 
 | Skill | Purpose | Evals |

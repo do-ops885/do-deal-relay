@@ -93,9 +93,7 @@ bindings** yet. Cloudflare Queues (consumer + max_retries + DLQ) is the
 documented fit and also hardens `lib/webhook/delivery.ts`. See F-2.
 
 ### I-8: Skills README drift — P3, docs
-`.agents/skills/README.md` lists only 10 of 60 skills in its inventory table.
-Fixed in this changeset via pointer to `agents-docs/SKILLS-DISTILLED.md`.
-
+`.agents/skills/README.md` lists only 10 of 58 skills in its inventory table.
 Fixed in this changeset via pointer to `agents-docs/SKILLS-DISTILLED.md`.
 
 ---
@@ -152,6 +150,9 @@ per-user publish budget (hook into `CANDIDATE_BUDGET_*` config). Depends on
 F-1 landing first.
 
 ### F-6: A2A (agent-to-agent) protocol support — LOW PRIORITY, owner-gated
+MCP server is complete (15 tools, SSE). A2A adds inter-agent deal exchange
+but has no consumer demand signal yet; revisit when agents actually integrate.
+
 Not proposed now: mobile app (4 weeks, no users yet), auto-apply checkout
 extension (browser-automation + ToS risk) — defer until adoption justifies.
 
@@ -161,9 +162,9 @@ extension (browser-automation + ToS risk) — defer until adoption justifies.
 
 Full catalog: `agents-docs/SKILLS-DISTILLED.md`. Key findings:
 
-- **60 skills** total; 8 vendored from `cloudflare/skills` (skills-lock.json),
+- **58 skills** total; 7 vendored from `cloudflare/skills` (skills-lock.json),
   the rest authored for this repo.
-- **Coverage**: 40/60 have `evals/`; 10 have `reference/`; all SKILL.md
+- **Coverage**: 37/58 have `evals/`; 10 have `reference/`; all SKILL.md
   respect the 250-line authoring standard (max 249).
 - **Redundancy clusters needing consolidation**: logging (3 parallel skills
   while the repo itself has N-3 open — skills and code disagree); Codacy
@@ -193,8 +194,3 @@ REDDIT-6 credentials, prod seeding decision, Vectorize dashboard check.
 binding inspection (`wrangler.jsonc`), and line-count audits. Supersedes the
 open-items list in `plans/GAP-ANALYSIS-2026-08-15.md` (now fully stale).*
 
-MCP server is complete (15 tools, SSE). A2A adds inter-agent deal exchange
-but has no consumer demand signal yet; revisit when agents actually integrate.
-
-Not proposed now: mobile app (4 weeks, no users yet), auto-apply checkout
-extension (browser-automation + ToS risk) — defer until adoption justifies.
