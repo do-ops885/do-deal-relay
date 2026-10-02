@@ -5,6 +5,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import type { Env } from "../../worker/types";
+import { jsonRecord, recordArray } from "../fixtures/mcp-assert";
 
 // ============================================================================
 // Mock Factory
@@ -49,7 +50,7 @@ function createMockEnv(): Env {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     D1: {} as D1Database,
   } as unknown as Env;
@@ -76,13 +77,14 @@ describe("MCP Route Handler - Pagination", () => {
     });
 
     const firstResponse = await handleMCPRequest(firstRequest, env);
-    const firstBody = (await firstResponse.json()) as any;
+    const firstBody = jsonRecord(await firstResponse.json());
+    const firstResult = jsonRecord(firstBody.result);
+    const firstTools = recordArray(firstResult.tools);
 
-    expect(firstBody.result.tools).toBeDefined();
-    expect(firstBody.result.tools.length).toBeGreaterThan(0);
-    expect(firstBody.result.tools.length).toBeLessThanOrEqual(20);
+    expect(firstTools.length).toBeGreaterThan(0);
+    expect(firstTools.length).toBeLessThanOrEqual(20);
 
-    if (firstBody.result.nextCursor) {
+    if (firstResult.nextCursor) {
       const secondRequest = new Request("http://localhost/mcp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,14 +92,14 @@ describe("MCP Route Handler - Pagination", () => {
           jsonrpc: "2.0",
           id: 2,
           method: "tools/list",
-          params: { cursor: firstBody.result.nextCursor },
+          params: { cursor: firstResult.nextCursor },
         }),
       });
 
       const secondResponse = await handleMCPRequest(secondRequest, env);
-      const secondBody = (await secondResponse.json()) as any;
+      const secondBody = jsonRecord(await secondResponse.json());
 
-      expect(secondBody.result.tools).toBeDefined();
+      expect(jsonRecord(secondBody.result).tools).toBeDefined();
     }
   });
 
@@ -117,11 +119,10 @@ describe("MCP Route Handler - Pagination", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
 
-    expect(body.result.resources).toBeDefined();
-    expect(Array.isArray(body.result.resources)).toBe(true);
-    expect(body.result.resources.length).toBeGreaterThan(0);
+    const resources = recordArray(jsonRecord(body.result).resources);
+    expect(resources.length).toBeGreaterThan(0);
   });
 });
 
@@ -146,13 +147,14 @@ describe("MCP Route Handler - Progress Notifications", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
+    const meta = jsonRecord(jsonRecord(body.result)._meta);
 
-    expect(body.result._meta).toBeDefined();
-    expect(body.result._meta.progress).toBeDefined();
-    expect(body.result._meta.progress.progressToken).toBe("test-progress-1");
-    expect(body.result._meta.progress.progress).toBe(1);
-    expect(body.result._meta.progress.total).toBe(1);
+    const progress = jsonRecord(meta.progress);
+
+    expect(progress.progressToken).toBe("test-progress-1");
+    expect(progress.progress).toBe(1);
+    expect(progress.total).toBe(1);
   });
 
   it("tools/call should work without progressToken", async () => {
@@ -174,8 +176,8 @@ describe("MCP Route Handler - Progress Notifications", () => {
     });
 
     const response = await handleMCPRequest(request, env);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
 
-    expect(body.result._meta).toBeUndefined();
+    expect(jsonRecord(body.result)._meta).toBeUndefined();
   });
 });
