@@ -1,11 +1,38 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-17
-**Version**: 0.19.27
-**Status**: Active — 2026-09-17 pre-existing sweep done: spec #813, fixes #814/#815 merged; prod D1 at v12. Next: #764 step-1 implementation (v13 incl. ai_act_logs table).
+**Last Updated**: 2026-10-02
+**Version**: 0.19.28
+**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02. Next: prod D1 v13/v14 apply (d1-ops runbook, owner-approved ops), then RL-1 DO migration, test gaps T-2/T-3/T-4, or REDDIT-5.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-02 Register reconciliation (#764 close-out) — v0.19.28
+
+Branch `cline/e8n3d346`. Docs-only reconciliation, zero prod change.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| #764 deal alerts | CLOSED 2026-09-29 (COMPLETED) — #824 shipped D1 storage helpers, keyword/token matcher, notifier (telegram/discord/email/webhook), `/api/nlq/alerts` CRUD, bot alert command, v13 migration; Queues fan-out descoped to inline best-effort in `publish.ts` + digest on `0 9 * * *` cron | issue #764 close comment, `worker/lib/alerts/*`, `worker/routes/nlq/alerts.ts`, `bot/commands/alerts.ts` |
+| `ai_act_logs` open gap | CLOSED — v14 `add_alert_deliveries_aiact` creates `alert_deliveries` + `ai_act_logs` (#853, 2026-10-02) | `migrations/0008_alert_deliveries_aiact.sql`, `schema-part-8.ts` version 14 |
+| F-11 strict flags | CLOSED — `noUnusedLocals`/`noUnusedParameters` enabled; `exactOptionalPropertyTypes` closed via #768 (2026-09-13) | `tsconfig.json:12-15` |
+| PRT-5 workers-types | CLOSED — superseded: `@cloudflare/workers-types ^5.20261002.1` via #855 (2026-10-02), well past #700's 5.20260820.1 | `package.json:48` |
+| ADR-031 | Status updated Proposed to Implemented with as-built note (Queues descoped, matcher is keyword/token, `deal_alert_match` emitted) | ADR-031 implementation note |
+| N-6 unit-test failures | CLOSED — full suite green locally 2026-10-02 (222 files, 3017/3017); register row flipped | npm run test:unit |
+| N-3 logging | STAYS DEFERRED — ADR-025 Accepted and `lib/logger/*` modules exist, but ~107 `global-logger` importers unmigrated; INDEX wording corrected | import count re-verified 2026-10-02 |
+
+Merged since 2026-09-17 (all green): PRs #824, #845, #846, #848, #849, #850, #851, #852, #853, #854, #855, #856, #857. PR queue empty; zero open issues.
+
+Open follow-ups: prod D1 v13/v14 apply (owner-approved ops per
+`.agents/skills/d1-ops` runbook; backup first, same pattern as v12 run) —
+remote verify needs owner creds, not possible from this sandbox. Prod
+seeding decision, Vectorize dashboard check, CI-1 secret (ADR-023), and
+REDDIT-6 credentials remain owner-blocked. Next feature candidates:
+RL-1 DO migration (SPEC-rl1, ADR-028; gates on ADR-017 phase 2), test
+gaps T-2/T-3/T-4 (SPEC-test-gaps-t2-t3-t4), REDDIT-5
+(SPEC-reddit-post-lifecycle).
 
 ---
 
@@ -499,7 +526,7 @@ scope = P0 + quick wins this run.
 | F-8 | Publish/stage re-parses full snapshots ~5x per run + double hash computation | P2 | ⬜ DEFERRED | publish.ts:63,85, storage.ts:60,87-95, stage.ts:60 |
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ⬜ DEFERRED | discover.ts imports, scheduled.ts:69-130 |
-| F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ⬜ DEFERRED - flags surface 416 errors repo-wide; needs dedicated sweep after dead-export cleanup | tsconfig.json:2-23 |
+| F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ✅ CLOSED 2026-10-02 — noUnusedLocals/noUnusedParameters enabled (416-error sweep completed); exactOptionalPropertyTypes remainder closed via #768 (2026-09-13) | tsconfig.json:12-15 |
 | F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | ⬜ PARTIAL — `wrangler.jsonc` `ai` binding + `extension/popup.js` split CLOSED via R-3/R-4 (`3465d06`, `b89d69d`); D1 boilerplate + `as any` cleanup remains DEFERRED | see analysis notes |
 
 ### Session outcomes already banked (pre-register)
@@ -525,7 +552,7 @@ Spec: [SPEC-pr-triage-and-p1-swarm.md](SPEC-pr-triage-and-p1-swarm.md)
 | PRT-2 | Roast/review #700 health audit | ✅ COMPLETE | Real impact confirmed (CVE undici bump, dedupe, first ranking-helper tests); 12 as-any casts replaced with typed DealOverrides; non-serializable default param removed |
 | PRT-3 | Fix #701 hmac signature-leak security fix | ✅ COMPLETE | Two Codacy findings fixed at root cause (banned double cast; hardcoded secret literal replaced with generateWebhookSecret()); merged |
 | PRT-4 | Close no-impact JSDoc-only PRs #697 #702 #706 | ✅ COMPLETE | Closed with plain-text rationale (zero runtime impact) |
-| PRT-5 | Resolve #696 workers-types bump | ⬜ OPEN | Strictly superseded once #700 lands (5.20260816.1 vs 5.20260820.1); close then |
+| PRT-5 | Resolve #696 workers-types bump | ✅ CLOSED 2026-10-02 | Superseded: `@cloudflare/workers-types ^5.20261002.1` via #855, well past #700's 5.20260820.1 |
 | PRT-6 | Implementation swarm: MI-5, MI-6, MF-2, MI-1+MF-3, T-1, N-1, N-2 | ✅ COMPLETE | PR #708; 10 atomic commits; see gap-item flips below |
 
 ### Gap item outcomes delivered by PRT-6
@@ -559,10 +586,10 @@ Not covered by GAP-ANALYSIS-2026-08-15:
 |:---|:---|:---|:---|
 | N-1 | Dead file worker/lib/webhook-sdk.ts (488 lines, zero imports) - parallel webhook SDK duplicating lib/webhook/* | P1 | ✅ CLOSED (deleted in PRT-6) |
 | N-2 | Dead file worker/routes/health.ts (210 lines) - duplicate of routes/core/health.ts | P1 | ✅ CLOSED (deleted with its exclusive test in PRT-6) |
-| N-3 | Parallel logging subsystems: global-logger.ts (~90 importers) vs lib/logger/* (4 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED |
+| N-3 | Parallel logging subsystems: global-logger.ts (~107 importers, re-verified 2026-10-02) vs lib/logger/* (6 modules) - divergence risk like MI-5 | P2 | ⬜ DEFERRED — ADR-025 Accepted; lib/logger target exists, importer migration still open |
 | N-4 | Source files over 500-line limit: router/legacy-routes.ts (509), research-agent/orchestrator/index.ts (503) | P2 | ✅ CLOSED — `legacy-routes.ts` split (472L); `research-agent/orchestrator/index.ts` now 438L; residual `extension/popup.js` re-registered as R-3 and closed (448L + 197L) |
 | N-5 | 51 banned non-null assertions in worker/ (worst: routes/core/deals.ts 9, nlq/query-builder/executor.ts 6, routes/d1/deals.ts 5, lib/ranking.ts 5) | P2 | ✅ CLOSED — all eliminated via guards/bindings in 2026-08-25 swarm R-2 (commits `b14380a` + `61dbc87`); zero matches in `worker/` production code |
-| N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ⬜ DEFERRED (dedicated fix sprint; zero regressions from PRT-6 verified by main-vs-branch diff) |
+| N-6 | 25 pre-existing unit-test failures on main (identical set on swarm branch; GitHub CI green on same commits): url-validator-impl x6, budget-allocation x5, notify x4, publish.core x3, publish.rollback x2, nlq/handlers-post x2, dependabot-patterns x2, validate x1 | P2 | ✅ CLOSED 2026-10-02 — full suite green locally: 222 files, 3017/3017 via npm run test:unit |
 
 Supporting evidence: lint = tsc+prettier only (no ESLint gate), so banned
 patterns are unenforced; zero TODO/FIXME debt found; no as any in worker/

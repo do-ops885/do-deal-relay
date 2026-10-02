@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-09-05. Active set is intentionally small; completed
+**Last Updated**: 2026-10-02. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,10 +12,11 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.9, single source of truth**.
-  Full inventory (P0–P3, deferred, blocked). Merge wave complete
-  (#748–#756); queue empty. Next candidates: RL-1 DO migration,
-  test gaps T-2/T-3/T-4, REDDIT-5.
+- [GOAP State](GOAP_STATE.md) — **v0.19.28, single source of truth**.
+  Full inventory (P0–P3, deferred, blocked). #764 deal alerts shipped
+  (#824/#853); register reconciled 2026-10-02; queue empty. Next: prod
+  D1 v13/v14 ops apply, then RL-1 DO migration, test gaps T-2/T-3/T-4,
+  REDDIT-5.
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
   swarm runs.
@@ -47,15 +48,27 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 - [ADR-024](ADR-024-skill-version-independence.md) — Skill version
   independence (shipped).
 - [ADR-025](ADR-025-logging-consolidation.md) — Logging consolidation
-  N-3 (shipped).
+  N-3 (Accepted; lib/logger shipped, importer migration deferred).
 - [ADR-026](ADR-026-ci-npm-registry-degradation.md) — Resolved 2026-09-05.
 - [ADR-027](ADR-027-ruleset-required-check-mismatch.md) — Resolved
   2026-09-05.
+- [ADR-028](ADR-028-rate-limit-binding-over-do.md) — Rate-limit binding
+  over DO (RL-1 candidate; gates on ADR-017 phase 2).
+- [ADR-029](ADR-029-dependabot-major-pin-policy.md) — Dependabot
+  major-pin policy.
+- [ADR-030](ADR-030-zod-v4-migration.md) — Zod v4 migration (shipped;
+  zod ^4.6.5).
+- [ADR-031](ADR-031-deal-alerts.md) — Personalized deal alerts
+  (Implemented 2026-10-02 with as-built note; #824/#853).
 
 ## Completed Specs (kept as GOAP evidence)
 
 - [SPEC-missing-impl-sweep](SPEC-missing-impl-sweep.md) — Shipped #750.
 - [SPEC-f11-strict-ts-flags](SPEC-f11-strict-ts-flags.md) — Shipped #745.
+- [SPEC-deal-alerts-764](SPEC-deal-alerts-764.md) — Shipped #824/#853.
+- [SPEC-exactOptionalPropertyTypes-768](SPEC-exactOptionalPropertyTypes-768.md)
+  — Shipped; #768 closed 2026-09-13.
+- [SPEC-zod-v4-migration](SPEC-zod-v4-migration.md) — Shipped; zod ^4.6.5.
 - [SPEC-n3-logging-consolidation](SPEC-n3-logging-consolidation.md) —
   Shipped #745.
 - [SPEC-self-learning-feedback-full](SPEC-self-learning-feedback-full.md)
