@@ -12,9 +12,10 @@ import { join } from "node:path";
  * the detail-path error contracts (PATCH 400, GET 405).
  *
  * Rate-limit aware: /api/nlq is 10 req/60s per user and /api/auth/register
- * is 5 req/60s, so the file runs serial with two registered users plus the
- * seeded admin JWT (lifecycle). Zero hardcoded secrets: admin JWT from
- * global-setup, user passwords random per run.
+ * is 5 req/60s, so the file runs serial with three cached registered
+ * users (5, 8, and 7 NLQ calls each). Data-owning flows must register:
+ * the seeded admin JWT has no D1 user row, so writes 500 on the FK.
+ * Zero hardcoded secrets: passwords random per run.
  */
 
 const HTTP_OK = 200;
@@ -120,17 +121,6 @@ async function ensureD1Initialized(
   ).toBe(true);
 }
 
-async function adminUser(
-  request: import("@playwright/test").APIRequestContext,
-): Promise<string> {
-  await ensureD1Initialized(request);
-  const adminToken = readAdminToken();
-  if (adminToken === null) {
-    throw new Error("admin JWT missing after D1 init guard");
-  }
-  return adminToken;
-}
-
 async function registerAndLogin(
   request: import("@playwright/test").APIRequestContext,
 ): Promise<string> {
@@ -161,6 +151,7 @@ async function registerAndLogin(
 // and register calls total two, well under the 5/60s register budget.
 let primaryToken: string | undefined;
 let secondaryToken: string | undefined;
+let lifecycleToken: string | undefined;
 
 async function primaryUser(
   request: import("@playwright/test").APIRequestContext,
@@ -178,6 +169,15 @@ async function secondaryUser(
     secondaryToken = await registerAndLogin(request);
   }
   return secondaryToken;
+}
+
+async function lifecycleUser(
+  request: import("@playwright/test").APIRequestContext,
+): Promise<string> {
+  if (lifecycleToken === undefined) {
+    lifecycleToken = await registerAndLogin(request);
+  }
+  return lifecycleToken;
 }
 
 function bearer(token: string): Record<string, string> {
@@ -280,7 +280,8 @@ test.describe("NLQ alert subscriptions (D1-backed)", () => {
   test("alert subscription lifecycle: create, list, patch, delete", async ({
     request,
   }) => {
-    const token = await adminUser(request);
+    await ensureD1Initialized(request);
+    const token = await lifecycleUser(request);
     const savedQueryId = await createSavedQuery(request, token, uniqueSuffix());
 
     const created = await createAlert(request, token, savedQueryId);
