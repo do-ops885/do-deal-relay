@@ -8,6 +8,11 @@ import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import { MCP_TOOLS, getTools, executeTool } from "../../worker/lib/mcp/tools";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
+import {
+  firstText,
+  recordArray,
+  structuredPayload,
+} from "../fixtures/mcp-assert";
 
 vi.mock("../../worker/lib/research-agent/orchestrator", () => ({
   executeReferralResearch: vi.fn().mockResolvedValue({
@@ -61,7 +66,7 @@ function createMockEnv(): Env {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     D1: {} as D1Database,
   } as unknown as Env;
@@ -236,7 +241,7 @@ describe("MCP Tools - Execution", () => {
       expect(result.isError).toBeFalsy();
       expect(result.structuredContent).toHaveProperty("deals");
       expect(result.structuredContent).toHaveProperty("total");
-      expect((result.structuredContent as any).deals).toHaveLength(0);
+      expect(recordArray(structuredPayload(result).deals)).toHaveLength(0);
     });
 
     it("should find deals by status", async () => {
@@ -257,7 +262,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as any;
+      const content = structuredPayload(result);
       expect(content.total).toBeGreaterThanOrEqual(1);
     });
 
@@ -284,7 +289,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const deals = (result.structuredContent as any).deals;
+      const deals = recordArray(structuredPayload(result).deals);
       if (deals.length > 0) {
         const deal = deals[0];
         expect(deal).toHaveProperty("code");
@@ -307,7 +312,7 @@ describe("MCP Tools - Execution", () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0]!.type).toBe("text");
-      expect((result.content[0] as any).text).toContain("not found");
+      expect(firstText(result.content)).toContain("not found");
     });
 
     it("should return deal details for existing code", async () => {
@@ -332,7 +337,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as any;
+      const content = structuredPayload(result);
       expect(content.code).toBe("FINDME");
       expect(content.domain).toBe("findme.com");
       expect(content.status).toBe("active");
@@ -370,7 +375,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as any;
+      const content = structuredPayload(result);
       expect(content.success).toBe(true);
       expect(content.code).toBe("NEWCODE");
       expect(content.status).toBe("quarantined");
@@ -388,7 +393,7 @@ describe("MCP Tools - Execution", () => {
         createMockRequest(),
       );
 
-      const content = result.structuredContent as any;
+      const content = structuredPayload(result);
       expect(content.status).toBe("quarantined");
       expect(content.message).toContain("review");
     });
@@ -406,7 +411,7 @@ describe("MCP Tools - Execution", () => {
       );
 
       expect(result.isError).toBeFalsy();
-      const content = result.structuredContent as any;
+      const content = structuredPayload(result);
       expect(content.success).toBe(true);
     });
   });
