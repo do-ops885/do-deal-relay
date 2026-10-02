@@ -171,7 +171,7 @@ describe("createDealCard Accessibility & Attributes", () => {
     expect(ariaLabel).not.toContain("&#39;");
   });
 
-  it("should maintain role='button' and tabindex='0' for interactive card", async () => {
+  it("should maintain role='button', tabindex='0', aria-haspopup='dialog', and aria-expanded='false' for interactive card", async () => {
     const createDealCard = await loadCreateDealCard();
     const deal: DealInput = {
       id: "deal-456",
@@ -182,6 +182,8 @@ describe("createDealCard Accessibility & Attributes", () => {
     const card = createDealCard(deal);
 
     expect(card.getAttribute("role")).toBe("button");
+    expect(card.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(card.getAttribute("aria-expanded")).toBe("false");
     expect(card.tabIndex).toBe(0);
     expect(card.dataset.dealId).toBe("deal-456");
   });
