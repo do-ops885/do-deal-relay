@@ -1,11 +1,29 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-09-17
-**Version**: 0.19.27
-**Status**: Active — 2026-09-17 pre-existing sweep done: spec #813, fixes #814/#815 merged; prod D1 at v12. Next: #764 step-1 implementation (v13 incl. ai_act_logs table).
+**Last Updated**: 2026-10-02
+**Version**: 0.19.28
+**Status**: Active — #764 step-2 landed: queues fan-out + senders + digest drain on feat/alerts-v14-deliveries-aiact; Codacy clean; CI pending. Next: FTS5 matcher parity + prod D1 v13/v14.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-02 Deal alerts step-2 fan-out — v0.19.28
+
+Branch `feat/alerts-v14-deliveries-aiact` (PR #853). Full Mode, SPEC-deal-alerts-764 steps 4-5.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| Codacy trigger lint | FIXED — dropped redundant `alert_subscriptions_updated_at` trigger from v14 (app-layer `updated_at` in `alert-subscriptions.ts`); fixed `.codacy.yml` stray null entry so `migrations/**` exclusion parses | `.codacy.yml`, `migrations/0008`, `schema-part-8.ts`, Codacy 0 issues |
+| Alert op name | FIXED — `personalized_deal_alert_match` to spec `deal_alert_match` | `matcher.ts:134` |
+| Queues fan-out | NEW — `ALERT_QUEUE` producer + consumer + DLQ in wrangler (`max_batch 10`, `timeout 5s`, `retries 10`, `alert-queue-dlq`); `Env.ALERT_QUEUE`; `queue()` in `index.ts`; `alert-consumer.ts` idempotent via `alert_deliveries`; `budgets.ts` 500/10 caps with digest rollover; `queue-producer.ts` with inline fallback + KV-DLQ note | `wrangler.jsonc`, `worker/types/api.ts`, `worker/index.ts`, `worker/queues/`, `worker/lib/alerts/` |
+| Senders + digest | NEW — `Sender` interface (`telegram`, `discord`, `webhook`, `email` via `validatedFetch`); `notifier.ts` delegates; `scheduled.ts` digest via `enqueueAlertBatch` with `digest-YYYY-MM-DD` run key on `0 9 * * *` | `senders.ts`, `notifier.ts`, `scheduled.ts`, `senders.test.ts` |
+| Tests | GREEN — 3021 unit (budgets, consumer, producer fallback, senders); `tsc` clean; `lint` clean | `tests/unit/queues/`, `tests/unit/alerts/` |
+
+Open gaps: FTS5 matcher parity (current keyword/token, zero Vectorize — meets free-tier but diverges from SPEC FTS5 path); prod D1 still v12 (v13/v14 unapplied, needs owner-approved runbook); queue creation `wrangler queues create alert-queue` + `alert-queue-dlq` not yet run in any env.
+
+---
 
 ---
 

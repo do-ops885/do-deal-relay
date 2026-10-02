@@ -1,9 +1,9 @@
 # ADR-031: Personalized Deal Alerts via Queues Fan-Out (2026-09-16)
 
 **Date**: 2026-09-16
-**Status**: Proposed
+**Status**: In Progress — step-4/5 landed on feat/alerts-v14-deliveries-aiact (queues + senders + digest drain); FTS5 matcher parity + prod v13/v14 remain
 **Related**: SPEC-deal-alerts-764.md, issue #764
-**Branch**: feat/deal-alerts-764-spec
+**Branch**: feat/alerts-v14-deliveries-aiact
 
 ## Context
 
