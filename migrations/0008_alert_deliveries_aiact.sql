@@ -5,6 +5,11 @@
 -- v13 (0007) created alert_subscriptions only; v14 adds the idempotency
 -- guard table the queue consumer needs and the ai_act_logs table backing
 -- EUAIActLogger (Article 12) that matcher.ts already calls.
+--
+-- Dialect: SQLite (Cloudflare D1). This file is intentionally excluded
+-- from Codacy static analysis (see .codacy.yml); Codacy's SQL linter
+-- parses a Postgres dialect and cannot accept valid SQLite syntax such
+-- as CREATE TRIGGER IF NOT EXISTS.
 
 CREATE TABLE IF NOT EXISTS alert_deliveries (
     alert_id TEXT NOT NULL,
