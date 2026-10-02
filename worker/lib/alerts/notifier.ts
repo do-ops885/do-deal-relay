@@ -1,12 +1,9 @@
 import type { Env } from "../../types";
 import type { AlertSubscriptionRow } from "../d1/alert-subscriptions";
-import { validatedFetch } from "../security";
 import { logger } from "../global-logger";
-import {
-  createTelegramCircuitBreaker,
-  CircuitBreakerOpenError,
-} from "../circuit-breaker";
 import type { Deal } from "../../types/deal";
+import { formatAlertMessage, getSender } from "./senders";
+import { CircuitBreakerOpenError } from "../circuit-breaker";
 
 export interface AlertNotificationResult {
   subscriptionId: string;
@@ -15,56 +12,11 @@ export interface AlertNotificationResult {
   error?: string;
 }
 
-/**
- * Format message body for notification alert
- */
-export function formatAlertMessage(
-  subscription: AlertSubscriptionRow,
-  deals: Deal[],
-): string {
-  const queryStr = subscription.query || "saved search";
-  const header = `🔔 **Deal Alert Match**\nQuery: _"${queryStr}"_\nMatches found: ${deals.length}\n\n`;
-
-  const dealSummaries = deals
-    .slice(0, 5)
-    .map((deal) => {
-      const rewardText = deal.reward
-        ? `${deal.reward.type.toUpperCase()}: ${deal.reward.value} ${deal.reward.currency || ""}`.trim()
-        : "N/A";
-      return `• **${deal.title || deal.code}**\n  Code: \`${deal.code}\` | Reward: ${rewardText}\n  URL: ${deal.url}`;
-    })
-    .join("\n\n");
-
-  const footer =
-    deals.length > 5 ? `\n\n...and ${deals.length - 5} more deal(s).` : "";
-  return `${header}${dealSummaries}${footer}`;
-}
+export { formatAlertMessage };
 
 /**
- * Deliver a Telegram message through the shared validated fetch path.
- * Declared at module scope so the dispatch path passes a bound function
- * reference rather than a serializable-expression closure.
- */
-async function sendTelegramMessage(
-  telegramUrl: string,
-  chatId: string,
-  messageText: string,
-): Promise<boolean> {
-  const res = await validatedFetch(telegramUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: messageText,
-      parse_mode: "Markdown",
-    }),
-  });
-  if (!res.ok) throw new Error(`Telegram error HTTP ${res.status}`);
-  return true;
-}
-
-/**
- * Send alert notification to destination based on channel
+ * Send alert notification to destination based on channel.
+ * Delegates to Sender implementations (SPEC-764 step 5).
  */
 export async function sendAlertNotification(
   env: Env,
@@ -80,89 +32,18 @@ export async function sendAlertNotification(
   }
 
   const messageText = formatAlertMessage(subscription, deals);
+  const sender = getSender(subscription.channel);
+  if (!sender) {
+    return {
+      subscriptionId: subscription.id,
+      channel: subscription.channel,
+      success: false,
+      error: `Unsupported channel: ${subscription.channel}`,
+    };
+  }
 
   try {
-    switch (subscription.channel) {
-      case "telegram": {
-        const botToken = env.TELEGRAM_BOT_TOKEN;
-        const chatId = subscription.destination || env.TELEGRAM_CHAT_ID;
-        if (!botToken || !chatId) {
-          return {
-            subscriptionId: subscription.id,
-            channel: "telegram",
-            success: false,
-            error: "Telegram token or destination missing",
-          };
-        }
-
-        const cb = createTelegramCircuitBreaker(env);
-        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        await cb.execute(
-          sendTelegramMessage.bind(null, telegramUrl, chatId, messageText),
-        );
-        break;
-      }
-
-      case "discord":
-      case "webhook": {
-        const webhookUrl = subscription.destination;
-        if (!webhookUrl) {
-          return {
-            subscriptionId: subscription.id,
-            channel: subscription.channel,
-            success: false,
-            error: "Webhook destination URL missing",
-          };
-        }
-
-        const payload =
-          subscription.channel === "discord"
-            ? { content: messageText }
-            : {
-                event: "deal_alert",
-                subscription_id: subscription.id,
-                saved_query_id: subscription.saved_query_id,
-                matches: deals,
-                timestamp: new Date().toISOString(),
-              };
-
-        const res = await validatedFetch(webhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "do-deal-relay-alerts/1.0",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          return {
-            subscriptionId: subscription.id,
-            channel: subscription.channel,
-            success: false,
-            error: `Webhook returned HTTP ${res.status}`,
-          };
-        }
-        break;
-      }
-
-      case "email": {
-        logger.info("Email notification queued/dispatched", {
-          component: "alerts-notifier",
-          subscription_id: subscription.id,
-          destination: subscription.destination,
-        });
-        break;
-      }
-
-      default:
-        return {
-          subscriptionId: subscription.id,
-          channel: subscription.channel,
-          success: false,
-          error: `Unsupported channel: ${subscription.channel}`,
-        };
-    }
+    await sender.send(env, subscription, deals, messageText);
 
     return {
       subscriptionId: subscription.id,
