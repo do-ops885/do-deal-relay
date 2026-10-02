@@ -41,8 +41,10 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.currentVersion).toBe(0);
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(status.latestVersion).toBe(13);
+    expect(status.pending).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
+    expect(status.latestVersion).toBe(14);
   });
 
   it("returns correct status when some migrations applied", async () => {
@@ -58,8 +60,8 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.currentVersion).toBe(2);
     expect(status.applied).toEqual([1, 2]);
-    expect(status.pending).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(status.latestVersion).toBe(13);
+    expect(status.pending).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    expect(status.latestVersion).toBe(14);
   });
 
   it("returns correct status when all migrations applied", async () => {
@@ -87,15 +89,22 @@ describe("MigrationRunner getStatus", () => {
           name: "add_alert_subscriptions",
           applied_at: 13000,
         },
+        {
+          version: 14,
+          name: "add_alert_deliveries_aiact",
+          applied_at: 14000,
+        },
       ],
     });
     const runner = new MigrationRunner(mockDb);
     const status = await runner.getStatus();
 
-    expect(status.currentVersion).toBe(13);
-    expect(status.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.currentVersion).toBe(14);
+    expect(status.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
     expect(status.pending).toEqual([]);
-    expect(status.latestVersion).toBe(13);
+    expect(status.latestVersion).toBe(14);
   });
 
   it("calls ensureMigrationsTable before querying", async () => {
@@ -116,7 +125,9 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.applied).toEqual([]);
     expect(status.currentVersion).toBe(0);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.pending).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 
   it("returns empty applied when query data is null", async () => {
@@ -125,7 +136,9 @@ describe("MigrationRunner getStatus", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.pending).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 });
 
@@ -384,7 +397,9 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.pending).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 
   it("handles query returning null data", async () => {
@@ -394,7 +409,9 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([]);
-    expect(status.pending).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(status.pending).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 
   it("ensureMigrationsTable is called on every getStatus", async () => {
@@ -424,7 +441,7 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([1, 3, 7]);
-    expect(status.pending).toEqual([2, 4, 5, 6, 8, 9, 10, 11, 12, 13]);
+    expect(status.pending).toEqual([2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14]);
     expect(status.currentVersion).toBe(7);
   });
 

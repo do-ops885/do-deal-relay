@@ -41,9 +41,11 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
     expect(result.rolledBack).toEqual([]);
-    expect(result.currentVersion).toBe(13);
+    expect(result.currentVersion).toBe(14);
     expect(result.error).toBeUndefined();
   });
 
@@ -57,8 +59,10 @@ describe("MigrationRunner migrate", () => {
     const result = await runner.migrate();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(result.currentVersion).toBe(13);
+    expect(result.applied).toEqual([
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
+    expect(result.currentVersion).toBe(14);
   });
 
   it("applies nothing when already at latest version", async () => {
@@ -86,6 +90,11 @@ describe("MigrationRunner migrate", () => {
           name: "add_alert_subscriptions",
           applied_at: 13000,
         },
+        {
+          version: 14,
+          name: "add_alert_deliveries_aiact",
+          applied_at: 14000,
+        },
       ],
     });
     const runner = new MigrationRunner(mockDb);
@@ -94,7 +103,7 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(13);
+    expect(result.currentVersion).toBe(14);
   });
 
   it("respects targetVersion and only applies up to that version", async () => {
@@ -344,8 +353,10 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(result.currentVersion).toBe(13);
+    expect(result.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
+    expect(result.currentVersion).toBe(14);
   });
 
   it("returns reset failure without attempting migrate", async () => {
@@ -371,7 +382,9 @@ describe("MigrationRunner fresh", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 });
 
@@ -456,6 +469,11 @@ describe("edge cases", () => {
               name: "add_alert_subscriptions",
               applied_at: 13000,
             },
+            {
+              version: 14,
+              name: "add_alert_deliveries_aiact",
+              applied_at: 14000,
+            },
           ],
         };
       }
@@ -466,6 +484,8 @@ describe("edge cases", () => {
     const result = await runner.fresh();
 
     expect(result.success).toBe(true);
-    expect(result.applied).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.applied).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 });
