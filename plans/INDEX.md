@@ -12,11 +12,11 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.29, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.30, single source of truth**.
   Full inventory (P0–P3, deferred, blocked). #764 deal alerts shipped
-  (#824/#853) plus alerts e2e; register reconciled 2026-10-02; queue
-  empty. Next: prod D1 v13/v14 ops apply, then RL-1 DO migration
-  (T-2/T-3/T-4 and REDDIT-5 closed).
+  (#824/#853) plus alerts e2e; register reconciled 2026-10-02. Queue
+  EMPTY: RL-1 verified closed (v0.19.12); T-2/T-3/T-4, REDDIT-5 closed.
+  Remaining: prod D1 v13/v14 ops apply (owner) + deferred menu.
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
   swarm runs.
