@@ -45,23 +45,37 @@ success-feedback loop** and **Queues-backed delivery**. Details below.
 
 ## Part 2 — Open Improvements (actionable now)
 
-### I-1: File-size violations of the 500-line constraint — P2, Light Mode
-- `worker/routes/auth.ts` — **565 lines**
-- `worker/lib/rate-limit.ts` — **517 lines** (`worker/lib/validation/url-validator.ts` is at exactly 500 — split opportunistically on next touch)
+### I-1: File-size violations of the 500-line constraint — P2, Light Mode — DONE 2026-10-02
+- `worker/routes/auth.ts` — **565 lines** → split helpers into
+  `worker/routes/auth-helpers.ts` (129 lines); auth.ts now 476 lines.
+- `worker/lib/rate-limit.ts` — **517 lines** → extracted the KV subsystem into
+  `worker/lib/rate-limit-kv.ts` (318 lines), barrel re-exports preserved for
+  existing consumers; rate-limit.ts now 232 lines.
+- `worker/lib/validation/url-validator.ts` is at exactly 500 — split
+  opportunistically on next touch (unchanged).
 
-Fix: extract pure helpers (auth: token-issuance/verification split;
-rate-limit: KV-fallback path into `rate-limit-binding.ts` sibling). Atomic PRs,
-no behavior change.
+No behavior change; 3017/3017 unit tests green.
 
-### I-2: Dead exports (test-only consumers) — P3, Light Mode
-- `worker/lib/cache.ts:285-317,328-378` — `createSourceCache`, `createRobotsTxtCache`, `createSnapshotCache`, `createStagingSnapshotCache`, and all aggregate metrics/reset helpers have zero non-test importers.
-- `worker/lib/similarity.ts:8-10,46` — exported weight constants and `countOverlap` used only internally + tests.
-- `worker/lib/rate-limit.ts:152` — `checkRateLimitKV` has no non-test consumers.
-- `worker/lib/research-agent/index.ts:87` — re-exports `simulateDiscovery` (test-only path).
+### I-2: Dead exports (test-only consumers) — P3 — PARTIAL 2026-10-02
+- **DONE**: `worker/lib/research-agent/index.ts` — removed dead barrel
+  re-exports `simulateDiscovery`, `generateSimulatedCode`,
+  `generateSimulatedReward` (zero importers outside `helpers.ts`).
+- **Corrected**: `checkRateLimitKV` (`rate-limit.ts:152`) is NOT dead — it is
+  consumed internally by `createRateLimitKVStore`, `batchCheckRateLimitKV`,
+  and `createRateLimitKVMiddleware` (now in `rate-limit-kv.ts`). Stays.
+- **Deferred**: `worker/lib/cache.ts` factory family
+  (`createSourceCache`, `createRobotsTxtCache`, `createSnapshotCache`,
+  `createStagingSnapshotCache`, aggregate metrics/reset helpers) — deletion is
+  entangled with 923 lines of tests where `resetAllCacheMetrics` doubles as
+  test-infrastructure for the live `KVCache` tests. Requires test rework, not
+  a Light-Mode change.
+- **Rejected**: `worker/lib/similarity.ts` exported weight constants and
+  `countOverlap` — `tests/unit/similarity.test.ts` consumes them to verify
+  the scoring formula; un-exporting means rewriting scoring tests for zero
+  behavior gain. Keep.
 
-Fix: un-export or delete; where deletion is right (cache factory family),
-verify no dynamic import first. This mirrors the MI-5/MI-6 pattern: **built,
-tested, but bypassed code invites drift** — the repo's recurring failure mode.
+Remaining fix (cache family) mirrors the MI-5/MI-6 pattern: **built, tested,
+but bypassed code invites drift** — the repo's recurring failure mode.
 
 ### I-3: N-3 logging split — P2, Deferred (ADR-025)
 ~108 files import `global-logger` while the target `lib/logger/*` (6 modules)
