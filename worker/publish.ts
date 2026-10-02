@@ -134,22 +134,24 @@ export async function publishSnapshot(
       publishedSnapshot.deals.map((deal) => deal.id),
     );
 
-    // Step 5c: Personalized deal alert matching (wave 5) — best-effort, never blocks publish.
+    // Step 5c: Personalized deal alert fan-out (SPEC-764 step 4).
+    // Queues with caps + DLQ; binding missing falls back inline.
+    // Best-effort, never blocks publish.
     try {
-      const { matchAndNotifySubscriptions } =
-        await import("./lib/alerts/matcher");
-      void matchAndNotifySubscriptions(
+      const { enqueueAlertBatch } = await import("./lib/alerts/queue-producer");
+      void enqueueAlertBatch(
         env,
         publishedSnapshot.deals,
         "instant",
+        ctx.run_id,
       ).catch((e) => {
-        logger.warn("Instant deal alert matching async error (non-critical)", {
+        logger.warn("Alert enqueue async error (non-critical)", {
           component: "publish",
           error: toError(e).message,
         });
       });
     } catch (e) {
-      logger.warn("Instant deal alert matching failed (non-critical)", {
+      logger.warn("Alert enqueue failed (non-critical)", {
         component: "publish",
         error: toError(e).message,
       });

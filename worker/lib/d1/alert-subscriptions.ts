@@ -191,3 +191,22 @@ export async function getActiveSubscriptionsByFrequency(
   );
   return res.success ? res.data || [] : [];
 }
+
+/**
+ * System-path lookup by id (queue consumer). No owner check; caller is
+ * the trusted queue consumer, not a user request.
+ */
+export async function getSubscriptionById(
+  db: D1Database,
+  id: string,
+): Promise<AlertSubscriptionRow | null> {
+  const client = createD1ReadClient(db);
+  const res = await client.queryFirst<AlertSubscriptionRow>(
+    `SELECT a.id, a.user_id, a.saved_query_id, a.channel, a.destination, a.threshold, a.frequency, a.active, a.created_at, a.updated_at, q.query
+     FROM alert_subscriptions a
+     LEFT JOIN nlq_saved_queries q ON a.saved_query_id = q.id
+     WHERE a.id = ?`,
+    [id],
+  );
+  return res.success ? res.data || null : null;
+}

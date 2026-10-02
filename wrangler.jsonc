@@ -224,6 +224,22 @@
       "simple": { "limit": 100, "period": 60 },
     },
   ],
+  // Alert fan-out queues (SPEC-764 step 4, ADR-031 free-tier addendum).
+  // Producer: ALERT_QUEUE binding. Consumer: max_batch 10, timeout 5s,
+  // retries 10, DLQ alert-queue-dlq (4d persist). Create via:
+  // wrangler queues create alert-queue && wrangler queues create alert-queue-dlq
+  "queues": {
+    "producers": [{ "binding": "ALERT_QUEUE", "queue": "alert-queue" }],
+    "consumers": [
+      {
+        "queue": "alert-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 10,
+        "dead_letter_queue": "alert-queue-dlq",
+      },
+    ],
+  },
   // Environment-specific configurations
   "env": {
     // Development environment for local testing
