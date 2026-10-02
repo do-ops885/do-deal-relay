@@ -42,9 +42,9 @@ describe("MigrationRunner getStatus", () => {
     expect(status.currentVersion).toBe(0);
     expect(status.applied).toEqual([]);
     expect(status.pending).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
-    expect(status.latestVersion).toBe(14);
+    expect(status.latestVersion).toBe(15);
   });
 
   it("returns correct status when some migrations applied", async () => {
@@ -60,8 +60,10 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.currentVersion).toBe(2);
     expect(status.applied).toEqual([1, 2]);
-    expect(status.pending).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
-    expect(status.latestVersion).toBe(14);
+    expect(status.pending).toEqual([
+      3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]);
+    expect(status.latestVersion).toBe(15);
   });
 
   it("returns correct status when all migrations applied", async () => {
@@ -94,17 +96,22 @@ describe("MigrationRunner getStatus", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_deal_feedback",
+          applied_at: 15000,
+        },
       ],
     });
     const runner = new MigrationRunner(mockDb);
     const status = await runner.getStatus();
 
-    expect(status.currentVersion).toBe(14);
+    expect(status.currentVersion).toBe(15);
     expect(status.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
     expect(status.pending).toEqual([]);
-    expect(status.latestVersion).toBe(14);
+    expect(status.latestVersion).toBe(15);
   });
 
   it("calls ensureMigrationsTable before querying", async () => {
@@ -126,7 +133,7 @@ describe("MigrationRunner getStatus", () => {
     expect(status.applied).toEqual([]);
     expect(status.currentVersion).toBe(0);
     expect(status.pending).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 
@@ -137,7 +144,7 @@ describe("MigrationRunner getStatus", () => {
 
     expect(status.applied).toEqual([]);
     expect(status.pending).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 });
@@ -398,7 +405,7 @@ describe("edge cases", () => {
 
     expect(status.applied).toEqual([]);
     expect(status.pending).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 
@@ -410,7 +417,7 @@ describe("edge cases", () => {
 
     expect(status.applied).toEqual([]);
     expect(status.pending).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 
@@ -441,7 +448,7 @@ describe("edge cases", () => {
     const status = await runner.getStatus();
 
     expect(status.applied).toEqual([1, 3, 7]);
-    expect(status.pending).toEqual([2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14]);
+    expect(status.pending).toEqual([2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15]);
     expect(status.currentVersion).toBe(7);
   });
 

@@ -42,10 +42,10 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
     expect(result.rolledBack).toEqual([]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
     expect(result.error).toBeUndefined();
   });
 
@@ -60,9 +60,9 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
   });
 
   it("applies nothing when already at latest version", async () => {
@@ -95,6 +95,11 @@ describe("MigrationRunner migrate", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_deal_feedback",
+          applied_at: 15000,
+        },
       ],
     });
     const runner = new MigrationRunner(mockDb);
@@ -103,7 +108,7 @@ describe("MigrationRunner migrate", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
   });
 
   it("respects targetVersion and only applies up to that version", async () => {
@@ -354,9 +359,9 @@ describe("MigrationRunner fresh", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
   });
 
   it("returns reset failure without attempting migrate", async () => {
@@ -383,7 +388,7 @@ describe("MigrationRunner fresh", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 });
@@ -485,7 +490,7 @@ describe("edge cases", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 });

@@ -15,6 +15,7 @@ import {
   handleExplainDeal,
   handleAnalytics,
   handleDORAMetrics,
+  handleDealFeedback,
 } from "../routes/core";
 import {
   handleGetReferrals,
@@ -303,6 +304,17 @@ export async function tryHandleLegacyRoutes(
     if (code) {
       return withAuth(request, env, "user", (auth) =>
         handleValidateDeal(request, code, env, auth),
+      );
+    }
+  }
+
+  // Deal success-feedback capture (ADR-033 slice 1) — user-reported outcomes.
+  const dealFeedbackMatch = path.match(/^\/api\/deals\/([^/]+)\/feedback$/);
+  if (dealFeedbackMatch && request.method === "POST") {
+    const code = dealFeedbackMatch[1];
+    if (code) {
+      return withAuth(request, env, "user", (auth) =>
+        handleDealFeedback(request, code, env, auth),
       );
     }
   }

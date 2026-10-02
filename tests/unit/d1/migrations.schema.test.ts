@@ -58,7 +58,9 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    expect(versions).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -167,6 +169,18 @@ describe("schema", () => {
     expect(v14?.down).toContain("DROP TABLE IF EXISTS alert_deliveries");
     expect(v14?.down).toContain("DROP TABLE IF EXISTS ai_act_logs");
   });
+
+  it("version 15 creates deal_feedback with unique user-code pair", () => {
+    const v15 = MIGRATIONS[14];
+    expect(v15?.name).toBe("add_deal_feedback");
+    expect(v15?.up).toContain("CREATE TABLE IF NOT EXISTS deal_feedback");
+    expect(v15?.up).toContain("UNIQUE(user_id, referral_code)");
+    expect(v15?.up).toContain(
+      "CHECK(outcome IN ('success', 'expired', 'invalid'))",
+    );
+    expect(v15?.up).toContain("idx_deal_feedback_code");
+    expect(v15?.down).toContain("DROP TABLE IF EXISTS deal_feedback");
+  });
 });
 
 // ============================================================================
@@ -239,7 +253,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(14);
+    expect(MIGRATIONS.length).toBe(15);
   });
 });
 
@@ -267,7 +281,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 
@@ -301,6 +315,11 @@ describe("factory functions", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_deal_feedback",
+          applied_at: 15000,
+        },
       ],
     });
 
@@ -308,7 +327,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -322,9 +341,9 @@ describe("factory functions", () => {
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
     expect(status.pending).toEqual([
-      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
-    expect(status.latestVersion).toBe(14);
+    expect(status.latestVersion).toBe(15);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -357,13 +376,18 @@ describe("factory functions", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_deal_feedback",
+          applied_at: 15000,
+        },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(14);
+    expect(status.currentVersion).toBe(15);
   });
 });
 
