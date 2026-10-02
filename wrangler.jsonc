@@ -152,6 +152,31 @@
       "class_name": "PipelineWorkflow",
     },
   ],
+  // Alert delivery queue (ADR-032). Producer binding is optional in Env so
+  // deploys without the queue fall back to inline send. Consumer has bounded
+  // retries with a dead-letter queue for permanently failed deliveries.
+  // NOTE: queue provisioning (deal-alerts + deal-alerts-dlq) is an owner
+  // operation via the d1-ops runbook pattern; code deploys safely first.
+  "queues": {
+    "producers": [
+      {
+        "binding": "ALERT_QUEUE",
+        "queue": "deal-alerts",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "deal-alerts",
+        "max_retries": 3,
+        "dead_letter_queue": "deal-alerts-dlq",
+      },
+      {
+        "queue": "deal-alerts-dlq",
+        // DLQ consumer: records failed status; no retries beyond this point.
+        "max_retries": 0,
+      },
+    ],
+  },
   // NOTE: No migrations needed — DOs are already deployed and provisioned.
   // migrations blocks MUST be absent for wrangler versions upload (Cloudflare Git Integration).
   // Live durable-object exports: required so wrangler registers the DO classes

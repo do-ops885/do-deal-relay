@@ -40,6 +40,24 @@ export interface PipelineWorkflowParams {
   cron: string;
 }
 
+// Alert dispatch queue message (ADR-032). A serializable snapshot of one
+// subscription and its matched deal batch; the consumer claims delivery via
+// the alertId primary key in alert_deliveries (idempotent redelivery guard).
+// Defined here (not in lib/alerts) so Env stays free of lib import cycles.
+export interface AlertDispatchMessage {
+  /** Deterministic id: subscriptionId + digest of sorted deal ids */
+  alertId: string;
+  subscriptionId: string;
+  userId: string;
+  savedQueryId: string;
+  channel: string;
+  destination: string | null;
+  query: string;
+  threshold: number;
+  frequency: string;
+  deals: unknown[];
+}
+
 // ============================================================================
 // Environment Types
 // ============================================================================
@@ -124,4 +142,7 @@ export interface Env {
   // Production pipeline workflow (ADR-018 wave 4); optional so local/test
   // envs without the binding fall back to the legacy direct path
   PIPELINE_WORKFLOW?: Workflow<PipelineWorkflowParams>;
+  // Alert delivery queue (ADR-032); optional so local/test envs without the
+  // binding fall back to inline send in lib/alerts/queue.ts
+  ALERT_QUEUE?: Queue<AlertDispatchMessage>;
 }

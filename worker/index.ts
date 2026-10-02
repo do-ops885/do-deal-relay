@@ -1,5 +1,5 @@
 import { setGitHubToken, initGitHubCircuitBreaker } from "./lib/github/index";
-import type { Env } from "./types";
+import type { AlertDispatchMessage, Env } from "./types";
 import { jsonResponse } from "./routes/utils";
 import { validateConfig } from "./lib/config-utils";
 import { logger } from "./lib/global-logger";
@@ -59,6 +59,31 @@ export default {
     }
 
     return handleRequest(request, env, ctx);
+  },
+
+  // Alert delivery queue consumer (ADR-032). Dispatches by queue name so the
+  // same Worker serves both the main queue and its dead-letter sink.
+  async queue(
+    batch: MessageBatch<AlertDispatchMessage>,
+    env: Env,
+  ): Promise<void> {
+    try {
+      validateConfig(env);
+    } catch (error) {
+      logger.error("Queue execution configuration error", {
+        component: "worker",
+        error_message: toError(error).message,
+      });
+      throw error;
+    }
+
+    const { processAlertQueueBatch, processAlertDLQBatch } =
+      await import("./lib/alerts/queue");
+    if (batch.queue === "deal-alerts-dlq") {
+      await processAlertDLQBatch(batch, env);
+      return;
+    }
+    await processAlertQueueBatch(batch, env);
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {

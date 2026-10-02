@@ -5,10 +5,8 @@ import {
   type AlertFrequency,
   type AlertSubscriptionRow,
 } from "../d1/alert-subscriptions";
-import {
-  sendAlertNotification,
-  type AlertNotificationResult,
-} from "./notifier";
+import { dispatchAlertNotification } from "./queue";
+import type { AlertNotificationResult } from "./notifier";
 import { createComplianceLogger } from "../eu-ai-act-logger";
 import { logger } from "../global-logger";
 
@@ -120,7 +118,15 @@ export async function matchAndNotifySubscriptions(
     }
 
     if (matchedDeals.length > 0) {
-      const notifyResult = await sendAlertNotification(env, sub, matchedDeals);
+      // Queue-first dispatch (ADR-032): enqueues when the ALERT_QUEUE binding
+      // exists so publish never awaits an outbound notification; falls back
+      // to the inline send when the binding is absent.
+      const notifyResult = await dispatchAlertNotification(
+        env,
+        sub,
+        matchedDeals,
+        frequency,
+      );
       results.push(notifyResult);
       if (notifyResult.success) {
         notificationsSent++;
@@ -143,7 +149,12 @@ export async function matchAndNotifySubscriptions(
             },
           },
           outputData: {
-            result: notifyResult.success ? "notified" : "failed",
+            result:
+              "queued" in notifyResult && notifyResult.queued
+                ? "queued"
+                : notifyResult.success
+                  ? "notified"
+                  : "failed",
             confidence: 1.0,
             explanation: `Matched ${matchedDeals.length} deals above threshold ${sub.threshold}`,
           },
