@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.29
-**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Next: prod D1 v13/v14 apply (d1-ops runbook, owner-approved ops), then RL-1 DO migration — T-2/T-3/T-4 and REDDIT-5 verified closed.
+**Version**: 0.19.30
+**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Queue EMPTY: RL-1 verified closed (v0.19.12 binding, 13/13 tests). Remaining: owner-blocked ops + deferred menu only.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
@@ -30,8 +30,26 @@ Open follow-ups: prod D1 v13/v14 apply (owner-approved ops per
 remote verify needs owner creds, not possible from this sandbox. Prod
 seeding decision, Vectorize dashboard check, CI-1 secret (ADR-023), and
 REDDIT-6 credentials remain owner-blocked. Next feature candidates:
-RL-1 DO migration (SPEC-rl1, ADR-028; gates on ADR-017 phase 2).
-T-2/T-3/T-4 and REDDIT-5 verified closed 2026-10-02 (see v0.19.29).
+T-2/T-3/T-4, REDDIT-5, and RL-1 all verified closed 2026-10-02
+(v0.19.29/v0.19.30); queue empty.
+
+---
+
+## 2026-10-02 RL-1 verified closed; queue empty — v0.19.30
+
+Branch `cline/e8n3d346`. Register correction, zero prod change.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| RL-1 as next candidate | CORRECTED — closed 2026-09-06 (v0.19.12): `ratelimits` bindings in `wrangler.jsonc` (4 scopes), RL_* optional in Env, binding-first + KV fallback in `rate-limit.ts`, selector module; 13/13 binding tests green 2026-10-02 | `worker/lib/rate-limit-binding.ts`, `tests/unit/rate-limit-binding.test.ts` |
+| Stale-candidate pattern | RULE — three dead next items (T-2/T-3/T-4, REDDIT-5, RL-1) were propagated from pre-reconciliation INDEX text. Any candidate MUST be re-verified against dated register sections before propagation (AGENTS.md incremental verification) | this entry |
+
+Queue status: EMPTY — no unblocked active work remains. Owner-blocked:
+prod D1 v13/v14 apply, CI-1 secret (ADR-023), REDDIT-6 credentials,
+prod seeding decision, Vectorize dashboard check. Deferred menu
+(operator decision required to schedule): F-8, F-10, F-12 remainder,
+N-3, R-6, P3-17, F-4 DO cutover remainder (SourceRegistry/DealRegistry,
+ADR-017 phase 2).
 
 ---
 
@@ -45,10 +63,9 @@ Branch `cline/e8n3d346`. Test addition + register correction, zero prod change.
 | T-2/T-3/T-4 as next candidate | CORRECTED — closed 2026-09-05 (v0.19.10): 7 suites, 95 tests; stale mention removed from header + INDEX | v0.19.10 section; tests/unit email, nlq classifier, change-detector, batch-processor suites |
 | REDDIT-5 as next candidate | CORRECTED — closed 2026-09-06 (16/16 reddit tests); INDEX reddit line updated; REDDIT-6 stays credential-blocked | GOAP REDDIT-5 entry |
 
-True open board: prod D1 v13/v14 ops apply (owner), RL-1 DO migration
-(SPEC-rl1, ADR-028; gates on ADR-017 phase 2), REDDIT-6 (owner creds),
-CI-1 (owner secret, ADR-023). Deferred: F-8, F-10, F-12 partial, N-3,
-P3-17.
+True open board: prod D1 v13/v14 ops apply (owner), REDDIT-6 (owner
+creds), CI-1 (owner secret, ADR-023). RL-1 verified closed (v0.19.30).
+Deferred: F-8, F-10, F-12 partial, N-3, P3-17.
 
 ---
 
