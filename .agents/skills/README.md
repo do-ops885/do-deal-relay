@@ -33,15 +33,13 @@ Validate symlinks are intact:
 
 ## Skills in This Repository
 
-| Skill | Description |
-|---|---|
-| [`agent-coordination/`](agent-coordination/) | Multi-agent orchestration patterns (hybrid, iterative, parallel, sequential, swarm) |
-| [`github-readme/`](github-readme/) | Create human-focused GitHub README.md files with 2026 best practices |
-| [`goap-agent/`](goap-agent/) | Goal-Oriented Action Planning agent execution strategies |
-| [`iterative-refinement/`](iterative-refinement/) | Iterative code improvement patterns with validation loops |
-| [`parallel-execution/`](parallel-execution/) | Parallel task execution patterns |
-| [`shell-script-quality/`](shell-script-quality/) | Shell script linting (ShellCheck) and testing (BATS) |
-| [`skill-creator/`](skill-creator/) | Create new skills with proper structure and best practices |
-| [`jules-usage/`](jules-usage/) | Use the Jules CLI for repo validation, long-running tasks, and GitHub feedback coordination |
-| [`task-decomposition/`](task-decomposition/) | Break complex tasks into manageable steps |
-| [`web-search-researcher/`](web-search-researcher/) | Research topics using web search with systematic methodology |
+There are 58 skills in this library (51 authored in-repo, 7 vendored from
+`cloudflare/skills` via `skills-lock.json`). The stale 10-row table previously
+here has been replaced by a pointer to the full distilled catalog:
+
+- **Full inventory, categories, redundancy clusters, and evals coverage**:
+  [`agents-docs/SKILLS-DISTILLED.md`](../../agents-docs/SKILLS-DISTILLED.md)
+- **Authoring standards** (frontmatter, rationalizations, red flags, 250-line
+  cap): [`agents-docs/SKILLS.md`](../../agents-docs/SKILLS.md)
+- **Per-skill usage**: load only as needed via `skill <name>` (progressive
+  disclosure per AGENTS.md §5)
