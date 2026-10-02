@@ -12,17 +12,17 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.28, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.29, single source of truth**.
   Full inventory (P0–P3, deferred, blocked). #764 deal alerts shipped
-  (#824/#853); register reconciled 2026-10-02; queue empty. Next: prod
-  D1 v13/v14 ops apply, then RL-1 DO migration, test gaps T-2/T-3/T-4,
-  REDDIT-5.
+  (#824/#853) plus alerts e2e; register reconciled 2026-10-02; queue
+  empty. Next: prod D1 v13/v14 ops apply, then RL-1 DO migration
+  (T-2/T-3/T-4 and REDDIT-5 closed).
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
   swarm runs.
 - [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
   Opt-in, fail-closed Reddit publication and moderation client.
-  REDDIT-1–4 complete, REDDIT-5 in progress, REDDIT-6 blocked on
+  REDDIT-1–5 complete, REDDIT-6 blocked on
   credentials. Decision: [ADR-020](ADR-020-reddit-post-lifecycle.md).
 
 ## Architecture Decision Records (kept in place)
