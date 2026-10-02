@@ -307,10 +307,21 @@ async function loadAndRender(dialog) {
   }
 }
 
+function setDialogTriggerExpanded(element, expanded) {
+  if (
+    element &&
+    typeof element.getAttribute === "function" &&
+    element.getAttribute("aria-haspopup") === "dialog"
+  ) {
+    element.setAttribute("aria-expanded", expanded ? "true" : "false");
+  }
+}
+
 export async function showDealDetail(dealId) {
   if (!dealId) return;
   closeActive();
   lastFocused = document.activeElement;
+  setDialogTriggerExpanded(lastFocused, true);
 
   const dialog = document.createElement("dialog");
   dialog.className = "modal deal-detail";
@@ -333,6 +344,7 @@ export async function showDealDetail(dealId) {
 
   dialog.addEventListener("click", (event) => handleDialogClick(dialog, event));
   dialog.addEventListener("close", () => {
+    setDialogTriggerExpanded(lastFocused, false);
     dialog.remove();
     if (activeDialog === dialog) activeDialog = null;
     if (lastFocused && typeof lastFocused.focus === "function") {
