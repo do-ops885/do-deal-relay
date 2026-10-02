@@ -2,8 +2,8 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.28
-**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02. Next: prod D1 v13/v14 apply (d1-ops runbook, owner-approved ops), then RL-1 DO migration, test gaps T-2/T-3/T-4, or REDDIT-5.
+**Version**: 0.19.29
+**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Next: prod D1 v13/v14 apply (d1-ops runbook, owner-approved ops), then RL-1 DO migration — T-2/T-3/T-4 and REDDIT-5 verified closed.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
@@ -30,9 +30,25 @@ Open follow-ups: prod D1 v13/v14 apply (owner-approved ops per
 remote verify needs owner creds, not possible from this sandbox. Prod
 seeding decision, Vectorize dashboard check, CI-1 secret (ADR-023), and
 REDDIT-6 credentials remain owner-blocked. Next feature candidates:
-RL-1 DO migration (SPEC-rl1, ADR-028; gates on ADR-017 phase 2), test
-gaps T-2/T-3/T-4 (SPEC-test-gaps-t2-t3-t4), REDDIT-5
-(SPEC-reddit-post-lifecycle).
+RL-1 DO migration (SPEC-rl1, ADR-028; gates on ADR-017 phase 2).
+T-2/T-3/T-4 and REDDIT-5 verified closed 2026-10-02 (see v0.19.29).
+
+---
+
+## 2026-10-02 Alerts e2e + next-candidate correction — v0.19.29
+
+Branch `cline/e8n3d346`. Test addition + register correction, zero prod change.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| #764 step-6 e2e remainder | CLOSED — `tests/e2e/alerts.spec.ts` (7 tests: unauthenticated 401, Zod 400, unknown-saved-query 404, full lifecycle, cross-user 404s, threshold-range 400, detail GET 405); local execution blocked by sandbox workerd (defunct on spawn), CI E2E is the execution gate | playwright --list 7/7, tsc + prettier clean |
+| T-2/T-3/T-4 as next candidate | CORRECTED — closed 2026-09-05 (v0.19.10): 7 suites, 95 tests; stale mention removed from header + INDEX | v0.19.10 section; tests/unit email, nlq classifier, change-detector, batch-processor suites |
+| REDDIT-5 as next candidate | CORRECTED — closed 2026-09-06 (16/16 reddit tests); INDEX reddit line updated; REDDIT-6 stays credential-blocked | GOAP REDDIT-5 entry |
+
+True open board: prod D1 v13/v14 ops apply (owner), RL-1 DO migration
+(SPEC-rl1, ADR-028; gates on ADR-017 phase 2), REDDIT-6 (owner creds),
+CI-1 (owner secret, ADR-023). Deferred: F-8, F-10, F-12 partial, N-3,
+P3-17.
 
 ---
 

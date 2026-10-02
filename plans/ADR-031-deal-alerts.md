@@ -123,5 +123,7 @@ Shipped in #824 (v13) and #853 (v14); issue #764 closed COMPLETED
 - v14 `add_alert_deliveries_aiact` (#853) also created `ai_act_logs`,
   closing the EU Act missing-table gap recorded in GOAP.
 
-Open from spec step 6: alerts e2e spec (`tests/e2e/alerts.spec.ts`)
-not yet added; queued for the T-2/T-3/T-4 test-gaps sprint.
+Closed from spec step 6: `tests/e2e/alerts.spec.ts` added 2026-10-02
+(7 tests covering 401/400/404 contracts, full lifecycle, cross-user
+isolation, and the 405 detail method contract); CI E2E is the
+execution gate (sandbox workerd cannot run locally).
