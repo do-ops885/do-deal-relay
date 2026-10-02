@@ -222,6 +222,66 @@ describe("showDealDetail Accessibility & Attributes", () => {
     expect(copyBtn?.getAttribute("aria-label")).not.toContain("&amp;");
   });
 
+  it("should toggle aria-expanded on the dialog trigger while the modal is open", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockResolvedValue({
+        id: "deal-7",
+        title: "Toggle Deal",
+        status: "active",
+      }),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const trigger = new MockElement("article");
+    trigger.setAttribute("role", "button");
+    trigger.setAttribute("aria-haspopup", "dialog");
+    trigger.setAttribute("aria-expanded", "false");
+    (
+      globalThis.document as unknown as { activeElement: unknown }
+    ).activeElement = trigger;
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("deal-7");
+
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    const dialog = createdDialogs[0];
+    dialog?.close();
+
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("should not touch aria-expanded on elements that are not dialog triggers", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockResolvedValue({
+        id: "deal-8",
+        title: "Plain Trigger",
+        status: "active",
+      }),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const plain = new MockElement("div");
+    (
+      globalThis.document as unknown as { activeElement: unknown }
+    ).activeElement = plain;
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("deal-8");
+
+    expect(plain.getAttribute("aria-expanded")).toBeNull();
+  });
+
   it("should fully escape quotes and ampersands in copy button markup without attribute breakout", async () => {
     const apiMock = {
       getDeal: vi.fn().mockResolvedValue({

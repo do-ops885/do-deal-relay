@@ -63,6 +63,8 @@ export function createDealCard(deal, { onSelect } = {}) {
   article.className = "deal-card";
   article.tabIndex = 0;
   article.setAttribute("role", "button");
+  article.setAttribute("aria-haspopup", "dialog");
+  article.setAttribute("aria-expanded", "false");
   article.dataset.dealId = String(deal.id || "");
   const ariaTitle = String(deal.title || "Untitled").trim();
   const ariaSource = String(deal.source || "unknown source").trim();
