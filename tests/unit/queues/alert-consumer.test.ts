@@ -56,6 +56,55 @@ describe("alert consumer", () => {
     await handleAlertQueueBatch(batch, env);
     expect(ack).toHaveBeenCalled();
   });
+
+  it("acks without resending when a prior attempt already succeeded", async () => {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const batch = {
+      messages: [
+        {
+          body: {
+            alertId: "alert-1",
+            subscriptionId: "sub-1",
+            dealIds: ["deal-1"],
+            channel: "webhook",
+            frequency: "instant",
+          },
+          ack,
+          retry,
+        },
+      ],
+      queue: "alert-queue",
+      retryAll: vi.fn(),
+    } as unknown as Parameters<typeof handleAlertQueueBatch>[0];
+
+    const db = {
+      prepare: () => ({
+        bind: () => ({
+          run: async () => ({ success: true, meta: { changes: 0 } }),
+          first: async () => ({ cnt: 1 }),
+          all: async () => ({ results: [], success: true }),
+        }),
+      }),
+      withSession: () => ({
+        prepare: () => ({
+          bind: () => ({
+            run: async () => ({ success: true, meta: { changes: 0 } }),
+            first: async () => ({ cnt: 1 }),
+            all: async () => ({ results: [], success: true }),
+          }),
+        }),
+        getBookmark: () => "bookmark-test",
+      }),
+    };
+    const env = { DEALS_DB: db } as unknown as Parameters<
+      typeof handleAlertQueueBatch
+    >[1];
+
+    await handleAlertQueueBatch(batch, env);
+    expect(ack).toHaveBeenCalled();
+    expect(retry).not.toHaveBeenCalled();
+  });
 });
 
 describe("alert producer", () => {
