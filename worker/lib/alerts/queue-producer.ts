@@ -3,6 +3,7 @@ import type { Deal } from "../../types/deal";
 import {
   getActiveSubscriptionsByFrequency,
   type AlertFrequency,
+  type AlertSubscriptionRow,
 } from "../d1/alert-subscriptions";
 import { scoreDealAgainstQuery, matchAndNotifySubscriptions } from "./matcher";
 import {
@@ -41,7 +42,7 @@ export async function enqueueAlertBatch(
   };
   if (!deals || deals.length === 0 || !env.DEALS_DB) return empty;
 
-  let subs;
+  let subs: AlertSubscriptionRow[];
   try {
     subs = await getActiveSubscriptionsByFrequency(env.DEALS_DB, frequency);
   } catch (err) {
