@@ -58,6 +58,29 @@ export async function recordDelivery(
   return (result.meta?.changes || 0) > 0;
 }
 
+/**
+ * True only when a delivery was already recorded as `sent`.
+ *
+ * Failed attempts are deliberately excluded: a redelivered message whose
+ * earlier attempt failed must be retried, not skipped. Skipping on any
+ * row would silently swallow every retried send and the DLQ would never
+ * be reached.
+ */
+export async function hasSentDelivery(
+  db: D1Database,
+  alertId: string,
+  subscriptionId: string,
+): Promise<boolean> {
+  const client = createD1ReadClient(db);
+  const res = await client.queryFirst<{ cnt: number }>(
+    `SELECT COUNT(*) as cnt FROM alert_deliveries
+     WHERE alert_id = ? AND subscription_id = ? AND status = 'sent'`,
+    [alertId, subscriptionId],
+  );
+  if (!res.success || !res.data) return false;
+  return res.data.cnt > 0;
+}
+
 export async function hasDelivered(
   db: D1Database,
   alertId: string,

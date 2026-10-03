@@ -1,9 +1,9 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-02
-**Version**: 0.19.31
-**Status**: Active — #764 deal alerts delivered (#824 CRUD/matcher/notifier, #853 v14 `alert_deliveries` + `ai_act_logs`); register reconciled 2026-10-02; alerts e2e added (7 tests). Queue EMPTY: RL-1 closed (v0.19.12), F-8/F-10 shipped (v0.19.5). Remaining: owner-blocked ops + small deferred menu (N-3, test as-any residue, F-4 DO cutover, gated R-6/P3-17).
+**Last Updated**: 2026-10-03
+**Version**: 0.19.32
+**Status**: Active — #764 step-2 Queues fan-out restored on `feat/alerts-step2-queues-digest` (`ALERT_QUEUE` producer + consumer + DLQ, senders, digest drain), superseding the v0.19.28 inline descope. Remaining: FTS5 matcher parity, prod D1 v13/v14 apply (owner), `wrangler queues create` in each env.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
@@ -84,6 +84,26 @@ True open board: prod D1 v13/v14 ops apply (owner), REDDIT-6 (owner
 creds), CI-1 (owner secret, ADR-023). RL-1 verified closed (v0.19.30).
 Deferred: F-8, F-10, F-12 partial, N-3, P3-17.
 
+---
+## 2026-10-02 Deal alerts step-2 Queues fan-out — v0.19.32
+
+Branch `feat/alerts-step2-queues-digest` (rebased on `main` 6fafd0f). Full Mode, SPEC-deal-alerts-764 steps 4-5. Supersedes the v0.19.28 descope note below: Queues fan-out is restored.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| Codacy trigger lint | FIXED — dropped redundant `alert_subscriptions_updated_at` trigger from v14 (app-layer `updated_at` in `alert-subscriptions.ts`); fixed `.codacy.yml` stray null entry so `migrations/**` exclusion parses | `.codacy.yml`, `migrations/0008`, `schema-part-8.ts`, Codacy 0 issues |
+| Alert op name | FIXED — `personalized_deal_alert_match` to spec `deal_alert_match` | `matcher.ts:134` |
+| Queues fan-out | NEW — `ALERT_QUEUE` producer + consumer + DLQ in wrangler (`max_batch 10`, `timeout 5s`, `retries 10`, `alert-queue-dlq`); `Env.ALERT_QUEUE`; `queue()` in `index.ts`; `alert-consumer.ts` idempotent via `alert_deliveries`; `budgets.ts` 500/10 caps with digest rollover; `queue-producer.ts` with inline fallback + KV-DLQ note | `wrangler.jsonc`, `worker/types/api.ts`, `worker/index.ts`, `worker/queues/`, `worker/lib/alerts/` |
+| Senders + digest | NEW — `Sender` interface (`telegram`, `discord`, `webhook`, `email` via `validatedFetch`); `notifier.ts` delegates; `scheduled.ts` digest via `enqueueAlertBatch` with `digest-YYYY-MM-DD` run key on `0 9 * * *` | `senders.ts`, `notifier.ts`, `scheduled.ts`, `senders.test.ts` |
+| Rebase | Rebased by cherry-pick onto `main` 6fafd0f; v14 migration commits already squashed in #853 (#853 + #854) were dropped as duplicates | `git log origin/main..HEAD` |
+| Roast fix: swallowed retries | FIXED (merge blocker) — consumer recorded `status: "sent"` BEFORE the send, so any failed attempt looked like a duplicate on redelivery and was acked undelivered; DLQ unreachable. Now records after the send and gates on `hasSentDelivery` (`status = 'sent'` only), so failed rows retry | `alert-consumer.ts`, `hasSentDelivery` in `alert-deliveries.ts` |
+| Roast fix: missing Article 12 log | FIXED (merge blocker) — queue path emitted no `deal_alert_match` event, so EU AI Act logging silently stopped once fan-out moved off the inline matcher. Consumer now logs per delivery with failure isolation | `alert-consumer.ts` `logAlertMatch` |
+| Roast fix: implicit any | FIXED — `let subs;` annotated `AlertSubscriptionRow[]` (Codacy ErrorProne high) | `queue-producer.ts:44` |
+| Tests | GREEN — 3030 unit, +4 covering `hasSentDelivery` status filter and consumer skip-on-sent path; tsc, lint, quality gate clean | `tests/unit/d1/alert-deliveries.test.ts`, `tests/unit/queues/alert-consumer.test.ts` |
+
+Open gaps: FTS5 matcher parity (current keyword/token, zero Vectorize — meets free-tier but diverges from SPEC FTS5 path); prod D1 still v12 (v13/v14 unapplied, needs owner-approved runbook); queue creation `wrangler queues create alert-queue` + `alert-queue-dlq` not yet run in any env.
+
+---
 ---
 
 ## 2026-09-17 Pre-existing sweep close-out — v0.19.27
@@ -717,6 +737,17 @@ activation (`REDDIT-6`) remains a separate human-controlled action.
 ### Status
 - All P2 file size violations (P2-1 through P2-6) now fully resolved
 - Zero files exceed 500-line limit
+
+---
+
+## PR Resolution Status — 2026-10-03
+
+| PR | Title | Triage | CI | Action |
+|----|-------|--------|-----|--------|
+| #865 | docs(api): document operational dashboard API endpoints | READY — docs-only; routes confirmed admin-gated at `worker/router/ops-routes.ts:54-68`, contract matches impl | ✅ 24 pass, 1 skip (`auto-merge`, non-required) | ✅ MERGED `6fafd0f` 2026-10-03T10:52:33Z, branch deleted |
+| #864 | [Jules Audit] Docs: update JSDoc annotations for config-utils | NO-IMPACT — single 1-line JSDoc edit in `worker/lib/config-utils.ts`; 6 audit files rewritten with net information loss (`AUDIT_SNAPSHOT` 18→4 lines); `DATE.txt` adds nothing to main; precedent #804/#806/#746/#710 | ✅ all pass (no signal, zero runtime diff) | CLOSED with roast comment, branch deleted |
+
+Result 2026-10-03: 1 merge, 1 close, PR queue empty, zero open issues. Step-2 alerts branch re-created as `feat/alerts-step2-queues-digest` by cherry-picking `9b0619e` + `5f02a92` + `0dd1584` onto `main` 6fafd0f; v14 migration commits (`b5afa89`, `2c43012`, `2b13838`, `fd67a6e`, `8ce5aa0`, `ee81fbf`) dropped as duplicates of squash #853/#854.
 
 ---
 

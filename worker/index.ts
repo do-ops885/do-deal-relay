@@ -12,6 +12,8 @@ import { SourceRegistry } from "./durable-objects/source-registry";
 import { DealRegistry } from "./durable-objects/deal-registry";
 import { DiscoveryShadowWorkflow } from "./workflows/discovery-shadow";
 import { PipelineWorkflow } from "./workflows/pipeline-workflow";
+import type { MessageBatch } from "@cloudflare/workers-types";
+import type { AlertQueueMessage } from "./queues/alert-consumer";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -81,6 +83,11 @@ export default {
     }
 
     return handleScheduled(event, env);
+  },
+
+  async queue(batch: MessageBatch<AlertQueueMessage>, env: Env): Promise<void> {
+    const { handleAlertQueueBatch } = await import("./queues/alert-consumer");
+    return handleAlertQueueBatch(batch, env);
   },
 
   async email(
