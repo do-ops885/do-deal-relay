@@ -736,6 +736,17 @@ activation (`REDDIT-6`) remains a separate human-controlled action.
 
 ---
 
+## PR Resolution Status — 2026-10-03
+
+| PR | Title | Triage | CI | Action |
+|----|-------|--------|-----|--------|
+| #865 | docs(api): document operational dashboard API endpoints | READY — docs-only; routes confirmed admin-gated at `worker/router/ops-routes.ts:54-68`, contract matches impl | ✅ 24 pass, 1 skip (`auto-merge`, non-required) | ✅ MERGED `6fafd0f` 2026-10-03T10:52:33Z, branch deleted |
+| #864 | [Jules Audit] Docs: update JSDoc annotations for config-utils | NO-IMPACT — single 1-line JSDoc edit in `worker/lib/config-utils.ts`; 6 audit files rewritten with net information loss (`AUDIT_SNAPSHOT` 18→4 lines); `DATE.txt` adds nothing to main; precedent #804/#806/#746/#710 | ✅ all pass (no signal, zero runtime diff) | CLOSED with roast comment, branch deleted |
+
+Result 2026-10-03: 1 merge, 1 close, PR queue empty, zero open issues. Step-2 alerts branch re-created as `feat/alerts-step2-queues-digest` by cherry-picking `9b0619e` + `5f02a92` + `0dd1584` onto `main` 6fafd0f; v14 migration commits (`b5afa89`, `2c43012`, `2b13838`, `fd67a6e`, `8ce5aa0`, `ee81fbf`) dropped as duplicates of squash #853/#854.
+
+---
+
 ## PR Resolution Status — 2026-07-13
 
 | PR | Title | Status | CI | Action |
