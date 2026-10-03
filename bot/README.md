@@ -24,6 +24,10 @@ Telegram and Discord bot implementations for managing referral codes through con
 | `/reactivate <code>` | Reactivate a code               | Moderator+  | Both      |
 | `/research <domain>` | Web research for codes          | Public      | Both      |
 | `/stats`             | View system statistics          | Public      | Both      |
+| `/alert [list|delete id]` | Manage deal alerts          | Public      | Both      |
+| `/worked <code>`     | Report that a code worked        | Public      | Both      |
+| `/failed <code>`     | Report that a code did not work  | Public      | Both      |
+| `/expired <code>`    | Report that a code expired       | Public      | Both      |
 
 ## URL Preservation (CRITICAL)
 

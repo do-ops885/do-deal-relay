@@ -137,10 +137,12 @@ Design sketch:
    user-reported data).
 5. Metrics: `feedback_ratio`, `median_time_to_feedback` in `/metrics`.
 
-Status: slice 1 (capture) shipped as ADR-033 — migration v15, upsert helper,
-`POST /api/deals/:code/feedback`, Article 12 logging, 15 tests. Slices
-2-4 (bot commands, trust/ranking wiring, metrics) registered in GOAP_STATE
-and ADR-033's deferred-slices section.
+Status: slices 1-2 shipped as ADR-033 — migration v15, upsert helper,
+`POST /api/deals/:code/feedback`, Article 12 logging, 15 tests; slice 2
+added bot commands `/worked` `/failed` `/expired` (Telegram + Discord,
+`source_channel: "bot"`, 7 tests). Slices 3-4 (trust/ranking wiring with
+scoring-design review, `/metrics` ratios) registered in GOAP_STATE and
+ADR-033's deferred-slices section.
 
 Value: turns the platform from a discovery tool into a quality-ranked one;
 directly improves the "deal freshness / no dead codes" success metric.

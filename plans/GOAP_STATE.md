@@ -2,10 +2,21 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-02
-**Version**: 0.19.34
-**Status**: Active — F-1 feedback capture shipped (ADR-033 slice 1: D1 v15 `deal_feedback` + `POST /api/deals/:code/feedback` + 15 tests); F-2 queues alert delivery shipped (ADR-032); Wave-1 hygiene shipped (500-line violations closed). Prior: #764 deal alerts, RL-1, F-8/F-10. Next: F-1 slices 2-4 (bot commands, trust/ranking, metrics). Deferred: N-3, test as-any residue, F-4 DO cutover, R-6/P3-17, cache-family dead exports. Owner-blocked: prod D1 v13/v14/v15 apply, queue provisioning, CI-1 secret, REDDIT-6 creds.
+**Version**: 0.19.35
+**Status**: Active — F-1 feedback slices 1-2 shipped (ADR-033: D1 v15 `deal_feedback` + `POST /api/deals/:code/feedback` + bot `/worked` `/failed` `/expired` commands, 22 tests); F-2 queues alert delivery shipped (ADR-032); Wave-1 hygiene shipped. Next: F-1 slices 3-4 (trust/ranking integration, metrics). Deferred: N-3, test as-any residue, F-4 DO cutover, R-6/P3-17, cache-family dead exports. Owner-blocked: prod D1 v13/v14/v15 apply, queue provisioning, CI-1 secret, REDDIT-6 creds.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-02 F-1 deal feedback slice 2 (bot commands) — v0.19.35
+
+Branch `cline/zrc5khrc`. Source: [ADR-033](ADR-033-deal-feedback.md) slice 2.
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| F-1 slice 2: bot feedback commands | CLOSED — `/worked`, `/failed`, `/expired` commands (`bot/commands/feedback.ts`, registered in the shared registry, auto-listed by `/help`), writing through `DealRelayAPI.reportDealFeedback` → `POST /api/deals/:code/feedback` with `source_channel: "bot"`; bot README command table updated (also added missing `/alert` row); 7 unit tests | `tests/unit/bot-feedback.test.ts`, tsc clean, full suite green |
+| Bot attribution limitation | DOCUMENTED — service API key is the authenticated principal, so bot reports record under the bot service user (same as alert subscriptions); per-chat-user attribution folded into slice 3 review | ADR-033 as-built note |
 
 ---
 

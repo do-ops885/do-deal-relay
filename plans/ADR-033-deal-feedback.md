@@ -1,6 +1,6 @@
 # ADR-033: Deal Success-Feedback Loop
 
-**Status**: Proposed → Implemented (slice 1: feedback capture, 2026-10-02)
+**Status**: Proposed → Implemented (slice 1: feedback capture, 2026-10-02; slice 2: bot commands, 2026-10-02)
 **Date**: 2026-10-02
 **Spec**: [SPEC-deal-feedback.md](SPEC-deal-feedback.md)
 
@@ -31,12 +31,19 @@ JWT auth, per-code lookups, the trust model, and the compliance logger.
 
 ## Deferred slices (explicitly out of scope here)
 
-- Slice 2: bot commands `/worked <code>` / `/failed <code>` writing through
-  the same helper with `source_channel: "bot"`.
+- Slice 2: **DONE 2026-10-02** — bot commands `/worked <code>`, `/failed <code>`,
+  `/expired <code>` (Telegram + Discord) write through the same helper with
+  `source_channel: "bot"` via `DealRelayAPI.reportDealFeedback`. As-built
+  attribution note: the bot's service API key is the authenticated principal,
+  so all bot reports record under the bot service user and re-reports by
+  different chat users for the same code revise that row (upsert). Per-chat-user
+  attribution needs the same principal-on-behalf-of design as the alert
+  subscriptions and is folded into the slice 3 review.
 - Slice 3: feeding per-code success ratio into trust evolution
   (`source-registry` DO / `lib/d1/trust.ts`) and ranking (`lib/ranking.ts`) —
   requires a scoring-design review before wiring, since it changes ranking
-  behavior (AI-assisted ranking already carries Article 12 obligations).
+  behavior (AI-assisted ranking already carries Article 12 obligations). Also
+  covers per-user feedback attribution for the bot channel.
 - Slice 4: `/metrics` feedback ratios (feedback_ratio, median time).
 
 ## Consequences
