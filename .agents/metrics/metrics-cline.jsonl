@@ -3,3 +3,4 @@
 {"timestamp": "2026-10-02T18:18:58Z", "agent": "cline", "task": "verify rl-1 closed, register queue empty correction", "status": "completed"}
 {"timestamp": "2026-10-02T18:29:33Z", "agent": "cline", "task": "verify f-8 f-10 shipped, re-scope f-12 residue", "status": "completed"}
 {"timestamp": "2026-10-02T18:48:23Z", "agent": "cline", "task": "f-12 as-any cleanup batch 1: mcp cluster (44 casts)", "status": "completed"}
+{"timestamp": "2026-10-03T18:16:33Z", "agent": "cline", "task": "f-12 as-any cleanup batch 2: nlq cluster (23 casts) + fixture rename", "status": "completed", "note": "PR 863 open, checks in flight at save time"}
