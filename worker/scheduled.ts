@@ -63,22 +63,28 @@ export async function handleScheduled(
         eventsProcessed: aggResult.eventsProcessed,
       });
 
-      // Daily digest personalized deal alerts
+      // Daily digest personalized deal alerts (SPEC-764 step 5).
+      // Enqueue via ALERT_QUEUE with run-date key: one message per digest
+      // subscription per day, drained here on 0 9 * * * cron. Falls back
+      // inline when binding missing.
       try {
         const { getProductionSnapshot } = await import("./lib/storage");
-        const { matchAndNotifySubscriptions } =
-          await import("./lib/alerts/matcher");
+        const { enqueueAlertBatch } =
+          await import("./lib/alerts/queue-producer");
         const snapshot = await getProductionSnapshot(env);
         if (snapshot && snapshot.deals.length > 0) {
-          const digestSummary = await matchAndNotifySubscriptions(
+          const runDate = new Date().toISOString().slice(0, 10);
+          const digestSummary = await enqueueAlertBatch(
             env,
             snapshot.deals,
             "daily-digest",
+            `digest-${runDate}`,
           );
           logger.info("Daily digest alert processing completed", {
             component: "scheduled",
-            subscriptionsProcessed: digestSummary.subscriptionsProcessed,
-            notificationsSent: digestSummary.notificationsSent,
+            enqueued: digestSummary.enqueued,
+            digestRollover: digestSummary.digestRollover,
+            dropped: digestSummary.dropped,
           });
         }
       } catch (error) {

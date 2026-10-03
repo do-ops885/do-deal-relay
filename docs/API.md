@@ -134,6 +134,135 @@ Liveness probe - returns 200 if service is running. Minimal check used by orches
 
 ---
 
+## Dashboard API
+
+Operational dashboard endpoints for monitoring deal inventory, 24-hour pipeline execution activity, and Cloudflare resource health. Requires Admin role.
+
+### GET /api/dashboard/stats
+
+Get consolidated dashboard statistics including deal status counts, recent 24-hour activity, system component health, and server timestamp. Requires Admin role.
+
+**Headers:**
+- `Authorization: Bearer <admin_access_token>` or `X-API-Key: <admin_key>`
+
+**Response (200 OK):**
+
+```json
+{
+  "stats": {
+    "total": 50,
+    "active": 42,
+    "quarantined": 5,
+    "rejected": 3
+  },
+  "recentActivity": {
+    "runs": 4,
+    "dealsFound": 18,
+    "errors": 0
+  },
+  "systemHealth": {
+    "status": "healthy",
+    "checks": {
+      "DEALS_PROD": true,
+      "DEALS_STAGING": true,
+      "DEALS_LOG": true,
+      "DEALS_LOCK": true,
+      "DEALS_SOURCES": true,
+      "d1_connection": true
+    }
+  },
+  "timestamp": "2026-04-04T12:00:00.000Z"
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 401: Unauthorized (missing or invalid token)
+- 403: Forbidden (Admin role required)
+- 500: Failed to get dashboard stats
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/stats" \
+  -H "Authorization: Bearer <admin_access_token>"
+```
+
+---
+
+### GET /api/dashboard/activity
+
+Get 24-hour pipeline execution activity metrics (pipeline runs, total deals discovered, and error count). Requires Admin role.
+
+**Headers:**
+- `Authorization: Bearer <admin_access_token>` or `X-API-Key: <admin_key>`
+
+**Response (200 OK):**
+
+```json
+{
+  "runs": 4,
+  "dealsFound": 18,
+  "errors": 0
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 401: Unauthorized (missing or invalid token)
+- 403: Forbidden (Admin role required)
+- 500: Failed to get recent activity
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/activity" \
+  -H "Authorization: Bearer <admin_access_token>"
+```
+
+---
+
+### GET /api/dashboard/health
+
+Get health status checks across Cloudflare KV bindings (`DEALS_PROD`, `DEALS_STAGING`, `DEALS_LOG`, `DEALS_LOCK`, `DEALS_SOURCES`) and the D1 database (`DEALS_DB`). Requires Admin role.
+
+**Headers:**
+- `Authorization: Bearer <admin_access_token>` or `X-API-Key: <admin_key>`
+
+**Response (200 OK):**
+
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "DEALS_PROD": true,
+    "DEALS_STAGING": true,
+    "DEALS_LOG": true,
+    "DEALS_LOCK": true,
+    "DEALS_SOURCES": true,
+    "d1_connection": true
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Success
+- 401: Unauthorized (missing or invalid token)
+- 403: Forbidden (Admin role required)
+- 500: Failed to get system health
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/dashboard/health" \
+  -H "Authorization: Bearer <admin_access_token>"
+```
+
+---
+
 ### GET /deals/similar
 
 Get deals similar to a specific deal code or domain.

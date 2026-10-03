@@ -30,6 +30,8 @@ servers:
 tags:
   - name: Health
     description: System health and readiness checks
+  - name: Dashboard
+    description: Operational dashboard and activity monitoring
   - name: Deals
     description: Public deal endpoints
   - name: Pipeline
@@ -380,6 +382,78 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnalyticsResponse"
+
+  # ============================================================================
+  # Dashboard Endpoints
+  # ============================================================================
+  /api/dashboard/stats:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard statistics
+      operationId: getDashboardStats
+      description: Consolidated stats including deal counts, recent 24h activity, system health, and timestamp
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Consolidated dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStatsResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin role required
+        "500":
+          description: Failed to get dashboard stats
+
+  /api/dashboard/activity:
+    get:
+      tags: [Dashboard]
+      summary: Get recent activity
+      operationId: getDashboardRecentActivity
+      description: 24-hour pipeline execution activity metrics
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Recent activity summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardActivityResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin role required
+        "500":
+          description: Failed to get recent activity
+
+  /api/dashboard/health:
+    get:
+      tags: [Dashboard]
+      summary: Get system health
+      operationId: getDashboardSystemHealth
+      description: System component health checks across KV bindings and D1 database
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: System component health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardHealthResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin role required
+        "500":
+          description: Failed to get system health
 
   # ============================================================================
   # Deal Submission
@@ -1448,6 +1522,52 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Deal"
+
+    # ==========================================================================
+    # Dashboard Schemas
+    # ==========================================================================
+    DashboardStatsResponse:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            quarantined:
+              type: integer
+            rejected:
+              type: integer
+        recentActivity:
+          $ref: "#/components/schemas/DashboardActivityResponse"
+        systemHealth:
+          $ref: "#/components/schemas/DashboardHealthResponse"
+        timestamp:
+          type: string
+          format: date-time
+
+    DashboardActivityResponse:
+      type: object
+      properties:
+        runs:
+          type: integer
+        dealsFound:
+          type: integer
+        errors:
+          type: integer
+
+    DashboardHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        checks:
+          type: object
+          additionalProperties:
+            type: boolean
 
     # ==========================================================================
     # Health Schemas

@@ -3,6 +3,7 @@ import type { D1Database } from "@cloudflare/workers-types";
 import {
   recordDelivery,
   hasDelivered,
+  hasSentDelivery,
 } from "../../../worker/lib/d1/alert-deliveries";
 
 interface RecordedQuery {
@@ -153,6 +154,31 @@ describe("d1/alert-deliveries", () => {
       const { db } = createScriptedDb({ failReads: true });
 
       await expect(hasDelivered(db, "alert-1", "sub-1")).resolves.toBe(false);
+    });
+  });
+
+  describe("hasSentDelivery", () => {
+    it("returns true for a sent delivery and filters on status", async () => {
+      const { db, queries } = createScriptedDb({ firstRows: [{ cnt: 1 }] });
+
+      await expect(hasSentDelivery(db, "alert-1", "sub-1")).resolves.toBe(true);
+      expect(queries[0]?.sql).toContain("status = 'sent'");
+    });
+
+    it("returns false when only a failed row exists so retries proceed", async () => {
+      const { db } = createScriptedDb({ firstRows: [{ cnt: 0 }] });
+
+      await expect(hasSentDelivery(db, "alert-1", "sub-1")).resolves.toBe(
+        false,
+      );
+    });
+
+    it("returns false when the count query fails", async () => {
+      const { db } = createScriptedDb({ failReads: true });
+
+      await expect(hasSentDelivery(db, "alert-1", "sub-1")).resolves.toBe(
+        false,
+      );
     });
   });
 });
