@@ -375,6 +375,49 @@ export class DealRelayAPI {
   }
 
   /**
+   * Report whether a deal worked (ADR-033 feedback loop).
+   * @param code Referral code the feedback applies to
+   * @param outcome User-reported outcome
+   * @param comment Optional free-text note (max 500 chars)
+   */
+  async reportDealFeedback(
+    code: string,
+    outcome: "success" | "expired" | "invalid",
+    comment?: string,
+  ): Promise<{
+    code: string;
+    outcome: string;
+    inserted: boolean;
+    feedback: {
+      total: number;
+      success: number;
+      expired: number;
+      invalid: number;
+      successRatio: number;
+    };
+  }> {
+    return this.request<{
+      code: string;
+      outcome: string;
+      inserted: boolean;
+      feedback: {
+        total: number;
+        success: number;
+        expired: number;
+        invalid: number;
+        successRatio: number;
+      };
+    }>(`/api/deals/${encodeURIComponent(code)}/feedback`, {
+      method: "POST",
+      body: JSON.stringify({
+        outcome,
+        source_channel: "bot",
+        ...(comment !== undefined ? { comment } : {}),
+      }),
+    });
+  }
+
+  /**
    * Execute web research for a domain/query
    */
   async research(request: WebResearchRequest): Promise<ResearchResponse> {
