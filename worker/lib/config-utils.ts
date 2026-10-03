@@ -62,7 +62,7 @@ export function parseBoundedIntegerConfig(
 /**
  * Get the trust threshold from environment or fallback to default
  * @param env Worker environment
- * @returns Trust threshold as a number
+ * @returns Trust threshold as a number clamped between MIN_TRUST_THRESHOLD_BOUND and MAX_TRUST_THRESHOLD_BOUND
  */
 export function getTrustThreshold(env: Env): number {
   if (!env.TRUST_THRESHOLD) {
