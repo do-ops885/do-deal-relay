@@ -44,6 +44,7 @@ green; zero open issues; zero open PRs; ci-status.json passing (stale
 | IMP-3 | Build-once-promote-everywhere (ADR-015 H-3) — version regen per deploy risks artifact drift | P3 | ⬜ REGISTERED | `scripts/generate-version.sh` |
 | IMP-4 | Alerts FTS5 matcher parity (carried ALERT-PARITY; token matcher adequate on free tier) | P3 | ⬜ OPEN | `worker/lib/alerts/matcher.ts` |
 | IMP-5 | Eval coverage beyond skills: NLQ intent, hybrid RRF quality, alerts matcher have no eval harness | P2 | ⬜ REGISTERED | `scripts/check-evals-freshness.sh` (skills-only) |
+| IMP-6 | LOC hygiene: `routes/auth.ts` 565 (over 500 max), `rate-limit.ts` 517, `url-validator.ts` 500; quality-gate warnings 2026-10-04 | P3 | ⬜ REGISTERED | `scripts/quality_gate.sh` LOC check |
 | N-3 | Logging consolidation re-measured: 110 `global-logger` importers (was ~107), 0 `lib/logger` barrel importers | P3 | STAYS DEFERRED (ADR-025) | grep counts 2026-10-04 |
 
 Ops-blocked set unchanged: prod D1 v13/v14 apply, `wrangler queues create

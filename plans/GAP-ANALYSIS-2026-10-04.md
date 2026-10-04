@@ -19,7 +19,7 @@ green, zero open issues, zero open PRs.
 | 2026-08-15 items re-audited | 17 (MI-1..6, MF-1..3, T-1..8) | All verified closed or WONTFIX |
 | New missing implementations | 2 | Flag enforcement gap; dead rollout flag |
 | Carried register items | 4 | N-3 logging, FTS5 parity, F-4 DO cutover, ops-blocked set |
-| Improvement candidates | 5 | Dashboard epic, OTEL, build-once, alert parity, eval coverage |
+| Improvement candidates | 6 | Dashboard epic, OTEL, build-once, alert parity, eval coverage, LOC hygiene |
 
 Source/test ratio improved: **344** worker source files vs **238** test files
 (was 303/198 on 2026-08-15). Remaining gaps are configuration-governance
@@ -135,6 +135,15 @@ only. No eval harness covers NLQ intent classification, hybrid-search RRF
 fusion quality, or the alerts matcher — the three AI-facing surfaces most
 prone to silent quality regressions.
 
+### IMP-6: Hot-file size hygiene (quality-gate LOC warnings)
+The 2026-10-04 quality-gate run flagged three files at/over the
+`MAX_LINES_PER_SOURCE_FILE=500` constant (hard fail at 600):
+`worker/routes/auth.ts` (565), `worker/lib/rate-limit.ts` (517),
+`worker/lib/validation/url-validator.ts` (500). `auth.ts` already exceeds
+the standard. Split along existing seams (e.g. auth route handlers vs
+token/session helpers) before the next feature addition forces a rushed
+refactor at the 600 hard limit.
+
 ---
 
 ## 5. Recommended Action Plan
@@ -148,6 +157,7 @@ prone to silent quality regressions.
 | P3 | N-3 importer migration wave (110 files) | L | ADR-025 completion |
 | P3 | IMP-4 alerts FTS5 parity | M | Alert recall |
 | P3 | IMP-3 build-once promote | M | Deploy drift removal |
+| P3 | IMP-6 split auth.ts (565) + rate-limit.ts (517) + url-validator.ts (500) | M | LOC gate compliance |
 | OWNER | OPS-1..OPS-4 | — | Prod launch readiness |
 
 ---

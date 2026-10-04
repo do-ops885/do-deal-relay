@@ -16,12 +16,12 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   Full inventory (P0–P3, deferred, blocked). Queue EMPTY. Remaining:
   prod D1 v13/v14 apply + `wrangler queues create` (owner ops), small
   deferred menu (N-3, F-4 DO cutover), and the 2026-10-04 gap-analysis
-  findings (NI-1/NI-2 flag governance, IMP-1..5 candidates).
+  findings (NI-1/NI-2 flag governance, IMP-1..6 candidates).
 - [Gap Analysis 2026-10-04](GAP-ANALYSIS-2026-10-04.md) — Fresh static
   audit. All 17 items from the 2026-08-15 audit re-verified closed; two
   new findings (route-level flag enforcement, dead `ai_extractor_scraper`
-  flag) plus five improvement candidates (dashboard epic, OTEL,
-  build-once promote, alerts FTS5 parity, AI eval coverage).
+  flag) plus six improvement candidates (dashboard epic, OTEL,
+  build-once promote, alerts FTS5 parity, AI eval coverage, LOC hygiene).
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
   swarm runs. **All items verified closed 2026-10-04** (see 2026-10-04
