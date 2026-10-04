@@ -1,11 +1,54 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-03
-**Version**: 0.19.32
-**Status**: Active — #764 step-2 Queues fan-out restored on `feat/alerts-step2-queues-digest` (`ALERT_QUEUE` producer + consumer + DLQ, senders, digest drain), superseding the v0.19.28 inline descope. Remaining: FTS5 matcher parity, prod D1 v13/v14 apply (owner), `wrangler queues create` in each env.
+**Last Updated**: 2026-10-04
+**Version**: 0.19.33
+**Status**: Active — 2026-10-04 gap audit complete ([GAP-ANALYSIS-2026-10-04](GAP-ANALYSIS-2026-10-04.md)): all 17 items from the 2026-08-15 audit re-verified closed; two new flag-governance findings (NI-1 route enforcement, NI-2 dead `ai_extractor_scraper` flag) queued P1; five improvement candidates registered. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-04 Fresh gap audit (missing impl / features / improvements) — v0.19.33
+
+Branch `cline/8czaqeq7`. Docs-only register + analysis, zero prod change.
+Full detail: [GAP-ANALYSIS-2026-10-04](GAP-ANALYSIS-2026-10-04.md).
+
+Baseline re-verified: `npx tsc --noEmit` clean; 224 unit files / 3030 tests
+green; zero open issues; zero open PRs; ci-status.json passing (stale
+2026-09-07). Source/test ratio 344 src vs 238 test files (was 303/198).
+
+### 2026-08-15 audit re-verification (17/17 closed or WONTFIX)
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| MI-1 MCP SSE route | CLOSED — `router/mcp-stream-routes.ts` registered; `/mcp/stream` live | `legacy-routes.ts:339` |
+| MI-2 scraper registry | CLOSED — orchestrator on `createDefaultScraperRegistry()` + `readySourceNames()`; `extractWithAI` wired | `orchestrator/index.ts:102,335` |
+| MI-3 AI Gateway | CLOSED — `runLLMWithGateway` in `nlq/ai/*`, gateway-gated embedding pipeline, `env.AI` fallback | `lib/ai-gateway/llm.ts` |
+| MI-5 legacy expiration | CLOSED — `expiration-manager.ts` deleted | `ls worker/lib` |
+| MI-6 `worker/db/schema.sql` | CLOSED — directory absent | `ls worker/db` |
+| MF-1 hybrid search | CLOSED — FTS5+vector RRF via `lib/search/hybrid` | `semantic-search.ts:169` |
+| MF-2 simulation default | CLOSED — real fetching 100%; simulation test-only | `orchestrator/index.ts:352` |
+| MF-3 MCP progress | CLOSED — progress bundle in `tools/call`; `check_progress` tool | `routes/mcp/tools.ts:70` |
+| T-1..T-8 | CLOSED — per-module tests present; suite green | `tests/unit/**` |
+| MI-4 DealRegistry DO | WONTFIX (by design, #750/ADR-022) | register |
+
+### New findings
+
+| ID | Item | Priority | Status | Evidence |
+|:---|:---|:---|:---|:---|
+| NI-1 | Five DEFAULT_FLAGS have zero readers; `bulk_import_export` + `email_processing` default `enabled:false` yet `/api/bulk/*` and `/api/email/*` are live | P1 | ⬜ OPEN | `feature-flags.ts:25-83`, `ops-routes.ts:31,43`, `legacy-routes.ts:392-410`; `isFeatureEnabled` readers = 3 files only |
+| NI-2 | `ai_extractor_scraper` flag dead config: declared off/0% rollout, never read; `extractWithAI` gates only on `env.AI` → LLM extraction always-on when AI bound | P1 | ⬜ OPEN | `feature-flags.ts:58`, `compliance-log.ts:155-163` |
+| IMP-1 | Web UI Dashboard epic (#298-#302): extend existing `public/` SPA incrementally vs separate React project | P3 | ⬜ REGISTERED | `public/js/*`, FOLLOWUP-p3-features |
+| IMP-2 | OTEL distributed tracing (P3-17) — Workers OTEL now GA | P2 | ⬜ REGISTERED | `docs/opentelemetry-setup.md` |
+| IMP-3 | Build-once-promote-everywhere (ADR-015 H-3) — version regen per deploy risks artifact drift | P3 | ⬜ REGISTERED | `scripts/generate-version.sh` |
+| IMP-4 | Alerts FTS5 matcher parity (carried ALERT-PARITY; token matcher adequate on free tier) | P3 | ⬜ OPEN | `worker/lib/alerts/matcher.ts` |
+| IMP-5 | Eval coverage beyond skills: NLQ intent, hybrid RRF quality, alerts matcher have no eval harness | P2 | ⬜ REGISTERED | `scripts/check-evals-freshness.sh` (skills-only) |
+| N-3 | Logging consolidation re-measured: 110 `global-logger` importers (was ~107), 0 `lib/logger` barrel importers | P3 | STAYS DEFERRED (ADR-025) | grep counts 2026-10-04 |
+
+Ops-blocked set unchanged: prod D1 v13/v14 apply, `wrangler queues create
+alert-queue` + DLQ in each env, prod seeding decision, REDDIT-6 + CI-1
+credentials, Vectorize dashboard check.
 
 ---
 
