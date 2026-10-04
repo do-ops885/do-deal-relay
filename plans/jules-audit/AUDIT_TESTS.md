@@ -1,11 +1,12 @@
-# Test Coverage Audit Findings (Track C)
+# Track C — Test Coverage — 2026-10-04
 
-**Timestamp**: 2026-09-30
+## Audit Summary
+Evaluated core configuration parsing and validation logic in `worker/lib/config-utils.ts`.
 
-## Audit Findings & Gaps Identified
-`parseBoundedIntegerConfig` in `worker/lib/config-utils.ts` handles integer validation, whitespace normalization, fallback defaults, and boundary checks. While standard integer formats are covered, edge cases around fractional string formats (e.g. `"25.0"` or `"12.00"` containing decimals) and scientific notation string parsing were not explicitly checked.
+## Uncovered / Edge Case Scenarios Identified
+1. **Bare Hyphen Rejection**: Verify `parseBoundedIntegerConfig` throws an integer parsing error when provided with a bare hyphen (`"-"`).
+2. **Numeric Separator Rejection**: Verify `parseBoundedIntegerConfig` rejects strings containing underscore numeric separators (e.g. `"1_000"`).
+3. **Negative Zero Parsing**: Verify `parseBoundedIntegerConfig` handles negative zero (`"-0"`) correctly within allowed integer bounds.
 
 ## Action Plan
-Add new unit test cases to `tests/unit/config-validation-enhanced.test.ts` to explicitly verify:
-1. Rejection of string numbers with explicit decimal representations (`"25.0"`).
-2. Correct handling of boundary values for valid integer parsing.
+Add new unit tests covering these 3 edge cases in `tests/unit/config-validation-enhanced.test.ts`.
