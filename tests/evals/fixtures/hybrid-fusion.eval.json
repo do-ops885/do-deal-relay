@@ -1,0 +1,47 @@
+{
+  "suite": "hybrid-fusion",
+  "version": 1,
+  "description": "Golden cases for fuseHybridResults RRF ordering (IMP-5).",
+  "thresholds": { "topNAccuracy": 1.0 },
+  "cases": [
+    {
+      "name": "fts-first-when-only-keyword",
+      "vectorHits": [],
+      "ftsRows": [
+        { "deal_id": "d1", "title": "Alpha", "domain": "a.example" },
+        { "deal_id": "d2", "title": "Beta", "domain": "b.example" }
+      ],
+      "expectTopIds": ["d1", "d2"]
+    },
+    {
+      "name": "vector-first-when-only-semantic",
+      "vectorHits": [
+        { "id": "v9", "score": 0.91 },
+        { "id": "v7", "score": 0.77 }
+      ],
+      "ftsRows": [],
+      "expectTopIds": ["v9", "v7"]
+    },
+    {
+      "name": "overlap-outranks-single-source",
+      "vectorHits": [
+        { "id": "shared", "score": 0.9 },
+        { "id": "vonly", "score": 0.8 }
+      ],
+      "ftsRows": [
+        { "deal_id": "shared", "title": "Shared", "domain": "s.example" },
+        { "deal_id": "konly", "title": "Konly", "domain": "k.example" }
+      ],
+      "expectTopIds": ["shared"]
+    },
+    {
+      "name": "rank-order-follows-rrf-not-raw-score",
+      "vectorHits": [{ "id": "v-low-raw", "score": 0.42 }],
+      "ftsRows": [
+        { "deal_id": "v-low-raw", "title": "Overlap", "domain": "o.example" },
+        { "deal_id": "k-second", "title": "Second", "domain": "t.example" }
+      ],
+      "expectTopIds": ["v-low-raw", "k-second"]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "suite": "nlq-intent",
+  "version": 1,
+  "description": "Golden cases for rule-based detectIntent (deterministic NLQ path).",
+  "thresholds": { "accuracy": 0.9 },
+  "cases": [
+    {
+      "name": "single-word-search",
+      "query": "revolut",
+      "expectIntent": "search"
+    },
+    {
+      "name": "find-search",
+      "query": "find trading212 deals",
+      "expectIntent": "search"
+    },
+    {
+      "name": "compare-versus",
+      "query": "compare revolut vs wise",
+      "expectIntent": "compare"
+    },
+    {
+      "name": "compare-alternatives",
+      "query": "alternatives to robinhood",
+      "expectIntent": "compare"
+    },
+    {
+      "name": "filter-only",
+      "query": "only cash rewards",
+      "expectIntent": "filter"
+    },
+    {
+      "name": "rank-best",
+      "query": "best referral deals",
+      "expectIntent": "rank"
+    },
+    {
+      "name": "rank-top",
+      "query": "top rated brokers",
+      "expectIntent": "rank"
+    },
+    {
+      "name": "discover-show",
+      "query": "show all current deals",
+      "expectIntent": "discover"
+    },
+    {
+      "name": "discover-browse",
+      "query": "browse available deals",
+      "expectIntent": "discover"
+    },
+    {
+      "name": "filter-without",
+      "query": "deals without expiry",
+      "expectIntent": "filter"
+    }
+  ]
+}
