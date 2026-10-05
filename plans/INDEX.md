@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-02. Active set is intentionally small; completed
+**Last Updated**: 2026-10-04. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,15 +12,20 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.31, single source of truth**.
-  Full inventory (P0–P3, deferred, blocked). #764 deal alerts shipped
-  (#824/#853) plus alerts e2e; register reconciled 2026-10-02. Queue
-  EMPTY: RL-1 (v0.19.12), F-8/F-10 (v0.19.5), T-2/T-3/T-4, REDDIT-5
-  all verified closed. Remaining: prod D1 v13/v14 ops apply (owner) +
-  small deferred menu (N-3, test as-any, F-4 DO cutover, gated items).
+- [GOAP State](GOAP_STATE.md) — **v0.19.33, single source of truth**.
+  Full inventory (P0–P3, deferred, blocked). Queue EMPTY. Remaining:
+  prod D1 v13/v14 apply + `wrangler queues create` (owner ops), small
+  deferred menu (N-3, F-4 DO cutover), and the 2026-10-04 gap-analysis
+  findings (NI-1/NI-2 flag governance, IMP-1..6 candidates).
+- [Gap Analysis 2026-10-04](GAP-ANALYSIS-2026-10-04.md) — Fresh static
+  audit. All 17 items from the 2026-08-15 audit re-verified closed; two
+  new findings (route-level flag enforcement, dead `ai_extractor_scraper`
+  flag) plus six improvement candidates (dashboard epic, OTEL,
+  build-once promote, alerts FTS5 parity, AI eval coverage, LOC hygiene).
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
-  swarm runs.
+  swarm runs. **All items verified closed 2026-10-04** (see 2026-10-04
+  audit, section 1).
 - [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
   Opt-in, fail-closed Reddit publication and moderation client.
   REDDIT-1–5 complete, REDDIT-6 blocked on
