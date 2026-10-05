@@ -158,6 +158,29 @@ export async function isFeatureEnabled(
 }
 
 /**
+ * Check if a feature flag is enabled, lazily seeding DEFAULT_FLAGS first.
+ *
+ * `initializeDefaultFlags` was historically never invoked, so flags did not
+ * exist in KV and every read fell through to `false` (ADR-032). Enforcement
+ * points call this variant so declared defaults actually materialize; the
+ * seeding path is idempotent and costs one KV get (`__ff_initialized__`)
+ * per check once seeded.
+ *
+ * @param flagName - Name of the feature flag
+ * @param env - Worker environment with KV bindings
+ * @param userId - Optional user ID for user-specific flags
+ * @returns Whether the feature is enabled for this request
+ */
+export async function isFeatureEnabledWithDefaults(
+  flagName: string,
+  env: Env,
+  userId?: string,
+): Promise<boolean> {
+  await initializeDefaultFlags(env);
+  return isFeatureEnabled(flagName, env, userId);
+}
+
+/**
  * Get a feature flag by name.
  *
  * Retrieves the full flag configuration from KV storage.
