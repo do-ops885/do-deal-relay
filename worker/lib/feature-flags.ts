@@ -24,28 +24,33 @@ const DEFAULT_FLAGS_INITIALIZED_KEY = "__ff_initialized__";
 const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
   {
     name: "bulk_import_export",
-    enabled: false,
-    description: "Enable bulk import/export endpoints",
+    enabled: true,
+    description:
+      "Kill switch for bulk import/export endpoints (enforced in ops-routes.ts per ADR-032)",
   },
   {
     name: "nlq_ai_enhancement",
     enabled: true,
-    description: "Enable AI-powered NLQ enhancement",
+    description:
+      "Kill switch for AI-powered NLQ enhancement (enforced in nlq/hybrid per ADR-032)",
   },
   {
     name: "email_processing",
-    enabled: false,
-    description: "Enable email API endpoints",
+    enabled: true,
+    description:
+      "Kill switch for email API endpoints (enforced in legacy-routes.ts per ADR-032)",
   },
   {
     name: "analytics_dashboard",
     enabled: true,
-    description: "Enable analytics endpoints",
+    description:
+      "Kill switch for analytics + dashboard endpoints (enforced in legacy-routes.ts/ops-routes.ts per ADR-032)",
   },
   {
     name: "webhook_system",
     enabled: true,
-    description: "Enable webhook endpoints",
+    description:
+      "Kill switch for webhook endpoints (enforced in legacy-routes.ts per ADR-032)",
   },
   {
     name: "real_research_fetching",
@@ -59,7 +64,7 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
     enabled: false,
     rolloutPercentage: 0,
     description:
-      "Workers AI-based referral code extractor (gradual rollout via setFeatureFlag)",
+      "Workers AI-based referral code extractor (fail-closed in research-agent extractWithAI per ADR-032; enable via PUT /api/admin/flags/ai_extractor_scraper)",
   },
   {
     name: "workflow_shadow_discovery",

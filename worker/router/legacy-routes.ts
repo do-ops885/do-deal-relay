@@ -1,5 +1,6 @@
 import type { Env } from "../types";
 import { checkBodySize } from "../middleware/body-limit";
+import { requireFeature } from "../middleware/feature-gate";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
 import {
@@ -129,6 +130,12 @@ export async function tryHandleLegacyRoutes(
     );
   }
   if (path === "/api/analytics" || path.startsWith("/api/analytics/")) {
+    const featureOff = await requireFeature(
+      "analytics_dashboard",
+      request,
+      env,
+    );
+    if (featureOff) return featureOff;
     return withAuth(request, env, "admin", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,
@@ -355,8 +362,17 @@ export async function tryHandleLegacyRoutes(
     });
   }
 
-  // Webhook routes
+  // Webhook routes (flag-gated only when the path targets the webhook
+  // surface; unmatched paths must keep falling through the ladder).
   const webhookPath = path.startsWith("/api") ? path.slice(4) : path;
+  if (webhookPath.startsWith("/webhooks")) {
+    const webhookFeatureOff = await requireFeature(
+      "webhook_system",
+      request,
+      env,
+    );
+    if (webhookFeatureOff) return webhookFeatureOff;
+  }
   const webhookResponse = await handleWebhookRoutes(request, env, webhookPath);
   if (webhookResponse) return webhookResponse;
 
@@ -390,12 +406,16 @@ export async function tryHandleLegacyRoutes(
 
   // Email API
   if (path === "/api/email/incoming" && request.method === "POST") {
+    const featureOff = await requireFeature("email_processing", request, env);
+    if (featureOff) return featureOff;
     const bodyTooLarge = checkBodySize(request, 100 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
     const rateLimiter = createRateLimitMiddleware(env, "/api/email/incoming");
     return rateLimiter(request, () => handleEmailIncoming(request, env));
   }
   if (path === "/api/email/parse" && request.method === "POST") {
+    const featureOff = await requireFeature("email_processing", request, env);
+    if (featureOff) return featureOff;
     const bodyTooLarge = checkBodySize(request, 10 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
     return withAuth(request, env, "user", (auth) => {
@@ -408,6 +428,8 @@ export async function tryHandleLegacyRoutes(
     });
   }
   if (path === "/api/email/help" && request.method === "GET") {
+    const featureOff = await requireFeature("email_processing", request, env);
+    if (featureOff) return featureOff;
     return withAuth(request, env, undefined, () => handleEmailHelp());
   }
 

@@ -7,6 +7,7 @@ import { logger } from "../../global-logger";
 import type { Env } from "../../../types";
 import type { EnhancedQuery, QueryFilters } from "../ai";
 import { AIQueryEnhancer } from "../ai";
+import { isFeatureEnabledWithDefaults } from "../../feature-flags";
 import { classifyWithRules } from "./rule-classifier";
 import {
   selectMethod,
@@ -46,6 +47,15 @@ export class HybridClassifier {
   }
 
   /**
+   * ADR-032: nlq_ai_enhancement kill switch. Fails closed to rule-based
+   * classification when the flag is off or KV is unavailable (the flag
+   * helpers swallow KV errors and report disabled).
+   */
+  private async isAiEnhancementEnabled(): Promise<boolean> {
+    return isFeatureEnabledWithDefaults("nlq_ai_enhancement", this.env);
+  }
+
+  /**
    * Classify a query using the optimal method (rule-based or AI)
    */
   async classify(query: string): Promise<ClassifierResult> {
@@ -61,6 +71,9 @@ export class HybridClassifier {
     } else {
       if (!this.aiEnhancer || !this.ai) {
         // Fallback to rules if AI unavailable
+        enhanced = classifyWithRules(query, startTime, this.env);
+      } else if (!(await this.isAiEnhancementEnabled())) {
+        // ADR-032: nlq_ai_enhancement kill switch — rule-based fallback.
         enhanced = classifyWithRules(query, startTime, this.env);
       } else {
         enhanced = await this.aiEnhancer.enhance(query);
@@ -108,11 +121,19 @@ export class HybridClassifier {
       classifyWithRules(q, Date.now(), this.env),
     );
 
-    // Process complex queries with AI
+    // Process complex queries with AI (ADR-032: nlq_ai_enhancement gate).
+    // Complex queries fall back to rules when the flag is off or AI is
+    // unavailable so they are never silently dropped from the results.
     const complexResults: EnhancedQuery[] = [];
-    if (this.aiEnhancer && complexQueries.length > 0) {
+    const aiEnabled =
+      this.aiEnhancer !== null && (await this.isAiEnhancementEnabled());
+    if (this.aiEnhancer && aiEnabled && complexQueries.length > 0) {
       for (const query of complexQueries) {
         complexResults.push(await this.aiEnhancer.enhance(query));
+      }
+    } else {
+      for (const query of complexQueries) {
+        complexResults.push(classifyWithRules(query, Date.now(), this.env));
       }
     }
 

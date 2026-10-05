@@ -1,5 +1,6 @@
 import type { Env } from "../types";
 import { checkBodySize } from "../middleware/body-limit";
+import { requireFeature } from "../middleware/feature-gate";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
 import { handleBulkImport } from "../routes/bulk/import";
@@ -29,6 +30,8 @@ export async function tryHandleOpsRoutes(
   path: string,
 ): Promise<Response | null> {
   if (path === "/api/bulk/import" && request.method === "POST") {
+    const featureOff = await requireFeature("bulk_import_export", request, env);
+    if (featureOff) return featureOff;
     const bodyTooLarge = checkBodySize(request, BULK_IMPORT_MAX_BODY_BYTES);
     if (bodyTooLarge) return bodyTooLarge;
     return withAuth(request, env, "user", (auth) => {
@@ -41,6 +44,8 @@ export async function tryHandleOpsRoutes(
     });
   }
   if (path === "/api/bulk/export" && request.method === "GET") {
+    const featureOff = await requireFeature("bulk_import_export", request, env);
+    if (featureOff) return featureOff;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,
@@ -52,16 +57,34 @@ export async function tryHandleOpsRoutes(
   }
 
   if (path === "/api/dashboard/stats" && request.method === "GET") {
+    const featureOff = await requireFeature(
+      "analytics_dashboard",
+      request,
+      env,
+    );
+    if (featureOff) return featureOff;
     return withAuth(request, env, "admin", () =>
       handleDashboardStats(env, request),
     );
   }
   if (path === "/api/dashboard/activity" && request.method === "GET") {
+    const featureOff = await requireFeature(
+      "analytics_dashboard",
+      request,
+      env,
+    );
+    if (featureOff) return featureOff;
     return withAuth(request, env, "admin", () =>
       handleDashboardRecentActivity(env, request),
     );
   }
   if (path === "/api/dashboard/health" && request.method === "GET") {
+    const featureOff = await requireFeature(
+      "analytics_dashboard",
+      request,
+      env,
+    );
+    if (featureOff) return featureOff;
     return withAuth(request, env, "admin", () =>
       handleDashboardSystemHealth(env, request),
     );
