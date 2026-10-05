@@ -32,6 +32,7 @@ vi.mock("../../../worker/lib/global-logger", () => ({
 
 function makeEnv(): Env {
   const store = new Map<string, unknown>();
+  const flagStore = new Map<string, string>();
   return {
     ENVIRONMENT: "test",
     TRUST_THRESHOLD: "0.2",
@@ -42,6 +43,23 @@ function makeEnv(): Env {
       }),
       delete: vi.fn(),
       list: vi.fn(),
+    },
+    // ADR-032: nlq_ai_enhancement gate reads flags from DEALS_LOCK; a
+    // Map-backed KV lets initializeDefaultFlags seed the default (enabled).
+    DEALS_LOCK: {
+      get: vi.fn(async <T>(key: string, type?: string): Promise<T | null> => {
+        const value = flagStore.get(key);
+        if (value === undefined) return null;
+        if (type === "json") return JSON.parse(value) as T;
+        return value as unknown as T;
+      }),
+      put: vi.fn(async (key: string, value: string) => {
+        flagStore.set(key, value);
+      }),
+      delete: vi.fn(async (key: string) => {
+        flagStore.delete(key);
+      }),
+      list: vi.fn(async () => ({ keys: [], list_complete: true })),
     },
   } as unknown as Env;
 }
@@ -207,5 +225,39 @@ describe("convenience functions", () => {
 
     const result = await classifier.classify(COMPLEX_QUERY);
     expect(result.method).toBe("rule");
+  });
+
+  it("ADR-032: falls back to rules when nlq_ai_enhancement is disabled", async () => {
+    const { setFeatureFlag } =
+      await import("../../../worker/lib/feature-flags");
+    const gateEnv = makeEnv();
+    await setFeatureFlag(
+      { name: "nlq_ai_enhancement", enabled: false },
+      gateEnv,
+    );
+    const ai = makeAiStub();
+    const classifier = new HybridClassifier(ai as unknown as Ai, gateEnv);
+
+    const result = await classifier.classify(COMPLEX_QUERY);
+
+    expect(ai.run).not.toHaveBeenCalled();
+    expect(result.query.intent.primary).toBeDefined();
+  });
+
+  it("ADR-032: batch keeps complex queries via rule fallback when disabled", async () => {
+    const { setFeatureFlag } =
+      await import("../../../worker/lib/feature-flags");
+    const batchEnv = makeEnv();
+    await setFeatureFlag(
+      { name: "nlq_ai_enhancement", enabled: false },
+      batchEnv,
+    );
+    const ai = makeAiStub();
+    const classifier = new HybridClassifier(ai as unknown as Ai, batchEnv);
+
+    const results = await classifier.classifyBatch(["wise", COMPLEX_QUERY]);
+
+    expect(results).toHaveLength(2);
+    expect(ai.run).not.toHaveBeenCalled();
   });
 });

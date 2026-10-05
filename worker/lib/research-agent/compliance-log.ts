@@ -22,6 +22,7 @@ import { toError } from "../sanitize-error";
 import { createComplianceLogger, hashInputData } from "../eu-ai-act-logger";
 import type { ScraperEnv } from "./scrapers";
 import { createAIExtractor } from "./scrapers/ai-extractor";
+import { isFeatureEnabledWithDefaults } from "../feature-flags";
 
 // ============================================================================
 // Operation names persisted to ai_act_logs.operation
@@ -158,6 +159,17 @@ export async function extractWithAI(
   query: string,
 ): Promise<ReferralResearchResult["discovered_codes"]> {
   if (!env.AI || !content.trim()) {
+    return [];
+  }
+  // ADR-032 / NI-2: the ai_extractor_scraper flag gates this path fail-closed.
+  // Historically the flag was declared off (0% rollout) but never read, so
+  // LLM extraction ran unconditionally whenever env.AI was bound — an
+  // unbudgeted cost and an Article 12 surface with no working off switch.
+  const extractorEnabled = await isFeatureEnabledWithDefaults(
+    "ai_extractor_scraper",
+    env,
+  );
+  if (!extractorEnabled) {
     return [];
   }
   try {

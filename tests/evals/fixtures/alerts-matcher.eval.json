@@ -1,0 +1,112 @@
+{
+  "suite": "alerts-matcher",
+  "version": 1,
+  "description": "Golden cases for scoreDealAgainstQuery (FTS5-parity semantics, IMP-4/IMP-5).",
+  "thresholds": { "passRate": 1.0 },
+  "cases": [
+    {
+      "name": "phrase-and-tokens-full-match",
+      "deal": {
+        "title": "AWS Cloud Credits $500",
+        "description": "Get $500 in cloud credits for startups",
+        "code": "AWS500",
+        "domain": "example.com",
+        "category": ["cloud", "hosting"],
+        "tags": ["aws", "credits"]
+      },
+      "query": "cloud credits",
+      "expect": { "minScore": 0.99 }
+    },
+    {
+      "name": "no-substring-false-positive-art",
+      "deal": {
+        "title": "Startup funding bonus",
+        "description": "For early startups",
+        "code": "START10",
+        "domain": "example.com",
+        "category": [],
+        "tags": []
+      },
+      "query": "art",
+      "expect": { "maxScore": 0.0 }
+    },
+    {
+      "name": "prefix-token-recall",
+      "deal": {
+        "title": "Trading212 free share",
+        "description": "Free fractional share for new users",
+        "code": "T212",
+        "domain": "trading212.com",
+        "category": ["investing"],
+        "tags": ["stocks"]
+      },
+      "query": "trad*",
+      "expect": { "minScore": 0.99 }
+    },
+    {
+      "name": "prefix-too-short-no-match",
+      "deal": {
+        "title": "Trading212 free share",
+        "description": "Free share",
+        "code": "T212",
+        "domain": "trading212.com",
+        "category": [],
+        "tags": []
+      },
+      "query": "t*",
+      "expect": { "maxScore": 0.0 }
+    },
+    {
+      "name": "multi-word-partial-ratio-half",
+      "deal": {
+        "title": "AWS Cloud Credits $500",
+        "description": "Get $500 in cloud credits for startups",
+        "code": "AWS500",
+        "domain": "example.com",
+        "category": ["cloud"],
+        "tags": ["aws"]
+      },
+      "query": "startups vpn",
+      "expect": { "minScore": 0.45, "maxScore": 0.55 }
+    },
+    {
+      "name": "code-token-exact",
+      "deal": {
+        "title": "AWS Cloud Credits",
+        "description": "Credits",
+        "code": "AWS500",
+        "domain": "example.com",
+        "category": [],
+        "tags": []
+      },
+      "query": "aws500",
+      "expect": { "minScore": 0.99 }
+    },
+    {
+      "name": "unrelated-zero",
+      "deal": {
+        "title": "AWS Cloud Credits",
+        "description": "Credits",
+        "code": "AWS500",
+        "domain": "example.com",
+        "category": [],
+        "tags": []
+      },
+      "query": "unrelated zzz qqq",
+      "expect": { "maxScore": 0.0 }
+    },
+    {
+      "name": "multiword-phrase-verbatim",
+      "deal": {
+        "title": "Free stock for new users",
+        "description": "Get a free stock when you sign up today",
+        "code": "FREE1",
+        "domain": "broker.example",
+        "category": ["investing"],
+        "tags": []
+      },
+      "query": "free stock",
+      "expect": { "minScore": 0.99 }
+    }
+  ]
+}

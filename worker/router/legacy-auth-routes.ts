@@ -16,6 +16,7 @@ import {
   handleListApiKeys,
   handleRevokeApiKey,
 } from "../routes/admin/keys";
+import { handleListFlags, handleUpdateFlag } from "../routes/admin/flags";
 
 /**
  * Health, auth, and admin identity routes extracted from legacy-routes.ts
@@ -111,6 +112,22 @@ export async function tryHandleAdminKeyRoutes(
     if (hash) {
       return withAuth(request, env, "admin", () =>
         handleRevokeApiKey(request, hash, env),
+      );
+    }
+  }
+
+  // Feature flag management (ADR-032): the control surface that makes the
+  // route/feature kill switches operator-manageable.
+  if (path === "/api/admin/flags" && request.method === "GET") {
+    return withAuth(request, env, "admin", () => handleListFlags(env, request));
+  }
+
+  const flagUpdateMatch = path.match(/^\/api\/admin\/flags\/([a-z0-9_]+)$/);
+  if (flagUpdateMatch && request.method === "PUT") {
+    const flagName = flagUpdateMatch[1];
+    if (flagName) {
+      return withAuth(request, env, "admin", () =>
+        handleUpdateFlag(request, env, flagName),
       );
     }
   }

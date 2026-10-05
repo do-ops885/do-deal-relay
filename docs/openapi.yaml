@@ -409,6 +409,92 @@ paths:
         "500":
           description: Failed to get dashboard stats
 
+  /api/admin/flags:
+    get:
+      tags: [Admin]
+      summary: List feature flags
+      operationId: listFeatureFlags
+      description: Lists all feature flags sorted by name. Defaults are seeded lazily on first call (ADR-032). Admin role required.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: All feature flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flags:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FeatureFlag"
+                  count:
+                    type: integer
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin role required
+
+  /api/admin/flags/{name}:
+    put:
+      tags: [Admin]
+      summary: Update a feature flag
+      operationId: updateFeatureFlag
+      description: Partially updates an existing feature flag. Unknown flag names return 404 FLAG_NOT_FOUND. Admin role required.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9_]{1,64}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                enabled:
+                  type: boolean
+                rolloutPercentage:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 1000
+                description:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Updated flag
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flag:
+                    $ref: "#/components/schemas/FeatureFlag"
+        "400":
+          description: Invalid flag name or request body
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin role required
+        "404":
+          description: Flag not found (FLAG_NOT_FOUND)
+
   /api/dashboard/activity:
     get:
       tags: [Dashboard]
@@ -1526,6 +1612,34 @@ components:
     # ==========================================================================
     # Dashboard Schemas
     # ==========================================================================
+    FeatureFlag:
+      type: object
+      required: [name, enabled, createdAt, updatedAt]
+      properties:
+        name:
+          type: string
+          description: Flag identifier (a-z0-9_)
+        enabled:
+          type: boolean
+        rolloutPercentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Optional percentage rollout (deterministic hash)
+        userIds:
+          type: array
+          items:
+            type: string
+          description: Optional allowlist of user IDs
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     DashboardStatsResponse:
       type: object
       properties:

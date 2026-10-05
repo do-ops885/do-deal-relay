@@ -304,7 +304,7 @@ describe("Feature Flags Rollouts", () => {
   // ==========================================================================
 
   describe("Default Flags", () => {
-    it("should initialize all 5 default flags", async () => {
+    it("should initialize all 9 default flags", async () => {
       await initializeDefaultFlags(mockEnv);
 
       const flags = [
@@ -313,6 +313,10 @@ describe("Feature Flags Rollouts", () => {
         "email_processing",
         "analytics_dashboard",
         "webhook_system",
+        "real_research_fetching",
+        "ai_extractor_scraper",
+        "workflow_shadow_discovery",
+        "workflow_pipeline_cutover",
       ];
 
       for (const name of flags) {
@@ -332,9 +336,11 @@ describe("Feature Flags Rollouts", () => {
       const analytics = await getFeatureFlag("analytics_dashboard", mockEnv);
       const webhook = await getFeatureFlag("webhook_system", mockEnv);
 
-      expect(bulk?.enabled).toBe(false);
+      // ADR-032: bulk/email defaults corrected to match long-standing live
+      // behavior (kill switches, not launch gates).
+      expect(bulk?.enabled).toBe(true);
       expect(nlq?.enabled).toBe(true);
-      expect(email?.enabled).toBe(false);
+      expect(email?.enabled).toBe(true);
       expect(analytics?.enabled).toBe(true);
       expect(webhook?.enabled).toBe(true);
     });
@@ -444,8 +450,9 @@ describe("Feature Flags Rollouts", () => {
       const nlqFlag = await getFeatureFlag("nlq_ai_enhancement", mockEnv);
       expect(nlqFlag?.enabled).toBe(true);
 
+      // ADR-032: email_processing default corrected to true (kill switch)
       const emailFlag = await getFeatureFlag("email_processing", mockEnv);
-      expect(emailFlag?.enabled).toBe(false);
+      expect(emailFlag?.enabled).toBe(true);
 
       const webhookFlag = await getFeatureFlag("webhook_system", mockEnv);
       expect(webhookFlag?.enabled).toBe(true);

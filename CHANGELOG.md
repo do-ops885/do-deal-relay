@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Feature Flag Governance (ADR-032)**: Route-level enforcement for all declared feature flags via `requireFeature` middleware (`503 FEATURE_DISABLED` when off) covering `/api/bulk/*`, `/api/email/*`, `/api/analytics*`, `/api/dashboard/*`, `/webhooks/*`, and the NLQ AI enhancement path. Admin management API (`GET /api/admin/flags`, `PUT /api/admin/flags/:name`) with zod validation and `404 FLAG_NOT_FOUND` on unknown names. Lazy default seeding via `isFeatureEnabledWithDefaults`.
+- **Eval harness (IMP-5)**: Golden-case regression suites for the alerts matcher, NLQ rule-based intent, and hybrid RRF fusion under `tests/evals/` with `npm run test:evals`.
+- **FTS5-parity matcher tests**: 13 golden cases covering exact-token, prefix (`token*`), phrase, and false-positive scenarios.
+
+### Changed
+- **Research-agent AI extraction now fail-closed (ADR-032)**: `extractWithAI` only runs when the `ai_extractor_scraper` flag is enabled (default: disabled). Previously it ran unconditionally whenever the Workers AI binding was present. Enable via `PUT /api/admin/flags/ai_extractor_scraper`.
+- **Alerts matcher token semantics (IMP-4)**: FTS5 unicode61-style exact/prefix token matching replaces query-side substring matching ("art" no longer matches "startups"); multi-word phrase bonus preserved for verbatim matches.
+- **File splits (IMP-6)**: `worker/routes/auth.ts` (565 to 198 lines, helpers/service extracted), `worker/lib/rate-limit.ts` (517 to 259, KV module extracted), `worker/lib/validation/url-validator.ts` (500 to 390, redirect detection extracted). All importers unchanged via barrel re-exports.
+- **Flag defaults corrected**: `bulk_import_export` and `email_processing` now default to enabled (matching long-standing live behavior); they function as operator kill switches.
+
+### Added
 - **Dashboard API documentation synchronization**: Documented operational dashboard endpoints (`GET /api/dashboard/stats`, `GET /api/dashboard/activity`, `GET /api/dashboard/health`) with request/response schemas, Admin role auth rules, and OpenAPI 3.0 path definitions in `docs/API.md` and `docs/openapi.yaml`.
 - **Personalized Deal Alerts (Saved-Search Subscriptions)**: Added `alert_subscriptions` D1 migration (`0007_alert_subscriptions.sql`), D1 CRUD access layer (`worker/lib/d1/alert-subscriptions.ts`), Alert Subscription API routes (`/api/nlq/alerts`), Alert Matcher and Fan-out notifier engine (`worker/lib/alerts/matcher.ts`, `worker/lib/alerts/notifier.ts`), publish-stage matching, daily-digest cron processing (`0 9 * * *`), bot commands (`/alert list`, `/alert delete`), and EU AI Act Article 12 compliance logging.
 - **NLQ API documentation synchronization**: Documented missing NLQ saved queries and suggestions endpoints (`POST /api/nlq/saved`, `GET /api/nlq/saved`, `DELETE /api/nlq/saved/:id`, `GET /api/nlq/suggestions`) with request/response schemas, parameter bounds, JWT auth rules, and curl examples in `docs/API.md`.

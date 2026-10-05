@@ -12,73 +12,17 @@ import type { Env } from "../types";
 import { logger } from "./global-logger";
 import { toErrMessage } from "./errors";
 import { listAllKvKeys } from "./kv-pagination";
+import {
+  FEATURE_FLAG_PREFIX,
+  DEFAULT_FLAGS_INITIALIZED_KEY,
+  DEFAULT_FLAGS,
+} from "./feature-flags-defaults";
+
+// Barrel re-export (IMP-6): defaults/constants split to feature-flags-defaults.ts.
+export { DEFAULT_FLAGS } from "./feature-flags-defaults";
 
 // ============================================================================
 // Configuration
-// ============================================================================
-
-const FEATURE_FLAG_PREFIX = "ff:";
-const DEFAULT_FLAGS_INITIALIZED_KEY = "__ff_initialized__";
-
-// Default feature flags to initialize
-const DEFAULT_FLAGS: Omit<FeatureFlag, "createdAt" | "updatedAt">[] = [
-  {
-    name: "bulk_import_export",
-    enabled: false,
-    description: "Enable bulk import/export endpoints",
-  },
-  {
-    name: "nlq_ai_enhancement",
-    enabled: true,
-    description: "Enable AI-powered NLQ enhancement",
-  },
-  {
-    name: "email_processing",
-    enabled: false,
-    description: "Enable email API endpoints",
-  },
-  {
-    name: "analytics_dashboard",
-    enabled: true,
-    description: "Enable analytics endpoints",
-  },
-  {
-    name: "webhook_system",
-    enabled: true,
-    description: "Enable webhook endpoints",
-  },
-  {
-    name: "real_research_fetching",
-    enabled: true,
-    rolloutPercentage: 100,
-    description:
-      "Enable real web scraping in the research agent (ProductHunt, GitHub, HN, Reddit, generic)",
-  },
-  {
-    name: "ai_extractor_scraper",
-    enabled: false,
-    rolloutPercentage: 0,
-    description:
-      "Workers AI-based referral code extractor (gradual rollout via setFeatureFlag)",
-  },
-  {
-    name: "workflow_shadow_discovery",
-    enabled: false,
-    rolloutPercentage: 0,
-    description:
-      "Shadow-mode discovery workflow run after the main pipeline (read-only, no state writes)",
-  },
-  {
-    name: "workflow_pipeline_cutover",
-    enabled: false,
-    rolloutPercentage: 0,
-    description:
-      "Route the 6h cron pipeline through the durable PipelineWorkflow instead of direct execution (ADR-018 wave 4)",
-  },
-];
-
-// ============================================================================
-// Types
 // ============================================================================
 
 export interface FeatureFlag {
@@ -155,6 +99,29 @@ export async function isFeatureEnabled(
   }
 
   return flag.enabled;
+}
+
+/**
+ * Check if a feature flag is enabled, lazily seeding DEFAULT_FLAGS first.
+ *
+ * `initializeDefaultFlags` was historically never invoked, so flags did not
+ * exist in KV and every read fell through to `false` (ADR-032). Enforcement
+ * points call this variant so declared defaults actually materialize; the
+ * seeding path is idempotent and costs one KV get (`__ff_initialized__`)
+ * per check once seeded.
+ *
+ * @param flagName - Name of the feature flag
+ * @param env - Worker environment with KV bindings
+ * @param userId - Optional user ID for user-specific flags
+ * @returns Whether the feature is enabled for this request
+ */
+export async function isFeatureEnabledWithDefaults(
+  flagName: string,
+  env: Env,
+  userId?: string,
+): Promise<boolean> {
+  await initializeDefaultFlags(env);
+  return isFeatureEnabled(flagName, env, userId);
 }
 
 /**

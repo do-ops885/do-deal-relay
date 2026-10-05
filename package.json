@@ -34,7 +34,8 @@
     "typecheck": "tsc --noEmit",
     "validate": "bash scripts/validate-codes.sh",
     "verify": "bash scripts/quality_gate.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:evals": "vitest run -c vitest.config.evals.ts"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
