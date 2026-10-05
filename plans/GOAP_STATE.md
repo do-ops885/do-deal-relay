@@ -1,11 +1,34 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-04
-**Version**: 0.19.33
-**Status**: Active — 2026-10-04 gap audit complete ([GAP-ANALYSIS-2026-10-04](GAP-ANALYSIS-2026-10-04.md)): all 17 items from the 2026-08-15 audit re-verified closed; two new flag-governance findings (NI-1 route enforcement, NI-2 dead `ai_extractor_scraper` flag) queued P1; five improvement candidates registered. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env.
+**Last Updated**: 2026-10-05
+**Version**: 0.19.34
+**Status**: Active — 2026-10-04 gap-audit findings IMPLEMENTED on `cline/8czaqeq7`: NI-1 + NI-2 flag governance (ADR-032: enforcement, admin API, fail-closed AI extraction), IMP-4 FTS5-parity matcher, IMP-5 eval harness, IMP-6 LOC splits. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope (platform traces already enabled in wrangler.jsonc).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-05 Gap-audit implementation batch (NI-1/NI-2/IMP-4/IMP-5/IMP-6) — v0.19.34
+
+Branch `cline/8czaqeq7`. Spec: [SPEC-flag-governance-and-hardening-2026-10-05](SPEC-flag-governance-and-hardening-2026-10-05.md). ADR: [ADR-032](ADR-032-feature-flag-governance.md).
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| NI-1 flag enforcement | CLOSED — `requireFeature` middleware gates `/api/bulk/*`, `/api/email/*`, `/api/analytics*` + `/api/dashboard/*`, `/webhooks/*` (503 `FEATURE_DISABLED`); `nlq_ai_enhancement` gates HybridClassifier AI path with rule fallback; lazy seeding via `isFeatureEnabledWithDefaults`; defaults corrected (bulk/email → enabled kill switches) | `worker/middleware/feature-gate.ts`, `ops-routes.ts`, `legacy-routes.ts`, `nlq/hybrid/index.ts`, tests/unit/feature-flags/{gate-middleware,admin-routes}.test.ts |
+| NI-1 admin API | CLOSED — `GET /api/admin/flags`, `PUT /api/admin/flags/:name` (admin role, zod strict body, 404 `FLAG_NOT_FOUND`); docs synced (API.md, openapi.yaml, FEATURE_FLAGS.md) | `worker/routes/admin/flags.ts`, `legacy-auth-routes.ts` |
+| NI-2 dead flag | CLOSED — `extractWithAI` fail-closed on `ai_extractor_scraper` (default off; enable via admin API); behavior change documented in ADR-032 + CHANGELOG | `compliance-log.ts`, tests/unit/research-agent-extract-ai.test.ts (4 tests) |
+| IMP-4 FTS5 parity | CLOSED — matcher uses unicode61-style exact/prefix (`token*`) tokens; query-side substring dropped ("art" no longer hits "startups"); phrase bonus gated to multi-word; 13 parity tests | `worker/lib/alerts/matcher.ts`, tests/unit/alerts/matcher-fts5-parity.test.ts |
+| IMP-5 eval harness | CLOSED — golden fixtures + runner for matcher (8 cases), NLQ intent (10), RRF fusion (4); `npm run test:evals` with ratchet thresholds | `tests/evals/*`, `vitest.config.evals.ts`, package.json |
+| IMP-6 LOC splits | CLOSED — auth.ts 565→198 (+auth-helpers 108, auth-service 305), rate-limit.ts 517→259 (+rate-limit-kv 293), url-validator.ts 500→390 (+url-redirects 125); zero importer changes (barrels) | `worker/routes/auth*.ts`, `worker/lib/rate-limit*.ts`, `worker/lib/validation/url-*.ts` |
+| IMP-2 OTEL | PARTIAL — platform traces already `enabled: true` in `wrangler.jsonc` observability; external OTEL-collector export stays owner scope (vendor/cost decision) | `wrangler.jsonc:16-18` |
+| IMP-3 build-once | REGISTERED, owner/CI scope — deploy-pipeline change needs owner sign-off | register |
+| IMP-1 dashboard | REGISTERED — separate-project decision stands (FOLLOWUP-p3-features) | register |
+
+Verification: `npx tsc --noEmit` clean; 228 unit files / 3060 tests green
+(+4 files / +30 tests vs v0.19.33 baseline 224/3030); `npm run test:evals`
+3/3 suites green (matcher 8/8, intent 10/10, fusion 4/4); prettier +
+markdownlint clean; openapi.yaml validated via js-yaml.
 
 ---
 

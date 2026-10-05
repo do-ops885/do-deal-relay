@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-04. Active set is intentionally small; completed
+**Last Updated**: 2026-10-05. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,16 +12,18 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.33, single source of truth**.
-  Full inventory (P0–P3, deferred, blocked). Queue EMPTY. Remaining:
-  prod D1 v13/v14 apply + `wrangler queues create` (owner ops), small
-  deferred menu (N-3, F-4 DO cutover), and the 2026-10-04 gap-analysis
-  findings (NI-1/NI-2 flag governance, IMP-1..6 candidates).
+- [GOAP State](GOAP_STATE.md) — **v0.19.34, single source of truth**.
+  Full inventory (P0–P3, deferred, blocked). 2026-10-04 gap-audit
+  findings IMPLEMENTED 2026-10-05 (NI-1/NI-2/IMP-4/IMP-5/IMP-6,
+  [ADR-032](ADR-032-feature-flag-governance.md)). Remaining: prod D1
+  v13/v14 apply + `wrangler queues create` (owner ops), deferred menu
+  (N-3, F-4 DO cutover), IMP-1/IMP-3 decisions, IMP-2 external OTEL export.
 - [Gap Analysis 2026-10-04](GAP-ANALYSIS-2026-10-04.md) — Fresh static
   audit. All 17 items from the 2026-08-15 audit re-verified closed; two
   new findings (route-level flag enforcement, dead `ai_extractor_scraper`
-  flag) plus six improvement candidates (dashboard epic, OTEL,
-  build-once promote, alerts FTS5 parity, AI eval coverage, LOC hygiene).
+  flag) plus six improvement candidates. **NI-1/NI-2/IMP-4/IMP-5/IMP-6
+  implemented 2026-10-05** ([SPEC](SPEC-flag-governance-and-hardening-2026-10-05.md),
+  [ADR-032](ADR-032-feature-flag-governance.md)).
 - [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
   missing implementations and test-coverage gaps behind the 2026-08
   swarm runs. **All items verified closed 2026-10-04** (see 2026-10-04
@@ -66,6 +68,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   zod ^4.6.5).
 - [ADR-031](ADR-031-deal-alerts.md) — Personalized deal alerts
   (Implemented 2026-10-02 with as-built note; #824/#853).
+- [ADR-032](ADR-032-feature-flag-governance.md) — Feature flag governance:
+  enforcement, corrected defaults, admin management API, fail-closed
+  `ai_extractor_scraper` (Implemented 2026-10-05).
 
 ## Completed Specs (kept as GOAP evidence)
 

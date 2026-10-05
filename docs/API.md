@@ -3558,3 +3558,70 @@ Revoke an API key by its hash.
 ```
 
 ---
+
+### GET /api/admin/flags
+
+List all feature flags (admin role, JWT bearer). Defaults are seeded lazily on first call (ADR-032).
+
+**Response:**
+
+```json
+{
+  "flags": [
+    {
+      "name": "bulk_import_export",
+      "enabled": true,
+      "description": "Kill switch for bulk import/export endpoints",
+      "createdAt": "2026-10-05T00:00:00.000Z",
+      "updatedAt": "2026-10-05T00:00:00.000Z"
+    }
+  ],
+  "count": 9
+}
+```
+
+### PUT /api/admin/flags/:name
+
+Update a feature flag (admin role, JWT bearer). Partial update: only the provided fields change. Unknown flag names return `404 FLAG_NOT_FOUND`.
+
+**Parameters:**
+
+- `name` (string): Flag name (`a-z0-9_`, max 64 chars)
+
+**Request Body:**
+
+```json
+{
+  "enabled": false,
+  "rolloutPercentage": 25,
+  "userIds": ["user-1"],
+  "description": "Optional note"
+}
+```
+
+All fields optional; at least one required. `rolloutPercentage` must be an integer 0–100.
+
+**Response:**
+
+```json
+{
+  "flag": {
+    "name": "email_processing",
+    "enabled": false,
+    "createdAt": "2026-10-05T00:00:00.000Z",
+    "updatedAt": "2026-10-05T01:00:00.000Z"
+  }
+}
+```
+
+**Errors:** `400` invalid name/body, `404 FLAG_NOT_FOUND` unknown flag.
+
+When a route flag is disabled, gated endpoints return `503` with:
+
+```json
+{ "error": "Feature disabled", "code": "FEATURE_DISABLED", "feature": "email_processing" }
+```
+
+See [FEATURE_FLAGS.md](FEATURE_FLAGS.md) for the full enforcement matrix.
+
+---

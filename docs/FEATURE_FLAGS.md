@@ -29,7 +29,7 @@ import {
 ### Check if Feature is Enabled
 
 ```typescript
-const enabled = await isFeatureFlag("new-dashboard", env);
+const enabled = await isFeatureEnabled("new-dashboard", env);
 if (enabled) {
   return renderNewDashboard();
 }
@@ -38,7 +38,7 @@ if (enabled) {
 **With user targeting:**
 
 ```typescript
-const enabled = await isFeatureFlag("beta-feature", env, "user-123");
+const enabled = await isFeatureEnabled("beta-feature", env, "user-123");
 ```
 
 ### Get Feature Flag Configuration
@@ -97,33 +97,71 @@ await initializeDefaultFlags(env);
 
 ## Default Flags
 
-The system initializes with these default flags:
+The system initializes with these default flags (ADR-032 — every flag names
+its enforcement point; flags are seeded lazily on first read):
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `bulk_import_export` | Disabled | Enable bulk import/export endpoints |
-| `nlq_ai_enhancement` | Enabled | Enable AI-powered NLQ enhancement |
-| `email_processing` | Disabled | Enable email API endpoints |
-| `analytics_dashboard` | Enabled | Enable analytics endpoints |
-| `webhook_system` | Enabled | Enable webhook endpoints |
+| Flag | Default | Enforcement Point |
+|------|---------|-------------------|
+| `bulk_import_export` | Enabled (kill switch) | `POST /api/bulk/import`, `GET /api/bulk/export` |
+| `email_processing` | Enabled (kill switch) | `/api/email/*` |
+| `analytics_dashboard` | Enabled (kill switch) | `/api/analytics*`, `/api/dashboard/*` |
+| `webhook_system` | Enabled (kill switch) | `/webhooks/*` |
+| `nlq_ai_enhancement` | Enabled (kill switch) | NLQ hybrid classifier AI path (rule fallback) |
+| `ai_extractor_scraper` | **Disabled (fail-closed)** | Research-agent `extractWithAI` — off unless enabled via admin API |
+| `real_research_fetching` | Enabled (100%) | Research-agent orchestrator real fetching |
+| `workflow_shadow_discovery` | Disabled | Shadow discovery workflow trigger |
+| `workflow_pipeline_cutover` | Disabled | Durable pipeline workflow trigger |
+
+> **Behavior change (ADR-032)**: `ai_extractor_scraper` is now enforced
+> fail-closed. Workers AI extraction in the research agent is OFF until an
+> admin enables the flag — previously it ran unconditionally whenever the AI
+> binding was present.
+
+## Enforcement (ADR-032)
+
+Route-level gates use the `requireFeature` middleware
+(`worker/middleware/feature-gate.ts`). A disabled flag returns
+`503 FEATURE_DISABLED` with a machine-readable body:
+
+```json
+{ "error": "Feature disabled", "code": "FEATURE_DISABLED", "feature": "bulk_import_export" }
+```
+
+503 (not 404) is used because the endpoints are publicly documented; the
+explicit code matches the existing `REMOTE_BINDING_REQUIRED` pattern.
+
+## Admin API
+
+Operators manage flags at runtime (admin role required, JWT bearer):
+
+```bash
+# List all flags (defaults are seeded lazily on first call)
+curl -H "Authorization: Bearer $ADMIN_JWT" https://your-worker.workers.dev/api/admin/flags
+
+# Flip a flag (partial update; unknown fields are rejected)
+curl -X PUT -H "Authorization: Bearer $ADMIN_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}' \
+  https://your-worker.workers.dev/api/admin/flags/email_processing
+```
+
+- `GET /api/admin/flags` — list every flag (sorted)
+- `PUT /api/admin/flags/:name` — update `enabled`, `rolloutPercentage`,
+  `userIds`, and/or `description`. Unknown flag names return
+  `404 FLAG_NOT_FOUND` so typos cannot create junk flags.
 
 ## Usage Patterns
 
 ### Middleware Pattern
 
-Protect routes with feature flags:
+Protect routes with the feature-gate middleware (ADR-032):
 
 ```typescript
-import { createFeatureFlagMiddleware } from "./lib/feature-flags";
+import { requireFeature } from "../middleware/feature-gate";
 
-// Create middleware for a specific flag
-const newFeatureMiddleware = createFeatureFlagMiddleware(
-  env,
-  "new-feature"
-);
-
-// Use with route handler
-app.use("/api/new", newFeatureMiddleware, handleNewFeature);
+// Inside a router branch — returns 503 FEATURE_DISABLED when off:
+const featureOff = await requireFeature("new-feature", request, env);
+if (featureOff) return featureOff;
 ```
 
 ### Conditional Feature Rendering
