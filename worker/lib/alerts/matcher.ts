@@ -18,18 +18,73 @@ export interface MatcherRunSummary {
   results: AlertNotificationResult[];
 }
 
+// ============================================================================
+// FTS5-parity token semantics (IMP-4, ADR-031 hardening)
+// ============================================================================
+
 /**
- * Score a single deal against a query string using hybrid keyword + token matching.
+ * Tokenize free text the way the D1 FTS5 unicode61 tokenizer would: split on
+ * non-alphanumeric boundaries, lowercase, drop empties. Kept in sync with the
+ * referrals_fts indexing path so the in-memory matcher and the FTS5 search
+ * path agree on what a "token" is.
+ */
+export function tokenizeDealText(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length > 0);
+}
+
+/**
+ * FTS5 MATCH parity for a single query token against deal tokens:
+ * - `token`  — exact-token match (no substring: "art" does not hit "startup")
+ * - `token*` — prefix match against any deal token (explicit FTS5 prefix)
+ *
+ * Query-side substring matching was deliberately dropped: it produced false
+ * positives (e.g. "car" matching "cardano") and diverged from the FTS5
+ * search path. Callers wanting stems write `car*`.
+ */
+function matchesQueryToken(
+  dealTokens: Set<string>,
+  queryToken: string,
+): boolean {
+  if (queryToken.endsWith("*")) {
+    const prefix = queryToken.slice(0, -1);
+    if (prefix.length < 2) return false;
+    for (const token of dealTokens) {
+      if (token.startsWith(prefix)) return true;
+    }
+    return false;
+  }
+  return dealTokens.has(queryToken);
+}
+
+/**
+ * Split a raw query into matchable tokens, preserving a trailing `*` prefix
+ * operator per whitespace-delimited word (the FTS5 prefix syntax).
+ */
+function tokenizeQuery(normalizedQuery: string): string[] {
+  return normalizedQuery
+    .split(/\s+/)
+    .map((word) => {
+      const hasPrefix = word.endsWith("*");
+      const core = word.replace(/[^\w]/g, "");
+      return hasPrefix && core.length > 0 ? `${core}*` : core;
+    })
+    .filter((t) => (t.endsWith("*") ? t.length > 2 : t.length > 1));
+}
+
+/**
+ * Score a single deal against a query string using FTS5-parity token
+ * matching (exact/prefix tokens) with phrase and domain/category boosts.
  * Returns a score between 0.0 and 1.0.
  */
 export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
   if (!queryStr || !queryStr.trim()) return 0;
 
   const normalizedQuery = queryStr.toLowerCase().trim();
-  const queryTokens = normalizedQuery
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter((t) => t.length > 1);
+  const queryTokens = tokenizeQuery(normalizedQuery);
 
   if (queryTokens.length === 0) return 0;
 
@@ -45,16 +100,22 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
     : "";
 
   const combinedDealText = `${dealTitle} ${dealDescription} ${dealCode} ${dealDomain} ${dealCategories} ${dealTags}`;
+  const dealTokens = new Set(tokenizeDealText(combinedDealText));
 
-  // Direct substring match bonus
-  if (combinedDealText.includes(normalizedQuery)) {
+  // Phrase match bonus (FTS5 "..." semantics): multi-word queries appearing
+  // verbatim. Single-token queries skip this on purpose — a lone token must
+  // win on token semantics ("art" must not phrase-match "startups").
+  if (
+    normalizedQuery.includes(" ") &&
+    combinedDealText.includes(normalizedQuery)
+  ) {
     return 1.0;
   }
 
-  // Token match ratio
+  // Token match ratio (FTS5 AND semantics map to ratio 1.0)
   let matchedTokens = 0;
   for (const token of queryTokens) {
-    if (combinedDealText.includes(token)) {
+    if (matchesQueryToken(dealTokens, token)) {
       matchedTokens++;
     }
   }
@@ -63,7 +124,9 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
 
   // Domain / Category direct hit boost
   const categoryOrDomainMatch = queryTokens.some(
-    (t) => dealDomain.includes(t) || dealCategories.includes(t),
+    (t) =>
+      dealDomain.includes(t.replace(/\*$/, "")) ||
+      dealCategories.includes(t.replace(/\*$/, "")),
   );
   if (categoryOrDomainMatch && tokenRatio > 0.3) {
     return Math.min(1.0, tokenRatio + 0.3);
