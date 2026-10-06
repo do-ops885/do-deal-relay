@@ -17,6 +17,10 @@ export { formatAlertMessage };
 /**
  * Send alert notification to destination based on channel.
  * Delegates to Sender implementations (SPEC-764 step 5).
+ * @param env Worker environment bindings
+ * @param subscription Alert subscription metadata
+ * @param deals Array of matching deals to notify about
+ * @returns Result status of the notification delivery
  */
 export async function sendAlertNotification(
   env: Env,

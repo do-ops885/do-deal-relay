@@ -27,6 +27,8 @@ export interface MatcherRunSummary {
  * non-alphanumeric boundaries, lowercase, drop empties. Kept in sync with the
  * referrals_fts indexing path so the in-memory matcher and the FTS5 search
  * path agree on what a "token" is.
+ * @param text The raw input string to tokenize
+ * @returns Array of lowercase alphanumeric tokens
  */
 export function tokenizeDealText(text: string): string[] {
   return text
@@ -78,7 +80,9 @@ function tokenizeQuery(normalizedQuery: string): string[] {
 /**
  * Score a single deal against a query string using FTS5-parity token
  * matching (exact/prefix tokens) with phrase and domain/category boosts.
- * Returns a score between 0.0 and 1.0.
+ * @param deal The deal object to score
+ * @param queryStr The search query string
+ * @returns Match score between 0.0 and 1.0
  */
 export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
   if (!queryStr || !queryStr.trim()) return 0;
@@ -138,6 +142,10 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
 /**
  * Match a batch of new deals against all active alert subscriptions of a given frequency
  * and send notifications for matches exceeding each subscription's threshold.
+ * @param env Worker environment bindings
+ * @param deals Array of newly published deals to evaluate
+ * @param frequency Subscription run frequency filter (default: "instant")
+ * @returns Summary of processed subscriptions and notification results
  */
 export async function matchAndNotifySubscriptions(
   env: Env,
