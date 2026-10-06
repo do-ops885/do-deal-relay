@@ -38,7 +38,7 @@ describe("schema-validation gate", () => {
   });
 
   it("should fail an invalid deal", () => {
-    const invalidDeal = { ...validDeal, title: "" } as any;
+    const invalidDeal = { ...validDeal, title: "" };
     const result = validateSchema(invalidDeal);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("Schema validation failed");

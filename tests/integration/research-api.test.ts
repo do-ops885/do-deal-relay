@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Research API Integration", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
@@ -58,7 +59,7 @@ describe("Research API Integration", () => {
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
       JWT_SECRET: "test-jwt-secret-32-chars-minimum-xyz",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       NOTIFICATION_THRESHOLD: "100",
     } as unknown as Env;
 

@@ -13,6 +13,7 @@ import {
   clearStaging,
 } from "../../worker/lib/storage";
 import type { Deal, Snapshot, SourceConfig, Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -149,7 +150,7 @@ describe("Storage Layer - Snapshots & Sources", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

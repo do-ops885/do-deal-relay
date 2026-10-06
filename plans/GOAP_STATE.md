@@ -1,11 +1,28 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-05
-**Version**: 0.19.34
-**Status**: Active — 2026-10-04 gap-audit findings IMPLEMENTED on `cline/8czaqeq7`: NI-1 + NI-2 flag governance (ADR-032: enforcement, admin API, fail-closed AI extraction), IMP-4 FTS5-parity matcher, IMP-5 eval harness, IMP-6 LOC splits. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope (platform traces already enabled in wrangler.jsonc).
+**Last Updated**: 2026-10-06
+**Version**: 0.19.35
+**Status**: Active — F-12 test `as any` residue CLOSED 2026-10-06 (0 in tests/, 0 in worker/; 5-agent swarm, zero prod change). Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope. Deferred menu: N-3 logging migration (115 importers), F-4 DO cutover remainder, IMP-1 dashboard decision.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-06 F-12 test as-any residue cleanup — v0.19.35
+
+Branch `test/f12-asany-residue-cleanup`. Spec: [SPEC-f12-asany-residue](SPEC-f12-asany-residue.md). No ADR (zero prod change; test-only, same precedent as T-2/T-3/T-4).
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| F-12 test residue | CLOSED — 0 `as any` in tests/ (was 191 in 82 files), 0 in worker/; 5-agent swarm with disjoint clusters (e2e/browser/smoke/integration, webhook, nlq/gates, security/auth/middleware/circuit-breaker, misc); patterns: `as unknown as` + `tests/fixtures/typed-assert.ts` + `vi.mocked`; fixture doc comment reworded so the literal no longer greps | `grep -r "as any" tests/ worker/` = 0/0 |
+| Alert failure suite | NEW — `tests/unit/queues/alert-consumer-failures.test.ts` (5 tests: send-false retry, sender-throw retry, empty-resolve skipped+ack, unknown-sub ack, ids-only enqueue shape) | 229 unit files / 3065 tests green |
+| Queue ops docs | NEW — Alert fan-out ops section (queue names, caps, digest run key, DLQ fallback, D1 v13/v14 prerequisite) | `docs/API.md` |
+| PR #873 triage | CLOSED no-impact — JSDoc-only (`matcher.ts`, `notifier.ts` param/returns tags + audit markdown rewrite); zero runtime diff per #804/#806/#746/#710 precedent | close comment on PR |
+
+Verification: `npx tsc --noEmit` clean; `npm run test:unit` 229 files / 3065 green (+1 file / +5 tests vs v0.19.34 baseline 228/3060); prettier clean; `./scripts/quality_gate.sh` exit 0. Playwright specs (e2e/browser) converted by inspection; CI E2E is the execution gate. One pre-existing sandbox-only failure noted: `security-gatekeeper.test.ts` fails to collect under plain vitest (`cloudflare:workers` import) identically on unmodified HEAD.
+
+Open follow-ups: prod D1 v13/v14 apply (owner-approved ops per `.agents/skills/d1-ops` runbook), `wrangler queues create alert-queue` + DLQ in each env, prod seeding decision, REDDIT-6 + CI-1 credentials, Vectorize dashboard check. Deferred: N-3 (115 `global-logger` importers), F-4 DO cutover remainder, IMP-1/IMP-2/IMP-3 decisions.
 
 ---
 
@@ -110,11 +127,12 @@ Branch `cline/e8n3d346`. Register correction, zero prod change.
 |:---|:---|:---|
 | F-8 publish re-parses | CLOSED — shipped v0.19.5 (PEV-snapshot-optimize): `putStagingSnapshot`/`promoteStagingToProduction` wired into `stage.ts`/`publish.ts`; zero snapshot parses in `publish.ts` | `worker/lib/storage.ts:59,107`, grep publish.ts = 0 |
 | F-10 discovery circuit breaker | CLOSED — shipped v0.19.5 (PEV-discovery-circuit-breaker): `getSourceCircuitBreaker` wired in `discover.ts` (skip-on-open, record per batch); cron handlers are separate triggers, in-tick sequencing by design | `worker/pipeline/discover.ts:14,208-213`, `worker/lib/circuit-breaker.ts` |
-| F-12 D1 boilerplate | CLOSED — all `routes/d1/*` import `getD1Logger`/`requireD1Db` from `./helpers`; residue re-scoped to test `as any` only: 263 of 330 left in tests/ (MCP + NLQ clusters cleaned), 0 in worker prod code; `simulateDiscovery` export is intentional (MF-2 test flag) | `worker/routes/d1/helpers.ts`, grep counts 2026-10-02 |
+| F-12 D1 boilerplate | CLOSED — all `routes/d1/*` import `getD1Logger`/`requireD1Db` from `./helpers`; test `as any` residue CLOSED 2026-10-06 (v0.19.35: 0 in tests/, 0 in worker/); `simulateDiscovery` export is intentional (MF-2 test flag) | `worker/routes/d1/helpers.ts`, SPEC-f12-asany-residue |
 
-Deferred menu after verification: N-3 (logging migration, ~107
-importers), test `as any` residue (330 casts, P3), F-4 DO cutover
-remainder (SourceRegistry/DealRegistry, ADR-017 phase 2 — reverted
+Deferred menu after verification: N-3 (logging migration, 115
+importers re-measured 2026-10-06), F-4 DO cutover
+remainder (SourceRegistry/DealRegistry,
+ADR-017 phase 2 — reverted
 once, needs care), R-6 + P3-17 (product/cost gated).
 
 ---
@@ -664,7 +682,7 @@ scope = P0 + quick wins this run.
 | F-9 | 10 bare silent catches in dashboard.ts + getSourceRegistry swallow outages from ops surfaces | P2 | ✅ CLOSED - all 10 sites log warn with error detail | dashboard.ts + storage.ts:138 |
 | F-10 | No circuit breaker on discovery fetches; sequential cron handlers stack heavy work with no resumption | P2 | ✅ CLOSED 2026-10-02 — breaker shipped v0.19.5 (skip-on-open in discover.ts); cron handlers are separate triggers, in-tick sequencing by design | discover.ts:14,208-213, circuit-breaker.ts |
 | F-11 | tsconfig missing noUnusedLocals/noUnusedParameters - banned patterns unenforceable, dead code accumulates (~98 further dead exports sampled: nlq rule-classifier path, MCP type surface, error-handler, logger export/query) | P1 | ✅ CLOSED 2026-10-02 — noUnusedLocals/noUnusedParameters enabled (416-error sweep completed); exactOptionalPropertyTypes remainder closed via #768 (2026-09-13) | tsconfig.json:12-15 |
-| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | 🟡 PARTIAL — ai binding + popup split + D1 boilerplate CLOSED (R-3/R-4, routes/d1/helpers.ts); residue: test `as any` cleanup IN PROGRESS — 263 left of 330 (MCP + NLQ clusters done via `tests/fixtures/typed-assert.ts`, 2026-10-02); simulateDiscovery export intentional (MF-2 flag) | grep counts 2026-10-02 |
+| F-12 | D1 route boilerplate duplicated across routes/d1/** (~250 lines: getD1Logger x4, DEALS_DB guard x11, inline toError x10); MI-2 residue (simulateDiscovery still exported side-by-side); extension/popup.js 512L; 322 as any in tests | P3 | ✅ CLOSED — ai binding + popup split + D1 boilerplate done earlier (R-3/R-4, routes/d1/helpers.ts); test `as any` residue CLOSED 2026-10-06 (v0.19.35: 0 in tests/, 0 in worker/); simulateDiscovery export intentional (MF-2 flag) | SPEC-f12-asany-residue, grep counts 2026-10-06 |
 
 ### Session outcomes already banked (pre-register)
 

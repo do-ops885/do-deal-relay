@@ -17,7 +17,7 @@ test.describe("Extension Popup UI Tests", () => {
     // Inject mock chrome API inline (Playwright serialization strips functions
     // when passed as an argument, so the mock must be defined inside the callback)
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             {
@@ -42,7 +42,7 @@ test.describe("Extension Popup UI Tests", () => {
           },
         },
         runtime: {
-          sendMessage: async (req: any) => {
+          sendMessage: async (req: { action?: string; data?: unknown }) => {
             // Route API submissions through fetch so Playwright's page.route
             // can intercept them for API integration tests
             if (req?.action === "submitToAPI") {
@@ -183,7 +183,8 @@ test.describe("Extension Content Script Tests", () => {
         },
       ];
 
-      (window as any).__testDetections = detections;
+      (window as unknown as { __testDetections: unknown }).__testDetections =
+        detections;
     });
 
     // Create a test page with referral URL (after addInitScript)
@@ -191,10 +192,13 @@ test.describe("Extension Content Script Tests", () => {
 
     // Verify detection worked
     const detections = (await page.evaluate(
-      () => (window as any).__testDetections,
-    )) as any[];
+      () =>
+        (window as unknown as { __testDetections: unknown }).__testDetections,
+    )) as unknown as Array<{ value: string }>;
     expect(detections).toHaveLength(1);
-    expect(detections[0].value).toBe("CODE123");
+    const first = detections[0];
+    if (!first) throw new Error("expected detection");
+    expect(first.value).toBe("CODE123");
   });
 
   test("content script detects referral codes in page content", async ({
@@ -269,7 +273,7 @@ test.describe("Extension API Integration Tests", () => {
   test("extension sends complete URLs to API", async ({ page }) => {
     // Inject chrome mock inline before loading popup
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             {
@@ -328,7 +332,7 @@ test.describe("Extension API Integration Tests", () => {
     // Use absolute URL because relative fetch() from file:// resolves to
     // file:///api/submit which bypasses Playwright's page.route interception.
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             {
@@ -352,7 +356,7 @@ test.describe("Extension API Integration Tests", () => {
           },
         },
         runtime: {
-          sendMessage: async (req: any) => {
+          sendMessage: async (req: { action?: string; data?: unknown }) => {
             if (req?.action === "submitToAPI") {
               const res = await fetch("http://localhost/api/submit", {
                 method: "POST",
@@ -382,7 +386,7 @@ test.describe("Extension API Integration Tests", () => {
   test("extension validates input before submission", async ({ page }) => {
     // Inject chrome mock inline
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },
@@ -422,7 +426,7 @@ test.describe("Extension API Integration Tests", () => {
   test("manual entry input cleans text in real-time", async ({ page }) => {
     // Inject chrome mock inline
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },
@@ -466,7 +470,7 @@ test.describe("Extension API Integration Tests", () => {
   }) => {
     // Inject chrome mock inline
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             { id: 1, title: "Test", url: "https://example.com" },

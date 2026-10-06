@@ -6,7 +6,7 @@ import {
   getTrustThreshold,
 } from "../../worker/lib/config-utils";
 import type { Env } from "../../worker/types";
-import type { KVNamespace } from "@cloudflare/workers-types";
+import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 
 describe("Enhanced Config Validation", () => {
   const mockKV = {} as KVNamespace;
@@ -20,7 +20,7 @@ describe("Enhanced Config Validation", () => {
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     JWT_SECRET: "test-jwt-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
@@ -32,83 +32,83 @@ describe("Enhanced Config Validation", () => {
   });
 
   it("should throw when DEALS_PROD is missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.DEALS_PROD;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: DEALS_PROD",
     );
   });
 
   it("should throw when DEALS_LOG is missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.DEALS_LOG;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: DEALS_LOG",
     );
   });
 
   it("should throw when DEALS_LOCK is missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.DEALS_LOCK;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: DEALS_LOCK",
     );
   });
 
   it("should throw when AI_GATEWAY_URL is missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.AI_GATEWAY_URL;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: AI_GATEWAY_URL",
     );
   });
 
   it("should throw when TRUST_THRESHOLD is missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.TRUST_THRESHOLD;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: TRUST_THRESHOLD",
     );
   });
 
   it("should throw when JWT_SECRET is missing or blank", () => {
-    const missing = { ...validEnv } as any;
+    const missing: Record<string, unknown> = { ...validEnv };
     delete missing.JWT_SECRET;
-    expect(() => validateConfig(missing)).toThrow(
+    expect(() => validateConfig(missing as unknown as Env)).toThrow(
       "Missing required config: JWT_SECRET",
     );
 
     expect(() =>
-      validateConfig({ ...validEnv, JWT_SECRET: "  " } as any),
+      validateConfig({ ...validEnv, JWT_SECRET: "  " } as unknown as Env),
     ).toThrow("Missing required config: JWT_SECRET");
   });
 
   it("should throw when multiple variables are missing", () => {
-    const env = { ...validEnv } as any;
+    const env: Record<string, unknown> = { ...validEnv };
     delete env.DEALS_PROD;
     delete env.DEALS_LOG;
-    expect(() => validateConfig(env)).toThrow(
+    expect(() => validateConfig(env as unknown as Env)).toThrow(
       "Missing required config: DEALS_PROD, DEALS_LOG",
     );
   });
 
   describe("TRUST_THRESHOLD validation", () => {
     it("should throw when TRUST_THRESHOLD is not a number", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "abc" } as unknown as Env;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is < 0", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "-0.1" } as unknown as Env;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
     });
 
     it("should throw when TRUST_THRESHOLD is > 1", () => {
-      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as any;
+      const env = { ...validEnv, TRUST_THRESHOLD: "1.1" } as unknown as Env;
       expect(() => validateConfig(env)).toThrow(
         "TRUST_THRESHOLD must be a number between 0 and 1",
       );
@@ -204,14 +204,20 @@ describe("Enhanced Config Validation", () => {
 
   describe("Budget variable validation (retained logic)", () => {
     it("should throw when budget variable is not a number", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "abc" } as any;
+      const env = {
+        ...validEnv,
+        CANDIDATE_BUDGET_GLOBAL: "abc",
+      } as unknown as Env;
       expect(() => validateConfig(env)).toThrow(
         'Invalid CANDIDATE_BUDGET_GLOBAL: "abc" is not a number',
       );
     });
 
     it("should throw when budget variable is negative", () => {
-      const env = { ...validEnv, CANDIDATE_BUDGET_GLOBAL: "-10" } as any;
+      const env = {
+        ...validEnv,
+        CANDIDATE_BUDGET_GLOBAL: "-10",
+      } as unknown as Env;
       expect(() => validateConfig(env)).toThrow(
         "Invalid CANDIDATE_BUDGET_GLOBAL: -10 must be non-negative",
       );

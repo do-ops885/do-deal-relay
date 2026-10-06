@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
+import { jsonRecord } from "../fixtures/typed-assert";
 
 describe("Referral Deactivation", () => {
   const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };
@@ -57,7 +59,7 @@ describe("Referral Deactivation", () => {
           run: vi.fn().mockResolvedValue({ success: true }),
           all: vi.fn().mockResolvedValue({ results: [] }),
         }),
-      } as any,
+      } as unknown as D1Database,
       AI_GATEWAY_URL: "https://example.com",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
@@ -98,7 +100,7 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv, mockCtx);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
 
     if (response.status !== 200) {
       console.log("Error response:", JSON.stringify(body, null, 2));
@@ -106,7 +108,7 @@ describe("Referral Deactivation", () => {
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.referral.code).toBe("MYCODE");
+    expect(jsonRecord(body.referral).code).toBe("MYCODE");
   });
 
   it("should return 404 for non-existent referral deactivation", async () => {
@@ -152,11 +154,11 @@ describe("Referral Deactivation", () => {
     );
 
     const response = await worker.fetch(request, mockEnv, mockCtx);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.referral.status).toBe("active");
+    expect(jsonRecord(body.referral).status).toBe("active");
   });
 
   // --- Helper: seed referral data into mock KV ---
@@ -295,10 +297,10 @@ describe("Referral Deactivation", () => {
     });
 
     const response = await worker.fetch(request, mockEnv, mockCtx);
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
 
     expect(response.status).toBe(200);
-    expect(body.referral.code).toBe("GETME");
-    expect(body.referral.id).toBe("789");
+    expect(jsonRecord(body.referral).code).toBe("GETME");
+    expect(jsonRecord(body.referral).id).toBe("789");
   });
 });

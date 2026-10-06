@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { alertCommand } from "../../bot/commands/alerts";
 import { findCommand } from "../../bot/commands/index";
 import type { CommandContext } from "../../bot/commands/types";
+import type { DealRelayAPI } from "../../bot/api-client";
 
 describe("Bot Alert Command Unit Tests", () => {
   const mockCtx: CommandContext = {
@@ -19,7 +20,7 @@ describe("Bot Alert Command Unit Tests", () => {
     reactivateReferral: vi.fn(),
     getAlertSubscriptions: vi.fn(),
     deleteAlertSubscription: vi.fn(),
-  } as any;
+  } as unknown as DealRelayAPI;
 
   it("should be discoverable via findCommand", () => {
     const cmd = findCommand("alert", "telegram");
@@ -28,7 +29,7 @@ describe("Bot Alert Command Unit Tests", () => {
   });
 
   it("should execute list subcommand successfully", async () => {
-    mockApi.getAlertSubscriptions.mockResolvedValue({
+    vi.mocked(mockApi.getAlertSubscriptions).mockResolvedValue({
       success: true,
       total: 1,
       count: 1,
@@ -56,7 +57,7 @@ describe("Bot Alert Command Unit Tests", () => {
   });
 
   it("should execute delete subcommand successfully", async () => {
-    mockApi.deleteAlertSubscription.mockResolvedValue({
+    vi.mocked(mockApi.deleteAlertSubscription).mockResolvedValue({
       success: true,
       deleted: "sub_999",
     });

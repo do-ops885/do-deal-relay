@@ -5,6 +5,7 @@ import {
 } from "../../worker/lib/config-utils";
 import { CONFIG } from "../../worker/config";
 import type { Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Config Utilities", () => {
   const mockEnv = {
@@ -21,7 +22,7 @@ describe("Config Utilities", () => {
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     JWT_SECRET: "test-jwt-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 
@@ -53,9 +54,9 @@ describe("Config Utilities", () => {
 
   describe("validateConfig", () => {
     it("should throw when mandatory config is missing", () => {
-      const env = { ...mockEnv } as any;
+      const env: Record<string, unknown> = { ...mockEnv };
       delete env.DEALS_PROD;
-      expect(() => validateConfig(env)).toThrow(
+      expect(() => validateConfig(env as unknown as Env)).toThrow(
         "Missing required config: DEALS_PROD",
       );
     });

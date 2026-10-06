@@ -3,6 +3,7 @@ import { discover } from "../../worker/pipeline/discover";
 import { validatedFetch } from "../../worker/lib/security";
 import { parseHTMLContent } from "../../worker/pipeline/discover-parsers";
 import type { PipelineContext, Env, SourceConfig } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 // Mock validatedFetch to bypass SSRF DNS resolution (cloudflare-dns.com)
 vi.mock("../../worker/lib/security", () => ({
@@ -79,7 +80,7 @@ describe("Discovery Engine", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

@@ -5,6 +5,7 @@ import {
   getRetentionPolicy,
   type ComplianceConfig,
 } from "../../worker/lib/eu-ai-act-logger";
+import type { D1Database } from "@cloudflare/workers-types";
 
 vi.mock("../../worker/config", () => ({
   CONFIG: {
@@ -31,7 +32,7 @@ describe("EUAIActLogger", () => {
 
   const mockDb = {
     prepare: mockPrepare,
-  } as any;
+  } as unknown as D1Database;
 
   const defaultConfig: ComplianceConfig = {
     systemId: "test-system",
@@ -392,7 +393,7 @@ describe("EUAIActLogger", () => {
 // ============================================================================
 
 describe("createComplianceLogger", () => {
-  const mockDb = { prepare: vi.fn() } as any;
+  const mockDb = { prepare: vi.fn() } as unknown as D1Database;
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -1,7 +1,7 @@
 /**
  * Typed assertion helpers for unit tests (F-12 as-any cleanup).
  *
- * Replaces `as any` casts on MCP content unions, structuredContent
+ * Replaces as-any casts on MCP content unions, structuredContent
  * payloads, and JSON response bodies with runtime-checked narrowing:
  * a wrong shape fails the test with a clear message instead of
  * silently disabling type checking. jsonRecord/recordArray are

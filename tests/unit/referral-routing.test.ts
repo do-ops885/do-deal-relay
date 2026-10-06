@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { Env } from "../../worker/types";
 
 describe("New split regex check", () => {
   const actionRegex = /^\/api\/referrals\/([^/]+)\/(deactivate|reactivate)$/;
@@ -47,7 +48,7 @@ describe("handleCreateReferral SSRF Validation", () => {
   it("should reject creation if URL points to prohibited loopback/private IP", async () => {
     const { handleCreateReferral } =
       await import("../../worker/routes/referrals");
-    const mockEnv = {} as any;
+    const mockEnv = {} as unknown as Env;
 
     const request = new Request("https://example.com/api/referrals", {
       method: "POST",

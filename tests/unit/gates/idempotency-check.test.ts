@@ -5,7 +5,7 @@ import { Deal } from "../../../worker/types";
 describe("idempotency-check gate", () => {
   const deal: Deal = {
     id: "existing-id",
-  } as any;
+  } as unknown as Deal;
 
   it("should pass if deal ID is not in existing IDs", () => {
     const existingIds = new Set(["other-id"]);

@@ -9,10 +9,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { KVNamespace } from "@cloudflare/workers-types";
+import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import worker from "../../worker/index";
 import type { Env, ReferralInput } from "../../worker/types";
 import { REFERRAL_KEYS } from "../../worker/lib/referral-storage/types";
+import { jsonRecord, recordArray } from "../fixtures/typed-assert";
 
 // ============================================================================
 // Mock Setup
@@ -61,7 +62,7 @@ function createMockEnv(): Env {
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
     JWT_SECRET: "test-jwt-secret-32-chars-minimum-xyz",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",
@@ -177,10 +178,10 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.tools).toBeDefined();
       expect(Array.isArray(body.tools)).toBe(true);
-      expect(body.tools.length).toBeGreaterThan(0);
+      expect(recordArray(body.tools).length).toBeGreaterThan(0);
     });
 
     it("should include search_deals tool", async () => {
@@ -191,9 +192,9 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv, mockCtx);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
 
-      const toolNames = body.tools.map((t: { name: string }) => t.name);
+      const toolNames = recordArray(body.tools).map((t) => t.name);
       expect(toolNames).toContain("search_deals");
     });
 
@@ -205,9 +206,9 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv, mockCtx);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
 
-      const toolNames = body.tools.map((t: { name: string }) => t.name);
+      const toolNames = recordArray(body.tools).map((t) => t.name);
       expect(toolNames).toContain("add_referral");
     });
 
@@ -219,9 +220,9 @@ describe("MCP Protocol E2E", () => {
       });
 
       const response = await worker.fetch(request, mockEnv, mockCtx);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
 
-      const toolNames = body.tools.map((t: { name: string }) => t.name);
+      const toolNames = recordArray(body.tools).map((t) => t.name);
       expect(toolNames).toContain("research_domain");
     });
   });
@@ -247,7 +248,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.content).toBeDefined();
     });
 
@@ -271,7 +272,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.content).toBeDefined();
     });
 
@@ -288,7 +289,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.content).toBeDefined();
     });
 
@@ -305,7 +306,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.content).toBeDefined();
       expect(body.isError).toBe(true);
     });
@@ -320,7 +321,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toBeDefined();
     });
   });
@@ -335,7 +336,7 @@ describe("MCP Protocol E2E", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.name).toBeDefined();
       expect(body.version).toBeDefined();
     });
@@ -381,7 +382,7 @@ describe("MCP Protocol E2E", () => {
       );
       expect(searchResponse.status).toBe(200);
 
-      const body = (await searchResponse.json()) as any;
+      const body = jsonRecord(await searchResponse.json());
       expect(body.content).toBeDefined();
     });
 

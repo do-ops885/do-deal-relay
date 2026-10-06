@@ -53,12 +53,12 @@ describe("Security Utils - validateFetchUrl SSRF Bypass Prevention", () => {
 
   it("should allow public IPv6 addresses", async () => {
     // Mock DNS resolution to return a public IPv6
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: async () => ({
         Answer: [{ data: "2606:4700:4700::1111" }],
       }),
-    });
+    } as unknown as Response);
 
     const result = await validateFetchUrl("https://one.one.one.one/");
     expect(result).toBe(true);
@@ -66,17 +66,17 @@ describe("Security Utils - validateFetchUrl SSRF Bypass Prevention", () => {
 
   it("should block domains that resolve to private IPv6 addresses", async () => {
     // Mock DNS resolution: A record empty, AAAA record returns private IPv6
-    (global.fetch as any)
+    vi.mocked(global.fetch)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ Answer: [] }), // A record
-      })
+      } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           Answer: [{ data: "fc00::1" }], // AAAA record
         }),
-      });
+      } as unknown as Response);
 
     const result = await validateFetchUrl("https://private-ipv6.com/");
     expect(result).toBe(false);

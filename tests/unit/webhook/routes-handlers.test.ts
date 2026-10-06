@@ -28,6 +28,7 @@ import {
   handleCreateSyncConfig,
   handleGetSyncState,
 } from "../../../worker/routes/webhooks/index";
+import type { Env } from "../../../worker/types";
 
 // ============================================================================
 // Mock KV Namespace
@@ -65,7 +66,7 @@ function createEnv(kv: MockKv) {
     DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 async function setupValidApiKey(
