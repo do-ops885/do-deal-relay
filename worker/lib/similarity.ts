@@ -47,7 +47,15 @@ export function countOverlap(
   target: Set<string>,
   candidate: Set<string>,
 ): number {
+  // Fast path: avoid set iteration overhead if either set is empty.
+  if (
+    target.size === EMPTY_TERM_LENGTH ||
+    candidate.size === EMPTY_TERM_LENGTH
+  ) {
+    return 0;
+  }
   let overlap = 0;
+  // Use scalar ternary assignments to prevent temporary array allocations on hot path.
   const targetIsSmaller = target.size <= candidate.size;
   const smaller = targetIsSmaller ? target : candidate;
   const larger = targetIsSmaller ? candidate : target;

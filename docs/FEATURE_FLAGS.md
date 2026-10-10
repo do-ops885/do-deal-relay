@@ -224,70 +224,82 @@ if (results.get("feature-a")) {
 
 ## Admin API Endpoints
 
-### List All Flags
+Admin endpoints require an Admin role (JWT Bearer token or Admin API key).
+
+### List All Feature Flags
+
+List all feature flags. Defaults are lazily seeded in KV on first access if not present (ADR-032).
 
 ```bash
-GET /api/flags
+GET /api/admin/flags
 ```
 
-Response:
+**Headers:**
+- `Authorization: Bearer <admin_access_token>` or `X-API-Key: <admin_key>`
+
+**Response (200 OK):**
 ```json
 {
   "flags": [
     {
-      "name": "new-feature",
+      "name": "bulk_import_export",
       "enabled": true,
-      "rolloutPercentage": 50,
-      "description": "New feature description",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
+      "description": "Kill switch for bulk import/export endpoints",
+      "createdAt": "2026-10-05T00:00:00.000Z",
+      "updatedAt": "2026-10-05T00:00:00.000Z"
     }
-  ]
+  ],
+  "count": 9
 }
 ```
 
-### Get Single Flag
+---
+
+### Update Feature Flag
+
+Update feature flag configuration via partial update. Unknown flag names return `404 FLAG_NOT_FOUND` to prevent typo pollution.
 
 ```bash
-GET /api/flags/:name
-```
-
-### Set Flag
-
-```bash
-PUT /api/flags/:name
+PUT /api/admin/flags/:name
 Content-Type: application/json
-
-{
-  "enabled": true,
-  "rolloutPercentage": 25,
-  "userIds": ["user-1", "user-2"],
-  "description": "Feature description"
-}
 ```
 
-### Delete Flag
+**Headers:**
+- `Authorization: Bearer <admin_access_token>` or `X-API-Key: <admin_key>`
 
-```bash
-DELETE /api/flags/:name
-```
+**Parameters:**
+- `name` (string): Flag identifier (`a-z0-9_`, max 64 chars)
 
-### Get Stats
-
-```bash
-GET /api/flags/stats
-```
-
-Response:
+**Request Body:**
 ```json
 {
-  "totalFlags": 5,
-  "enabledFlags": 3,
-  "disabledFlags": 2,
-  "flagsWithRollout": 1,
-  "flagsWithUserIds": 1
+  "enabled": false,
+  "rolloutPercentage": 25,
+  "userIds": ["user-1"],
+  "description": "Updated feature flag description"
 }
 ```
+
+All body fields are optional; at least one field must be provided. `rolloutPercentage` must be an integer between 0 and 100.
+
+**Response (200 OK):**
+```json
+{
+  "flag": {
+    "name": "email_processing",
+    "enabled": false,
+    "createdAt": "2026-10-05T00:00:00.000Z",
+    "updatedAt": "2026-10-05T01:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+- 200: Flag updated successfully
+- 400: Invalid flag name or invalid body payload
+- 401: Unauthorized (missing or invalid token)
+- 403: Forbidden (Admin role required)
+- 404: `FLAG_NOT_FOUND` - flag name is unknown
 
 ## Examples
 

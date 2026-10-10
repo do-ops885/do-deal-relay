@@ -24,18 +24,24 @@ The system utilizes a secure, transactional Two-Phase Publishing architecture to
 - At this stage, the status of the deal is marked as `quarantined` or `pending`. These deals are isolated from public/production-facing read queries.
 
 ### 2. Publish Phase (Phase 2)
-Upon successful validation through all 9 gates:
-1. **Durable Object Lock Verification**: The pipeline ensures it maintains the `PIPELINE_LOCK` to block other processes.
-2. **Atomic Merge**: The system fetches the active production snapshot (`snapshot:prod`) from the `DEALS_PROD` KV namespace.
-3. **Validation Check**: It evaluates the candidate list using the 9-Gate validation logic. Only deals that pass all gates are promoted.
-4. **KV Snapshot Update**: The verified deals are merged with existing active deals, and the updated list is written back to `DEALS_PROD` under the `snapshot:prod` key.
-5. **Git Sync (GitHub Action Commit)**: The system triggers an asynchronous pipeline flow that commits the updated `deals.json` dataset to the repository branch, maintaining a perfect version-controlled Git history of all production releases.
+Upon successful validation through all 9 gates (`publishSnapshot` in `worker/publish.ts`):
+1. **Staging Snapshot Verification**: Verifies `DEALS_STAGING` snapshot exists and hash matches context (`staging.snapshot_hash === snapshot.snapshot_hash`).
+2. **Idempotency Verification**: Checks whether `snapshot_hash` was already committed via `isSnapshotCommitted`.
+3. **KV Promotion**: Promotes staging snapshot to `DEALS_PROD` (`promoteStagingToProduction`), replacing active production snapshot (`snapshot:prod`).
+4. **D1 Batch Indexing**: Inserts active referral records in batch into `DEALS_DB` (`insertReferralsBatch`).
+5. **Decoupled Side Effects**:
+   - **Durable Object Mirror**: Fire-and-forget state mirror to `DealRegistry` DO (`mirrorPublishToDO`).
+   - **Instant Alert Fan-Out**: Dispatches matched deal subscriptions to alert queues (`enqueueAlertBatch`).
+   - **High-Value Notifications**: Triggers webhooks if deal reward values exceed `NOTIFICATION_THRESHOLD` (`notifyHighValueDealsWithWebhook`).
+6. **Git Commit & Verification**: Commits snapshot to GitHub repo (`commitSnapshot`) and verifies commit SHA against repository API (`verifyCommit`).
+7. **Metadata & Audit Trail**: Updates last run execution metadata (`setLastRunMetadata`) and appends immutable audit log records to `DEALS_DB` (`logAuditEventsBatch`).
 
 ### 3. Rollback & Fault Tolerance Conditions
-A transaction rollback is automatically or manually triggered under the following failure modes:
-- **`HASH_MISMATCH` Detection**: If the snapshot hash changes between the start of the validation run and final publication, the run is instantly aborted, and no writes are committed to `DEALS_PROD`.
-- **Integrity/Corruption Verification Failures**: If any post-publish sanity tests fail, or if a newly merged snapshot is parsed as invalid JSON.
-- **Rollback Execution**: To roll back, the active `snapshot:prod` key in `DEALS_PROD` is restored to its previous snapshot value (retrieved from the daily backup log or Git history). This instantly isolates any faulty deployment without needing server restarts or manual deployments.
+A transaction rollback (`rollbackSnapshot` in `worker/publish.ts`) is automatically triggered under the following failure conditions:
+- **`HASH_MISMATCH` Detection**: Staging or context hash mismatch during promotion aborts publication without modifying `DEALS_PROD`.
+- **Commit Verification Failure**: If `verifyCommit` returns false or GitHub API fails after KV write, rollback is invoked.
+- **Data Corruption or Invalid Snapshot**: Post-publish sanity failure or malformed JSON payload.
+- **Rollback Execution Protocol**: `revertProduction` restores `DEALS_PROD` snapshot to `previousSnapshot` and confirms hash match via `getProductionSnapshot`. If verified hash does not match, a critical `PublishError` is thrown and logged to audit trails.
 
 ## Middleware Pipeline & Security (ADR-016, ADR-028 Addendum)
 All API routes go through a centralized middleware pipeline in `worker/lib/middleware/pipeline.ts`:
