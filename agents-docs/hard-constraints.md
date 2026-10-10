@@ -124,21 +124,27 @@ Files requiring explicit coordination before modification (see `typescript-codin
 - `worker/lib/research-agent/fetcher.ts`
 - `.github/workflows/*.yml`
 
-## System Infrastructure (13 Quality Gates)
-Enforced via `./scripts/quality_gate.sh`:
+## System Infrastructure (18 Quality Checks)
+Enforced via `./scripts/quality_gate.sh` (checks 6.5, 11.5 and 16.5 are the fractional ones):
 1. TypeScript compilation
 2. Unit tests
 3. Validation gate orchestration check
 4. Directory organization
 5. Build check
 6. Prettier format check
+6.5 Markdown lint
 7. YAML syntax validation
 8. GitHub Actions workflow validation
 9. Secret detection
 10. Dependency audit (`npm audit`)
 11. Skill symlinks integrity
+11.5 Skill hygiene (`./scripts/skill-eval-check.sh`)
 12. Git hooks installation
 13. Dependabot configuration validation
+14. Shell unit tests (`tests/unit/worker-host.test.sh`)
+15. Lines-of-code enforcement
+16.5 Error-shaping helpers gate
+17. Context efficiency (AGENTS.md and SKILL.md size)
 
 ## Per-Deal Logic (9 Validation Gates)
 Mandatory gates enforced in `worker/validation/pipeline.ts`:
