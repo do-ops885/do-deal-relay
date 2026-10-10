@@ -27,7 +27,10 @@ describe("handleValidateUrl error sanitization", () => {
 
     expect(response.status).toBe(500);
 
-    const body = (await response.json()) as { error: string; details?: unknown };
+    const body = (await response.json()) as {
+      error: string;
+      details?: unknown;
+    };
     expect(body.error).toBe("Validation failed");
     expect(body.details).toBeUndefined();
 
