@@ -37,7 +37,7 @@ Optimize AGENTS.md to be a concise coordination hub (<140 lines) by moving detai
 | Web Research                   | `agents-docs/features/web-research.md`             | Medium   |
 | Project Structure              | `agents-docs/PROJECT_STRUCTURE.md`                 | High     |
 | State Management               | `agents-docs/coordination/state-management.md`     | Medium   |
-| Quality Gates                  | `agents-docs/quality-gates.md`                     | High     |
+| Quality Gates                  | `agents-docs/quality-standards.md`                     | High     |
 | Next Steps & References        | Keep condensed in AGENTS.md                        | -        |
 
 ## Workflow
