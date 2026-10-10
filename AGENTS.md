@@ -23,7 +23,6 @@ readonly DEFAULT_TIMEOUT_SECONDS=1800
 ## 3. Production Reliability & Operational Safeguards
 - **SSRF Hardening**: Outgoing network calls MUST use `validatedFetch` via `worker/lib/security.ts`. Never bypass DNS/CIDR checks.
 - **Validation Pipeline**: Submissions MUST pass all 9 validation gates in `worker/validation/pipeline.ts`. Speculative rewrites are strictly forbidden.
-- **Canonical MCP Tools**: Call canonical tool names `search_deals` (alias: `get_deals`), `get_deal` (alias: `get_deal_by_code`), and `add_referral` (alias: `submit_deal`).
 - **RBAC Controls**: Admin role required for `/metrics`, `/api/dora-metrics`, `/dora`, and `/api/d1/*`. User role required for `/api/nlq` and referral management (Create/Deactivate/Reactivate).
 - **Banned Patterns**: No hardcoded secrets, no magic numbers, no `!` assertions, and no unused imports. Maintain high operational safety.
 
