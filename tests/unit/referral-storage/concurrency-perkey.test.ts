@@ -159,9 +159,9 @@ describe("Referral Storage - Atomic Per-Key & Concurrency Tests", () => {
     const ref = createReferral("ref-301", "DOM301", "old-domain.com", "active");
     await storeReferralInput(env, ref);
 
-    expect(
-      await kv.get("referral:index:domain:old-domain.com:ref-301"),
-    ).toBe("ref-301");
+    expect(await kv.get("referral:index:domain:old-domain.com:ref-301")).toBe(
+      "ref-301",
+    );
 
     // Update referral with new domain
     const updatedRef: ReferralInput = {
@@ -174,9 +174,9 @@ describe("Referral Storage - Atomic Per-Key & Concurrency Tests", () => {
     expect(
       await kv.get("referral:index:domain:old-domain.com:ref-301"),
     ).toBeNull();
-    expect(
-      await kv.get("referral:index:domain:new-domain.com:ref-301"),
-    ).toBe("ref-301");
+    expect(await kv.get("referral:index:domain:new-domain.com:ref-301")).toBe(
+      "ref-301",
+    );
 
     const oldRefs = await getReferralsByDomain(env, "old-domain.com");
     expect(oldRefs).toHaveLength(0);
