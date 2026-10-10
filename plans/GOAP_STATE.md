@@ -1,13 +1,35 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-05
-**Version**: 0.19.34
+**Last Updated**: 2026-10-10
+**Version**: 0.19.35
 **Status**: Active — 2026-10-04 gap-audit findings IMPLEMENTED on `cline/8czaqeq7`: NI-1 + NI-2 flag governance (ADR-032: enforcement, admin API, fail-closed AI extraction), IMP-4 FTS5-parity matcher, IMP-5 eval harness, IMP-6 LOC splits. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope (platform traces already enabled in wrangler.jsonc).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
 ---
+## 2026-10-10 Improvement sweep (register only) — v0.19.35
+
+Branch `cline/8cp1f2gp`. Full register with per-item evidence:
+[IMPROVEMENT-SWEEP-2026-10-10](IMPROVEMENT-SWEEP-2026-10-10.md).
+
+Five parallel read-only domain audits (security, runtime/router, data/storage,
+quality/tests, CI/docs) produced 42 verified findings, each filed as a small
+GitHub issue and linked in the register. Nothing here is implemented yet; this
+section exists so the sweep is tracked in the GOAP register.
+
+| Group | Issues | Highest severity |
+|:---|:---|:---|
+| Security | #885-#892 | P1: refresh-token reuse (#885), MCP role/ownership gaps (#887) |
+| Runtime / router | #893-#899, #909 | P1: `/health/ready` always ready (#893), redirect 500 (#894) |
+| Data / storage | #900-#908 | P1: four tables with no migration (#900) |
+| Quality / tests | #910-#915 | P2: unenforced LOC limit (#914), tautological smoke tests (#915) |
+| CI / scripts / docs | #916-#926 | P1: timeout masked as pass (#916), coverage never collected (#919), security.yml hardening (#921) |
+
+Excluded as already closed or owner-blocked: I-4 redirect re-validation,
+MI-4 DO hot path, CI-1 `CLOUDFLARE_API_TOKEN`.
+
+
 
 ## 2026-10-05 Gap-audit implementation batch (NI-1/NI-2/IMP-4/IMP-5/IMP-6) — v0.19.34
 
