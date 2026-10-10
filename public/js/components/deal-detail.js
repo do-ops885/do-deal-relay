@@ -277,6 +277,11 @@ async function loadAndRender(dialog) {
   const id = dialog.dataset.dealId;
   if (!id) {
     renderInto(dialog, buildNotFound());
+    const emptyTitle = dialog.querySelector(".deal-detail__empty-title");
+    if (emptyTitle) {
+      emptyTitle.setAttribute("tabindex", "-1");
+      if (typeof emptyTitle.focus === "function") emptyTitle.focus();
+    }
     return;
   }
   renderInto(dialog, buildLoading());
@@ -289,6 +294,11 @@ async function loadAndRender(dialog) {
     const deal = normalizeDeal(raw);
     if (!deal) {
       renderInto(dialog, buildNotFound());
+      const emptyTitle = dialog.querySelector(".deal-detail__empty-title");
+      if (emptyTitle) {
+        emptyTitle.setAttribute("tabindex", "-1");
+        if (typeof emptyTitle.focus === "function") emptyTitle.focus();
+      }
       return;
     }
     renderInto(dialog, buildDealContent(deal));
@@ -302,6 +312,11 @@ async function loadAndRender(dialog) {
   } catch (err) {
     if (err && err.name === "AbortError") return;
     renderInto(dialog, buildError(err && err.message ? err.message : null));
+    const errorTitle = dialog.querySelector(".error__title");
+    if (errorTitle) {
+      errorTitle.setAttribute("tabindex", "-1");
+      if (typeof errorTitle.focus === "function") errorTitle.focus();
+    }
   } finally {
     if (activeController === controller) activeController = null;
   }
