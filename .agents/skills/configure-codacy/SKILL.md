@@ -9,6 +9,8 @@ metadata:
 
 # Configure Codacy
 
+> **Upstream:** codacy/codacy-skills. Needs both CLIs installed; the cloud tool list comes from Codacy, so a repo not on Codacy limits the workflow to local tools.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 This skill tailors Codacy configuration to a project's actual stack and coding conventions. It discovers the repository's languages and frameworks, initializes a broad set of tools and patterns, runs analysis, then intelligently cuts noise — producing a clean, high-signal configuration with a full audit trail of what changed and why.
@@ -23,16 +25,20 @@ Both CLIs share credentials at `~/.codacy/credentials`, so a single login covers
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
-
+| Concern | Counter-Argument |
+|---------|------------------|
+| "Disabling one noisy pattern is safe because the tool has others enabled." | `reference/05-security-guardrail.md` requires every security concern (SQL injection, XSS, path traversal, hardcoded secrets) to keep at least one active pattern. |
+| "The repo is one language, so `discover` and `init --auto` are overkill." | do-deal-relay ships TypeScript, Python, SQL, Shell, and Markdown; a single-tool config leaves most files unanalyzed. |
+| "Cutting noise means disabling every pattern that fires." | Tune the pattern or exclude the files that trigger it first; disable only when the pattern targets the wrong stack. |
+| "The changes can be described in chat." | The skill writes a machine-readable summary of every change; prose is not an audit trail. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
+- [ ] A security pattern is disabled while no other active pattern covers that concern.
+- [ ] Patterns are cut before the first `analyze` run provides per-pattern counts.
+- [ ] New exclusions are added without checking `.codacy.yml`, which already excludes `migrations/**`, `coverage/**`, and templates.
+- [ ] A `Critical` or `High` non-security pattern is disabled instead of excluded from the files that fire it.
+- [ ] `.codacy/codacy.config.json` is rewritten with no before/after counts recorded.
 
 
 ## Reference

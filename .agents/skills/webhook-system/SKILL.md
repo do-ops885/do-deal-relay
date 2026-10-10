@@ -204,14 +204,15 @@ See [templates/webhook.ts](templates/webhook.ts) and [examples/event-delivery.ts
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The partner ID in the path is enough to authenticate the sender." | `/webhooks/incoming/:partnerId` is a public route; `worker/routes/webhooks/incoming.ts` verifies the HMAC at the request boundary as defense-in-depth because an ID is an identifier, not a secret. |
+| "Loosen the timestamp window so retried deliveries still pass." | `verifyHmacSignature` in `worker/lib/hmac.ts` rejects skew beyond 300s to block replays; widening the window makes every captured request reusable. |
+| "Best-effort delivery is fine; a dropped event is acceptable." | `worker/lib/webhook/delivery.ts` routes failed attempts to the Dead Letter Queue with a 30-day TTL; swallowing them breaks the DLQ contract and leaves the partner blind. |
+| "I will POST wherever the subscriber points." | `worker/routes/webhooks/subscriptions.ts` runs `validateFetchUrl` on endpoint URLs; skipping it reopens SSRF against private address space. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Body processed before the signature/timestamp headers are checked.
+- [ ] Subscription endpoint stored without `validateFetchUrl` or an HTTPS requirement.
+- [ ] Delivery marked delivered on a non-2xx response, or a failed attempt never enqueued to the DLQ.
+- [ ] `Idempotency-Key` ignored, so a retried event is handled twice.
+- [ ] Signature compared with plain string equality instead of the timing-safe helper in `worker/lib/hmac.ts`.

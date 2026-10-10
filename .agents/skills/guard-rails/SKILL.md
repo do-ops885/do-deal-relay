@@ -233,14 +233,15 @@ See [templates/policy.ts](templates/policy.ts) and [examples/safety-check.ts](ex
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Report mode is fine in production; nobody reads the logs anyway." | `enforceGuardRails` in `worker/lib/guard-rails.ts` throws a non-retryable `ValidationError` on fatal findings. Report mode lets unsafe deals through the validation stage. |
+| "The safety scan covers the whole batch." | The processing stage in `runGuardRails` samples `Math.min(deals.length, 10)`; treating that sample as full coverage leaves injection in later deals unscanned. |
+| "A red external check can be forced through with `--admin`." | The merge guardrail forbids admin bypass; any conclusion other than `SUCCESS` blocks merge. |
+| "Directory hygiene warnings are cosmetic." | Root artifacts such as `typecheck_*.txt`, `*.tmp`, and `*.temp` are policy violations; they belong under `temp/`. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] `checkSafety` XSS or dangerous-URL-scheme findings downgraded from fatal in `runGuardRails`.
+- [ ] A run exceeding `CONFIG.MAX_DEALS_PER_RUN` or `CONFIG.MAX_PAYLOAD_SIZE_BYTES` passed without the resource-limit check firing.
+- [ ] PR merged while a required check from the merge guardrail list is not `SUCCESS`.
+- [ ] `!` non-null assertions or unused imports merged despite the TypeScript guard rules.
+- [ ] Root-level temp artifacts left outside `temp/` and left unreported.

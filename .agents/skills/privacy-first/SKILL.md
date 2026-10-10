@@ -118,14 +118,15 @@ fi
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "It is only a fixture, a real address is acceptable." | Only `example.com`, `example.org`, `test.com`, and `localhost` are allowed in `tests/`; any other domain is a leak. |
+| "The README needs a maintainer contact." | The replacement rule routes contact to a GitHub Issues link and vulnerability reports to `SECURITY.md`. |
+| "The address is in the commit message, not a file." | Commit messages are part of the repository and are scanned by the same email check. |
+| "A metadata email field is harmless." | Package metadata (`pyproject.toml`, `setup.py`) must drop the `email = "..."` field entirely. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A `contact@` or `support@` address added to a README, config, or doc.
+- [ ] An `email = "..."` field reintroduced into package metadata.
+- [ ] A non-test domain (gmail, company domain) used in a `tests/` fixture.
+- [ ] A personal address placed in a commit message.
+- [ ] The email check added to a quality gate without the `example.com|example.org|test.com` exclusion.

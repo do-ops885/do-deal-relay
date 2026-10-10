@@ -9,6 +9,8 @@ metadata:
 
 # Configure Codacy (Cloud)
 
+> **Upstream:** codacy/codacy-skills. Needs the repository on Codacy with a finished analysis plus a valid API token; no local analysis is used.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 This skill tunes the Codacy configuration of a repository **directly on Codacy Cloud**, using the cloud as the source of truth. It does **not** run local analysis. It reads the current cloud issue landscape, applies a higher-signal set of tools and patterns, reanalyzes on Codacy, and iteratively cuts noise over two passes — producing a clean, high-signal configuration with a full audit trail of what changed and why.
@@ -201,16 +203,20 @@ rm -rf .codacy/tmp .codacy/remote.config.json .codacy/auto.config.json
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
-
+| Concern | Counter-Argument |
+|---------|------------------|
+| "One tuning pass is enough; the second is redundant." | Pass one enables the higher-signal set and cuts obvious noise; pass two judges what those new patterns actually surfaced and trims the rest. |
+| "When Codacy returns 409, force the disable." | A 409 means a coding standard enforces the pattern; record it in `conflicts[]` and never pass `--force` or unlink the standard. |
+| "Keep cutting until the issue total drops." | Standard-locked baseline noise makes a flat or higher total expected; over-cutting removes useful Security findings. |
+| "Cloud-only patterns can be changed through `codacy tools --import`." | Only tools listed by `codacy-analysis info` accept import; cloud-only patterns go through `codacy pattern` / `codacy patterns`. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
+- [ ] A 409 conflict is worked around with `--force` instead of logged in `conflicts[]`.
+- [ ] `codacy pattern <tool> <id> -o json` is not checked for a non-empty `enabledBy` before a disable.
+- [ ] AFTER pattern counts are re-counted from the paginated (100-cap) cloud list.
+- [ ] The final issue total is pushed below baseline by disabling Security patterns.
+- [ ] `.codacy/tmp`, `.codacy/remote.config.json`, or `.codacy/auto.config.json` survive the run.
 
 
 ## Reference

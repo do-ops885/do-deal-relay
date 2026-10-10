@@ -45,18 +45,18 @@ const strategy = await reddit.buildEngagementStrategy({
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
+| "The subreddit is about AI agents, so a promo post will land without a risk check." | `analyzeCommunities` runs with `riskThreshold: "low"` first; `reference/02-community-risk-assessment.md` still marks r/ChatGPT and r/ArtificialIntelligence as medium risk. |
+| "Replying in a thread is not a post, so the research-only rule does not apply." | The skill ships `mode: "research"` and its metadata forbids posting without explicit authorization; a comment reply is an engagement action too. |
+| "The account has enough karma, so the pre-posting checklist is done." | `reference/06-risk-mitigation.md` requires 90+ days of account age and 50+ comments in the target subreddit, not a karma number alone. |
+| "The demo link explains everything, so no AI disclosure is needed." | The pre-posting checklist requires a disclosure statement and a reply plan before any promotional activity. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A subreddit is added to the target list without the anti-AI and malicious-actor scans from `reference/06-risk-mitigation.md`.
+- [ ] A post or comment is drafted for r/SideProject or r/AI_Agents while `mode` is still `research`.
+- [ ] Account age, karma, or prior comments in the target subreddit are assumed rather than verified.
+- [ ] A promo goes out without the AI disclosure statement or a plan to answer replies.
+- [ ] A medium-risk community is reclassified as low so it stays in scope.
 
 ## Reference
 

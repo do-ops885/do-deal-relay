@@ -215,14 +215,15 @@ A great README is the single most important factor in project adoption and contr
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Badges are decoration; the README reads fine without them." | Root `README.md` opens with CI, Security, and Nightly workflow badges. Removing them hides build health from the first screen. |
+| "The purpose can follow the feature list." | The 5-second rule puts name, one-sentence tagline, and a visual above the fold; readers who must scroll to learn the point have already left. |
+| "Alt text and language tags can be added later." | The accessibility checklist requires descriptive alt text and language-tagged fences before publishing, not as a follow-up. |
+| "A wiki link replaces an inline quick start." | The Quick Start must be runnable in under two minutes; `README.md` lists `npm install` plus the command table for exactly that reason. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Badge block deleted or pointing at a workflow no longer present under `.github/workflows/`.
+- [ ] Quick Start missing the Node >= 20.0.0 prerequisite stated in `README.md`.
+- [ ] Code fences without a language tag, or images without alt text, shipped in the final README.
+- [ ] Heading levels skipped (H1 straight to H3) or links labelled "click here".
+- [ ] Commands such as `npm run verify` or `npm run test:e2e` documented without checking `package.json`.

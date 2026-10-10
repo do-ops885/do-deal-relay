@@ -138,14 +138,15 @@ See [templates/lock.ts](templates/lock.ts) and [examples/leader-election.ts](exa
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The PipelineLock DO and the D1 CAS do the same thing, so keep only the D1 path." | `worker/lib/lock.ts` makes the DO the primary serialization point and treats a definitive `false` as final; ADR-022 keeps D1 only as an automatic fallback for a missing binding, RPC rejection, or `PIPELINE_LOCK_RPC_TIMEOUT_MS` overrun. |
+| "I can call `acquireLock()` and ignore the boolean it returns." | The return value gates the critical section. When another trace owns the row the D1 `INSERT OR IGNORE`/UPDATE CAS leaves ownership untouched, so proceeding runs two pipelines against one `pipeline:lock` row. |
+| "Renewal always succeeds once I hold the lock." | `extendLock` throws the non-retryable `ConcurrencyError` in `worker/durable-objects/pipeline-lock.ts` and `worker/lib/lock-d1.ts` when `trace_id` no longer owns the row; assuming success corrupts a stolen lease. |
+| "A shorter TTL is safer than renewing." | `DEFAULT_LOCK_TTL_SECONDS` is 300. If TTL drops below the critical-section duration the expiry branch of the D1 CAS hands the row to the next run mid-flight. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] `acquireLock()` result discarded instead of gating the section it protects.
+- [ ] `releaseLock()` or `extendLock()` called with a `trace_id` that never acquired the lock.
+- [ ] A definitive DO `false` retried against D1 as if it were an infrastructure fault (ADR-022 says contention is not a fallback trigger).
+- [ ] Lock TTL set below the expected critical-section duration with no `extendLock()` call.
+- [ ] `releaseLock()` skipped on the error path, leaving the row to clear only when TTL expires.

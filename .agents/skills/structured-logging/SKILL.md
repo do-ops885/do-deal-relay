@@ -236,14 +236,14 @@ See [templates/logger.ts](templates/logger.ts) and [examples/tracing.ts](example
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| A plain console.log string is simpler than building a structured entry. | worker/lib/logger/structured.ts emits run_id, trace_id, phase, and duration_ms so a trace can be rebuilt through the TRACE_INDEX_PREFIX index; free-text strings cannot be filtered. |
+| With no inbound x-correlation-id header there is nothing to trace. | A correlation ID is generated when the header is absent (crypto.randomUUID()) and reused when present, so every request still gets an ID. |
+| A silent catch around the log write is harmless. | The StructuredLogger catch calls emitConsole with a `[LOGGER_FALLBACK]` marker; swallowing the error makes the entry vanish with no trace. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A request handler logs without deriving or generating a correlation/trace ID at entry.
+- [ ] A helper is called with a fresh logger, dropping run_id or trace_id from child/phase context.
+- [ ] Secrets such as token, apiKey, or password reach log context instead of hitting the redact list.
+- [ ] A log write or ctx.waitUntil() flush sits inside an empty catch block.
+- [ ] Entries carry free-form keys or a bare string message with no structured context object.

@@ -191,14 +191,15 @@ See [templates/expiration.ts](templates/expiration.ts) and [examples/deal-tracki
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The expiry handler runs exactly once, so it needs no guard." | The skill warns expiration may trigger multiple times. `worker/lib/expiration/notifications.ts` filters against `getNotifiedExpiringDeals`; an unguarded handler double-deactivates deals. |
+| "One warning window is enough." | `checkDealExpirations` in `worker/lib/expiration/index.ts` collects both the 7-day and 30-day windows and dedupes; collapsing them drops the earlier notice. |
+| "Grace period is padding I can remove." | Grace exists for clock skew. Removing it expires boundary-timestamp deals before their stated end. |
+| "Stored expiry dates tell me all I need." | `worker/lib/source-expiry.ts` re-fetches the live source via `validatedFetch` and matches `EXPIRED_SOURCE_PATTERNS`; date-only checks miss reissued or dead pages. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Expiry handler written without an idempotency check against `getNotifiedExpiringDeals`.
+- [ ] Grace period stripped while expirations fire on exact boundary timestamps.
+- [ ] Notification windows narrowed below the 7-day/30-day set passed to `findExpiringDeals`.
+- [ ] Source-page expiry probe issued outside `validatedFetch` in `worker/lib/security.ts`.
+- [ ] `expiresAt` parsed from locale strings rather than epoch/ISO values, so `remaining` drifts.

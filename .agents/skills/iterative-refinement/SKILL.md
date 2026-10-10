@@ -232,14 +232,15 @@ See patterns.md
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Just keep looping until the tests pass; a limit is bureaucratic." | The skill caps iterations at 5-15 and requires justification above 20. An uncapped fix loop hides a stuck state behind repeated attempts. |
+| "Validation between iterations is optional when the edit is tiny." | The core loop is action, validate, assess, decide. Without a validation pass the next decision rests on assumption, not measurement. |
+| "One extra pass after success won't hurt." | The skill says stop early on success or convergence. Extra passes risk regressing tests that already pass. |
+| "'Code reads better' is a good enough criterion." | Validators must be concrete and automated; this repo produces countable results from `npm run test:unit` and `./scripts/quality_gate.sh`. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] No numeric success criteria recorded before the first iteration begins.
+- [ ] The same failing approach retried for 2-3 iterations without a strategy change.
+- [ ] Iteration count pushed past 20 with no written justification.
+- [ ] Prior-iteration metrics (pass rate, warning count) not carried into the next pass.
+- [ ] Loop continued after criteria pass or after improvement falls below the convergence threshold.

@@ -143,14 +143,15 @@ Example:
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The query is short, so validation and rate limiting are overhead." | `handleNLQ` runs `NLQRequestSchema` (1..`NLQ_MAX_QUERY_LENGTH`=500) and `checkRateLimit` before parsing; dropping them removes the 429 path. |
+| "Send every query through the AI enhancer, it is simpler." | The rule classifier resolves simple queries in <50ms; the AI path is reserved for complex queries because it adds latency and token cost. |
+| "Keep the raw query text so debugging is easy." | `recordNlqCompliance` stores a content hash plus intent and entity counts; the raw text is never persisted. |
+| "Build the SQL by interpolating the query string." | `buildStructuredQuery` emits SQL against D1 FTS5; hand-built SQL from user text is an injection surface. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A new `/api/nlq/...` path added that the router in `worker/routes/nlq/index.ts` does not dispatch.
+- [ ] Query text used before it passes `parseQuery` / `NLQRequestSchema`.
+- [ ] Intent or entity behavior changed without adding cases to `evals/evals.json`.
+- [ ] Raw query text written to logs or D1 in place of the hashed compliance record.
+- [ ] AI enhancement called on every request, bypassing the rule-classifier fast path.

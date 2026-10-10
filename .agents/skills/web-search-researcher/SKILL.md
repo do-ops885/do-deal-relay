@@ -208,14 +208,15 @@ Analyze, Search strategically, Fetch authoritative, Synthesize with attribution.
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "My pretrained knowledge already answers this." | The skill opens by requiring the `<env>` date and the current year in every query; Cloudflare/MCP behavior shifts between compatibility dates, and `worker/config.ts` pins `SCHEMA_VERSION`, so recalled facts drift from the pinned baseline. |
+| "The first hit answered the question, so I can stop." | The Round 1/2 rule halts only on official docs or consensus; stopping early is how an uncorroborated claim enters, and `worker/lib/research-agent/orchestrator/circuit-breaker.ts` trips after 5 failures because sources do go bad. |
+| "Quotes and links are nice-to-have." | Findings must carry links and publication dates; `RESEARCH_MIN_CONFIDENCE` (0.3) only means something when a claim can be traced and scored. |
+| "Fetching pages is slow, so I will synthesize from snippets." | The workflow fetches 3-5 sources; search snippets strip the version qualifiers and dates that decide relevance. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Queries issued without the year taken from `<env>`.
+- [ ] A conclusion drawn from a single result with no official-doc or cross-reference check.
+- [ ] Findings reported with no link or publication date attached.
+- [ ] Repeated fetches pushed past the per-domain limits in `worker/lib/research-agent/rate-limiter.ts` instead of backing off when the circuit opens.
+- [ ] Round 1 used for a decision that changes a threshold in `worker/config.ts`.

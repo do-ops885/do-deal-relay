@@ -201,17 +201,20 @@ skill self-learning-feedback score_output agents-update/SKILL.md
 - [Verification Scripts](scripts/) - Ready-to-use verification tools
 - [Lesson Database](references/lessons.json) - Captured errors and fixes
 - [ANALYSIS SWARM Pattern](references/analysis-swarm.md) - 3-persona methodology
+
 ## Rationalizations
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Status: Complete" is already written down, so re-verifying it just burns cycles. | The RYAN verify phase exists because agents-docs/LESSONS.md LESSON-023 recorded features marked missing that had already shipped; verify_status_accuracy.sh flags a "Complete" label that still has unchecked boxes. |
+| Noise and clarity are subjective, so scoring short docs adds nothing. | FLASH weights Noise at 25% and Clarity at 20% of the 0-100 score; anything under 90 is meant to trigger suggest_fixes.sh, so skipping the score lets fluff pass the gate. |
+| Version strings are cosmetic; the frontmatter can lag the VERSION file. | verify_version_consistency.sh --fix is bundled precisely for this drift, and a stale version claim in a SKILL.md is the cheapest defect to catch at commit time. |
+| Lessons live in my head; writing them to references/lessons.jsonl is busywork. | The SOCRATES learn phase turns each failure into a queryable record, and references/lessons.jsonl plus agents-docs/LESSONS.md are what later runs read back. |
 
 ## Red Flags
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+
+- [ ] A "Status: Complete" or "Implemented" claim is committed with no file path or command output attached as evidence.
+- [ ] An output ships with no 0-100 score, or scores below 80 with no suggest_fixes.sh run.
+- [ ] A version string is quoted in docs without verify_version_consistency.sh being run against the VERSION file.
+- [ ] An error is corrected but no lesson is appended to references/lessons.jsonl or agents-docs/LESSONS.md.
+- [ ] A section still carrying unchecked `[ ]` items is left labeled complete.

@@ -236,14 +236,14 @@ grep -c "## " AGENTS.md  # Should have fewer sections
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "AGENTS.md is only a few lines over 140, so a light trim is enough." | Trimming words deletes detail with no destination. The Core Rule sends full instructions to `agents-docs/`, and the Section Mapping names the exact target per section. |
+| "That section is rarely read, so deleting it is safe." | Content Preservation Rules forbid delete-without-move: every code block, table, and example must land in its mapped `agents-docs/` file. |
+| "I can migrate every section in one pass and skip the checks." | Workflow step 4 requires `wc -l AGENTS.md` <= 140 plus a cross-reference grep; dangling `../AGENTS.md` links surface only when checked. |
+| "A link to `references/section-mapping.md` is close enough." | Link only destinations that exist under `agents-docs/`; an unreachable target breaks the hub instead of extending it. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] AGENTS.md shortened by rewording instead of moving sections to `agents-docs/`.
+- [ ] A migrated section has no destination file in the Section Mapping.
+- [ ] `wc -l AGENTS.md` still exceeds 140 after the pass.
+- [ ] Cross-references under `agents-docs/` point at anchors that no longer exist.

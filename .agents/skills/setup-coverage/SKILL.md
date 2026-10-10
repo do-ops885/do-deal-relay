@@ -9,6 +9,8 @@ metadata:
 
 # Setup Coverage
 
+> **Upstream:** codacy/codacy-skills. Upload needs `CODACY_PROJECT_TOKEN` (or `CODACY_API_TOKEN`) as a CI secret and the repository added to Codacy.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 This skill sets up test coverage reporting in a repository and configures automatic upload to Codacy. It detects what exists, identifies what is missing, and fills the gaps.
@@ -131,13 +133,17 @@ Common issues and their solutions:
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
+| Concern | Counter-Argument |
+|---------|------------------|
+| "Coverage is generated, so the setup is done." | A report that is never uploaded leaves Codacy with no data; Step 5 adds the upload, and it must run on every push. |
+| "Coverage only matters on pull requests." | Codacy compares the PR head commit against the common ancestor, so both need data — run the job on all branches. |
+| "Absolute paths in the report are fine." | Paths must be relative to the repository root or Codacy holds the report at Pending. |
+| "Commit the token so CI can upload." | `CODACY_PROJECT_TOKEN` belongs in CI secrets; the workflow references it and never writes it to a tracked file. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
-
+- [ ] A second coverage run is added although `.github/workflows/ci.yml` already produces `coverage-unit/lcov.info`.
+- [ ] The Codacy upload step is wired without a `CODACY_PROJECT_TOKEN` or `CODACY_API_TOKEN` CI secret.
+- [ ] Coverage runs only on `main` or only on pull requests, leaving the common-ancestor commit without data.
+- [ ] The report is sent with `--partial` uploads and no closing `final`.
+- [ ] Report paths point outside the repo (for example `/home/runner/...`) instead of starting at the repo root.

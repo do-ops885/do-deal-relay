@@ -204,14 +204,15 @@ See [templates/metrics.ts](templates/metrics.ts) and [examples/prometheus-export
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The feature works without a metric; I will instrument it later." | `worker/lib/metrics/core.ts` records a timing and result for every phase from `init` through `finalize`; an uninstrumented phase breaks the DORA rollup in `dora.ts`. |
+| "Metric names are cosmetic, I will inline the string." | `worker/lib/metrics/names.ts` is the single source of the `METRIC_*` constants; hardcoded names drift and silently orphan dashboards. |
+| "The default histogram buckets are good enough." | `prometheus.ts` sets `HISTOGRAM_BUCKETS_SECONDS` to SLO-aligned bounds; arbitrary buckets lose the p95/p99 resolution those SLOs are checked against. |
+| "One extra label value will not hurt." | Each distinct label combination is a separate time series; the skill caps label values near 100 to keep the `/metrics` export bounded. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A new label added without checking its value cardinality against the <100 bound.
+- [ ] A metric name that ignores the snake_case plus unit convention (a bare `duration` instead of `duration_seconds`).
+- [ ] A counter that is reset or decremented instead of monotonically incremented.
+- [ ] A new metric emitted without a matching `# HELP` / `# TYPE` line in the `prometheus.ts` exporter.
+- [ ] Label values interpolated raw instead of passed through `escapeLabelValue`.

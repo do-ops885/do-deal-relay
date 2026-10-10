@@ -9,6 +9,8 @@ metadata:
 
 # Codacy Cloud CLI
 
+> **Upstream:** codacy/codacy-skills. Every command here needs a Codacy API token; without one, `codacy info` and all queries fail.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 The Codacy Cloud CLI (`codacy`) is the command-line interface for Codacy Cloud. Use it whenever the user wants to interact with remote Codacy data. This is a different tool from the Codacy Analysis CLI (`codacy-analysis`), which runs static analysis locally.
@@ -40,16 +42,20 @@ codacy info
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
-
+| Concern | Counter-Argument |
+|---------|------------------|
+| "Local analysis found nothing, so the Cloud query is unnecessary." | Local tools do not cover cloud-only tools; `codacy issues -O -o json` is the only source for those findings. |
+| "`codacy info` failed, so the CLI is broken." | A missing or expired `CODACY_API_TOKEN` fails the same way; run `codacy login` or re-export the token before concluding anything. |
+| "Every command needs provider, org, and repo spelled out." | Inside the repo the CLI auto-detects them from the git remote, so `codacy pull-request <prNumber>` runs bare. |
+| "Reanalysis finishes quickly, so poll it by hand." | `--reanalyze-and-wait` blocks until the run ends (up to 20 minutes); `--reanalyze` is fire-and-forget only when you will re-check. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
+- [ ] A coverage or pass/fail claim is made from local results the Cloud CLI never returned.
+- [ ] `codacy issues -O -o json` output is read as flat fields instead of the nested `.overview` structure.
+- [ ] `--ignore-issue` is used with no `--ignore-reason`.
+- [ ] A reanalysis is triggered without `--reanalyze-and-wait` and the old numbers are reported as current.
+- [ ] `~/.codacy/credentials` is edited by hand, or a second login is attempted for `codacy-analysis`.
 
 
 ## Reference

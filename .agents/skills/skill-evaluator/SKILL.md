@@ -156,14 +156,15 @@ PASS | NEEDS_WORK | FAIL — <one sentence>
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| The skill directory loads cleanly, so the verdict is PASS. | Structure check only proves wiring; the workflow requires a live run graded against assertions, and a run-less report can be no better than NEEDS_WORK. |
+| Assertions all passed, so a baseline run is wasted effort. | Without a no-skill or prior-snapshot run you cannot attribute the pass to the skill rather than the base model; step 4 is baseline comparison. |
+| scripts/check_structure.py came back green, so evals are fine. | That script only verifies folder layout and eval presence; malformed JSON or missing expected_output fields still require reading evals.json directly. |
+| One fuzzy assertion is acceptable if the rest are solid. | The assertion rules require every PASS/FAIL to carry evidence; a claim with no evidence path must be rewritten, not tolerated. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A PASS/FAIL verdict is issued with no live-run section, or structure is marked PASS while SKILL.md is missing.
+- [ ] evals/evals.json exists but is invalid JSON, or its cases omit id/prompt/expected_output.
+- [ ] Assertions are subjective ("looks polished") instead of directly checkable.
+- [ ] A pass or fail line is reported with no evidence behind it.
+- [ ] A nested duplicate folder such as skill-name/skill-name/, or an evals/ dir with no evals.json, is left unflagged.

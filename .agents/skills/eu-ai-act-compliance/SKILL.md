@@ -50,18 +50,18 @@ await logger.logOperation({
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
+| "The worker already emits structured logs, so Article 12 record-keeping is handled." | Runtime logging is not the compliance record; `worker/lib/eu-ai-act-logger.ts` writes the operation, input digest, output, and oversight fields into `ai_act_logs` with a 180-day retention window. |
+| "Only a hash of the input is stored, so there is nothing else to record." | `hashInputData` exists so Article 12.3 can capture `input_source` and `input_description` alongside the digest; the hash replaces raw text, not the log entry. |
+| "The model returned 0.85 confidence, which counts as the human decision." | Article 14 oversight is a separate `humanOversight` record with `reviewerId`, `reviewerRole`, and a decision; a confidence score is not a reviewer. |
+| "The system is limited_risk, so only Article 50 transparency applies." | `createComplianceLogger` defaults to `limited_risk` and still writes Article 12 logs; high_risk adds Articles 9-11, it does not remove record-keeping. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] An operation that changes deal state reaches `worker/lib/eu-ai-act-logger.ts` with `humanOversight` omitted.
+- [ ] `retentionDays` is set below the 180-day default that Article 19 requires.
+- [ ] A raw prompt, email body, or API payload is written into `ai_act_logs` instead of a `hashInputData` digest.
+- [ ] `riskClassification` is lowered to `limited_risk` to avoid the high_risk Articles 9-11 documentation.
+- [ ] `cleanupExpiredLogs()` removes rows whose `retention_until` has not passed.
 
 ## Reference
 
