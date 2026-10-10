@@ -142,6 +142,16 @@ describe("Enhanced Config Validation", () => {
       expect(() =>
         parseBoundedIntegerConfig("TEST_VAR", "abc", 10, 0, 100),
       ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "+100", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "100.00", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+    });
+
+    it("should correctly parse octal-like zero-padded decimal integers", () => {
+      expect(parseBoundedIntegerConfig("TEST_VAR", "088", 10, 0, 100)).toBe(88);
     });
 
     it("should throw when value is out of bounds", () => {

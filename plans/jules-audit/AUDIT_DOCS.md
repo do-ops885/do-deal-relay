@@ -1,11 +1,11 @@
-# Track D — Documentation — 2026-10-04
+# Documentation Audit — 2026-10-08
 
-## Audit Summary
-Reviewed exported functions and interfaces in `worker/lib/config-utils.ts` for JSDoc documentation compliance.
+## Missing / Incomplete JSDoc Comments Identified
+1. `worker/lib/config-utils.ts`:
+   - `REQUIRED_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
+   - `BUDGET_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
+   - `parseBoundedIntegerConfig`: Update JSDoc to document boundary and non-decimal integer throw behavior.
+   - `getTrustThreshold`: Update JSDoc to explicitly mention fallback and clamping behavior.
 
-## Missing or Incomplete Doc Comments
-- `getTrustThreshold`: JSDoc return description can explicitly clarify that the returned threshold is clamped within `[MIN_TRUST_THRESHOLD_BOUND, MAX_TRUST_THRESHOLD_BOUND]`.
-- `validateConfig`: Ensure `@param`, `@returns`, and `@throws` JSDoc tags strictly follow standard TypeScript JSDoc conventions.
-
-## Action Plan
-Update JSDoc annotations for `getTrustThreshold` and `validateConfig` in `worker/lib/config-utils.ts`.
+## Planned Action
+Add/update comprehensive JSDoc annotations for exported constants and functions in `worker/lib/config-utils.ts`.
