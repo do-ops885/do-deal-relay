@@ -233,14 +233,15 @@ bash scripts/check-quality.sh
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| ShellCheck complaints are style-only; the script already runs on my machine. | SC2086 unquoted expansion breaks on the path arguments this repo's scripts/*.sh accept, and the skill documents an `enable=all` `.shellcheckrc` rather than a curated subset. |
+| A BATS file is overkill for a tiny helper function. | The validation loop pairs shellcheck with bats tests/script.bats, and without a BASH_SOURCE guard the script cannot be sourced by BATS setup() to test the function. |
+| I'll silence the warning with a `# shellcheck disable=` comment. | Disables belong only on documented false positives such as SC1090 dynamic source; blanket-disabling hides real SC2155 faults where `local x=$(cmd)` discards the exit status. |
+| Linting one file is faster than walking the tree. | `shellcheck -x` with source-path=SCRIPTDIR follows source directives, so a single-file pass misses breakage that only appears when the whole scripts/ tree is linted together. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A changed or new scripts/*.sh file is committed without `shellcheck -x` having been run on it.
+- [ ] `set -euo pipefail` is absent, or a `# shellcheck disable=` was added with no false-positive justification.
+- [ ] A script meant to be tested has no BASH_SOURCE/`$0` main guard, so BATS cannot source it.
+- [ ] BATS assertions check only `$status` and never assert on `$output`.
+- [ ] The `enable=all` setting in .shellcheckrc is bypassed per invocation instead of fixing the reported issue.

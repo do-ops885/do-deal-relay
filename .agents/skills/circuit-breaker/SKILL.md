@@ -180,14 +180,15 @@ See [templates/breaker.ts](templates/breaker.ts) and [examples/api-protection.ts
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The upstream has been healthy for months, so a breaker is unnecessary." | OPEN exists for the first cascade; `failureThreshold: 5` trips before a stalled dependency backs up callers. |
+| "Retries alone absorb failures." | Every outbound call already routes through `validatedFetch` in `worker/lib/security.ts`; wrap that site so bounded backoff sits behind an OPEN circuit. |
+| "Returning an empty result is an acceptable fallback." | With Fallback must return a real degraded path (`fetchBackupAPI`), and `on('open')` must raise an alert rather than swallow the transition. |
+| "One breaker can guard every downstream call." | Multi-Circuit Setup registers separate circuits for `api` and `db` so a slow database cannot trip the payment path. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Outbound calls sit in retry loops with no failure threshold or OPEN state.
+- [ ] Fallback returns empty success instead of a documented degraded response.
+- [ ] `on('open')` has no alert hook, so trips stay invisible.
+- [ ] Every dependency shares one breaker with a single threshold.
+- [ ] Calls to a known-failing host keep firing while the circuit is OPEN.

@@ -56,7 +56,7 @@ Free-tier safe (migration writes are hundreds of rows against the
    /tmp/prod-backup-<date>.sql`. Verify table list in the dump. Never
    commit backups.
 2. **Dump runtime SQL**: import `MIGRATIONS` from
-   `worker/lib/d1/migrations/schema.ts` (tsx works) to one file per
+   `worker/lib/d1/migrations/schema-part-*.ts` (tsx works) to one file per
    version. Review every file for `DROP`/`ALTER`/`INSERT...SELECT`.
 3. **Compatibility check per version** against live remote schema:
    `sqlite_master` DDL + row counts. Empty sources make copy-step

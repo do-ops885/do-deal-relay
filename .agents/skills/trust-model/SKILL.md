@@ -166,14 +166,15 @@ See [templates/scoring.ts](templates/scoring.ts) and [examples/source-ranking.ts
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "One deal's score cannot move a source's trust much." | Each validated deal adjusts trust by `CONFIG.TRUST_ADJUSTMENT` (+0.1 success / -0.2 failure); two failures push a 0.6 source under `CONFIG.MIN_TRUST_SCORE` (0.3) and the trust gate drops its entire feed. |
+| "Trust is a fixed per-domain constant I can hardcode." | `worker/lib/d1/trust.ts` evolves trust atomically via a D1 batch; a hardcoded value reintroduces the KV read-modify-write race that ADR-017 removed. |
+| "Confidence and trust measure the same thing, so I will reuse one score." | `worker/lib/ranking.ts` keeps `confidence` and `trust` as separate breakdown factors in `calculateDetailedScore`; merging them double-counts source reputation in the composite rank. |
+| "I only need the numeric score, not the classification band." | `CONFIG.TRUST_BOUNDS` maps score ranges to trusted/probationary/unverified/blocked; reading the raw float skips the blocked (<0.2) risk path. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Source trust persisted with a KV read-modify-write instead of the D1 batch in `worker/lib/d1/trust.ts`.
+- [ ] A gate or ranking branch comparing `trust_score` to a literal instead of `getTrustThreshold(env)`.
+- [ ] Adjustment magnitudes edited without updating `CONFIG.TRUST_ADJUSTMENT` / `CONFIG.TRUST_BOUNDS`.
+- [ ] A brand-new domain classified as trusted with no provenance or verification record.
+- [ ] `trust_score` left undefined or defaulted to 1.0 for a source with no history.

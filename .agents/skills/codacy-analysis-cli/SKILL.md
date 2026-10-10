@@ -9,6 +9,8 @@ metadata:
 
 # Codacy Analysis CLI
 
+> **Upstream:** codacy/codacy-skills. Analysis runs on this machine; results can differ from Codacy Cloud, and a tool is only usable when its runtime (Docker, Node, Python) is present.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 The Codacy Analysis CLI (`codacy-analysis`) runs static analysis locally on a repository. It detects languages, selects tools, and reports issues — without pushing code to Codacy. This is a different tool from the Codacy Cloud CLI (`codacy`), which queries remote Codacy data.
@@ -50,16 +52,20 @@ codacy-analysis logout
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
-
+| Concern | Counter-Argument |
+|---------|------------------|
+| "`tsc` and `prettier` already pass, so local Codacy analysis adds nothing." | `codacy-analysis analyze` runs ESLint9, Semgrep, Ruff and the other tools in `.codacy/codacy.config.json`; `npm run lint` only type-checks and formats. |
+| "Analysis is slow, so run it once over the whole tree at the end." | `--pr`, `--diff`, and `--staged` scope the run to changed files; use them instead of a full-tree pass. |
+| "A non-zero exit means the repo has bugs." | Exit 2 is an execution error (missing dependency or tool crash); `--inspect` and `--fail-if-missing` separate setup failures from real issues. |
+| "The text output is fine to read directly." | Agent workflows must pass `--output-format json` and parse `.issues` and `.toolResults`; text output has no stable shape. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
+- [ ] A tool missing from `codacy-analysis analyze --inspect --output-format json` is treated as a clean result.
+- [ ] The whole repository is analyzed when `--pr` or `--diff` would cover the change.
+- [ ] `update-config` is run on a config that was hand-edited after a bare `init`.
+- [ ] Exit 1 (issues found) and exit 2 (execution error) are reported the same way.
+- [ ] `exclude_paths` in `.codacy.yml` are ignored, so `migrations/**` and test fixtures get re-flagged.
 
 
 ## Reference

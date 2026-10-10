@@ -148,14 +148,15 @@ Good decomposition enables optimal execution, clear validation, and higher quali
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The goal is obvious, so I'll start editing and assemble the task list as I go." | A change spanning `worker/validation/pipeline.ts` and `worker/lib/ranking.ts` carries ordering constraints; without named atomic tasks and dependency edges the gate sequence is guesswork. |
+| "One broad task is easier to track than seven small ones." | `plans/SPEC_TEMPLATE.md` and the GOAP phases require single-owner, independently verifiable units; a task that edits both `worker/config.ts` and `worker/routes/webhooks/` cannot be verified on its own. |
+| "Dependencies will surface naturally while executing." | Gates in `worker/validation/pipeline.ts` run in a fixed order (schema, trust, price, freshness); mis-sequenced decomposition reproduces the very ordering defect the pipeline prevents. |
+| "Estimates are bookkeeping and do not change the work." | The Low/Medium/High bands decide whether a unit is atomic or must be split again; skipping them leaves a >4h task that stalls the swarm. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Sub-tasks named after files ("edit pipeline.ts") instead of a single verifiable outcome with declared inputs and outputs.
+- [ ] No dependency edge recorded between tasks that both mutate `worker/config.ts` or the same validation gate.
+- [ ] A unit whose completion cannot be demonstrated by a test or a `scripts/quality_gate.sh` run.
+- [ ] Every task marked P0, with no P1/P2 triage against the skill's priority bands.
+- [ ] Decomposition that omits a testing or docs task for a change touching `worker/validation/`.

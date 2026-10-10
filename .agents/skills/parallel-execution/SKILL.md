@@ -206,14 +206,15 @@ Parallel execution maximizes efficiency through concurrent execution, independen
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Two agents editing different SKILL.md files cannot clash." | They clash if either also writes `agents-docs/coordination/state.json` or `handoff-log.jsonl`, which are single-writer files. |
+| "I will spawn the agents one after another." | Concurrency requires one message carrying all Task calls; separate messages serialize the work. |
+| "Independence is obvious, no file check needed." | `scripts/pre-commit-hook.sh` regenerates `evals.json` and stages it; two parallel commits then race on the same git index. |
+| "Collect whatever finishes first." | Pick AND, OR, or threshold up front; an undeclared strategy silently drops a failed sibling. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Two parallel tasks target the same file or the same coordination ledger.
+- [ ] Task calls emitted across separate messages instead of one batch.
+- [ ] A "parallel" task consumes the output of a sibling (hidden dependency).
+- [ ] Concurrent commits each trigger evals.json regeneration on the shared index.
+- [ ] Aggregation starts while a sibling task is still running.
