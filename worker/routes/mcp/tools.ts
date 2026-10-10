@@ -5,6 +5,7 @@
  */
 
 import type { Env } from "../../types";
+import type { AuthResult } from "../../lib/auth";
 import {
   type ToolsListResult,
   type ToolCallResult,
@@ -15,6 +16,7 @@ import { paginateList } from "../../lib/mcp/pagination";
 import { type ProgressNotification } from "../../lib/mcp/utils";
 import {
   createProgressTracker,
+  addToIndex,
   type ProgressTracker,
 } from "../../lib/mcp/progress";
 
@@ -73,6 +75,7 @@ export async function handleToolCall(
   params: ToolCallParams,
   env: Env,
   request: Request,
+  auth?: AuthResult,
 ): Promise<ToolCallResult> {
   const { name, arguments: args = {}, _meta } = params;
 
@@ -84,7 +87,11 @@ export async function handleToolCall(
   const progressToken = _meta?.progressToken;
   const activeProgress: ActiveProgressTracking | null = progressToken
     ? {
-        tracker: createProgressTracker(String(progressToken), env),
+        tracker: createProgressTracker(
+          String(progressToken),
+          env,
+          auth?.userId,
+        ),
         token: progressToken,
       }
     : null;
@@ -93,9 +100,12 @@ export async function handleToolCall(
     await activeProgress.tracker
       .updateProgress(0, 1, `Starting tool: ${name}`)
       .catch(() => {});
+    await addToIndex(env, String(progressToken), name, auth?.userId).catch(
+      () => {},
+    );
   }
 
-  const result = await executeTool(name, args, env, request);
+  const result = await executeTool(name, args, env, request, auth);
 
   if (!activeProgress) return result;
 
