@@ -1,13 +1,60 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Skill Rules Configuration",
-  "description": "Defines trigger rules for automatic skill activation based on keywords, patterns, and file paths.",
+  "version": 2,
+  "description": "Trigger rules for skill activation. Every entry must name a directory in .agents/skills/; validated by scripts/skill-eval-check.sh.",
   "rules": [
+    {
+      "skill": "do-deal-relay",
+      "triggers": {
+        "keywords": [
+          "deal",
+          "deals",
+          "referral",
+          "referral code",
+          "mcp",
+          "deal discovery"
+        ],
+        "files": ["worker/routes/referrals*.ts", "worker/routes/mcp/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "validation-gates",
+      "triggers": {
+        "keywords": ["validation", "gate", "validation gate", "pipeline"],
+        "files": ["worker/validation/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "pre-commit",
+      "triggers": {
+        "keywords": ["commit", "hook", "pre-commit", "husky", "commitlint"],
+        "files": [".pre-commit-config.yaml", ".husky/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "guard-rails",
+      "triggers": {
+        "keywords": [
+          "guard rail",
+          "guard-rail",
+          "bypass",
+          "no-verify",
+          "secret scan"
+        ],
+        "files": ["worker/lib/guard-rails.ts"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
     {
       "skill": "shell-script-quality",
       "triggers": {
         "keywords": ["shell", "bash", "script", "shellcheck", "bats"],
-        "patterns": ["\\.sh$", "^(#!.*bash)", "^(#!.*sh)"],
         "files": ["**/*.sh", "scripts/**/*"]
       },
       "priority": "high",
@@ -23,51 +70,279 @@
           "steps",
           "phases",
           "milestone"
-        ],
-        "patterns": ["plan.*", "step.*", "phase.*"],
-        "files": []
+        ]
       },
       "priority": "high",
       "autoActivate": true
     },
     {
-      "skill": "code-quality",
+      "skill": "refcli",
+      "triggers": {
+        "keywords": ["referral", "referral code", "refcli"],
+        "files": ["scripts/refcli.ts"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "console-to-logger",
+      "triggers": {
+        "keywords": ["console.log", "console.error", "replace console"],
+        "files": ["worker/**/*.ts"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "d1-ops",
+      "triggers": {
+        "keywords": ["d1", "migration", "sql", "database", "wrangler d1"],
+        "files": ["migrations/**/*", "worker/lib/d1/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "skill-creator",
+      "triggers": {
+        "keywords": ["skill", "create skill", "improve skill"],
+        "files": [".agents/skills/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "skill-evaluator",
+      "triggers": {
+        "keywords": ["eval", "evaluate skill", "benchmark", "assertions"],
+        "files": [".agents/skills/**/evals/**/*"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "pr-resolver",
       "triggers": {
         "keywords": [
-          "review",
-          "quality",
-          "refactor",
-          "clean code",
-          "best practice"
+          "pull request",
+          "pr review",
+          "ci failure",
+          "merge conflict"
+        ]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "agents-update",
+      "triggers": {
+        "keywords": ["agents.md", "agent docs", "agent policy"],
+        "files": ["AGENTS.md"]
+      },
+      "priority": "high",
+      "autoActivate": true
+    },
+    {
+      "skill": "webhook-system",
+      "triggers": {
+        "keywords": ["webhook", "hmac", "signature", "delivery retry"],
+        "files": ["worker/routes/webhooks/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "structured-logging",
+      "triggers": {
+        "keywords": ["log", "logging", "correlation id", "trace", "logger"],
+        "files": ["worker/lib/logger/**/*", "worker/lib/global-logger.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "error-sanitization",
+      "triggers": {
+        "keywords": ["error", "sanitize", "throw", "catch"],
+        "files": ["worker/lib/errors.ts", "worker/lib/error-handler.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "typescript-coding-standards",
+      "triggers": {
+        "keywords": ["typescript", "type safety", "strict mode", "interface"],
+        "files": ["**/*.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "privacy-first",
+      "triggers": {
+        "keywords": ["email", "pii", "personal data", "privacy", "redact"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "context-hygiene",
+      "triggers": {
+        "keywords": ["context window", "token budget", "compact"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "self-learning-feedback",
+      "triggers": {
+        "keywords": ["feedback", "lesson learned", "metrics jsonl"],
+        "files": [".agents/metrics/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "agentic-abstention",
+      "triggers": {
+        "keywords": ["abstain", "abstention", "infeasible", "cannot proceed"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "agent-coordination",
+      "triggers": {
+        "keywords": ["coordinate agents", "handoff", "swarm"],
+        "files": ["agents-docs/coordination/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": true
+    },
+    {
+      "skill": "cloudflare",
+      "triggers": {
+        "keywords": [
+          "cloudflare",
+          "worker",
+          "kv",
+          "r2",
+          "vectorize",
+          "wrangler"
         ],
-        "patterns": ["review.*", "quality.*", "refactor.*"],
-        "files": ["**/*.rs", "**/*.ts", "**/*.js", "**/*.py", "**/*.go"]
+        "files": ["wrangler.jsonc"]
       },
       "priority": "medium",
       "autoActivate": false
     },
     {
-      "skill": "test-runner",
+      "skill": "durable-objects",
       "triggers": {
         "keywords": [
-          "test",
-          "spec",
-          "coverage",
-          "unit test",
-          "integration test"
+          "durable object",
+          "durable objects",
+          "alarm",
+          "do storage"
         ],
-        "patterns": ["test.*", "spec.*", ".*_test\\.", ".*\\.test\\."],
-        "files": ["**/tests/**/*", "**/*.test.*", "**/*_test.*"]
+        "files": ["worker/durable-objects/**/*"]
       },
-      "priority": "high",
-      "autoActivate": true
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "crypto-utils",
+      "triggers": {
+        "keywords": ["hash", "hmac", "sign", "encrypt", "constant-time"],
+        "files": ["worker/lib/crypto.ts", "worker/lib/hmac.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "metrics-pipeline",
+      "triggers": {
+        "keywords": ["metrics", "prometheus", "dora"],
+        "files": ["worker/lib/metrics/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "codacy-code-review",
+      "triggers": {
+        "keywords": ["codacy", "code review", "coverage", "duplication"],
+        "files": [".codacy.yml", ".codacy/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "nlq",
+      "triggers": {
+        "keywords": ["nlq", "natural language query", "query deals"],
+        "files": ["worker/routes/nlq/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "trust-model",
+      "triggers": {
+        "keywords": ["trust", "trust score", "source ranking", "reliability"],
+        "files": ["worker/lib/ranking.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "expiration-manager",
+      "triggers": {
+        "keywords": ["expiry", "expiration", "expires at", "ttl"],
+        "files": ["worker/lib/expiration/**/*"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "distributed-locking",
+      "triggers": {
+        "keywords": ["lock", "mutex", "race condition"],
+        "files": ["worker/lib/lock.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "circuit-breaker",
+      "triggers": {
+        "keywords": ["circuit breaker", "backoff", "upstream failure"],
+        "files": ["worker/lib/circuit-breaker.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "stateful-pipeline",
+      "triggers": {
+        "keywords": ["pipeline", "state machine", "rollback"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "eu-ai-act-compliance",
+      "triggers": {
+        "keywords": ["eu ai act", "compliance", "audit log", "retention"],
+        "files": ["worker/lib/eu-ai-act-logger.ts"]
+      },
+      "priority": "medium",
+      "autoActivate": false
     },
     {
       "skill": "parallel-execution",
       "triggers": {
-        "keywords": ["parallel", "concurrent", "simultaneous", "batch"],
-        "patterns": ["parallel.*", "concurrent.*"],
-        "files": []
+        "keywords": ["parallel", "concurrent", "simultaneous", "batch"]
       },
       "priority": "medium",
       "autoActivate": false
@@ -75,9 +350,31 @@
     {
       "skill": "iterative-refinement",
       "triggers": {
-        "keywords": ["iterate", "refine", "improve", "loop", "progressive"],
-        "patterns": ["iterate.*", "refine.*", "improve.*"],
-        "files": []
+        "keywords": ["iterate", "refine", "improve", "progressive"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "multi-agent-orchestration",
+      "triggers": {
+        "keywords": ["orchestrate", "supervisor", "worker role", "swarm"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "goap-agent",
+      "triggers": {
+        "keywords": ["goap", "goal oriented", "multi-step execution"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "pev-loop",
+      "triggers": {
+        "keywords": ["pev", "plan execute verify", "verification loop"]
       },
       "priority": "medium",
       "autoActivate": false
@@ -85,15 +382,156 @@
     {
       "skill": "web-search-researcher",
       "triggers": {
+        "keywords": ["search", "research", "look up", "documentation"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "anti-ai-slop",
+      "triggers": {
+        "keywords": ["copy review", "ux writing", "generic ai", "ai slop"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "github-readme",
+      "triggers": {
+        "keywords": ["readme", "project documentation"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "setup-coverage",
+      "triggers": {
+        "keywords": ["coverage", "codecov", "coverage report"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "web-perf",
+      "triggers": {
         "keywords": [
-          "search",
-          "research",
-          "find information",
-          "look up",
-          "documentation"
-        ],
-        "patterns": ["search.*", "research.*", "find.*"],
-        "files": []
+          "performance",
+          "lighthouse",
+          "core web vitals",
+          "bundle size"
+        ]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "agent-browser",
+      "triggers": {
+        "keywords": ["browser", "playwright", "screenshot", "scrape"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "jules-usage",
+      "triggers": {
+        "keywords": ["jules", "long running task", "jules session"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "codeberg-api",
+      "triggers": {
+        "keywords": ["codeberg", "forgejo", "gitea"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "reddit-engagement",
+      "triggers": {
+        "keywords": ["reddit", "community post"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "architecture-diagram",
+      "triggers": {
+        "keywords": ["architecture diagram", "svg diagram"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "building-mcp-server-on-cloudflare",
+      "triggers": {
+        "keywords": ["mcp server", "model context protocol"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "agents-sdk",
+      "triggers": {
+        "keywords": ["agents sdk", "agent worker"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "sandbox-sdk",
+      "triggers": {
+        "keywords": ["sandbox", "code execution sandbox"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "cloudflare-email-service",
+      "triggers": {
+        "keywords": ["email sending", "email routing", "transactional email"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "turnstile-spin",
+      "triggers": {
+        "keywords": ["turnstile", "captcha", "siteverify"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "codacy-analysis-cli",
+      "triggers": {
+        "keywords": ["codacy analysis", "local static analysis"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "codacy-cloud-cli",
+      "triggers": {
+        "keywords": ["codacy cloud", "codacy issues"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "configure-codacy",
+      "triggers": {
+        "keywords": ["codacy config", "codacy setup"]
+      },
+      "priority": "medium",
+      "autoActivate": false
+    },
+    {
+      "skill": "configure-codacy-cloud",
+      "triggers": {
+        "keywords": ["codacy cloud config"]
       },
       "priority": "medium",
       "autoActivate": false
