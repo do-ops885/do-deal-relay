@@ -1,16 +1,14 @@
-# Track A — Dependency Audit — 2026-10-04
+# Dependency Audit — 2026-10-08
 
-## Findings
+The following safe patch/minor upgrades were detected without API breaking changes:
 
 | Package | Current | Available | Risk | Upgrade Safe? |
 |---|---|---|---|---|
-| `@cloudflare/workers-types` | `5.20261002.1` | `5.20261004.1` | Low | Yes (patch update) |
-| `wrangler` | `4.146.0` | `4.147.0` | Low | Yes (minor update) |
+| `@cloudflare/workers-types` | `5.20261004.1` | `5.20261008.1` | Low | Yes (patch update) |
+| `js-yaml` | `5.4.2` | `5.4.3` | Low | Yes (patch update) |
+| `wrangler` | `4.147.0` | `4.148.0` | Low | Yes (minor/patch update) |
 
-## Deferred / Human Review Required
-- `vitest`: `4.1.11` -> `5.0.3` (Major version upgrade — human review required)
-- `@vitest/coverage-v8`: `4.1.11` -> `5.0.3` (Major version upgrade — human review required)
-- `miniflare`: `5.20261001.0-alpha` (Alpha pre-release — deferred per Cloudflare ecosystem lockstep policy)
-
-## Action Plan
-Upgrade `@cloudflare/workers-types` to `^5.20261004.1` and `wrangler` to `^4.147.0` in `package.json`.
+## Skipped / Human Review Required
+- `@cloudflare/vitest-pool-workers`: `0.22.0` -> `0.23.0` (evaluated; deferring to keep lockstep ecosystem release)
+- `vitest` / `@vitest/coverage-v8`: `4.1.11` -> `5.0.3` (major version upgrade)
+- `miniflare`: `4.20260730.0` -> `5.20261006.0-alpha` (alpha version)
