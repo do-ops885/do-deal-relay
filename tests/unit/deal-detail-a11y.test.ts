@@ -124,6 +124,10 @@ class MockElement {
       pattern = /<[^>]*class="[^"]*\bdeal-detail__copy\b[^"]*"[^>]*>/;
     } else if (selector === ".deal-detail__content") {
       pattern = /<[^>]*class="[^"]*\bdeal-detail__content\b[^"]*"[^>]*>/;
+    } else if (selector === ".deal-detail__empty-title") {
+      pattern = /<[^>]*class="[^"]*\bdeal-detail__empty-title\b[^"]*"[^>]*>/;
+    } else if (selector === ".error__title") {
+      pattern = /<[^>]*class="[^"]*\berror__title\b[^"]*"[^>]*>/;
     }
 
     if (pattern) {
@@ -387,5 +391,51 @@ describe("showDealDetail Accessibility & Attributes", () => {
     expect(titleEl).not.toBeNull();
     expect(titleEl?.getAttribute("tabindex")).toBe("-1");
     expect(titleEl?.focused).toBe(true);
+  });
+
+  it("should set tabindex='-1' and focus empty state title when deal is not found", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockResolvedValue(null),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("nonexistent-deal");
+
+    const dialog = createdDialogs[0];
+    const emptyTitle = dialog?.querySelector(
+      ".deal-detail__empty-title",
+    ) as unknown as MockElement;
+    expect(emptyTitle).not.toBeNull();
+    expect(emptyTitle?.getAttribute("tabindex")).toBe("-1");
+    expect(emptyTitle?.focused).toBe(true);
+  });
+
+  it("should set tabindex='-1' and focus error title when fetching deal fails", async () => {
+    const apiMock = {
+      getDeal: vi.fn().mockRejectedValue(new Error("Network Error")),
+    };
+
+    vi.doMock("../../public/js/api.js", () => ({
+      api: apiMock,
+    }));
+
+    const mod =
+      (await import("../../public/js/components/deal-detail.js")) as unknown as DealDetailMod;
+
+    await mod.showDealDetail("failed-deal");
+
+    const dialog = createdDialogs[0];
+    const errorTitle = dialog?.querySelector(
+      ".error__title",
+    ) as unknown as MockElement;
+    expect(errorTitle).not.toBeNull();
+    expect(errorTitle?.getAttribute("tabindex")).toBe("-1");
+    expect(errorTitle?.focused).toBe(true);
   });
 });
