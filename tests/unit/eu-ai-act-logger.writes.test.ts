@@ -4,6 +4,7 @@ import {
   type ComplianceConfig,
   type AIActLogEntry,
 } from "../../worker/lib/eu-ai-act-logger";
+import type { D1Database } from "@cloudflare/workers-types";
 
 vi.mock("../../worker/config", () => ({
   CONFIG: {
@@ -30,7 +31,7 @@ describe("EUAIActLogger", () => {
 
   const mockDb = {
     prepare: mockPrepare,
-  } as any;
+  } as unknown as D1Database;
 
   const defaultConfig: ComplianceConfig = {
     systemId: "test-system",
@@ -138,7 +139,10 @@ describe("EUAIActLogger", () => {
     });
 
     it("should use default systemId when entry.systemId is missing", async () => {
-      const entry = { ...baseEntry, systemId: undefined } as any;
+      const entry = {
+        ...baseEntry,
+        systemId: undefined,
+      } as unknown as AIActLogEntry;
       await logger.logOperation(entry);
 
       const bindings = mockBind.mock.calls[0] as unknown[];
@@ -146,7 +150,10 @@ describe("EUAIActLogger", () => {
     });
 
     it("should use default operationVersion when entry.operationVersion is missing", async () => {
-      const entry = { ...baseEntry, operationVersion: undefined } as any;
+      const entry = {
+        ...baseEntry,
+        operationVersion: undefined,
+      } as unknown as AIActLogEntry;
       await logger.logOperation(entry);
 
       const bindings = mockBind.mock.calls[0] as unknown[];

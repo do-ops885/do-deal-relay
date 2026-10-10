@@ -10,9 +10,10 @@ import {
   resetAllCacheMetrics,
 } from "../../worker/lib/cache";
 import type { Env } from "../../worker/types";
+import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 
 describe("KVCache", () => {
-  let mockKv: any;
+  let mockKv: KVNamespace;
   let cache: KVCache;
 
   beforeEach(() => {
@@ -46,7 +47,7 @@ describe("KVCache", () => {
         }
         return { keys };
       }),
-    };
+    } as unknown as KVNamespace;
 
     // Create cache instance with 5 minute default TTL
     cache = new KVCache(mockKv, 300, "test");
@@ -300,6 +301,7 @@ describe("KVCache", () => {
       await cache.set(key, value);
 
       const putCall = vi.mocked(mockKv.put).mock.calls[0];
+      if (putCall === undefined) throw new Error("expected put call");
       const storedJson = putCall[1] as string;
       const parsed = JSON.parse(storedJson) as CacheEntry<typeof value>;
 
@@ -345,7 +347,7 @@ describe("KVCache", () => {
   // ============================================================================
 
   describe("factory functions", () => {
-    const makeEnv = (kv: any, extra?: Record<string, unknown>): Env =>
+    const makeEnv = (kv: KVNamespace, extra?: Record<string, unknown>): Env =>
       ({
         DEALS_SOURCES: kv,
         DEALS_PROD: kv,
@@ -356,13 +358,18 @@ describe("KVCache", () => {
         WEBHOOK_SECRET: "test-secret",
         API_ENCRYPTION_KEY: "test-key",
         EMAIL_WEBHOOK_SECRET: "test-email-secret",
-        DEALS_DB: {} as any,
+        DEALS_DB: {} as unknown as D1Database,
         TRUST_THRESHOLD: "0.3",
         ...extra,
       }) as unknown as Env;
 
     it("should create source cache with correct config", () => {
-      const kv = { get: vi.fn(), put: vi.fn(), delete: vi.fn(), list: vi.fn() };
+      const kv = {
+        get: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        list: vi.fn(),
+      } as unknown as KVNamespace;
       const sourceCache = createSourceCache(makeEnv(kv));
       expect(sourceCache).toBeInstanceOf(KVCache);
 
@@ -375,7 +382,12 @@ describe("KVCache", () => {
     });
 
     it("should create GitHub cache with correct config", () => {
-      const kv = { get: vi.fn(), put: vi.fn(), delete: vi.fn(), list: vi.fn() };
+      const kv = {
+        get: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        list: vi.fn(),
+      } as unknown as KVNamespace;
       const githubCache = createGitHubCache(makeEnv(kv));
       expect(githubCache).toBeInstanceOf(KVCache);
 
@@ -388,7 +400,12 @@ describe("KVCache", () => {
     });
 
     it("should create robots.txt cache with correct config", () => {
-      const kv = { get: vi.fn(), put: vi.fn(), delete: vi.fn(), list: vi.fn() };
+      const kv = {
+        get: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        list: vi.fn(),
+      } as unknown as KVNamespace;
       const robotsCache = createRobotsTxtCache(
         makeEnv(kv, { DEALS_LOCK: undefined }),
       );
@@ -403,7 +420,12 @@ describe("KVCache", () => {
     });
 
     it("should create snapshot cache with correct config", () => {
-      const kv = { get: vi.fn(), put: vi.fn(), delete: vi.fn(), list: vi.fn() };
+      const kv = {
+        get: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        list: vi.fn(),
+      } as unknown as KVNamespace;
       const snapshotCache = createSnapshotCache(makeEnv(kv));
       expect(snapshotCache).toBeInstanceOf(KVCache);
 
@@ -416,7 +438,12 @@ describe("KVCache", () => {
     });
 
     it("should create staging snapshot cache with correct config", () => {
-      const kv = { get: vi.fn(), put: vi.fn(), delete: vi.fn(), list: vi.fn() };
+      const kv = {
+        get: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+        list: vi.fn(),
+      } as unknown as KVNamespace;
       const stagingCache = createStagingSnapshotCache(makeEnv(kv));
       expect(stagingCache).toBeInstanceOf(KVCache);
 

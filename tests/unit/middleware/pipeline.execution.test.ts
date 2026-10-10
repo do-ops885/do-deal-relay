@@ -9,6 +9,11 @@ import { rateLimitMiddleware } from "../../../worker/lib/middleware/rate-limit";
 import type { RouteConfig } from "../../../worker/lib/middleware/types";
 import type { Env } from "../../../worker/types";
 
+// Single-key JSON getter signature of KVNamespace.get. vi.mocked() resolves
+// the overloaded KVNamespace.get to its last (bulk-key) overload, so narrow
+// to the signature these tests actually exercise before wrapping.
+type KvJsonGet = (key: string, type: "json") => Promise<unknown>;
+
 // ============================================================================
 // Test Helpers
 // ============================================================================
@@ -87,7 +92,9 @@ describe("Middleware Pipeline", () => {
     it("should pass through when no rate limit config and no default exists", async () => {
       const env = createMockEnv();
       // No rate limit state in KV → checkRateLimit allows the request
-      (env.DEALS_LOCK.get as any).mockResolvedValue(null);
+      vi.mocked(env.DEALS_LOCK.get as unknown as KvJsonGet).mockResolvedValue(
+        null,
+      );
 
       const config: RouteConfig = {
         method: "GET",
@@ -109,7 +116,9 @@ describe("Middleware Pipeline", () => {
 
     it("should enforce custom rate limits from route config", async () => {
       const env = createMockEnv();
-      (env.DEALS_LOCK.get as any).mockResolvedValue(null);
+      vi.mocked(env.DEALS_LOCK.get as unknown as KvJsonGet).mockResolvedValue(
+        null,
+      );
 
       const config: RouteConfig = {
         method: "POST",
@@ -136,7 +145,7 @@ describe("Middleware Pipeline", () => {
       // Simulate hitting the /api/submit default limit (maxRequests: 10)
       const now = Math.floor(Date.now() / 1000);
       const windowStart = Math.floor(now / 60) * 60;
-      (env.DEALS_LOCK.get as any).mockResolvedValue({
+      vi.mocked(env.DEALS_LOCK.get as unknown as KvJsonGet).mockResolvedValue({
         count: 10,
         windowStart,
       });
@@ -164,7 +173,9 @@ describe("Middleware Pipeline", () => {
 
     it("should fail open on KV errors", async () => {
       const env = createMockEnv();
-      (env.DEALS_LOCK.get as any).mockRejectedValue(new Error("KV failure"));
+      vi.mocked(env.DEALS_LOCK.get as unknown as KvJsonGet).mockRejectedValue(
+        new Error("KV failure"),
+      );
 
       const config: RouteConfig = {
         method: "GET",
@@ -283,7 +294,9 @@ describe("Middleware Pipeline", () => {
 
     it("should block non-admin for internal routes", async () => {
       const env = createMockEnv();
-      (env.WEBHOOK_API_KEYS!.get as any).mockResolvedValue(
+      vi.mocked(
+        env.WEBHOOK_API_KEYS!.get as unknown as KvJsonGet,
+      ).mockResolvedValue(
         JSON.stringify({
           userId: "user-1",
           role: "user",

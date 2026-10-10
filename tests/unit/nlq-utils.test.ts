@@ -6,6 +6,7 @@ import {
   ENDPOINT_PATH,
 } from "../../worker/routes/nlq/utils";
 import { CONFIG } from "../../worker/config";
+import type { Env } from "../../worker/types";
 
 describe("NLQ Utils", () => {
   describe("ENDPOINT_PATH", () => {
@@ -29,7 +30,7 @@ describe("NLQ Utils", () => {
 
   describe("getNLQLogger", () => {
     it("should return a logger with correct component and traceId", () => {
-      const env = { DEALS_LOG: { put: vi.fn() } } as any;
+      const env = { DEALS_LOG: { put: vi.fn() } } as unknown as Env;
       const traceId = "test-trace";
       const logger = getNLQLogger(env, traceId);
 

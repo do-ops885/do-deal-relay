@@ -7,6 +7,7 @@ import {
 import type { Deal } from "../../../worker/types/deal";
 import type { AlertSubscriptionRow } from "../../../worker/lib/d1/alert-subscriptions";
 import type { Env } from "../../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Alert Matcher and Notifier Unit Tests", () => {
   const sampleDeal: Deal = {
@@ -75,7 +76,7 @@ describe("Alert Matcher and Notifier Unit Tests", () => {
     vi.stubGlobal("fetch", mockFetch);
 
     const mockEnv = {
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       ENVIRONMENT: "test",

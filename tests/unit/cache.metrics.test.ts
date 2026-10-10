@@ -7,9 +7,10 @@ import {
   resetAllCaches,
 } from "../../worker/lib/cache";
 import type { Env } from "../../worker/types";
+import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 
 describe("KVCache", () => {
-  let mockKv: any;
+  let mockKv: KVNamespace;
   let cache: KVCache;
 
   beforeEach(() => {
@@ -43,7 +44,7 @@ describe("KVCache", () => {
         }
         return { keys };
       }),
-    };
+    } as unknown as KVNamespace;
 
     // Create cache instance with 5 minute default TTL
     cache = new KVCache(mockKv, 300, "test");
@@ -442,7 +443,7 @@ describe("KVCache", () => {
         WEBHOOK_SECRET: "test-secret",
         API_ENCRYPTION_KEY: "test-key",
         EMAIL_WEBHOOK_SECRET: "test-email-secret",
-        DEALS_DB: {} as any,
+        DEALS_DB: {} as unknown as D1Database,
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
@@ -476,11 +477,15 @@ describe("KVCache", () => {
         WEBHOOK_SECRET: "test-secret",
         API_ENCRYPTION_KEY: "test-key",
         EMAIL_WEBHOOK_SECRET: "test-email-secret",
-        DEALS_DB: {} as any,
+        DEALS_DB: {} as unknown as D1Database,
         TRUST_THRESHOLD: "0.3",
       } as unknown as Env;
 
-      const cache1 = new KVCache(mockKvProd as any, 30, "snapshot");
+      const cache1 = new KVCache(
+        mockKvProd as unknown as KVNamespace,
+        30,
+        "snapshot",
+      );
       await cache1.get("nonexistent"); // miss
 
       await resetAllCaches(env);

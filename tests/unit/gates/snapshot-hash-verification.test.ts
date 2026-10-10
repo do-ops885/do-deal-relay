@@ -14,7 +14,7 @@ describe("snapshot-hash-verification gate", () => {
     source: { domain: "example.com" },
     code: "CODE",
     reward: { type: "cash", value: 10 },
-  } as any;
+  } as unknown as Deal;
 
   it("should fail if critical fields are missing", async () => {
     const ctx = {} as PipelineContext;

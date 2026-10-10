@@ -5,28 +5,57 @@ import fs from "fs";
 import path from "path";
 import { load as yamlLoad, JSON_SCHEMA } from "js-yaml";
 
+interface DependabotGroup {
+  patterns: string[];
+}
+
+interface DependabotIgnoreEntry {
+  "dependency-name": string;
+  versions?: string[];
+}
+
+interface DependabotUpdateEntry {
+  "package-ecosystem": string;
+  groups: Record<string, DependabotGroup>;
+  ignore?: DependabotIgnoreEntry[];
+}
+
+interface DependabotConfig {
+  updates: DependabotUpdateEntry[];
+}
+
+interface ExecError {
+  status?: number | null;
+  stdout?: unknown;
+  stderr?: unknown;
+  message?: unknown;
+}
+
 describe("Dependabot Patterns and Wildcards", () => {
   const content = fs.readFileSync(".github/dependabot.yml", "utf8");
-  const config = yamlLoad(content, { schema: JSON_SCHEMA }) as any;
+  const config = yamlLoad(content, {
+    schema: JSON_SCHEMA,
+  }) as unknown as DependabotConfig;
 
   const npmUpdate = config.updates.find(
-    (u: any) => u["package-ecosystem"] === "npm",
-  );
+    (u: DependabotUpdateEntry) => u["package-ecosystem"] === "npm",
+  ) as unknown as DependabotUpdateEntry;
   const dockerUpdate = config.updates.find(
-    (u: any) => u["package-ecosystem"] === "docker",
+    (u: DependabotUpdateEntry) => u["package-ecosystem"] === "docker",
   );
   const githubUpdate = config.updates.find(
-    (u: any) => u["package-ecosystem"] === "github-actions",
-  );
+    (u: DependabotUpdateEntry) => u["package-ecosystem"] === "github-actions",
+  ) as unknown as DependabotUpdateEntry;
   const terraformUpdate = config.updates.find(
-    (u: any) => u["package-ecosystem"] === "terraform",
+    (u: DependabotUpdateEntry) => u["package-ecosystem"] === "terraform",
   );
 
   const matchOptions = { dot: true, nocomment: true };
 
   describe("npm Grouping Patterns", () => {
     it("cloudflare group correctly captures scoped packages", () => {
-      const cloudflareGroup = npmUpdate.groups.cloudflare;
+      const cloudflareGroup = npmUpdate.groups
+        .cloudflare as unknown as DependabotGroup;
       const patterns = cloudflareGroup.patterns;
 
       expect(
@@ -52,7 +81,8 @@ describe("Dependabot Patterns and Wildcards", () => {
     });
 
     it("testing group correctly captures vitest and related packages", () => {
-      const testingGroup = npmUpdate.groups.testing;
+      const testingGroup = npmUpdate.groups
+        .testing as unknown as DependabotGroup;
       const patterns = testingGroup.patterns;
 
       expect(
@@ -93,9 +123,11 @@ describe("Dependabot Patterns and Wildcards", () => {
           ).toBe(false);
         }
       }
-      expect(ignores.some((i: any) => i["dependency-name"] === "*")).toBe(
-        false,
-      );
+      expect(
+        ignores.some(
+          (i: DependabotIgnoreEntry) => i["dependency-name"] === "*",
+        ),
+      ).toBe(false);
     });
 
     it("docker ecosystem is intentionally unconfigured", () => {
@@ -112,11 +144,11 @@ describe("Dependabot Patterns and Wildcards", () => {
       // syntax accepted by Dependabot cloud (e.g. ">=5").
       const ignores = npmUpdate.ignore ?? [];
       const vitest = ignores.find(
-        (i: any) => i["dependency-name"] === "vitest",
-      );
+        (i: DependabotIgnoreEntry) => i["dependency-name"] === "vitest",
+      ) as unknown as DependabotIgnoreEntry;
       const vitestScoped = ignores.find(
-        (i: any) => i["dependency-name"] === "@vitest/*",
-      );
+        (i: DependabotIgnoreEntry) => i["dependency-name"] === "@vitest/*",
+      ) as unknown as DependabotIgnoreEntry;
 
       expect(vitest).toBeDefined();
       expect(vitestScoped).toBeDefined();
@@ -140,11 +172,29 @@ describe("Dependabot Patterns and Wildcards", () => {
           stdio: "pipe",
         });
         return { exitCode: 0, stdout: result, stderr: "" };
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const err = e as unknown as ExecError;
+        const toText = (value: unknown): string => {
+          if (typeof value === "string") return value;
+          if (
+            value !== null &&
+            typeof value === "object" &&
+            "toString" in value
+          ) {
+            const fn = (value as { toString: unknown }).toString;
+            if (typeof fn === "function") {
+              return String((fn as () => unknown).call(value) ?? "");
+            }
+          }
+          return value === undefined || value === null ? "" : String(value);
+        };
         return {
-          exitCode: e.status ?? 1,
-          stdout: e.stdout?.toString() ?? "",
-          stderr: e.stderr?.toString() ?? e.message ?? "",
+          exitCode: typeof err.status === "number" ? err.status : 1,
+          stdout: toText(err.stdout),
+          stderr:
+            err.stderr !== undefined && err.stderr !== null
+              ? toText(err.stderr)
+              : toText(err.message),
         };
       }
     }
@@ -194,7 +244,9 @@ describe("Dependabot Patterns and Wildcards", () => {
 
   describe("Other Ecosystem Patterns", () => {
     it("github-actions group captures all actions", () => {
-      const patterns = githubUpdate.groups["github-actions"].patterns;
+      const patterns = (
+        githubUpdate.groups["github-actions"] as unknown as DependabotGroup
+      ).patterns;
       const isMatch = (val: string, pat: string) => {
         if (pat === "*") return true;
         return minimatch(val, pat, matchOptions);

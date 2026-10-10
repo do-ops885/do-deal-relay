@@ -8,6 +8,11 @@ import { authMiddleware } from "../../../worker/lib/middleware/auth";
 import type { RouteConfig } from "../../../worker/lib/middleware/types";
 import type { Env } from "../../../worker/types";
 
+// Single-key JSON getter signature of KVNamespace.get. vi.mocked() resolves
+// the overloaded KVNamespace.get to its last (bulk-key) overload, so narrow
+// to the signature these tests actually exercise before wrapping.
+type KvJsonGet = (key: string, type: "json") => Promise<unknown>;
+
 // ============================================================================
 // Test Helpers
 // ============================================================================
@@ -302,7 +307,9 @@ describe("Middleware Pipeline", () => {
     it("should reject non-admin users for internal routes", async () => {
       const env = createMockEnv();
       // Mock a valid API key that returns user role (not admin)
-      (env.WEBHOOK_API_KEYS!.get as any).mockResolvedValue(
+      vi.mocked(
+        env.WEBHOOK_API_KEYS!.get as unknown as KvJsonGet,
+      ).mockResolvedValue(
         JSON.stringify({
           userId: "user-1",
           role: "user",
@@ -346,7 +353,9 @@ describe("Middleware Pipeline", () => {
 
     it("should pass through for internal routes with admin role", async () => {
       const env = createMockEnv();
-      (env.WEBHOOK_API_KEYS!.get as any).mockResolvedValue(
+      vi.mocked(
+        env.WEBHOOK_API_KEYS!.get as unknown as KvJsonGet,
+      ).mockResolvedValue(
         JSON.stringify({
           userId: "admin-1",
           role: "admin",

@@ -69,7 +69,7 @@ describe("normalization-verification gate", () => {
       ...validDeal,
       metadata: { ...validDeal.metadata, normalized_at: "" },
     };
-    const result = verifyNormalization(deal as any);
+    const result = verifyNormalization(deal);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("missing normalized_at timestamp");
   });

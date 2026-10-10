@@ -286,9 +286,7 @@ describe("buildWhereClause", () => {
     it("should ignore expiry_days filter with non-number value", () => {
       const result = buildWhereClause(
         createBaseQuery({
-          filters: [
-            { field: "expiry_days", operator: "lte", value: "soon" as any },
-          ],
+          filters: [{ field: "expiry_days", operator: "lte", value: "soon" }],
         }),
       );
       const expiryClauses = result.whereClauses.filter((c) =>

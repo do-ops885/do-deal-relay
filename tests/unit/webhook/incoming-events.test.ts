@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleIncomingWebhook } from "../../../worker/lib/webhook/incoming";
 import type { WebhookPartner } from "../../../worker/lib/webhook/types";
+import type { Env } from "../../../worker/types";
 
 // Mock the HMAC module to control signature verification
 vi.mock("../../../worker/lib/hmac", async (importOriginal) => {
@@ -79,7 +80,7 @@ function createEnv(kv: MockKv) {
     DEALS_SOURCES: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 // ============================================================================
@@ -377,7 +378,7 @@ describe("Webhook Incoming - Event Processing", () => {
 
   describe("No KV Available", () => {
     it("should allow rate limit check to pass when KV unavailable", async () => {
-      const env = {} as any;
+      const env = {} as unknown as Env;
 
       const result = await handleIncomingWebhook(
         env,
@@ -391,7 +392,7 @@ describe("Webhook Incoming - Event Processing", () => {
     });
 
     it("should allow idempotency check to pass when KV unavailable", async () => {
-      const env = {} as any;
+      const env = {} as unknown as Env;
 
       const result = await handleIncomingWebhook(env, "partner_test", "{}", {
         ...createHeaders(),

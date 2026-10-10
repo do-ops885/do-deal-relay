@@ -6,7 +6,7 @@ describe("freshness gate", () => {
   it("should pass if no expiry date", () => {
     const deal: Deal = {
       expiry: { type: "unknown", confidence: 0 },
-    } as any;
+    } as unknown as Deal;
     const result = validateFreshness(deal);
     expect(result.passed).toBe(true);
   });
@@ -16,7 +16,7 @@ describe("freshness gate", () => {
     futureDate.setDate(futureDate.getDate() + 7);
     const deal: Deal = {
       expiry: { date: futureDate.toISOString(), type: "hard", confidence: 1 },
-    } as any;
+    } as unknown as Deal;
     const result = validateFreshness(deal);
     expect(result.passed).toBe(true);
   });
@@ -26,7 +26,7 @@ describe("freshness gate", () => {
     pastDate.setDate(pastDate.getDate() - 1);
     const deal: Deal = {
       expiry: { date: pastDate.toISOString(), type: "hard", confidence: 1 },
-    } as any;
+    } as unknown as Deal;
     const result = validateFreshness(deal);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("Deal expired on");

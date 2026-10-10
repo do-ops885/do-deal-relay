@@ -12,6 +12,7 @@ import {
 import { handleGetResearchResults } from "../../worker/routes/referral-research";
 import type { Env, WebResearchRequest } from "../../worker/types";
 import * as securityModule from "../../worker/lib/security";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Research Agent - Real Fetching", () => {
   let mockEnv: Env;
@@ -38,7 +39,7 @@ describe("Research Agent - Real Fetching", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",
@@ -156,7 +157,7 @@ describe("Research Agent - Real Fetching", () => {
 
       // Suspicious codes should have lower confidence due to test/demo/sample keywords
       referrals.forEach((ref) => {
-        const context = ((ref as any).context || "").toLowerCase();
+        const context = (ref.context || "").toLowerCase();
         if (
           context.includes("test") ||
           context.includes("demo") ||

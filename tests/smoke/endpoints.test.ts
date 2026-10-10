@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { jsonRecord, recordArray } from "../fixtures/typed-assert";
 
 /**
  * Smoke tests for the Worker's HTTP endpoints.
@@ -19,7 +20,7 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       }
       // 200 if healthy, 503 if degraded (e.g. no snapshot in KV)
       expect([200, 503]).toContain(res.status);
-      const body = (await res.json()) as any;
+      const body = jsonRecord(await res.json());
       expect(body).toHaveProperty("status");
       expect(["healthy", "degraded"]).toContain(body.status);
     });
@@ -39,9 +40,9 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       expect([200, 401]).toContain(res.status);
 
       if (res.status === 200) {
-        const body = (await res.json()) as any;
+        const body = jsonRecord(await res.json());
         expect(body).toHaveProperty("summary");
-        expect(body.summary).toHaveProperty("total_runs");
+        expect(jsonRecord(body.summary)).toHaveProperty("total_runs");
       }
     });
 
@@ -75,10 +76,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       }
       expect([200, 401, 404]).toContain(res.status);
       if (res.status === 200) {
-        const body = (await res.json()) as any;
+        const body = recordArray(await res.json());
         expect(Array.isArray(body)).toBe(true);
       } else if (res.status === 404 || res.status === 401) {
-        const body = (await res.json()) as any;
+        const body = jsonRecord(await res.json());
         expect(body).toHaveProperty("error");
       }
     });
@@ -94,7 +95,7 @@ describe("Smoke Tests - HTTP Endpoints", () => {
         return;
       }
       expect(res.status).toBe(404);
-      const body = (await res.json()) as any;
+      const body = jsonRecord(await res.json());
       expect(body).toHaveProperty("error", "Not found");
     });
   });

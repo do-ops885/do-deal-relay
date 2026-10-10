@@ -4,6 +4,7 @@ import {
   calculateValidationRatio,
 } from "../../worker/validation/pipeline";
 import type { Deal, PipelineContext, Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 // Cloudflare Workers KV namespace type
 type KVNamespace = {
@@ -97,7 +98,7 @@ describe("Validation Pipeline", () => {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
     ENVIRONMENT: "test",
     GITHUB_REPO: "test/repo",

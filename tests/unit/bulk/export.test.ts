@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Env, ReferralInput } from "../../../worker/types";
+import { jsonRecord, recordArray } from "../../fixtures/typed-assert";
 
 // Type for KV namespace mock
 type MockKVNamespace = {
@@ -93,12 +94,12 @@ describe("Bulk Export", () => {
       );
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = jsonRecord(await response.json());
 
       expect(response.headers.get("Content-Type")).toBe("application/json");
       expect(data.success).toBe(true);
       expect(data.format).toBe("json");
-      expect(data.deals).toHaveLength(1);
+      expect(recordArray(data.deals)).toHaveLength(1);
       expect(data.total).toBe(1);
     });
 
@@ -153,11 +154,11 @@ describe("Bulk Export", () => {
       );
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = jsonRecord(await response.json());
 
-      expect(data.pagination.limit).toBe(50);
-      expect(data.pagination.offset).toBe(25);
-      expect(data.pagination.has_more).toBe(true);
+      expect(jsonRecord(data.pagination).limit).toBe(50);
+      expect(jsonRecord(data.pagination).offset).toBe(25);
+      expect(jsonRecord(data.pagination).has_more).toBe(true);
     });
 
     it("should enforce max export limit", async () => {
@@ -177,11 +178,11 @@ describe("Bulk Export", () => {
       const request = new Request("http://localhost/api/bulk/export?limit=100");
 
       const response = await handleBulkExport(request, mockEnv);
-      const data = (await response.json()) as any;
+      const data = jsonRecord(await response.json());
 
       // Verify the code path works and returns pagination
       expect(data.pagination).toBeDefined();
-      expect(data.pagination.limit).toBe(100);
+      expect(jsonRecord(data.pagination).limit).toBe(100);
     });
 
     it("should filter by domain", async () => {

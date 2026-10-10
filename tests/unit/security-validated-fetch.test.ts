@@ -42,24 +42,24 @@ describe("Security Utils - validatedFetch", () => {
     const publicUrl = "https://example.com/api";
 
     // Mock DNS resolution in validateFetchUrl (calls fetch for A and AAAA)
-    (global.fetch as any)
+    vi.mocked(global.fetch)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           Answer: [{ data: "93.184.216.34" }],
         }),
-      })
+      } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           Answer: [],
         }),
-      })
+      } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
         text: async () => "success",
-      });
+      } as unknown as Response);
 
     const response = await validatedFetch(publicUrl);
     expect(response.ok).toBe(true);
