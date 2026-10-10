@@ -80,12 +80,6 @@ export async function handleValidateUrl(
       component: "validation-api",
       handler: "handleValidateUrl",
     });
-    return errorResponse(
-      "Validation failed",
-      500,
-      undefined,
-      request,
-      env,
-    );
+    return errorResponse("Validation failed", 500, undefined, request, env);
   }
 }
