@@ -9,6 +9,7 @@ import {
 import { validateFetchUrl } from "../../lib/security";
 import { validateUrl } from "../../lib/validation/url-validator";
 import { logger } from "../../lib/global-logger";
+import { sanitizeErrorForClient } from "../../lib/sanitize-error";
 
 interface ValidateUrlBody {
   url: string;
@@ -75,16 +76,14 @@ export async function handleValidateUrl(
 
     return response;
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Validation failed";
-    logger.error("URL validation error", {
+    sanitizeErrorForClient(error, {
       component: "validation-api",
-      error: errorMessage,
+      handler: "handleValidateUrl",
     });
     return errorResponse(
       "Validation failed",
       500,
-      { detail: errorMessage },
+      undefined,
       request,
       env,
     );
