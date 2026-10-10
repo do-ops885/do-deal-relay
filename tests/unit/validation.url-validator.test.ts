@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
+import { handleValidateUrl } from "../../worker/routes/validation/url";
+import type { Env } from "../../worker/types";
 
 // Mock implementations for validation functions
 const mockValidateUrl = vi.fn();
@@ -296,6 +298,25 @@ describe("URL Validator", () => {
 
       expect(result.valid).toBe(false);
       expect(result.error).toContain("maximum redirects");
+    });
+  });
+
+  describe("handleValidateUrl error sanitization", () => {
+    it("should return 500 without leaking raw error detail on uncaught exception", async () => {
+      const request = new Request("https://example.com/api/validate/url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "invalid-json-body-causes-syntax-error",
+      });
+      const env = {} as Env;
+
+      const response = await handleValidateUrl(request, env);
+      expect(response.status).toBe(500);
+
+      const body = (await response.json()) as Record<string, unknown>;
+      expect(body).toEqual({ error: "Validation failed" });
+      expect(body.detail).toBeUndefined();
+      expect(body.details).toBeUndefined();
     });
   });
 });
