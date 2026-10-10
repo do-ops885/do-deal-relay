@@ -87,7 +87,11 @@ export async function handleToolCall(
   const progressToken = _meta?.progressToken;
   const activeProgress: ActiveProgressTracking | null = progressToken
     ? {
-        tracker: createProgressTracker(String(progressToken), env, auth?.userId),
+        tracker: createProgressTracker(
+          String(progressToken),
+          env,
+          auth?.userId,
+        ),
         token: progressToken,
       }
     : null;

@@ -76,7 +76,11 @@ function createMockRequest(): Request {
   return new Request("http://localhost/mcp");
 }
 
-const mockAdminAuth = { authenticated: true, userId: "admin1", role: "admin" as const };
+const mockAdminAuth = {
+  authenticated: true,
+  userId: "admin1",
+  role: "admin" as const,
+};
 
 function createMockReferral(
   overrides: Partial<ReferralInput> = {},

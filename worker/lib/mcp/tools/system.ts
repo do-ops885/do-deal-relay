@@ -245,7 +245,8 @@ export const systemToolHandlers: Record<string, ToolHandler> = {
     handleGetSimilarDeals(GetSimilarDealsInputSchema.parse(args), env),
   get_deal_highlights: (args, env) => handleGetDealHighlights(args, env),
   get_logs: (args, env) => handleGetLogs(GetLogsInputSchema.parse(args), env),
-  check_progress: (args, env, _req, auth) => handleCheckProgress(args, env, auth),
+  check_progress: (args, env, _req, auth) =>
+    handleCheckProgress(args, env, auth),
   cancel_operation: (args, env, _req, auth) =>
     handleCancelOperation(args, env, auth),
   list_operations: (args, env, _req, auth) =>

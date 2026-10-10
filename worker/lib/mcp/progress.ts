@@ -23,9 +23,9 @@ export interface ProgressState {
   toolName: string;
   createdAt: string;
   updatedAt: string;
-  userId?: string;
+  userId?: string | undefined;
   result?: unknown;
-  error?: string;
+  error?: string | undefined;
 }
 
 export interface ProgressTracker {
@@ -44,7 +44,7 @@ export interface ProgressIndexEntry {
   operationId: string;
   toolName: string;
   createdAt: string;
-  userId?: string;
+  userId?: string | undefined;
 }
 
 function progressKey(operationId: string): string {
