@@ -5,43 +5,43 @@
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/agents-sdk/SKILL.md",
-      "computedHash": "cb669fba9289d500872584ea0daab1c5114f1c8f12a991f90871431d3fadbf3c"
+      "computedHash": "7296a3e7910b83cb1199a116e0cffe0d6620e1fc76dee9aa1179971fc2e1eb8b"
     },
     "cloudflare": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/cloudflare/SKILL.md",
-      "computedHash": "ecc9c0211c605451f7e8b437724f84810fe013d5ca6c653c51d046139d4ecbf7"
+      "computedHash": "3973434cb9d1a81a818085e8cb5476affe6f26d57132d47764894a43694300bd"
     },
     "cloudflare-email-service": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/cloudflare-email-service/SKILL.md",
-      "computedHash": "6274be056fe5211aa220833c97ff6a7d96a1cdfd8854a53ca839ca758d35f356"
+      "computedHash": "440d915c76b408196491f0989c623279d520d3f11922e714b59150293791e260"
     },
     "durable-objects": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/durable-objects/SKILL.md",
-      "computedHash": "72efa2277fea08f43b393c74abaacc9fa575e20bc63bdc9d46829b8a39352852"
+      "computedHash": "1d585424d789011a4ccd55c3c26bf13881d9d244f48bb2bf78c8a5e87f5d1d99"
     },
     "sandbox-sdk": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/sandbox-sdk/SKILL.md",
-      "computedHash": "e44cceebe7e47d815034027c303315139d35c1d92a3ee287dc6d3e9a02f0667b"
+      "computedHash": "77743870f3fa5129aa65905de108fe979b66b949045507cee5fb3617a7dacaa7"
     },
     "turnstile-spin": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/turnstile-spin/SKILL.md",
-      "computedHash": "46ad17e8e09902993d88dc212e780e6aecd34cb3ad22fb9ae90d5e02a54e20d6"
+      "computedHash": "24c5bf382d478c1c7f30b20cb6ac0943e0fe5344c6cd0d8d05868ae02a3fccee"
     },
     "web-perf": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/web-perf/SKILL.md",
-      "computedHash": "7ae53856c320574f7440f50aef7892f96837eec9fd49d329d049d432fb4b299a"
+      "computedHash": "fcf583af00a12e3cab9712f50f8a03120eb6f22df888b2c4c508cee00b3ed24a"
     }
   }
 }
