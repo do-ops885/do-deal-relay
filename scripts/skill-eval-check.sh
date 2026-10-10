@@ -141,6 +141,106 @@ for sf in "${SKILL_FILES[@]}"; do
   fi
 done
 
+# ── Phase 3.5: Hygiene checks ────────────────────────────────────────
+# 1. No two skills may ship the same Rationalizations/Red Flags block
+# 2. Every relative reference/script/eval link inside a SKILL.md must resolve
+# 3. Every skill directory must appear in the .agents/skills/README.md index
+# 4. Every skill named in skill-rules.json must exist (and be listed once)
+info ""
+info "${CYAN}=== HYGIENE CHECKS ===${NC}"
+
+declare -A BOILERPLATE_MEMBERS
+
+for sf in "${SKILL_FILES[@]}"; do
+  rel="${sf#${ROOT_DIR}/}"
+  skill_dir="$(dirname "$sf")"
+
+  # ── Shared boilerplate ──
+  block=$(awk '
+    /^## Rationalizations/ { inblock = 1 }
+    inblock && /^## Red Flags/ { print; red = 1; next }
+    inblock && red && /^## / { exit }
+    inblock { print }
+  ' "$sf")
+  block_hash=$(printf '%s' "$block" | sha256sum | cut -c1-16)
+  BOILERPLATE_MEMBERS["$block_hash"]="${BOILERPLATE_MEMBERS[$block_hash]:-} ${skill_dir#${SKILLS_ROOT}/}"
+
+  # ── Dead local links ──
+  missing=""
+  while IFS= read -r ref; do
+    [[ -z "$ref" ]] && continue
+    [[ "$ref" == *'*'* ]] && continue
+    # Generated artefacts (dotfiles such as tests/e2e/.jwt-token) are not committed
+    [[ "$(basename "$ref")" == .* ]] && continue
+    if [[ ! -e "${skill_dir}/${ref}" && ! -e "${ROOT_DIR}/${ref}" ]]; then
+      missing="${missing} ${ref}"
+    fi
+  done < <(
+    {
+      grep -oE '\((reference|references|scripts|templates|evals|modules|tests)/[A-Za-z0-9._/-]+\)' "$sf" | tr -d '()'
+      grep -oE '`(reference|references|scripts|templates|evals|modules|tests)/[A-Za-z0-9._/-]+`' "$sf" | tr -d '`'
+    } | sort -u
+  )
+  if [[ -n "$missing" ]]; then
+    fail "${rel} — unresolvable local reference(s):${missing}"
+    record_offender_path "$sf"
+  else
+    ok "${rel} — local references resolve"
+  fi
+done
+
+for block_hash in "${!BOILERPLATE_MEMBERS[@]}"; do
+  # shellcheck disable=SC2086
+  set -- ${BOILERPLATE_MEMBERS[$block_hash]}
+  if (( $# > 1 )); then
+    fail "shared Rationalizations/Red Flags block across ${#} skills: $*"
+  fi
+done
+ok "no Rationalizations/Red Flags block is shared between skills"
+
+# ── Index drift ──
+INDEX_FILE="${SKILLS_ROOT}/README.md"
+if [[ -f "$INDEX_FILE" ]]; then
+  index_missing=""
+  for skill_dir in "${SKILLS_ROOT}"/*/; do
+    name="$(basename "$skill_dir")"
+    grep -qF "[\`${name}/\`]" "$INDEX_FILE" || index_missing="${index_missing} ${name}"
+  done
+  if [[ -n "$index_missing" ]]; then
+    fail ".agents/skills/README.md index is missing:${index_missing}"
+  else
+    ok ".agents/skills/README.md index lists every skill"
+  fi
+else
+  fail ".agents/skills/README.md index not found"
+fi
+
+# ── skill-rules.json integrity ──
+RULES_FILE="${SKILLS_ROOT}/skill-rules.json"
+if [[ -f "$RULES_FILE" ]]; then
+  if rules_skills=$(python3 -c '
+import json, sys
+rules = json.load(open(sys.argv[1]))["rules"]
+print("\n".join(r["skill"] for r in rules))
+' "$RULES_FILE" 2>/dev/null); then
+    unknown=""
+    while IFS= read -r rule_skill; do
+      [[ -z "$rule_skill" ]] && continue
+      [[ -d "${SKILLS_ROOT}/${rule_skill}" ]] || unknown="${unknown} ${rule_skill}"
+    done <<< "$rules_skills"
+    duplicates=$(printf '%s\n' "$rules_skills" | sort | uniq -d | tr '\n' ' ')
+    if [[ -n "$unknown" ]]; then
+      fail "skill-rules.json references unknown skill(s):${unknown}"
+    elif [[ -n "${duplicates// /}" ]]; then
+      fail "skill-rules.json lists duplicate rule(s): ${duplicates}"
+    else
+      ok "skill-rules.json references only existing skills"
+    fi
+  else
+    fail "skill-rules.json is not valid JSON"
+  fi
+fi
+
 # ── Phase 4: Split plans for oversized skills ────────────────────────
 emit_split_plan() {
   local sf="$1"; local lc="$2"; local rel="${sf#${ROOT_DIR}/}"; local dir; dir="$(dirname "$sf")"
@@ -272,7 +372,7 @@ info "  Failures: ${RED}${FAILURES}${NC}"
 # 1 = warnings only (structural deficits in some skills)
 # 2 = failures (one or more skills exceed 250 lines)
 if (( FAILURES > 0 )); then
-  $JSON || info "${RED}Harness sensor FAIL: ${FAILURES} skill(s) exceed ${MAX_LINES}-line limit. See split plans above.${NC}"
+  $JSON || info "${RED}Harness sensor FAIL: ${FAILURES} skill hygiene or length violation(s). See details above.${NC}"
   exit 2
 elif (( WARNINGS > 0 )); then
   $JSON || info "${YELLOW}Harness sensor WARN: ${WARNINGS} structural deficit(s); no length violations.${NC}"

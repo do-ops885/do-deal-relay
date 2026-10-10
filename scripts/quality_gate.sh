@@ -204,6 +204,10 @@ if [ -d ".claude" ]; then
     run_check "Skill symlinks" "${SCRIPT_DIR}/validate-skills.sh"
 fi
 
+# Check 11.5: Skill hygiene (frontmatter, sections, line limit, shared boilerplate,
+# dead local links, README index drift, skill-rules.json integrity)
+run_check "Skill hygiene" "${SCRIPT_DIR}/skill-eval-check.sh"
+
 # Check 12: Git hooks installed (skip in CI - hooks are for local dev only)
 if [ -z "${SKIP_TESTS:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ] && [ ! -f ".git/hooks/pre-commit" ]; then
     ERRORS+=("✗ Git hooks not installed")
