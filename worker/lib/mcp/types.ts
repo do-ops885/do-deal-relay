@@ -8,6 +8,7 @@
  */
 
 import type { Env } from "../../types";
+import type { AuthResult } from "../auth";
 import type { ZodType } from "zod";
 
 // Zod schemas extracted to schemas.ts to stay under 500-line limit.
@@ -446,6 +447,7 @@ export type ToolHandler = (
   args: StringKeyObject,
   env: Env,
   request: Request,
+  auth?: AuthResult,
 ) => Promise<ToolCallResult>;
 
 /**

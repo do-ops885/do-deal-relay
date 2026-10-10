@@ -76,6 +76,8 @@ function createMockRequest(): Request {
   return new Request("http://localhost/mcp");
 }
 
+const mockAdminAuth = { authenticated: true, userId: "admin1", role: "admin" as const };
+
 function createMockReferral(
   overrides: Partial<ReferralInput> = {},
 ): ReferralInput {
@@ -315,6 +317,7 @@ describe("MCP Tools - Execution", () => {
         { days: 30 },
         env,
         createMockRequest(),
+        mockAdminAuth,
       );
 
       expect(result.isError).toBeFalsy();
@@ -331,6 +334,7 @@ describe("MCP Tools - Execution", () => {
         { days: 30 },
         env,
         createMockRequest(),
+        mockAdminAuth,
       );
 
       expect(result.isError).toBeFalsy();

@@ -318,7 +318,9 @@ export async function tryHandleLegacyRoutes(
   if (path === "/mcp") {
     const bodyTooLarge = checkBodySize(request, 10 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
-    return withAuth(request, env, "user", () => handleMCPRequest(request, env));
+    return withAuth(request, env, "user", (auth) =>
+      handleMCPRequest(request, env, auth),
+    );
   }
 
   // Legacy MCP v1 Endpoints (for backwards compatibility)
@@ -336,7 +338,7 @@ export async function tryHandleLegacyRoutes(
         "/mcp/v1/tools/call",
         auth,
       );
-      return rateLimiter(request, () => handleMCPCall(request, env));
+      return rateLimiter(request, () => handleMCPCall(request, env, auth));
     });
   }
   if (path === "/mcp/v1/info") {

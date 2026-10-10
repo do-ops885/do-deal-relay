@@ -111,6 +111,7 @@ describe("handleStreamingToolCall", () => {
       { q: "x" },
       env,
       expect.any(Request),
+      undefined,
     );
   });
 

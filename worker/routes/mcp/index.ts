@@ -15,6 +15,7 @@
  */
 
 import type { Env } from "../../types";
+import type { AuthResult } from "../../lib/auth";
 import { CONFIG } from "../../config";
 import { getTools, executeTool } from "../../lib/mcp/tools";
 import { createRateLimitHeaders } from "../../lib/rate-limit";
@@ -51,6 +52,7 @@ import { MCPErrorCodes } from "../../lib/mcp/types";
 export async function handleMCPRequest(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
@@ -178,7 +180,7 @@ export async function handleMCPRequest(
             400,
           );
         }
-        result = await handleToolCall(validatedParams, env, request);
+        result = await handleToolCall(validatedParams, env, request, auth);
         break;
       }
 
@@ -305,6 +307,7 @@ export async function handleMCPListTools(
 export async function handleMCPCall(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
   try {
     const body = (await request.json()) as {
@@ -325,7 +328,7 @@ export async function handleMCPCall(
       });
     }
 
-    const result = await executeTool(tool, input, env, request);
+    const result = await executeTool(tool, input, env, request, auth);
 
     return new Response(JSON.stringify(result), {
       status: result.isError ? 400 : 200,
