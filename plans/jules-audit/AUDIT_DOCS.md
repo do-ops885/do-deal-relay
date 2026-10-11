@@ -1,11 +1,8 @@
-# Documentation Audit — 2026-10-08
+# AUDIT_DOCS.md
 
-## Missing / Incomplete JSDoc Comments Identified
-1. `worker/lib/config-utils.ts`:
-   - `REQUIRED_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
-   - `BUDGET_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
-   - `parseBoundedIntegerConfig`: Update JSDoc to document boundary and non-decimal integer throw behavior.
-   - `getTrustThreshold`: Update JSDoc to explicitly mention fallback and clamping behavior.
+## Documentation Audit Findings
 
-## Planned Action
-Add/update comprehensive JSDoc annotations for exported constants and functions in `worker/lib/config-utils.ts`.
+1. `worker/routes/core/submit.ts`:
+   - Added JSDoc `@param request`, `@param env`, `@returns` and detailed docstring description to public route handler `handleSubmit`.
+2. `worker/lib/config-utils.ts`:
+   - Updated JSDoc annotations for `parseBoundedIntegerConfig` and `getTrustThreshold` to clarify float parsing behavior and fallback score clamping bounds.

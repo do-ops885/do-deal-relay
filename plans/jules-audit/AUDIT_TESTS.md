@@ -1,10 +1,8 @@
-# Test Coverage Audit — 2026-10-08
+# AUDIT_TESTS.md
 
-## Uncovered Logic / Edge Cases Identified
-1. `parseBoundedIntegerConfig` in `worker/lib/config-utils.ts` lacks test coverage for edge case string inputs:
-   - Octal-like string representation with non-octal digit (e.g. `"088"`)
-   - Explicit plus sign string representation (e.g. `"+100"`)
-   - Floating point string representations (e.g. `"100.00"`)
+## Test Coverage Audit Findings
 
-## Planned Action
-Add unit tests covering these edge cases in `tests/unit/config-validation-enhanced.test.ts`.
+1. `tests/unit/config-validation-enhanced.test.ts`:
+   - Added unit test coverage for `parseBoundedIntegerConfig` handling floating-point strings with explicit plus sign (e.g. `"+12.34"`).
+   - Added unit test coverage for `parseBoundedIntegerConfig` handling zero-padded negative integer strings (e.g. `"-088"`).
+   - Added unit test coverage for `parseBoundedIntegerConfig` boundary conditions and exact equality matching minimum and maximum allowable bounds.

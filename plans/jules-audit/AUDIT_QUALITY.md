@@ -1,5 +1,7 @@
-# Code Quality Audit — 2026-10-08
+# AUDIT_QUALITY.md
 
-No actionable code quality findings. Zero TODO/FIXME comments, zero unhandled magic numbers, zero `.unwrap()` or console logs in production code, zero source files over 500 lines.
+## Code Quality Audit Findings
 
-Track B skipped per Impact Gate (zero actionable findings).
+1. `worker/routes/core/submit.ts`:
+   - `parseInt(contentLength)` is missing explicit radix 10 parameter.
+   - `1024 * 1024` magic number for maximum submit payload body size should be extracted to named constant `MAX_SUBMIT_BODY_SIZE_BYTES`.
