@@ -1,8 +1,12 @@
-# Audit Snapshot — 2026-10-08
+# AUDIT_SNAPSHOT.md
 
-- Repository: do-deal-relay
-- Version: 0.1.8
-- Primary Language: TypeScript (Node.js / Cloudflare Workers)
+Repository: do-deal-relay
+Version: 0.1.8
+Audit Date: 2026-10-11
+Audit Directory: plans/jules-audit/
+
+## System Info
+- Primary Language: TypeScript / Node.js
+- Package Manager: npm
 - Test Runner: vitest (`npm run test:unit`)
-- Quality Gate Command: `./scripts/quality_gate.sh`
-- Audit Directory: `plans/jules-audit/`
+- Quality Gate: `./scripts/quality_gate.sh`

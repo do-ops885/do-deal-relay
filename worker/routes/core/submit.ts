@@ -15,6 +15,12 @@ import type { Env, SubmitDealBody, Deal } from "../../types";
 import { SubmitDealBodySchema } from "../../types";
 import { jsonResponse } from "../utils";
 
+/**
+ * Handle POST /api/submit request for submitting a new deal offer into quarantine staging
+ * @param request HTTP incoming submit request
+ * @param env Cloudflare worker environment bindings
+ * @returns Response with submission status and generated deal ID
+ */
 export async function handleSubmit(
   request: Request,
   env: Env,
