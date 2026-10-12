@@ -7,11 +7,11 @@ describe("trust-score gate", () => {
     source: {
       trust_score: 0.5,
     },
-  } as any;
+  } as unknown as Deal;
 
   const env: Env = {
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 
   it("should pass if trust score is above threshold", () => {
     const result = validateTrustScore(deal, env);
@@ -22,7 +22,7 @@ describe("trust-score gate", () => {
     const lowTrustDeal = {
       ...deal,
       source: { trust_score: 0.1 },
-    } as any;
+    } as unknown as Deal;
     const result = validateTrustScore(lowTrustDeal, env);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("below minimum");

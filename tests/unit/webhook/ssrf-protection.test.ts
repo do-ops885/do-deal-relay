@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { handleSubscribe } from "../../../worker/routes/webhooks/subscriptions";
+import type { Env } from "../../../worker/types";
+import { jsonRecord } from "../../fixtures/typed-assert";
 
 // Mock security module validateFetchUrl to ensure test hermeticity without live DNS calls
 vi.mock("../../../worker/lib/security", async (importOriginal) => {
@@ -59,7 +61,7 @@ describe("Webhook Subscription SSRF Protection", () => {
       get: vi.fn(),
       put: vi.fn(),
     },
-  } as any;
+  } as unknown as Env;
 
   it("should block subscription to private IP", async () => {
     const request = new Request("https://api.test/subscribe", {
@@ -75,7 +77,7 @@ describe("Webhook Subscription SSRF Protection", () => {
     });
 
     const response = await handleSubscribe(request, mockEnv);
-    const data = (await response.json()) as any;
+    const data = jsonRecord(await response.json());
 
     expect(response.status).toBe(400);
     expect(data.error).toMatch(/disallowed|SSRF|blocked/i);
@@ -95,7 +97,7 @@ describe("Webhook Subscription SSRF Protection", () => {
     });
 
     const response = await handleSubscribe(request, mockEnv);
-    const data = (await response.json()) as any;
+    const data = jsonRecord(await response.json());
 
     expect(response.status).toBe(400);
     expect(data.error).toMatch(/disallowed|SSRF|blocked/i);

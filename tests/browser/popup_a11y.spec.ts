@@ -14,7 +14,7 @@ test.describe("Extension Popup Accessibility Tests", () => {
     // Inject mock chrome API inline (Playwright serialization strips functions
     // when passed as an argument, so the mock must be defined inside the callback)
     await page.addInitScript(() => {
-      (window as any).chrome = {
+      (window as unknown as { chrome: unknown }).chrome = {
         tabs: {
           query: async () => [
             {

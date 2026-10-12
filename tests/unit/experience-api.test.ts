@@ -8,7 +8,7 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     put: vi.fn(async () => {}),
     delete: vi.fn(async () => {}),
     list: vi.fn(async () => ({ keys: [], list_complete: true })),
-  } as any;
+  } as unknown as KVNamespace;
 
   const defaultDb = {
     prepare: vi.fn().mockReturnValue({
@@ -37,7 +37,7 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     WEBHOOK_API_KEYS: {
       get: vi.fn(async () => JSON.stringify({ role: "user" })),
       put: vi.fn(),
-    } as any,
+    } as unknown as KVNamespace,
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
@@ -47,7 +47,7 @@ const createMockEnv = (overrides: Partial<Env> = {}): Env => {
     GITHUB_REPO: "test/repo",
     NOTIFICATION_THRESHOLD: "100",
     ...overrides,
-  } as any;
+  } as unknown as Env;
 };
 
 const authHeader = { "X-API-Key": "ddr_admin_test_key_123" };

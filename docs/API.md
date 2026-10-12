@@ -2330,6 +2330,51 @@ Delete an alert subscription. Requires User role.
 
 ---
 
+#### Alert fan-out ops (Queues + digest)
+
+Purpose: Cloudflare Queues fan-out for personalized deal alerts (SPEC-deal-alerts-764
+step 4, ADR-031). Config follows the official Cloudflare Queues docs
+(https://developers.cloudflare.com/queues/configuration/configure-queues): producer
+binding `ALERT_QUEUE` on queue `alert-queue`; consumer `max_batch_size` 10,
+`max_batch_timeout` 5, `max_retries` 10, `dead_letter_queue` `alert-queue-dlq`.
+
+Queue setup is owner-run, once per environment, and is NOT run by CI:
+
+```bash
+npx wrangler queues create alert-queue
+npx wrangler queues create alert-queue-dlq
+```
+
+Queues are inert until created. If the binding is missing, the producer falls back
+inline with a warn log.
+
+Payload is IDs only (`alertId`, `subscriptionId`, `dealIds`, `channel`, `frequency`,
+`runDate`). Deals resolve from the production snapshot in the consumer.
+
+Free-tier caps: `MAX_ALERT_QUEUE_MESSAGES_PER_PUBLISH` 500,
+`MAX_MATCHES_PER_SUBSCRIPTION_PER_PUBLISH` 10. Overflow rolls to digest and is never
+a silent drop. A missing binding or `sendBatch` failure falls back to inline
+best-effort `matchAndNotifySubscriptions` with a warn log plus a KV-DLQ overflow note.
+
+Consumer is idempotent via the `alert_deliveries(alert_id, subscription_id)` unique
+guard. Status `sent` is recorded only AFTER a successful send, so failed attempts
+retry and poison messages reach the DLQ after max retries. Empty deal resolution
+records `skipped` and acks.
+
+Digest: `daily-digest` subscriptions enqueue one message per subscription per day with
+run key `digest-YYYY-MM-DD`, drained by the `0 9 * * *` cron in
+`worker/scheduled.ts`. `instant` subscriptions enqueue immediately at publish
+(`worker/publish.ts` step 5c) and never block publish.
+
+Compliance: both inline and queue paths emit `deal_alert_match` via
+`logAIInteraction` (hashed query only, no PII).
+
+D1 prerequisite: migrations v13 (`alert_subscriptions`) plus v14 (`alert_deliveries`
+plus `ai_act_logs`) must be applied. Production apply is owner-approved per the
+`.agents/skills/d1-ops` runbook, backup first.
+
+---
+
 ## Semantic Search API
 
 Natural language search using Cloudflare Vectorize and Workers AI embeddings. Requires User role.

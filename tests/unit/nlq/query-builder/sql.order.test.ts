@@ -143,14 +143,18 @@ describe("buildOrderByClause", () => {
 
     it("should default to relevance when sortBy is undefined", () => {
       const result = buildOrderByClause(
-        buildQuery({ sortBy: undefined as any }),
+        buildQuery({
+          sortBy: undefined as unknown as StructuredQuery["sortBy"],
+        }),
       );
       expect(result).toBe("ORDER BY fts.rank");
     });
 
     it("should default to relevance when sortBy is an unknown value", () => {
       const result = buildOrderByClause(
-        buildQuery({ sortBy: "unknown_field" as any }),
+        buildQuery({
+          sortBy: "unknown_field" as unknown as StructuredQuery["sortBy"],
+        }),
       );
       expect(result).toBe("ORDER BY fts.rank");
     });

@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { KVNamespace, D1Database } from "@cloudflare/workers-types";
 import { handleNLQRequest } from "../../../worker/routes/nlq/index";
 import type { Env } from "../../../worker/types";
+import { jsonRecord } from "../../fixtures/typed-assert";
 
 // Mock the handlers module
 vi.mock("../../../worker/routes/nlq/handlers", () => ({
@@ -97,7 +98,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(405);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.code).toBe("METHOD_NOT_ALLOWED");
       expect(body.error).toBe("Method not allowed");
     });
@@ -111,7 +112,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(405);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.code).toBe("METHOD_NOT_ALLOWED");
     });
 
@@ -122,7 +123,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(404);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.code).toBe("NOT_FOUND");
       expect(body.error).toBe("Not found");
     });
@@ -134,7 +135,7 @@ describe("NLQ Route Handler", () => {
       const response = await handleNLQRequest(request, url, mockEnv);
 
       expect(response.status).toBe(404);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toBe("Not found");
     });
 

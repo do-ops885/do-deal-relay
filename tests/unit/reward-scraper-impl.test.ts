@@ -5,6 +5,8 @@ import {
   detectRewardChanges,
   getScrapingStats,
 } from "../../worker/lib/validation/reward-scraper";
+import type { Deal } from "../../worker/types";
+import type { RewardScrapeResult } from "../../worker/lib/validation/scrapers/types";
 
 vi.mock("../../worker/lib/global-logger", () => ({
   logger: {
@@ -120,7 +122,7 @@ describe("reward-scraper", () => {
         id: "1",
         url: "https://example.com/deal",
         reward: { type: "cash", value: 50, currency: "USD" },
-      } as any;
+      } as unknown as Deal;
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -137,7 +139,7 @@ describe("reward-scraper", () => {
         id: "1",
         url: "https://example.com/deal",
         reward: { type: "cash", value: 50, currency: "USD" },
-      } as any;
+      } as unknown as Deal;
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -161,7 +163,7 @@ describe("reward-scraper", () => {
         },
         { success: true, rewardChanged: false },
         { success: false },
-      ] as any[];
+      ] as unknown as RewardScrapeResult[];
 
       const stats = getScrapingStats(results);
       expect(stats.total).toBe(3);

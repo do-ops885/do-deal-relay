@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import worker from "../../worker/index";
 import { notify } from "../../worker/notify";
 import type { Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
+import { jsonRecord } from "../fixtures/typed-assert";
 
 // Mock notify module
 vi.mock("../../worker/notify", () => ({
@@ -22,7 +24,7 @@ describe("Worker Initialization", () => {
     WEBHOOK_SECRET: "test-secret",
     API_ENCRYPTION_KEY: "test-key",
     EMAIL_WEBHOOK_SECRET: "test-email-secret",
-    DEALS_DB: {} as any,
+    DEALS_DB: {} as unknown as D1Database,
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 
@@ -43,7 +45,7 @@ describe("Worker Initialization", () => {
       const response = await worker.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(503);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toBe("Configuration error");
     });
 
@@ -54,7 +56,7 @@ describe("Worker Initialization", () => {
       const response = await worker.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(503);
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toBe("Configuration error");
     });
   });

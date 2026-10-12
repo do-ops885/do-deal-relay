@@ -39,7 +39,7 @@ describe("JWT Utilities", () => {
       new Request("https://example.com", {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      { JWT_SECRET: "" } as any,
+      { JWT_SECRET: "" } as unknown as Env,
     );
     expect(auth.authenticated).toBe(false);
   });

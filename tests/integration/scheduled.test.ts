@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Scheduled Event Handler", () => {
   let mockKvStorage: Map<string, unknown>;
@@ -91,7 +92,7 @@ describe("Scheduled Event Handler", () => {
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
       JWT_SECRET: "test-jwt-secret-32-chars-minimum-xyz",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ENVIRONMENT: "test",
       GITHUB_REPO: "test/repo",

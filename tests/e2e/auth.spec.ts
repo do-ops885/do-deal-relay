@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { jsonRecord } from "../fixtures/typed-assert";
 
 /**
  * E2E tests for API Authentication and Authorization
@@ -16,8 +17,7 @@ test.describe("Authentication (401)", () => {
   test("GET /metrics returns 401 when unauthenticated", async ({ request }) => {
     const response = await request.get("/metrics");
     expect(response.status()).toBe(401);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBe("Missing API key");
   });
 
@@ -28,8 +28,7 @@ test.describe("Authentication (401)", () => {
       headers: { "X-API-Key": "invalid-format" },
     });
     expect(response.status()).toBe(401);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBe("Invalid API key format");
   });
 
@@ -40,8 +39,7 @@ test.describe("Authentication (401)", () => {
       headers: { "X-API-Key": "ddr_nonexistent_key_123456789" },
     });
     expect(response.status()).toBe(401);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBe("Invalid API key");
   });
 
@@ -50,8 +48,7 @@ test.describe("Authentication (401)", () => {
       headers: { "X-API-Key": EXPIRED_KEY },
     });
     expect(response.status()).toBe(401);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBe("API key expired");
   });
 });
@@ -64,8 +61,7 @@ test.describe("Authorization (403)", () => {
       headers: { "X-API-Key": USER_KEY },
     });
     expect(response.status()).toBe(403);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBe("Required role: admin");
   });
 
@@ -93,8 +89,7 @@ test.describe("Successful Authenticated Access", () => {
       headers: { "X-API-Key": ADMIN_KEY },
     });
     expect(response.status()).toBe(200);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("locked");
   });
 
@@ -110,8 +105,7 @@ test.describe("Successful Authenticated Access", () => {
 
     // Auth should pass, but validation should fail with 400
     expect(response.status()).toBe(400);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body: Record<string, unknown> = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body.error).toBeDefined();
     expect(body.error).not.toBe("Unauthorized");
     expect(body.error).not.toBe("Forbidden");

@@ -29,6 +29,7 @@ vi.mock("../../../worker/lib/hmac", async (importOriginal) => {
   };
 });
 import { verifyHmacSignature } from "../../../worker/lib/hmac";
+import type { Env } from "../../../worker/types";
 
 function createMockKv() {
   const storage = new Map<string, string>();
@@ -61,7 +62,7 @@ function createEnv(kv: MockKv) {
     DEALS_LOG: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 function createPartner(

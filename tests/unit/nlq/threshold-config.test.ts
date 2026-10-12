@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { buildFiltersFromEntities } from "../../../worker/lib/nlq/hybrid/rule-classifier";
 import { AIQueryEnhancer } from "../../../worker/lib/nlq/ai/index";
 import type { Env } from "../../../worker/types";
+import type { Entity, QueryFilters } from "../../../worker/lib/nlq/ai/types";
 
 describe("NLQ Threshold Configuration", () => {
   const mockEnv = {
@@ -56,7 +57,11 @@ describe("NLQ Threshold Configuration", () => {
       ];
 
       // Accessing private method for testing purposes
-      const filters = (enhancer as any).buildFilters(entities, mockEnv);
+      const filters = (
+        enhancer as unknown as {
+          buildFilters: (entities: Entity[], env: Env) => QueryFilters;
+        }
+      ).buildFilters(entities, mockEnv);
       expect(filters.minTrustScore).toBe(0.2);
     });
   });
