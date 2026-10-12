@@ -151,48 +151,50 @@ function createMockDb(state: MockDbState) {
     const matchesDeliveries = sql.includes(SQL_FROM_DELIVERIES);
     const matchesSubscriptions = sql.includes(SQL_FROM_SUBSCRIPTIONS);
     const isInsertDeliveries = sql.includes(SQL_INTO_DELIVERIES);
-    const bound = (...params: unknown[]) => ({
-      first: async (): Promise<unknown> => {
-        if (matchesDeliveries) {
-          return { cnt: state.sentCount };
-        }
-        if (matchesSubscriptions) {
-          return state.subRow;
-        }
-        return null;
-      },
-      run: async (): Promise<{
-        success: boolean;
-        results?: unknown[];
-        meta?: Record<string, unknown>;
-      }> => {
-        if (isInsertDeliveries) {
-          state.capturedInserts.push(params);
+    function bound(...params: unknown[]) {
+      return {
+        first: async (): Promise<unknown> => {
+          if (matchesDeliveries) {
+            return { cnt: state.sentCount };
+          }
+          if (matchesSubscriptions) {
+            return state.subRow;
+          }
+          return null;
+        },
+        run: async (): Promise<{
+          success: boolean;
+          results?: unknown[];
+          meta?: Record<string, unknown>;
+        }> => {
+          if (isInsertDeliveries) {
+            state.capturedInserts.push(params);
+            return { success: true, meta: { changes: 1 } };
+          }
+          if (matchesSubscriptions) {
+            return {
+              success: true,
+              results: state.subRows,
+              meta: {
+                changes: 0,
+                rows_read: state.subRows.length,
+                rows_written: 0,
+              },
+            };
+          }
           return { success: true, meta: { changes: 1 } };
-        }
-        if (matchesSubscriptions) {
-          return {
-            success: true,
-            results: state.subRows,
-            meta: {
-              changes: 0,
-              rows_read: state.subRows.length,
-              rows_written: 0,
-            },
-          };
-        }
-        return { success: true, meta: { changes: 1 } };
-      },
-      all: async (): Promise<{
-        success: boolean;
-        results: unknown[];
-      }> => {
-        if (matchesSubscriptions) {
-          return { success: true, results: state.subRows };
-        }
-        return { success: true, results: [] };
-      },
-    });
+        },
+        all: async (): Promise<{
+          success: boolean;
+          results: unknown[];
+        }> => {
+          if (matchesSubscriptions) {
+            return { success: true, results: state.subRows };
+          }
+          return { success: true, results: [] };
+        },
+      };
+    }
     return {
       bind: bound,
       first: async (): Promise<unknown> => {

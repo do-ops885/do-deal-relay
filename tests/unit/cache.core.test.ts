@@ -347,8 +347,8 @@ describe("KVCache", () => {
   // ============================================================================
 
   describe("factory functions", () => {
-    const makeEnv = (kv: KVNamespace, extra?: Record<string, unknown>): Env =>
-      ({
+    function makeEnv(kv: KVNamespace, extra?: Record<string, unknown>): Env {
+      return {
         DEALS_SOURCES: kv,
         DEALS_PROD: kv,
         DEALS_STAGING: kv,
@@ -361,7 +361,8 @@ describe("KVCache", () => {
         DEALS_DB: {} as unknown as D1Database,
         TRUST_THRESHOLD: "0.3",
         ...extra,
-      }) as unknown as Env;
+      } as unknown as Env;
+    }
 
     it("should create source cache with correct config", () => {
       const kv = {

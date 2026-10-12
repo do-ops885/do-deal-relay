@@ -174,7 +174,7 @@ describe("Dependabot Patterns and Wildcards", () => {
         return { exitCode: 0, stdout: result, stderr: "" };
       } catch (e: unknown) {
         const err = e as unknown as ExecError;
-        const toText = (value: unknown): string => {
+        function toText(value: unknown): string {
           if (typeof value === "string") return value;
           if (
             value !== null &&
@@ -187,7 +187,7 @@ describe("Dependabot Patterns and Wildcards", () => {
             }
           }
           return value === undefined || value === null ? "" : String(value);
-        };
+        }
         return {
           exitCode: typeof err.status === "number" ? err.status : 1,
           stdout: toText(err.stdout),
