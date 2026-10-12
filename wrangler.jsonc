@@ -497,33 +497,6 @@
           },
         ],
       },
-      // Workflows and queues are not inherited from the top level by
-      // environments: repeat them here so production deploys without
-      // wrangler configuration warnings.
-      "workflows": [
-        {
-          "name": "discovery-shadow",
-          "binding": "DISCOVERY_WORKFLOW",
-          "class_name": "DiscoveryShadowWorkflow",
-        },
-        {
-          "name": "pipeline",
-          "binding": "PIPELINE_WORKFLOW",
-          "class_name": "PipelineWorkflow",
-        },
-      ],
-      "queues": {
-        "producers": [{ "binding": "ALERT_QUEUE", "queue": "alert-queue" }],
-        "consumers": [
-          {
-            "queue": "alert-queue",
-            "max_batch_size": 10,
-            "max_batch_timeout": 5,
-            "max_retries": 10,
-            "dead_letter_queue": "alert-queue-dlq",
-          },
-        ],
-      },
       // No migrations — DOs already provisioned. See note above.
     },
   },

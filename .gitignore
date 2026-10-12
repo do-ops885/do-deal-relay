@@ -21,6 +21,7 @@ logs/
 
 # Testing
 coverage/
+coverage-unit/
 .nyc_output/
 test-results/
 playwright-report/
