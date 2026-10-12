@@ -154,6 +154,18 @@ describe("Enhanced Config Validation", () => {
       expect(parseBoundedIntegerConfig("TEST_VAR", "088", 10, 0, 100)).toBe(88);
     });
 
+    it("should correctly parse negative zero-padded decimal integers", () => {
+      expect(parseBoundedIntegerConfig("TEST_VAR", "-088", 10, -100, 100)).toBe(
+        -88,
+      );
+    });
+
+    it("should parse valid integer with tab and multiline whitespace", () => {
+      expect(
+        parseBoundedIntegerConfig("TEST_VAR", "\t 50 \n", 10, 0, 100),
+      ).toBe(50);
+    });
+
     it("should throw when value is out of bounds", () => {
       expect(() =>
         parseBoundedIntegerConfig("TEST_VAR", "-1", 10, 0, 100),
