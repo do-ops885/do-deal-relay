@@ -94,6 +94,22 @@ export async function handleScheduled(
         });
       }
 
+      // Daily EU AI Act retention sweep: cleanupExpiredLogs previously had
+      // no caller, so retention_until was never enforced and ai_act_logs
+      // grew without bound. Best-effort — never fails the daily cron.
+      try {
+        const cleaned = await runAiActRetentionCleanup(env);
+        logger.info("EU AI Act retention cleanup completed", {
+          component: "scheduled",
+          cleaned,
+        });
+      } catch (error) {
+        logger.warn("EU AI Act retention cleanup failed (non-critical)", {
+          component: "scheduled",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       return;
     }
 
@@ -259,4 +275,20 @@ export async function handleScheduled(
       },
     });
   }
+}
+
+/**
+ * Run the EU AI Act retention sweep against the D1 log table.
+ *
+ * Resolves to 0 when the DB binding is absent. D1 failures propagate to
+ * the caller, which treats the sweep as non-critical.
+ *
+ * @param env - Worker environment (DEALS_DB binding optional).
+ * @returns Number of expired log rows deleted.
+ */
+export async function runAiActRetentionCleanup(env: Env): Promise<number> {
+  if (!env.DEALS_DB) return 0;
+  const { createComplianceLogger } = await import("./lib/eu-ai-act-logger");
+  const complianceLogger = createComplianceLogger(env.DEALS_DB);
+  return complianceLogger.cleanupExpiredLogs();
 }
