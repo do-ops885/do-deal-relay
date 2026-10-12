@@ -5,6 +5,7 @@
  */
 
 import type { Env } from "../../../types";
+import type { AuthResult } from "../../auth";
 import type { ToolCallResult } from "../types";
 import {
   getProgress,
@@ -12,29 +13,24 @@ import {
   listOperations,
 } from "../progress";
 
+function isAuthorizedForOperation(
+  stateUserId: string | undefined,
+  auth?: AuthResult,
+): boolean {
+  if (auth?.role === "admin") return true;
+  if (!stateUserId) return true; // Legacy unassigned operations
+  return stateUserId === auth?.userId;
+}
+
 export async function handleCheckProgress(
   args: Record<string, unknown>,
   env: Env,
+  auth?: AuthResult,
 ): Promise<ToolCallResult> {
   const operationId = args.operationId as string | undefined;
 
   if (!operationId) {
-    const ops = await listOperations(env);
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(
-            {
-              operations: ops,
-              count: ops.length,
-            },
-            null,
-            2,
-          ),
-        },
-      ],
-    };
+    return handleListOperations(args, env, auth);
   }
 
   const state = await getProgress(operationId, env);
@@ -47,6 +43,25 @@ export async function handleCheckProgress(
           text: JSON.stringify(
             {
               error: "Operation not found",
+              operationId,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  if (!isAuthorizedForOperation(state.userId, auth)) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              error: "Forbidden: Operation belongs to another user",
               operationId,
             },
             null,
@@ -71,6 +86,7 @@ export async function handleCheckProgress(
 export async function handleCancelOperation(
   args: Record<string, unknown>,
   env: Env,
+  auth?: AuthResult,
 ): Promise<ToolCallResult> {
   const operationId = args.operationId as string | undefined;
 
@@ -105,6 +121,21 @@ export async function handleCancelOperation(
     };
   }
 
+  if (!isAuthorizedForOperation(state.userId, auth)) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            error: "Forbidden: Operation belongs to another user",
+            operationId,
+          }),
+        },
+      ],
+      isError: true,
+    };
+  }
+
   if (state.status === "completed" || state.status === "failed") {
     return {
       content: [
@@ -120,7 +151,7 @@ export async function handleCancelOperation(
     };
   }
 
-  const tracker = createProgressTracker(operationId, env);
+  const tracker = createProgressTracker(operationId, env, auth?.userId);
   await tracker.markCancelled();
 
   return {
@@ -140,8 +171,10 @@ export async function handleCancelOperation(
 export async function handleListOperations(
   _args: Record<string, unknown>,
   env: Env,
+  auth?: AuthResult,
 ): Promise<ToolCallResult> {
-  const ops = await listOperations(env);
+  const isAdmin = auth?.role === "admin";
+  const ops = await listOperations(env, auth?.userId, isAdmin);
 
   return {
     content: [

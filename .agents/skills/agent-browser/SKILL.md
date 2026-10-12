@@ -38,18 +38,18 @@ agent-browser snapshot -i  # Check result
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
+| "The `@e` refs from my first snapshot are still valid." | Reference 12 (Ref Lifecycle) invalidates refs on navigation or DOM mutation; every interaction needs a fresh `snapshot -i`. |
+| "I will target elements with a hand-written CSS selector instead of snapshotting." | The workflow is open, snapshot, then act on a ref; semantic locators (reference 14) are the sanctioned fallback, and guessed selectors silently hit the wrong node. |
+| "Leaving the session up is harmless for a one-off run." | Reference 11 covers session management and cleanup; orphaned sessions and held profile locks make the next run nondeterministic. |
+| "A screenshot proves the page changed the way I expect." | Reference 08 (diffing) is what verifies the change; an image alone cannot show which DOM or value actually moved. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Clicks or fills issued against refs captured before a navigation or DOM update.
+- [ ] No `snapshot -i` between an action and the assertion that it worked.
+- [ ] A fixed `sleep` used instead of `wait --load networkidle` or the timeout guidance in reference 09.
+- [ ] Login credentials typed into commands rather than the authenticated-session template.
+- [ ] Browser left running at task end with no cleanup.
 
 ## Reference
 
