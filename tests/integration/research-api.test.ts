@@ -27,6 +27,9 @@ describe("Research API Integration", () => {
         const fullKey = `${prefix}:${key}`;
         mockKvStorage.set(fullKey, value);
       }),
+      delete: vi.fn(async (key: string) => {
+        mockKvStorage.delete(`${prefix}:${key}`);
+      }),
     };
   }
 
