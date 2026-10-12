@@ -90,13 +90,16 @@ Always run the quality gate script before handoff or task completion:
 
 ### Quality Gate Steps
 
+`./scripts/quality_gate.sh` runs 18 numbered checks. The core ones:
+
 | Step                           | Description                                   | Harness type |
 | ------------------------------ | --------------------------------------------- | ------------ |
 | 1. TypeScript Compilation      | Ensure all TypeScript compiles without errors | Computational sensor |
 | 2. Unit Tests                  | Run test suite with >80% coverage             | Computational sensor |
-| 3. Validation Gates            | Run 10-gate validation pipeline               | Computational sensor |
+| 3. Validation Gates            | Run the 9-gate validation pipeline            | Computational sensor |
 | 4. Security Checks             | Scan for secrets, vulnerabilities             | Computational sensor |
 | 5. Root Directory Organization | Verify files are in proper subfolders         | Computational sensor |
+| 11.5 Skill Hygiene             | Skill structure, boilerplate, links, index    | Computational sensor |
 
 ### Example Quality Gate Run
 

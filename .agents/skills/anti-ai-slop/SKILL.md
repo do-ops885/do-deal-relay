@@ -185,13 +185,15 @@ Using 🚀 💡 ✨ ⚡ 🔥 as substitutes for meaning. One emoji in a headline
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The purple gradient and Inter are just framework defaults." | The Canon of Slop flags `#7c3aed -> #2563eb` and Inter/DM Sans/Space Grotesk as the strongest AI-UI cue; `references/ui-alternatives.md` lists component-level replacements. |
+| "A rocket emoji in the header adds energy." | Emoji Inflation sets the count at zero outside genuinely casual contexts; a glyph used as punctuation is performance, not meaning. |
+| "A confirm modal protects the user from a bad delete." | The UX Canon names "Are you sure?" dialogs as a trust defect; ship a 5-10 second undo window instead. |
+| "Polish the palette first, fix the flow later." | The Audit Workflow scores structural findings red and cosmetic ones green, then fixes structural first; polishing a broken flow hides the defect. |
 
 ## Red Flags
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+
+- [ ] A hero pairs a purple-to-blue gradient with rounded 24px cards.
+- [ ] Inter, DM Sans, or Space Grotesk chosen with no stated reason.
+- [ ] Error copy reads "Invalid input" rather than naming the fix.
+- [ ] A first-load modal or tooltip tour teaches an interface that should be redesigned.
+- [ ] Destructive actions open a confirm dialog with no undo path.

@@ -215,14 +215,15 @@ See [templates/crypto.ts](templates/crypto.ts) and [examples/signing.ts](example
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "SHA-256 is good enough for stored passwords." | The Hash Functions table routes passwords to Argon2 or bcrypt, slow by design; SHA-256 covers integrity only. |
+| "Math.random is fine for an IV or token." | Secure Random requires `secureRandom` and `secureRandomInt`; `generateToken` draws from a CSPRNG. |
+| "A direct `==` check on the HMAC is fine." | Constant-Time Comparison exists to close timing side channels; use `constantTimeEqual` on signatures and secrets. |
+| "I'll write a small custom cipher and bake in one static key." | Best Practices #2 forbids rolling your own; use AES-256-GCM carrying `{ciphertext, iv, tag}` and take secrets from env, never literals near `worker/lib/security.ts` callers. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Password stored as a plain SHA-256 or MD5 digest.
+- [ ] IV, salt, or token drawn from `Math.random`.
+- [ ] Signature compared with `==` or string equality.
+- [ ] A hand-rolled cipher instead of AES-256-GCM.
+- [ ] A key literal committed in source rather than read from env.

@@ -202,24 +202,22 @@ jobs:
 
 | Topic | File |
 |-------|------|
-| Full API endpoint list | `references/API_ENDPOINTS.md` |
-| Authentication guide | `references/AUTH.md` |
-| Pagination & rate limits | `references/PAGINATION.md` |
-| Forgejo Actions (CI/CD) | `references/FORGEJO_ACTIONS.md` |
+| CLI tool for Forgejo API operations | `scripts/forgejo_api.py` |
 | Eval test cases | `evals/evals.json` |
 
 ## Rationalizations
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "The repository is public, so I can drop `FORGEJO_TOKEN`." | The token is optional for reads only; `scripts/forgejo_api.py` omits the Authorization header when it is empty, and writes need `write:repository` or `write:issue`. |
+| "I can PUT file content without the existing sha." | Error Handling maps 409 to a SHA mismatch; `get-file` returns the `sha` the update must echo back. |
+| "A 429 just means retry immediately." | The error table pairs 429 with a backoff wait; hammering the endpoint extends the limit window. |
+| "Any git host URL works for `FORGEJO_BASE_URL`." | The base defaults to `https://codeberg.org/api/v1`; a self-hosted Forgejo must expose the full `/api/v1` path. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] Write call made with an empty or read-only `FORGEJO_TOKEN`.
+- [ ] `put-file` sent without the `sha` returned by a prior `get-file`.
+- [ ] 401 or 403 retried without rechecking token scopes.
+- [ ] `FORGEJO_BASE_URL` set without the `/api/v1` suffix.
+- [ ] Workflow files placed outside `.forgejo/workflows/`.

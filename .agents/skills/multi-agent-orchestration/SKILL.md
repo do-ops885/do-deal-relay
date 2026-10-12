@@ -106,7 +106,7 @@ Every orchestration must end with verification:
 ## State Management
 
 For multi-step orchestrations:
-- State in `plans/PROGRESS.json` (not context window)
+- State in `plans/GOAP_STATE.md` and `agents-docs/coordination/state.json` (not context window)
 - Git commits as checkpoints
 - Fresh context per iteration (stateless outer loop)
 - Audit trail in `DEALS_LOG` KV namespace

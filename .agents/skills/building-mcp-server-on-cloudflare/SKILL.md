@@ -156,18 +156,18 @@ Restart Claude Desktop after updating config.
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
-
+| "I remember the MCP SDK and Workers glue from training." | The skill's opening rule is retrieval over pre-training; the SDK moves quickly, and `worker/lib/mcp/schemas.ts` pins the `protocolVersion` parsing your installed SDK must actually emit. |
+| "Tool output can be a plain string; schemas just add friction." | Every tool in `worker/lib/mcp/tools/` (deals, research, user, system) declares a zod input schema and returns a typed `ToolCallResult`; free-form output fails clients that validate. |
+| "Auth can be bolted on after the tools work." | The OAuth template changes the Worker entry point and its bindings; adding it late invalidates the MCP Inspector session you already ran. |
+| "Deploying to `*.workers.dev` is enough to be production-ready." | A real remote server needs the provider bindings wired and the `serveSSE("/mcp")` route to match the client's URL, not just a live hostname. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A tool registered without a zod input schema, or a handler that ignores its declared parameters.
+- [ ] Handler logic written from memory with no check against Cloudflare/MCP docs or `worker/lib/mcp/types.ts`.
+- [ ] Local testing skipped past MCP Inspector pointed at `http://localhost:8788/mcp`.
+- [ ] Entry point diverging from the `serveSSE("/mcp")` path the client config connects to.
+- [ ] Deploy attempted before the wrangler bindings (KV/D1/DO) the tools need are configured.
 
 ## Reference
 

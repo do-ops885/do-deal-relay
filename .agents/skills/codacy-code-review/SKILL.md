@@ -9,6 +9,8 @@ metadata:
 
 # Codacy Code Review
 
+> **Upstream:** codacy/codacy-skills. Local analysis is instant; coverage, gate status, and issue ignoring need a token and a pushed, analyzed PR.
+>
 > **Glossary:** See [glossary.md](../../../agents-docs/references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
 
 This skill enriches code reviews with Codacy data. It works alongside any existing code review process (a code-review skill, CodeRabbit, manual review, etc.) — it adds Codacy-specific data on top.
@@ -197,13 +199,17 @@ If a code review skill (e.g. `code-review` skill, CodeRabbit) has already perfor
 
 ## Rationalizations
 
-- Skills imported from codacy/codacy-skills open-source repository
-- Cross-skill references use relative paths to shared glossary
-- All tools documented with CLI flags and JSON output for agent workflows
+| Concern | Counter-Argument |
+|---------|------------------|
+| "Wait for Codacy Cloud before starting the review." | `codacy-analysis analyze --pr` returns issues at once; start the review with those and add cloud data when it arrives. |
+| "No quality gate in the response means the PR passed." | Cloud data is for the PR HEAD commit and needs a push plus analysis; a stale or absent result is not a pass — use `--reanalyze-and-wait`. |
+| "Coverage fell, so block the whole PR." | Check `--diff` for the lines the PR left uncovered; flag those files, not the raw delta. |
+| "This is a Codacy-only review, so the ticket and test plan can wait." | Steps 6 and 7 require alignment against the linked ticket/PR description and a test plan; the workflow says complete every step. |
 
 ## Red Flags
 
-- Requires Codacy API token for Cloud operations
-- Local analysis may differ from Cloud analysis results
-- Tool availability depends on machine dependencies (Docker, language runtimes)
-
+- [ ] The review is published without the coverage delta, standards status, and duplication fields from `codacy pull-request`.
+- [ ] A local-only finding set is presented as the full PR analysis while tools sit in `capability.unavailable`.
+- [ ] `--ignore-issue` is called with no reason, or a pattern is disabled for a one-off false positive.
+- [ ] A Critical or High issue introduced by the PR is not marked as a blocker.
+- [ ] The summary drops the ticket-alignment or test-plan sections.
