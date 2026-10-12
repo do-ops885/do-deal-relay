@@ -23,8 +23,9 @@ export interface ProgressState {
   toolName: string;
   createdAt: string;
   updatedAt: string;
+  userId?: string | undefined;
   result?: unknown;
-  error?: string;
+  error?: string | undefined;
 }
 
 export interface ProgressTracker {
@@ -43,6 +44,7 @@ export interface ProgressIndexEntry {
   operationId: string;
   toolName: string;
   createdAt: string;
+  userId?: string | undefined;
 }
 
 function progressKey(operationId: string): string {
@@ -55,11 +57,41 @@ function progressKey(operationId: string): string {
 async function ensureProgressIndexTable(env: Env): Promise<void> {
   try {
     await env.DEALS_DB.exec(
-      `CREATE TABLE IF NOT EXISTS ${PROGRESS_INDEX_TABLE} (operationId TEXT PRIMARY KEY, toolName TEXT NOT NULL, createdAt TEXT NOT NULL)`,
+      `CREATE TABLE IF NOT EXISTS ${PROGRESS_INDEX_TABLE} (operationId TEXT PRIMARY KEY, toolName TEXT NOT NULL, createdAt TEXT NOT NULL, userId TEXT)`,
     );
+    try {
+      await env.DEALS_DB.exec(
+        `ALTER TABLE ${PROGRESS_INDEX_TABLE} ADD COLUMN userId TEXT`,
+      );
+    } catch {
+      // Column userId already exists or table was newly created with it
+    }
   } catch (err) {
     logger.warn("MCP Progress: ensureProgressIndexTable failed", {
       component: "mcp-progress",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+export async function addToIndex(
+  env: Env,
+  operationId: string,
+  toolName: string,
+  userId?: string,
+): Promise<void> {
+  try {
+    await ensureProgressIndexTable(env);
+    const now = new Date().toISOString();
+    await env.DEALS_DB.prepare(
+      `INSERT OR REPLACE INTO ${PROGRESS_INDEX_TABLE} (operationId, toolName, createdAt, userId) VALUES (?, ?, ?, ?)`,
+    )
+      .bind(operationId, toolName, now, userId || null)
+      .run();
+  } catch (err) {
+    logger.warn("MCP Progress: addToIndex failed", {
+      component: "mcp-progress",
+      operationId,
       error: err instanceof Error ? err.message : String(err),
     });
   }
@@ -85,6 +117,7 @@ async function removeFromIndex(env: Env, operationId: string): Promise<void> {
 export function createProgressTracker(
   operationId: string,
   env: Env,
+  userId?: string,
 ): ProgressTracker {
   const now = new Date().toISOString();
   const writeState = async (state: Partial<ProgressState>): Promise<void> => {
@@ -98,6 +131,7 @@ export function createProgressTracker(
       toolName: "",
       createdAt: now,
       updatedAt: now,
+      userId,
     };
     const merged: ProgressState = Object.assign(
       {},
@@ -106,6 +140,9 @@ export function createProgressTracker(
       state,
       { updatedAt: new Date().toISOString() },
     );
+    if (userId && !merged.userId) {
+      merged.userId = userId;
+    }
     await env.DEALS_PROD.put(progressKey(operationId), JSON.stringify(merged), {
       expirationTtl: PROGRESS_TTL_SECONDS,
     });
@@ -174,15 +211,32 @@ export async function getProgress(
   }
 }
 
-export async function listOperations(env: Env): Promise<ProgressIndexEntry[]> {
+export async function listOperations(
+  env: Env,
+  userId?: string,
+  isAdmin?: boolean,
+): Promise<ProgressIndexEntry[]> {
   try {
     await ensureProgressIndexTable(env);
-    const result = await env.DEALS_DB.prepare(
-      `SELECT operationId, toolName, createdAt FROM ${PROGRESS_INDEX_TABLE} WHERE createdAt > datetime('now', '-' || ? || ' seconds') LIMIT 200`,
-    )
-      .bind(PROGRESS_TTL_SECONDS.toString())
-      .all<ProgressIndexEntry>();
-    return result.results;
+    if (isAdmin) {
+      const result = await env.DEALS_DB.prepare(
+        `SELECT operationId, toolName, createdAt, userId FROM ${PROGRESS_INDEX_TABLE} WHERE createdAt > datetime('now', '-' || ? || ' seconds') LIMIT 200`,
+      )
+        .bind(PROGRESS_TTL_SECONDS.toString())
+        .all<ProgressIndexEntry>();
+      return result.results;
+    }
+
+    if (userId) {
+      const result = await env.DEALS_DB.prepare(
+        `SELECT operationId, toolName, createdAt, userId FROM ${PROGRESS_INDEX_TABLE} WHERE userId = ? AND createdAt > datetime('now', '-' || ? || ' seconds') LIMIT 200`,
+      )
+        .bind(userId, PROGRESS_TTL_SECONDS.toString())
+        .all<ProgressIndexEntry>();
+      return result.results;
+    }
+
+    return [];
   } catch (err) {
     logger.warn("MCP Progress: listOperations failed", {
       component: "mcp-progress",

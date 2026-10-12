@@ -23,7 +23,7 @@ export async function tryHandleMCPStreamRoutes(
   if (path === "/mcp/stream" && request.method === "GET") {
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(env, "/mcp/stream", auth);
-      return rateLimiter(request, () => handleMCPStream(request, env));
+      return rateLimiter(request, () => handleMCPStream(request, env, auth));
     });
   }
 
@@ -51,6 +51,7 @@ export async function tryHandleMCPStreamRoutes(
           { name: body.name, arguments: body.arguments ?? {} },
           env,
           request,
+          auth,
         );
       });
     });
