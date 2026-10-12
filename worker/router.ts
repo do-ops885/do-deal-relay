@@ -12,7 +12,6 @@ import {
   handlePipelineRequest,
 } from "./lib/middleware/pipeline";
 import { handleHealth, handleReady, handleLive } from "./routes/core";
-import { handleD1Request } from "./routes/d1";
 
 /**
  * Initialize pipeline-registered routes.
@@ -20,7 +19,8 @@ import { handleD1Request } from "./routes/d1";
  *   cors → logging → rate-limit → auth → handler
  *
  * Health routes are migrated first as proof of concept.
- * D1 routes get auth (previously unprotected).
+ * D1 routes remain on the legacy admin-gated ladder (see legacy-routes.ts);
+ * the bare pipeline "/api/d1" registration was removed as dead (always 404).
  * Rate limiting is added to routes that lacked it.
  */
 function initPipelineRoutes(): void {
@@ -48,26 +48,6 @@ function initPipelineRoutes(): void {
       handler: (_req, env) => handleLive(env, _req),
       auth: "public",
       description: "Liveness probe",
-    },
-
-    // -----------------------------------------------------------------------
-    // D1 Database API — admin-only with rate limiting (P1-1 fix)
-    // Previously had no auth beyond the legacy catch-all.
-    // -----------------------------------------------------------------------
-    {
-      method: ["GET", "POST", "PUT", "DELETE"],
-      path: "/api/d1",
-      handler: (req, env) => {
-        const url = new URL(req.url);
-        return handleD1Request(req, url, env);
-      },
-      auth: "internal",
-      rateLimit: {
-        windowSeconds: 60,
-        maxRequests: 30,
-        keyPrefix: "ratelimit:d1",
-      },
-      description: "D1 database operations (admin only)",
     },
   ]);
 }
