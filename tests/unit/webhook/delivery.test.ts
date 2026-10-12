@@ -10,6 +10,7 @@ import type {
   WebhookSubscription,
   DeadLetterEvent,
 } from "../../../worker/lib/webhook/types";
+import type { Env } from "../../../worker/types";
 
 vi.mock("../../../worker/lib/security", () => ({
   validateFetchUrl: vi.fn().mockResolvedValue(true),
@@ -56,7 +57,7 @@ function createEnv(kv: MockKv) {
     DEALS_LOG: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 function createEvent(overrides: Partial<WebhookEvent> = {}): WebhookEvent {
@@ -125,7 +126,7 @@ describe("Webhook Delivery", () => {
 
     it("should do nothing when KV is unavailable", async () => {
       await expect(
-        sendOutgoingWebhooks({} as any, createEvent()),
+        sendOutgoingWebhooks({} as unknown as Env, createEvent()),
       ).resolves.toBeUndefined();
       expect(fetchSpy).not.toHaveBeenCalled();
     });
@@ -324,8 +325,10 @@ describe("Webhook Delivery", () => {
         // Mock random values to get deterministic zero jitter
         const getRandomValuesSpy = vi
           .spyOn(globalThis.crypto, "getRandomValues")
-          .mockImplementation((array: any) => {
-            array[0] = 0;
+          .mockImplementation((array: ArrayBufferView<ArrayBuffer>) => {
+            if (array instanceof Uint8Array) {
+              array[0] = 0;
+            }
             return array;
           });
 
@@ -398,7 +401,7 @@ describe("Webhook Delivery", () => {
     });
 
     it("should return empty array when KV is unavailable", async () => {
-      expect(await getDeadLetterQueue({} as any)).toEqual([]);
+      expect(await getDeadLetterQueue({} as unknown as Env)).toEqual([]);
     });
 
     it("should return all DLQ entries", async () => {
@@ -441,7 +444,9 @@ describe("Webhook Delivery", () => {
 
   describe("retryDeadLetterEvent()", () => {
     it("should return false when KV is unavailable", async () => {
-      expect(await retryDeadLetterEvent({} as any, "e", "s")).toBe(false);
+      expect(await retryDeadLetterEvent({} as unknown as Env, "e", "s")).toBe(
+        false,
+      );
     });
 
     it("should return false when DLQ entry does not exist", async () => {

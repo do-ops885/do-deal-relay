@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { jsonRecord, recordArray } from "../fixtures/typed-assert";
 
 /**
  * Browser-based API endpoint tests
@@ -65,8 +66,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("status", "healthy");
     expect(body).toHaveProperty("version");
     expect(body).toHaveProperty("timestamp");
@@ -77,8 +77,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("ready");
     expect(body.ready).toBe(true);
   });
@@ -88,8 +87,7 @@ test.describe("Health Endpoints", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("alive");
     expect(body.alive).toBe(true);
   });
@@ -103,8 +101,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = recordArray(await response.json());
     expect(Array.isArray(body)).toBe(true);
   });
 
@@ -116,8 +113,7 @@ test.describe("Deals API", () => {
     const contentType = response.headers()["content-type"];
     expect(contentType).toContain("application/json");
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("deals");
     expect(Array.isArray(body.deals)).toBe(true);
   });
@@ -129,8 +125,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = recordArray(await response.json());
     expect(Array.isArray(body)).toBe(true);
   });
 
@@ -141,8 +136,7 @@ test.describe("Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = recordArray(await response.json());
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeLessThanOrEqual(5);
   });
@@ -158,8 +152,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("deals");
     expect(body).toHaveProperty("meta");
     expect(Array.isArray(body.deals)).toBe(true);
@@ -174,9 +167,8 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
-    expect(body.meta.sort_by).toBe("confidence");
+    const body = jsonRecord(await response.json());
+    expect(jsonRecord(body.meta).sort_by).toBe("confidence");
   });
 
   test("GET /deals/highlights returns featured deals", async ({ request }) => {
@@ -186,8 +178,7 @@ test.describe("Ranked Deals API", () => {
 
     expect(response.status()).toBe(200);
 
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("top_deals");
     expect(body).toHaveProperty("expiring_soon");
     expect(body).toHaveProperty("recently_added");
@@ -205,8 +196,7 @@ test.describe("Protected API Endpoints", () => {
     });
 
     expect(response.status()).toBe(200);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("qualityMetrics");
   });
 
@@ -218,8 +208,7 @@ test.describe("Protected API Endpoints", () => {
     });
 
     expect(response.status()).toBe(200);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("locked");
   });
 
@@ -231,8 +220,7 @@ test.describe("Protected API Endpoints", () => {
     });
 
     expect(response.status()).toBe(200);
-    // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-    const body = (await response.json()) as any;
+    const body = jsonRecord(await response.json());
     expect(body).toHaveProperty("logs");
     expect(Array.isArray(body.logs)).toBe(true);
   });
@@ -308,8 +296,7 @@ test.describe("JWT Auth – Deals API", () => {
     expect([200, 404]).toContain(response.status());
 
     if (response.status() === 200) {
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = recordArray(await response.json());
       expect(Array.isArray(body)).toBe(true);
     }
   });
@@ -325,8 +312,7 @@ test.describe("JWT Auth – Deals API", () => {
     if (response.status() === 200) {
       const contentType = response.headers()["content-type"];
       expect(contentType).toContain("application/json");
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("deals");
       expect(Array.isArray(body.deals)).toBe(true);
     }
@@ -341,8 +327,7 @@ test.describe("JWT Auth – Deals API", () => {
     expect([200, 404]).toContain(response.status());
 
     if (response.status() === 200) {
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("deals");
       expect(body).toHaveProperty("meta");
       expect(Array.isArray(body.deals)).toBe(true);
@@ -381,8 +366,7 @@ test.describe("JWT Auth – Deals API", () => {
 
     // If user data is seeded, verify the payload
     if (response.status() === 200) {
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("email", "e2e-test@example.com");
       expect(body).toHaveProperty("name", "E2E Test User");
       expect(body).toHaveProperty("role");

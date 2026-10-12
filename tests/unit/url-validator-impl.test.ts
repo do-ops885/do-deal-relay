@@ -7,6 +7,7 @@ import {
   getValidationSummary,
 } from "../../worker/lib/validation/url-validator";
 import { validatedFetch } from "../../worker/lib/security";
+import type { UrlValidationResult } from "../../worker/lib/validation/url-validator-types";
 
 // Mock logger to avoid noise
 vi.mock("../../worker/lib/global-logger", () => ({
@@ -155,22 +156,37 @@ describe("url-validator", () => {
 
   describe("isUrlDead", () => {
     it("should return true for invalid result", () => {
-      expect(isUrlDead({ valid: false } as any)).toBe(true);
+      expect(
+        isUrlDead({ valid: false } as unknown as UrlValidationResult),
+      ).toBe(true);
     });
 
     it("should return true for 404 status", () => {
-      expect(isUrlDead({ valid: true, statusCode: 404 } as any)).toBe(true);
+      expect(
+        isUrlDead({
+          valid: true,
+          statusCode: 404,
+        } as unknown as UrlValidationResult),
+      ).toBe(true);
     });
 
     it("should return true for too many redirects", () => {
       expect(
-        isUrlDead({ valid: true, statusCode: 200, redirectCount: 4 } as any),
+        isUrlDead({
+          valid: true,
+          statusCode: 200,
+          redirectCount: 4,
+        } as unknown as UrlValidationResult),
       ).toBe(true);
     });
 
     it("should return false for healthy 200", () => {
       expect(
-        isUrlDead({ valid: true, statusCode: 200, redirectCount: 0 } as any),
+        isUrlDead({
+          valid: true,
+          statusCode: 200,
+          redirectCount: 0,
+        } as unknown as UrlValidationResult),
       ).toBe(false);
     });
   });
@@ -186,7 +202,7 @@ describe("url-validator", () => {
           redirectCount: 0,
           statusCode: 404,
         },
-      ] as any[];
+      ] as unknown as UrlValidationResult[];
 
       const summary = getValidationSummary(results);
       expect(summary.total).toBe(3);

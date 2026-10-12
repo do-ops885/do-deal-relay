@@ -4,14 +4,16 @@ import {
   sendOutgoingWebhooks,
 } from "../../worker/lib/webhook/delivery";
 import type { Env } from "../../worker/types";
+import type { WebhookEvent } from "../../worker/lib/webhook/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 vi.mock("../../worker/lib/webhook/types", async () => {
   const actual = (await vi.importActual(
     "../../worker/lib/webhook/types",
-  )) as any;
+  )) as unknown as typeof import("../../worker/lib/webhook/types");
   return {
     ...actual,
-    getWebhookKV: vi.fn().mockImplementation((env) => env.DEALS_WEBHOOKS),
+    getWebhookKV: vi.fn().mockImplementation((env: Env) => env.DEALS_WEBHOOKS),
   };
 });
 
@@ -30,7 +32,12 @@ vi.mock("../../worker/lib/hmac", () => ({
 }));
 
 describe("Webhook Delivery Optimization", () => {
-  let mockKv: any;
+  let mockKv: {
+    get: ReturnType<typeof vi.fn>;
+    put: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    list: ReturnType<typeof vi.fn>;
+  };
   let mockEnv: Env;
 
   beforeEach(() => {
@@ -54,7 +61,7 @@ describe("Webhook Delivery Optimization", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 
@@ -105,11 +112,11 @@ describe("Webhook Delivery Optimization", () => {
 
   describe("sendOutgoingWebhooks (calls getAllActiveSubscriptions)", () => {
     it("should fetch subscriptions in parallel and filter active ones", async () => {
-      const event: any = {
+      const event = {
         id: "evt_1",
         type: "referral.created",
         data: { domain: "example.com" },
-      };
+      } as unknown as WebhookEvent;
 
       const keys = [
         { name: "webhook_subscription:sub1" },

@@ -12,9 +12,11 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.34, single source of truth**.
-  Full inventory (P0–P3, deferred, blocked). 2026-10-04 gap-audit
-  findings IMPLEMENTED 2026-10-05 (NI-1/NI-2/IMP-4/IMP-5/IMP-6,
+- [GOAP State](GOAP_STATE.md) — **v0.19.35, single source of truth**.
+  Full inventory (P0–P3, deferred, blocked). F-12 test `as any`
+  residue CLOSED 2026-10-06 ([SPEC](SPEC-f12-asany-residue.md);
+  0 in tests/, 0 in worker/; 229 files / 3065 tests green).
+  2026-10-04 gap-audit findings implemented 2026-10-05 (NI-1/NI-2/IMP-4/IMP-5/IMP-6,
   [ADR-032](ADR-032-feature-flag-governance.md)). Remaining: prod D1
   v13/v14 apply + `wrangler queues create` (owner ops), deferred menu
   (N-3, F-4 DO cutover), IMP-1/IMP-3 decisions, IMP-2 external OTEL export.

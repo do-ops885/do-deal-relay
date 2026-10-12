@@ -10,6 +10,7 @@ import {
   getUserSubscriptions,
 } from "../../../worker/lib/webhook/subscriptions";
 import type { WebhookPartner } from "../../../worker/lib/webhook/types";
+import type { Env } from "../../../worker/types";
 
 // ============================================================================
 // Mock KV Namespace
@@ -40,7 +41,7 @@ function createMockKv() {
 
 type MockKv = ReturnType<typeof createMockKv>;
 function createEnv(kv: MockKv) {
-  return { DEALS_STAGING: kv } as any;
+  return { DEALS_STAGING: kv } as unknown as Env;
 }
 
 describe("Webhook Subscriptions - Partner & Subscription", () => {
@@ -61,7 +62,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
       });
 
       it("should return empty array when KV is unavailable", async () => {
-        expect(await getWebhookPartners({} as any)).toEqual([]);
+        expect(await getWebhookPartners({} as unknown as Env)).toEqual([]);
       });
 
       it("should return partners when they exist", async () => {
@@ -170,9 +171,9 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
           rate_limit_per_minute: 60,
           created_at: "2024-01-01T00:00:00Z",
         };
-        await expect(saveWebhookPartner({} as any, partner)).rejects.toThrow(
-          "No KV namespace available",
-        );
+        await expect(
+          saveWebhookPartner({} as unknown as Env, partner),
+        ).rejects.toThrow("No KV namespace available");
       });
     });
 
@@ -300,7 +301,7 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
       it("should throw when KV is unavailable", async () => {
         await expect(
           createSubscription(
-            {} as any,
+            {} as unknown as Env,
             partnerId,
             "https://example.com",
             ["referral.created"],
@@ -344,7 +345,9 @@ describe("Webhook Subscriptions - Partner & Subscription", () => {
       });
 
       it("should return null when KV is unavailable", async () => {
-        expect(await getSubscription({} as any, "sub_any")).toBeNull();
+        expect(
+          await getSubscription({} as unknown as Env, "sub_any"),
+        ).toBeNull();
       });
     });
 

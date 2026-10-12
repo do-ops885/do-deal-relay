@@ -12,6 +12,7 @@ import {
   createSubscription,
 } from "../../../worker/lib/webhook/subscriptions";
 import type { SyncConfig } from "../../../worker/lib/webhook/types";
+import type { Env } from "../../../worker/types";
 
 // ============================================================================
 // Mock KV Namespace
@@ -46,7 +47,7 @@ function createEnv(kv: MockKv) {
     DEALS_LOG: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 describe("Webhook Subscriptions - Mutations & Sync", () => {
@@ -100,7 +101,9 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
 
     it("should return null when KV is unavailable", async () => {
       expect(
-        await updateSubscription({} as any, "sub_any", { active: false }),
+        await updateSubscription({} as unknown as Env, "sub_any", {
+          active: false,
+        }),
       ).toBeNull();
     });
 
@@ -147,7 +150,9 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
     });
 
     it("should return false when KV is unavailable", async () => {
-      expect(await deleteSubscription({} as any, "sub_any")).toBe(false);
+      expect(await deleteSubscription({} as unknown as Env, "sub_any")).toBe(
+        false,
+      );
     });
 
     it("should not affect other subscriptions of same partner", async () => {
@@ -186,7 +191,7 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
       });
 
       it("should return null when KV is unavailable", async () => {
-        expect(await getSyncState({} as any, "sync_1")).toBeNull();
+        expect(await getSyncState({} as unknown as Env, "sync_1")).toBeNull();
       });
 
       it("should return saved sync state", async () => {
@@ -228,7 +233,9 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
           pending_changes: 0,
           status: "idle" as const,
         };
-        await expect(saveSyncState({} as any, state)).resolves.toBeUndefined();
+        await expect(
+          saveSyncState({} as unknown as Env, state),
+        ).resolves.toBeUndefined();
       });
 
       it("should overwrite previous sync state", async () => {
@@ -338,9 +345,9 @@ describe("Webhook Subscriptions - Mutations & Sync", () => {
           conflict_resolution: "manual",
           priority: "local",
         };
-        await expect(createSyncConfig({} as any, config)).rejects.toThrow(
-          "No KV namespace available",
-        );
+        await expect(
+          createSyncConfig({} as unknown as Env, config),
+        ).rejects.toThrow("No KV namespace available");
       });
 
       it("should reject an empty owner ID at the storage boundary", async () => {

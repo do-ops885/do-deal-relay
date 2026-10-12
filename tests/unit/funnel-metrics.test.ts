@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { handleMetrics } from "../../worker/routes/core/health";
 import { Env, PipelineMetrics } from "../../worker/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 describe("Funnel Metrics", () => {
   it("should calculate funnel metrics correctly in handleMetrics JSON response", async () => {
@@ -23,15 +24,15 @@ describe("Funnel Metrics", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 
     const mockMetric: PipelineMetrics = {
       run_id: "run-1",
       start_time: Date.now(),
-      phase_timings: {} as any,
-      phase_results: {} as any,
+      phase_timings: {} as unknown as PipelineMetrics["phase_timings"],
+      phase_results: {} as unknown as PipelineMetrics["phase_results"],
       total_duration_ms: 1000,
       deals_processed: {
         discovered: 100,
@@ -87,7 +88,7 @@ describe("Funnel Metrics", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
 
@@ -130,8 +131,8 @@ describe("Funnel Metrics", () => {
     const mockMetricZero: PipelineMetrics = {
       run_id: "run-zero",
       start_time: Date.now(),
-      phase_timings: {} as any,
-      phase_results: {} as any,
+      phase_timings: {} as unknown as PipelineMetrics["phase_timings"],
+      phase_results: {} as unknown as PipelineMetrics["phase_results"],
       total_duration_ms: 500,
       deals_processed: {
         discovered: 0,

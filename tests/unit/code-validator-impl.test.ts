@@ -72,11 +72,11 @@ describe("code-validator", () => {
 
   describe("validateCodeOnPage", () => {
     it("should find code on page", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         text: async () =>
           "<html><body>Use code REF123 for a bonus!</body></html>",
-      });
+      } as unknown as Response);
 
       const result = await validateCodeOnPage("REF123", "https://example.com");
       expect(result.codeFound).toBe(true);
@@ -84,11 +84,11 @@ describe("code-validator", () => {
     });
 
     it("should handle page not found", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 404,
         statusText: "Not Found",
-      });
+      } as unknown as Response);
 
       const result = await validateCodeOnPage("REF123", "https://example.com");
       expect(result.codeFound).toBe(false);
@@ -98,10 +98,10 @@ describe("code-validator", () => {
 
   describe("validateCodeComplete", () => {
     it("should perform full validation", async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         text: async () => "<html><body>Code: PROMO50</body></html>",
-      });
+      } as unknown as Response);
 
       const result = await validateCodeComplete(
         "PROMO50",

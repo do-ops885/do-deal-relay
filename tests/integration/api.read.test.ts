@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env, Snapshot, Deal } from "../../worker/types";
+import { jsonRecord, recordArray } from "../fixtures/typed-assert";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -144,8 +145,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(["healthy", "degraded"]).toContain(body.status);
       expect(body.version).toBeDefined();
       expect(body.timestamp).toBeDefined();
@@ -155,8 +155,7 @@ describe("API Endpoints", () => {
       const request = new Request("http://localhost/health");
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect([200, 503]).toContain(response.status);
       expect(["healthy", "degraded"]).toContain(body.status);
     });
@@ -196,8 +195,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.funnel).toBeDefined();
     });
 
@@ -233,10 +231,9 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.funnel).toBeDefined();
-      expect(body.funnel.discovered).toBe(0);
+      expect(jsonRecord(body.funnel).discovered).toBe(0);
     });
   });
 
@@ -272,8 +269,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = recordArray(await response.json());
       expect(Array.isArray(body)).toBe(true);
       expect(body).toHaveLength(2);
     });
@@ -285,8 +281,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(404);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toBe("No deals available");
     });
 
@@ -321,10 +316,11 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = recordArray(await response.json());
       expect(body).toHaveLength(1);
-      expect(body[0].metadata.category).toContain("referral");
+      const first = body[0];
+      if (!first) throw new Error("expected deal");
+      expect(jsonRecord(first.metadata).category).toContain("referral");
     });
 
     it("should filter by min_reward", async () => {
@@ -360,10 +356,11 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = recordArray(await response.json());
       expect(body).toHaveLength(1);
-      expect(body[0].reward.value).toBe(75);
+      const first = body[0];
+      if (!first) throw new Error("expected deal");
+      expect(jsonRecord(first.reward).value).toBe(75);
     });
 
     it("should respect limit parameter", async () => {
@@ -390,8 +387,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = recordArray(await response.json());
       expect(body).toHaveLength(5);
     });
 
@@ -405,8 +401,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      expect((await response.json()) as any).toHaveProperty("error");
+      expect(jsonRecord(await response.json())).toHaveProperty("error");
     });
   });
 
@@ -423,8 +418,7 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("version");
       expect(body).toHaveProperty("generated_at");
       expect(body).toHaveProperty("snapshot_hash");
@@ -464,9 +458,8 @@ describe("API Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
-      expect(body.deals).toHaveLength(1);
+      const body = jsonRecord(await response.json());
+      expect(recordArray(body.deals)).toHaveLength(1);
     });
   });
 });

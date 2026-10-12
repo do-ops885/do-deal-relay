@@ -35,7 +35,7 @@ describe("duplicate-check gate", () => {
   it("should pass if no duplicates in context", () => {
     const ctx: PipelineContext = {
       validated: [],
-    } as any;
+    } as unknown as PipelineContext;
     const result = checkDeduplication(deal, ctx);
     expect(result.passed).toBe(true);
   });
@@ -43,7 +43,7 @@ describe("duplicate-check gate", () => {
   it("should fail if duplicate ID exists in context", () => {
     const ctx: PipelineContext = {
       validated: [{ ...deal, id: "test-id" }],
-    } as any;
+    } as unknown as PipelineContext;
     const result = checkDeduplication(deal, ctx);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("Duplicate detected");
@@ -52,7 +52,7 @@ describe("duplicate-check gate", () => {
   it("should fail if duplicate domain and code exists in context", () => {
     const ctx: PipelineContext = {
       validated: [{ ...deal, id: "other-id" }],
-    } as any;
+    } as unknown as PipelineContext;
     const result = checkDeduplication(deal, ctx);
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("Duplicate detected");
