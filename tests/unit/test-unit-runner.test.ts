@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { execSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { readFileSync, existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -18,7 +19,7 @@ describe("test-unit runner script", () => {
     originalEnv = { ...process.env };
     tempSummaryFile = join(
       tmpdir(),
-      `test-summary-${Date.now()}-${Math.random().toString(36).substring(2)}.md`,
+      `test-summary-${Date.now()}-${randomUUID()}.md`,
     );
 
     exitSpy = vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
