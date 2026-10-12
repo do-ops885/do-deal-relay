@@ -3,6 +3,7 @@ import type { Env } from "../../types";
 import { REFERRAL_KEYS } from "./types";
 import { getReferralById } from "./crud";
 import { fetchInBatches, executeInBatches } from "../utils";
+import { listAllKvKeys } from "../kv-pagination";
 
 // ============================================================================
 // Search and Query Operations
@@ -10,41 +11,69 @@ import { fetchInBatches, executeInBatches } from "../utils";
 
 /**
  * Get all referrals for a domain
- * Optimization: Parallel batch fetch instead of sequential loop
+ * Uses per-key atomic domain index with legacy JSON blob fallback
  */
 export async function getReferralsByDomain(
   env: Env,
   domain: string,
 ): Promise<ReferralInput[]> {
-  const indexKey = REFERRAL_KEYS.DOMAIN_INDEX;
-  const index = await env.DEALS_SOURCES.get<Record<string, string[]>>(
-    indexKey,
-    "json",
-  );
+  const domainLower = domain.toLowerCase();
+  const prefix = `${REFERRAL_KEYS.DOMAIN_INDEX_PREFIX}${domainLower}:`;
+  const listResult = await listAllKvKeys(env.DEALS_SOURCES, { prefix });
+  let ids = listResult.keys
+    .map((k) => k.name.slice(prefix.length))
+    .filter(Boolean);
 
-  if (!index || !index[domain]) return [];
+  // Fallback to legacy domain index if no per-key entries found
+  if (ids.length === 0) {
+    const indexKey = REFERRAL_KEYS.DOMAIN_INDEX;
+    const index = await env.DEALS_SOURCES.get<Record<string, string[]>>(
+      indexKey,
+      "json",
+    );
+    if (index && index[domain]) {
+      ids = index[domain];
+    }
+  }
 
-  return fetchInBatches(index[domain], (id) => getReferralById(env, id));
+  if (ids.length === 0) return [];
+
+  const uniqueIds = Array.from(new Set(ids));
+  return fetchInBatches(uniqueIds, (id) => getReferralById(env, id));
 }
 
 /**
  * Get referrals by status
- * Optimization: Parallel batch fetch instead of sequential loop
+ * Uses per-key atomic status index with legacy list blob fallback
  */
 export async function getReferralsByStatus(
   env: Env,
   status: ReferralInput["status"],
 ): Promise<ReferralInput[]> {
-  const listKey =
-    status === "active"
-      ? REFERRAL_KEYS.ACTIVE_LIST
-      : REFERRAL_KEYS.INACTIVE_LIST;
-  const ids = await env.DEALS_SOURCES.get<string[]>(listKey, "json");
+  const prefix = `${REFERRAL_KEYS.STATUS_PREFIX}${status}:`;
+  const listResult = await listAllKvKeys(env.DEALS_SOURCES, { prefix });
+  let ids = listResult.keys
+    .map((k) => k.name.slice(prefix.length))
+    .filter(Boolean);
 
-  if (!ids) return [];
+  // Fallback to legacy status lists if no per-key entries found
+  if (ids.length === 0) {
+    const listKey =
+      status === "active"
+        ? REFERRAL_KEYS.ACTIVE_LIST
+        : REFERRAL_KEYS.INACTIVE_LIST;
+    const legacyIds = await env.DEALS_SOURCES.get<string[]>(listKey, "json");
+    if (legacyIds) {
+      ids = legacyIds;
+    }
+  }
 
-  // fetchInBatches automatically filters out null/undefined results
-  const referrals = await fetchInBatches(ids, (id) => getReferralById(env, id));
+  if (ids.length === 0) return [];
+
+  const uniqueIds = Array.from(new Set(ids));
+  const referrals = await fetchInBatches(uniqueIds, (id) =>
+    getReferralById(env, id),
+  );
   return referrals.filter((r) => r && r.status === status);
 }
 
