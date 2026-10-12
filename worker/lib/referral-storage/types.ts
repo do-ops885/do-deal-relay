@@ -8,8 +8,11 @@ import type { Env } from "../../types";
 export const REFERRAL_KEYS = {
   INPUT_PREFIX: "referral:input:",
   CODE_INDEX: "referral:index:code",
+  CODE_INDEX_PREFIX: "referral:index:code:",
   DOMAIN_INDEX: "referral:index:domain",
+  DOMAIN_INDEX_PREFIX: "referral:index:domain:",
   STATUS_INDEX: "referral:index:status",
+  STATUS_PREFIX: "referral:status:",
   RESEARCH_PREFIX: "referral:research:",
   HISTORY_PREFIX: "referral:history:",
   ACTIVE_LIST: "referral:active:list",
@@ -25,33 +28,28 @@ export type ReferralStorageKeys = typeof REFERRAL_KEYS;
 export async function updateReferralIndices(
   env: Env,
   referral: ReferralInput,
+  oldDomain?: string,
 ): Promise<void> {
-  // Update code index
-  const codeIndexKey = REFERRAL_KEYS.CODE_INDEX;
-  const codeIndex =
-    (await env.DEALS_SOURCES.get<Record<string, string>>(
-      codeIndexKey,
-      "json",
-    )) || {};
-  codeIndex[referral.code?.toLowerCase() || ""] = referral.id || "";
-  await env.DEALS_SOURCES.put(codeIndexKey, JSON.stringify(codeIndex));
-
-  // Update domain index
-  const domainIndexKey = REFERRAL_KEYS.DOMAIN_INDEX;
-  const domainIndex =
-    (await env.DEALS_SOURCES.get<Record<string, string[]>>(
-      domainIndexKey,
-      "json",
-    )) || {};
-  const domain = referral.domain || "unknown";
   const referralId = referral.id || "unknown";
-  if (!domainIndex[domain]) {
-    domainIndex[domain] = [];
+
+  // Update code index (per-key atomic record)
+  if (referral.code) {
+    const codeKey = `${REFERRAL_KEYS.CODE_INDEX_PREFIX}${referral.code.toLowerCase()}`;
+    await env.DEALS_SOURCES.put(codeKey, referralId);
   }
-  if (!domainIndex[domain].includes(referralId)) {
-    domainIndex[domain].push(referralId);
+
+  // Update domain index (per-key atomic record per referral)
+  const domain = (referral.domain || "unknown").toLowerCase();
+  if (oldDomain) {
+    const oldDomainLower = oldDomain.toLowerCase();
+    if (oldDomainLower !== domain) {
+      const oldDomainKey = `${REFERRAL_KEYS.DOMAIN_INDEX_PREFIX}${oldDomainLower}:${referralId}`;
+      await env.DEALS_SOURCES.delete(oldDomainKey);
+    }
   }
-  await env.DEALS_SOURCES.put(domainIndexKey, JSON.stringify(domainIndex));
+
+  const domainKey = `${REFERRAL_KEYS.DOMAIN_INDEX_PREFIX}${domain}:${referralId}`;
+  await env.DEALS_SOURCES.put(domainKey, referralId);
 }
 
 export async function updateStatusLists(
@@ -60,27 +58,17 @@ export async function updateStatusLists(
   oldStatus: ReferralInput["status"],
   newStatus: ReferralInput["status"],
 ): Promise<void> {
-  // Remove from old list
-  const oldListKey =
-    oldStatus === "active"
-      ? REFERRAL_KEYS.ACTIVE_LIST
-      : REFERRAL_KEYS.INACTIVE_LIST;
-  const oldList =
-    (await env.DEALS_SOURCES.get<string[]>(oldListKey, "json")) || [];
-  const filteredOldList = oldList.filter((itemId: string) => itemId !== id);
-  await env.DEALS_SOURCES.put(oldListKey, JSON.stringify(filteredOldList));
-
-  // Add to new list
-  const newListKey =
-    newStatus === "active"
-      ? REFERRAL_KEYS.ACTIVE_LIST
-      : REFERRAL_KEYS.INACTIVE_LIST;
-  const newList =
-    (await env.DEALS_SOURCES.get<string[]>(newListKey, "json")) || [];
-  if (!newList.includes(id)) {
-    newList.push(id);
+  // Remove from old status list
+  if (oldStatus && oldStatus !== newStatus) {
+    const oldKey = `${REFERRAL_KEYS.STATUS_PREFIX}${oldStatus}:${id}`;
+    await env.DEALS_SOURCES.delete(oldKey);
   }
-  await env.DEALS_SOURCES.put(newListKey, JSON.stringify(newList));
+
+  // Add to new status list
+  if (newStatus) {
+    const newKey = `${REFERRAL_KEYS.STATUS_PREFIX}${newStatus}:${id}`;
+    await env.DEALS_SOURCES.put(newKey, id);
+  }
 }
 
 export async function logReferralChange(

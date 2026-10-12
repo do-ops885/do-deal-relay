@@ -32,13 +32,13 @@ export const BUDGET_CONFIG_KEYS = [
 
 /**
  * Safely parse an integer environment variable bounded by minimum and maximum constraints
- * @param name The environment variable name
- * @param value The raw string environment variable value
- * @param fallback The fallback number if value is undefined or blank
- * @param minimum The minimum allowable integer value
- * @param maximum The maximum allowable integer value
- * @returns The parsed integer within specified bounds
- * @throws Error if value contains non-decimal characters, floating point numbers, or is out of bounds
+ * @param name - The environment variable name for error reporting
+ * @param value - The raw string environment variable value or undefined
+ * @param fallback - The fallback integer number if value is undefined or whitespace
+ * @param minimum - The minimum allowable integer bound (inclusive)
+ * @param maximum - The maximum allowable integer bound (inclusive)
+ * @returns The parsed integer within specified bounds or the fallback value
+ * @throws {Error} If value contains non-decimal characters, floating point values, or is outside [minimum, maximum]
  */
 export function parseBoundedIntegerConfig(
   name: string,
@@ -84,9 +84,9 @@ export function getTrustThreshold(env: Env): number {
 
 /**
  * Validate required environment bindings and configuration values
- * @param env Worker environment bindings
- * @returns {void}
- * @throws Error if required variables are missing or if threshold/budget configs are invalid or negative
+ * @param env - Worker environment bindings object
+ * @returns Void if configuration is valid
+ * @throws {Error} If required variables are missing, TRUST_THRESHOLD is invalid/out-of-bounds, or budget configs are invalid/negative
  */
 export function validateConfig(env: Env): void {
   const missing = REQUIRED_CONFIG_KEYS.filter((key) => {

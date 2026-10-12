@@ -17,14 +17,34 @@ import {
 export async function storeReferralInput(
   env: Env,
   referral: ReferralInput,
+  previousDomain?: string,
 ): Promise<ReferralInput> {
-  const key = `${REFERRAL_KEYS.INPUT_PREFIX}${referral.id || "unknown"}`;
+  const referralId = referral.id || "unknown";
+  const key = `${REFERRAL_KEYS.INPUT_PREFIX}${referralId}`;
+
+  let oldDomain = previousDomain;
+  let oldStatus: ReferralInput["status"] | undefined;
+
+  if (referral.id) {
+    const existing = await getReferralById(env, referral.id);
+    if (existing) {
+      if (!oldDomain) {
+        oldDomain = existing.domain;
+      }
+      oldStatus = existing.status;
+    }
+  }
 
   // Store the referral
   await env.DEALS_SOURCES.put(key, JSON.stringify(referral));
 
   // Update indices
-  await updateReferralIndices(env, referral);
+  await updateReferralIndices(env, referral, oldDomain);
+
+  // Maintain status index
+  if (referral.status) {
+    await updateStatusLists(env, referralId, oldStatus, referral.status);
+  }
 
   return referral;
 }
@@ -48,6 +68,17 @@ export async function getReferralByCode(
   env: Env,
   code: string,
 ): Promise<ReferralInput | null> {
+  const codeLower = code.toLowerCase();
+
+  // Try per-key atomic index first
+  const perKey = `${REFERRAL_KEYS.CODE_INDEX_PREFIX}${codeLower}`;
+  const id = await env.DEALS_SOURCES.get(perKey);
+
+  if (id) {
+    return getReferralById(env, id);
+  }
+
+  // Legacy fallback to shared JSON blob
   const indexKey = REFERRAL_KEYS.CODE_INDEX;
   const index = await env.DEALS_SOURCES.get<Record<string, string>>(
     indexKey,
@@ -56,10 +87,10 @@ export async function getReferralByCode(
 
   if (!index) return null;
 
-  const id = index[code.toLowerCase()];
-  if (!id) return null;
+  const legacyId = index[codeLower];
+  if (!legacyId) return null;
 
-  return getReferralById(env, id);
+  return getReferralById(env, legacyId);
 }
 
 /**
