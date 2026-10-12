@@ -42,42 +42,6 @@ export async function getRunLogs(
   }
 }
 
-export async function queryLogsByRunId(
-  env: Env,
-  run_id: string,
-): Promise<StructuredLogEntry[]> {
-  try {
-    const runListKey = `run:${run_id}`;
-    const logKeys = await env.DEALS_LOG.get<string[]>(runListKey, "json");
-
-    if (!logKeys || logKeys.length === 0) {
-      return [];
-    }
-
-    const keysToFetch = logKeys.filter((key) =>
-      key.startsWith(STRUCTURED_LOG_PREFIX),
-    );
-
-    // Optimization: Parallel batch fetch instead of sequential loop
-    const entries = await fetchInBatches<string, StructuredLogEntry>(
-      keysToFetch,
-      (key) => env.DEALS_LOG.get<StructuredLogEntry>(key, "json"),
-    );
-
-    return entries.sort(
-      (a: StructuredLogEntry, b: StructuredLogEntry) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
-  } catch (error) {
-    logger.error("Failed to query logs by run_id", {
-      component: "logger-query",
-      run_id,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return [];
-  }
-}
-
 export async function queryLogsByTraceId(
   env: Env,
   trace_id: string,
