@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { execSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { readFileSync, existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -8,17 +9,28 @@ vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
 }));
 
+type ExecError = Error & {
+  killed?: boolean;
+  signal?: string;
+  status?: number;
+};
+
 describe("test-unit runner script", () => {
   let tempSummaryFile: string;
   let originalEnv: NodeJS.ProcessEnv;
-  let exitSpy: any;
-  let consoleErrorSpy: any;
+  let exitSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     originalEnv = { ...process.env };
-    tempSummaryFile = join(tmpdir(), `test-summary-${Date.now()}-${Math.random().toString(36).substring(2)}.md`);
+    tempSummaryFile = join(
+      tmpdir(),
+      `test-summary-${Date.now()}-${randomUUID()}.md`,
+    );
 
-    exitSpy = vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
+    exitSpy = vi
+      .spyOn(process, "exit")
+      .mockImplementation((() => undefined) as () => never);
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     vi.clearAllMocks();
@@ -38,17 +50,20 @@ describe("test-unit runner script", () => {
 
     await import("../../scripts/test-unit.js");
 
-    expect(execSync).toHaveBeenCalledWith("vitest run -c vitest.config.unit.ts", {
-      stdio: "inherit",
-      timeout: 300_000,
-    });
+    expect(execSync).toHaveBeenCalledWith(
+      "vitest run -c vitest.config.unit.ts",
+      {
+        stdio: "inherit",
+        timeout: 300_000,
+      },
+    );
     expect(exitSpy).not.toHaveBeenCalled();
   });
 
   it("exits non-zero (1) and writes to GITHUB_STEP_SUMMARY when killed by timeout", async () => {
     process.env.GITHUB_STEP_SUMMARY = tempSummaryFile;
 
-    const timeoutError = new Error("Command failed") as any;
+    const timeoutError: ExecError = new Error("Command failed");
     timeoutError.killed = true;
     timeoutError.signal = "SIGTERM";
     vi.mocked(execSync).mockImplementation(() => {
@@ -57,17 +72,21 @@ describe("test-unit runner script", () => {
 
     await import("../../scripts/test-unit.js");
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("vitest killed by timeout (known upstream hang)");
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "vitest killed by timeout (known upstream hang)",
+    );
     expect(exitSpy).toHaveBeenCalledWith(1);
 
     expect(existsSync(tempSummaryFile)).toBe(true);
     const summaryContent = readFileSync(tempSummaryFile, "utf8");
     expect(summaryContent).toContain("### ❌ Unit Tests Failed");
-    expect(summaryContent).toContain("vitest killed by timeout (known upstream hang)");
+    expect(summaryContent).toContain(
+      "vitest killed by timeout (known upstream hang)",
+    );
   });
 
   it("exits with error status when command fails without timeout", async () => {
-    const processError = new Error("Command failed") as any;
+    const processError: ExecError = new Error("Command failed");
     processError.killed = false;
     processError.status = 2;
     vi.mocked(execSync).mockImplementation(() => {
