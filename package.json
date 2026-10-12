@@ -39,6 +39,7 @@
     "test:evals": "vitest run -c vitest.config.evals.ts"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^5.20261012.1",
     "cheerio": "^1.2.0",
     "discord.js": "^14.27.0",
     "protobufjs": "8.8.0",
@@ -47,7 +48,6 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.22.0",
-    "@cloudflare/workers-types": "^5.20261012.1",
     "@playwright/test": "^1.64.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.6.5",
