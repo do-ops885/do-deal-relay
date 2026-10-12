@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import worker from "../../worker/index";
 import type { Env, Snapshot, Deal } from "../../worker/types";
+import { jsonRecord } from "../fixtures/typed-assert";
 
 const createMockDeal = (id: string, overrides: Partial<Deal> = {}): Deal => ({
   id,
@@ -193,8 +194,7 @@ describe("API Write Endpoints", () => {
 
       // Should return error response
       expect(response.status).toBeGreaterThanOrEqual(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("success");
     });
   });
@@ -207,8 +207,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("locked");
     });
 
@@ -227,8 +226,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       // Lock status depends on implementation
       expect(body).toHaveProperty("locked");
     });
@@ -250,8 +248,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body).toHaveProperty("logs");
       expect(body).toHaveProperty("count");
     });
@@ -272,8 +269,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(200);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.logs).toBeDefined();
     });
 
@@ -319,8 +315,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(201);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.success).toBe(true);
       expect(body).toHaveProperty("deal_id");
       expect(body).toHaveProperty("code");
@@ -337,8 +332,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(415);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      expect((await response.json()) as any).toHaveProperty("error");
+      expect(jsonRecord(await response.json())).toHaveProperty("error");
     });
 
     it("should return 400 for invalid body", async () => {
@@ -351,8 +345,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(400);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      expect((await response.json()) as any).toHaveProperty("error");
+      expect(jsonRecord(await response.json())).toHaveProperty("error");
     });
 
     it("should return 409 for duplicate deal code", async () => {
@@ -374,8 +367,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(409);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(body.error).toContain("already exists");
     });
 
@@ -402,8 +394,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, mockEnv, mockCtx);
 
       expect(response.status).toBe(404);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      expect((await response.json()) as any).toHaveProperty("error");
+      expect(jsonRecord(await response.json())).toHaveProperty("error");
     });
 
     it("should handle KV errors gracefully", async () => {
@@ -426,8 +417,7 @@ describe("API Write Endpoints", () => {
       const response = await worker.fetch(request, brokenEnv, mockCtx);
 
       expect([200, 503]).toContain(response.status);
-      // biome-ignore-next-line lint/suspicious/noExplicitAny: test response parsing
-      const body = (await response.json()) as any;
+      const body = jsonRecord(await response.json());
       expect(["healthy", "degraded", "unhealthy"]).toContain(body.status);
     });
   });

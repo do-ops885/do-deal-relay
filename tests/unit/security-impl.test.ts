@@ -13,12 +13,12 @@ describe("Security Utils - validateFetchUrl", () => {
     const url = "https://example.com/api/data";
 
     // Mock DNS resolution to return a public IP
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         Answer: [{ data: "93.184.216.34" }], // example.com
       }),
-    });
+    } as unknown as Response);
 
     const result = await validateFetchUrl(url);
     expect(result).toBe(true);
@@ -61,12 +61,12 @@ describe("Security Utils - validateFetchUrl", () => {
     const url = "https://malicious.com/";
 
     // Mock DNS resolution to return a private IP
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         Answer: [{ data: "10.0.0.5" }],
       }),
-    });
+    } as unknown as Response);
 
     const result = await validateFetchUrl(url);
     expect(result).toBe(false);
@@ -75,10 +75,10 @@ describe("Security Utils - validateFetchUrl", () => {
   it("should return false if DNS resolution fails", async () => {
     const url = "https://nonexistent-domain-xyz.com/";
 
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ Answer: [] }),
-    });
+    } as unknown as Response);
 
     const result = await validateFetchUrl(url);
     expect(result).toBe(false);
@@ -87,7 +87,7 @@ describe("Security Utils - validateFetchUrl", () => {
   it("should return false on fetch error during DNS resolution", async () => {
     const url = "https://example.com/";
 
-    (global.fetch as any).mockRejectedValueOnce(new Error("Network timeout"));
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network timeout"));
 
     const result = await validateFetchUrl(url);
     expect(result).toBe(false);

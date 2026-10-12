@@ -46,7 +46,7 @@ describe("Rate Limiting", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
     } as unknown as Env;
   });
@@ -114,7 +114,7 @@ describe("Rate Limiting", () => {
         get: vi.fn().mockRejectedValue(new Error("KV error")),
         put: vi.fn(),
         delete: vi.fn(),
-      } as any;
+      } as unknown as Env["DEALS_LOCK"];
 
       const result = await checkRateLimit(mockEnv, "client-1", "/deals");
 

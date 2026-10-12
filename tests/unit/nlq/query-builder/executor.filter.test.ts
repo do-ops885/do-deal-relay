@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeStructuredQuery } from "../../../../worker/lib/nlq/query-builder/executor";
 import type { StructuredQuery } from "../../../../worker/lib/nlq/types";
 import type { DealSearchResult } from "../../../../worker/lib/d1/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 const searchDealsMock = vi.fn<() => Promise<DealSearchResult[]>>();
 const queryWithJsonMock = vi.fn();
@@ -74,7 +75,7 @@ function createBaseQuery(
 }
 
 describe("executeStructuredQuery - filter-only path", () => {
-  const mockDb = {} as any;
+  const mockDb = {} as unknown as D1Database;
   beforeEach(() => {
     vi.clearAllMocks();
     queryWithJsonMock.mockResolvedValue({ success: true, data: [] });
@@ -174,7 +175,7 @@ describe("executeStructuredQuery - filter-only path", () => {
 });
 
 describe("executeStructuredQuery - edge cases", () => {
-  const mockDb = {} as any;
+  const mockDb = {} as unknown as D1Database;
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleNLQRequest } from "../../../worker/routes/nlq/index";
 import type { Env } from "../../../worker/types";
+import { jsonRecord } from "../../fixtures/typed-assert";
 
 vi.mock("../../../worker/lib/auth", () => ({
   authenticateRequest: vi.fn().mockResolvedValue({
@@ -11,7 +12,7 @@ vi.mock("../../../worker/lib/auth", () => ({
 
 describe("NLQ Alert Subscription Endpoints", () => {
   let mockEnv: Env;
-  let mockD1: any;
+  let mockD1: unknown;
 
   beforeEach(() => {
     const prep = vi.fn().mockImplementation(() => ({
@@ -71,7 +72,7 @@ describe("NLQ Alert Subscription Endpoints", () => {
 
     const res = await handleNLQRequest(req, url, envWithoutDB);
     expect(res.status).toBe(503);
-    const body = (await res.json()) as any;
+    const body = jsonRecord(await res.json());
     expect(body.code).toBe("DATABASE_UNAVAILABLE");
   });
 
@@ -88,7 +89,7 @@ describe("NLQ Alert Subscription Endpoints", () => {
 
     const res = await handleNLQRequest(req, url, mockEnv);
     expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
+    const body = jsonRecord(await res.json());
     expect(body.code).toBe("VALIDATION_ERROR");
   });
 
@@ -100,7 +101,7 @@ describe("NLQ Alert Subscription Endpoints", () => {
 
     const res = await handleNLQRequest(req, url, mockEnv);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const body = jsonRecord(await res.json());
     expect(body.success).toBe(true);
     expect(body.subscriptions).toBeDefined();
   });
@@ -113,7 +114,7 @@ describe("NLQ Alert Subscription Endpoints", () => {
 
     const res = await handleNLQRequest(req, url, mockEnv);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const body = jsonRecord(await res.json());
     expect(body.success).toBe(true);
     expect(body.deleted).toBe("sub_123");
   });

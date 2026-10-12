@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeStructuredQuery } from "../../../../worker/lib/nlq/query-builder/executor";
 import type { StructuredQuery } from "../../../../worker/lib/nlq/types";
 import type { DealSearchResult } from "../../../../worker/lib/d1/types";
+import type { D1Database } from "@cloudflare/workers-types";
 
 const searchDealsMock = vi.fn<() => Promise<DealSearchResult[]>>();
 const queryWithJsonMock = vi.fn();
@@ -57,7 +58,7 @@ function createBaseQuery(
 }
 
 describe("executeStructuredQuery - FTS5 text path", () => {
-  const mockDb = {} as any;
+  const mockDb = {} as unknown as D1Database;
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -86,7 +87,7 @@ describe("executeStructuredQuery - FTS5 text path", () => {
 
   it("should exclude deals with undefined category", async () => {
     searchDealsMock.mockResolvedValue([
-      makeDeal({ category: undefined as any }),
+      makeDeal({ category: undefined as unknown as string[] }),
     ]);
     const result = await executeStructuredQuery(
       mockDb,
@@ -265,7 +266,7 @@ describe("executeStructuredQuery - FTS5 text path", () => {
 
     it("should handle missing confidence_score in sort (default to 0)", async () => {
       searchDealsMock.mockResolvedValue([
-        makeDeal({ confidence_score: undefined as any }),
+        makeDeal({ confidence_score: undefined as unknown as number }),
         makeDeal({ id: 2, deal_id: "d2", confidence_score: 0.5 }),
       ]);
       const result = await executeStructuredQuery(

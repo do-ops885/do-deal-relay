@@ -3,6 +3,7 @@ import {
   DealRegistry,
   type StageDealInput,
 } from "../../worker/durable-objects/deal-registry";
+import type { DurableObjectState } from "@cloudflare/workers-types";
 
 // ============================================================================
 // In-memory SQLite mock for state.storage.sql
@@ -172,15 +173,12 @@ function createMockSql() {
 }
 
 function createMockState(mockSql: { exec: ReturnType<typeof vi.fn> }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DurableObjectState
-  // Container type mismatch between @cloudflare/workers-types versions;
-  // the constructor only accesses state.storage.sql which we mock.
   return {
     id: { name: "test-deal-registry" },
     storage: {
       sql: mockSql,
     },
-  } as any;
+  } as unknown as DurableObjectState;
 }
 
 // ============================================================================

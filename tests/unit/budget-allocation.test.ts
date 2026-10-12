@@ -3,6 +3,7 @@ import { discover } from "../../worker/pipeline/discover";
 import { validatedFetch } from "../../worker/lib/security";
 import type { PipelineContext, Env, SourceConfig } from "../../worker/types";
 import { logger } from "../../worker/lib/global-logger";
+import type { D1Database } from "@cloudflare/workers-types";
 
 // The exported logger is Object.freeze'd, so vi.spyOn(logger, "info") throws
 // "Cannot redefine property". Module-mock it instead (repo standard).
@@ -84,7 +85,7 @@ describe("Budget Allocation", () => {
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
-      DEALS_DB: {} as any,
+      DEALS_DB: {} as unknown as D1Database,
       TRUST_THRESHOLD: "0.3",
       ...vars,
     } as unknown as Env;

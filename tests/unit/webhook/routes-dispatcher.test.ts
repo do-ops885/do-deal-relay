@@ -3,6 +3,7 @@ import {
   handleWebhookRoutes,
   handleIncomingWebhookRequest,
 } from "../../../worker/routes/webhooks/index";
+import type { Env } from "../../../worker/types";
 
 // ============================================================================
 // Mock KV Namespace
@@ -40,7 +41,7 @@ function createEnv(kv: MockKv) {
     DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
     TRUST_THRESHOLD: "0.3",
-  } as any;
+  } as unknown as Env;
 }
 
 async function setupValidApiKey(kv: MockKv, key: string = "ddr_test_key_123") {
@@ -76,7 +77,8 @@ function createRequest(
 
 // Mocking handleIncomingWebhook to control its behavior
 vi.mock("../../../worker/lib/webhook/index", async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual =
+    await importOriginal<typeof import("../../../worker/lib/webhook/index")>();
   return {
     ...actual,
     handleIncomingWebhook: vi
