@@ -224,14 +224,15 @@ pre-commit run --all-files --show-diff-on-failure
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| "Commit with `--no-verify`, the hooks are slow." | The hooks mirror CI (tsc, prettier, markdownlint); bypassing moves the failure to the pipeline. |
+| "A hook rewrote my file but my commit is fine." | `end-of-file-fixer` and `prettier` edit files in place; stage the rewrite and re-run or the commit holds the pre-fix content. |
+| "Track the hook repo on a branch for the latest fixes." | `.pre-commit-config.yaml` pins `rev` tags (for example v6.0.0); floating revs make runs non-reproducible. |
+| "Running the hook on staged files is enough." | After adding or editing a hook, `--all-files` is needed so existing files conform too. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] `git commit --no-verify` used to sidestep the tsc, prettier, or markdownlint hooks.
+- [ ] Files rewritten by a hook left unstaged after a failed run.
+- [ ] A `.pre-commit-config.yaml` `rev` pointed at a branch or raw SHA without `autoupdate --freeze`.
+- [ ] A new hook merged without a `pre-commit run --all-files` pass.
+- [ ] An artifact above the `--maxkb=1000` bound committed past `check-added-large-files`.

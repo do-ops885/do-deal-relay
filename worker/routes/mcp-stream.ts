@@ -6,10 +6,15 @@
  */
 
 import type { Env } from "../types";
+import type { AuthResult } from "../lib/auth";
 import type { ToolCallParams, ToolCallResult } from "../lib/mcp/types";
 import { executeTool } from "../lib/mcp/tools";
 import { toError } from "../lib/sanitize-error";
-import { createProgressTracker, getProgress } from "../lib/mcp/progress";
+import {
+  createProgressTracker,
+  addToIndex,
+  getProgress,
+} from "../lib/mcp/progress";
 import { getMCPCorsHeaders } from "./mcp/utils";
 
 const SSE_HEADERS: Record<string, string> = {
@@ -30,10 +35,12 @@ export async function handleStreamingToolCall(
   params: ToolCallParams,
   env: Env,
   request: Request,
+  auth?: AuthResult,
 ): Promise<Response> {
   const { name, arguments: args = {} } = params;
   const operationId = crypto.randomUUID();
-  const tracker = createProgressTracker(operationId, env);
+  const tracker = createProgressTracker(operationId, env, auth?.userId);
+  await addToIndex(env, operationId, name, auth?.userId).catch(() => {});
 
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
@@ -60,6 +67,7 @@ export async function handleStreamingToolCall(
         args as Record<string, unknown>,
         env,
         request,
+        auth,
       );
 
       await tracker.markCompleted(result);
@@ -114,6 +122,7 @@ export async function handleStreamingToolCall(
 export async function handleMCPStream(
   request: Request,
   env: Env,
+  auth?: AuthResult,
 ): Promise<Response> {
   const url = new URL(request.url);
   const operationId = url.searchParams.get("operationId");
@@ -140,6 +149,23 @@ export async function handleMCPStream(
         ...getMCPCorsHeaders(request, env),
       },
     });
+  }
+
+  if (
+    auth?.role !== "admin" &&
+    initialState.userId &&
+    initialState.userId !== auth?.userId
+  ) {
+    return new Response(
+      JSON.stringify({ error: "Forbidden: Operation belongs to another user" }),
+      {
+        status: 403,
+        headers: {
+          "Content-Type": "application/json",
+          ...getMCPCorsHeaders(request, env),
+        },
+      },
+    );
   }
 
   const { readable, writable } = new TransformStream();

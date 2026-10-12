@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 import type { Env } from "../../../types";
+import type { AuthResult } from "../../auth";
 import type { Tool, ToolCallResult, ToolHandler } from "../types";
 
 import { dealTools, dealToolHandlers } from "./deals";
@@ -41,6 +42,16 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
 };
 
 /**
+ * Tools restricted to admin role only
+ */
+export const ADMIN_TOOLS = new Set([
+  "trigger_discovery",
+  "get_pipeline_status",
+  "get_logs",
+  "get_stats",
+]);
+
+/**
  * Execute a tool by name with arguments
  */
 export async function executeTool(
@@ -48,6 +59,7 @@ export async function executeTool(
   args: { [key: string]: unknown },
   env: Env,
   request: Request,
+  auth?: AuthResult,
 ): Promise<ToolCallResult> {
   const handler = TOOL_HANDLERS[name];
 
@@ -63,8 +75,20 @@ export async function executeTool(
     };
   }
 
+  if (ADMIN_TOOLS.has(name) && auth?.role !== "admin") {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Forbidden: Tool "${name}" requires admin role`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
   try {
-    return await handler(args, env, request);
+    return await handler(args, env, request, auth);
   } catch (error) {
     if (error instanceof z.ZodError) {
       const issues = error.issues

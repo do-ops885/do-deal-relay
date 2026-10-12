@@ -112,7 +112,7 @@ Store in `evals/evals.json`:
 
 - `references/best-practices.md` - Best practices for skill creators
 - `references/evaluating-skills.md` - Evaluating skill output quality
-- `references/schemas.md` - JSON structures for evals.json, grading.json
+- `references/guide.md` - End-to-end skill authoring templates and examples
 - `references/output-patterns.md` - Common output patterns
 - `references/workflows.md` - Common workflow patterns
 
@@ -128,14 +128,15 @@ Creates a .skill file for distribution.
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| The body is only slightly over 250 lines, so splitting is unnecessary. | scripts/skill-eval-check.sh hard-fails any SKILL.md above 250 lines and prints a reference/ split plan, so the detail has to move behind progressive disclosure. |
+| One realistic prompt proves the skill triggers correctly. | Description tuning needs roughly 20 should- and should-not-trigger queries run three times each on a 60/40 train/validation split; a lone prompt cannot separate scope errors from model noise. |
+| A broad description is safer because it fires more often. | The description is capped at 1024 characters and must say both what the skill does and when to use it; near-miss queries exist to expose over-triggering. |
+| Assertions like "the output is good" capture quality well enough. | evals.json cases require concrete checkable assertions with id, prompt, and expected_output; subjective statements have no pass/fail evidence path. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A new or edited SKILL.md exceeds 250 lines, or drops `## Rationalizations` / `## Red Flags`.
+- [ ] Frontmatter description explains what the skill does but never states when to trigger it, or exceeds 1024 characters.
+- [ ] Cases in evals/evals.json are missing `id`, `prompt`, or `expected_output`.
+- [ ] No should-not-trigger near-miss queries were authored, leaving scope creep untested.
+- [ ] A `references/` entry names a file that is absent from the skill folder.
