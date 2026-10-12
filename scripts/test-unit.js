@@ -12,25 +12,24 @@
  * To run vitest directly without the timeout wrapper (e.g. for local
  * debugging), use: npx vitest run -c vitest.config.unit.ts
  */
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 
 const TIMEOUT_MS = 300_000; // 5 minutes
 
 const args = process.argv.slice(2);
-const extraArgs =
-  args.length > 0
-    ? " " + args.map((arg) => `"${arg.replace(/"/g, '\\"')}"`).join(" ")
-    : "";
-
-try {
-  execSync(`vitest run -c vitest.config.unit.ts${extraArgs}`, {
+const result = spawnSync(
+  "vitest",
+  ["run", "-c", "vitest.config.unit.ts", ...args],
+  {
     stdio: "inherit",
     timeout: TIMEOUT_MS,
-  });
-} catch (e) {
-  // execSync throws with { killed, signal, status } properties
-  if (e.killed || e.signal === "SIGTERM") {
+  },
+);
+
+if (result.error) {
+  // spawnSync reports timeout via error with code ETIMEDOUT and signal SIGTERM
+  if (result.error.code === "ETIMEDOUT" || result.signal === "SIGTERM") {
     const errorMsg = "vitest killed by timeout (known upstream hang)";
     console.error(errorMsg);
 
@@ -45,5 +44,7 @@ try {
 
     process.exit(1);
   }
-  process.exit(e.status ?? 1);
+  process.exit(result.status ?? 1);
 }
+
+process.exit(result.status ?? 0);
