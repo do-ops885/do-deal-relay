@@ -7,7 +7,7 @@ export const MIN_TRUST_THRESHOLD_BOUND = 0;
 /** Maximum allowable upper bound for the trust threshold */
 export const MAX_TRUST_THRESHOLD_BOUND = 1;
 
-/** List of required environment variable binding keys */
+/** List of required environment variable binding keys for worker runtime initialization */
 export const REQUIRED_CONFIG_KEYS = [
   "DEALS_PROD",
   "DEALS_LOG",
@@ -23,7 +23,7 @@ export const REQUIRED_CONFIG_KEYS = [
   "GITHUB_REPO",
 ] as const;
 
-/** List of optional budget configuration variable keys */
+/** List of optional budget configuration variable keys for candidate evaluation */
 export const BUDGET_CONFIG_KEYS = [
   "CANDIDATE_BUDGET_GLOBAL",
   "CANDIDATE_BUDGET_PER_SOURCE",
@@ -37,8 +37,8 @@ export const BUDGET_CONFIG_KEYS = [
  * @param fallback The fallback number if value is undefined or blank
  * @param minimum The minimum allowable integer value
  * @param maximum The maximum allowable integer value
- * @returns The parsed integer within bounds
- * @throws Error if value is non-integer or out of bounds
+ * @returns The parsed integer within specified bounds
+ * @throws Error if value contains non-decimal characters, floating point numbers, or is out of bounds
  */
 export function parseBoundedIntegerConfig(
   name: string,
@@ -60,9 +60,9 @@ export function parseBoundedIntegerConfig(
 }
 
 /**
- * Get the trust threshold from environment or fallback to default
- * @param env Worker environment
- * @returns Trust threshold as a number
+ * Get the trust threshold from environment or fallback to default, clamped to [0, 1]
+ * @param env Worker environment bindings
+ * @returns Trust threshold float as a number clamped between 0 and 1
  */
 export function getTrustThreshold(env: Env): number {
   if (!env.TRUST_THRESHOLD) {
