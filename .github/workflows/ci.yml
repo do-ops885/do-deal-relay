@@ -126,13 +126,14 @@ jobs:
         with:
           name: coverage
           path: coverage-unit/
+          if-no-files-found: error
           retention-days: 7
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           files: ./coverage-unit/lcov.info
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
 
   test-e2e:
