@@ -93,12 +93,8 @@ fi
 sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/g" docs/API.md
 echo "✓ Updated docs/API.md"
 
-# Update other doc files
-for file in docs/AGENTS.md agents-docs/SYSTEM_REFERENCE.md QUICKSTART.md; do
-    if [ -f "$file" ]; then
-        sed -i "s/\b$CURRENT_VERSION\b/$NEW_VERSION/g" "$file" 2>/dev/null || true
-    fi
-done
+# Update documentation files via update-docs.sh
+bash scripts/update-docs.sh
 echo "✓ Updated documentation"
 
 # Run quality gates

@@ -63,6 +63,8 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
+      - name: Check doc version consistency
+        run: npm run docs:check
       - name: Validate markdown
         run: |
           npx markdownlint-cli --config .markdownlint.json \
