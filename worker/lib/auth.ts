@@ -257,6 +257,12 @@ export async function authenticateRequest(
     if (!payload) {
       return { authenticated: false, error: "Invalid JWT token" };
     }
+    if (payload.type === "refresh") {
+      return {
+        authenticated: false,
+        error: "Refresh tokens cannot be used as access tokens",
+      };
+    }
     const role = JWT_ROLES.includes(payload.role as AuthRole)
       ? (payload.role as AuthRole)
       : "user";

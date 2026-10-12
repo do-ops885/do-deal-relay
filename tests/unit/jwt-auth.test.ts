@@ -52,6 +52,22 @@ describe("JWT Utilities", () => {
     expect(decoded).toBeNull();
   });
 
+  it("should reject refresh token when presented as bearer access token", async () => {
+    const refreshToken = await createToken(
+      { sub: "user123", type: "refresh" },
+      secret,
+      3600,
+    );
+    const auth = await authenticateRequest(
+      new Request("https://example.com/api/deals", {
+        headers: { Authorization: `Bearer ${refreshToken}` },
+      }),
+      { JWT_SECRET: secret } as any,
+    );
+    expect(auth.authenticated).toBe(false);
+    expect(auth.error).toBe("Refresh tokens cannot be used as access tokens");
+  });
+
   it("should hash and verify passwords", async () => {
     const password = process.env.TEST_PASSWORD || "my-secure-password-123!";
     const hash = await hashPassword(password);
