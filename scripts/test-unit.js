@@ -16,8 +16,14 @@ import { execSync } from "node:child_process";
 
 const TIMEOUT_MS = 300_000; // 5 minutes
 
+const args = process.argv.slice(2);
+const extraArgs =
+  args.length > 0
+    ? " " + args.map((arg) => `"${arg.replace(/"/g, '\\"')}"`).join(" ")
+    : "";
+
 try {
-  execSync("vitest run -c vitest.config.unit.ts", {
+  execSync(`vitest run -c vitest.config.unit.ts${extraArgs}`, {
     stdio: "inherit",
     timeout: TIMEOUT_MS,
   });
