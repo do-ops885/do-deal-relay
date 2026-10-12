@@ -178,6 +178,49 @@ describe("Security Gate - runSecurityGate", () => {
     expect(injectionFinding?.passed).toBe(false);
   });
 
+  it("should fail URL validation check on non-standard ports", async () => {
+    const nonStandardPortDeal = createMockDeal({
+      id: "deal-port-1",
+      title: "Non-standard port deal",
+      description: "Connecting to custom port",
+      url: "https://safe-service.com:22/checkout",
+    });
+
+    const report = await runSecurityGate(
+      [nonStandardPortDeal],
+      mockCtx,
+      mockEnv,
+    );
+    const urlFinding = report.findings.find(
+      (f) => f.check === "url_validation",
+    );
+    expect(urlFinding).toBeDefined();
+    expect(urlFinding?.passed).toBe(false);
+    expect(urlFinding?.message).toContain("Non-standard port: 22");
+  });
+
+  it("should pass URL validation check on standard web ports", async () => {
+    for (const port of [80, 443, 8080, 8443]) {
+      const standardPortDeal = createMockDeal({
+        id: `deal-port-${port}`,
+        title: `Standard port ${port} deal`,
+        description: "Connecting to standard port",
+        url: `https://safe-service.com:${port}/checkout`,
+      });
+
+      const report = await runSecurityGate(
+        [standardPortDeal],
+        mockCtx,
+        mockEnv,
+      );
+      const urlFinding = report.findings.find(
+        (f) => f.check === "url_validation",
+      );
+      expect(urlFinding).toBeDefined();
+      expect(urlFinding?.passed).toBe(true);
+    }
+  });
+
   it("should summarize failed security findings correctly", async () => {
     const maliciousDeal = createMockDeal({
       id: "deal-6",

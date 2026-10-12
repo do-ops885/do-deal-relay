@@ -106,12 +106,7 @@
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
   },
   "secrets": {
-    "required": [
-      "WEBHOOK_SECRET",
-      "EMAIL_WEBHOOK_SECRET",
-      "API_ENCRYPTION_KEY",
-      "JWT_SECRET",
-    ],
+    "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
   },
   // D1 Database for advanced queries and full-text search
   "d1_databases": [
@@ -295,12 +290,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
     },
     // Staging environment for pre-production testing
@@ -356,12 +346,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
       "kv_namespaces": [
         {
@@ -455,12 +440,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
       "kv_namespaces": [
         {

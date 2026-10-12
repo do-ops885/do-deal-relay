@@ -63,8 +63,9 @@ These are injected into the worker runtime and are NOT in `wrangler.jsonc`.
 | Secret | Purpose | How to Generate |
 |--------|---------|-----------------|
 | `WEBHOOK_SECRET` | HMAC signature verification for incoming webhooks | Generate: `openssl rand -hex 32` |
-| `API_ENCRYPTION_KEY` | Encrypts/decrypts sensitive data in KV (min 32 chars) | Generate: `openssl rand -base64 32` |
 | `EMAIL_WEBHOOK_SECRET` | HMAC verification for inbound email webhooks | Generate: `openssl rand -hex 32` |
+
+> **Note on KV Encryption**: Data stored in Cloudflare KV namespaces is automatically encrypted at rest and in transit natively by Cloudflare infrastructure.
 
 #### Optional (features degrade gracefully without these)
 
@@ -122,12 +123,10 @@ npx wrangler vectorize create "deal-embeddings-staging" \
 ```bash
 # Production
 npx wrangler secret put WEBHOOK_SECRET --env production
-npx wrangler secret put API_ENCRYPTION_KEY --env production
 npx wrangler secret put EMAIL_WEBHOOK_SECRET --env production
 
 # Staging
 npx wrangler secret put WEBHOOK_SECRET --env staging
-npx wrangler secret put API_ENCRYPTION_KEY --env staging
 npx wrangler secret put EMAIL_WEBHOOK_SECRET --env staging
 
 # Optional secrets (production only typically)
@@ -319,7 +318,6 @@ npm run dev
 # Required env vars are read from .dev.vars (gitignored)
 # Minimum required for local dev:
 echo 'WEBHOOK_SECRET=dev_secret' > .dev.vars
-echo 'API_ENCRYPTION_KEY=dev_encryption_key_32_chars_long!!' >> .dev.vars
 echo 'EMAIL_WEBHOOK_SECRET=dev_email_secret' >> .dev.vars
 ```
 
@@ -459,14 +457,13 @@ After any rollback:
 # Check which config is missing from the error message
 # Required bindings: DEALS_PROD, DEALS_LOG, DEALS_LOCK, AI_GATEWAY_URL,
 #                    TRUST_THRESHOLD, WEBHOOK_SECRET, EMAIL_WEBHOOK_SECRET,
-#                    API_ENCRYPTION_KEY, DEALS_DB, ENVIRONMENT, GITHUB_REPO
+#                    DEALS_DB, ENVIRONMENT, GITHUB_REPO
 
 # List all secrets
 npx wrangler secret list --env production
 
 # Re-set any missing secrets
 npx wrangler secret put WEBHOOK_SECRET --env production
-npx wrangler secret put API_ENCRYPTION_KEY --env production
 npx wrangler secret put EMAIL_WEBHOOK_SECRET --env production
 ```
 

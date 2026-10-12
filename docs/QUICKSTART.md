@@ -49,7 +49,6 @@ cp .dev.vars.example .dev.vars
 Open `.dev.vars` and set secure values for:
 - `WEBHOOK_SECRET` - Used for webhook signature verification
 - `EMAIL_WEBHOOK_SECRET` - Used for email webhook verification
-- `API_ENCRYPTION_KEY` - Used for API encryption (must be 32+ characters)
 
 **Never commit `.dev.vars` to version control** - it's already in `.gitignore`.
 

@@ -50,6 +50,7 @@ export const SECURITY_CONSTANTS = {
     "fe80::/10",
     "ff00::/8",
   ] as const,
+  STANDARD_PORTS: [80, 443, 8080, 8443] as const,
 } as const;
 
 interface ParsedCidrV4 {
