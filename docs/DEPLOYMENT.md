@@ -380,7 +380,6 @@ git push origin v0.1.3
 | `deploy-production.yml`   | Push to main / v* tag          | Deploy to production           |
 | `kv-setup.yml`            | Manual dispatch                | Create KV namespaces           |
 | `security.yml`            | Scheduled / PR                 | Security scanning              |
-| `dependencies.yml`        | Scheduled                      | Dependency updates             |
 | `discovery.yml`           | Scheduled                      | Deal discovery pipeline        |
 | `cleanup.yml`             | Scheduled                      | Resource cleanup               |
 
