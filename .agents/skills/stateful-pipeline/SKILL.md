@@ -83,21 +83,20 @@ See `examples/` for:
 ## Reference
 
 - `reference/failure-handling.md` - Deep dive on failure paths
-- `reference/rollback-patterns.md` - Rollback strategies
-- `reference/metrics-integration.md` - Metrics and observability
 
 ## Rationalizations
 
 | Concern | Counter-Argument |
 |---------|------------------|
-| "This is just a small change, no need for coordination." | Even small changes can have side effects. Structured coordination ensures nothing is missed. |
-| "Writing an ADR/Plan takes too much time." | Investing time in planning saves significantly more time during execution and debugging. |
-| "I can do this all in one go." | Breaking tasks down into atomic steps increases reliability and allows for better verification. |
+| Retry every failure uniformly; classifying retryable vs not is overhead. | The retry branch only re-runs while error.retryable is true and retryCount < maxRetries; re-running a validation error just spends the backoff window. |
+| On any failure, abort the run; snapshotting for rollback is too costly. | onFailure: 'revert' restores the last snapshot and cleans partial writes; aborting mid-publish leaves downstream state half-written. |
+| Per-phase metrics are noise; the final success flag tells the story. | Every phase records its own metrics and log entry so a regression can be pinned to discover, normalize, validate, or publish. |
+| Concurrent execution is rare, so concurrency_abort is dead code. | The state machine lists concurrency_abort as a first-class failure path because two pipelines writing the same target corrupt shared state. |
 
 ## Red Flags
 
-- [ ] Starting execution before a plan is approved.
-- [ ] Making multiple unrelated changes in a single commit.
-- [ ] Skipping validation gates or quality checks.
-- [ ] Lack of coordination between parallel tasks leading to conflicts.
-- [ ] Failing to update documentation after architectural changes.
+- [ ] A phase mutates shared context without capturing a snapshot first, leaving revert nothing to restore.
+- [ ] Retry logic re-runs a phase regardless of error.retryable or ignores maxRetries.
+- [ ] A failing phase advances without selecting revert, quarantine, or concurrency_abort.
+- [ ] Phases execute without emitting per-phase metrics or a structured log entry.
+- [ ] The init-to-finalize chain is bypassed by invoking a later phase directly.

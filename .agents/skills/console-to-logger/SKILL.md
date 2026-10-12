@@ -37,8 +37,8 @@ logger.info("Processing request", { component: "api" });
 
 ```bash
 # Find all console.* calls in worker code (excluding logger infrastructure):
-grep -rn "console\.\(log\|warn\|error\|info\)(" src/ --include="*.ts" | \
-  grep -v "logger/structured.ts" | \
+grep -rn "console\.\(log\|warn\|error\|info\)(" worker/ --include="*.ts" | \
+  grep -v "worker/lib/logger/" | \
   grep -v "global-logger.ts"
 ```
 
@@ -137,7 +137,7 @@ grep -rn "console\.\(log\|warn\|error\)(" src/ --include="*.ts" | \
 Use lowercase kebab-case matching the module/directory name:
 - `worker/lib/cache.ts` → `component: "cache"`
 - `worker/lib/rate-limit.ts` → `component: "rate-limit"`
-- `worker/routes/api/deals.ts` → `component: "deals-api"`
+- `worker/routes/validation/deal.ts` → `component: "deals-api"`
 - `worker/pipeline/discover.ts` → `component: "pipeline"`
 
 ## Rationalizations
