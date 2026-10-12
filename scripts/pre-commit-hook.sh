@@ -206,26 +206,39 @@ echo ""
 # GUARD RAIL 4: Line Count Limits
 # ============================================
 echo "Guard Rail 4: Line Count Limits"
-MAX_LINES_TS=500
-MAX_LINES_SKILL=250
-MAX_LINES_AGENTS=150
+# Single source: scripts/quality-limits.sh (matches AGENTS.md and quality_gate.sh).
+# shellcheck disable=SC1091
+HOOK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${HOOK_SCRIPT_DIR}/quality-limits.sh" ]; then
+    source "${HOOK_SCRIPT_DIR}/quality-limits.sh"
+else
+    HOOK_TOPLEVEL="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+    source "${HOOK_TOPLEVEL}/scripts/quality-limits.sh"
+fi
+MAX_LINES_TS="${MAX_LINES_PER_SOURCE_FILE}"
+MAX_LINES_SKILL="${MAX_LINES_PER_SKILL_MD}"
+MAX_LINES_AGENTS="${MAX_LINES_AGENTS_MD}"
 
 LINE_VIOLATIONS=0
 while IFS= read -r file; do
     if [ -f "$file" ]; then
+        # Tests and generated dirs excluded by design (fixtures exceed 500, see quality-limits.sh)
+        case "$file" in
+            tests/*|coverage/*|dist/*|node_modules/*|public/*) continue ;;
+        esac
         LINES=$(wc -l < "$file")
 
-        # TypeScript/JavaScript files
+        # TypeScript/JavaScript files (fail, not warn)
         if [[ "$file" == *.ts ]] || [[ "$file" == *.js ]]; then
-            if [ "$LINES" -gt $MAX_LINES_TS ]; then
-                warning "$file has $LINES lines (max $MAX_LINES_TS)"
+            if [ "$LINES" -gt "$MAX_LINES_TS" ]; then
+                error "$file has $LINES lines (max $MAX_LINES_TS)"
                 LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
             fi
         fi
 
         # SKILL.md files
         if [[ "$file" == */SKILL.md ]]; then
-            if [ "$LINES" -gt $MAX_LINES_SKILL ]; then
+            if [ "$LINES" -gt "$MAX_LINES_SKILL" ]; then
                 warning "$file has $LINES lines (max $MAX_LINES_SKILL)"
                 LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
             fi
@@ -233,7 +246,7 @@ while IFS= read -r file; do
 
         # AGENTS.md
         if [[ "$file" == "AGENTS.md" ]]; then
-            if [ "$LINES" -gt $MAX_LINES_AGENTS ]; then
+            if [ "$LINES" -gt "$MAX_LINES_AGENTS" ]; then
                 warning "AGENTS.md has $LINES lines (max $MAX_LINES_AGENTS)"
                 LINE_VIOLATIONS=$((LINE_VIOLATIONS + 1))
             fi
@@ -244,7 +257,7 @@ done <<< "$STAGED_FILES"
 if [ $LINE_VIOLATIONS -eq 0 ]; then
     success "Line count check complete"
 else
-    warning "$LINE_VIOLATIONS file(s) exceed line limit (warnings only)"
+    info "$LINE_VIOLATIONS file(s) exceed line limit (source fails, docs warn)"
 fi
 echo ""
 

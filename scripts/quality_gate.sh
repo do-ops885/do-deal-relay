@@ -225,9 +225,12 @@ if [ -f "${ROOT_DIR}/tests/unit/worker-host.test.sh" ]; then
 fi
 
 # Check 15: Lines-of-code (LOC) enforcement
-# Enforce MAX_LINES_PER_SOURCE_FILE (500) with warning at 500, fail at 600
-LOC_WARNING_THRESHOLD=500
-LOC_FAIL_THRESHOLD=600
+# Single source: scripts/quality-limits.sh (matches AGENTS.md fatal 500).
+# Tests excluded by design (existing fixtures exceed 500); worker/bot sources are all under 500.
+# shellcheck source=quality-limits.sh
+source "${SCRIPT_DIR}/quality-limits.sh"
+LOC_WARNING_THRESHOLD="${LOC_WARN_THRESHOLD}"
+LOC_FAIL_THRESHOLD="${LOC_FAIL_THRESHOLD}"
 loc_violations=0
 
 while IFS= read -r -d '' file; do
@@ -237,7 +240,7 @@ while IFS= read -r -d '' file; do
     esac
 
     line_count=$(wc -l < "$file" 2>/dev/null || echo 0)
-    if [ "$line_count" -ge "$LOC_FAIL_THRESHOLD" ]; then
+    if [ "$line_count" -gt "$LOC_FAIL_THRESHOLD" ]; then
         ERRORS+=("✗ File exceeds ${LOC_FAIL_THRESHOLD} lines: $file ($line_count lines)")
         loc_violations=$((loc_violations + 1))
     elif [ "$line_count" -ge "$LOC_WARNING_THRESHOLD" ]; then
@@ -246,7 +249,7 @@ while IFS= read -r -d '' file; do
 done < <(find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.sh" -o -name "*.md" \) -print0 2>/dev/null)
 
 if [ $loc_violations -gt 0 ]; then
-    ERRORS+=("Fix files exceeding ${LOC_FAIL_THRESHOLD} lines or increase MAX_LINES_PER_SOURCE_FILE in AGENTS.md")
+    ERRORS+=("Fix files exceeding ${LOC_FAIL_THRESHOLD} lines or increase MAX_LINES_PER_SOURCE_FILE in scripts/quality-limits.sh and AGENTS.md")
 fi
 
 # Check 16.5: Error-shaping helpers gate
@@ -263,9 +266,9 @@ fi
 rm -f "$ERR_HELPERS_LOG"
 
 # Check 17: Context efficiency (agent documentation size)
-# Warn if AGENTS.md or SKILL.md files are oversized
-AGENTS_MD_WARNING=200
-SKILL_MD_WARNING=250
+# Warn if AGENTS.md or SKILL.md files are oversized (limits from quality-limits.sh)
+AGENTS_MD_WARNING="${MAX_LINES_AGENTS_MD}"
+SKILL_MD_WARNING="${MAX_LINES_PER_SKILL_MD}"
 
 if [ -f "${ROOT_DIR}/AGENTS.md" ]; then
     agents_lines=$(wc -l < "${ROOT_DIR}/AGENTS.md" 2>/dev/null || echo 0)
