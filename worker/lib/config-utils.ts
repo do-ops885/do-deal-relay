@@ -38,7 +38,7 @@ export const BUDGET_CONFIG_KEYS = [
  * @param minimum The minimum allowable integer value
  * @param maximum The maximum allowable integer value
  * @returns The parsed integer within specified bounds
- * @throws Error if value contains non-decimal characters, floating point numbers, or is out of bounds
+ * @throws {Error} If value contains non-decimal characters, floating point numbers, or is out of bounds
  */
 export function parseBoundedIntegerConfig(
   name: string,
@@ -86,7 +86,7 @@ export function getTrustThreshold(env: Env): number {
  * Validate required environment bindings and configuration values
  * @param env Worker environment bindings
  * @returns {void}
- * @throws Error if required variables are missing or if threshold/budget configs are invalid or negative
+ * @throws {Error} If required variables are missing or if threshold/budget configs are invalid or negative
  */
 export function validateConfig(env: Env): void {
   const missing = REQUIRED_CONFIG_KEYS.filter((key) => {
