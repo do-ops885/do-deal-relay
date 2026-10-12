@@ -22,7 +22,7 @@ if [ ! -f "$VERSION_FILE" ]; then
 fi
 
 VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
-DEPLOY_COUNT=$(git tag -l 'v*' 2>/dev/null | wc -l | tr -d '[:space:]')
+DEPLOY_COUNT=$( (git tag -l 'v*' 2>/dev/null || true) | wc -l | tr -d '[:space:]')
 
 # Build list of documentation files to track
 DOCS_FILES=(

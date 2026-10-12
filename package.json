@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "benchmark": "tsx scripts/benchmark_pipeline.ts",
-    "build": "bash scripts/generate-version.sh && bash scripts/update-docs.sh && tsc",
-    "build:watch": "bash scripts/generate-version.sh && bash scripts/update-docs.sh && tsc --watch",
+    "build": "bash scripts/generate-version.sh && tsc",
+    "build:watch": "bash scripts/generate-version.sh && tsc --watch",
     "deploy": "wrangler deploy",
     "dev": "bash scripts/generate-version.sh && wrangler dev --port 8787",
     "docs:check": "bash scripts/update-docs.sh --check",
