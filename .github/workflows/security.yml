@@ -46,7 +46,7 @@ jobs:
             trufflehog filesystem . --only-verified --json
           else
             echo "Running incremental scan from ${BEFORE} to ${SHA}"
-            trufflehog git . --since-commit "${BEFORE}" \
+            trufflehog git file://. --since-commit "${BEFORE}" \
               --only-verified --json
           fi
         id: secret-scan
