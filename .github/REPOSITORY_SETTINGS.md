@@ -224,14 +224,13 @@ After configuration, verify:
 
 ## CI/CD Integration
 
-The repository is configured with 9 workflows:
+The repository is configured with 8 workflows:
 
 - **ci.yml**: Main CI pipeline
 - **security.yml**: Daily security scanning
 - **deploy-staging.yml**: Automated staging deployment
 - **deploy-production.yml**: Production deployment with rollback
 - **discovery.yml**: Scheduled discovery runs
-- **dependencies.yml**: Weekly dependency updates
 - **cleanup.yml**: Monthly maintenance
 - **kv-setup.yml**: Infrastructure setup
 - **auto-merge.yml**: Dependabot PR automation
