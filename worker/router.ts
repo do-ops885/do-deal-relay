@@ -33,6 +33,7 @@ function initPipelineRoutes(): void {
       path: "/health",
       handler: (_req, env) => handleHealth(env, _req),
       auth: "public",
+      rateLimit: false,
       description: "Health check",
     },
     {
@@ -40,6 +41,7 @@ function initPipelineRoutes(): void {
       path: "/health/ready",
       handler: (_req, env) => handleReady(env, _req),
       auth: "public",
+      rateLimit: false,
       description: "Readiness probe",
     },
     {
@@ -47,6 +49,7 @@ function initPipelineRoutes(): void {
       path: "/health/live",
       handler: (_req, env) => handleLive(env, _req),
       auth: "public",
+      rateLimit: false,
       description: "Liveness probe",
     },
   ]);
