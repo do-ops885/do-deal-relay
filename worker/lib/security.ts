@@ -293,6 +293,8 @@ async function fetchDns(
 // Matches C0 control characters (\x00-\x1f), DEL (\x7f), and common
 // encoded variants (%00-%1f, %7f) that bypass naive string checks.
 // Shared single source for hasDangerousChars (issue #912).
+// Intentional control-char class for SSRF/CRLF defense (reviewed suppression).
+// eslint-disable-next-line no-control-regex
 export const DANGEROUS_CHARS_RE = /[\x00-\x1f\x7f]/;
 export const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
 // %5c = backslash, %25 = double-encoding prefix
