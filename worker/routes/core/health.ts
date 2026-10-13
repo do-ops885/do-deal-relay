@@ -22,7 +22,11 @@ export async function handleReady(
   request: Request,
 ): Promise<Response> {
   try {
-    void env.DEALS_DB.prepare("SELECT 1").first();
+    const probe = env.DEALS_DB.prepare("SELECT 1").first();
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("D1 probe timeout")), 2000);
+    });
+    await Promise.race([probe, timeout]);
     return jsonResponse({ ready: true }, 200, request, env);
   } catch {
     return jsonResponse(

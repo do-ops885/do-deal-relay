@@ -16,11 +16,19 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 /**
- * Get all allowed origins, including those from environment variables
+ * Get all allowed origins, including those from environment variables.
+ * Localhost entries are stripped in production to avoid trusting
+ * credentialed localhost origins against production.
  */
 export function getAllowedOrigins(env?: Env): string[] {
   if (env?.ALLOWED_ORIGINS) {
     return env.ALLOWED_ORIGINS.split(",").map((o) => o.trim());
+  }
+  const isProduction = env?.ENVIRONMENT === "production";
+  if (isProduction) {
+    return DEFAULT_ALLOWED_ORIGINS.filter(
+      (o) => !o.includes("localhost") && !o.includes("127.0.0.1"),
+    );
   }
   return DEFAULT_ALLOWED_ORIGINS;
 }

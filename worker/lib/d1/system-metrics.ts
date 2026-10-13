@@ -2,7 +2,7 @@
  * D1 System Metrics Helpers — Single and batch insert for pipeline metrics.
  *
  * Uses D1 batch API for atomic multi-row inserts. The system_metrics table
- * is defined in migration 10 (see schema migration for system_metrics).
+ * is defined in migration 15 (schema-part-9).
  *
  * Column mapping: the table uses `timestamp` (NOT `created_at`).
  */

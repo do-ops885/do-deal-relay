@@ -67,6 +67,7 @@ export async function getReferralCodeByString(
       rc.deal_id,
       d.title as deal_title,
       d.domain,
+      d.url as deal_url,
       rc.status,
       rc.max_uses,
       rc.current_uses,

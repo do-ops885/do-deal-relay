@@ -193,18 +193,22 @@ export class PipelineLock {
    * Otherwise returns the lock metadata.
    */
   async getLockStatus(): Promise<LockStatus> {
-    const row = this.sql
+    const rows = this.sql
       .exec<LockRow>(
         `SELECT id, run_id, trace_id, acquired_at, expires_at
          FROM locks WHERE id = ?`,
         LOCK_ID,
       )
-      .one();
+      .toArray();
+    const row = rows[0];
+    if (!row) {
+      return { locked: false };
+    }
 
     const now = Date.now();
     const expiresAt = Number(row.expires_at);
 
-    if (!row || expiresAt <= now) {
+    if (expiresAt <= now) {
       return { locked: false };
     }
 
