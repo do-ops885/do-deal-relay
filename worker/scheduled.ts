@@ -9,6 +9,7 @@ import { runContinuousVerification } from "./validation/gates/continuous-verific
 import { checkAndCleanPosts } from "./reddit";
 import { maybeTriggerShadowDiscovery } from "./workflows/shadow-trigger";
 import { maybeTriggerPipelineWorkflow } from "./workflows/pipeline-trigger";
+import { purgeOldDeals } from "./lib/do-mirror";
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -141,6 +142,22 @@ export async function handleScheduled(
             validated: result.validated,
             deactivated: result.deactivated,
           },
+        });
+      }
+
+      // Weekly DealRegistry retention sweep: purgeOld previously had no
+      // production caller, letting the DO deals table grow without bound.
+      // Best-effort — a purge failure never fails the validation sweep.
+      try {
+        const purged = await purgeOldDeals(env);
+        logger.info("DealRegistry purge completed", {
+          component: "scheduled",
+          purged,
+        });
+      } catch (error) {
+        logger.warn("DealRegistry purge failed (non-critical)", {
+          component: "scheduled",
+          error: error instanceof Error ? error.message : String(error),
         });
       }
 
