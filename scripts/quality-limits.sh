@@ -8,6 +8,10 @@
 # (for example tests/unit/deal-registry.test.ts at 1061 lines) exceed the
 # source limit by design, and worker/bot sources are currently all under
 # 500 lines. Enforcement targets source growth, not test fixtures.
+#
+# Variables are consumed via `source` in scripts/quality_gate.sh and
+# scripts/pre-commit-hook.sh; single-file analysis cannot see cross-file use.
+# shellcheck disable=SC2034
 
 # Source files must not exceed 500 lines (fatal).
 readonly MAX_LINES_PER_SOURCE_FILE=500
