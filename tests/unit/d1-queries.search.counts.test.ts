@@ -242,7 +242,7 @@ describe("D1 Queries — Counts & Active", () => {
         meta: { rows_read: 0, rows_written: 0 },
       });
       await getExpiringDeals(mockDb as unknown as D1Database);
-      expect(getMockStatement().bind).toHaveBeenCalledWith(7);
+      expect(getMockStatement().bind).toHaveBeenCalledWith(7, 500);
     });
 
     it("should return empty array on error", async () => {

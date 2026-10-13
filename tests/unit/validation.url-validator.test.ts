@@ -308,7 +308,13 @@ describe("URL Validator", () => {
         headers: { "Content-Type": "application/json" },
         body: "invalid-json-body-causes-syntax-error",
       });
-      const env = {} as Env;
+      const env = {
+        DEALS_LOCK: {
+          get: vi.fn().mockResolvedValue(null),
+          put: vi.fn().mockResolvedValue(undefined),
+          delete: vi.fn().mockResolvedValue(undefined),
+        },
+      } as unknown as Env;
 
       const response = await handleValidateUrl(request, env);
       expect(response.status).toBe(500);
