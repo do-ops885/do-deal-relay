@@ -23,7 +23,6 @@ cp .dev.vars.example .dev.vars
 Edit `.dev.vars` and set secure values for:
 - `WEBHOOK_SECRET` - Used for webhook signature verification
 - `EMAIL_WEBHOOK_SECRET` - Used for email webhook verification
-- `API_ENCRYPTION_KEY` - Used for API encryption (must be 32+ characters)
 
 **Never commit `.dev.vars` to version control** - it's in `.gitignore` by default.
 
@@ -75,7 +74,7 @@ cp .dev.vars.example .dev.vars
 cp scripts/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 ```
 
-> **Note**: Copying `.dev.vars.example` to `.dev.vars` is required before running E2E tests locally. The file provides placeholder values for `WEBHOOK_SECRET`, `EMAIL_WEBHOOK_SECRET`, `API_ENCRYPTION_KEY`, and `JWT_SECRET`. Replace with real values from your Cloudflare dashboard for full functionality.
+> **Note**: Copying `.dev.vars.example` to `.dev.vars` is required before running E2E tests locally. The file provides placeholder values for `WEBHOOK_SECRET`, `EMAIL_WEBHOOK_SECRET`, and `JWT_SECRET`. Replace with real values from your Cloudflare dashboard for full functionality.
 
 ## How to Contribute
 

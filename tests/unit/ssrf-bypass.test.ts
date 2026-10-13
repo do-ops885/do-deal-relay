@@ -64,6 +64,34 @@ describe("Security Utils - validateFetchUrl SSRF Bypass Prevention", () => {
     expect(result).toBe(true);
   });
 
+  it("should block URLs with non-standard ports", async () => {
+    const nonStandardPortUrls = [
+      "https://example.com:22/",
+      "https://example.com:3306/",
+      "https://example.com:6379/",
+      "https://example.com:9000/",
+    ];
+
+    for (const url of nonStandardPortUrls) {
+      const result = await validateFetchUrl(url);
+      expect(result).toBe(false);
+    }
+  });
+
+  it("should allow URLs with standard web ports when DNS resolves to public IP", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        Answer: [{ data: "1.1.1.1" }],
+      }),
+    } as unknown as Response);
+
+    for (const port of [443, 8443, 8080]) {
+      const result = await validateFetchUrl(`https://one.one.one.one:${port}/`);
+      expect(result).toBe(true);
+    }
+  });
+
   it("should block domains that resolve to private IPv6 addresses", async () => {
     // Mock DNS resolution: A record empty, AAAA record returns private IPv6
     vi.mocked(global.fetch)

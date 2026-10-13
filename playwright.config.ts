@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * Required env vars for local E2E:
  *   - Copy .dev.vars.example → .dev.vars for worker config validation
- *   - Or set WEBHOOK_SECRET, EMAIL_WEBHOOK_SECRET, API_ENCRYPTION_KEY
+ *   - Or set WEBHOOK_SECRET, EMAIL_WEBHOOK_SECRET
  */
 
 // Presence-only check; values are never compared, returned, or logged.
@@ -22,11 +22,6 @@ function getMissingEnvVars(): readonly string[] {
     process.env.EMAIL_WEBHOOK_SECRET.trim() === ""
   )
     missing.push("EMAIL_WEBHOOK_SECRET");
-  if (
-    process.env.API_ENCRYPTION_KEY === undefined ||
-    process.env.API_ENCRYPTION_KEY.trim() === ""
-  )
-    missing.push("API_ENCRYPTION_KEY");
   return missing;
 }
 

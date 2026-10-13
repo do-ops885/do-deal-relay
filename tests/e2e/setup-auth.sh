@@ -31,7 +31,6 @@ ensure_dev_vars() {
     cat > .dev.vars <<'EOF'
 WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod
 EMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod
-API_ENCRYPTION_KEY=e2e-test-encryption-key-32-chars-ok
 JWT_SECRET=e2e-test-jwt-secret-do-not-use-in-prod
 EOF
     echo "✓ Created .dev.vars with E2E test secrets"

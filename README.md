@@ -108,7 +108,6 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 | `AI_GATEWAY_URL` | Yes | AI Gateway URL for model access |
 | `TRUST_THRESHOLD` | Yes | Minimum trust score (0.0–1.0) |
 | `WEBHOOK_SECRET` | Yes | Secret for signing/verifying webhooks |
-| `API_ENCRYPTION_KEY` | Yes | Key for encrypting sensitive API data |
 | `ENVIRONMENT` | Yes | Deployment environment (production, staging, development) |
 | `GITHUB_REPO` | Yes | GitHub repository path (e.g., `org/repo`) |
 | `GITHUB_TOKEN` | No | GitHub personal access token |

@@ -54,6 +54,19 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
       });
       return false;
     }
+    if (parsed.port) {
+      const port = parseInt(parsed.port, 10);
+      if (
+        !(SECURITY_CONSTANTS.STANDARD_PORTS as readonly number[]).includes(port)
+      ) {
+        logger.warn(`SSRF Blocked: Non-standard port detected: ${port}`, {
+          component: "security",
+          port,
+          url,
+        });
+        return false;
+      }
+    }
     const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     if (
       (SECURITY_CONSTANTS.BLOCKED_HOSTS as readonly string[]).includes(hostname)
