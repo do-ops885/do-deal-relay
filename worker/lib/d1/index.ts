@@ -92,6 +92,3 @@ export {
   getResearchCache,
   putResearchCache,
 } from "./research-cache";
-
-// Re-export SQL schema for reference
-export const SCHEMA_VERSION = "1.0.0";

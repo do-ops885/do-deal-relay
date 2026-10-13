@@ -1,6 +1,6 @@
 import type { Env } from "../types";
 import type { PipelineWorkflowParams } from "../types/api";
-import { isFeatureEnabled } from "../lib/feature-flags";
+import { isFeatureEnabledWithDefaults } from "../lib/feature-flags";
 import { logger } from "../lib/global-logger";
 
 export const CUTOVER_FLAG = "workflow_pipeline_cutover";
@@ -16,7 +16,7 @@ export async function maybeTriggerPipelineWorkflow(
   cron: string,
 ): Promise<{ triggered: boolean; reason: string }> {
   try {
-    if (!(await isFeatureEnabled(CUTOVER_FLAG, env))) {
+    if (!(await isFeatureEnabledWithDefaults(CUTOVER_FLAG, env))) {
       return { triggered: false, reason: "flag_disabled" };
     }
     const binding = env.PIPELINE_WORKFLOW;

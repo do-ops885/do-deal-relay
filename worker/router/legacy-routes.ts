@@ -316,6 +316,11 @@ export async function tryHandleLegacyRoutes(
 
   // MCP (Model Context Protocol) Endpoints - 2025-11-25 Specification
   if (path === "/mcp") {
+    // Browser preflight must not require auth; the MCP handler returns
+    // 204 with CORS headers for OPTIONS (otherwise dead behind 401).
+    if (request.method === "OPTIONS") {
+      return handleMCPRequest(request, env);
+    }
     const bodyTooLarge = checkBodySize(request, 10 * 1024);
     if (bodyTooLarge) return bodyTooLarge;
     return withAuth(request, env, "user", (auth) =>

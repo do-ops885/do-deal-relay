@@ -164,13 +164,6 @@ export interface EmbeddingCacheEntry {
 // Default Configuration
 // ============================================================================
 
-export const DEFAULT_EMBEDDING_CONFIG: EmbeddingPipelineConfig = {
-  model: "@cf/baai/bge-base-en-v1.5",
-  batch_size: 100, // Max 100 texts per embedding request
-  max_concurrent: 3,
-  cache_ttl_seconds: 86400, // 24 hours
-};
-
 export const SEMANTIC_SEARCH_CONFIG = {
   /** Default similarity threshold */
   DEFAULT_MIN_SCORE: 0.3,
