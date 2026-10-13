@@ -14,9 +14,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/health`);
-      } catch {
-        expect(true).toBe(true);
-        return;
+      } catch (error) {
+        throw new Error(
+          `Worker unreachable at ${BASE_URL}/health: ${error instanceof Error ? error.message : String(error)}. Start wrangler dev first.`,
+        );
       }
       // 200 if healthy, 503 if degraded (e.g. no snapshot in KV)
       expect([200, 503]).toContain(res.status);
@@ -31,9 +32,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/metrics?format=json`);
-      } catch {
-        expect(true).toBe(true);
-        return;
+      } catch (error) {
+        throw new Error(
+          `Worker unreachable at ${BASE_URL}/metrics: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
 
       // 401 is now expected because /metrics is protected
@@ -50,9 +52,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/metrics`);
-      } catch {
-        expect(true).toBe(true);
-        return;
+      } catch (error) {
+        throw new Error(
+          `Worker unreachable at ${BASE_URL}/metrics: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
 
       // 401 is now expected because /metrics is protected
@@ -70,9 +73,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/deals`);
-      } catch {
-        expect(true).toBe(true);
-        return;
+      } catch (error) {
+        throw new Error(
+          `Worker unreachable at ${BASE_URL}/deals: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
       expect([200, 401, 404]).toContain(res.status);
       if (res.status === 200) {
@@ -90,9 +94,10 @@ describe("Smoke Tests - HTTP Endpoints", () => {
       let res: Response;
       try {
         res = await fetch(`${BASE_URL}/invalid-route-123`);
-      } catch {
-        expect(true).toBe(true);
-        return;
+      } catch (error) {
+        throw new Error(
+          `Worker unreachable at ${BASE_URL}/invalid-route-123: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
       expect(res.status).toBe(404);
       const body = jsonRecord(await res.json());

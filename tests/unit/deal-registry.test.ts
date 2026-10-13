@@ -192,9 +192,11 @@ function createRegistry() {
   return { registry, storage: mockSql.storage, mockSql };
 }
 
+let dealCounter = 0;
 function makeDeal(overrides: Partial<StageDealInput> = {}): StageDealInput {
+  dealCounter += 1;
   return {
-    id: `deal-${Math.random().toString(36).slice(2, 8)}`,
+    id: `deal-test-${dealCounter}`,
     source: "test-source",
     title: "Test Deal",
     data: '{"key":"value"}',
@@ -270,14 +272,16 @@ describe("DealRegistry", () => {
 
     it("should set created_at and updated_at timestamps", async () => {
       const { registry, storage } = createRegistry();
-      const before = Date.now();
-      await registry.stageDeals([makeDeal({ id: "deal-1" })]);
-      const after = Date.now();
-
-      expect(storage[0]!.created_at).toBeGreaterThanOrEqual(before);
-      expect(storage[0]!.created_at).toBeLessThanOrEqual(after);
-      expect(storage[0]!.updated_at).toBeGreaterThanOrEqual(before);
-      expect(storage[0]!.updated_at).toBeLessThanOrEqual(after);
+      const fixedTime = 1700000000000;
+      vi.useFakeTimers();
+      vi.setSystemTime(fixedTime);
+      try {
+        await registry.stageDeals([makeDeal({ id: "deal-1" })]);
+        expect(storage[0]!.created_at).toBe(fixedTime);
+        expect(storage[0]!.updated_at).toBe(fixedTime);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

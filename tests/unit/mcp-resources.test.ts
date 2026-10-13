@@ -65,11 +65,13 @@ function createMockEnv(): Env {
   } as unknown as Env;
 }
 
+let mockReferralCounter = 0;
 function createMockReferral(
   overrides: Partial<ReferralInput> = {},
 ): ReferralInput {
+  mockReferralCounter += 1;
   return {
-    id: `ref-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `ref-test-${mockReferralCounter}`,
     code: overrides.code || "TEST123",
     url: overrides.url || "https://example.com/ref/TEST123",
     domain: overrides.domain || "example.com",

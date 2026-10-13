@@ -253,18 +253,26 @@ describe("Feature Flags CRUD", () => {
     });
 
     it("should preserve existing createdAt on update", async () => {
-      await setFeatureFlag({ name: "preserve-test", enabled: true }, mockEnv);
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+        await setFeatureFlag({ name: "preserve-test", enabled: true }, mockEnv);
 
-      const first = await getFeatureFlag("preserve-test", mockEnv);
-      const createdAt = first?.createdAt;
+        const first = await getFeatureFlag("preserve-test", mockEnv);
+        const createdAt = first?.createdAt;
 
-      // Update the flag
-      await new Promise((r) => setTimeout(r, 10));
-      await setFeatureFlag({ name: "preserve-test", enabled: false }, mockEnv);
+        vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+        await setFeatureFlag(
+          { name: "preserve-test", enabled: false },
+          mockEnv,
+        );
 
-      const second = await getFeatureFlag("preserve-test", mockEnv);
-      expect(second?.createdAt).toBe(createdAt);
-      expect(second?.updatedAt).not.toBe(createdAt);
+        const second = await getFeatureFlag("preserve-test", mockEnv);
+        expect(second?.createdAt).toBe(createdAt);
+        expect(second?.updatedAt).not.toBe(createdAt);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("should return all flag properties", async () => {
@@ -315,33 +323,53 @@ describe("Feature Flags CRUD", () => {
     });
 
     it("should set createdAt only on first creation", async () => {
-      await setFeatureFlag({ name: "timestamp-flag", enabled: true }, mockEnv);
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+        await setFeatureFlag(
+          { name: "timestamp-flag", enabled: true },
+          mockEnv,
+        );
 
-      const first = await getFeatureFlag("timestamp-flag", mockEnv);
-      expect(first?.createdAt).toBeDefined();
+        const first = await getFeatureFlag("timestamp-flag", mockEnv);
+        expect(first?.createdAt).toBeDefined();
 
-      // Wait a bit then update
-      await new Promise((r) => setTimeout(r, 10));
-      await setFeatureFlag({ name: "timestamp-flag", enabled: false }, mockEnv);
+        vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+        await setFeatureFlag(
+          { name: "timestamp-flag", enabled: false },
+          mockEnv,
+        );
 
-      const second = await getFeatureFlag("timestamp-flag", mockEnv);
-      expect(second?.createdAt).toBe(first?.createdAt);
+        const second = await getFeatureFlag("timestamp-flag", mockEnv);
+        expect(second?.createdAt).toBe(first?.createdAt);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("should set updatedAt on every update", async () => {
-      await setFeatureFlag({ name: "updated-at-flag", enabled: true }, mockEnv);
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+        await setFeatureFlag(
+          { name: "updated-at-flag", enabled: true },
+          mockEnv,
+        );
 
-      const first = await getFeatureFlag("updated-at-flag", mockEnv);
-      const firstUpdatedAt = first?.updatedAt;
+        const first = await getFeatureFlag("updated-at-flag", mockEnv);
+        const firstUpdatedAt = first?.updatedAt;
 
-      await new Promise((r) => setTimeout(r, 10));
-      await setFeatureFlag(
-        { name: "updated-at-flag", enabled: false },
-        mockEnv,
-      );
+        vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+        await setFeatureFlag(
+          { name: "updated-at-flag", enabled: false },
+          mockEnv,
+        );
 
-      const second = await getFeatureFlag("updated-at-flag", mockEnv);
-      expect(second?.updatedAt).not.toBe(firstUpdatedAt);
+        const second = await getFeatureFlag("updated-at-flag", mockEnv);
+        expect(second?.updatedAt).not.toBe(firstUpdatedAt);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
