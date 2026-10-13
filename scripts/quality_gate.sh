@@ -96,6 +96,9 @@ if command -v npx >/dev/null 2>&1; then
     fi
 fi
 
+# Check 6.6: Documentation version consistency (matches CI docs job)
+run_check "Documentation version consistency" "bash ${SCRIPT_DIR}/update-docs.sh --check"
+
 # Check 7: YAML syntax validation (matches yaml-lint job)
 # Check if yamllint is available
 if command -v yamllint >/dev/null 2>&1; then

@@ -9,6 +9,7 @@
     "build:watch": "bash scripts/generate-version.sh && tsc --watch",
     "deploy": "wrangler deploy",
     "dev": "bash scripts/generate-version.sh && wrangler dev --port 8787",
+    "docs:check": "bash scripts/update-docs.sh --check",
     "docs:update": "bash scripts/update-docs.sh",
     "fmt:check": "prettier --check .",
     "fmt:fix": "prettier --write .",

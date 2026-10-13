@@ -21,7 +21,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["@cloudflare/workers-types", "@playwright/test", "vitest"]
+    "types": ["@cloudflare/workers-types"]
   },
   "include": [
     "worker/**/*.ts",
