@@ -7,7 +7,7 @@ import { maybeTriggerPipelineWorkflow } from "../../../worker/workflows/pipeline
 import { executePhase, handleFailure } from "../../../worker/pipeline-executor";
 import { acquireLock, releaseLock, extendLock } from "../../../worker/lib/lock";
 import { notify } from "../../../worker/notify";
-import { isFeatureEnabled } from "../../../worker/lib/feature-flags";
+import { isFeatureEnabledWithDefaults } from "../../../worker/lib/feature-flags";
 import type {
   Deal,
   Env,
@@ -32,7 +32,7 @@ vi.mock("../../../worker/notify", () => ({
 }));
 
 vi.mock("../../../worker/lib/feature-flags", () => ({
-  isFeatureEnabled: vi.fn(),
+  isFeatureEnabledWithDefaults: vi.fn(),
 }));
 
 const RUN_ID = "cutover-1";
@@ -50,7 +50,7 @@ const mockAcquireLock = vi.mocked(acquireLock);
 const mockReleaseLock = vi.mocked(releaseLock);
 const mockExtendLock = vi.mocked(extendLock);
 const mockNotify = vi.mocked(notify);
-const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
+const mockIsFeatureEnabled = vi.mocked(isFeatureEnabledWithDefaults);
 
 const NEXT_BY_PHASE: Record<string, PipelinePhase | FailurePath> = {
   discover: "normalize",
