@@ -105,6 +105,13 @@ export async function checkRateLimit(
 
   const key = `${config.keyPrefix}:${id}:${windowStart}`;
   if (!env.DEALS_LOCK) {
+    if (SENSITIVE_ENDPOINTS.has(endpoint)) {
+      logger.error("Rate limit binding missing for sensitive endpoint", {
+        component: "rate-limit",
+        endpoint,
+      });
+      return { allowed: false, remaining: 0, resetTime, limit: max };
+    }
     return { allowed: true, remaining: max, resetTime, limit: max };
   }
 
@@ -230,6 +237,18 @@ export function createRateLimitMiddleware(
 
     const response = await handler();
     const headers = createRateLimitHeaders(result);
+    // Response.redirect() yields immutable headers; clone redirects
+    // before mutating so ?redirect=true does not throw into a 500.
+    if (response.headers.get("Location")) {
+      const merged = new Headers(response.headers);
+      for (const [k, v] of headers.entries()) {
+        merged.set(k, v);
+      }
+      return new Response(null, {
+        status: response.status,
+        headers: merged,
+      });
+    }
     for (const [k, v] of headers.entries()) {
       response.headers.set(k, v);
     }

@@ -388,3 +388,8 @@ export function getValidationSummary(results: UrlValidationResult[]): {
       results.length > 0 ? Math.round(totalResponseTime / results.length) : 0,
   };
 }
+
+/**
+ * Intent-revealing alias for async fetch validation (issue #912).
+ */
+export const validateFetchableUrl = validateUrl;

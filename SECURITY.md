@@ -47,7 +47,7 @@ Autonomous discovery runs pass through a dedicated security gate (`runSecurityGa
 - **SSRF Protection**: Verifies URLs against blocked host lists and resolves hostnames via DNS-over-HTTPS (DoH) to block private IP ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, etc.). Localhost is permitted only in non-production environments (`test` or `development`).
 - **Credential Leakage Detection**: Scans deal payloads for secret exposure (passwords, API keys, bearer tokens, private keys, OpenAI keys).
 - **Injection Defense**: Scans deal fields for SQL, NoSQL, XSS script injection, javascript URIs, and path traversal patterns (`../`).
-- **URL Validation**: Ensures deal URLs use HTTPS, do not exceed 2,048 characters, and restrict port ranges to standard bounds.
+- **URL Validation**: Ensures deal URLs use HTTPS, do not exceed 2,048 characters, and restrict ports to 80, 443, 8080, 8443 (see STANDARD_PORTS in worker/lib/security-ip.ts).
 - **Content Safety**: Detects malicious patterns (phishing, malware), fraudulent claims (guaranteed returns), and pyramid scheme language.
 
 Any findings categorized as **Critical** or **High** severity automatically block deal publication until resolved.

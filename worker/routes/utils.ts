@@ -3,6 +3,7 @@
 // ============================================================================
 
 import type { Env } from "../types";
+import { hasDangerousChars } from "../lib/security";
 
 /**
  * Default allowed origins for CORS validation
@@ -16,11 +17,19 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 /**
- * Get all allowed origins, including those from environment variables
+ * Get all allowed origins, including those from environment variables.
+ * Localhost entries are stripped in production to avoid trusting
+ * credentialed localhost origins against production.
  */
 export function getAllowedOrigins(env?: Env): string[] {
   if (env?.ALLOWED_ORIGINS) {
     return env.ALLOWED_ORIGINS.split(",").map((o) => o.trim());
+  }
+  const isProduction = env?.ENVIRONMENT === "production";
+  if (isProduction) {
+    return DEFAULT_ALLOWED_ORIGINS.filter(
+      (o) => !o.includes("localhost") && !o.includes("127.0.0.1"),
+    );
   }
   return DEFAULT_ALLOWED_ORIGINS;
 }
@@ -198,23 +207,20 @@ function allowedOriginsCheck(
   );
 }
 
-// Security: Define patterns to detect dangerous characters (control characters,
-// backslashes, tabs, null bytes, and their URL-encoded or double-encoded variants)
-// to prevent browser-specific parser differentials, CRLF injections, and bypasses.
-const DANGEROUS_CHARS_RE = /[\x00-\x1f\x7f]/;
-const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
-const ENCODED_BACKSLASH_RE = /%5[cC]/i;
-const DOUBLE_ENCODING_RE = /%25(?:0[0-9a-f]|1[0-9a-f]|5[cC]|7[fF])/i;
-
-function hasDangerousChars(url: string): boolean {
-  return (
-    DANGEROUS_CHARS_RE.test(url) ||
-    ENCODED_CONTROL_RE.test(url) ||
-    ENCODED_BACKSLASH_RE.test(url) ||
-    DOUBLE_ENCODING_RE.test(url) ||
-    url.includes("\\")
-  );
+/**
+ * Intent-revealing alias for redirect validation (issue #912).
+ * Original validateUrl (string|null) kept for compatibility.
+ */
+export function validateRedirectUrl(
+  url: string,
+  allowedDomains?: string[],
+): string | null {
+  return validateUrl(url, allowedDomains);
 }
+
+// hasDangerousChars is shared from worker/lib/security.ts (issue #912).
+// Re-exported here for importers that referenced the local copy.
+export { hasDangerousChars };
 
 /**
  * Allowed domains for redirects

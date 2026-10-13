@@ -1456,8 +1456,132 @@ paths:
                 type: string
                 description: CSV format when format=csv
 
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      operationId: authLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200": { description: JWT tokens }
+        "401": { description: Invalid credentials }
+  /api/experience:
+    post:
+      tags: [Experience]
+      summary: Submit experience
+      operationId: submitExperience
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "201": { description: Created }
+  /api/admin/keys:
+    get:
+      tags: [Admin]
+      summary: List API keys
+      operationId: listApiKeys
+      security:
+        - BearerAuth: []
+      responses:
+        "200": { description: API keys }
+    post:
+      tags: [Admin]
+      summary: Create API key
+      operationId: createApiKey
+      security:
+        - BearerAuth: []
+      responses:
+        "201": { description: Created }
+  /api/nlq/saved:
+    get:
+      tags: [NLQ]
+      summary: List saved queries
+      operationId: listSavedQueries
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Saved queries }
+    post:
+      tags: [NLQ]
+      summary: Save query
+      operationId: saveQuery
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "201": { description: Created }
+  /api/nlq/alerts:
+    get:
+      tags: [NLQ]
+      summary: List alerts
+      operationId: listAlerts
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Alerts }
+    post:
+      tags: [NLQ]
+      summary: Create alert
+      operationId: createAlert
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "201": { description: Created }
+  /api/semantic-search:
+    post:
+      tags: [Search]
+      summary: Semantic search via Vectorize
+      operationId: semanticSearch
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Results }
+  /mcp/stream:
+    get:
+      tags: [MCP]
+      summary: MCP stream (SSE)
+      operationId: mcpStream
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: SSE stream }
+  /api/d1/similar:
+    get:
+      tags: [D1]
+      summary: Similar deals via D1
+      operationId: d1Similar
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Similar deals }
+  /api/dora-metrics:
+    get:
+      tags: [Metrics]
+      summary: DORA metrics
+      operationId: doraMetrics
+      security:
+        - BearerAuth: []
+      responses:
+        "200": { description: DORA metrics }
+
 # ==============================================================================
 # Components
+
 # ==============================================================================
 components:
   parameters:

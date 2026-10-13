@@ -7,13 +7,8 @@ import type { RewardScrapeResult } from "./types";
 import { SCRAPE_TIMEOUT_MS } from "./types";
 import { extractRewardFromHTML } from "./html-extractor";
 
-export function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "unknown";
-  }
-}
+import { extractDomain } from "../url-rate-limit";
+export { extractDomain };
 
 async function performRewardScrape(
   url: string,

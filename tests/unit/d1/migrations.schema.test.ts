@@ -58,7 +58,9 @@ describe("schema", () => {
 
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    expect(versions).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]);
   });
 
   it("version 1 creates core tables (categories, deals, referral_codes)", () => {
@@ -239,7 +241,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(14);
+    expect(MIGRATIONS.length).toBe(15);
   });
 });
 
@@ -267,7 +269,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
   });
 
@@ -301,6 +303,11 @@ describe("factory functions", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_missing_runtime_tables",
+          applied_at: 15000,
+        },
       ],
     });
 
@@ -308,7 +315,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(14);
+    expect(result.currentVersion).toBe(15);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -322,9 +329,9 @@ describe("factory functions", () => {
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
     expect(status.pending).toEqual([
-      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     ]);
-    expect(status.latestVersion).toBe(14);
+    expect(status.latestVersion).toBe(15);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -357,13 +364,18 @@ describe("factory functions", () => {
           name: "add_alert_deliveries_aiact",
           applied_at: 14000,
         },
+        {
+          version: 15,
+          name: "add_missing_runtime_tables",
+          applied_at: 15000,
+        },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(14);
+    expect(status.currentVersion).toBe(15);
   });
 });
 

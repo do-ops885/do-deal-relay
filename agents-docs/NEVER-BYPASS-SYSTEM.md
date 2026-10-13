@@ -199,7 +199,7 @@ Passwords, API keys, or private keys in code.
 
 ## System Components
 
-### 1. Audit System (`scripts/guard-rail-audit.sh`)
+### 1. Audit System (`scripts/quality_gate.sh`)
 
 **Functions:**
 
@@ -418,7 +418,7 @@ Recommend alerting on:
    ```
 3. Check audit system exists:
    ```bash
-   ls scripts/guard-rail-audit.sh
+   ls scripts/quality_gate.sh
    ```
 
 ### Audit Log Not Created
@@ -484,7 +484,7 @@ When in doubt:
 - **AGENTS.md**: Quality Gates section
 - **scripts/pre-commit-hook.sh**: Implementation
 - **scripts/pre-push-hook.sh**: Implementation
-- **scripts/guard-rail-audit.sh**: Audit system
+- **scripts/quality_gate.sh**: Audit system
 - `agents-docs/HARNESS.md` - Harness engineering framework
 
 ---

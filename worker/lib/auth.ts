@@ -193,10 +193,26 @@ export async function verifyApiKey(
     return { authenticated: false, error: "API key expired" };
   }
 
-  // Update last used
-  metadata.lastUsed = new Date().toISOString();
-  const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
-  await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata));
+  // Update last used (throttled to 1h to avoid KV write amplification)
+  // and preserve original KV TTL so keys still expire at the KV layer.
+  const lastUsedMs = metadata.lastUsed
+    ? Date.parse(metadata.lastUsed)
+    : Number.NaN;
+  const nowMs = Date.now();
+  const isStale = Number.isNaN(lastUsedMs) || nowMs - lastUsedMs > 3600_000;
+  if (isStale) {
+    metadata.lastUsed = new Date(nowMs).toISOString();
+    const kv = env.WEBHOOK_API_KEYS || env.DEALS_SOURCES;
+    await kv.put(`apikey:${keyHash}`, JSON.stringify(metadata), {
+      ...(metadata.expiresAt
+        ? {
+            expiration: Math.floor(
+              new Date(metadata.expiresAt).getTime() / 1000,
+            ),
+          }
+        : { expirationTtl: 365 * 86400 }),
+    });
+  }
 
   return {
     authenticated: true,

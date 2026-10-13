@@ -193,13 +193,8 @@ export function getProviderFormat(provider: string): ProviderFormat | null {
 // Utility Functions
 // ============================================================================
 
-function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "unknown";
-  }
-}
+import { extractDomain } from "./url-rate-limit";
+export { extractDomain };
 
 // ============================================================================
 // Complete Code Validation

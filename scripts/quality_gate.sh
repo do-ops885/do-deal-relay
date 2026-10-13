@@ -15,12 +15,28 @@ WARNINGS=()
 DRIFT_DETECTED=false
 
 # Pre-check: CI drift detection
-# If .github/ci-status/ci-status.json exists and CI is failing, warn early
+# If .github/ci-status/ci-status.json exists and CI is failing, warn early.
+# Uses jq when available (portable, no GNU BRE \s dependency); falls back to grep -E.
 CI_STATUS_FILE="${ROOT_DIR}/.github/ci-status/ci-status.json"
 if [ -f "$CI_STATUS_FILE" ]; then
-    if grep -q '"overall":\s*"failure"' "$CI_STATUS_FILE" 2>/dev/null || \
-       grep -q '"overall":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null || \
-       grep -q '"status":\s*"failing"' "$CI_STATUS_FILE" 2>/dev/null; then
+    CI_FAILING=false
+    if command -v jq >/dev/null 2>&1; then
+        if jq -e '.status == "failing"' "$CI_STATUS_FILE" >/dev/null 2>&1; then
+            CI_FAILING=true
+        fi
+        # Treat stale status (>48h) as unknown rather than passing.
+        LAST_RUN=$(jq -r '.last_run // empty' "$CI_STATUS_FILE" 2>/dev/null || true)
+        if [ -n "$LAST_RUN" ]; then
+            LAST_EPOCH=$(date -d "$LAST_RUN" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$LAST_RUN" +%s 2>/dev/null || echo 0)
+            NOW_EPOCH=$(date +%s)
+            if [ "$LAST_EPOCH" -gt 0 ] && [ $((NOW_EPOCH - LAST_EPOCH)) -gt 172800 ]; then
+                WARNINGS+=("⚠ ci-status.json is stale (last_run=$LAST_RUN >48h); treating as unknown — refresh via scripts/update-ci-status.sh")
+            fi
+        fi
+    elif grep -Eq '"status": *"failing"' "$CI_STATUS_FILE" 2>/dev/null; then
+        CI_FAILING=true
+    fi
+    if [ "$CI_FAILING" = "true" ]; then
         DRIFT_DETECTED=true
         WARNINGS+=("⚠ CI drift detected: .github/ci-status/ci-status.json shows CI is failing")
         WARNINGS+=("  Local quality gate may pass while CI is broken. Verify CI status before merging.")

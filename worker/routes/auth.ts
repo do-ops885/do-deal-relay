@@ -178,9 +178,19 @@ export async function handleListUsers(
   try {
     if (!auth.userId)
       return errorResponse("Unauthorized", 401, undefined, request, env);
+    const url = new URL(request.url);
+    const rawLimit = Number(url.searchParams.get("limit") ?? 50);
+    const rawOffset = Number(url.searchParams.get("offset") ?? 0);
+    const limit = Math.min(
+      Math.max(Number.isFinite(rawLimit) ? rawLimit : 50, 1),
+      200,
+    );
+    const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
     const result = await env.DEALS_DB.prepare(
-      "SELECT id, email, name, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC",
-    ).all();
+      "SELECT id, email, name, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    )
+      .bind(limit, offset)
+      .all();
     const users = (result.results || []).map((row) => ({
       id: row.id,
       email: row.email,
@@ -190,7 +200,7 @@ export async function handleListUsers(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
-    return jsonResponse({ users }, 200, request, env);
+    return jsonResponse({ users, limit, offset }, 200, request, env);
   } catch (error) {
     logger.error("Failed to list users", toErrCtx(error));
     return errorResponse("Failed to list users", 500, undefined, request, env);

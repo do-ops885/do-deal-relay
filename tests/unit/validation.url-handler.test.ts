@@ -21,6 +21,11 @@ describe("handleValidateUrl error sanitization", () => {
         get: vi.fn().mockResolvedValue(null),
         put: vi.fn().mockResolvedValue(undefined),
       },
+      DEALS_LOCK: {
+        get: vi.fn().mockResolvedValue(null),
+        put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+      },
     } as unknown as Env;
 
     const response = await handleValidateUrl(request, mockEnv);

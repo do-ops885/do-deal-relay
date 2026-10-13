@@ -243,12 +243,19 @@ export async function tryHandleLegacyRoutes(
     });
   }
 
-  // Research results API
+  // Research results API (rate-limited: outbound research is expensive)
   if (path.startsWith("/api/research/") && request.method === "GET") {
     const domain = path.replace("/api/research/", "");
-    return withAuth(request, env, undefined, () =>
-      handleGetResearchResults(domain, env, request),
-    );
+    return withAuth(request, env, "user", (auth) => {
+      const rateLimiter = createRateLimitMiddleware(
+        env,
+        "/api/research/:domain",
+        auth,
+      );
+      return rateLimiter(request, () =>
+        handleGetResearchResults(domain, env, request),
+      );
+    });
   }
 
   // Semantic search (Vectorize + Workers AI)

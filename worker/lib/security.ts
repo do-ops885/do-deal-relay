@@ -21,6 +21,17 @@ export { isIpInCidr } from "./security-ip";
 const SECURITY_DNS_CACHE_TTL_MS = 300_000;
 const SECURITY_DNS_CACHE_MAX_ENTRIES = 500;
 
+/**
+ * Intent-revealing alias for boolean URL safety check (issue #912).
+ * Original name kept for compatibility.
+ */
+export function isSafeUrl(
+  url: string,
+  allowedDomains?: readonly string[],
+): boolean {
+  return validateUrl(url, allowedDomains);
+}
+
 export function validateUrl(
   url: string,
   allowedDomains?: readonly string[],
@@ -279,15 +290,17 @@ async function fetchDns(
   }
 }
 
-// Matches C0 control characters (\x00-\x1f), DEL (\x7f), and common
+// Matches control characters (C0, DEL and C1 via Unicode Cc) and common
 // encoded variants (%00-%1f, %7f) that bypass naive string checks.
-const DANGEROUS_CHARS_RE = /[\x00-\x1f\x7f]/;
-const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
+// Shared single source for hasDangerousChars (issue #912).
+// Uses \p{Cc} instead of literal C0 ranges to avoid no-control-regex.
+export const DANGEROUS_CHARS_RE = /\p{Cc}/u;
+export const ENCODED_CONTROL_RE = /%(?:0[0-9a-f]|1[0-9a-f]|7[fF])/i;
 // %5c = backslash, %25 = double-encoding prefix
-const ENCODED_BACKSLASH_RE = /%5[cC]/i;
-const DOUBLE_ENCODING_RE = /%25(?:0[0-9a-f]|1[0-9a-f]|5[cC]|7[fF])/i;
+export const ENCODED_BACKSLASH_RE = /%5[cC]/i;
+export const DOUBLE_ENCODING_RE = /%25(?:0[0-9a-f]|1[0-9a-f]|5[cC]|7[fF])/i;
 
-function hasDangerousChars(url: string): boolean {
+export function hasDangerousChars(url: string): boolean {
   return (
     DANGEROUS_CHARS_RE.test(url) ||
     ENCODED_CONTROL_RE.test(url) ||

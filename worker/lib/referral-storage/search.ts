@@ -4,6 +4,7 @@ import { REFERRAL_KEYS } from "./types";
 import { getReferralById } from "./crud";
 import { fetchInBatches, executeInBatches } from "../utils";
 import { listAllKvKeys } from "../kv-pagination";
+import { searchReferralsD1 } from "./d1-queries";
 
 // ============================================================================
 // Search and Query Operations
@@ -89,13 +90,34 @@ export async function searchReferrals(
     source?: ReferralInput["source"] | "all";
     limit?: number;
     offset?: number;
+    query?: string;
   },
 ): Promise<{ referrals: ReferralInput[]; total: number }> {
   let referrals: ReferralInput[] = [];
 
-  // Get base list
+  // Prefer D1 bounded query when enabled (issue #908); KV full scan is
+  // capped to avoid subrequest exhaustion.
+  const useD1 = env.USE_D1_READS === "true" && env.DEALS_DB;
+  if (useD1 && filters.query) {
+    const d1Limit = Math.min(filters.limit ?? 100, 200);
+    const d1Options: { limit?: number; domain?: string; status?: string } = {
+      limit: d1Limit,
+    };
+    if (filters.domain !== undefined) d1Options.domain = filters.domain;
+    if (filters.status !== undefined) d1Options.status = filters.status;
+    const d1Results = await searchReferralsD1(env, filters.query, d1Options);
+    const offset = filters.offset ?? 0;
+    return {
+      referrals: d1Results.slice(offset, offset + d1Limit),
+      total: d1Results.length,
+    };
+  }
+
+  // Get base list (KV fallback, bounded)
+  const MAX_SCAN = 1000;
   if (filters.status && filters.status !== "all") {
     referrals = await getReferralsByStatus(env, filters.status);
+    referrals = referrals.slice(0, MAX_SCAN);
   } else {
     // Get all - Optimization: Parallelize retrieval of all statuses
     const [active, inactive, expired, quarantined] = await Promise.all([
@@ -104,7 +126,10 @@ export async function searchReferrals(
       getReferralsByStatus(env, "expired"),
       getReferralsByStatus(env, "quarantined"),
     ]);
-    referrals = [...active, ...inactive, ...expired, ...quarantined];
+    referrals = [...active, ...inactive, ...expired, ...quarantined].slice(
+      0,
+      MAX_SCAN,
+    );
   }
 
   // Apply filters

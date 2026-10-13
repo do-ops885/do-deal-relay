@@ -104,6 +104,8 @@
     // MCP Configuration
     "MCP_PROTOCOL_VERSION": "2025-11-25",
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
+    "USE_D1_READS": "false",
+    "ALLOWED_ORIGINS": "https://do-deal-relay.pages.dev,https://do-deal-relay.com,https://www.do-deal-relay.com",
   },
   "secrets": {
     "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -288,6 +290,7 @@
         "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
+        "USE_D1_READS": "false",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -344,6 +347,7 @@
         "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
+        "USE_D1_READS": "false",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -444,6 +448,8 @@
         "CANDIDATE_BUDGET_HIGH_TRUST_BONUS": "200",
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
+        "USE_D1_READS": "false",
+        "ALLOWED_ORIGINS": "https://do-deal-relay.pages.dev,https://do-deal-relay.com,https://www.do-deal-relay.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],

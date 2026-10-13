@@ -57,6 +57,7 @@ export interface ReferralCodeResult {
   deal_id: number;
   deal_title: string;
   domain: string;
+  deal_url?: string;
   status: string;
   max_uses: number;
   current_uses: number;

@@ -43,7 +43,7 @@ export async function getExpiringDeals(
   const client = createD1ReadClient(db);
 
   const result = await client.query<ExpiringDealRow>(
-    `SELECT 
+    `SELECT
       d.id,
       d.deal_id,
       d.title,
@@ -56,8 +56,9 @@ export async function getExpiringDeals(
     AND d.expiry_date > datetime('now')
     AND d.expiry_date <= datetime('now', '+' || ? || ' days')
     AND d.is_active = 1
-    ORDER BY days_remaining ASC`,
-    [days],
+    ORDER BY days_remaining ASC
+    LIMIT ?`,
+    [days, 500],
   );
 
   return result.success ? result.data || [] : [];

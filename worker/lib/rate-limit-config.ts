@@ -35,6 +35,8 @@ export const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   // 300s window intentionally uses KV fallback path (ADR-028 Addendum)
   "/api/discover": cfg(5, "discover", 300),
   "/api/research": cfg(20, "research"),
+  "/api/research/:domain": cfg(20, "research"),
+  "/api/referrals/:code": cfg(60, "referrals"),
   "/api/email/incoming": cfg(30, "email"),
   "/api/email/parse": cfg(20, "email-parse"),
   "/api/validate/url": cfg(20, "validate"),

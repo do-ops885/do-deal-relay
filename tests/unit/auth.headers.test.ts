@@ -319,26 +319,4 @@ describe("Auth Headers", () => {
       expect(result).toBeDefined();
     });
   });
-
-  // ============================================================================
-  // NOTE: Functions Not Currently Implemented
-  // ============================================================================
-
-  describe("Unimplemented Functions (Noted for Future)", () => {
-    it("NOTE: checkRateLimit() - not currently in auth.ts", () => {
-      expect(true).toBe(true);
-    });
-
-    it("NOTE: updateRateLimitUsage() - not currently in auth.ts", () => {
-      expect(true).toBe(true);
-    });
-
-    it("NOTE: refreshApiKey() - not currently in auth.ts", () => {
-      expect(true).toBe(true);
-    });
-
-    it("NOTE: revokeApiKey() - not currently in auth.ts", () => {
-      expect(true).toBe(true);
-    });
-  });
 });

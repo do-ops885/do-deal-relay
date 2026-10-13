@@ -376,7 +376,7 @@ git push origin v0.1.3
 | Workflow                  | Trigger                        | Purpose                        |
 | ------------------------- | ------------------------------ | ------------------------------ |
 | `ci.yml`                  | PR / push to main, develop     | Quality gate, tests, security  |
-| `deploy-staging.yml`      | Push to develop                | Deploy to staging              |
+| `deploy-production.yml`      | Push to develop                | Deploy to staging              |
 | `deploy-production.yml`   | Push to main / v* tag          | Deploy to production           |
 | `kv-setup.yml`            | Manual dispatch                | Create KV namespaces           |
 | `security.yml`            | Scheduled / PR                 | Security scanning              |
@@ -405,7 +405,7 @@ Runs on every PR and push to `main`/`develop`:
 7. **Release Creation** — Auto-create GitHub release on `v*` tags
 8. **Failure Notification** — Creates GitHub issue with deduplication
 
-### Staging Deployment Pipeline (deploy-staging.yml)
+### Staging Deployment Pipeline (deploy-production.yml)
 
 1. Type check
 2. Test suite
@@ -416,7 +416,7 @@ Runs on every PR and push to `main`/`develop`:
 ### Concurrency
 
 - `deploy-production`: No cancel-in-progress (safe deployments)
-- `deploy-staging`: No cancel-in-progress
+- `deploy-production`: No cancel-in-progress
 - `ci`: Cancel-in-progress enabled for PRs
 
 ---

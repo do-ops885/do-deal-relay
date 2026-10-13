@@ -265,11 +265,11 @@ export async function getReferralByCode(
     try {
       const d1Result = await getReferralCodeByString(env.DEALS_DB, code);
       if (d1Result) {
-        // Convert D1 result to ReferralInput format
+        // Convert D1 result to ReferralInput format (deal join provides url)
         return {
           id: `ref_${d1Result.code}`,
           code: d1Result.code,
-          url: "", // Would need full deal details
+          url: d1Result.deal_url ?? "",
           domain: d1Result.domain,
           status: d1Result.status,
           metadata: {
@@ -404,4 +404,38 @@ export async function reactivateReferral(
   }
 
   return result;
+}
+
+/**
+ * Reconcile KV and D1 referral stores (issue #903).
+ * Compares counts and detects divergence; callers decide backfill.
+ * Keep read-only: never mutates either store.
+ */
+export async function reconcileReferralStores(env: Env): Promise<{
+  kvCount: number;
+  d1Count: number;
+  divergent: boolean;
+}> {
+  let kvCount = 0;
+  let d1Count = 0;
+  try {
+    const kv = env.DEALS_PROD;
+    if (kv) {
+      const list = await kv.list({ prefix: "referral:" });
+      kvCount = list.keys.length;
+    }
+  } catch (error) {
+    await logDualWriteError(env, "reconcileKvCount", error);
+  }
+  try {
+    if (env.DEALS_DB) {
+      const row = await env.DEALS_DB.prepare(
+        "SELECT COUNT(*) as count FROM referral_codes",
+      ).first<{ count: number }>();
+      d1Count = row?.count ?? 0;
+    }
+  } catch (error) {
+    await logDualWriteError(env, "reconcileD1Count", error);
+  }
+  return { kvCount, d1Count, divergent: kvCount !== d1Count };
 }

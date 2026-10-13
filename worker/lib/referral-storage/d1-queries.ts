@@ -138,7 +138,7 @@ export async function getExpiringReferralsD1(
       expires_at: string;
       days_remaining: number;
     }>(
-      `SELECT 
+      `SELECT
         rc.code,
         d.domain,
         d.title,
@@ -150,8 +150,9 @@ export async function getExpiringReferralsD1(
       AND rc.expires_at > datetime('now')
       AND rc.expires_at <= datetime('now', '+' || ? || ' days')
       AND rc.is_active = 1
-      ORDER BY days_remaining ASC`,
-      [days],
+      ORDER BY days_remaining ASC
+      LIMIT ?`,
+      [days, 500],
     );
 
     if (result.success && result.data) {
