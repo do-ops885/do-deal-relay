@@ -4,6 +4,7 @@ import { CONFIG } from "../config";
 import { generateSnapshotHash } from "../lib/crypto";
 import { putStagingSnapshot } from "../lib/storage";
 import { mirrorStageToDO } from "../lib/do-mirror";
+import { toPipelineError } from "../lib/error-handler";
 import type { Env } from "../types";
 
 // ============================================================================
@@ -65,7 +66,11 @@ export async function stage(
   // Validate snapshot
   const validation = SnapshotSchema.safeParse(snapshot);
   if (!validation.success) {
-    throw new Error(`Invalid snapshot: ${validation.error.message}`);
+    throw toPipelineError(
+      new Error(`Invalid snapshot: ${validation.error.message}`),
+      "ValidationError",
+      "stage",
+    );
   }
 
   // Write to staging — use direct put to avoid second hash (F-8)

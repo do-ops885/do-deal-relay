@@ -9,6 +9,7 @@ import { generateRunId, generateUUID } from "./lib/crypto";
 import { acquireLock, releaseLock, extendLock } from "./lib/lock";
 import { createLogBuilder, appendLog } from "./lib/logger";
 import { toError } from "./lib/sanitize-error";
+import { classifyError } from "./lib/error-handler";
 import { executePhase, handleFailure } from "./pipeline-executor";
 import type { Env } from "./types";
 
@@ -150,10 +151,7 @@ export async function executePipeline(env: Env): Promise<{
           env,
           logBuilder
             .status("error")
-            .error(
-              (error as PipelineError).errorClass || "UnknownError",
-              err.message,
-            )
+            .error(classifyError(error, currentPhase).errorClass, err.message)
             .duration(Date.now() - startTime)
             .build(),
         );

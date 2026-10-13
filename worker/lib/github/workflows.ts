@@ -1,9 +1,9 @@
 import {
   getGitHubConfig,
   safeResponseJson,
-  getGitHubLogger,
   githubCircuitBreaker,
 } from "./core";
+import { withErrorHandling } from "../error-handler";
 import { validatedFetch } from "../security";
 import type { WorkflowRun, WorkflowStatus } from "./types";
 
@@ -35,16 +35,11 @@ export async function getWorkflowRuns(
       updated_at: run.updated_at,
     }));
   };
-  try {
-    return cb ? await cb.execute(execute) : await execute();
-  } catch (error) {
-    getGitHubLogger().error(
-      "Failed to get workflow runs",
-      error instanceof Error ? error : new Error(String(error)),
-      { repo, branch },
-    );
-    throw error;
-  }
+  return withErrorHandling(() => (cb ? cb.execute(execute) : execute()), {
+    component: "github",
+    repo,
+    branch,
+  });
 }
 
 export async function getWorkflowStatusSummary(

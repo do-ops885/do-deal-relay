@@ -452,7 +452,12 @@ export async function tryHandleLegacyRoutes(
   if (opsResponse) return opsResponse;
 
   // Admin API Key Management (extracted to legacy-auth-routes.ts).
-  const adminKeyResponse = await tryHandleAdminKeyRoutes(request, env, path);
+  const adminKeyResponse = await tryHandleAdminKeyRoutes(
+    request,
+    env,
+    url,
+    path,
+  );
   if (adminKeyResponse) return adminKeyResponse;
 
   // No legacy route matched.

@@ -12,7 +12,12 @@ import type { Env } from "../../types";
 import { jsonResponse } from "../utils";
 import { type NLQError } from "../../lib/nlq/types";
 import { handleNLQ, handleNLQGet, handleNLQExplain } from "./handlers";
-import { handleSavedPost, handleSavedGet, handleSavedDelete } from "./saved";
+import {
+  handleSavedPost,
+  handleSavedGet,
+  handleSavedGetById,
+  handleSavedDelete,
+} from "./saved";
 import { handleSuggestions } from "./suggestions";
 import {
   handleAlertsPost,
@@ -100,9 +105,9 @@ export async function handleNLQRequest(
       env,
     );
   }
-  const savedDeleteMatch = path.match(/^\/api\/nlq\/saved\/([^/]+)$/);
-  if (savedDeleteMatch && request.method === "DELETE") {
-    const id = savedDeleteMatch[1];
+  const savedDetailMatch = path.match(/^\/api\/nlq\/saved\/([^/]+)$/);
+  if (savedDetailMatch) {
+    const id = savedDetailMatch[1];
     if (!id) {
       return jsonResponse(
         {
@@ -115,7 +120,18 @@ export async function handleNLQRequest(
         env,
       );
     }
-    return handleSavedDelete(request, env, id);
+    if (request.method === "GET") return handleSavedGetById(request, env, id);
+    if (request.method === "DELETE") return handleSavedDelete(request, env, id);
+    return jsonResponse(
+      {
+        error: "Method not allowed",
+        message: "Only GET and DELETE supported",
+        code: "METHOD_NOT_ALLOWED",
+      } as NLQError,
+      405,
+      request,
+      env,
+    );
   }
 
   // Suggestions endpoint

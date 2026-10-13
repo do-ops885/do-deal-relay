@@ -8,7 +8,7 @@ import {
 } from "../lib/referral-storage";
 import { generateDealId } from "../lib/crypto";
 import { logger } from "../lib/global-logger";
-import { jsonResponse } from "./utils";
+import { jsonResponse, validateRedirectUrl } from "./utils";
 import { validateFetchUrl, validateReferralUrl } from "../lib/security";
 import { DEFAULT_SOURCES } from "../config";
 
@@ -314,10 +314,12 @@ export async function handleGetReferralByCode(
     const redirect = url.searchParams.get("redirect") === "true";
 
     if (redirect) {
-      // Referral-specific redirect validation: ensure stored URL matches its domain and is allowed
+      // Referral-specific redirect validation: reject open-redirect shapes
+      // (userinfo, path traversal, CRLF) before the domain and fetch checks.
       const referralDomain = referral.domain || "";
       if (
         !referral.url ||
+        !validateRedirectUrl(referral.url) ||
         !isAllowedReferralDomain(referralDomain) ||
         !validateReferralUrl(referral.url, referralDomain) ||
         !(await validateFetchUrl(referral.url))

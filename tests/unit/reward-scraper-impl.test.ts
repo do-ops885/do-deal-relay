@@ -18,6 +18,7 @@ vi.mock("../../worker/lib/global-logger", () => ({
 }));
 
 vi.mock("../../worker/lib/security", () => ({
+  isSafeUrl: vi.fn().mockReturnValue(true),
   validateUrl: vi.fn().mockReturnValue(true),
   validateFetchUrl: vi.fn().mockResolvedValue(true),
   validatedFetch: vi

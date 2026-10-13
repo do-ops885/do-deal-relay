@@ -9,7 +9,11 @@ import { score, evolveSourceTrust } from "./pipeline/score";
 import { stage } from "./pipeline/stage";
 import { publishSnapshot } from "./publish";
 import { notify } from "./notify";
-import { enforceGuardRails, runGuardRails } from "./lib/guard-rails";
+import {
+  checkConsistency,
+  enforceGuardRails,
+  runGuardRails,
+} from "./lib/guard-rails";
 import { checkDealExpirations } from "./lib/expiration";
 import type { Env } from "./types";
 import { recordDealCount } from "./lib/metrics/index";
@@ -116,14 +120,38 @@ export async function executePhase(
 
       return "stage";
 
-    case "stage":
+    case "stage": {
       const stageResult = await stage(ctx.scored, ctx, env);
       ctx.snapshot = stageResult.snapshot;
+
+      // Stage-consistency guard rail: the staged snapshot must not gain deals
+      // and must not silently drop more than half of the scored batch. The
+      // read-after-write verification below stays the hard gate; this check
+      // surfaces data-loss regressions in logs (wires checkConsistency).
+      const consistency = checkConsistency(
+        {
+          count: ctx.scored.length,
+          hashes: ctx.scored.map((d) => d.id),
+        },
+        {
+          count: stageResult.snapshot.deals.length,
+          hashes: stageResult.snapshot.deals.map((d) => d.id),
+        },
+      );
+      if (!consistency.passed) {
+        logger.warn("Stage consistency check failed", {
+          component: "state-machine",
+          phase: "stage",
+          run_id: ctx.run_id,
+          message: consistency.message,
+        });
+      }
 
       if (!stageResult.verified) {
         return "revert";
       }
       return "publish";
+    }
 
     case "publish":
       try {

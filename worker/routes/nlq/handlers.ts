@@ -19,6 +19,7 @@ import {
   type NLQExplanation,
 } from "../../lib/nlq/types";
 import { parseQuery } from "../../lib/nlq/parser";
+import { getSecondaryIntents } from "../../lib/nlq/intent";
 import {
   buildStructuredQuery,
   executeStructuredQuery,
@@ -181,6 +182,7 @@ export async function handleNLQ(request: Request, env: Env): Promise<Response> {
     logger.debug("Query parsed", {
       intent: parsed.intent.intent,
       confidence: parsed.intent.confidence,
+      secondary_intents: getSecondaryIntents(body.query, parsed.intent.intent),
       entities: parsed.entities.length,
       trace_id: traceId,
     });
@@ -461,6 +463,7 @@ export async function handleNLQExplain(
             normalized: t.normalized,
           })),
           intent: parsed.intent,
+          secondary_intents: getSecondaryIntents(query, parsed.intent.intent),
           entities: parsed.entities,
         },
         structured,

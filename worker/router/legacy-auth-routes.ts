@@ -17,6 +17,8 @@ import {
   handleRevokeApiKey,
 } from "../routes/admin/keys";
 import { handleListFlags, handleUpdateFlag } from "../routes/admin/flags";
+import { handleCiStatus } from "../routes/admin/ci-status";
+import { handleReconcileReferrals } from "../routes/admin/referrals";
 
 /**
  * Health, auth, and admin identity routes extracted from legacy-routes.ts
@@ -91,6 +93,7 @@ export async function tryHandleLegacyAuthRoutes(
 export async function tryHandleAdminKeyRoutes(
   request: Request,
   env: Env,
+  url: URL,
   path: string,
 ): Promise<Response | null> {
   if (path === "/api/admin/keys") {
@@ -130,6 +133,21 @@ export async function tryHandleAdminKeyRoutes(
         handleUpdateFlag(request, env, flagName),
       );
     }
+  }
+
+  // CI workflow status (read-only GitHub Actions summary). Wires the
+  // previously unrouted worker/lib/github/workflows.ts.
+  if (path === "/api/admin/ci-status" && request.method === "GET") {
+    return withAuth(request, env, "admin", () =>
+      handleCiStatus(request, url, env),
+    );
+  }
+
+  // Referral store reconciliation (read-only KV/D1 divergence report).
+  if (path === "/api/admin/referrals/reconcile" && request.method === "POST") {
+    return withAuth(request, env, "admin", () =>
+      handleReconcileReferrals(request, env),
+    );
   }
 
   return null;
