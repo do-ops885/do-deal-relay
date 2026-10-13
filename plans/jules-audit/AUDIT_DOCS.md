@@ -1,11 +1,12 @@
-# Documentation Audit — 2026-10-08
+# Documentation Audit Report - 2026-10-13
 
-## Missing / Incomplete JSDoc Comments Identified
-1. `worker/lib/config-utils.ts`:
-   - `REQUIRED_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
-   - `BUDGET_CONFIG_KEYS`: Missing JSDoc `@type` or property description for public exported constant.
-   - `parseBoundedIntegerConfig`: Update JSDoc to document boundary and non-decimal integer throw behavior.
-   - `getTrustThreshold`: Update JSDoc to explicitly mention fallback and clamping behavior.
+## Summary
+Found exported public route handlers in `worker/routes/experience.ts` missing JSDoc documentation comments.
 
-## Planned Action
-Add/update comprehensive JSDoc annotations for exported constants and functions in `worker/lib/config-utils.ts`.
+## Actionable Findings
+
+| Target File | Function | Proposed Fix |
+| --- | --- | --- |
+| `worker/routes/experience.ts` | `handleSubmitExperience` | Add JSDoc with `@param` and `@returns` descriptions |
+| `worker/routes/experience.ts` | `handleGetExperience` | Add JSDoc with `@param` and `@returns` descriptions |
+| `worker/routes/experience.ts` | `handleRunAggregation` | Add JSDoc with `@param` and `@returns` descriptions |

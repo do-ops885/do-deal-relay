@@ -45,7 +45,8 @@ describe("test-unit runner script", () => {
       pid: 1234,
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
-    });
+      error: undefined,
+    } as any);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");
@@ -64,17 +65,18 @@ describe("test-unit runner script", () => {
   it("exits non-zero (1) and writes to GITHUB_STEP_SUMMARY when killed by timeout", async () => {
     process.env.GITHUB_STEP_SUMMARY = tempSummaryFile;
 
-    const timeoutError = new Error("Command failed") as any;
-    timeoutError.code = "ETIMEDOUT";
+    const timeoutErr = new Error("ETIMEDOUT") as any;
+    timeoutErr.code = "ETIMEDOUT";
+
     vi.mocked(spawnSync).mockReturnValue({
       status: null,
       signal: "SIGTERM",
-      error: timeoutError,
       output: [],
       pid: 1234,
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
-    });
+      error: timeoutErr,
+    } as any);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");
@@ -100,7 +102,8 @@ describe("test-unit runner script", () => {
       pid: 1234,
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
-    });
+      error: undefined,
+    } as any);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");

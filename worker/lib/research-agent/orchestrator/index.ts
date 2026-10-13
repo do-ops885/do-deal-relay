@@ -25,7 +25,7 @@ import {
 } from "../helpers";
 import { isCircuitOpen, recordSuccess, recordFailure } from "./circuit-breaker";
 import { getCachedResults, cacheResults } from "./cache";
-import { isFeatureEnabled } from "../../feature-flags";
+import { isFeatureEnabledWithDefaults } from "../../feature-flags";
 import {
   createDefaultScraperRegistry,
   readySourceNames,
@@ -74,7 +74,10 @@ async function shouldUseRealFetching(
   if (request.options?.use_real_fetching !== undefined) {
     return request.options.use_real_fetching;
   }
-  const rolloutEnabled = await isFeatureEnabled("real_research_fetching", env);
+  const rolloutEnabled = await isFeatureEnabledWithDefaults(
+    "real_research_fetching",
+    env,
+  );
   if (rolloutEnabled) {
     return true;
   }
