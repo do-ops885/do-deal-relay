@@ -31,6 +31,10 @@ export const rateLimitMiddleware: MiddlewareFn = async (
   env: Env,
   config: RouteConfig,
 ): Promise<Response | null> => {
+  // Explicit opt-out (e.g. health probes): never rate limit.
+  if (config.rateLimit === false) {
+    return null;
+  }
   if (!config.rateLimit) {
     // No custom rate limit — check if endpoint defaults exist in rate-limit.ts
     // by passing through with the standard endpoint key

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { maybeTriggerShadowDiscovery } from "../../../worker/workflows/shadow-trigger";
-import { isFeatureEnabled } from "../../../worker/lib/feature-flags";
+import { isFeatureEnabledWithDefaults } from "../../../worker/lib/feature-flags";
 import type { Env } from "../../../worker/types";
 
 vi.mock("../../../worker/lib/feature-flags", () => ({
-  isFeatureEnabled: vi.fn(),
+  isFeatureEnabledWithDefaults: vi.fn(),
 }));
 
 const RUN_ID = "run-7";
@@ -24,7 +24,7 @@ interface FakeWorkflowBinding {
   create: (args: WorkflowCreateArgs) => Promise<WorkflowCreateResult>;
 }
 
-const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
+const mockIsFeatureEnabled = vi.mocked(isFeatureEnabledWithDefaults);
 
 function createRecordingBinding(): {
   binding: FakeWorkflowBinding;

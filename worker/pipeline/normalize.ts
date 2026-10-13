@@ -1,5 +1,4 @@
 import { Deal, PipelineContext } from "../types";
-import { generateDealId } from "../lib/crypto";
 import { batchAutoCategorize } from "../lib/categorization";
 
 // ============================================================================
@@ -133,13 +132,6 @@ function normalizeDate(date: string): string {
   } catch {
     return date;
   }
-}
-
-/**
- * Generate canonical ID from normalized deal
- */
-export async function regenerateDealId(deal: Deal): Promise<string> {
-  return generateDealId(deal.source.domain, deal.code, deal.reward.type);
 }
 
 /**

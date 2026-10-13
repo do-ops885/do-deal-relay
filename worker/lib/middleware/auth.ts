@@ -12,15 +12,9 @@ import { unauthorizedResponse, forbiddenResponse } from "../../routes/utils";
 import { logger } from "../global-logger";
 
 // WeakMap to propagate auth context without mutating immutable Request headers
+// Note: auth context helpers removed (zero importers, see #911);
+// middleware writes directly to the store.
 const authContextStore = new WeakMap<Request, AuthResult>();
-
-export function getAuthContext(request: Request): AuthResult | undefined {
-  return authContextStore.get(request);
-}
-
-export function setAuthContext(request: Request, result: AuthResult): void {
-  authContextStore.set(request, result);
-}
 
 // ============================================================================
 // Auth Middleware
