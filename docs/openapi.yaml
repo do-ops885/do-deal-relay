@@ -342,11 +342,18 @@ paths:
           in: query
           schema:
             type: string
-            enum: [json, jsonl]
+            enum: [json, jsonl, structured-jsonl]
             default: json
+          description: structured-jsonl exports the structured log stream
+        - name: trace_id
+          in: query
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9._:-]{1,128}$"
+          description: Return the structured entries for one trace id
       responses:
         "200":
-          description: Research logs
+          description: Research logs, structured trace logs, or JSONL export
           content:
             application/json:
               schema:
@@ -354,7 +361,8 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: JSONL format when format=jsonl
+                description: JSONL format when format=jsonl or structured-jsonl
+        "400": { description: Invalid trace_id }
 
   /api/analytics:
     get:
@@ -1520,6 +1528,25 @@ paths:
         - ApiKeyAuth: []
       responses:
         "201": { description: Created }
+  /api/nlq/saved/{id}:
+    get:
+      tags: [NLQ]
+      summary: Get a saved query
+      operationId: getSavedQuery
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200": { description: Saved query }
+        "401": { description: Unauthorized }
+        "404": { description: Not found or owned by another user }
+        "503": { description: D1 unavailable or migration pending }
   /api/nlq/alerts:
     get:
       tags: [NLQ]
@@ -1539,6 +1566,62 @@ paths:
         - ApiKeyAuth: []
       responses:
         "201": { description: Created }
+  /api/admin/ci-status:
+    get:
+      tags: [Admin]
+      summary: GitHub Actions workflow status
+      operationId: getCiStatus
+      description: Read-only workflow summary and recent runs for the configured repository. Admin role required.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: branch
+          in: query
+          schema:
+            type: string
+            default: main
+        - name: runs
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+        - name: wait
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+        - name: commit
+          in: query
+          schema:
+            type: string
+            pattern: "^[0-9a-fA-F]{7,40}$"
+        - name: attempts
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 3
+      responses:
+        "200": { description: Workflow summary and runs }
+        "400": { description: Invalid branch or commit }
+        "502": { description: GitHub unavailable }
+        "503": { description: GITHUB_REPO or GITHUB_TOKEN not configured }
+  /api/admin/referrals/reconcile:
+    post:
+      tags: [Admin]
+      summary: Reconcile KV and D1 referral stores
+      operationId: reconcileReferrals
+      description: Read-only divergence report between the KV and D1 referral stores. Admin role required.
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Reconciliation report }
+        "503": { description: Referral stores not configured }
   /api/semantic-search:
     post:
       tags: [Search]

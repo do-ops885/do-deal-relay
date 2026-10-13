@@ -1,13 +1,42 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-06
-**Version**: 0.19.35
+**Last Updated**: 2026-10-13
+**Version**: 0.19.36
 **Status**: Active — F-12 test `as any` residue CLOSED 2026-10-06 (0 in tests/, 0 in worker/; 5-agent swarm, zero prod change). Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope. Deferred menu: N-3 logging migration (115 importers), F-4 DO cutover remainder, IMP-1 dashboard decision.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
 
 ---
+
+## 2026-10-13 Missing-wiring sweep + Codecov OIDC policy — v0.19.36
+
+Branch `cline/3xz9zsaa`. ADR: [ADR-033](ADR-033-codecov-oidc-upload-credentials.md).
+No spec (wiring of existing modules + one CI policy record).
+
+Method: dead-export/zero-importer scan over `worker/` (exports with no caller,
+modules with no importer), then route or adopt every hit instead of deleting.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| W-1 GitHub workflow status | CLOSED — `GET /api/admin/ci-status` (admin) wires `getWorkflowRuns`, `getWorkflowStatusSummary`, `waitForWorkflowsComplete` (bounded `attempts` 1-5, 2s poll); 503 on missing repo/token, 400 on bad branch/commit | `worker/routes/admin/ci-status.ts`, `worker/router/legacy-auth-routes.ts`, tests/unit/missing-wiring/admin-routes.test.ts |
+| W-2 trace log query + structured export | CLOSED — `GET /api/log?trace_id=` wires `queryLogsByTraceId`; `format=structured-jsonl` wires `exportStructuredLogsAsJSONL` | `worker/routes/core/pipeline.ts` |
+| W-3 saved query by id | CLOSED — `GET /api/nlq/saved/:id` wires `getSavedQuery` (ownership in SQL, 404 on foreign id) | `worker/routes/nlq/saved.ts`, `worker/routes/nlq/index.ts` |
+| W-4 referral store reconcile | CLOSED — `POST /api/admin/referrals/reconcile` (admin, read-only) wires `reconcileReferralStores` (#903) | `worker/routes/admin/referrals.ts` |
+| W-5 NLQ secondary intents | CLOSED — `getSecondaryIntents` surfaced as `secondary_intents` on `/api/nlq` and `/api/nlq/explain`; `isComparisonQuery` is now the single comparison detector inside `classifyIntent`/`classifyAllIntents` | `worker/lib/nlq/intent.ts`, `worker/routes/nlq/handlers.ts` |
+| W-6 stage consistency guard | CLOSED — `checkConsistency` runs between scored batch and staged snapshot; divergence logs a warning, read-after-write verification stays the hard gate | `worker/pipeline-executor.ts`, tests/unit/missing-wiring/pipeline-consistency.test.ts |
+| W-7 error helpers | CLOSED — `classifyError` replaces the unsafe `(error as PipelineError)` cast in `state-machine.ts`; `toPipelineError` types the invalid-snapshot throw; `withErrorHandling` wraps GitHub workflow fetches | `worker/state-machine.ts`, `worker/pipeline/stage.ts`, `worker/lib/github/workflows.ts` |
+| W-8 intent-revealing aliases | CLOSED — `isSafeUrl` adopted at the 3 boolean URL checks, `validateFetchableUrl` at the 2 async validation routes, `validateRedirectUrl` added to the referral redirect guard | `worker/lib/research-agent/*`, `worker/lib/validation/scrapers/reward-scraper-core.ts`, `worker/routes/validation/*`, `worker/routes/referrals.ts` |
+| #968 codecov tokenless | OWNER-BLOCKED — fix requires `.github/workflows/ci.yml`; the agent credential lacks `workflows` permission (push rejected). OIDC patch recorded in ADR-033 with policy: token when present, advisory OIDC otherwise | ADR-033, issue #968 |
+
+Verification: `npx tsc --noEmit` clean; `npm run test:unit` 245 files / 3168
+tests green (+6 files / +34 tests vs v0.19.35 baseline 239/3134); openapi.yaml
+parsed (68 paths) with the 3 new paths; prettier + markdownlint clean.
+
+Remaining after this sweep: OPS-1..OPS-4 (prod D1 v13/v14, queues, seeding,
+external credentials), IMP-1 dashboard epic, IMP-2 external OTEL export,
+IMP-3 build-once promote, N-3 importer migration (ADR-025), F-4 DO cutover
+remainder (ADR-017/ADR-022), R-6 ai-gateway gating, REDDIT-6.
 
 ## 2026-10-06 F-12 test as-any residue cleanup — v0.19.35
 

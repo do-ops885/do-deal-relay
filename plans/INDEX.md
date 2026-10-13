@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-05. Active set is intentionally small; completed
+**Last Updated**: 2026-10-13. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,7 +12,13 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.35, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.36, single source of truth**.
+  2026-10-13 missing-wiring sweep: `GET /api/admin/ci-status`,
+  `GET /api/log?trace_id=` + `structured-jsonl`,
+  `GET /api/nlq/saved/:id`, `POST /api/admin/referrals/reconcile`,
+  NLQ `secondary_intents`, stage consistency guard, alias/error-helper
+  adoption (245 files / 3168 tests green). Codecov OIDC policy:
+  [ADR-033](ADR-033-codecov-oidc-upload-credentials.md).
   Full inventory (P0–P3, deferred, blocked). F-12 test `as any`
   residue CLOSED 2026-10-06 ([SPEC](SPEC-f12-asany-residue.md);
   0 in tests/, 0 in worker/; 229 files / 3065 tests green).
@@ -73,6 +79,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 - [ADR-032](ADR-032-feature-flag-governance.md) — Feature flag governance:
   enforcement, corrected defaults, admin management API, fail-closed
   `ai_extractor_scraper` (Implemented 2026-10-05).
+- [ADR-033](ADR-033-codecov-oidc-upload-credentials.md) — Codecov upload
+  credentials: OIDC when no token, advisory upload; owner applies the
+  workflow patch (agent credential lacks `workflows` permission).
 
 ## Completed Specs (kept as GOAP evidence)
 

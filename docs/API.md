@@ -633,7 +633,12 @@ Get research logs.
 
 - `run_id` (string): Get logs for specific run
 - `count` (number): Number of recent logs (default: 100)
-- `format` (string): 'json' or 'jsonl' (default: json)
+- `format` (string): 'json', 'jsonl' or 'structured-jsonl' (default: json).
+  'jsonl' exports research logs, 'structured-jsonl' exports the structured
+  log stream (both capped at the 10000 newest entries).
+- `trace_id` (string): Return the structured entries written for one trace id
+  (alphanumeric, `.`, `_`, `:`, `-`; max 128 chars). Takes precedence over
+  `run_id`/`count`.
 
 **Response (JSON):**
 
@@ -657,6 +662,28 @@ Get research logs.
 {"run_id":"...","phase":"discover","status":"complete"}
 {"run_id":"...","phase":"validate","status":"complete"}
 ```
+
+**Response (trace lookup):**
+
+```json
+{
+  "trace_id": "trace-abc123",
+  "logs": [
+    {
+      "timestamp": "2026-10-13T00:00:00.000Z",
+      "level": "info",
+      "message": "deal staged",
+      "trace_id": "trace-abc123"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Status Codes:**
+
+- 200: Logs returned
+- 400: Invalid `trace_id` (`INVALID_TRACE_ID`)
 
 ---
 
@@ -2105,6 +2132,48 @@ List saved NLQ queries for the authenticated user. Requires JWT authentication.
 
 ```bash
 curl "https://your-worker.workers.dev/api/nlq/saved?limit=10&offset=0" \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+---
+
+### GET /api/nlq/saved/:id
+
+Fetch one saved NLQ query owned by the authenticated user. Requires JWT authentication. Ownership is enforced in SQL, so another user's id returns `404`.
+
+**Path Parameters:**
+
+- `id` (string, required): ID of the saved query
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "saved": {
+    "id": "sq_1234567890",
+    "user_id": "usr_987654321",
+    "query": "trading platforms with $100 bonus",
+    "name": "Trading $100+ Deals",
+    "intent": "search",
+    "created_at": "2026-09-26T00:00:00.000Z",
+    "updated_at": "2026-09-26T00:00:00.000Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- 200: Saved query returned
+- 401: Unauthorized (missing or invalid JWT token)
+- 404: Saved query not found or owned by another user
+- 500: Failed to fetch saved query (`GET_FAILED`)
+- 503: D1 database unavailable or migration pending (`MIGRATION_PENDING`)
+
+**Example:**
+
+```bash
+curl "https://your-worker.workers.dev/api/nlq/saved/sq_1234567890" \
   -H "Authorization: Bearer <jwt_token>"
 ```
 
@@ -3668,5 +3737,63 @@ When a route flag is disabled, gated endpoints return `503` with:
 ```
 
 See [FEATURE_FLAGS.md](FEATURE_FLAGS.md) for the full enforcement matrix.
+
+### GET /api/admin/ci-status
+
+Read-only GitHub Actions status for the repository in `GITHUB_REPO` (admin role).
+
+**Query Parameters:**
+
+- `branch` (string, optional): Branch to inspect (default: `main`)
+- `runs` (number, optional): Recent runs to include, 1-20 (default: 10)
+- `wait` (string, optional): `1` to poll until the matching runs complete
+- `commit` (string, optional): Commit SHA to wait on when `wait=1`
+- `attempts` (number, optional): Poll attempts when `wait=1`, 1-5 (default: 3; 2s interval)
+
+**Response:**
+
+```json
+{
+  "repo": "do-ops885/do-deal-relay",
+  "branch": "main",
+  "summary": {
+    "total_runs": 10,
+    "completed_runs": 9,
+    "successful_runs": 8,
+    "failed_runs": 1,
+    "pending_runs": 1
+  },
+  "runs": []
+}
+```
+
+With `wait=1` the response carries `wait`, `success`, `attempts` and `summary` instead of `runs`.
+
+**Status Codes:**
+
+- 200: Status returned
+- 400: Invalid `branch`/`commit` (`INVALID_BRANCH`, `INVALID_COMMIT`)
+- 502: GitHub API unavailable (`GITHUB_UNAVAILABLE`)
+- 503: `GITHUB_REPO` or `GITHUB_TOKEN` not configured
+
+### POST /api/admin/referrals/reconcile
+
+Read-only divergence report between the KV and D1 referral stores (admin role). Never mutates either store.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "reconciled": { "kvCount": 12, "d1Count": 10, "divergent": true },
+  "action_required": true
+}
+```
+
+**Status Codes:**
+
+- 200: Reconciliation report returned
+- 503: Neither `DEALS_PROD` nor `DEALS_DB` is configured (`STORES_UNAVAILABLE`)
+
 
 ---
