@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateFetchUrl, validateUrl, validatedFetch } from "../security";
+import { isSafeUrl, validateFetchUrl, validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type { RedditListingResponse } from "./types";
@@ -173,7 +173,7 @@ async function fetchRedditPublic(
       };
     }
 
-    if (!validateUrl(url)) {
+    if (!isSafeUrl(url)) {
       return {
         success: false,
         content: "",

@@ -7,7 +7,7 @@ import {
   createRateLimitHeaders,
 } from "../../lib/rate-limit";
 import { validateFetchUrl } from "../../lib/security";
-import { validateUrl } from "../../lib/validation/url-validator";
+import { validateFetchableUrl } from "../../lib/validation/url-validator";
 import { logger } from "../../lib/global-logger";
 import { sanitizeErrorForClient } from "../../lib/sanitize-error";
 
@@ -61,7 +61,7 @@ export async function handleValidateUrl(
       return errorResponse("URL is blocked for security reasons", 403);
     }
 
-    const result = await validateUrl(body.url, env);
+    const result = await validateFetchableUrl(body.url, env);
 
     const headers = createRateLimitHeaders(rateLimitResult);
     const response = jsonResponse(

@@ -66,8 +66,8 @@ export function classifyIntent(
 
   // Special patterns for specific intents
 
-  // Compare patterns
-  if (/\b(compare|vs|versus)\b/i.test(query)) {
+  // Compare patterns (single source of truth: isComparisonQuery)
+  if (isComparisonQuery(query)) {
     scores.compare.score += 3;
     scores.compare.matches.push("compare/vs pattern");
   }
@@ -174,8 +174,8 @@ function classifyAllIntents(
     }
   }
 
-  // Special patterns
-  if (/\b(compare|vs|versus)\b/i.test(query)) scores.compare += 3;
+  // Special patterns (compare detection shared with classifyIntent)
+  if (isComparisonQuery(query)) scores.compare += 3;
   if (/\b(how many|count of|number of)\b/i.test(query)) scores.count += 3;
   if (/\b(top|best|highest|lowest)\b/i.test(query)) scores.rank += 3;
 

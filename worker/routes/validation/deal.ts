@@ -6,7 +6,7 @@ import {
   getClientIdentifier,
   createRateLimitHeaders,
 } from "../../lib/rate-limit";
-import { validateUrl } from "../../lib/validation/url-validator";
+import { validateFetchableUrl } from "../../lib/validation/url-validator";
 import { validateCodeComplete } from "../../lib/validation/code-validator";
 import { scrapeCurrentRewards } from "../../lib/validation/reward-scraper";
 import { getDealsByCode } from "../../lib/storage";
@@ -75,7 +75,7 @@ export async function handleValidateDeal(
         url: string;
         status: string;
       };
-      url?: Awaited<ReturnType<typeof validateUrl>>;
+      url?: Awaited<ReturnType<typeof validateFetchableUrl>>;
       code?: Awaited<ReturnType<typeof validateCodeComplete>>;
       rewards?: Awaited<ReturnType<typeof scrapeCurrentRewards>>;
       valid: boolean;
@@ -93,7 +93,7 @@ export async function handleValidateDeal(
     };
 
     if (checkUrl) {
-      results.url = await validateUrl(deal.url, env);
+      results.url = await validateFetchableUrl(deal.url, env);
       if (!results.url.valid) {
         results.valid = false;
         results.issues.push(`URL validation failed: ${results.url.error}`);

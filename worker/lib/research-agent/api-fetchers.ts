@@ -1,5 +1,5 @@
 import { CONFIG } from "../../config";
-import { validateUrl, validatedFetch } from "../security";
+import { isSafeUrl, validatedFetch } from "../security";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type {
@@ -245,7 +245,7 @@ export async function fetchHackerNewsDeals(
   const url = `https://hn.algolia.com/api/v1/search?query=${encodedQuery}&tags=story&hitsPerPage=${limit}`;
 
   try {
-    if (!validateUrl(url)) {
+    if (!isSafeUrl(url)) {
       return {
         success: false,
         content: "",

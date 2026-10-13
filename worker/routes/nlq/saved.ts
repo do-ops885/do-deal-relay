@@ -7,6 +7,7 @@ import {
   saveQuery,
   listSavedQueries,
   deleteSavedQuery,
+  getSavedQuery,
 } from "../../lib/d1/nlq-saved";
 
 const SaveBodySchema = z.object({
@@ -147,6 +148,68 @@ export async function handleSavedGet(
     }
     return jsonResponse(
       { error: "Failed to list saved queries", code: "LIST_FAILED" },
+      500,
+      request,
+      env,
+    );
+  }
+}
+
+/**
+ * GET /api/nlq/saved/:id — fetch one saved query owned by the caller.
+ *
+ * Wires `getSavedQuery`, which existed in the D1 layer without an HTTP
+ * surface (missing-wiring sweep 2026-10-13). Ownership is enforced in SQL so
+ * another user's id resolves as 404 rather than leaking existence.
+ */
+export async function handleSavedGetById(
+  request: Request,
+  env: Env,
+  id: string,
+): Promise<Response> {
+  if (!env.DEALS_DB) {
+    return jsonResponse(
+      { error: "D1 database not configured", code: "DATABASE_UNAVAILABLE" },
+      503,
+      request,
+      env,
+    );
+  }
+  const userId = await getUserId(request, env);
+  if (!userId)
+    return jsonResponse(
+      { error: "Unauthorized", code: "UNAUTHORIZED" },
+      401,
+      request,
+      env,
+    );
+
+  try {
+    const row = await getSavedQuery(env.DEALS_DB, userId, id);
+    if (!row) {
+      return jsonResponse(
+        { error: "Not found", code: "NOT_FOUND" },
+        404,
+        request,
+        env,
+      );
+    }
+    return jsonResponse({ success: true, saved: row }, 200, request, env);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("no such table")) {
+      return jsonResponse(
+        {
+          error: "Saved queries not available (migration pending)",
+          code: "MIGRATION_PENDING",
+        },
+        503,
+        request,
+        env,
+      );
+    }
+    return jsonResponse(
+      { error: "Failed to fetch saved query", code: "GET_FAILED" },
       500,
       request,
       env,

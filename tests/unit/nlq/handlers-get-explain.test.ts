@@ -363,6 +363,20 @@ describe("NLQ Handlers - GET & Explain", () => {
       expect(Array.isArray(parsed.tokens)).toBe(true);
     });
 
+    it("should expose secondary intents for multi-intent queries", async () => {
+      const request = new Request("http://localhost/api/nlq/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: "compare and rank trading bonuses" }),
+      });
+
+      const response = await handleNLQExplain(request, mockEnv);
+
+      expect(response.status).toBe(200);
+      const parsed = jsonRecord(jsonRecord(await response.json()).parsed);
+      expect(Array.isArray(parsed.secondary_intents)).toBe(true);
+    });
+
     it("should handle explain execution errors", async () => {
       vi.mocked(parseQuery).mockImplementationOnce(() => {
         throw new Error("Parse failure");
