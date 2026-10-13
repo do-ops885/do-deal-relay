@@ -17,7 +17,9 @@ import {
   putResearchCache,
   getResearchCacheBatch,
   putResearchCacheBatch,
+  purgeExpiredResearchCache,
 } from "../../../worker/lib/d1/research-cache";
+import { CONFIG } from "../../../worker/config";
 
 // ============================================================================
 // Recording mock with configurable read results
@@ -275,6 +277,88 @@ describe("d1/research-cache", () => {
       await expect(putResearchCache(rec.db, "k1", 1)).rejects.toThrow(
         "D1 write timeout",
       );
+    });
+
+    it("writes expires_at using the default research cache TTL", async () => {
+      const rec = createCacheDb();
+      const before = Math.floor(Date.now() / 1000);
+
+      await putResearchCache(rec.db, "k1", { cached: true });
+
+      const expiresAt = rec.queries[0]?.params[3];
+      expect(typeof expiresAt).toBe("number");
+      const lower = before + CONFIG.RESEARCH_CACHE_TTL_SECONDS;
+      const upper =
+        Math.floor(Date.now() / 1000) + CONFIG.RESEARCH_CACHE_TTL_SECONDS;
+      expect(expiresAt as number).toBeGreaterThanOrEqual(lower);
+      expect(expiresAt as number).toBeLessThanOrEqual(upper);
+      expect(rec.queries[0]?.sql).toContain("expires_at");
+    });
+
+    it("honours an explicit ttlSeconds override", async () => {
+      const rec = createCacheDb();
+      const before = Math.floor(Date.now() / 1000);
+
+      await putResearchCache(rec.db, "k1", { cached: true }, 60);
+
+      const expiresAt = rec.queries[0]?.params[3];
+      expect(expiresAt as number).toBeGreaterThanOrEqual(before + 60);
+      expect(expiresAt as number).toBeLessThanOrEqual(
+        Math.floor(Date.now() / 1000) + 60,
+      );
+    });
+  });
+
+  // ==========================================================================
+  // Expiry filtering
+  // ==========================================================================
+
+  describe("expiry filtering", () => {
+    it("excludes expired rows on single-key reads", async () => {
+      const rec = createCacheDb({
+        firstResult: { payload: JSON.stringify({ hits: 1 }) },
+      });
+
+      await getResearchCache(rec.db, "k1");
+
+      expect(rec.queries[0]?.sql).toContain("expires_at");
+    });
+
+    it("excludes expired rows on batch reads without extra binds", async () => {
+      const rec = createCacheDb();
+      const keys = ["k1", "k2"];
+
+      await getResearchCacheBatch(rec.db, keys);
+
+      expect(rec.queries[0]?.sql).toContain("expires_at");
+      expect(rec.queries[0]?.params).toEqual(keys);
+    });
+  });
+
+  // ==========================================================================
+  // purgeExpiredResearchCache
+  // ==========================================================================
+
+  describe("purgeExpiredResearchCache", () => {
+    it("deletes only expired rows and returns the change count", async () => {
+      const rec = createCacheDb();
+      rec.run.mockResolvedValueOnce({
+        results: [],
+        meta: { changes: 3 },
+      });
+
+      const purged = await purgeExpiredResearchCache(rec.db);
+
+      expect(purged).toBe(3);
+      const sql = String(rec.prepare.mock.calls[0]?.[0] ?? "");
+      expect(sql).toContain("DELETE FROM research_cache_kv");
+      expect(sql).toContain("expires_at");
+    });
+
+    it("returns 0 when the driver reports no change metadata", async () => {
+      const rec = createCacheDb();
+
+      await expect(purgeExpiredResearchCache(rec.db)).resolves.toBe(0);
     });
   });
 });
