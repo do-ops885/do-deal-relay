@@ -166,14 +166,17 @@ export async function executePipeline(
     if (tooLarge) return tooLarge;
   }
 
-  // 4. Rate Limit
-  const rateLimitResponse = await rateLimitMiddleware(
-    request,
-    env,
-    config,
-    params,
-  );
-  if (rateLimitResponse) return rateLimitResponse;
+  // 4. Rate Limit (skipped when route opts out with rateLimit: false,
+  // e.g. health probes that must never 429)
+  if (config.rateLimit !== false) {
+    const rateLimitResponse = await rateLimitMiddleware(
+      request,
+      env,
+      config,
+      params,
+    );
+    if (rateLimitResponse) return rateLimitResponse;
+  }
 
   // 5. Auth
   const authResponse = await authMiddleware(request, env, config, params);

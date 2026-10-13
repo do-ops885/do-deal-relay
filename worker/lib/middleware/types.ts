@@ -42,15 +42,18 @@ export interface RouteConfig {
   handler: RouteHandler;
   /** Authentication tier required */
   auth: AuthTier;
-  /** Optional rate limit configuration (overrides endpoint defaults) */
-  rateLimit?: {
-    /** Time window in seconds */
-    windowSeconds: number;
-    /** Maximum requests within the window */
-    maxRequests: number;
-    /** Custom key prefix for rate limit storage */
-    keyPrefix?: string;
-  };
+  /** Optional rate limit configuration (overrides endpoint defaults).
+   * Set to `false` to explicitly skip rate limiting (e.g. health probes). */
+  rateLimit?:
+    | {
+        /** Time window in seconds */
+        windowSeconds: number;
+        /** Maximum requests within the window */
+        maxRequests: number;
+        /** Custom key prefix for rate limit storage */
+        keyPrefix?: string;
+      }
+    | false;
   /** Optional body size limit in bytes */
   bodySizeLimit?: number;
   /** Human-readable description for auto-generated API docs */
