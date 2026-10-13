@@ -27,9 +27,6 @@ describe("Research API Integration", () => {
         const fullKey = `${prefix}:${key}`;
         mockKvStorage.set(fullKey, value);
       }),
-      delete: vi.fn(async (key: string) => {
-        mockKvStorage.delete(`${prefix}:${key}`);
-      }),
     };
   }
 
@@ -47,6 +44,20 @@ describe("Research API Integration", () => {
     mockKvStorage.set(
       "sources:apikey:" + hash,
       JSON.stringify({ role: "admin", userId: "test-user" }),
+    );
+    // Opt the test env out of real fetching. Since #955 the orchestrator
+    // seeds DEFAULT_FLAGS on read, and real_research_fetching defaults to
+    // enabled — without this seed the suite would attempt real fetching.
+    // Seeding only fills missing flags, so this explicit value wins.
+    mockKvStorage.set(
+      "lock:ff:real_research_fetching",
+      JSON.stringify({
+        name: "real_research_fetching",
+        enabled: false,
+        rolloutPercentage: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
     );
 
     mockEnv = {
@@ -73,7 +84,7 @@ describe("Research API Integration", () => {
     vi.unstubAllGlobals();
   });
 
-  it("should use simulated mode by default in test environment", async () => {
+  it("should use simulated mode in test environment (flag off)", async () => {
     const request = new Request("http://localhost/api/research", {
       method: "POST",
       headers: {

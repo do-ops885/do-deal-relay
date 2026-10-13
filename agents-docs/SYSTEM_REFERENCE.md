@@ -1,5 +1,5 @@
 # System Reference
-**Version**: 0.2.1 (Schema: 0.1.8) | **Status**: Production
+**Version**: 0.1.8 (Schema: 0.1.8) | **Status**: Production
 
 > **Harness role: Architecture fitness + maintainability sensors.** The validation gates and infrastructure contracts defined here are computational sensors that regulate both maintainability (the 9-gate pipeline) and architecture fitness (DORA metrics, continuous verification). See `agents-docs/HARNESS.md` for the full framework.
 

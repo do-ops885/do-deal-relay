@@ -17,7 +17,7 @@ export default async function globalSetup() {
   if (!existsSync(resolve(root, ".dev.vars"))) {
     console.log("Creating .dev.vars from .dev.vars.example...");
     const example = existsSync(resolve(root, ".dev.vars.example"))
-      ? "WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod\nEMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod\nAPI_ENCRYPTION_KEY=e2e-test-encryption-key-32-chars-ok\nJWT_SECRET=e2e-test-jwt-secret-do-not-use-in-prod\n"
+      ? "WEBHOOK_SECRET=e2e-test-webhook-secret-do-not-use-in-prod\nEMAIL_WEBHOOK_SECRET=e2e-test-email-webhook-secret-do-not-use-in-prod\nJWT_SECRET=e2e-test-jwt-secret-do-not-use-in-prod\n"
       : "";
     writeFileSync(resolve(root, ".dev.vars"), example);
   }

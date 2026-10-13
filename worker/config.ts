@@ -16,7 +16,7 @@ import { VERSION } from "./version";
 export const CONFIG = {
   // System
   VERSION,
-  SCHEMA_VERSION: "0.1.8",
+  SCHEMA_VERSION: VERSION,
 
   // Timing
   LOCK_TTL_SECONDS: 300, // 5 minutes
@@ -303,7 +303,7 @@ export const DEFAULT_SOURCES = [
 ];
 
 // ============================================================================
-// Research Selector Configs for Known Domains
+// Research Selector Types (configs removed: zero importers, see #911)
 // ============================================================================
 
 export interface ExtractSelectorSet {
@@ -315,108 +315,6 @@ export interface ExtractSelectorSet {
   code: string[];
   reward: string[];
 }
-
-export const RESEARCH_SELECTOR_CONFIGS: Record<string, ExtractSelectorSet> = {
-  "trading212.com": {
-    dealTitle: [
-      ".campaign-title",
-      "h1.invite-title",
-      "[data-testid='campaign-name']",
-    ],
-    price: [".reward-amount", ".bonus-value", "[data-reward]"],
-    source: [".source-name", ".broker-name"],
-    description: [".campaign-description", ".terms-text"],
-    keyPoints: [".feature-list li", ".benefits-list li"],
-    code: ["[data-ref-code]", ".referral-code", ".invite-code"],
-    reward: [".reward-amount", "[data-reward]", ".bonus-value"],
-  },
-  "revolut.com": {
-    dealTitle: [".referral-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".referral-description", ".terms"],
-    keyPoints: [".benefits li", ".features li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "wise.com": {
-    dealTitle: [".invite-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".invite-description", ".terms"],
-    keyPoints: [".benefits li", ".how-it-works li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "robinhood.com": {
-    dealTitle: [".referral-title", "h1"],
-    price: [".bonus-amount", ".reward-value", ".stock-value"],
-    source: [".source-name"],
-    description: [".referral-description", ".terms"],
-    keyPoints: [".features li", ".benefits li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "webull.com": {
-    dealTitle: [".invite-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".invite-description", ".terms"],
-    keyPoints: [".features li", ".steps li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "crypto.com": {
-    dealTitle: [".referral-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".referral-description", ".terms"],
-    keyPoints: [".features li", ".benefits li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "binance.com": {
-    dealTitle: [".referral-title", ".activity-title", "h1"],
-    price: [".bonus-amount", ".reward-value", "[data-bonus]"],
-    source: [".source-name"],
-    description: [".referral-description", ".activity-desc"],
-    keyPoints: [".features li", ".rules li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "coinbase.com": {
-    dealTitle: [".invite-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".invite-description", ".terms"],
-    keyPoints: [".benefits li", ".features li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-  "paypal.com": {
-    dealTitle: [".referral-title", "h1"],
-    price: [".bonus-amount", ".reward-value"],
-    source: [".source-name"],
-    description: [".referral-description", ".terms"],
-    keyPoints: [".benefits li", ".features li"],
-    code: ["[data-ref-code]", ".referral-code"],
-    reward: [".bonus-amount", ".reward-value"],
-  },
-};
-
-// ============================================================================
-// Error Messages
-// ============================================================================
-
-export const ERROR_MESSAGES = {
-  LOCK_CONFLICT: "Another run is in progress (lock conflict)",
-  HASH_MISMATCH: "Snapshot hash mismatch - possible concurrent modification",
-  VALIDATION_FAILED: "One or more validation gates failed",
-  PUBLISH_FAILED: "Failed to publish to production",
-  FETCH_FAILED: "Failed to fetch from source",
-  PARSE_FAILED: "Failed to parse content",
-  NOTIFICATION_FAILED: "Failed to send notification",
-} as const;
 
 // ============================================================================
 // Validation Gate Names

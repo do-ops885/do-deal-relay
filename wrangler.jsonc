@@ -106,12 +106,7 @@
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
   },
   "secrets": {
-    "required": [
-      "WEBHOOK_SECRET",
-      "EMAIL_WEBHOOK_SECRET",
-      "API_ENCRYPTION_KEY",
-      "JWT_SECRET",
-    ],
+    "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
   },
   // D1 Database for advanced queries and full-text search
   "d1_databases": [
@@ -295,12 +290,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
     },
     // Staging environment for pre-production testing
@@ -356,17 +346,18 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
+      // TODO(#907): staging bindings below reuse the top-level namespace
+      // ids so every id is valid 32-hex and DEALS_PROD/DEALS_STAGING no
+      // longer share one namespace. True environment isolation still needs
+      // dedicated staging namespaces provisioned via the Cloudflare
+      // dashboard (`wrangler kv namespace create <name>`); replace these
+      // ids with them and verify before relying on staging isolation.
       "kv_namespaces": [
         {
           "binding": "DEALS_PROD",
-          "id": "b0db85b92fae45c1895152737ab72649",
+          "id": "23ee9b8c9e2748e5880f476b8b57a524",
         },
         {
           "binding": "DEALS_STAGING",
@@ -374,7 +365,7 @@
         },
         {
           "binding": "DEALS_LOG",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8-staging",
+          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
         },
         {
           "binding": "DEALS_LOCK",
@@ -455,12 +446,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
       },
       "secrets": {
-        "required": [
-          "WEBHOOK_SECRET",
-          "EMAIL_WEBHOOK_SECRET",
-          "API_ENCRYPTION_KEY",
-          "JWT_SECRET",
-        ],
+        "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
       "kv_namespaces": [
         {
@@ -514,33 +500,6 @@
           {
             "name": "DEAL_REGISTRY",
             "class_name": "DealRegistry",
-          },
-        ],
-      },
-      // Workflows and queues are not inherited from the top level by
-      // environments: repeat them here so production deploys without
-      // wrangler configuration warnings.
-      "workflows": [
-        {
-          "name": "discovery-shadow",
-          "binding": "DISCOVERY_WORKFLOW",
-          "class_name": "DiscoveryShadowWorkflow",
-        },
-        {
-          "name": "pipeline",
-          "binding": "PIPELINE_WORKFLOW",
-          "class_name": "PipelineWorkflow",
-        },
-      ],
-      "queues": {
-        "producers": [{ "binding": "ALERT_QUEUE", "queue": "alert-queue" }],
-        "consumers": [
-          {
-            "queue": "alert-queue",
-            "max_batch_size": 10,
-            "max_batch_timeout": 5,
-            "max_retries": 10,
-            "dead_letter_queue": "alert-queue-dlq",
           },
         ],
       },

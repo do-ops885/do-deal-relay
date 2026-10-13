@@ -6,6 +6,7 @@
 import type { Deal, PipelineContext, Env } from "../types";
 import { logger } from "../lib/global-logger";
 import { validateFetchUrl } from "../lib/security";
+import { SECURITY_CONSTANTS } from "../lib/security-ip";
 
 // ============================================================================
 // Security Check Types
@@ -230,11 +231,15 @@ const URL_VALIDATION_CHECK = {
           issues.push(`URL exceeds 2048 characters: ${url.length}`);
         }
 
-        // Check for suspicious port numbers
+        // Check for non-standard port numbers
         if (parsed.port) {
           const port = parseInt(parsed.port, 10);
-          if (port < 1 || port > 65535) {
-            issues.push(`Invalid port: ${parsed.port}`);
+          if (
+            !(SECURITY_CONSTANTS.STANDARD_PORTS as readonly number[]).includes(
+              port,
+            )
+          ) {
+            issues.push(`Non-standard port: ${parsed.port}`);
           }
         }
       } catch {
