@@ -1,8 +1,9 @@
-# Audit Snapshot — 2026-10-08
+# Repository Audit Snapshot - 2026-10-13
 
-- Repository: do-deal-relay
-- Version: 0.1.8
-- Primary Language: TypeScript (Node.js / Cloudflare Workers)
-- Test Runner: vitest (`npm run test:unit`)
-- Quality Gate Command: `./scripts/quality_gate.sh`
-- Audit Directory: `plans/jules-audit/`
+## Environment & Layout
+- **Primary Language**: TypeScript / JavaScript (Node.js & Cloudflare Workers)
+- **Dependency Manifest**: `package.json`
+- **Test Runner**: `vitest` via `npm run test:unit` (`scripts/test-unit.js`)
+- **Quality Gate Command**: `./scripts/quality_gate.sh`
+- **Audit Directory**: `plans/jules-audit/`
+- **Product Version**: `0.1.8` (from root `VERSION`)
