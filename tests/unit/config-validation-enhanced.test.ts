@@ -137,6 +137,12 @@ describe("Enhanced Config Validation", () => {
         parseBoundedIntegerConfig("TEST_VAR", "12.34", 10, 0, 100),
       ).toThrow("TEST_VAR must be an integer");
       expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "-12.34", 10, -100, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
+        parseBoundedIntegerConfig("TEST_VAR", "+12.34", 10, 0, 100),
+      ).toThrow("TEST_VAR must be an integer");
+      expect(() =>
         parseBoundedIntegerConfig("TEST_VAR", "25.0", 10, 0, 100),
       ).toThrow("TEST_VAR must be an integer");
       expect(() =>
@@ -216,6 +222,8 @@ describe("Enhanced Config Validation", () => {
 
     it("should parse valid trust threshold string within bounds", () => {
       expect(getTrustThreshold({ TRUST_THRESHOLD: "0.75" } as Env)).toBe(0.75);
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "0" } as Env)).toBe(0);
+      expect(getTrustThreshold({ TRUST_THRESHOLD: "1" } as Env)).toBe(1);
     });
 
     it("should clamp values below 0 to 0 and above 1 to 1", () => {
