@@ -248,8 +248,8 @@ fi
 # Tests excluded by design (existing fixtures exceed 500); worker/bot sources are all under 500.
 # shellcheck source=quality-limits.sh
 source "${SCRIPT_DIR}/quality-limits.sh"
-LOC_WARNING_THRESHOLD="${LOC_WARN_THRESHOLD}"
-LOC_FAIL_THRESHOLD="${LOC_FAIL_THRESHOLD}"
+# quality-limits.sh declares these readonly; use them directly instead of
+# reassigning (a reassignment of a readonly variable aborts the check).
 loc_violations=0
 
 while IFS= read -r -d '' file; do
@@ -262,7 +262,7 @@ while IFS= read -r -d '' file; do
     if [ "$line_count" -gt "$LOC_FAIL_THRESHOLD" ]; then
         ERRORS+=("✗ File exceeds ${LOC_FAIL_THRESHOLD} lines: $file ($line_count lines)")
         loc_violations=$((loc_violations + 1))
-    elif [ "$line_count" -ge "$LOC_WARNING_THRESHOLD" ]; then
+    elif [ "$line_count" -ge "$LOC_WARN_THRESHOLD" ]; then
         WARNINGS+=("⚠ File approaching limit: $file ($line_count lines, limit ${LOC_FAIL_THRESHOLD})")
     fi
 done < <(find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.sh" -o -name "*.md" \) -print0 2>/dev/null)
