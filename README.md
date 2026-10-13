@@ -12,7 +12,7 @@ Autonomous AI-agent deal discovery system on Cloudflare Workers.
 
 ### Prerequisites
 
-- Node.js >= 20.0.0
+- Node.js >= 22.0.0 (see package.json engines + .nvmrc)
 - npm
 - Wrangler CLI (`npm install -g wrangler`)
 
@@ -29,7 +29,7 @@ npm install
 | `npm run dev` | Start local development server |
 | `npm run build` | Build TypeScript |
 | `npm run typecheck` | Type check only |
-| `npm run test` | Run tests with coverage |
+| `npm run test` | Run unit tests (vitest, no coverage) |
 | `npm run test:e2e` | Run E2E tests (Playwright) |
 | `npm run lint` | Type check + format check |
 | `npm run lint:fix` | Type check + auto-fix formatting |
@@ -80,7 +80,7 @@ The system utilizes Cloudflare D1 (SQLite) for structured data and identity mana
 ## Safety & Quality
 
 - **9 Validation Gates**: Per-deal integrity checks (schema, trust, dedupe, etc.)
-- **12 Quality Gates**: System-wide CI/CD checks (tests, lint, security, audit)
+- **18 Quality Checks**: System-wide CI/CD checks (tests, lint, security, audit)
 - **Performance Thresholds**: Pipeline benchmark enforced at 5,000 deals/sec
 
 ## CI/CD Pipeline

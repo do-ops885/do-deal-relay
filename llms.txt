@@ -12,7 +12,7 @@ Autonomous AI-agent deal discovery system on Cloudflare Workers.
 ## Agent Infrastructure
 - GOAP-based development workflow
 - Atomic commit workflow (`scripts/ai-commit.sh`)
-- 13-gate system quality checks (`scripts/quality_gate.sh`)
+- 18-check quality gate (`scripts/quality_gate.sh`)
 - Extensive skills library in `.agents/skills/`
 
 ## Documentation

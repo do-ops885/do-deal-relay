@@ -60,10 +60,10 @@ All skills in `.agents/skills/` must pass evaluator checks before being used in 
 
 ```bash
 # Evaluate a specific skill
-npx ts-node scripts/eval-skill.ts skill-name
+bash scripts/skill-eval-check.sh skill-name
 
 # Evaluate all skills
-npx ts-node scripts/eval-skill.ts --all
+bash scripts/skill-eval-check.sh --all
 ```
 
 **Requirements:**

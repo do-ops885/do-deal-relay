@@ -121,7 +121,7 @@ Run `./scripts/quality_gate.sh` to execute all validation checks:
 - Unit tests
 - Validation gates
 - Security checks
-- Root directory file organization (via `./scripts/check-root-files.sh`)
+- Root directory file organization (via ./scripts/quality_gate.sh Check 4)
 
 ## Active Agents
 

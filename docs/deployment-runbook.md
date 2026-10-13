@@ -252,7 +252,7 @@ develop branch → Staging deploy → Verify → Merge to main → Production de
 
 ### 5.1 Deploy to Staging
 
-**Automatic**: Push to `develop` branch triggers `.github/workflows/deploy-staging.yml`.
+**Automatic**: Push to `develop` branch triggers `.github/workflows/deploy-production.yml`.
 
 **Manual trigger**:
 

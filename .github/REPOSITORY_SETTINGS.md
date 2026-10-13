@@ -67,16 +67,16 @@ This document outlines the recommended GitHub repository settings for this proje
 
   - Require branches to be up to date before merging
   - Status checks that are required:
-    - `Build Check`
+    - `Build`
     - `CI Summary`
-    - `Lint & Format Check`
-    - `TypeScript Check`
+    - `Format Check`
+    - `Type Check`
     - `Unit Tests`
     - `Validation Gates`
     - `Quality Gate`
     - `Secret Detection`
     - `Security Scan`
-    - `CodeQL Analysis`
+    - `Analyze`
 
 - [ ] **Require conversation resolution before merging**
 - [ ] **Require signed commits** (optional)
@@ -224,16 +224,17 @@ After configuration, verify:
 
 ## CI/CD Integration
 
-The repository is configured with 8 workflows:
+The repository is configured with 17 workflows (see .github/workflows/):
 
 - **ci.yml**: Main CI pipeline
+- **ci-and-labels.yml**: CI setup and PR labels
 - **security.yml**: Daily security scanning
-- **deploy-staging.yml**: Automated staging deployment
 - **deploy-production.yml**: Production deployment with rollback
 - **discovery.yml**: Scheduled discovery runs
 - **cleanup.yml**: Monthly maintenance
 - **kv-setup.yml**: Infrastructure setup
 - **auto-merge.yml**: Dependabot PR automation
+- **benchmarks.yml, canary.yml, codeql.yml, nightly.yml, release.yml, resolve-deepsource.yml, rollback.yml, vectorize-setup.yml, yaml-lint.yml**: supporting pipelines
 
 ## See Also
 
