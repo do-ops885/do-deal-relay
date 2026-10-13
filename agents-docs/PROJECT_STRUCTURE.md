@@ -3,7 +3,7 @@
 > **Harness role: Harnessability foundation.** The directory structure and root policy are the "ambient affordances" that make the codebase legible and tractable to agents. A well-defined structure reduces the variety space the harness must regulate. See `agents-docs/HARNESS.md` for the full framework.
 
 **Reference**: Comprehensive directory structure for the deal discovery system
-**Version**: 0.1.3
+**Version**: 0.1.8
 
 ## Directory Tree
 
