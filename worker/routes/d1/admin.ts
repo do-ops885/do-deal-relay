@@ -18,10 +18,6 @@ export async function authenticateD1Request(
   env: Env,
   request: Request,
 ): Promise<boolean> {
-  // Skip auth for health check
-  const url = new URL(request.url);
-  if (url.pathname === "/api/d1/health") return true;
-
   // Use unified authentication library
   const auth = await authenticateRequest(request, env);
   return auth.authenticated;
@@ -44,12 +40,15 @@ export async function handleD1Migrations(
     if (action === "init") {
       // Initialize database with all migrations
       const result = await initDatabase(env.DEALS_DB);
-      return jsonResponse({
-        success: result.success,
-        message: `Database initialized to version ${result.currentVersion}`,
-        applied: result.applied,
-        error: result.error,
-      });
+      return jsonResponse(
+        {
+          success: result.success,
+          message: `Database initialized to version ${result.currentVersion}`,
+          applied: result.applied,
+          error: result.error,
+        },
+        result.success ? 200 : 500,
+      );
     }
 
     // Get migration status
