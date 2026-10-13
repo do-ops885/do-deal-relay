@@ -4,6 +4,7 @@ import { REFERRAL_KEYS } from "./types";
 import { getReferralById } from "./crud";
 import { fetchInBatches, executeInBatches } from "../utils";
 import { listAllKvKeys } from "../kv-pagination";
+import { searchReferralsD1 } from "./d1-queries";
 
 // ============================================================================
 // Search and Query Operations
@@ -98,7 +99,6 @@ export async function searchReferrals(
   // capped to avoid subrequest exhaustion.
   const useD1 = env.USE_D1_READS === "true" && env.DEALS_DB;
   if (useD1 && filters.query) {
-    const { searchReferralsD1 } = await import("./d1-queries");
     const d1Limit = Math.min(filters.limit ?? 100, 200);
     const d1Options: { limit?: number; domain?: string; status?: string } = {
       limit: d1Limit,

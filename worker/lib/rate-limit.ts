@@ -237,28 +237,22 @@ export function createRateLimitMiddleware(
 
     const response = await handler();
     const headers = createRateLimitHeaders(result);
-    // Response.redirect() yields immutable headers; clone before mutating
-    // so ?redirect=true does not throw into a 500.
-    try {
-      for (const [k, v] of headers.entries()) {
-        response.headers.set(k, v);
-      }
-      return response;
-    } catch {
+    // Response.redirect() yields immutable headers; clone redirects
+    // before mutating so ?redirect=true does not throw into a 500.
+    if (response.headers.get("Location")) {
       const merged = new Headers(response.headers);
       for (const [k, v] of headers.entries()) {
-        try {
-          merged.set(k, v);
-        } catch {
-          break;
-        }
+        merged.set(k, v);
       }
-      return new Response(response.body, {
+      return new Response(null, {
         status: response.status,
-        statusText: response.statusText,
         headers: merged,
       });
     }
+    for (const [k, v] of headers.entries()) {
+      response.headers.set(k, v);
+    }
+    return response;
   };
 }
 

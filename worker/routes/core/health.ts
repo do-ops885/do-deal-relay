@@ -21,10 +21,11 @@ export async function handleReady(
   env: Env,
   request: Request,
 ): Promise<Response> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const probe = env.DEALS_DB.prepare("SELECT 1").first();
     const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("D1 probe timeout")), 2000);
+      timer = setTimeout(() => reject(new Error("D1 probe timeout")), 2000);
     });
     await Promise.race([probe, timeout]);
     return jsonResponse({ ready: true }, 200, request, env);
@@ -35,6 +36,8 @@ export async function handleReady(
       request,
       env,
     );
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }
 

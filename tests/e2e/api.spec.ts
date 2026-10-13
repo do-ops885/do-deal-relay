@@ -251,13 +251,26 @@ test.describe("404 Handling", () => {
 test.describe("CORS Headers", () => {
   test("API endpoints include CORS headers", async ({ request }) => {
     const response = await request.get("/health", {
-      headers: { Origin: "http://localhost:8787" },
+      headers: { Origin: "https://do-deal-relay.pages.dev" },
     });
 
     expect(response.status()).toBe(200);
 
     const headers = response.headers();
     expect(headers["access-control-allow-origin"]).toBe(
+      "https://do-deal-relay.pages.dev",
+    );
+  });
+
+  test("localhost origin is not trusted in production", async ({ request }) => {
+    const response = await request.get("/health", {
+      headers: { Origin: "http://localhost:8787" },
+    });
+
+    expect(response.status()).toBe(200);
+
+    const headers = response.headers();
+    expect(headers["access-control-allow-origin"] ?? "").not.toBe(
       "http://localhost:8787",
     );
   });
