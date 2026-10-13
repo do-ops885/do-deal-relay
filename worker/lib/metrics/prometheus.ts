@@ -376,20 +376,3 @@ export function logPrometheusExport(metrics: PipelineMetrics): void {
     // Logger must never throw
   }
 }
-
-/**
- * Prometheus text exporter constants exported for routing and external layers.
- *
- * Provides central access to standard Prometheus Content-Type header formats
- * and default latency histogram buckets (in seconds) mapped to phase performance tracking.
- */
-export const PROMETHEUS_CONSTANTS = {
-  /**
-   * The standard text content-type including version descriptor for Prometheus scraping clients.
-   */
-  CONTENT_TYPE: PROMETHEUS_CONTENT_TYPE,
-  /**
-   * Default duration/latency bucket upper bounds (in seconds) used for phase performance profiling.
-   */
-  BUCKETS_SECONDS: HISTOGRAM_BUCKETS_SECONDS,
-} as const;
