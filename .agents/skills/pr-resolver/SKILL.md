@@ -71,7 +71,7 @@ agents:
 - "Skip review comments that look nitpicky" — review comments are signal; AGENTS.md lists Operational Safety comments as blockers.
 
 ## Red Flags
-- Merging a PR while any of `Type Check`, `Run Tests`, `Quality Gate`, or `Validate Skills` is failing.
+- Merging a PR while any of `Type Check`, `Unit Tests`, `Quality Gate`, or `Validate Skills` is failing.
 - Force-pushing over other contributors' commits without their approval.
 - Bot-author PRs that bypass the human merge decision (Human Boundaries rule 3).
 - Resolving a CI failure by reverting the very file the PR modified.
