@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { isFeatureEnabled } from "../lib/feature-flags";
+import { isFeatureEnabledWithDefaults } from "../lib/feature-flags";
 import { logger } from "../lib/global-logger";
 
 /**
@@ -22,7 +22,9 @@ export async function maybeTriggerShadowDiscovery(
   run_id: string,
 ): Promise<ShadowTriggerResult> {
   try {
-    if (!(await isFeatureEnabled("workflow_shadow_discovery", env))) {
+    if (
+      !(await isFeatureEnabledWithDefaults("workflow_shadow_discovery", env))
+    ) {
       return { triggered: false, reason: "flag_disabled" };
     }
     const binding = env.DISCOVERY_WORKFLOW;
