@@ -21,6 +21,9 @@ export const REFERRAL_KEYS = {
 
 export type ReferralStorageKeys = typeof REFERRAL_KEYS;
 
+/** Retention for referral change-history KV entries (90 days, in seconds). */
+const REFERRAL_HISTORY_TTL_SECONDS = 90 * 24 * 60 * 60;
+
 // ============================================================================
 // Index Management
 // ============================================================================
@@ -86,5 +89,9 @@ export async function logReferralChange(
   },
 ): Promise<void> {
   const key = `${REFERRAL_KEYS.HISTORY_PREFIX}${log.referral_id}:${Date.now()}`;
-  await env.DEALS_SOURCES.put(key, JSON.stringify(log));
+  // History keys are append-only; expire them so status churn cannot grow
+  // the namespace without bound.
+  await env.DEALS_SOURCES.put(key, JSON.stringify(log), {
+    expirationTtl: REFERRAL_HISTORY_TTL_SECONDS,
+  });
 }

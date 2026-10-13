@@ -12,21 +12,32 @@ import {
 // ============================================================================
 
 /**
- * Store a new referral input
+ * Store a new referral input.
+ *
+ * When the referral has no id, a unique id is generated and assigned so
+ * concurrent submissions never share a single KV key.
  */
 export async function storeReferralInput(
   env: Env,
   referral: ReferralInput,
   previousDomain?: string,
 ): Promise<ReferralInput> {
-  const referralId = referral.id || "unknown";
+  const providedId = referral.id;
+  // Generate a unique id when the caller did not supply one. Falling back
+  // to a shared "unknown" key would let concurrent submissions silently
+  // overwrite each other at referral:input:unknown.
+  const referralId =
+    providedId && providedId.length > 0 ? providedId : crypto.randomUUID();
+  if (referralId !== providedId) {
+    referral.id = referralId;
+  }
   const key = `${REFERRAL_KEYS.INPUT_PREFIX}${referralId}`;
 
   let oldDomain = previousDomain;
   let oldStatus: ReferralInput["status"] | undefined;
 
-  if (referral.id) {
-    const existing = await getReferralById(env, referral.id);
+  if (providedId) {
+    const existing = await getReferralById(env, providedId);
     if (existing) {
       if (!oldDomain) {
         oldDomain = existing.domain;
