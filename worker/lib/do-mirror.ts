@@ -5,12 +5,16 @@ import { toError } from "./sanitize-error";
 const DO_RPC_TIMEOUT_MS = 1000;
 const MAX_MIRROR_DOMAINS = 10;
 
+/** Default retention window for the DealRegistry purge sweep (90 days). */
+const DEAL_REGISTRY_PURGE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
+
 interface DealRegistryStub {
   stageDeals(
     deals: Array<{ id: string; source: string; title: string; data: string }>,
   ): Promise<number>;
   validateDeals(dealIds: string[]): Promise<number>;
   publishDeals(dealIds: string[]): Promise<number>;
+  purgeOld(maxAgeMs: number): Promise<number>;
 }
 
 interface SourceRegistryStub {
@@ -131,6 +135,38 @@ export async function mirrorPublishToDO(
       component: "do-mirror",
       error: toError(error).message,
     });
+  }
+}
+
+/**
+ * Best-effort purge of stale deals from the DealRegistry DO.
+ * Wired into the weekly cron so the DO deals table cannot grow without
+ * bound. Never throws; missing bindings or RPC failures resolve to 0.
+ *
+ * @param env      - Worker environment (DEAL_REGISTRY binding optional).
+ * @param maxAgeMs - Maximum deal age in milliseconds (defaults to 90 days).
+ * @returns Number of deals purged, or 0 when skipped/failed.
+ */
+export async function purgeOldDeals(
+  env: Env,
+  maxAgeMs: number = DEAL_REGISTRY_PURGE_MAX_AGE_MS,
+): Promise<number> {
+  const candidate = getDealRegistryStubObject(env);
+  if (!hasRpcMethods(candidate, ["purgeOld"])) return 0;
+  const stub = candidate as DealRegistryStub;
+  try {
+    const purged = await stub.purgeOld(maxAgeMs);
+    logger.debug("DealRegistry purge completed", {
+      component: "do-mirror",
+      purged,
+    });
+    return purged;
+  } catch (error) {
+    logger.warn("DealRegistry purge failed (non-critical)", {
+      component: "do-mirror",
+      error: toError(error).message,
+    });
+    return 0;
   }
 }
 
