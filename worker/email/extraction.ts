@@ -12,6 +12,8 @@ import {
 /**
  * Extract all URLs from email content
  * CRITICAL: Must return complete, unmodified URLs
+ * @param text - Raw plain text or HTML content from email
+ * @returns Array of valid, cleaned URL strings
  */
 export function extractUrls(text: string): string[] {
   const urlPattern = /https?:\/\/[^\s<>"{}|\^`\[\]]+/gi;
@@ -39,6 +41,9 @@ export function extractUrls(text: string): string[] {
 /**
  * Extract referral URL and code from email using service-specific patterns
  * CRITICAL: Returns complete URL from email, never reconstructed
+ * @param email - Parsed email object containing text and html
+ * @param servicePattern - Optional service-specific pattern configuration
+ * @returns Object containing matching referral URL and code, or nulls
  */
 export function extractReferralUrl(
   email: ParsedEmail,
@@ -88,6 +93,8 @@ export function extractReferralUrl(
 
 /**
  * Detect service from email sender, subject, and content
+ * @param email - Parsed email object containing from, subject, and text fields
+ * @returns Service identifier name string or "unknown"
  */
 export function detectService(email: ParsedEmail): string {
   const sender = email.from.toLowerCase();
@@ -140,6 +147,8 @@ export function detectService(email: ParsedEmail): string {
 
 /**
  * Get service pattern by service name
+ * @param serviceName - The service identifier name
+ * @returns Service pattern configuration object or undefined if not found
  */
 export function getServicePattern(
   serviceName: string,
@@ -153,6 +162,9 @@ export function getServicePattern(
 
 /**
  * Extract referral code from email content
+ * @param email - Parsed email object containing text and html fields
+ * @param servicePattern - Optional service-specific pattern configuration
+ * @returns Extracted referral code string or null if not found
  */
 export function extractCode(
   email: ParsedEmail,
@@ -187,6 +199,9 @@ export function extractCode(
 
 /**
  * Extract reward description from email content
+ * @param email - Parsed email object containing text and html fields
+ * @param servicePattern - Optional service-specific pattern configuration
+ * @returns Reward description string or null if not found
  */
 export function extractReward(
   email: ParsedEmail,
@@ -221,6 +236,9 @@ export function extractReward(
 
 /**
  * Extract expiry date from email content
+ * @param email - Parsed email object containing text and html fields
+ * @param servicePattern - Optional service-specific pattern configuration
+ * @returns ISO formatted expiry date string (YYYY-MM-DD) or null
  */
 export function extractExpiry(
   email: ParsedEmail,
@@ -352,6 +370,8 @@ function parseDate(dateStr: string): string | null {
  * Extract referral information from an email
  * Uses service-specific patterns for high confidence,
  * falls back to generic patterns
+ * @param email - Parsed email object to extract referral data from
+ * @returns Complete extraction result object with confidence score and method
  */
 export function extractReferralFromEmail(email: ParsedEmail): ExtractionResult {
   // Detect service
@@ -419,6 +439,8 @@ import type { EmailCommandType } from "./types";
 
 /**
  * Determine if email is a command email or forwarded referral
+ * @param email - Parsed email object containing recipient, subject, and body
+ * @returns The detected email command type enum value
  */
 export function detectEmailType(email: ParsedEmail): EmailCommandType {
   const to = email.to[0]?.toLowerCase() || "";
