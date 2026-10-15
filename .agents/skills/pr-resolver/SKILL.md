@@ -1,6 +1,6 @@
 ---
 name: pr-resolver
-description: Automate the PR lifecycle — discover, fix CI failures, resolve conflicts, address reviews, and merge passing PRs.
+description: Automate the PR lifecycle — always push the branch, open the PR, and validate checks green; discover, fix CI failures, resolve conflicts, address reviews, and merge passing PRs.
 ---
 
 # PR Resolver Skill — GOAP Swarm Orchestrator
@@ -39,12 +39,22 @@ Dispatch parallel agents per PR issue:
 ./scripts/pev-gates.sh
 ```
 
-### 5. MERGE
+### 5. PUSH AND OPEN PR (always, never ask)
+After VERIFY is green, always push the branch and open a PR — or reuse the existing PR for the branch. Never stop at a local commit and never ask the user whether to push or open the PR; pushing and validating is the default completion path, not an optional extra.
+```bash
+git push -u origin <branch>
+gh pr create --title "<plain text, max 150 chars>" --body "What/Why/Impact, max 1000 chars"  # skip when a PR already exists for the branch
+gh pr checks <number>  # poll until zero failures
+gh pr view <number> --json statusCheckRollup -q '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
+```
+Only report completion when every required check concludes SUCCESS (SKIPPED is acceptable solely for non-required jobs such as auto-merge). On any FAILURE, ACTION_REQUIRED, TIMED_OUT, or CANCELLED, fix it in the same PR — never open a follow-up PR to repair CI.
+
+### 6. MERGE
 ```bash
 gh pr merge <number> --squash --delete-branch
 ```
 
-### 6. LOOP
+### 7. LOOP
 Repeat until all mergable PRs are merged and main CI is green.
 
 ## Agent Swarm Configuration
@@ -69,6 +79,7 @@ agents:
 - "Auto-merge for trusted maintainers" — auto-merge bypasses the gate suite; every PR must run the full pipeline.
 - "Conflict is trivial, force-push the resolution" — silent conflict resolution hides semantic differences; require explicit resolution commits.
 - "Skip review comments that look nitpicky" — review comments are signal; AGENTS.md lists Operational Safety comments as blockers.
+- "Local commit is enough; ask the user before pushing or opening the PR" — a local commit leaves CI, CodeQL, and E2E unrun and the work unreviewable; pushing the branch and opening the PR is the completion path, not an optional extra.
 
 ## Red Flags
 - Merging a PR while any of `Type Check`, `Unit Tests`, `Quality Gate`, or `Validate Skills` is failing.
@@ -76,3 +87,4 @@ agents:
 - Bot-author PRs that bypass the human merge decision (Human Boundaries rule 3).
 - Resolving a CI failure by reverting the very file the PR modified.
 - Skipping `--delete-branch` after merge, leaving stale head pointers.
+- Stopping at a local commit or asking the user whether to push or open the PR instead of doing it unprompted once local gates pass.
