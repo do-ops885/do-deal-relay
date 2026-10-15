@@ -1,11 +1,27 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
+**Re-verified:** 2026-10-15
 **Last Updated**: 2026-10-15
-**Version**: 0.19.38
-**Status**: Active — v0.19.38 close-out (#973 deps merged, #975 autonomous-merge policy merged, #968 verified closed, ci-status refreshed); queue empty, zero open issues/PRs. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
+**Version**: 0.19.39
+**Status**: Active — v0.19.39 PEV hygiene (reverify marker, deps disposition, validator re-confirmed); queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-15 PEV gate hygiene — v0.19.39
+
+Register v0.19.39. Docs/register only; zero prod change. Fresh `pev-gates.sh`
+run showed 3 fails; dispositioned:
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| goap-reverify | FIXED — sensor aged the file by its `Generated` stamp; added the designed `**Re-verified:** 2026-10-15` marker, sensor now PASS | `scripts/goap-reverify.sh:78`, exit 0 |
+| deps audit | ACCEPTED RISK (dev-only) — full `npm audit` flags artillery + markdownlint subtrees (braces, csv-parse, js-yaml, katex, sharp); every fix path is a breaking major (`--force`). Prod `npm audit --omit=dev` is 0 vulns; neither chain ships to Workers. A trial `npm audit fix` was reverted: lock churn with zero advisory reduction | `npm audit`, reverted lock |
+| ci-workflow-validator | KNOWN LIMITATION — premise mismatch already recorded, no action | [ADR-021](ADR-021-ci-workflow-validator-over-strict.md) |
+
+Verification: `npx tsc --noEmit` clean; `npm run test:unit` 245 files / 3168 tests green; `npm run lint` clean; pev core gates (format, typecheck, lint, unit, schema, markdown, secrets, skills, codes) all pass.
 
 ---
 
