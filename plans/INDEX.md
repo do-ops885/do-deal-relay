@@ -12,7 +12,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.37, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.38, single source of truth**.
+  2026-10-15 queue close-out (#968 verified closed, #973 deps merged,
+  #975 autonomous-merge policy, ci-status refreshed) on top of
   2026-10-15 plans compaction (Full compact archived, [PROGRESS](PROGRESS-2026-10-15.md)) + F-12 re-close on top of
   2026-10-13 missing-wiring sweep: `GET /api/admin/ci-status`,
   `GET /api/log?trace_id=` + `structured-jsonl`,

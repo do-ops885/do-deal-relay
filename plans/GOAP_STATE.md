@@ -2,10 +2,24 @@
 
 **Generated**: 2026-07-06
 **Last Updated**: 2026-10-15
-**Version**: 0.19.37
-**Status**: Active — v0.19.37 plans compaction + F-12 re-close (docs/register + test-only, zero prod change); F-12 residue RE-CLOSED 2026-10-15 (0 in tests/, 0 in worker/). v0.19.36 (2026-10-13 wiring sweep, ADR-033) kept intact below. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
+**Version**: 0.19.38
+**Status**: Active — v0.19.38 close-out (#973 deps merged, #975 autonomous-merge policy merged, #968 verified closed, ci-status refreshed); queue empty, zero open issues/PRs. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-15 Queue close-out (#968/#973/#975) — v0.19.38
+
+Register v0.19.38. Docs/register only; zero prod change.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| #968 codecov tokenless | CLOSED — OIDC upload verified green on main (Unit Tests job with `fail_ci_if_error: true` success on run 38697699741); issue auto-closed by #974 merge | issue #968, `ci.yml:136-143` |
+| #973 Jules deps | MERGED (`631bbd9`) — rebased onto main, archived-audit churn dropped, package-only (zod 4.6.7, workers-types, playwright 1.64.1, wrangler 4.151.0; vitest pin per ADR-029 intact); 22/22 CI checks green | PR #973 |
+| #975 merge policy | MERGED (`146135b`) — AGENTS.md §6 autonomous-merge rule + pr-resolver red-flag alignment; standing order: verify and merge when green, never wait | PR #975 |
+| ci-status.json | REFRESHED — was stale 2026-09-07, now passing @ 2026-10-15T08:03:19Z via `update-ci-status.sh` | `.github/ci-status/ci-status.json` |
+| queue | EMPTY — zero open issues, zero open PRs; remaining items owner-blocked (OPS-1..4) or deferred (N-3, F-4, IMP-1, R-6+P3-17) | tracker |
 
 ---
 
