@@ -12,8 +12,8 @@ vi.mock("node:child_process", () => ({
 describe("test-unit runner script", () => {
   let tempSummaryFile: string;
   let originalEnv: NodeJS.ProcessEnv;
-  let exitSpy: any;
-  let consoleErrorSpy: any;
+  let exitSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     originalEnv = { ...process.env };
@@ -22,7 +22,9 @@ describe("test-unit runner script", () => {
       `test-summary-${Date.now()}-${randomUUID()}.md`,
     );
 
-    exitSpy = vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
+    exitSpy = vi
+      .spyOn(process, "exit")
+      .mockImplementation((() => {}) as unknown as never);
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     vi.clearAllMocks();
@@ -46,7 +48,7 @@ describe("test-unit runner script", () => {
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
       error: undefined,
-    } as any);
+    } as unknown as ReturnType<typeof spawnSync>);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");
@@ -65,7 +67,9 @@ describe("test-unit runner script", () => {
   it("exits non-zero (1) and writes to GITHUB_STEP_SUMMARY when killed by timeout", async () => {
     process.env.GITHUB_STEP_SUMMARY = tempSummaryFile;
 
-    const timeoutErr = new Error("ETIMEDOUT") as any;
+    const timeoutErr = new Error(
+      "ETIMEDOUT",
+    ) as unknown as NodeJS.ErrnoException;
     timeoutErr.code = "ETIMEDOUT";
 
     vi.mocked(spawnSync).mockReturnValue({
@@ -76,7 +80,7 @@ describe("test-unit runner script", () => {
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
       error: timeoutErr,
-    } as any);
+    } as unknown as ReturnType<typeof spawnSync>);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");
@@ -103,7 +107,7 @@ describe("test-unit runner script", () => {
       stdout: Buffer.from(""),
       stderr: Buffer.from(""),
       error: undefined,
-    } as any);
+    } as unknown as ReturnType<typeof spawnSync>);
 
     // @ts-expect-error script is JS without declaration file
     await import("../../scripts/test-unit.js");
