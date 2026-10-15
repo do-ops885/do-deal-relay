@@ -12,7 +12,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.39, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.40, single source of truth**.
+  2026-10-15 deferred N-3 closed as misconceived (importers use the
+  canonical factory; ADR-025 stands) on top of
   2026-10-15 PEV hygiene (reverify marker fixed, dev-only audit risk
   accepted, validator limitation re-confirmed) on top of
   2026-10-15 queue close-out (#968 verified closed, #973 deps merged,

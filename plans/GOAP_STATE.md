@@ -3,10 +3,29 @@
 **Generated**: 2026-07-06
 **Re-verified:** 2026-10-15
 **Last Updated**: 2026-10-15
-**Version**: 0.19.39
-**Status**: Active — v0.19.39 PEV hygiene (reverify marker, deps disposition, validator re-confirmed); queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
+**Version**: 0.19.40
+**Status**: Active — v0.19.40 closes deferred N-3 as misconceived (importers use the canonical factory; no second console path remains); queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, R-6+P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-15 Deferred N-3 closed as misconceived — v0.19.40
+
+Register v0.19.40. Docs/register only; zero prod change. Re-verified the
+deferred "N-3 importer migration (~115 `global-logger` importers)" premise
+before scheduling the work, and the premise is false:
+
+| Check | Evidence |
+|:---|:---|
+| Importers import the canonical factory | All 139 `global-logger` references are `logger` / `createLogger` / `emitConsole` imports — usage of the single-sourced console logger, exactly per ADR-025 design |
+| No migration target exists | `lib/logger/index.ts` exports run-log storage only (types/structured/legacy/query/export); it has no console factory to migrate callers to — migration would be a layering violation |
+| Single `createLogger` definition | Sole definition in `worker/lib/global-logger.ts`; `bot/lib/logger.ts` is thin re-exports per ADR-025 |
+| Single console-routing path | 0 direct `console.*` calls in `worker/lib/logger/structured.ts`; `emitConsole` used in exactly the 3 ADR-025 places |
+
+Disposition: N-3 CLOSED (true duplication was already consolidated in v0.19.6;
+the residual importer count measures adoption of the canonical factory, not
+duplication). Dropped from the deferred menu. ADR-025 stands unchanged.
 
 ---
 
