@@ -42,12 +42,12 @@
     "cheerio": "^1.2.0",
     "discord.js": "^14.27.0",
     "telegraf": "^4.16.3",
-    "zod": "^4.6.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",
-    "@cloudflare/workers-types": "^5.20261012.1",
-    "@playwright/test": "^1.64.0",
+    "@cloudflare/workers-types": "^5.20261015.1",
+    "@playwright/test": "^1.64.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "^4.1.11",
@@ -59,7 +59,7 @@
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
-    "wrangler": "^4.149.0"
+    "wrangler": "^4.151.0"
   },
   "overrides": {
     "esbuild": ">=0.28.1",
@@ -68,7 +68,7 @@
     "fast-xml-builder": "1.2.0",
     "undici": "6.28.1",
     "uuid": "14.0.0",
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.64.1",
     "ws": "8.21.0",
     "engine.io-client": "6.6.5",
     "form-data": "4.0.6",
