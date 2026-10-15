@@ -1,11 +1,33 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Last Updated**: 2026-10-13
-**Version**: 0.19.36
-**Status**: Active — F-12 test `as any` residue CLOSED 2026-10-06 (0 in tests/, 0 in worker/; 5-agent swarm, zero prod change). Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` in each env. IMP-2 external OTEL export + IMP-3 build-once stay owner/CI scope. Deferred menu: N-3 logging migration (115 importers), F-4 DO cutover remainder, IMP-1 dashboard decision.
+**Last Updated**: 2026-10-15
+**Version**: 0.19.37
+**Status**: Active — v0.19.37 plans compaction + F-12 re-close (docs/register + test-only, zero prod change); F-12 residue RE-CLOSED 2026-10-15 (0 in tests/, 0 in worker/). v0.19.36 (2026-10-13 wiring sweep, ADR-033) kept intact below. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: N-3, F-4, IMP-1, R-6+P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-15 Plans compaction + F-12 re-close — v0.19.37
+
+Register v0.19.37. Docs/register + test-only; zero prod change. Rebases the
+stale v0.19.35-based compaction onto main v0.19.36 (2026-10-13 wiring sweep
+W-1..W-8, ADR-033, 245 files / 3168 tests) — that section is kept intact below.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| plans compaction | Full compact — ~30 SPECs/PEVs/PROGRESS/FOLLOWUPs + jules-audit archived to `reports/archived_plans/`, ~20 kept | `git mv` batch, INDEX backfill |
+| codecov #968 | OPEN — OIDC fix merged via #970 (`dc00291`), but issue still OPEN; verify upload green then close | issue #968, PR #970 |
+| Jules #973 | OPEN — patch/minor, additions 180 / deletions 113 | PR #973 |
+| F-12 regression | RE-CLOSED 2026-10-15 — post-10-06 `as any` counts re-typed (`jwt-auth.test.ts` `as unknown as Env`, `test-unit-runner.test.ts` typed spies/returns) | grep `as any` 0/0, tsc clean |
+| Sept/Oct docs deltas | Docs-only record: trace/log sampling 1.0 vs recommended 0.1/0.01, OTLP destinations commented, `compatibility_date 2026-06-13` stale, non-standard `secrets.required`, staging KV reuse TODO #907, D1 name mismatch, queue `max_retries: 10` + DLQ undefined | wrangler/docs diff |
+| owner-blocked | OPS-1..4 + IMP-2/3 unchanged (owner/CI scope) | register |
+| deferred | N-3, F-4, IMP-1, R-6+P3-17 unchanged | register |
+
+Verification: `npx tsc --noEmit` clean; `npm run test:unit` 245 files / 3168 tests green (matches rebased main baseline); `npm run lint` + `fmt:check` clean; `./scripts/quality_gate.sh` exit 0; skill-eval PASS. No prod runtime touched.
+
+Open follow-ups: close #968 on green upload, review #973, prod D1 apply, queues create per env. Detail: [PROGRESS-2026-10-15](PROGRESS-2026-10-15.md).
 
 ---
 
@@ -37,6 +59,8 @@ Remaining after this sweep: OPS-1..OPS-4 (prod D1 v13/v14, queues, seeding,
 external credentials), IMP-1 dashboard epic, IMP-2 external OTEL export,
 IMP-3 build-once promote, N-3 importer migration (ADR-025), F-4 DO cutover
 remainder (ADR-017/ADR-022), R-6 ai-gateway gating, REDDIT-6.
+
+---
 
 ## 2026-10-06 F-12 test as-any residue cleanup — v0.19.35
 

@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-13. Active set is intentionally small; completed
+**Last Updated**: 2026-10-15. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,7 +12,8 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.36, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.37, single source of truth**.
+  2026-10-15 plans compaction (Full compact archived, [PROGRESS](PROGRESS-2026-10-15.md)) + F-12 re-close on top of
   2026-10-13 missing-wiring sweep: `GET /api/admin/ci-status`,
   `GET /api/log?trace_id=` + `structured-jsonl`,
   `GET /api/nlq/saved/:id`, `POST /api/admin/referrals/reconcile`,
@@ -20,7 +21,8 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   adoption (245 files / 3168 tests green). Codecov OIDC policy:
   [ADR-033](ADR-033-codecov-oidc-upload-credentials.md).
   Full inventory (P0–P3, deferred, blocked). F-12 test `as any`
-  residue CLOSED 2026-10-06 ([SPEC](SPEC-f12-asany-residue.md);
+  residue CLOSED 2026-10-06
+  ([SPEC](../reports/archived_plans/SPEC-f12-asany-residue.md);
   0 in tests/, 0 in worker/; 229 files / 3065 tests green).
   2026-10-04 gap-audit findings implemented 2026-10-05 (NI-1/NI-2/IMP-4/IMP-5/IMP-6,
   [ADR-032](ADR-032-feature-flag-governance.md)). Remaining: prod D1
@@ -30,12 +32,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   audit. All 17 items from the 2026-08-15 audit re-verified closed; two
   new findings (route-level flag enforcement, dead `ai_extractor_scraper`
   flag) plus six improvement candidates. **NI-1/NI-2/IMP-4/IMP-5/IMP-6
-  implemented 2026-10-05** ([SPEC](SPEC-flag-governance-and-hardening-2026-10-05.md),
+  implemented 2026-10-05**
+  ([SPEC](../reports/archived_plans/SPEC-flag-governance-and-hardening-2026-10-05.md),
   [ADR-032](ADR-032-feature-flag-governance.md)).
-- [Gap Analysis 2026-08-15](GAP-ANALYSIS-2026-08-15.md) — Static audit of
-  missing implementations and test-coverage gaps behind the 2026-08
-  swarm runs. **All items verified closed 2026-10-04** (see 2026-10-04
-  audit, section 1).
 - [Reddit Post Lifecycle Spec](SPEC-reddit-post-lifecycle.md) — **Active**.
   Opt-in, fail-closed Reddit publication and moderation client.
   REDDIT-1–5 complete, REDDIT-6 blocked on
@@ -83,28 +82,49 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   credentials: OIDC when no token, advisory upload; owner applies the
   workflow patch (agent credential lacks `workflows` permission).
 
-## Completed Specs (kept as GOAP evidence)
+## Completed Specs (archived 2026-10-15 — pointers to `reports/archived_plans/`)
 
-- [SPEC-missing-impl-sweep](SPEC-missing-impl-sweep.md) — Shipped #750.
-- [SPEC-f11-strict-ts-flags](SPEC-f11-strict-ts-flags.md) — Shipped #745.
-- [SPEC-deal-alerts-764](SPEC-deal-alerts-764.md) — Shipped #824/#853.
-- [SPEC-exactOptionalPropertyTypes-768](SPEC-exactOptionalPropertyTypes-768.md)
-  — Shipped; #768 closed 2026-09-13.
-- [SPEC-zod-v4-migration](SPEC-zod-v4-migration.md) — Shipped; zod ^4.6.5.
-- [SPEC-n3-logging-consolidation](SPEC-n3-logging-consolidation.md) —
+- [SPEC-missing-impl-sweep](../reports/archived_plans/SPEC-missing-impl-sweep.md) —
+  Shipped #750.
+- [SPEC-f11-strict-ts-flags](../reports/archived_plans/SPEC-f11-strict-ts-flags.md) —
   Shipped #745.
-- [SPEC-self-learning-feedback-full](SPEC-self-learning-feedback-full.md)
-  — Shipped v0.19.1.
-- [SPEC-improvement-swarm-2026-08-25](SPEC-improvement-swarm-2026-08-25.md)
-  — Shipped v0.19.2.
-- [SPEC-pr-triage-and-p1-swarm](SPEC-pr-triage-and-p1-swarm.md),
-  [SPEC-pr-triage-and-improvements-2026-08-29](SPEC-pr-triage-and-improvements-2026-08-29.md)
-  — Shipped v0.19.0.
-- [PEV-d1-boilerplate-dry](PEV-d1-boilerplate-dry.md),
-  [PEV-discovery-circuit-breaker](PEV-discovery-circuit-breaker.md),
-  [PEV-snapshot-optimize](PEV-snapshot-optimize.md) — Shipped v0.19.5.
-- [PROGRESS-2026-08-25](PROGRESS-2026-08-25.md),
-  [PROGRESS-2026-08-31](PROGRESS-2026-08-31.md) — Swarm outcome records.
+- [SPEC-deal-alerts-764](../reports/archived_plans/SPEC-deal-alerts-764.md) —
+  Shipped #824/#853.
+- [SPEC-exactOptionalPropertyTypes-768](../reports/archived_plans/SPEC-exactOptionalPropertyTypes-768.md) —
+  Shipped; #768 closed 2026-09-13.
+- [SPEC-zod-v4-migration](../reports/archived_plans/SPEC-zod-v4-migration.md) —
+  Shipped; zod ^4.6.5.
+- [SPEC-n3-logging-consolidation](../reports/archived_plans/SPEC-n3-logging-consolidation.md) —
+  Shipped #745.
+- [SPEC-self-learning-feedback-full](../reports/archived_plans/SPEC-self-learning-feedback-full.md) —
+  Shipped v0.19.1.
+- [SPEC-improvement-swarm-2026-08-25](../reports/archived_plans/SPEC-improvement-swarm-2026-08-25.md) —
+  Shipped v0.19.2.
+- [SPEC-pr-triage-and-p1-swarm](../reports/archived_plans/SPEC-pr-triage-and-p1-swarm.md),
+  [SPEC-pr-triage-and-improvements-2026-08-29](../reports/archived_plans/SPEC-pr-triage-and-improvements-2026-08-29.md) —
+  Shipped v0.19.0.
+- [SPEC-f12-asany-residue](../reports/archived_plans/SPEC-f12-asany-residue.md) —
+  Shipped; F-12 residue CLOSED 2026-10-06.
+- [SPEC-flag-governance-and-hardening-2026-10-05](../reports/archived_plans/SPEC-flag-governance-and-hardening-2026-10-05.md) —
+  Shipped 2026-10-05 (NI-1/NI-2/IMP-4/IMP-5/IMP-6).
+- [SPEC-rl1-rate-limit-binding](../reports/archived_plans/SPEC-rl1-rate-limit-binding.md) —
+  Archived 2026-10-15; gates on ADR-017 phase 2.
+- [SPEC-workflow-shadow-763](../reports/archived_plans/SPEC-workflow-shadow-763.md),
+  [SPEC-workflow-shadow-wave2-763](../reports/archived_plans/SPEC-workflow-shadow-wave2-763.md),
+  [SPEC-workflow-shadow-wave3-763](../reports/archived_plans/SPEC-workflow-shadow-wave3-763.md),
+  [SPEC-workflow-cutover-wave4-763](../reports/archived_plans/SPEC-workflow-cutover-wave4-763.md) —
+  Archived 2026-10-15.
+- [SPEC-test-gaps-t2-t3-t4](../reports/archived_plans/SPEC-test-gaps-t2-t3-t4.md) —
+  Archived 2026-10-15.
+- [SPEC-ci-unblock-full-hygiene](../reports/archived_plans/SPEC-ci-unblock-full-hygiene.md) —
+  Archived 2026-10-15.
+- [PEV-d1-boilerplate-dry](../reports/archived_plans/PEV-d1-boilerplate-dry.md),
+  [PEV-discovery-circuit-breaker](../reports/archived_plans/PEV-discovery-circuit-breaker.md),
+  [PEV-snapshot-optimize](../reports/archived_plans/PEV-snapshot-optimize.md) —
+  Shipped v0.19.5.
+- [PROGRESS-2026-08-25](../reports/archived_plans/PROGRESS-2026-08-25.md),
+  [PROGRESS-2026-08-31](../reports/archived_plans/PROGRESS-2026-08-31.md) —
+  Swarm outcome records.
 
 ## Process Docs (kept in place)
 
@@ -113,19 +133,37 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   `scripts/pev-gates.sh` and the `pev-loop`, `goap-agent`,
   `validation-gates`, and `multi-agent-orchestration` skills.
 
-## Historical Reference (kept in place, not active)
+## Historical Reference (archived 2026-10-15 — pointers, all resolved)
 
-- [GitHub Automation](github-automation-plan.md) — Mostly complete since
-  2026-06-30; auto-merge live.
-- [FOLLOWUP: Deployment Fix](FOLLOWUP-deployment-fix.md) — Resolved;
-  staging health-check root cause and options.
-- [FOLLOWUP: E2E Local Env Setup](FOLLOWUP-e2e-local-env-setup.md) —
-  Closed; auth setup infrastructure shipped.
-- [FOLLOWUP: P3 Features](FOLLOWUP-p3-features.md) — Semantic search
-  complete; dashboard deferred to separate project.
-- [FOLLOWUP: Issues Not Addressed](FOLLOWUP-issues-not-addressed.md) —
-  Rollback-issue wave root-caused 2026-07-17; zero open issues.
-- `jules-audit/` — Dated Jules audit snapshots.
+- [GitHub Automation](../reports/archived_plans/github-automation-plan.md) —
+  Mostly complete since 2026-06-30; auto-merge live. Archived 2026-10-15.
+- [FOLLOWUP: Deployment Fix](../reports/archived_plans/FOLLOWUP-deployment-fix.md) —
+  Resolved; staging health-check root cause and options. Archived
+  2026-10-15 as resolved.
+- [FOLLOWUP: E2E Local Env Setup](../reports/archived_plans/FOLLOWUP-e2e-local-env-setup.md) —
+  Closed; auth setup infrastructure shipped. Archived 2026-10-15 as
+  resolved.
+- [FOLLOWUP: P3 Features](../reports/archived_plans/FOLLOWUP-p3-features.md) —
+  Semantic search complete; dashboard deferred to separate project.
+  Archived 2026-10-15 as resolved.
+- [FOLLOWUP: Issues Not Addressed](../reports/archived_plans/FOLLOWUP-issues-not-addressed.md) —
+  Rollback-issue wave root-caused 2026-07-17; zero open issues. Archived
+  2026-10-15 as resolved.
+- `jules-audit/` (archived 2026-10-15 to
+  `reports/archived_plans/jules-audit/`) — Dated Jules audit snapshots.
+
+## Archived 2026-10-15 (Wave 1A)
+
+Moved from `plans/` to `reports/archived_plans/` (filenames identical;
+`jules-audit/` moved as a directory):
+
+- `GAP-ANALYSIS-2026-08-15.md` (was Active; all items verified closed
+  2026-10-04, see [Gap Analysis 2026-10-04](GAP-ANALYSIS-2026-10-04.md)
+  section 1) — now
+  [archived](../reports/archived_plans/GAP-ANALYSIS-2026-08-15.md).
+- 19 SPECs, 3 PEVs, 2 PROGRESS records, 4 FOLLOWUPs, 1 automation plan,
+  and `jules-audit/` — see Completed Specs and Historical Reference
+  pointers above.
 
 ## Archived 2026-09-05
 

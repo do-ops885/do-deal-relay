@@ -62,7 +62,7 @@ describe("JWT Utilities", () => {
       new Request("https://example.com/api/deals", {
         headers: { Authorization: `Bearer ${refreshToken}` },
       }),
-      { JWT_SECRET: secret } as any,
+      { JWT_SECRET: secret } as unknown as Env,
     );
     expect(auth.authenticated).toBe(false);
     expect(auth.error).toBe("Refresh tokens cannot be used as access tokens");
