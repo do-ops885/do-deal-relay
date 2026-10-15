@@ -28,6 +28,16 @@ export async function handleCreateApiKey(
       );
     }
 
+    // Security check: Validate role against permitted API key roles
+    const ALLOWED_API_KEY_ROLES = ["admin", "user", "readonly"] as const;
+    if (!ALLOWED_API_KEY_ROLES.includes(body.role as any)) {
+      return jsonResponse(
+        { error: "Invalid role. Allowed roles: admin, user, readonly" },
+        400,
+        request,
+      );
+    }
+
     const config: ApiKeyConfig = {
       key: "", // Will be generated
       userId: body.userId,
