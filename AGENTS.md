@@ -64,6 +64,7 @@ Local pre-push: `npm run lint && npm run test:unit && ./scripts/quality_gate.sh`
 - Every PR verifies end to end: unit, integration, E2E, lint, typecheck, security and quality gates green. Do not merge with failing or skipped required checks.
 - Resolve every review comment (human or bot) with a fix commit or a reply. No unresolved threads at merge.
 - Merge the PR once all threads are resolved and all required checks are green — do not leave a ready PR open and do not ask whether to merge.
+- Never wait for a human when the gate is fully green: take over any ready PR (including bot-authored ones), rebase onto main, trim out-of-scope churn, re-validate, then merge.
 - If CI fails after push, fix it in the same PR. Never open a follow-up PR to repair CI.
 - Full Mode PRs carry the `plans/GOAP_STATE.md` version bump plus ADR/spec updates.
 - Required checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Validate Skills`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL (actions, javascript-typescript)`, `Codacy Static Code Analysis`, `Workers Builds`.

@@ -84,7 +84,7 @@ agents:
 ## Red Flags
 - Merging a PR while any of `Type Check`, `Unit Tests`, `Quality Gate`, or `Validate Skills` is failing.
 - Force-pushing over other contributors' commits without their approval.
-- Bot-author PRs that bypass the human merge decision (Human Boundaries rule 3).
+- Bot-author PRs merged without verification to green and without resolving every thread (standing owner order: verify, take over, re-validate, then merge — never wait for a human when the gate is fully green).
 - Resolving a CI failure by reverting the very file the PR modified.
 - Skipping `--delete-branch` after merge, leaving stale head pointers.
 - Stopping at a local commit or asking the user whether to push or open the PR instead of doing it unprompted once local gates pass.
