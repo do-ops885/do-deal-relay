@@ -75,19 +75,20 @@ function tokenizeQuery(normalizedQuery: string): string[] {
     .filter((t) => (t.endsWith("*") ? t.length > 2 : t.length > 1));
 }
 
+export interface PreparedDeal {
+  deal: Deal;
+  combinedDealText: string;
+  dealTokens: Set<string>;
+  dealDomain: string;
+  dealCategories: string;
+}
+
 /**
- * Score a single deal against a query string using FTS5-parity token
- * matching (exact/prefix tokens) with phrase and domain/category boosts.
- * Returns a score between 0.0 and 1.0.
+ * Precompute normalized text, categories, domain, and token set for a deal.
+ * Calling this once per deal in batch processing avoids redundant string
+ * concatenation, lowercasing, and token Set allocations across M queries.
  */
-export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
-  if (!queryStr || !queryStr.trim()) return 0;
-
-  const normalizedQuery = queryStr.toLowerCase().trim();
-  const queryTokens = tokenizeQuery(normalizedQuery);
-
-  if (queryTokens.length === 0) return 0;
-
+export function prepareDeal(deal: Deal): PreparedDeal {
   const dealTitle = (deal.title || "").toLowerCase();
   const dealDescription = (deal.description || "").toLowerCase();
   const dealCode = (deal.code || "").toLowerCase();
@@ -101,6 +102,33 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
 
   const combinedDealText = `${dealTitle} ${dealDescription} ${dealCode} ${dealDomain} ${dealCategories} ${dealTags}`;
   const dealTokens = new Set(tokenizeDealText(combinedDealText));
+
+  return {
+    deal,
+    combinedDealText,
+    dealTokens,
+    dealDomain,
+    dealCategories,
+  };
+}
+
+/**
+ * Score a pre-tokenized deal against a query string using FTS5-parity token
+ * matching (exact/prefix tokens) with phrase and domain/category boosts.
+ * Returns a score between 0.0 and 1.0.
+ */
+export function scorePreparedDeal(
+  prepared: PreparedDeal,
+  queryStr: string,
+): number {
+  if (!queryStr || !queryStr.trim()) return 0;
+
+  const normalizedQuery = queryStr.toLowerCase().trim();
+  const queryTokens = tokenizeQuery(normalizedQuery);
+
+  if (queryTokens.length === 0) return 0;
+
+  const { combinedDealText, dealTokens, dealDomain, dealCategories } = prepared;
 
   // Phrase match bonus (FTS5 "..." semantics): multi-word queries appearing
   // verbatim. Single-token queries skip this on purpose — a lone token must
@@ -133,6 +161,15 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
   }
 
   return tokenRatio;
+}
+
+/**
+ * Score a single deal against a query string using FTS5-parity token
+ * matching (exact/prefix tokens) with phrase and domain/category boosts.
+ * Returns a score between 0.0 and 1.0.
+ */
+export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
+  return scorePreparedDeal(prepareDeal(deal), queryStr);
 }
 
 /**
@@ -170,15 +207,20 @@ export async function matchAndNotifySubscriptions(
   let notificationsSent = 0;
   const complianceLogger = createComplianceLogger(env.DEALS_DB);
 
+  // Performance optimization: Pre-tokenize deals once O(N) before subscription matching loop.
+  // Eliminates O(N * M) redundant string concatenations, lowercasing, and Set tokenizations
+  // across M active subscriptions.
+  const preparedDeals = deals.map(prepareDeal);
+
   for (const sub of subscriptions) {
     const query = sub.query || "";
     if (!query) continue;
 
     const matchedDeals: Deal[] = [];
-    for (const deal of deals) {
-      const score = scoreDealAgainstQuery(deal, query);
+    for (const prepared of preparedDeals) {
+      const score = scorePreparedDeal(prepared, query);
       if (score >= sub.threshold) {
-        matchedDeals.push(deal);
+        matchedDeals.push(prepared.deal);
       }
     }
 

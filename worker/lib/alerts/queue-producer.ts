@@ -5,7 +5,11 @@ import {
   type AlertFrequency,
   type AlertSubscriptionRow,
 } from "../d1/alert-subscriptions";
-import { scoreDealAgainstQuery, matchAndNotifySubscriptions } from "./matcher";
+import {
+  prepareDeal,
+  scorePreparedDeal,
+  matchAndNotifySubscriptions,
+} from "./matcher";
 import {
   capMatchesPerSubscription,
   capPublishMessages,
@@ -57,13 +61,16 @@ export async function enqueueAlertBatch(
   const proposed: AlertQueueMessage[] = [];
   let digestRollover = 0;
 
+  // Performance optimization: Pre-tokenize deals once O(N) before subscription matching loop.
+  const preparedDeals = deals.map(prepareDeal);
+
   for (const sub of subs) {
     const query = sub.query || "";
     if (!query) continue;
     const matchedIds: string[] = [];
-    for (const deal of deals) {
-      if (scoreDealAgainstQuery(deal, query) >= sub.threshold) {
-        matchedIds.push(deal.id);
+    for (const prepared of preparedDeals) {
+      if (scorePreparedDeal(prepared, query) >= sub.threshold) {
+        matchedIds.push(prepared.deal.id);
       }
     }
     if (matchedIds.length === 0) continue;
