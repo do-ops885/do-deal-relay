@@ -1,6 +1,6 @@
 # Input Methods Swarm Handoff Protocol
 
-**Version**: 0.1.8
+**Version**: 0.1.9
 **Swarm**: input-methods-swarm
 **Date\*\*: 2026-04-01
 
