@@ -11,6 +11,7 @@
     "dev": "bash scripts/generate-version.sh && wrangler dev --port 8787",
     "docs:check": "bash scripts/update-docs.sh --check",
     "docs:update": "bash scripts/update-docs.sh",
+    "flashoffer": "esbuild scripts/flashoffer-entry.ts --bundle --platform=node --format=esm --outfile=/tmp/opencode/flashoffer-entry.mjs --log-level=error && node /tmp/opencode/flashoffer-entry.mjs",
     "fmt:check": "prettier --check .",
     "fmt:fix": "prettier --write .",
     "lint": "tsc --noEmit && prettier --check .",

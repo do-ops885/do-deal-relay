@@ -1,12 +1,29 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Re-verified:** 2026-10-15
-**Last Updated**: 2026-10-15
-**Version**: 0.19.40
-**Status**: Active — v0.19.40 closes deferred N-3 as misconceived (importers use the canonical factory; no second console path remains); queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, R-6+P3-17.
+**Re-verified:** 2026-10-16
+**Last Updated**: 2026-10-16
+**Version**: 0.19.41
+**Status**: Active — v0.19.41 fixes dual-write re-save FK failure (upsert `last_row_id` never trusted; resolved via SELECT). Queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, R-6+P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-16 dual-write re-save FK fix — v0.19.41
+
+Register v0.19.41. Prod fix (1 file) + regression tests, via GOAP swarm
+(3 parallel agents: fix / test / official-docs research).
+
+| Item | Disposition | Evidence |
+|:---|:---|:---|
+| `storeReferralDual` re-save `FOREIGN KEY constraint failed` | FIXED — `insertDeal` upserts via `ON CONFLICT(deal_id) DO UPDATE`, so D1 `last_row_id` is stale/0 on the conflict path. The follow-up `insertReferralCode` now resolves the numeric id with `SELECT id FROM deals WHERE deal_id = ?`; lookup miss is logged and skipped, never failing the call (KV stays primary) | `worker/lib/referral-storage/dual-write.ts:140-163` (file 458 lines, under 500) |
+| Fix pattern choice | Research-backed: official D1 docs define `last_row_id` only as "the last inserted row ID" (no upsert semantics); SQLite leaves `last_insert_rowid()` unchanged on conflict-update. `SELECT`-by-natural-key chosen over `RETURNING id` (extra read, zero version risk) | D1 return-object docs, sqlite.org `lang_returning` / `last_insert_rowid` |
+| Regression coverage | NEW `tests/unit/dual-write-resave.test.ts` (faithful SQLite semantics: stale rowid 0 + FK enforcement; fails pre-fix, passes post-fix). Updated 3 tests in `dual-write.storeReferralDual.test.ts` to the lookup contract | 2/2 new + 8/8 existing green; referral-storage + bulk suites 97/97 green |
+
+Verification: `npx tsc --noEmit` clean; `prettier --check` clean on all
+touched files; no other `insertDeal` callers exist (sole D1 consumer is
+`storeReferralDual`).
 
 ---
 

@@ -14,39 +14,42 @@ const { mockInsertDeal, mockInsertReferralCode } = vi.hoisted(() => ({
   mockInsertReferralCode: vi.fn(),
 }));
 
-const { mockCreateD1Client, setMockD1Client } = vi.hoisted(() => {
-  let currentMockClient: ReturnType<typeof createFreshMockD1Client> | null =
-    null;
+const { mockCreateD1Client, setMockD1Client, getMockD1Client } = vi.hoisted(
+  () => {
+    let currentMockClient: ReturnType<typeof createFreshMockD1Client> | null =
+      null;
 
-  function createFreshMockD1Client() {
+    function createFreshMockD1Client() {
+      return {
+        execute: vi.fn().mockResolvedValue({ success: true, lastRowId: 1 }),
+        query: vi.fn().mockResolvedValue({ success: true, data: [] }),
+        queryFirst: vi.fn().mockResolvedValue({ success: true, data: null }),
+        queryWithJson: vi.fn().mockResolvedValue({ success: true, data: [] }),
+        raw: vi.fn().mockResolvedValue({ success: true }),
+        batch: vi.fn().mockResolvedValue({ success: true, results: [] }),
+        batchInsert: vi.fn().mockResolvedValue({ success: true }),
+        insertWithJson: vi.fn().mockResolvedValue({ success: true }),
+        prepare: vi.fn(),
+        runPrepared: vi.fn(),
+        transaction: vi.fn(),
+        getBookmark: vi.fn(),
+      };
+    }
+
     return {
-      execute: vi.fn().mockResolvedValue({ success: true, lastRowId: 1 }),
-      query: vi.fn().mockResolvedValue({ success: true, data: [] }),
-      queryFirst: vi.fn().mockResolvedValue({ success: true, data: null }),
-      queryWithJson: vi.fn().mockResolvedValue({ success: true, data: [] }),
-      raw: vi.fn().mockResolvedValue({ success: true }),
-      batch: vi.fn().mockResolvedValue({ success: true, results: [] }),
-      batchInsert: vi.fn().mockResolvedValue({ success: true }),
-      insertWithJson: vi.fn().mockResolvedValue({ success: true }),
-      prepare: vi.fn(),
-      runPrepared: vi.fn(),
-      transaction: vi.fn(),
-      getBookmark: vi.fn(),
+      mockCreateD1Client: vi.fn(() => {
+        if (!currentMockClient) {
+          currentMockClient = createFreshMockD1Client();
+        }
+        return currentMockClient;
+      }),
+      setMockD1Client: (client: ReturnType<typeof createFreshMockD1Client>) => {
+        currentMockClient = client;
+      },
+      getMockD1Client: () => currentMockClient,
     };
-  }
-
-  return {
-    mockCreateD1Client: vi.fn(() => {
-      if (!currentMockClient) {
-        currentMockClient = createFreshMockD1Client();
-      }
-      return currentMockClient;
-    }),
-    setMockD1Client: (client: ReturnType<typeof createFreshMockD1Client>) => {
-      currentMockClient = client;
-    },
-  };
-});
+  },
+);
 
 vi.mock("../../../worker/lib/logger", () => ({
   createStructuredLogger: vi.fn(() => ({
@@ -147,7 +150,12 @@ describe("storeReferralDual", () => {
   it("should store referral to KV and D1 when dual-write is enabled", async () => {
     const referral = createMockReferral({ id: "ref-001" });
     mockStoreInKV.mockResolvedValue(referral);
-    mockInsertDeal.mockResolvedValue({ success: true, id: 42 });
+    // upsert ids are resolved via SELECT, not last_row_id
+    mockInsertDeal.mockResolvedValue({ success: true, id: 0 });
+    getMockD1Client()?.queryFirst.mockResolvedValue({
+      success: true,
+      data: { id: 42 },
+    });
     mockInsertReferralCode.mockResolvedValue({ success: true, id: 1 });
 
     const result = await storeReferralDual(
@@ -159,6 +167,10 @@ describe("storeReferralDual", () => {
     expect(mockStoreInKV).toHaveBeenCalledWith(expect.any(Object), referral);
     expect(mockInsertDeal).toHaveBeenCalledTimes(1);
     expect(mockInsertReferralCode).toHaveBeenCalledTimes(1);
+    expect(mockInsertReferralCode).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ deal_id: 42 }),
+    );
     expect(result).toEqual(referral);
   });
 
@@ -214,7 +226,11 @@ describe("storeReferralDual", () => {
   it("should not fail when insertDeal succeeds but insertReferralCode fails", async () => {
     const referral = createMockReferral({ id: "ref-003" });
     mockStoreInKV.mockResolvedValue(referral);
-    mockInsertDeal.mockResolvedValue({ success: true, id: 42 });
+    mockInsertDeal.mockResolvedValue({ success: true, id: 0 });
+    getMockD1Client()?.queryFirst.mockResolvedValue({
+      success: true,
+      data: { id: 42 },
+    });
     mockInsertReferralCode.mockRejectedValue(
       new Error("Referral code insert failed"),
     );
@@ -231,10 +247,11 @@ describe("storeReferralDual", () => {
     expect(result).toEqual(referral);
   });
 
-  it("should not try insertReferralCode when insertDeal returns no id", async () => {
+  it("should skip insertReferralCode when the deal row lookup misses", async () => {
     const referral = createMockReferral({ id: "ref-004" });
     mockStoreInKV.mockResolvedValue(referral);
     mockInsertDeal.mockResolvedValue({ success: true, id: undefined });
+    // default queryFirst mock resolves { data: null } -> lookup miss
 
     const result = await storeReferralDual(
       createMockEnv({ DEALS_DB: {} as unknown as Env["DEALS_DB"] }),
@@ -244,6 +261,7 @@ describe("storeReferralDual", () => {
     expect(mockStoreInKV).toHaveBeenCalledTimes(1);
     expect(mockInsertDeal).toHaveBeenCalledTimes(1);
     expect(mockInsertReferralCode).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalled();
     expect(result).toEqual(referral);
   });
 
