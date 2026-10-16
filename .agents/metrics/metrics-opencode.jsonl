@@ -42,3 +42,7 @@
 {"timestamp": "2026-10-15T18:02:00Z", "agent": "opencode", "task": "pev hygiene audit + v0.19.39 PR 978 merged; healed corrupt npm cache", "status": "completed"}
 {"timestamp": "2026-10-15T18:20:00Z", "agent": "opencode", "task": "re-verified N-3 premise, closed as misconceived v0.19.40 PR 979", "status": "completed"}
 {"timestamp": "2026-10-16T12:52:00Z", "agent": "opencode", "task": "pr-resolver: merged PRs 980, 981, 982, 983 with rebase and CI green on main", "status": "completed"}
+{"timestamp": "2026-10-16T13:00:25.831419+00:00", "agent": "opencode", "task": "housekeeping PR 984 ci-status refresh + metrics flush, auto-merge enabled", "status": "completed"}
+{"timestamp": "2026-10-16T13:02:41.882975+00:00", "agent": "opencode", "task": "verify PR 984 merged, main synced to 1ae54b4, branch cleaned", "status": "completed"}
+{"timestamp": "2026-10-16T13:11:08.620435+00:00", "agent": "opencode", "task": "flashoffer real save/load/daily-verify entry", "status": "completed"}
+{"timestamp": "2026-10-16T13:29:49.728885+00:00", "agent": "opencode-goap", "task": "goap swarm: dual-write upsert FK fix + regression tests + docs research", "status": "completed"}

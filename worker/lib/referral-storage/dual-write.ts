@@ -138,11 +138,28 @@ export async function storeReferralDual(
       });
 
       // Then insert the referral code if deal was successful
-      if (dealResult.success && dealResult.id) {
-        await insertReferralCode(env.DEALS_DB, {
-          ...referral,
-          deal_id: dealResult.id,
-        });
+      // last_row_id is unreliable on upserts (CONFLICT/UPDATE inserts no
+      // row), so resolve the numeric deal row id with a real lookup.
+      if (dealResult.success) {
+        const dealKey = referral.id || `ref_${referral.code}`;
+        const client = createD1Client(env.DEALS_DB);
+        const dealRow = await client.queryFirst<{ id: number }>(
+          "SELECT id FROM deals WHERE deal_id = ?",
+          [dealKey],
+        );
+        const resolvedDealId = dealRow.data?.id;
+        if (typeof resolvedDealId !== "number") {
+          await logDualWriteError(
+            env,
+            "storeReferral",
+            new Error(`Deal row not found for deal_id: ${dealKey}`),
+          );
+        } else {
+          await insertReferralCode(env.DEALS_DB, {
+            ...referral,
+            deal_id: resolvedDealId,
+          });
+        }
       }
     } catch (error) {
       // Log but don't fail - KV is still the primary
