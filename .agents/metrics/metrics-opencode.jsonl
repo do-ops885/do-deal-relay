@@ -30,3 +30,15 @@
 {"timestamp": "2026-10-02T11:18:05.119969+00:00", "agent": "opencode", "task": "pr-resolver: merged PRs 855,856,857 via squash, main CI green, zero open PRs", "status": "completed"}
 {"timestamp": "2026-10-03T11:10:00Z", "agent": "opencode", "task": "pr triage 865 merge + 864 close, step-2 alerts rebase onto main, pr 866 opened", "status": "completed"}
 {"timestamp": "2026-10-03T17:02:00Z", "agent": "opencode", "task": "roast pr 866 and fix two merge blockers (swallowed retries, missing ai act log), merge 866", "status": "completed"}
+{"timestamp": "2026-10-13T10:10:00Z", "agent": "opencode", "task": "implement all 18 open issues PR 969 merged", "status": "completed"}
+{"timestamp": "2026-10-13T10:44:46Z", "agent": "opencode", "task": "fix CI codecov OIDC-only upload on main", "status": "completed"}
+{"timestamp": "2026-10-13T10:48:44Z", "agent": "opencode", "task": "open PR 970 for CI codecov OIDC fix", "status": "completed"}
+{"timestamp": "2026-10-13T10:52:43Z", "agent": "opencode", "task": "monitor PR 970 CI to green, all 25 checks success", "status": "completed"}
+{"timestamp": "2026-10-15T07:00:00Z", "agent": "opencode", "task": "plans full compact + v0.19.36 reconcile + f-12 re-close", "status": "completed"}
+{"timestamp": "2026-10-15T07:17:00Z", "agent": "opencode", "task": "push PR 974 validate-all-green merge + codify always-PR rule in AGENTS.md/pr-resolver", "status": "completed"}
+{"timestamp": "2026-10-15T07:30:00Z", "agent": "opencode", "task": "verify codecov green close-968 + triage conflicting bot PR 973", "status": "completed"}
+{"timestamp": "2026-10-15T07:59:00Z", "agent": "opencode", "task": "revive-verify-merge bot PR 973 + codify autonomous-merge rule PR 975", "status": "completed"}
+{"timestamp": "2026-10-15T08:20:00Z", "agent": "opencode", "task": "register close-out v0.19.38 + ci-status refresh PR 976", "status": "completed"}
+{"timestamp": "2026-10-15T18:02:00Z", "agent": "opencode", "task": "pev hygiene audit + v0.19.39 PR 978 merged; healed corrupt npm cache", "status": "completed"}
+{"timestamp": "2026-10-15T18:20:00Z", "agent": "opencode", "task": "re-verified N-3 premise, closed as misconceived v0.19.40 PR 979", "status": "completed"}
+{"timestamp": "2026-10-16T12:52:00Z", "agent": "opencode", "task": "pr-resolver: merged PRs 980, 981, 982, 983 with rebase and CI green on main", "status": "completed"}
