@@ -1,6 +1,6 @@
 # Handoff Coordination Protocol
 
-**Version**: 0.1.8
+**Version**: 0.1.9
 **Last Updated**: 2026-04-01
 **Status\*\*: Active
 

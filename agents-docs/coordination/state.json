@@ -39,7 +39,7 @@
   },
   "active_agents": [],
   "current_phase": "pr-401-merged",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "commit": "HEAD",
   "release_status": "stable",
   "agent_status": {},
