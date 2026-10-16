@@ -83,6 +83,14 @@ const ThemeManager = {
   apply(theme) {
     document.documentElement.setAttribute("data-theme", theme);
     safeStorage.set(THEME_KEY, theme);
+    const button = $(SELECTORS.themeToggle);
+    if (button) {
+      const isDark = theme === "dark";
+      button.setAttribute("aria-pressed", isDark ? "true" : "false");
+      const label = isDark ? "Switch to light theme" : "Switch to dark theme";
+      button.setAttribute("aria-label", label);
+      button.setAttribute("title", label);
+    }
   },
   toggle() {
     const current =
