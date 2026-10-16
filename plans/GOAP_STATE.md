@@ -3,10 +3,26 @@
 **Generated**: 2026-07-06
 **Re-verified:** 2026-10-16
 **Last Updated**: 2026-10-16
-**Version**: 0.19.41
-**Status**: Active — v0.19.41 fixes dual-write re-save FK failure (upsert `last_row_id` never trusted; resolved via SELECT). Queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, R-6+P3-17.
+**Version**: 0.19.42
+**Status**: Active — v0.19.42 deferred-menu sweep (4 parallel agents): R-6 CLOSED as superseded (ai-gateway has 6 runtime importers, MI-3 already closed); F-4, IMP-1, P3-17 re-verified STILL-DEFERRED with fresh evidence. Queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, P3-17.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-16 Deferred-menu re-verification sweep — v0.19.42
+
+Register v0.19.42. Docs/register only; zero prod change. 4 parallel
+re-verification agents checked each deferred item against current code:
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| R-6 ai-gateway | CLOSED as superseded — "zero importers" rationale is factually stale: 6 runtime importers (`nlq/ai/intent.ts:11`, `entities.ts:11`, `expansion.ts:10`, `nlq/ai/index.ts:16`, `search/embedding-pipeline.ts:5`, `search/client.ts:20`); MI-3 already CLOSED. Any residual product/cost concern needs a new narrow item | grep importer scan 2026-10-16 |
+| F-4 DO remainder | STILL-DEFERRED — SourceRegistry/DealRegistry touchpoints are best-effort mirror only (`do-mirror.ts`, fire-and-forget, KV/D1 canonical); PipelineLock remains primary per ADR-022 | worker/lib/do-mirror.ts, pipeline/stage.ts:81, publish.ts:132 |
+| IMP-1 dashboard | STILL-DEFERRED — separate-project decision stands; `public/` is vanilla-JS SPA only, zero #298-302 epic commits | FOLLOWUP-p3-features, git log |
+| P3-17 OTEL | STILL-DEFERRED — owner/cost gate holds: OTLP export needs paid plan + vendor backend + secret; GA only shrinks future work to config (~10 lines) | docs/opentelemetry-setup.md, wrangler.jsonc (destinations commented) |
+
+Deferred menu after sweep: F-4, IMP-1, P3-17.
 
 ---
 
@@ -738,7 +754,7 @@ Code for this swarm landed on `main` via 6 commits (`ebe9323`, `b14380a`, `61dbc
 | R-3 | extension/popup.js 512L exceeds `MAX_LINES_PER_SOURCE_FILE=500` (only remaining >500 file) | P2 | WS-D | ✅ CLOSED — `popup.js` 448L + `popup-render.js` 197L; `popup.html` script order verified; commit `3465d06` |
 | R-4 | wrangler.jsonc lacks `"ai"` binding block while `embedding-pipeline.ts` uses `env.AI.run` | P1 | WS-F | ✅ CLOSED — `ai` binding declared top-level + dev + staging + production; commit `b89d69d` |
 | R-5 | Test gaps T-6/T-7/T-8 still open (SourceRegistry DO, d1/trust.ts, lib/expiration helpers) | P2 | WS-E | ✅ CLOSED — 87 tests across 3 files (29/40/28); commit `1b251b4`; 2 latent bugs documented in PROGRESS |
-| R-6 | MI-3 re-verified 2026-08-25: ai-gateway client has zero importers outside module — stays DEFERRED | P2 | deferred | ⬜ DEFERRED — product/cost gating required |
+| R-6 | MI-3 re-verified 2026-08-25: ai-gateway client has zero importers outside module — stays DEFERRED | P2 | deferred | ✅ CLOSED 2026-10-16 as superseded — re-verify found 6 runtime importers (`nlq/ai/*`, `search/*`); MI-3 already closed; see v0.19.42 |
 
 Swarm verification: 194 files / 2727 tests green (+115 vs baseline of 2612), pev-gates 12/13 (only `ci-workflow-validator` = `BLOCKED-3` per `ADR-021`), `tsc --noEmit` clean, `prettier` clean, `markdownlint` clean, `wrangler` dry-run clean. Net -105 lines; `as any` = 0 in `worker/`.
 
