@@ -266,6 +266,7 @@ function openEnv() {
     process.env.FLASHOFFER_STATE_DIR ?? "/tmp/opencode/flashoffer-state";
   mkdirSync(dir, { recursive: true });
   const sqlite = new DatabaseSync(join(dir, "deals.db"));
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: plain Node factory, not a Qwik component
   const kv = (name: string) => new FileKV(dir, name);
   const env = {
     DEALS_SOURCES: kv("sources"),
