@@ -1,96 +1,83 @@
 # Agent Coordination Hub - do-deal-relay
 
-**Workflow Standard**: Agent Hub v0.2.5 (Upstream v0.3.5)
-**Product version**: root `VERSION` only. Never restate or edit version numbers in other files (skill-local semver is governed by `plans/ADR-024-skill-version-independence.md`).
+**Workflow Standard**: Adapted from Upstream Workflow Reference (`github-template-ai-agents` v0.3.5)
+**Product Version**: Single source of truth is root `VERSION` file. Never restate or edit version numbers elsewhere.
 
-## 1. Named Constants & System Limits
+## 1. Core Mandate & Behavioral Contract
 
-| Constant | Value | Enforced by |
+1. **Analyze First**: Deeply inspect repository structure, existing agent infrastructure (`.agents/`), tooling, sub-agents, quality gates, CI setup, and conventions before asking questions.
+2. **Zero Low-Value Questions**: Infrastructure (quality gates, skills, sub-agents, validation scripts, CI rehearsal) exists and works. Never ask if they exist or if incremental changes/quality gates are desired.
+3. **Minimize Clarification Requests**: Infer decisions from existing patterns first. Only request clarification if information cannot be derived from code, multiple valid non-technical interpretations exist, or the decision is explicitly organizational/product-oriented.
+4. **Architectural & Operational Guardrails**:
+   - Preserve `do-deal-relay` architecture: Cloudflare Workers, D1 storage, KV indexes, Durable Objects, and Vectorize.
+   - Make small, incremental changes. Avoid speculative rewrites or altering established validation pipeline logic.
+   - Maintain production reliability and SSRF hardening (`validatedFetch` in `worker/lib/security.ts`).
+
+## 2. Named Constants & System Limits
+
+| Constant | Value | Enforced By |
 | --- | --- | --- |
-| `MAX_LINES_PER_SOURCE_FILE` | 500 | fatal (LOC gate) |
-| `MAX_LINES_PER_SKILL_MD` | 250 | warning (`skill-eval-check.sh`) |
-| `MAX_LINES_AGENTS_MD` | 200 | warning (quality gate) |
+| `MAX_LINES_PER_SOURCE_FILE` | 500 | LOC gate (`quality_gate.sh`) |
+| `MAX_LINES_PER_SKILL_MD` | 250 | `skill-eval-check.sh` |
+| `MAX_LINES_AGENTS_MD` | 200 | Quality gate (`quality_gate.sh`) |
 | `MAX_COMMIT_SUBJECT_LENGTH` | 72 | commitlint |
-| `MAX_PR_TITLE_LENGTH` | 150 | review |
-| `MAX_PR_BODY_LENGTH` | 1000 | review |
-| `TRUST_THRESHOLD` | 0.3 | gate `source_trust` |
-| `DEFAULT_TIMEOUT_SECONDS` | 1800 | agent task budget |
+| `MAX_PR_TITLE_LENGTH` | 150 | Review |
+| `MAX_PR_BODY_LENGTH` | 1000 | Review |
+| `TRUST_THRESHOLD` | 0.3 | `source_trust` gate |
+| `DEFAULT_TIMEOUT_SECONDS` | 1800 | Agent task budget |
 
-- **Hot files** (coordinate before editing): `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `worker/lib/research-agent/fetcher.ts`, `.github/workflows/*.yml`.
-- **Single sources of truth**: this file for agent policy, `VERSION` for the product version, `agents-docs/hard-constraints.md` for guard rails and the bypass protocol, `agents-docs/quality-standards.md` for quality criteria. Link to them, never duplicate them.
+- **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `worker/lib/research-agent/fetcher.ts`, `.github/workflows/*.yml`.
 
-## 2. Analyze-First Mandate & Zero Low-Value Questions
+## 3. Production Safeguards & Canonical Infrastructure
 
-1. **Analyze first**: inspect repo structure, tooling, sub-agents and workflows before asking anything.
-2. **Zero low-value questions**: quality gates, skills, sub-agents and validation scripts exist and work. Do not ask whether they exist.
-3. **Infer conventions**: follow existing patterns (centralized middleware router, D1 schema, strict TypeScript, Durable Objects) instead of requesting external guidance.
+- **SSRF Hardening**: All outbound requests must use `validatedFetch` in `worker/lib/security.ts` to enforce DNS/CIDR validation. Never bypass safety checks.
+- **9-Gate Validation Pipeline**: Submissions pass all 9 gates in `worker/validation/pipeline.ts` (`VALIDATION_GATES`). Never weaken or rewrite gates without explicit specification.
+- **Canonical MCP Tools**: `search_deals` (alias `get_deals`), `get_deal` (alias `get_deal_by_code`), `add_referral` (alias `submit_deal`).
+- **RBAC**: Enforced by `withAuth` in `worker/router/`. `admin` role for `/metrics`, `/api/dora-metrics`, `/dora`, `/api/d1/*`, `/api/status`, feature flags; `user` role for `/api/nlq`, `/api/submit`, deal CRUD.
+- **Banned Patterns**: Hardcoded secrets/tokens, magic numbers, non-null `!` assertions, unused imports, `innerHTML` XSS risks.
 
-## 3. Production Reliability & Operational Safeguards
+## 4. Skill Routing (Load On Demand)
 
-- **SSRF hardening**: all outbound network calls go through `validatedFetch` in `worker/lib/security.ts`. Never bypass DNS/CIDR checks.
-- **Validation pipeline**: submissions must pass all 9 gates in `worker/validation/pipeline.ts` (`VALIDATION_GATES` in `worker/config.ts`). Speculative rewrites are forbidden.
-- **Canonical MCP tools**: `search_deals` (alias `get_deals`), `get_deal` (alias `get_deal_by_code`), `add_referral` (alias `submit_deal`).
-- **RBAC**: `admin` role for `/metrics`, `/api/dora-metrics`, `/dora`, `/api/d1/*`, `/api/status` and feature flags; `user` role for `/api/nlq`, `/api/submit` and referral create/deactivate/reactivate. Enforced by `withAuth` in `worker/router/`.
-- **Banned patterns**: hardcoded secrets, magic numbers, non-null `!` assertions, unused imports.
+Canonical skills reside in `.agents/skills/`. `.claude/`, `.gemini/`, `.qwen/` are symlinks; OpenCode reads the canonical path. Load skills as needed (`skill <name>`) to preserve context.
 
-## 4. Skill Routing (load on demand)
-
-Canonical skills live in `.agents/skills/`. `.claude/`, `.gemini/` and `.qwen/` are symlinks to it; OpenCode reads the canonical path. Load only what the task needs (`skill <name>`) to protect the token budget. Full index: `.agents/skills/README.md`.
-
-| Task | Load |
+| Task | Skill |
 | --- | --- |
-| PR, commit, hook or CI work | `pr-resolver`, `pre-commit`, `validation-gates` |
+| PR, commit, hook, or CI work | `pr-resolver`, `pre-commit`, `validation-gates` |
 | Planning, decomposition, GOAP | `task-decomposition`, `goap-agent`, `pev-loop` |
-| Parallel or delegated work | `parallel-execution`, `agent-coordination`, `multi-agent-orchestration` |
+| Parallel / delegated work | `parallel-execution`, `agent-coordination`, `multi-agent-orchestration` |
 | Worker / Cloudflare surface | `cloudflare`, `durable-objects`, `d1-ops`, `structured-logging` |
 | Security-sensitive change | `guard-rails`, `error-sanitization`, `privacy-first`, `crypto-utils` |
-| Creating or editing skills | `skill-creator`, `skill-evaluator`, `context-hygiene` |
+| Creating / editing skills | `skill-creator`, `skill-evaluator`, `context-hygiene` |
 
-**Skill hygiene** (sensor: `./scripts/skill-eval-check.sh`): YAML frontmatter with `name` and `description`; `## Rationalizations` is a skill-specific excuse/counter-argument table; `## Red Flags` is a skill-specific checklist; no two skills may share the same Rationalizations/Red Flags block; every relative link in a SKILL.md must resolve; SKILL.md stays under 250 lines.
+- **Skill Hygiene**: Valid YAML frontmatter; required `## Rationalizations` and `## Red Flags` sections; unique content; valid relative links; max 250 lines per `SKILL.md`.
 
 ## 5. Process Modes & PEV Loop (Plan-Execute-Verify)
 
-- **Light Mode** (small fixes, docs, skills): `./scripts/quality_gate.sh` then an atomic commit and a PR. Always push the branch, open the PR (or reuse the existing one), and validate checks to green — never stop at a local commit and never ask whether to push or open the PR.
-- **Full Mode** (refactors, systems): spec in `plans/` from `SPEC_TEMPLATE.md`, GOAP tracking in `plans/GOAP_STATE.md`, ADR in `plans/`.
-- **CI precheck**: before Full Mode work, confirm `.github/ci-status/ci-status.json` is `passing`; pause if it is not.
-- **Always-fix**: resolve lint, type, format and CI failures found in the current context. If a blocker is external, file an ADR and mark the task `blocked` in `plans/GOAP_STATE.md`.
-- **Incremental verification**: re-verify earlier assumptions before each GOAP step.
+- **Light Mode** (Small fixes, docs, skills): Plan → Implement → Local verification (`./scripts/quality_gate.sh`) → Atomic commit/PR. Push branch and open/update PR without waiting for explicit prompt.
+- **Full Mode** (Refactors, new subsystems, architecture): Plan spec in `plans/` (`SPEC_TEMPLATE.md`), ADR in `plans/`, GOAP tracking in `plans/GOAP_STATE.md`.
+- **PEV Loop**: Verify assumptions incrementally before each step. Check CI status (`.github/ci-status/ci-status.json`). Fix regressions introduced in current context immediately.
 
+## 6. Verification & Quality Gates
 
-## 6. Verification & Merge Guardrail (non-negotiable)
+Run before commit/push: `npm run lint && npm run test:unit && ./scripts/quality_gate.sh`.
 
-Local pre-push: `npm run lint && npm run test:unit && ./scripts/quality_gate.sh`.
+- Required CI checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Validate Skills`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL`, `Codacy Static Code Analysis`, `Workers Builds`.
+- All checks must pass (`SUCCESS`). Resolve all review comments before merging. Never use `--admin` bypass.
 
-- Every PR verifies end to end: unit, integration, E2E, lint, typecheck, security and quality gates green. Do not merge with failing or skipped required checks.
-- Resolve every review comment (human or bot) with a fix commit or a reply. No unresolved threads at merge.
-- Merge the PR once all threads are resolved and all required checks are green — do not leave a ready PR open and do not ask whether to merge.
-- Never wait for a human when the gate is fully green: take over any ready PR (including bot-authored ones), rebase onto main, trim out-of-scope churn, re-validate, then merge.
-- If CI fails after push, fix it in the same PR. Never open a follow-up PR to repair CI.
-- Full Mode PRs carry the `plans/GOAP_STATE.md` version bump plus ADR/spec updates.
-- Required checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Validate Skills`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL (actions, javascript-typescript)`, `Codacy Static Code Analysis`, `Workers Builds`.
-- Any conclusion other than `SUCCESS` blocks merge: `FAILURE`, `ACTION_REQUIRED`, `TIMED_OUT` and `CANCELLED` all block. `SKIPPED` is acceptable only for non-required jobs such as `auto-merge`.
-- Verify before merge: `gh pr checks <n>` and `gh pr view <n> --json statusCheckRollup -q '.statusCheckRollup[] | "\(.name): \(.conclusion)"'` must show zero failures. No `--admin` bypass.
-- External analysis failures (Codacy, DeepSource, CodeQL), including `ACTION_REQUIRED` or "Not up to standards" with critical/high findings, must be fixed or triaged with a reviewed suppression.
-- Branch protection must require the checks above; if it does not, block the merge and file an ADR.
+## 7. Workflow Commands
 
-## 7. Operational Commands
+- Tooling setup: `./scripts/agent-toolkit.sh setup` | `./scripts/bootstrap.sh`
+- Quality & Verification: `./scripts/quality_gate.sh` | `./scripts/pev-gates.sh` | `./scripts/skill-eval-check.sh`
+- Local CI rehearsal: `./scripts/run_act_local.sh`
+- Tests & Lint: `npm run lint` | `npm run fmt:fix` | `npm run test:unit` | `npm run test:integration`
 
-- Setup: `./scripts/agent-toolkit.sh setup`
-- Quality: `./scripts/quality_gate.sh` (18 checks) | `./scripts/pev-gates.sh` | `./scripts/skill-eval-check.sh`
-- Skills: `./scripts/setup-skills.sh` | `./scripts/validate-skills.sh`
-- Lint and tests: `npm run lint` | `npm run fmt:fix` | `npm run test:unit` | `npm run test:integration`
-- Sub-agents: `.opencode/agents/` and `.claude/agents/` act as context firewalls; registry in `agents-docs/AGENTS_REGISTRY.md`.
+## 8. Commit & PR Conventions
 
-## 8. PR & Commit Standards (zero slop)
+- **Commits**: `type(scope): subject`, lowercase, max 72 chars. No filler/emojis. Example: `fix(security): resolve ssrf validation`.
+- **PRs**: Title `type(scope): description` (max 150 chars); plain text body covering What, Why, Impact (max 1000 chars).
+- **YAML Workflows**: Line 4 (`on:`) must carry `# yamllint disable-line rule:truthy`.
 
-- No conversational filler, no markdown formatting in commit messages, no emojis.
-- Commits: `type(scope): subject`, strictly lowercase, max 72 chars, for example `fix(security): resolve ssrf validation`.
-- PRs: plain text covering What, Why and Impact, calling out performance or metrics changes. Title max 150 chars, body max 1000 chars.
-- New `.github/workflows/*.yml` files must carry `# yamllint disable-line rule:truthy` on line 4 (the `on:` line).
+## 9. Post-Task Telemetry
 
-## 9. Post-Task Protocol
-
-On completion or abstention, append one JSON line to `.agents/metrics/metrics-{agent}.jsonl` (create if missing; fall back to `.agents/metrics.jsonl` when the directory is absent) so concurrent agents never conflict.
-
-- Completed: `{"timestamp": "ISO8601", "agent": "name", "task": "desc", "status": "completed"}`
-- Abstained: `{"timestamp": "ISO8601", "agent": "name", "task": "desc", "abstained": true, "abstention_reason": "code", "stopped_at_step": N}`
+Upon task completion or abstention, append a JSON record to `.agents/metrics/metrics-{agent}.jsonl` (or `.agents/metrics.jsonl` fallback):
+`{"timestamp": "ISO8601", "agent": "name", "task": "desc", "status": "completed"}`
