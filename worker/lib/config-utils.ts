@@ -60,7 +60,7 @@ export function parseBoundedIntegerConfig(
 
 /**
  * Get the trust threshold from environment or fallback to default, clamped to [0, 1]
- * @param env Worker environment bindings
+ * @param env - Worker environment bindings object containing optional TRUST_THRESHOLD
  * @returns Trust threshold float as a number clamped between 0 and 1
  */
 export function getTrustThreshold(env: Env): number {
@@ -85,7 +85,7 @@ export function getTrustThreshold(env: Env): number {
  * Validate required environment bindings and configuration values
  * @param env - Worker environment bindings object
  * @returns Void if configuration is valid
- * @throws {Error} If required variables are missing, TRUST_THRESHOLD is invalid/out-of-bounds, or budget configs are invalid/negative
+ * @throws {Error} If required variables are missing, TRUST_THRESHOLD is invalid or out of bounds [0, 1], or budget configs are non-numeric or negative
  */
 export function validateConfig(env: Env): void {
   const missing = REQUIRED_CONFIG_KEYS.filter((key) => {
