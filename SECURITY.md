@@ -40,20 +40,23 @@ privately to the maintainers.
 - **Replay Protection**: Enforces timestamp tolerance validation (default: 300 seconds) against request timestamps.
 
 ### SSRF Protection
-- **Host Resolution Validation**: All outgoing URL fetches in the discovery and validation pipelines undergo SSRF checks (`validateFetchUrl`) resolving underlying host IPs to block access to private/internal network ranges.
+- **Host Resolution Validation**: All outgoing URL fetches in the discovery and validation pipelines undergo SSRF checks (`validateFetchUrl`) resolving underlying host IPs to block access to private/internal network ranges. Allowed outbound ports are strictly restricted to standard web ports (`STANDARD_PORTS`: 80, 443, 8080, 8443).
 
 ### Pipeline Security Gate (PEV Loop)
 Autonomous discovery runs pass through a dedicated security gate (`runSecurityGate`) executing five automated checks prior to publication:
 - **SSRF Protection**: Verifies URLs against blocked host lists and resolves hostnames via DNS-over-HTTPS (DoH) to block private IP ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, etc.). Localhost is permitted only in non-production environments (`test` or `development`).
 - **Credential Leakage Detection**: Scans deal payloads for secret exposure (passwords, API keys, bearer tokens, private keys, OpenAI keys).
 - **Injection Defense**: Scans deal fields for SQL, NoSQL, XSS script injection, javascript URIs, and path traversal patterns (`../`).
-- **URL Validation**: Ensures deal URLs use HTTPS, do not exceed 2,048 characters, and restrict ports to 80, 443, 8080, 8443 (see STANDARD_PORTS in worker/lib/security-ip.ts).
+- **URL Validation**: Ensures deal URLs use HTTPS, do not exceed 2,048 characters, enforce standard web ports (80, 443, 8080, 8443 via `STANDARD_PORTS`), and scan all query parameters in `parsed.searchParams` for protocol markers (`://`, `//`, `\`) to block nested open redirect vectors.
 - **Content Safety**: Detects malicious patterns (phishing, malware), fraudulent claims (guaranteed returns), and pyramid scheme language.
 
 Any findings categorized as **Critical** or **High** severity automatically block deal publication until resolved.
 
 ### Access Control & Input Hardening
 - **Role-Based Access Control (RBAC)**: Strict separation between `public`, `user`, and `admin` API tiers.
+- **API Key Role Validation**: Role inputs for API key creation (`POST /api/admin/keys`) are strictly validated against permitted values (`admin`, `user`, `readonly`), returning 400 Bad Request on invalid roles.
+- **Content-Length Header Validation**: Body limit middleware enforces strict RFC 9110 decimal digit format (`/^\d+$/`) and safe integer bounds (`Number.isSafeInteger`) on `Content-Length` headers, rejecting malformed header values with 400 Bad Request.
+- **MCP Execution Authorization & IDOR Protection**: Sensitive MCP tools (`trigger_discovery`, `get_pipeline_status`, `get_logs`, `get_stats`) enforce admin role validation during execution. Streaming progress state (`ProgressState`) and operation tracking (`mcp_progress_index`) record `userId` ownership to isolate operations across check progress, cancellation, listing, and SSE stream endpoints.
 - **Input Hardening**: Rejection of control characters, null bytes, tabs, and open-redirect path patterns across URL and referral submission handlers.
 
 ## Scope
