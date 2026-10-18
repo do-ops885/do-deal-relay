@@ -1,6 +1,6 @@
-# Referral Management System (v0.1.8)
+# Referral Management System (v0.1.9)
 
-**Version**: 0.1.8
+**Version**: 0.1.9
 **Status**: Implemented
 **Last Updated**: 2026-04-02
 

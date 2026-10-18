@@ -1,7 +1,7 @@
 # URL Handling Rules (CRITICAL)
 
 **Status**: Active
-**Version**: 0.1.8
+**Version**: 0.1.9
 **Applies To**: All agents, CLI tools, API endpoints, and integrations
 **Enforcement\*\*: FATAL - Violations block execution
 
