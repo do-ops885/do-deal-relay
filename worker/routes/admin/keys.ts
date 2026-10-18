@@ -13,6 +13,12 @@ import {
 } from "../../lib/auth";
 import { jsonResponse } from "../utils";
 
+/**
+ * Handle POST /api/admin/keys to generate and store a new API key with role authorization
+ * @param request - Incoming HTTP Request with JSON body containing userId and role
+ * @param env - Worker environment bindings
+ * @returns JSON response containing the generated API key or an error message
+ */
 export async function handleCreateApiKey(
   request: Request,
   env: Env,
@@ -67,6 +73,12 @@ export async function handleCreateApiKey(
   }
 }
 
+/**
+ * Handle GET /api/admin/keys to list registered API keys with sanitized metadata
+ * @param request - Incoming HTTP Request
+ * @param env - Worker environment bindings
+ * @returns JSON response containing sanitized list of API key records
+ */
 export async function handleListApiKeys(
   request: Request,
   env: Env,
@@ -91,6 +103,13 @@ export async function handleListApiKeys(
   }
 }
 
+/**
+ * Handle DELETE /api/admin/keys/:hash to revoke an active API key by its hash
+ * @param request - Incoming HTTP Request
+ * @param keyHash - Key hash identifier to revoke
+ * @param env - Worker environment bindings
+ * @returns JSON response indicating revocation success or 404 if not found
+ */
 export async function handleRevokeApiKey(
   request: Request,
   keyHash: string,
