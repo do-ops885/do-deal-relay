@@ -2,13 +2,13 @@
 
 > Adopting this template in an existing project.
 
-[![Template Version](https://img.shields.io/badge/version-0.1.8-blue)](VERSION)
+[![Template Version](https://img.shields.io/badge/version-0.1.9-blue)](VERSION)
 
 ## Overview
 
 This guide helps you integrate AI agent support into an existing codebase incrementally. You can adopt features progressively - no need to do everything at once.
 
-**Current Version:** 0.1.8
+**Current Version:** 0.1.9
 
 ## Adoption Levels
 
