@@ -1,5 +1,9 @@
 import { createRouter } from "./router.js";
 import { api, ApiError } from "./api.js";
+import { renderDealsView } from "./deals.js";
+import { renderReferralsView } from "./referrals.js";
+import { renderAnalyticsView } from "./analytics.js";
+import { showDealDetail } from "./components/deal-detail.js";
 
 const THEME_KEY = "ddr:theme";
 const SIDEBAR_KEY = "ddr:sidebar";
@@ -340,28 +344,23 @@ function initNavDelegation() {
   });
 }
 
-function buildStubViews() {
+async function renderDealDetailRoute(context) {
+  const view = await renderDealsView();
+  const dealId = context?.params?.[0];
+  if (dealId) {
+    queueMicrotask(() => {
+      void showDealDetail(decodeURIComponent(dealId));
+    });
+  }
+  return view;
+}
+
+function buildViews() {
   return {
-    deals: createPlaceholderView({
-      title: "Deals",
-      subtitle: "Browse and filter available deals",
-      body: "Deals view will be implemented by Agent 2 (Deal Management Views).",
-    }),
-    "deal-detail": createPlaceholderView({
-      title: "Deal Details",
-      subtitle: "Detailed information for a single deal",
-      body: "Deal detail view will be implemented by Agent 2 (Deal Management Views).",
-    }),
-    referrals: createPlaceholderView({
-      title: "Referrals",
-      subtitle: "Track referral codes and conversions",
-      body: "Referrals view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
-    analytics: createPlaceholderView({
-      title: "Analytics",
-      subtitle: "Pipeline performance and trends",
-      body: "Analytics view will be implemented by Agent 3 (Analytics and Referral Views).",
-    }),
+    deals: () => renderDealsView(),
+    "deal-detail": (context) => renderDealDetailRoute(context),
+    referrals: () => renderReferralsView(),
+    analytics: () => renderAnalyticsView(),
     research: createPlaceholderView({
       title: "Research",
       subtitle: "Domain research and source analysis",
@@ -390,10 +389,10 @@ function bootstrap() {
   initVersionLabel();
   initNavDelegation();
 
-  const stubViews = buildStubViews();
+  const views = buildViews();
   const router = createRouter({
     outlet: viewEl,
-    views: stubViews,
+    views,
     notFound: createNotFoundView(),
     onChange: (result) => {
       NavManager.sync(result.name);
@@ -426,7 +425,7 @@ function bootstrap() {
     router,
     registerView: (name, renderer) => router.registerView(name, renderer),
   };
-  window.__ddrStubViews = stubViews;
+  window.__ddrViews = views;
 
   LoadingManager.show();
   router

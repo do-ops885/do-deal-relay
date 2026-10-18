@@ -1,7 +1,7 @@
 # ADR-021: ci-workflow-validator gate structurally over-strict for wrangler-provisioned vars
 
 **Date**: 2026-08-22
-**Status**: Accepted (blocker registered per AGENTS.md Always-Fix triage)
+**Status**: Resolved (2026-10-18, remediation path 2)
 **Gate**: scripts/ci-workflow-validator.sh (invoked by scripts/pev-gates.sh)
 
 ## Context
@@ -46,9 +46,25 @@ gate rework. Two acceptable remediation paths for a future sprint:
    that both wrangler.jsonc and workflows derive from, making the check
    satisfiable without artificial env blocks.
 
+## Remediation (2026-10-18, path 2)
+
+A config-parity manifest was introduced at
+`scripts/ci-workflow-validator.manifest.json`. Every wrangler var/secret is
+classified as either `runtime_provisioned` (supplied by Cloudflare Workers
+Builds; no workflow reference required) or `workflow_managed` (must appear in
+an expected workflow). The gate now:
+
+- passes classified `runtime_provisioned` items,
+- enforces `workflow_managed` items as before,
+- **fails** any unclassified item, preserving the drift-detection value: a new
+  var/secret must be explicitly classified when added.
+
+Result: 15/15 pass, exit 0; the standing known-fail is eliminated.
+
 ## Consequences
 
-- pev-gates.sh will report ci-workflow-validator FAIL until remediation lands;
-  treat this single known-fail as accepted debt tracked via BLOCKED-3.
-- No production risk: the gate validates documentation-style consistency, not
+- pev-gates.sh no longer reports a ci-workflow-validator FAIL.
+- Adding a new wrangler var/secret without classifying it in the manifest now
+  fails the gate, restoring its original intent.
+- No production risk: the gate validates config-contract consistency, not
   runtime behavior; worker config remains governed by wrangler.jsonc.

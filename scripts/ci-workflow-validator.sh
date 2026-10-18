@@ -10,8 +10,14 @@
 # Algorithm:
 #   1. Parse wrangler.jsonc via node eval() (works perfectly for JSONC since
 #      comments and trailing commas are valid JS object-literal syntax).
-#   2. For each var/secret, check it is referenced under `env.X` (vars) or
-#      `secrets.X` (secrets) in at least one expected workflow file.
+#   2. Classify each var/secret against the manifest
+#      (scripts/ci-workflow-validator.manifest.json, per ADR-021):
+#        - runtime_provisioned → supplied by Cloudflare Workers Builds from
+#          wrangler.jsonc; no workflow reference required (PASS).
+#        - workflow_managed   → must be referenced under `env.X`/`secrets.X`
+#          in an expected workflow file (enforced below).
+#        - unclassified       → FAIL: a new config item was added without
+#          classifying it, restoring the gate's drift-detection value.
 #   3. If env-specific (.env.production.*), it MUST appear in the production
 #      deploy workflows (deploy-production.yml or canary.yml).
 #   4. Secrets referenced via env.X (instead of secrets.X) FAIL with a hint.
@@ -93,6 +99,21 @@ ITEMS=$(printf '%s\n%s\n' "$TOP_LEVEL_ITEMS" "$ENV_ITEMS" | grep -v '^$' || true
 
 [[ -z "$ITEMS" ]] && { info "${YELLOW}wrangler.jsonc has no vars/secrets to validate${NC}"; exit 0; }
 
+# ── Phase 2b: Load classification manifest (ADR-021) ───────────────
+MANIFEST="${PROJECT_ROOT}/scripts/ci-workflow-validator.manifest.json"
+declare -A MANIFEST_STATE
+if [[ -f "$MANIFEST" ]]; then
+  while IFS= read -r mname; do
+    [[ -n "$mname" ]] && MANIFEST_STATE["$mname"]="runtime"
+  done < <(jq -r '(.runtime_provisioned // [])[]' "$MANIFEST" 2>/dev/null)
+  while IFS= read -r mname; do
+    [[ -n "$mname" ]] && MANIFEST_STATE["$mname"]="managed"
+  done < <(jq -r '(.workflow_managed // [])[]' "$MANIFEST" 2>/dev/null)
+else
+  info "${RED}MISSING: $MANIFEST — run remediation per ADR-021${NC}"
+  exit 2
+fi
+
 # ── Phase 3: Per-item validation ───────────────────────────────────
 # Expected workflow files per environment (regex against .github/workflows/X.yml)
 declare -A EXPECTED_RE
@@ -115,6 +136,18 @@ while IFS= read -r item; do
   rest="${item#*:}"
   level="${rest%%:*}"
   name="${rest#*:}"
+
+  manifest_state="${MANIFEST_STATE[$name]:-}"
+
+  if [[ "$manifest_state" == "runtime" ]]; then
+    pass "${name} (${type}, ${level}) → runtime-provisioned via wrangler.jsonc"
+    continue
+  fi
+  if [[ -z "$manifest_state" ]]; then
+    fail "${name} (${type}, ${level}): unclassified config item — add it to scripts/ci-workflow-validator.manifest.json"
+    MISSING_ITEMS+=("$name|$level|$type|unclassified")
+    continue
+  fi
 
   if [[ "$type" == "secret" ]]; then
     expected_term="secrets.${name}"
