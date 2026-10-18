@@ -1,0 +1,21 @@
+{
+  "description": "Classification manifest for scripts/ci-workflow-validator.sh. Every var/secret in wrangler.jsonc must be classified here. ADR-021: runtime_provisioned items are supplied by Cloudflare Workers Builds from wrangler.jsonc and are intentionally absent from GitHub Actions workflows.",
+  "workflow_managed": [],
+  "runtime_provisioned": [
+    "AI_GATEWAY_URL",
+    "ALLOWED_ORIGINS",
+    "CANDIDATE_BUDGET_GLOBAL",
+    "CANDIDATE_BUDGET_HIGH_TRUST_BONUS",
+    "CANDIDATE_BUDGET_PER_SOURCE",
+    "ENVIRONMENT",
+    "GITHUB_REPO",
+    "MCP_PROTOCOL_VERSION",
+    "MCP_RATE_LIMIT_PER_MINUTE",
+    "NOTIFICATION_THRESHOLD",
+    "TRUST_THRESHOLD",
+    "USE_D1_READS",
+    "WEBHOOK_SECRET",
+    "EMAIL_WEBHOOK_SECRET",
+    "JWT_SECRET"
+  ]
+}

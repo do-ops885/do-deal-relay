@@ -21,3 +21,19 @@ declare module "*public/js/components/deal-detail.js" {
   export function showDealDetail(dealId: string): Promise<void>;
   export function closeDealDetail(): void;
 }
+
+declare module "*public/js/deals.js" {
+  export function renderDealsView(): Promise<HTMLElement>;
+}
+
+declare module "*public/js/referrals.js" {
+  export function renderReferralsView(options?: {
+    mount?: HTMLElement;
+  }): Promise<HTMLElement | { element: HTMLElement; dispose: () => void }>;
+}
+
+declare module "*public/js/analytics.js" {
+  export function renderAnalyticsView(options?: {
+    mount?: HTMLElement;
+  }): Promise<HTMLElement | { element: HTMLElement; dispose: () => void }>;
+}

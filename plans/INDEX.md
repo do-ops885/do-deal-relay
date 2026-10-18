@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-15. Active set is intentionally small; completed
+**Last Updated**: 2026-10-18. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -12,7 +12,13 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Active Plans
 
-- [GOAP State](GOAP_STATE.md) — **v0.19.40, single source of truth**.
+- [GOAP State](GOAP_STATE.md) — **v0.19.43, single source of truth**.
+  2026-10-18 plans-gap sweep: IMP-1 incremental SPA views wired
+  (deals/referrals/analytics + deal-detail dialog), ADR-021 validator
+  resolved via config-parity manifest (15/15), ADR-019 deploy timeouts
+  resolved; owner-blocked items opened as tracked issues on top of
+  v0.19.42 deferred-menu sweep
+  on top of
   2026-10-15 deferred N-3 closed as misconceived (importers use the
   canonical factory; ADR-025 stands) on top of
   2026-10-15 PEV hygiene (reverify marker fixed, dev-only audit risk

@@ -1,12 +1,32 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Re-verified:** 2026-10-16
-**Last Updated**: 2026-10-16
-**Version**: 0.19.42
-**Status**: Active — v0.19.42 deferred-menu sweep (4 parallel agents): R-6 CLOSED as superseded (ai-gateway has 6 runtime importers, MI-3 already closed); F-4, IMP-1, P3-17 re-verified STILL-DEFERRED with fresh evidence. Queue otherwise empty. Remaining owner ops: prod D1 v13/v14 apply, `wrangler queues create` per env. IMP-2/IMP-3 stay owner/CI scope. Deferred: F-4, IMP-1, P3-17.
+**Re-verified:** 2026-10-18
+**Last Updated**: 2026-10-18
+**Version**: 0.19.43
+**Status**: Active — v0.19.43 plans-gap sweep (GOAP swarm): IMP-1 incremental SPA wiring SHIPPED (deals/referrals/analytics views wired, were dead code), ADR-021 ci-workflow-validator RESOLVED via config-parity manifest (15/15 pass), ADR-019 deploy timeouts RESOLVED (30/20). Owner-blocked items opened as tracked issues.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-18 Plans-gap sweep — v0.19.43
+
+Register v0.19.43. GOAP swarm recon re-verified every OPEN/REGISTERED/
+DEFERRED item against code; the queue's only genuinely in-repo gaps were
+the unwired SPA views and two accepted-debt gates.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| IMP-1 incremental SPA | SHIPPED — `public/js/{deals,referrals,analytics}.js` and `components/deal-detail.js` were dead code (zero imports). `public/js/app.js` now imports and registers the real renderers; `deal-detail` route renders the list and opens the detail dialog. New `tests/unit/public-views-wiring.test.ts` guards the contract | `public/js/app.js:1-5,347-375`; wiring test green |
+| ADR-021 validator | RESOLVED (path 2) — new `scripts/ci-workflow-validator.manifest.json` classifies every wrangler var/secret as `runtime_provisioned` or `workflow_managed`; gate passes 15/15 and now FAILS unclassified items (drift detection preserved) | `scripts/ci-workflow-validator.sh`, manifest; `--json` 15/0/0 |
+| ADR-019 deploy timeout | RESOLVED — `pre-deploy-checks` 15→30 min, `deploy-production` 15→20 min; credential now has workflow-push scope (verified) | `.github/workflows/deploy-production.yml:38,98` |
+| #989 release-on-tag 422 | FIXED — deploy `Create release on tag` step now `getReleaseByTag` → `updateRelease`, falling back to `createRelease` on 404, so a pre-created release no longer fails the job | `.github/workflows/deploy-production.yml:346+` |
+| v15 migration drift | REGISTERED — `migrations/0009_missing_runtime_tables.sql` / `schema-part-9.ts` v15 exist but OPS-1 header still said v13/v14; folded into the ops issue | `worker/db/schema-part-9.ts` |
+| owner-blocked | OPS-1..4, IMP-1 epic, IMP-2, IMP-3, F-4, #907 opened as tracked GitHub issues (see queue) | GitHub issues |
+
+Verification: `npx tsc --noEmit` clean; prettier clean; new wiring test
+passes; validator 15/15; yaml/prettier clean on the deploy workflow.
 
 ---
 
