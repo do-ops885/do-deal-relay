@@ -55,3 +55,4 @@
 {"timestamp": "2026-10-16T16:03:08.394756+00:00", "agent": "opencode-pr", "task": "PR #987 auto-merge enabled; blocked on missing required checks", "status": "completed"}
 {"timestamp": "2026-10-16T16:23:13.244917+00:00", "agent": "opencode-pr", "task": "PR #987 blocked: CodeQL/Codacy never dispatched; auto-merge armed, escalated to owner", "status": "completed"}
 {"timestamp": "2026-10-18T08:30:12.331556+00:00", "agent": "opencode-goap", "task": "plans-gap sweep: merged #991/#992, wired SPA views, resolved ADR-019/021, fixed #989 release idempotency, opened 8 tracked issues", "status": "completed"}
+{"timestamp": "2026-10-18T08:59:46.720025+00:00", "agent": "opencode-goap", "task": "config-drift resolve: #999 staging KV isolation wired, #998 compat date/sampling/D1/queue drift cleaned, #1000 decision recorded", "status": "completed"}
