@@ -46,3 +46,12 @@
 {"timestamp": "2026-10-16T13:02:41.882975+00:00", "agent": "opencode", "task": "verify PR 984 merged, main synced to 1ae54b4, branch cleaned", "status": "completed"}
 {"timestamp": "2026-10-16T13:11:08.620435+00:00", "agent": "opencode", "task": "flashoffer real save/load/daily-verify entry", "status": "completed"}
 {"timestamp": "2026-10-16T13:29:49.728885+00:00", "agent": "opencode-goap", "task": "goap swarm: dual-write upsert FK fix + regression tests + docs research", "status": "completed"}
+{"timestamp": "2026-10-16T13:58:15.751296+00:00", "agent": "opencode-pr", "task": "PR #985 opened, CI green incl Codacy fix", "status": "completed"}
+{"timestamp": "2026-10-16T14:01:06.296709+00:00", "agent": "opencode-prod", "task": "PR #985 merged; production external-agent probe + local entry retest", "status": "completed"}
+{"timestamp": "2026-10-16T14:52:35.352578+00:00", "agent": "opencode-ci", "task": "main CI verified green post-#985; status PR #986 opened", "status": "completed"}
+{"timestamp": "2026-10-16T15:17:33.384696+00:00", "agent": "opencode-ci", "task": "PR #986 merged; main synced", "status": "completed"}
+{"timestamp": "2026-10-16T15:19:48.237929+00:00", "agent": "opencode-goap", "task": "deferred-menu re-verify sweep: R-6 closed, F-4/IMP-1/P3-17 hold", "status": "completed"}
+{"timestamp": "2026-10-16T15:59:26.202560+00:00", "agent": "opencode-pr", "task": "PR #987 opened (GOAP v0.19.42), CI green", "status": "completed"}
+{"timestamp": "2026-10-16T16:03:08.394756+00:00", "agent": "opencode-pr", "task": "PR #987 auto-merge enabled; blocked on missing required checks", "status": "completed"}
+{"timestamp": "2026-10-16T16:23:13.244917+00:00", "agent": "opencode-pr", "task": "PR #987 blocked: CodeQL/Codacy never dispatched; auto-merge armed, escalated to owner", "status": "completed"}
+{"timestamp": "2026-10-18T08:30:12.331556+00:00", "agent": "opencode-goap", "task": "plans-gap sweep: merged #991/#992, wired SPA views, resolved ADR-019/021, fixed #989 release idempotency, opened 8 tracked issues", "status": "completed"}
