@@ -3,7 +3,10 @@
 {
   "name": "do-deal-relay",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-06-13",
+  // Newest compatibility date supported by the pinned workerd/miniflare
+  // toolchain (older pin 2026-06-13 was stale). Bump only alongside a
+  // dependency update and re-run `npm run test:integration`.
+  "compatibility_date": "2026-08-22",
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
   // Observability for monitoring and debugging
@@ -18,7 +21,7 @@
       // head_sampling_rate: fraction of traces to export (0.0–1.0).
       // 1.0 = export everything (development/debugging).
       // 0.1 = export 10% of traces (recommended for production).
-      "head_sampling_rate": 1,
+      "head_sampling_rate": 0.1,
       // OTLP export destinations — add one entry per backend.
       // Each destination requires a URL and an Authorization header with
       // the vendor-specific API key stored as a Cloudflare secret.
@@ -223,8 +226,8 @@
   ],
   // Alert fan-out queues (SPEC-764 step 4, ADR-031 free-tier addendum).
   // Producer: ALERT_QUEUE binding. Consumer: max_batch 10, timeout 5s,
-  // retries 10, DLQ alert-queue-dlq (4d persist). Create via:
-  // wrangler queues create alert-queue && wrangler queues create alert-queue-dlq
+  // retries 10, DLQ alert-queue-dlq (4d persist). Both queues are
+  // provisioned in the account (created via `wrangler queues create`).
   "queues": {
     "producers": [{ "binding": "ALERT_QUEUE", "queue": "alert-queue" }],
     "consumers": [
@@ -352,32 +355,30 @@
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
       },
-      // TODO(#907): staging bindings below reuse the top-level namespace
-      // ids so every id is valid 32-hex and DEALS_PROD/DEALS_STAGING no
-      // longer share one namespace. True environment isolation still needs
-      // dedicated staging namespaces provisioned via the Cloudflare
-      // dashboard (`wrangler kv namespace create <name>`); replace these
-      // ids with them and verify before relying on staging isolation.
+      // Dedicated staging namespaces (resolves #907 / #999). Staging no
+      // longer reuses the production namespace ids, so staging writes
+      // cannot corrupt the production DEALS_PROD / LOG / LOCK / SOURCES /
+      // STAGING data. Provisioned via `wrangler kv namespace create`.
       "kv_namespaces": [
         {
           "binding": "DEALS_PROD",
-          "id": "23ee9b8c9e2748e5880f476b8b57a524",
+          "id": "c069a6c3d2b44edea79ccd5a1466f404",
         },
         {
           "binding": "DEALS_STAGING",
-          "id": "b0db85b92fae45c1895152737ab72649",
+          "id": "bfe5081d507944cb8992bf72b57e24d4",
         },
         {
           "binding": "DEALS_LOG",
-          "id": "1f1a901fd6fb4dffbdcc86aa4a914ba8",
+          "id": "f0d3c6b0868740b4a9342907b47fb15b",
         },
         {
           "binding": "DEALS_LOCK",
-          "id": "e3ab520eafd5430ab72978e78bdd257e",
+          "id": "007ee06d71894d049513f845efe6f108",
         },
         {
           "binding": "DEALS_SOURCES",
-          "id": "be3c0fc148b749b49a59aa7cfa23e3ac",
+          "id": "40bc0b3501f3474d8a272a674acee812",
         },
       ],
       "d1_databases": [
@@ -479,7 +480,9 @@
       "d1_databases": [
         {
           "binding": "DEALS_DB",
-          "database_name": "deals-db",
+          // database_name matches the top-level binding and the live D1
+          // resource (same database_id); "deals-db" was a stale alias.
+          "database_name": "do-deal-relay",
           "database_id": "29ee4ca4-8147-4059-9898-b13c1e9599ff",
         },
       ],

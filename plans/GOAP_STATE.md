@@ -3,10 +3,32 @@
 **Generated**: 2026-07-06
 **Re-verified:** 2026-10-18
 **Last Updated**: 2026-10-18
-**Version**: 0.19.43
-**Status**: Active — v0.19.43 plans-gap sweep (GOAP swarm): IMP-1 incremental SPA wiring SHIPPED (deals/referrals/analytics views wired, were dead code), ADR-021 ci-workflow-validator RESOLVED via config-parity manifest (15/15 pass), ADR-019 deploy timeouts RESOLVED (30/20). Owner-blocked items opened as tracked issues.
+**Version**: 0.19.44
+**Status**: Active — v0.19.44 config-drift resolve: #999 staging KV isolation WIRED (dedicated staging namespaces, prod ids retired from `env.staging`), #998 drift cleaned (compat date 2026-06-13 → 2026-08-22 validated locally, trace sampling 1 → 0.1, D1 prod alias unified, queue comment corrected), #1000 dashboard decision RECORDED (incremental vanilla-JS SPA remains canonical; React epic stays deferred).
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-10-18 Config-drift resolve — v0.19.44
+
+Register v0.19.44. Config + docs only; no runtime code change. Resolves
+three tracked issues opened in the v0.19.43 sweep.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| #999 staging KV isolation | WIRED — created `deals-staging-{prod,log,lock,sources,staging}` namespaces (`c069a6c3…`, `f0d3c6b0…`, `007ee06d…`, `40bc0b35…`, `bfe5081d…`); `env.staging.kv_namespaces` no longer reuses production ids; TODO(#907) comment removed | `wrangler.jsonc` staging block; `wrangler deploy --dry-run --env staging` resolves all five staging ids |
+| #998 trace sampling | FIXED — top-level `observability.traces.head_sampling_rate` 1 → 0.1 (prod recommendation) | `wrangler.jsonc:21` |
+| #998 compatibility_date | UPDATED — 2026-06-13 → 2026-08-22, the newest date supported by the pinned workerd/miniflare toolchain (2026-10-01 fails `ERR_RUNTIME_FAILURE`: "newest date supported … is 2026-08-22"). Locally validated, not a blind bump | `wrangler.jsonc:6`; `npm run test:integration` 80/80 green |
+| #998 D1 name mismatch | FIXED — `env.production.d1_databases[].database_name` `deals-db` → `do-deal-relay` (same `database_id`); stale alias removed | `wrangler.jsonc` prod D1 block |
+| #998 queue DLQ comment | CORRECTED — `alert-queue` / `alert-queue-dlq` are provisioned; stale "not-yet-created" wording removed | `wrangler.jsonc` queues block |
+| #998 `secrets.required` | RETAINED — intentionally non-standard but consumed by `scripts/ci-workflow-validator.manifest.json` (ADR-021); removing it would break the validator gate | ADR-021 |
+| #1000 dashboard decision | RECORDED — incremental vanilla-JS SPA (shipped in #993) remains canonical; the React+Tailwind rebuild (#298-#302) is a separate project and stays deferred. Reversible if the owner reopens it | `plans/GOAP_STATE.md` (this entry) |
+
+Verification: `npx tsc --noEmit` clean; `prettier --check wrangler.jsonc`
+clean; `npm run test:unit` 3173/3173; `npm run test:integration` 80/80;
+`wrangler deploy --dry-run` clean for both `--env staging` and
+`--env production`.
 
 ---
 
