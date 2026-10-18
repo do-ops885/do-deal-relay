@@ -45,6 +45,11 @@ Every API response includes rate limit metadata in the headers:
 - **Batch Validation** (`/api/validate/batch`): 5 requests per 300 seconds (enforced via KV path; see ADR-028 Addendum)
 - **Research** (`/api/research`): 20 requests per 60 seconds
 
+### Request Body & Header Validation Constraints
+
+- **Content-Length Header**: Strict RFC 9110 decimal digit format (`/^\d+$/`) and safe integer bounds (`Number.isSafeInteger`) are enforced across all payload-bearing endpoints. Malformed or non-decimal `Content-Length` header values return `400 Bad Request`.
+- **Payload Limits**: Specific endpoints enforce body size bounds (e.g. 5KB for auth/referral creation, 10KB for deal submission/research, 50KB for bulk import, 100KB for email webhooks). Requests exceeding the specified body size return `413 Payload Too Large`.
+
 ## Endpoints
 
 ### GET /health
@@ -1273,7 +1278,7 @@ Endpoints for validating referral URLs, codes, and retrieving validation system 
 
 ### POST /api/validate/url
 
-Validate a single referral URL for accessibility, redirects, and security (SSRF).
+Validate a single referral URL for accessibility, redirects, and security (SSRF). URL validation enforces standard web port restrictions (`STANDARD_PORTS`: 80, 443, 8080, 8443) and scans all query parameters in `parsed.searchParams` for protocol markers (`://`, `//`, `\`) to prevent open redirect bypasses.
 
 **Request Body:**
 
@@ -1792,23 +1797,25 @@ Main entry point for MCP JSON-RPC requests (Specification 2025-11-25).
 
 ### Available MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_deals` | Search for referral deals with advanced filtering and ranking |
-| `get_deal` | Get detailed information about a specific referral code |
-| `add_referral` | Add a new referral code to the system (requires review) |
-| `research_domain` | Research a domain for available referral programs |
-| `list_categories` | List all available deal categories with descriptions |
-| `validate_deal` | Validate a deal's URL and check if it's active |
-| `get_stats` | Get system statistics and deal counts |
-| `experience_deal` | Report success or failure with a specific code |
-| `report_deal` | Report broken, expired, or fraudulent codes |
-| `get_pipeline_status` | Get current status of the discovery pipeline |
-| `trigger_discovery` | Manually trigger the discovery pipeline |
-| `get_similar_deals` | Find referral deals similar to a specific code or domain |
-| `get_deal_highlights` | Get top-rated, recent, and soon-to-expire deals |
-| `get_logs` | Retrieve recent or specific run logs |
-| `natural_language_query` | Search deals using natural language |
+| Tool | Description | Access Level |
+|------|-------------|--------------|
+| `search_deals` | Search for referral deals with advanced filtering and ranking | User / Public |
+| `get_deal` | Get detailed information about a specific referral code | User / Public |
+| `add_referral` | Add a new referral code to the system (requires review) | User |
+| `research_domain` | Research a domain for available referral programs | User |
+| `list_categories` | List all available deal categories with descriptions | User / Public |
+| `validate_deal` | Validate a deal's URL and check if it's active | User |
+| `get_stats` | Get system statistics and deal counts | Admin |
+| `experience_deal` | Report success or failure with a specific code | User |
+| `report_deal` | Report broken, expired, or fraudulent codes | User |
+| `get_pipeline_status` | Get current status of the discovery pipeline | Admin |
+| `trigger_discovery` | Manually trigger the discovery pipeline | Admin |
+| `get_similar_deals` | Find referral deals similar to a specific code or domain | User / Public |
+| `get_deal_highlights` | Get top-rated, recent, and soon-to-expire deals | User / Public |
+| `get_logs` | Retrieve recent or specific run logs | Admin |
+| `natural_language_query` | Search deals using natural language | User |
+
+*Note: Sensitive tools (`trigger_discovery`, `get_pipeline_status`, `get_logs`, `get_stats`) enforce strict Admin role authorization.*
 
 ### Resources
 
@@ -3604,7 +3611,7 @@ Administrative endpoints for system management and API key control. Requires adm
 
 ### POST /api/admin/keys
 
-Create a new API key for a user or agent.
+Create a new API key for a user or agent. Requires Admin role.
 
 **Request Body:**
 
@@ -3619,6 +3626,13 @@ Create a new API key for a user or agent.
   }
 }
 ```
+
+**Parameters:**
+
+- `userId` (string, required): Identifier for the key owner
+- `role` (string, required): Permitted key role — must be one of `"admin"`, `"user"`, or `"readonly"`. Any unpermitted role value returns `400 Bad Request`.
+- `expiresAt` (string, optional): ISO 8601 expiration timestamp
+- `rateLimit` (object, optional): Rate limit settings (`requestsPerMinute`, `requestsPerHour`)
 
 **Response (201 Created):**
 

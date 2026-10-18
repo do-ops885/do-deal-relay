@@ -8,9 +8,21 @@
 
 The Model Context Protocol (MCP) is an open protocol that enables AI agents to securely interact with the deal discovery system through standardized tools and resources. This implementation follows the MCP 2025-11-25 specification.
 
-## Authentication
+## Authentication & Authorization
 
 No authentication required for public endpoints. Rate limiting applies: 100 requests per minute per IP.
+
+### Role-Based Access Control
+
+MCP tool execution is governed by caller identity and role:
+
+- **Admin Role**: Required for sensitive system operational tools (`trigger_discovery`, `get_pipeline_status`, `get_logs`, `get_stats`). Requests from callers lacking `admin` privileges return `-32003 Invalid tool arguments` or authorization error responses.
+- **User Role**: Required for mutation and interaction tools (`add_referral`, `report_deal`, `experience_deal`, `research_domain`, `validate_deal`, `natural_language_query`, and SSE streaming).
+- **Public / Unauthenticated**: Public read-only tool execution (`search_deals`, `get_deal`, `list_categories`, `get_similar_deals`, `get_deal_highlights`).
+
+### Progress State & Ownership Scoping
+
+For long-running tool executions using the SSE streaming API (`POST /mcp/stream/tools/call` and `GET /mcp/stream`), progress tracking state (`ProgressState`) and execution index tracking (`mcp_progress_index`) incorporate `userId` ownership. Progress checking, operation cancellation, and stream monitoring endpoints enforce owner-scoping to prevent cross-user IDOR access or unauthorized operation cancellation.
 
 ## MCP Endpoints
 

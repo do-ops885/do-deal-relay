@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP Documentation synchronization**: Updated `docs/MCP.md`, `docs/API.md`, and `docs/INDEX.md` to document all 15 available MCP tools and the MCP SSE streaming endpoints (`POST /mcp/stream/tools/call` and `GET /mcp/stream`).
 - **Cron schedules documentation**: Explicitly documented all 4 system background cron schedules (`0 */6 * * *`, `*/30 * * * *`, `0 9 * * *`, `0 0 * * SUN`) in `README.md` and `docs/DEPLOYMENT.md`.
 - **Security controls documentation**: Added Security Architecture & Controls and PEV Pipeline Security Gate sections in `SECURITY.md` covering HMAC signature verification standards, SSRF protection, PEV security gate (SSRF, credential leakage, injection, URL validation, content safety), RBAC, and input hardening.
+- **Subsystem & Security Documentation Synchronization**: Documented role validation rules for `POST /api/admin/keys`, strict RFC 9110 `Content-Length` header validation constraints, standard web port restrictions, open redirect search parameter scanning, and MCP admin role tool authorization & user-scoped SSE progress tracking across `docs/API.md`, `docs/MCP.md`, and `SECURITY.md`.
 
 ### Security
 - **HMAC signature leakage prevention**: Hardened HMAC verification in `worker/lib/hmac.ts` to omit computed signature return values on verification failures.
