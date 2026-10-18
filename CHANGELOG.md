@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-10-16
+
 ### Added
 - **Feature Flag Governance (ADR-032)**: Route-level enforcement for all declared feature flags via `requireFeature` middleware (`503 FEATURE_DISABLED` when off) covering `/api/bulk/*`, `/api/email/*`, `/api/analytics*`, `/api/dashboard/*`, `/webhooks/*`, and the NLQ AI enhancement path. Admin management API (`GET /api/admin/flags`, `PUT /api/admin/flags/:name`) with zod validation and `404 FLAG_NOT_FOUND` on unknown names. Lazy default seeding via `isFeatureEnabledWithDefaults`.
 - **Eval harness (IMP-5)**: Golden-case regression suites for the alerts matcher, NLQ rule-based intent, and hybrid RRF fusion under `tests/evals/` with `npm run test:evals`.

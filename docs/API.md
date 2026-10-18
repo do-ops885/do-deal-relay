@@ -61,7 +61,7 @@ Check system health status.
 ```json
 {
   "status": "healthy",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "timestamp": "2024-03-31T12:00:00Z",
   "checks": {
     "kv_connection": true,
@@ -82,7 +82,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": true,
   "status": "healthy",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "checks": {
     "kv_connection": true,
     "last_run_success": true,
@@ -115,7 +115,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
   "ready": false,
   "status": "degraded",
   "timestamp": "2026-04-04T12:00:00Z",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "checks": {
     "kv_connection": false,
     "last_run_success": false,
@@ -486,7 +486,7 @@ Get full snapshot with metadata.
 
 ```json
 {
-  "version": "0.1.8",
+  "version": "0.1.9",
   "generated_at": "2024-03-31T12:00:00Z",
   "run_id": "deals-2024-03-31-12",
   "snapshot_hash": "abc123...",
