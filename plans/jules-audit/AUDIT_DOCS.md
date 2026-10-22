@@ -1,3 +1,11 @@
-# Track D — Documentation Findings
+# Track D: Documentation
 
-Updated JSDoc `@param` and `@returns` annotations for `getTrustThreshold` in `worker/lib/config-utils.ts` to improve API documentation completeness.
+## Surface Area Inspected
+Public API handlers in `worker/routes/admin/keys.ts`:
+- `handleCreateApiKey`
+- `handleListApiKeys`
+- `handleRevokeApiKey`
+
+## Doc Updates
+- Add JSDoc annotations for extracted default rate limit constants (`DEFAULT_API_KEY_REQUESTS_PER_MINUTE`, `DEFAULT_API_KEY_REQUESTS_PER_HOUR`) in `worker/routes/admin/keys.ts`.
+- Update JSDoc documentation on `handleCreateApiKey` to document default and custom rate limit handling.
