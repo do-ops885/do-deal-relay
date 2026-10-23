@@ -14,9 +14,13 @@ import {
 import { jsonResponse } from "../utils";
 
 /**
- * Handle POST /api/admin/keys to generate and store a new API key with role authorization
+ * Handle POST /api/admin/keys to generate and store a new API key with role authorization.
+ *
+ * Validates request payload for required `userId` and permitted `role` ("admin", "user", or "readonly").
+ * Applies default rate limits (60 req/min, 1000 req/hr) if custom limits are not specified.
+ *
  * @param request - Incoming HTTP Request with JSON body containing userId and role
- * @param env - Worker environment bindings
+ * @param env - Worker environment bindings containing KV storage for API key records
  * @returns JSON response containing the generated API key or an error message
  */
 export async function handleCreateApiKey(
@@ -74,9 +78,13 @@ export async function handleCreateApiKey(
 }
 
 /**
- * Handle GET /api/admin/keys to list registered API keys with sanitized metadata
+ * Handle GET /api/admin/keys to list registered API keys with sanitized metadata.
+ *
+ * Retrieves all registered API keys from KV storage and returns a sanitized list
+ * including key hash, userId, role, timestamps, and rate limits while omitting raw key values.
+ *
  * @param request - Incoming HTTP Request
- * @param env - Worker environment bindings
+ * @param env - Worker environment bindings containing KV storage for API key records
  * @returns JSON response containing sanitized list of API key records
  */
 export async function handleListApiKeys(
@@ -104,11 +112,14 @@ export async function handleListApiKeys(
 }
 
 /**
- * Handle DELETE /api/admin/keys/:hash to revoke an active API key by its hash
+ * Handle DELETE /api/admin/keys/:hash to revoke an active API key by its hash.
+ *
+ * Removes the API key record associated with the specified key hash from KV storage.
+ *
  * @param request - Incoming HTTP Request
  * @param keyHash - Key hash identifier to revoke
- * @param env - Worker environment bindings
- * @returns JSON response indicating revocation success or 404 if not found
+ * @param env - Worker environment bindings containing KV storage for API key records
+ * @returns JSON response indicating revocation success or 404 if key was not found
  */
 export async function handleRevokeApiKey(
   request: Request,
