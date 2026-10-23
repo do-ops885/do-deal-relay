@@ -13,11 +13,19 @@ import {
 } from "../../lib/auth";
 import { jsonResponse } from "../utils";
 
+export const DEFAULT_API_KEY_REQUESTS_PER_MINUTE = 60;
+export const DEFAULT_API_KEY_REQUESTS_PER_HOUR = 1000;
+
 /**
- * Handle POST /api/admin/keys to generate and store a new API key with role authorization
- * @param request - Incoming HTTP Request with JSON body containing userId and role
+ * Handle POST /api/admin/keys to generate and store a new API key with role authorization.
+ *
+ * Validates role against allowed roles (`admin`, `user`, `readonly`) and applies default
+ * rate limits (`DEFAULT_API_KEY_REQUESTS_PER_MINUTE`, `DEFAULT_API_KEY_REQUESTS_PER_HOUR`)
+ * when omitted from request body.
+ *
+ * @param request - Incoming HTTP Request with JSON body containing `userId`, `role`, and optional `rateLimit`/`expiresAt`
  * @param env - Worker environment bindings
- * @returns JSON response containing the generated API key or an error message
+ * @returns JSON response containing the generated API key string or an error response
  */
 export async function handleCreateApiKey(
   request: Request,
@@ -36,7 +44,11 @@ export async function handleCreateApiKey(
 
     // Security check: Validate role against permitted API key roles
     const ALLOWED_API_KEY_ROLES = ["admin", "user", "readonly"] as const;
-    if (!ALLOWED_API_KEY_ROLES.includes(body.role as any)) {
+    if (
+      !ALLOWED_API_KEY_ROLES.includes(
+        body.role as (typeof ALLOWED_API_KEY_ROLES)[number],
+      )
+    ) {
       return jsonResponse(
         { error: "Invalid role. Allowed roles: admin, user, readonly" },
         400,
@@ -51,8 +63,8 @@ export async function handleCreateApiKey(
       createdAt: new Date().toISOString(),
       ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt } : {}),
       rateLimit: body.rateLimit || {
-        requestsPerMinute: 60,
-        requestsPerHour: 1000,
+        requestsPerMinute: DEFAULT_API_KEY_REQUESTS_PER_MINUTE,
+        requestsPerHour: DEFAULT_API_KEY_REQUESTS_PER_HOUR,
       },
     };
 
