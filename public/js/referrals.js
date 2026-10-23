@@ -140,10 +140,37 @@ function renderToolbar(state, cb) {
     reported: 0,
   };
   for (const r of state.raw) if (counts[r.status] != null) counts[r.status]++;
+  const handleKeyDown = (e) => {
+    const key = e.key;
+    if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(key)) {
+      e.preventDefault();
+      const currentIndex = VALID_FILTERS.indexOf(state.filter);
+      let newIndex = currentIndex;
+      if (key === "ArrowRight") {
+        newIndex = (currentIndex + 1) % VALID_FILTERS.length;
+      } else if (key === "ArrowLeft") {
+        newIndex =
+          (currentIndex - 1 + VALID_FILTERS.length) % VALID_FILTERS.length;
+      } else if (key === "Home") {
+        newIndex = 0;
+      } else if (key === "End") {
+        newIndex = VALID_FILTERS.length - 1;
+      }
+      const newFilter = VALID_FILTERS[newIndex];
+      cb.onFilter(newFilter);
+      setTimeout(() => {
+        const targetBtn = tabs.querySelector(`[data-filter="${newFilter}"]`);
+        if (targetBtn && typeof targetBtn.focus === "function") {
+          targetBtn.focus();
+        }
+      }, 0);
+    }
+  };
   const tabs = el("div", {
     class: "filter-tabs",
     role: "tablist",
     "aria-label": "Filter by status",
+    onkeydown: handleKeyDown,
   });
   for (const f of VALID_FILTERS) {
     const active = state.filter === f;
@@ -154,6 +181,7 @@ function renderToolbar(state, cb) {
           class: `filter-tab${active ? " filter-tab--active" : ""}`,
           type: "button",
           role: "tab",
+          tabindex: active ? "0" : "-1",
           "aria-selected": active ? "true" : "false",
           dataset: { filter: f },
           onclick: () => cb.onFilter(f),
