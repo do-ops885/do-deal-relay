@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **API and OpenAPI Documentation Synchronization**: Documented missing Webhook API endpoints (`DELETE /webhooks/unsubscribe/:id` and `POST /webhooks/sync/:partnerId/trigger`) in `docs/API.md`. Synchronized missing OpenAPI 3.0 path definitions in `docs/openapi.yaml` covering `GET /api/admin/users`, `DELETE /api/admin/keys/{hash}`, `PATCH` / `DELETE /api/nlq/alerts/{id}`, `POST /mcp/stream/tools/call`, `DELETE /webhooks/unsubscribe/{id}`, and `POST /webhooks/sync/{partnerId}/trigger`.
+
 ## [0.1.9] - 2026-10-16
 
 ### Added
