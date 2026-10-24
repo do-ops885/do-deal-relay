@@ -1236,6 +1236,28 @@ paths:
         "404":
           description: Subscription not found
 
+  /api/webhooks/unsubscribe/{id}:
+    delete:
+      tags: [Webhooks]
+      summary: Unsubscribe from webhooks by ID
+      operationId: webhookUnsubscribeById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Unsubscribed successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Subscription not found
+
   /api/webhooks/subscriptions:
     get:
       tags: [Webhooks]
@@ -1336,6 +1358,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SyncConfigResponse"
+
+  /api/webhooks/sync/{partnerId}/trigger:
+    post:
+      tags: [Webhooks]
+      summary: Trigger partner sync
+      operationId: triggerPartnerSync
+      parameters:
+        - name: partnerId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Sync completed
+        "401":
+          description: Unauthorized
+        "404":
+          description: Sync config or state not found
 
   # ============================================================================
   # Email Endpoints
@@ -1492,6 +1536,18 @@ paths:
         - ApiKeyAuth: []
       responses:
         "201": { description: Created }
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List registered users
+      operationId: listAdminUsers
+      description: List all registered users in the system. Admin role required.
+      security:
+        - BearerAuth: []
+      responses:
+        "200": { description: List of registered users }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden (Admin role required) }
   /api/admin/keys:
     get:
       tags: [Admin]
@@ -1509,6 +1565,26 @@ paths:
         - BearerAuth: []
       responses:
         "201": { description: Created }
+  /api/admin/keys/{hash}:
+    delete:
+      tags: [Admin]
+      summary: Revoke API key
+      operationId: revokeApiKey
+      description: Revoke an API key by its SHA-256 hash. Admin role required.
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: API key revoked successfully }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden (Admin role required) }
+        "404": { description: API key not found }
   /api/nlq/saved:
     get:
       tags: [NLQ]
@@ -1566,6 +1642,41 @@ paths:
         - ApiKeyAuth: []
       responses:
         "201": { description: Created }
+  /api/nlq/alerts/{id}:
+    patch:
+      tags: [NLQ]
+      summary: Update alert subscription
+      operationId: updateAlert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Alert subscription updated }
+        "401": { description: Unauthorized }
+        "404": { description: Alert subscription not found }
+    delete:
+      tags: [NLQ]
+      summary: Delete alert subscription
+      operationId: deleteAlert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Alert subscription deleted }
+        "401": { description: Unauthorized }
+        "404": { description: Alert subscription not found }
   /api/admin/ci-status:
     get:
       tags: [Admin]
@@ -1642,6 +1753,16 @@ paths:
         - ApiKeyAuth: []
       responses:
         "200": { description: SSE stream }
+  /mcp/stream/tools/call:
+    post:
+      tags: [MCP]
+      summary: Initiate streaming MCP tool call
+      operationId: mcpStreamingToolCall
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200": { description: Streaming tool call initiated (SSE) }
   /api/d1/similar:
     get:
       tags: [D1]

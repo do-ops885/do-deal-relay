@@ -2674,6 +2674,39 @@ curl -X POST "https://your-worker.workers.dev/webhooks/unsubscribe" \
 
 ---
 
+### DELETE /webhooks/unsubscribe/:id
+
+Unsubscribe from webhook events by subscription ID in path. Requires User role.
+
+**Parameters:**
+
+- `id` (string, required): Subscription ID to delete
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Subscription deleted successfully"
+}
+```
+
+**Status Codes:**
+
+- 200: Subscription deleted successfully
+- 401: Unauthorized (missing or invalid credentials)
+- 404: Subscription not found or not owned by user
+- 500: Failed to delete subscription
+
+**Example:**
+
+```bash
+curl -X DELETE "https://your-worker.workers.dev/webhooks/unsubscribe/sub_abc123xyz" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
 ### GET /webhooks/subscriptions
 
 List active webhook subscriptions for a partner.
@@ -3104,6 +3137,42 @@ Get the current sync state for a partner.
 
 ```bash
 curl "https://your-worker.workers.dev/webhooks/sync/partner_trading212"
+```
+
+---
+
+### POST /webhooks/sync/:partnerId/trigger
+
+Manually trigger an immediate synchronization for a partner. Requires User role.
+
+**Parameters:**
+
+- `partnerId` (string, required): Partner ID to trigger sync for
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Sync completed for partner partner_trading212",
+  "synced": 5,
+  "failed": 0,
+  "cursor": "cursor_token_xyz"
+}
+```
+
+**Status Codes:**
+
+- 200: Sync executed successfully
+- 401: Unauthorized (missing or invalid credentials)
+- 404: Sync config not found for partner
+- 500: Sync execution failed
+
+**Example:**
+
+```bash
+curl -X POST "https://your-worker.workers.dev/webhooks/sync/partner_trading212/trigger" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---
