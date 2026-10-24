@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",
-    "@cloudflare/workers-types": "^5.20261016.1",
+    "@cloudflare/workers-types": "^5.20261024.1",
     "@playwright/test": "^1.64.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.6.5",
@@ -60,14 +60,14 @@
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
     "vitest": "^4.1.12",
-    "wrangler": "^4.151.0"
+    "wrangler": "^4.152.0"
   },
   "overrides": {
     "esbuild": ">=0.28.1",
     "joi": "^18.2.9",
     "fast-xml-parser": "5.7.1",
     "fast-xml-builder": "1.2.0",
-    "undici": "6.28.1",
+    "undici": "6.29.1",
     "uuid": "14.0.0",
     "@playwright/test": "^1.64.1",
     "ws": "8.21.0",

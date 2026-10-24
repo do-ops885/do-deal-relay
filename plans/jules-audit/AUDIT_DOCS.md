@@ -1,3 +1,10 @@
-# Track D — Documentation Findings
+# Documentation Audit (Track D)
 
-Updated JSDoc `@param` and `@returns` annotations for `getTrustThreshold` in `worker/lib/config-utils.ts` to improve API documentation completeness.
+- **Date**: 2026-10-24
+- **Auditor**: Jules Overnight Codebase Health Audit
+
+## JSDoc / Documentation Updates
+
+1. **Target**: `handleCreateApiKey` in `worker/routes/admin/keys.ts`.
+2. **Action**:
+   - Updated JSDoc annotations to document default rate limit parameters (`DEFAULT_API_KEY_REQUESTS_PER_MINUTE`, `DEFAULT_API_KEY_REQUESTS_PER_HOUR`) and strict role validation rules.
