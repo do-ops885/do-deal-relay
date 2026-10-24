@@ -57,4 +57,54 @@ describe("Admin API Keys - handleCreateApiKey security validation", () => {
       expect(data.error).toContain("Invalid role");
     }
   });
+
+  it("should apply default rate limits when rateLimit option is omitted", async () => {
+    const req = new Request("http://localhost/api/admin/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: "usr_123", role: "user" }),
+    });
+
+    const res = await handleCreateApiKey(req, mockEnv);
+    expect(res.status).toBe(201);
+    const apiKeyKey = Array.from(mockKvStorage.keys()).find((k) =>
+      k.startsWith("apikey:"),
+    );
+    expect(apiKeyKey).toBeDefined();
+    const storedBlob = mockKvStorage.get(apiKeyKey!);
+    expect(storedBlob).toBeDefined();
+    const stored = JSON.parse(storedBlob!);
+    expect(stored.rateLimit).toEqual({
+      requestsPerMinute: 60,
+      requestsPerHour: 1000,
+    });
+  });
+
+  it("should preserve custom rate limits when provided", async () => {
+    mockKvStorage.clear();
+    const customRateLimit = {
+      requestsPerMinute: 120,
+      requestsPerHour: 5000,
+    };
+    const req = new Request("http://localhost/api/admin/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: "usr_custom",
+        role: "admin",
+        rateLimit: customRateLimit,
+      }),
+    });
+
+    const res = await handleCreateApiKey(req, mockEnv);
+    expect(res.status).toBe(201);
+    const apiKeyKey = Array.from(mockKvStorage.keys()).find((k) =>
+      k.startsWith("apikey:"),
+    );
+    expect(apiKeyKey).toBeDefined();
+    const storedBlob = mockKvStorage.get(apiKeyKey!);
+    expect(storedBlob).toBeDefined();
+    const stored = JSON.parse(storedBlob!);
+    expect(stored.rateLimit).toEqual(customRateLimit);
+  });
 });
