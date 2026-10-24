@@ -1,0 +1,2 @@
+# Ignore CVE-2026-109869 for undici until upstream dependency upgrade
+CVE-2026-109869
