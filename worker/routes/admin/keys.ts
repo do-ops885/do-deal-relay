@@ -14,8 +14,8 @@ import {
 import { jsonResponse } from "../utils";
 
 /**
- * Handle POST /api/admin/keys to generate and store a new API key with role authorization
- * @param request - Incoming HTTP Request with JSON body containing userId and role
+ * Handle POST /api/admin/keys to generate and store a new API key with role authorization and configurable rate limits
+ * @param request - Incoming HTTP Request with JSON body containing userId, role, and optional rateLimit or expiresAt
  * @param env - Worker environment bindings
  * @returns JSON response containing the generated API key or an error message
  */
