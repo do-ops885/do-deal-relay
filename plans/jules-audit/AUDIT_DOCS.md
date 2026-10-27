@@ -1,3 +1,6 @@
-# Track D — Documentation Findings
+# Track D — Documentation Audit
 
-Updated JSDoc `@param` and `@returns` annotations for `getTrustThreshold` in `worker/lib/config-utils.ts` to improve API documentation completeness.
+## JSDoc Enhancements
+- **File**: `worker/routes/admin/keys.ts`
+- **Target**: `handleCreateApiKey`
+- **Details**: Update JSDoc documentation to explicitly describe role validation rules (`admin`, `user`, `readonly`) and default rate limits (`60 req/min`, `1000 req/hour`).

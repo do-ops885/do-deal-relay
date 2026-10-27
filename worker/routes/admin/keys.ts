@@ -15,6 +15,10 @@ import { jsonResponse } from "../utils";
 
 /**
  * Handle POST /api/admin/keys to generate and store a new API key with role authorization
+ * Validates role against permitted roles (`admin`, `user`, `readonly`) and applies default
+ * rate limits (`DEFAULT_API_KEY_REQUESTS_PER_MINUTE`, `DEFAULT_API_KEY_REQUESTS_PER_HOUR`)
+ * when custom rate limits are omitted in the payload.
+ *
  * @param request - Incoming HTTP Request with JSON body containing userId and role
  * @param env - Worker environment bindings
  * @returns JSON response containing the generated API key or an error message
