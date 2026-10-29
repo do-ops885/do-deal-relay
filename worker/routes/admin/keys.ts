@@ -15,9 +15,13 @@ import { jsonResponse } from "../utils";
 
 /**
  * Handle POST /api/admin/keys to generate and store a new API key with role authorization
- * @param request - Incoming HTTP Request with JSON body containing userId and role
+ *
+ * Validates request payload for required `userId` and permitted `role` ("admin", "user", or "readonly").
+ * Applies default rate limits (60 requests/minute, 1000 requests/hour) when `rateLimit` configuration is omitted.
+ *
+ * @param request - Incoming HTTP Request with JSON body containing userId, role, and optional rate limits or expiration
  * @param env - Worker environment bindings
- * @returns JSON response containing the generated API key or an error message
+ * @returns JSON response containing the generated API key string or a 400/500 error response
  */
 export async function handleCreateApiKey(
   request: Request,

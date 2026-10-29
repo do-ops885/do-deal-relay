@@ -1,3 +1,7 @@
-# Track D — Documentation Findings
+# Documentation Audit - 2026-10-29
 
-Updated JSDoc `@param` and `@returns` annotations for `getTrustThreshold` in `worker/lib/config-utils.ts` to improve API documentation completeness.
+## Findings
+
+1. `worker/routes/admin/keys.ts`
+   - Unclear / incomplete JSDoc annotations for `handleCreateApiKey`.
+   - Addition: Update JSDoc documentation to detail rate limit defaults and role validation requirements.

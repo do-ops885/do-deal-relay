@@ -1,5 +1,7 @@
-# Track C — Test Coverage Findings
+# Test Coverage Audit - 2026-10-29
 
-Added unit test cases to `tests/unit/config-validation-enhanced.test.ts` covering:
-- Valid budget configuration variables (`CANDIDATE_BUDGET_GLOBAL`, `CANDIDATE_BUDGET_PER_SOURCE`, `CANDIDATE_BUDGET_HIGH_TRUST_BONUS`) in `validateConfig`.
-- Tab and multiline whitespace string parsing for `parseBoundedIntegerConfig`.
+## Findings
+
+1. `tests/unit/admin-keys.test.ts`
+   - Uncovered Logic: API key default rate limit assignments and custom rate limit overrides in `handleCreateApiKey`.
+   - Addition: Unit tests verifying default rate limits (`60` req/min, `1000` req/hr) when `rateLimit` is omitted, and custom rate limits when specified.
