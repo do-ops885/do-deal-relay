@@ -145,6 +145,44 @@ function renderToolbar(state, cb) {
     role: "tablist",
     "aria-label": "Filter by status",
   });
+  tabs.addEventListener("keydown", (e) => {
+    const tabButtons = Array.from(tabs.querySelectorAll('[role="tab"]'));
+    const currentIndex = tabButtons.indexOf(document.activeElement);
+    if (currentIndex === -1) return;
+
+    let targetIndex = -1;
+    if (e.key === "ArrowRight") {
+      targetIndex = (currentIndex + 1) % tabButtons.length;
+    } else if (e.key === "ArrowLeft") {
+      targetIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
+    } else if (e.key === "Home") {
+      targetIndex = 0;
+    } else if (e.key === "End") {
+      targetIndex = tabButtons.length - 1;
+    }
+
+    if (targetIndex !== -1) {
+      e.preventDefault();
+      const targetTab = tabButtons[targetIndex];
+      const filter = targetTab?.dataset?.filter;
+      if (filter) {
+        cb.onFilter(filter);
+        requestAnimationFrame(() => {
+          const rootNode =
+            typeof tabs.getRootNode === "function" ? tabs.getRootNode() : null;
+          const newTab =
+            (rootNode && typeof rootNode.querySelector === "function"
+              ? rootNode.querySelector(`[data-filter="${filter}"]`)
+              : null) ||
+            (typeof document !== "undefined"
+              ? document.querySelector(`[data-filter="${filter}"]`)
+              : null) ||
+            tabs.querySelector(`[data-filter="${filter}"]`);
+          newTab?.focus();
+        });
+      }
+    }
+  });
   for (const f of VALID_FILTERS) {
     const active = state.filter === f;
     tabs.append(
@@ -155,6 +193,7 @@ function renderToolbar(state, cb) {
           type: "button",
           role: "tab",
           "aria-selected": active ? "true" : "false",
+          tabindex: active ? "0" : "-1",
           dataset: { filter: f },
           onclick: () => cb.onFilter(f),
         },
