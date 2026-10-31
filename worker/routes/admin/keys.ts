@@ -15,6 +15,9 @@ import { jsonResponse } from "../utils";
 
 /**
  * Handle POST /api/admin/keys to generate and store a new API key with role authorization
+ *
+ * Falls back to default rate limits (60 req/min, 1000 req/hr) when `rateLimit` is not provided in body.
+ *
  * @param request - Incoming HTTP Request with JSON body containing userId and role
  * @param env - Worker environment bindings
  * @returns JSON response containing the generated API key or an error message
