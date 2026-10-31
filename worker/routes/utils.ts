@@ -50,11 +50,18 @@ export const SECURITY_HEADERS: Record<string, string> = {
 };
 
 /**
- * Get allowed origin based on request Origin header and environment
+ * Get allowed origin based on request Origin header and environment.
+ * Rejects origins with dangerous characters (e.g. CRLF injection) or unlisted origins
+ * to prevent HTTP header splitting and unauthorized CORS reflection.
  */
 export function getAllowedOrigin(origin?: string | null, env?: Env): string {
+  if (!origin) return "";
+  // Reject headers containing CRLF, null bytes, or dangerous control sequences (header splitting protection)
+  if (hasDangerousChars(origin)) {
+    return "";
+  }
   const allowed = getAllowedOrigins(env);
-  if (origin && allowed.includes(origin)) {
+  if (allowed.includes(origin)) {
     return origin;
   }
   return ""; // Return empty string if origin not allowed (prevents wildcard bypass)

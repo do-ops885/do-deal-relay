@@ -4,6 +4,7 @@ import {
   errorResponse,
   unauthorizedResponse,
   getAllowedOrigins,
+  getAllowedOrigin,
   SECURITY_HEADERS,
 } from "../../worker/routes/utils";
 
@@ -74,5 +75,11 @@ describe("Routes Utils Security", () => {
     });
     const response = jsonResponse(mockData, 200, request);
     expect(response.headers.get("Vary")).toBe("Origin");
+  });
+
+  it("should reject origin header with control characters / dangerous sequences", () => {
+    const badOrigin = "https://do-deal-relay.com\0";
+    expect(getAllowedOrigins()).toContain("https://do-deal-relay.com");
+    expect(getAllowedOrigin(badOrigin)).toBe("");
   });
 });
