@@ -14,8 +14,8 @@ import {
 import { jsonResponse } from "../utils";
 
 /**
- * Handle POST /api/admin/keys to generate and store a new API key with role authorization
- * @param request - Incoming HTTP Request with JSON body containing userId and role
+ * Handle POST /api/admin/keys to generate and store a new API key with role authorization and rate limits
+ * @param request - Incoming HTTP Request with JSON body containing userId, role, and optional rateLimit/expiresAt
  * @param env - Worker environment bindings
  * @returns JSON response containing the generated API key or an error message
  */
@@ -36,13 +36,20 @@ export async function handleCreateApiKey(
 
     // Security check: Validate role against permitted API key roles
     const ALLOWED_API_KEY_ROLES = ["admin", "user", "readonly"] as const;
-    if (!ALLOWED_API_KEY_ROLES.includes(body.role as any)) {
+    if (
+      !ALLOWED_API_KEY_ROLES.includes(
+        body.role as (typeof ALLOWED_API_KEY_ROLES)[number],
+      )
+    ) {
       return jsonResponse(
         { error: "Invalid role. Allowed roles: admin, user, readonly" },
         400,
         request,
       );
     }
+
+    const DEFAULT_API_KEY_REQUESTS_PER_MINUTE = 60;
+    const DEFAULT_API_KEY_REQUESTS_PER_HOUR = 1000;
 
     const config: ApiKeyConfig = {
       key: "", // Will be generated
@@ -51,8 +58,8 @@ export async function handleCreateApiKey(
       createdAt: new Date().toISOString(),
       ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt } : {}),
       rateLimit: body.rateLimit || {
-        requestsPerMinute: 60,
-        requestsPerHour: 1000,
+        requestsPerMinute: DEFAULT_API_KEY_REQUESTS_PER_MINUTE,
+        requestsPerHour: DEFAULT_API_KEY_REQUESTS_PER_HOUR,
       },
     };
 

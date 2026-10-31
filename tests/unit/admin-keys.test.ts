@@ -57,4 +57,53 @@ describe("Admin API Keys - handleCreateApiKey security validation", () => {
       expect(data.error).toContain("Invalid role");
     }
   });
+
+  it("should apply default rate limits when rateLimit is omitted", async () => {
+    const req = new Request("http://localhost/api/admin/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: "usr_default_rl", role: "user" }),
+    });
+
+    const res = await handleCreateApiKey(req, mockEnv);
+    expect(res.status).toBe(201);
+
+    // Verify stored configuration has default rate limits
+    const storedValues = Array.from(mockKvStorage.values()).map((v) =>
+      JSON.parse(v),
+    );
+    const storedKey = storedValues.find((v) => v.userId === "usr_default_rl");
+    expect(storedKey).toBeDefined();
+    expect(storedKey?.rateLimit).toEqual({
+      requestsPerMinute: 60,
+      requestsPerHour: 1000,
+    });
+  });
+
+  it("should honor custom rate limits when specified in request body", async () => {
+    const customRateLimit = {
+      requestsPerMinute: 120,
+      requestsPerHour: 5000,
+    };
+    const req = new Request("http://localhost/api/admin/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: "usr_custom_rl",
+        role: "admin",
+        rateLimit: customRateLimit,
+      }),
+    });
+
+    const res = await handleCreateApiKey(req, mockEnv);
+    expect(res.status).toBe(201);
+
+    // Verify stored configuration has custom rate limits
+    const storedValues = Array.from(mockKvStorage.values()).map((v) =>
+      JSON.parse(v),
+    );
+    const storedKey = storedValues.find((v) => v.userId === "usr_custom_rl");
+    expect(storedKey).toBeDefined();
+    expect(storedKey?.rateLimit).toEqual(customRateLimit);
+  });
 });

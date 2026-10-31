@@ -1,5 +1,7 @@
 # Track C — Test Coverage Findings
 
-Added unit test cases to `tests/unit/config-validation-enhanced.test.ts` covering:
-- Valid budget configuration variables (`CANDIDATE_BUDGET_GLOBAL`, `CANDIDATE_BUDGET_PER_SOURCE`, `CANDIDATE_BUDGET_HIGH_TRUST_BONUS`) in `validateConfig`.
-- Tab and multiline whitespace string parsing for `parseBoundedIntegerConfig`.
+Status: Addressed
+
+Findings & Changes:
+- Added unit tests in `tests/unit/admin-keys.test.ts` verifying that `handleCreateApiKey` sets default rate limits (`requestsPerMinute: 60`, `requestsPerHour: 1000`) when `rateLimit` is omitted in the request.
+- Added unit tests in `tests/unit/admin-keys.test.ts` verifying that `handleCreateApiKey` preserves and honors custom rate limits specified in the request body.
