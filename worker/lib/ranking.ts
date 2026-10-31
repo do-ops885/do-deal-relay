@@ -346,6 +346,11 @@ export function getTopDeals(deals: Deal[], limit: number = 10): Deal[] {
 /**
  * Get deals expiring soon (within specified days)
  *
+ * Algorithmic/Memory Optimization: Pre-parse expiry timestamp once per deal
+ * during filtering pass into lightweight tuple array { deal, expiryTime }.
+ * Reusing precomputed timestamps eliminates O(N log N) redundant Date object
+ * instantiations and string parsing inside sort comparator callbacks.
+ *
  * @param deals - Array of candidate deals
  * @param days - Number of days ahead to check for expiry (default: 7)
  * @returns Array of deals expiring within cutoff, sorted by earliest expiry date
@@ -354,21 +359,26 @@ export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
   const now = Date.now();
   const cutoff = now + days * 24 * 60 * 60 * 1000;
 
-  return deals
-    .filter((d) => {
-      if (!d.expiry.date) return false;
-      const expiry = new Date(d.expiry.date).getTime();
-      return expiry > now && expiry <= cutoff;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.expiry.date ?? "").getTime() -
-        new Date(b.expiry.date ?? "").getTime(),
-    );
+  const filtered: Array<{ deal: Deal; expiryTime: number }> = [];
+  for (const deal of deals) {
+    if (!deal.expiry.date) continue;
+    const expiryTime = Date.parse(deal.expiry.date);
+    if (!isNaN(expiryTime) && expiryTime > now && expiryTime <= cutoff) {
+      filtered.push({ deal, expiryTime });
+    }
+  }
+
+  filtered.sort((a, b) => a.expiryTime - b.expiryTime);
+  return filtered.map((item) => item.deal);
 }
 
 /**
  * Get recently added deals (within specified days)
+ *
+ * Algorithmic/Memory Optimization: Pre-parse discovery timestamp once per deal
+ * during single filtering loop into { deal, discoveredTime }. Reusing precomputed
+ * primitive timestamps during sort avoids O(N log N) repeated Date allocations
+ * and string parsing.
  *
  * @param deals - Array of candidate deals
  * @param days - Discovery window in days (default: 7)
@@ -377,17 +387,24 @@ export function getExpiringDeals(deals: Deal[], days: number = 7): Deal[] {
 export function getRecentDeals(deals: Deal[], days: number = 7): Deal[] {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
-  return deals
-    .filter((d) => new Date(d.source.discovered_at).getTime() >= cutoff)
-    .sort(
-      (a, b) =>
-        new Date(b.source.discovered_at).getTime() -
-        new Date(a.source.discovered_at).getTime(),
-    );
+  const filtered: Array<{ deal: Deal; discoveredTime: number }> = [];
+  for (const deal of deals) {
+    const discoveredTime = Date.parse(deal.source.discovered_at);
+    if (!isNaN(discoveredTime) && discoveredTime >= cutoff) {
+      filtered.push({ deal, discoveredTime });
+    }
+  }
+
+  filtered.sort((a, b) => b.discoveredTime - a.discoveredTime);
+  return filtered.map((item) => item.deal);
 }
 
 /**
  * Get high value deals (above threshold)
+ *
+ * Algorithmic Optimization: Pre-extract numeric reward value during initial
+ * filtering pass. Reusing extracted scalar numbers during sorting avoids
+ * redundant type checking and regex parsing inside sort comparator callbacks.
  *
  * @param deals - Array of candidate deals
  * @param threshold - Minimum numerical reward value (default: 50)
@@ -397,14 +414,14 @@ export function getHighValueDeals(
   deals: Deal[],
   threshold: number = 50,
 ): Deal[] {
-  return deals
-    .filter((d) => {
-      const value = typeof d.reward.value === "number" ? d.reward.value : 0;
-      return value >= threshold;
-    })
-    .sort((a, b) => {
-      const aVal = typeof a.reward.value === "number" ? a.reward.value : 0;
-      const bVal = typeof b.reward.value === "number" ? b.reward.value : 0;
-      return bVal - aVal;
-    });
+  const filtered: Array<{ deal: Deal; value: number }> = [];
+  for (const deal of deals) {
+    const value = typeof deal.reward.value === "number" ? deal.reward.value : 0;
+    if (value >= threshold) {
+      filtered.push({ deal, value });
+    }
+  }
+
+  filtered.sort((a, b) => b.value - a.value);
+  return filtered.map((item) => item.deal);
 }
