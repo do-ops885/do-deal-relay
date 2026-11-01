@@ -68,3 +68,6 @@ worker-configuration.d.ts
 VERSION
 
 opencode.json
+
+# Local KV seed backups (scripts/seed-kv.sh)
+seed-backup/
