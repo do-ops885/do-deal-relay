@@ -93,7 +93,8 @@ kv_put_guarded() {
   fi
 
   if [ -n "${existing}" ]; then
-    local backup_file="${ROOT_DIR}/seed-backup/${BACKUP_STAMP}/${label}.json"
+    local backup_root="${SEED_BACKUP_DIR:-${ROOT_DIR}/seed-backup}"
+    local backup_file="${backup_root}/${BACKUP_STAMP}/${label}.json"
     mkdir -p "$(dirname "${backup_file}")"
     printf '%s' "${existing}" > "${backup_file}"
     echo "  ✓ backed up existing ${key} → ${backup_file}"
@@ -237,7 +238,8 @@ Options:
   --help, -h     Show this help message
 
 Safety: existing non-empty keys are backed up to
-seed-backup/<UTC timestamp>/ and refused unless --force is passed.
+seed-backup/<UTC timestamp>/ (override with SEED_BACKUP_DIR) and refused
+unless --force is passed.
 
 This script initializes Cloudflare KV namespaces with required seed data
 for fresh deployments. It reads namespace IDs from wrangler.jsonc and
