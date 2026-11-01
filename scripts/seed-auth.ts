@@ -2,52 +2,68 @@
  * Seed Script for Authentication and User Management
  *
  * Split by blast radius:
- *   - `seedAuth` writes the data authorization actually depends on: roles,
- *     permissions and their mappings. Safe to run against production.
+ *   - `seedAuth` writes the data authorization actually depends on: the
+ *     `roles` and `permissions` rows. Safe to run against production.
  *   - `seedTestFixtures` writes placeholder users with a known hash and a
  *     wildcard API key. Development and tests only; never call it against
  *     production.
+ *
+ * The role→permission matrix in `role_permissions` is seeded by
+ * migrations/0004_refresh_tokens_rbac.sql, which uses the canonical
+ * `(id, role, permission, created_at)` columns and `resource:action`
+ * vocabulary. Reading `worker/lib/rbac.ts` (`SELECT permission FROM
+ * role_permissions WHERE role = ?`) depends on that vocabulary, so this file
+ * never invents its own permission names.
  *
  * Every statement is `INSERT OR IGNORE`, so both functions are idempotent.
  */
 
 import { D1Database } from "@cloudflare/workers-types";
 
+/** Permission vocabulary defined by migrations/0004_refresh_tokens_rbac.sql. */
+const PERMISSIONS = [
+  "deals:read",
+  "deals:write",
+  "deals:delete",
+  "users:read",
+  "users:write",
+  "users:delete",
+  "apikeys:read",
+  "apikeys:write",
+  "apikeys:delete",
+  "audit:read",
+  "pipeline:read",
+  "pipeline:write",
+  "metrics:read",
+  "config:read",
+  "config:write",
+  "referrals:read",
+  "referrals:write",
+  "profile:read",
+  "profile:write",
+];
+
+const ROLES = [
+  ["admin", "Administrator", "Full system access"],
+  ["user", "User", "Standard user access for submissions and research"],
+  ["viewer", "Viewer", "Read-only access to deals and referrals"],
+  ["api_consumer", "API Consumer", "Limited programmatic access"],
+] as const;
+
+const ROLE_ROWS = ROLES.map(
+  ([id, name, description]) => `('${id}', '${name}', '${description}')`,
+).join(",\n    ");
+
+const PERMISSION_ROWS = PERMISSIONS.map(
+  (id) => `('${id}', '${id}', 'Permission ${id}')`,
+).join(",\n    ");
+
 const ROLES_AND_PERMISSIONS = [
-  // Roles
   `INSERT OR IGNORE INTO roles (id, name, description) VALUES
-    ('admin', 'Administrator', 'Full system access'),
-    ('user', 'User', 'Standard user access for submissions and research'),
-    ('viewer', 'Viewer', 'Read-only access to deals and referrals');`,
+    ${ROLE_ROWS};`,
 
-  // Permissions
   `INSERT OR IGNORE INTO permissions (id, name, description) VALUES
-    ('deals:view', 'View Deals', 'Ability to view deal listings'),
-    ('deals:create', 'Create Deals', 'Ability to submit new deals'),
-    ('deals:admin', 'Admin Deals', 'Ability to manage all deals'),
-    ('referrals:view', 'View Referrals', 'Ability to view referral codes'),
-    ('referrals:create', 'Create Referrals', 'Ability to submit new referral codes'),
-    ('referrals:manage', 'Manage Referrals', 'Ability to deactivate/reactivate referrals'),
-    ('keys:manage', 'Manage API Keys', 'Ability to create and revoke API keys'),
-    ('users:manage', 'Manage Users', 'Ability to manage user accounts'),
-    ('audit:view', 'View Audit Logs', 'Ability to view system audit logs');`,
-
-  // Admin gets every permission that exists
-  `INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
-   SELECT 'admin', id FROM permissions;`,
-
-  // User permissions
-  `INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES
-    ('user', 'deals:view'),
-    ('user', 'deals:create'),
-    ('user', 'referrals:view'),
-    ('user', 'referrals:create'),
-    ('user', 'referrals:manage');`,
-
-  // Viewer permissions
-  `INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES
-    ('viewer', 'deals:view'),
-    ('viewer', 'referrals:view');`,
+    ${PERMISSION_ROWS};`,
 ];
 
 /**
@@ -70,7 +86,7 @@ async function run(db: D1Database, queries: string[]): Promise<void> {
   }
 }
 
-/** Production-safe: roles, permissions and their mappings only. */
+/** Production-safe: roles and permissions only. */
 export async function seedAuth(db: D1Database): Promise<void> {
   console.log("Seeding authentication roles and permissions...");
   await run(db, ROLES_AND_PERMISSIONS);
