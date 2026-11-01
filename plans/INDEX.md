@@ -1,6 +1,6 @@
 # Plans Index
 
-**Last Updated**: 2026-10-18. Active set is intentionally small; completed
+**Last Updated**: 2026-11-01. Active set is intentionally small; completed
 work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 
 ## Status Definitions
@@ -93,6 +93,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 - [ADR-033](ADR-033-codecov-oidc-upload-credentials.md) — Codecov upload
   credentials: OIDC when no token, advisory upload; owner applies the
   workflow patch (agent credential lacks `workflows` permission).
+- [ADR-034](ADR-034-build-once-promote-everywhere.md) — Build-once
+  promote-everywhere: one CI artifact per commit, consumed by every deploy
+  job (Implemented 2026-11-01; supersedes the ADR-015 H-3 R2 variant).
 
 ## Completed Specs (archived 2026-10-15 — pointers to `reports/archived_plans/`)
 

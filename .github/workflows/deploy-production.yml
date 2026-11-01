@@ -20,6 +20,11 @@ name: Deploy - Production
         required: false
         type: boolean
         default: true
+      build_artifact_name:
+        description: "Artifact to promote instead of building again (ADR-034)"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -90,14 +95,25 @@ jobs:
           fi
           echo "✅ Staging environment is healthy"
 
+  build:
+    name: Build Artifact
+    # Build-once-promote-everywhere (ADR-015 H-3, ADR-034). A nested caller
+    # that already built this commit passes build_artifact_name so this job is
+    # skipped and the same artifact is promoted instead of rebuilt.
+    if: ${{ !inputs.build_artifact_name }}
+    uses: ./.github/workflows/build-artifact.yml
+
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     environment: production
-    needs: pre-deploy-checks
+    needs: [pre-deploy-checks, build]
     timeout-minutes: 20
 
     if: >
+      always() &&
+      needs.pre-deploy-checks.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) &&
       (github.event.inputs.confirm_deploy == 'true' || github.event_name == 'push')
 
@@ -115,8 +131,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Download build artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.build_artifact_name || format('worker-build-{0}', github.sha) }}
+
+      - name: Verify artifact was built from this commit
+        run: |
+          ARTIFACT_SHA="$(node -p "require('./build-manifest.json').sha")"
+          ARTIFACT_VERSION="$(node -p "require('./build-manifest.json').version")"
+          if [ "${ARTIFACT_SHA}" != "${{ github.sha }}" ]; then
+            echo "❌ Artifact built from ${ARTIFACT_SHA}, expected ${{ github.sha }}"
+            exit 1
+          fi
+          echo "✅ Promoting version ${ARTIFACT_VERSION} built from ${ARTIFACT_SHA}"
 
       - name: Deploy to Cloudflare Production
         id: deploy
