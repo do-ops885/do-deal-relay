@@ -7,6 +7,7 @@ import { getProductionSnapshot } from "../lib/storage";
 import { createComplianceLogger } from "../lib/eu-ai-act-logger";
 import { logger } from "../lib/global-logger";
 import { toError } from "../lib/sanitize-error";
+import { withSpan } from "../lib/tracing";
 import type { Deal } from "../types/deal";
 
 export interface AlertQueueMessage {
@@ -37,72 +38,85 @@ export async function handleAlertQueueBatch(
     return;
   }
 
-  for (const msg of batch.messages) {
-    const body = msg.body;
-    if (!body || !body.alertId || !body.subscriptionId) {
-      msg.ack();
-      continue;
-    }
+  await withSpan(
+    "alert.queue.batch",
+    { "queue.messages": batch.messages.length },
+    async () => {
+      for (const msg of batch.messages) {
+        const body = msg.body;
+        if (!body || !body.alertId || !body.subscriptionId) {
+          msg.ack();
+          continue;
+        }
 
-    try {
-      if (
-        await hasSentDelivery(env.DEALS_DB, body.alertId, body.subscriptionId)
-      ) {
-        msg.ack();
-        continue;
+        try {
+          if (
+            await hasSentDelivery(
+              env.DEALS_DB,
+              body.alertId,
+              body.subscriptionId,
+            )
+          ) {
+            msg.ack();
+            continue;
+          }
+
+          const sub = await getSubscriptionById(
+            env.DEALS_DB,
+            body.subscriptionId,
+          );
+          if (!sub) {
+            msg.ack();
+            continue;
+          }
+
+          const snapshot = await getProductionSnapshot(env);
+          const byId = new Map<string, Deal>();
+          if (snapshot) {
+            for (const d of snapshot.deals) byId.set(d.id, d);
+          }
+          const deals = (body.dealIds || [])
+            .map((id) => byId.get(id))
+            .filter((d): d is Deal => d !== undefined);
+
+          if (deals.length === 0) {
+            await recordDelivery(env.DEALS_DB, {
+              alertId: body.alertId,
+              subscriptionId: body.subscriptionId,
+              dealIds: body.dealIds || [],
+              channel: body.channel || "webhook",
+              status: "skipped",
+            });
+            msg.ack();
+            continue;
+          }
+
+          const result = await sendAlertNotification(env, sub, deals);
+          await recordDelivery(env.DEALS_DB, {
+            alertId: body.alertId,
+            subscriptionId: body.subscriptionId,
+            dealIds: body.dealIds || [],
+            channel: body.channel || sub.channel,
+            status: result.success ? "sent" : "failed",
+            ...(result.error !== undefined ? { error: result.error } : {}),
+          });
+          await logAlertMatch(env, sub, deals, result.success);
+
+          if (result.success) {
+            msg.ack();
+          } else {
+            msg.retry();
+          }
+        } catch (err) {
+          logger.warn("Alert queue message failed, scheduled retry", {
+            component: "alert-consumer",
+            error: toError(err).message,
+          });
+          msg.retry();
+        }
       }
-
-      const sub = await getSubscriptionById(env.DEALS_DB, body.subscriptionId);
-      if (!sub) {
-        msg.ack();
-        continue;
-      }
-
-      const snapshot = await getProductionSnapshot(env);
-      const byId = new Map<string, Deal>();
-      if (snapshot) {
-        for (const d of snapshot.deals) byId.set(d.id, d);
-      }
-      const deals = (body.dealIds || [])
-        .map((id) => byId.get(id))
-        .filter((d): d is Deal => d !== undefined);
-
-      if (deals.length === 0) {
-        await recordDelivery(env.DEALS_DB, {
-          alertId: body.alertId,
-          subscriptionId: body.subscriptionId,
-          dealIds: body.dealIds || [],
-          channel: body.channel || "webhook",
-          status: "skipped",
-        });
-        msg.ack();
-        continue;
-      }
-
-      const result = await sendAlertNotification(env, sub, deals);
-      await recordDelivery(env.DEALS_DB, {
-        alertId: body.alertId,
-        subscriptionId: body.subscriptionId,
-        dealIds: body.dealIds || [],
-        channel: body.channel || sub.channel,
-        status: result.success ? "sent" : "failed",
-        ...(result.error !== undefined ? { error: result.error } : {}),
-      });
-      await logAlertMatch(env, sub, deals, result.success);
-
-      if (result.success) {
-        msg.ack();
-      } else {
-        msg.retry();
-      }
-    } catch (err) {
-      logger.warn("Alert queue message failed, scheduled retry", {
-        component: "alert-consumer",
-        error: toError(err).message,
-      });
-      msg.retry();
-    }
-  }
+    },
+  );
 }
 
 /**
