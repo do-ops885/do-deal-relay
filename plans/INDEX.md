@@ -51,6 +51,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
   Opt-in, fail-closed Reddit publication and moderation client.
   REDDIT-1–5 complete, REDDIT-6 blocked on
   credentials. Decision: [ADR-020](ADR-020-reddit-post-lifecycle.md).
+- [Durable Object Cutover Spec](SPEC-durable-object-cutover.md) —
+  **Planned**. Execution shape for #997 (F-4); runs only after an ADR-035
+  trigger is measured and the owner schedules a sprint.
 
 ## Architecture Decision Records (kept in place)
 
@@ -96,6 +99,9 @@ work lives in `reports/archived_plans/`. See [README](README.md) for rules.
 - [ADR-034](ADR-034-build-once-promote-everywhere.md) — Build-once
   promote-everywhere: one CI artifact per commit, consumed by every deploy
   job (Implemented 2026-11-01; supersedes the ADR-015 H-3 R2 variant).
+- [ADR-035](ADR-035-durable-object-cutover.md) — Durable Object cutover for
+  SourceRegistry/DealRegistry: trigger-based, blocked on owner scheduling
+  ([SPEC](SPEC-durable-object-cutover.md)).
 
 ## Completed Specs (archived 2026-10-15 — pointers to `reports/archived_plans/`)
 
