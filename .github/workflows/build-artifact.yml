@@ -1,0 +1,84 @@
+---
+name: Build Artifact
+
+"on": # yamllint disable-line rule:truthy
+  workflow_call:
+    outputs:
+      artifact_name:
+        description: "Name of the uploaded build artifact"
+        value: ${{ jobs.build.outputs.artifact_name }}
+      version:
+        description: "Version stamped into the build from the VERSION file"
+        value: ${{ jobs.build.outputs.version }}
+
+# Build-once-promote-everywhere (ADR-015 H-3, ADR-034).
+# Builds a single artifact per commit and publishes it for every deploy job in
+# the same run, so staging and production never deploy code from differing
+# builds. Callers consume it with actions/download-artifact.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Once
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact_name: ${{ steps.meta.outputs.artifact_name }}
+      version: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build stamp matches VERSION
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          EXPECTED="export const VERSION = \"${VERSION}\";"
+          if ! grep -qF "${EXPECTED}" worker/version.ts; then
+            echo "❌ worker/version.ts does not match VERSION=${VERSION}"
+            cat worker/version.ts
+            exit 1
+          fi
+          echo "✅ Build stamped with version ${VERSION}"
+
+      - name: Write build manifest
+        id: meta
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          {
+            echo "{"
+            echo "  \"version\": \"${VERSION}\","
+            echo "  \"sha\": \"${{ github.sha }}\","
+            echo "  \"ref\": \"${{ github.ref }}\","
+            echo "  \"run_id\": \"${{ github.run_id }}\","
+            echo "  \"built_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""
+            echo "}"
+          } > build-manifest.json
+          echo "artifact_name=worker-build-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          cat build-manifest.json
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: worker-build-${{ github.sha }}
+          path: |
+            dist/
+            worker/version.ts
+            build-manifest.json
+          retention-days: 7
+          if-no-files-found: error

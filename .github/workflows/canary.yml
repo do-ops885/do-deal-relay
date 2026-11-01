@@ -69,10 +69,15 @@ jobs:
             echo "| Auto-promote | ${{ github.event.inputs.auto_promote || false }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  build:
+    name: Build Artifact
+    # Build once; the canary promotes this artifact (ADR-034).
+    uses: ./.github/workflows/build-artifact.yml
+
   deploy-canary:
     name: Deploy Canary
     runs-on: ubuntu-latest
-    needs: setup-canary
+    needs: [setup-canary, build]
     timeout-minutes: 15
 
     steps:
@@ -89,8 +94,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Download build artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: worker-build-${{ github.sha }}
+
+      - name: Verify artifact was built from this commit
+        run: |
+          ARTIFACT_SHA="$(node -p "require('./build-manifest.json').sha")"
+          if [ "${ARTIFACT_SHA}" != "${{ github.sha }}" ]; then
+            echo "❌ Artifact built from ${ARTIFACT_SHA}, expected ${{ github.sha }}"
+            exit 1
+          fi
+          echo "✅ Promoting artifact built from ${ARTIFACT_SHA}"
 
       - name: Deploy to Cloudflare Workers
         id: deploy
