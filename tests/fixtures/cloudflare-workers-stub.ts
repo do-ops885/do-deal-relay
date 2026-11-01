@@ -26,3 +26,28 @@ export class NonRetryableError extends Error {
     this.name = name ?? "NonRetryableError";
   }
 }
+
+/**
+ * No-op span so `worker/lib/tracing.ts` stays importable on Node. Spans are
+ * recorded by the Workers runtime in integration tests and production; here
+ * they must cost nothing and change nothing.
+ */
+const noopSpan = {
+  isTraced: false,
+  setAttribute: () => noopSpan,
+  setAttributes: () => noopSpan,
+  recordException: () => noopSpan,
+  spanContext: () => ({ traceId: "0".repeat(32), spanId: "0".repeat(16) }),
+};
+
+export const tracing = {
+  enterSpan: <T>(_name: string, callback: (span: typeof noopSpan) => T): T =>
+    callback(noopSpan),
+  startActiveSpan: <T>(
+    _name: string,
+    callback: (span: typeof noopSpan) => T,
+  ): T => callback(noopSpan),
+  startSpan: () => noopSpan,
+  getActiveSpan: () => noopSpan,
+  Span: class {},
+};

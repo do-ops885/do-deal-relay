@@ -13,6 +13,7 @@ import {
 } from "../lib/metrics";
 import { getProductionSnapshot } from "../lib/storage";
 import { fetchInBatches } from "../lib/utils";
+import { withSpan } from "../lib/tracing";
 
 import { ValidationResult, GateResult } from "./types";
 import { validateSchema } from "./gates/schema-validation";
@@ -98,7 +99,15 @@ async function validateSingleDeal(
     // Run sync gates in parallel
     const syncResults = await Promise.all(
       syncGates.map(async (gate) => {
-        const gateResult = await runGate(gate, deal, ctx, env, existingDealIds);
+        const gateResult = await withSpan(
+          "validation.gate",
+          {
+            "gate.name": gate,
+            "deal.id": deal.id,
+            "deal.source": deal.source.domain,
+          },
+          () => runGate(gate, deal, ctx, env, existingDealIds),
+        );
         return { gate, result: gateResult };
       }),
     );
@@ -116,7 +125,15 @@ async function validateSingleDeal(
     // Run async gates sequentially (they may depend on previous gate state)
     if (allPassed) {
       for (const gate of asyncGates) {
-        const gateResult = await runGate(gate, deal, ctx, env, existingDealIds);
+        const gateResult = await withSpan(
+          "validation.gate",
+          {
+            "gate.name": gate,
+            "deal.id": deal.id,
+            "deal.source": deal.source.domain,
+          },
+          () => runGate(gate, deal, ctx, env, existingDealIds),
+        );
         if (!gateResult.passed) {
           allPassed = false;
           failureReasons.push(`${gate}: ${gateResult.reason}`);
