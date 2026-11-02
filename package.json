@@ -55,7 +55,7 @@
     "artillery": "^2.0.34",
     "husky": "^9.1.7",
     "js-yaml": "^5.5.0",
-    "markdownlint-cli": "^0.49.1",
+    "markdownlint-cli": "^0.50.0",
     "miniflare": "4.20260730.0",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
