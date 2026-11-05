@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { checkBodySize } from "../middleware/body-limit";
+import { enforceBodyLimit } from "../middleware/body-limit";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
 import { handleMCPStream, handleStreamingToolCall } from "../routes/mcp-stream";
@@ -28,8 +28,9 @@ export async function tryHandleMCPStreamRoutes(
   }
 
   if (path === "/mcp/stream/tools/call" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,

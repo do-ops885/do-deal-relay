@@ -198,9 +198,11 @@ jobs:
           WRANGLER_PID=$!
           echo "WRANGLER_PID=$WRANGLER_PID" >> "$GITHUB_ENV"
 
-          # Wait for health check to pass
+          # Wait for the worker to accept requests. A local e2e instance has
+          # no seeded D1 snapshot/pipeline metrics, so /health correctly
+          # reports "degraded"; readiness only requires a successful probe.
           for _i in {1..30}; do
-            if curl -s http://localhost:8787/health | grep -q '"status":\s*"healthy"'; then
+            if curl -sf http://localhost:8787/health > /dev/null; then
               SUCCESS=1; break
             fi
             sleep 2
