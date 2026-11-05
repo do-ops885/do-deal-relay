@@ -2,9 +2,8 @@ import type { Env } from "./types";
 import { VERSION } from "./version";
 import { logger } from "./lib/global-logger";
 import { parseTrustedEgressHosts } from "./lib/egress-policy";
-import { validatedFetch } from "./lib/security";
+import { validatedRedditFetch } from "./lib/reddit-fetch";
 import { toError } from "./lib/sanitize-error";
-import { createTimeoutSignal } from "./lib/utils";
 import { sourceSaysExpired } from "./lib/source-expiry";
 import { parseBoundedIntegerConfig } from "./lib/config-utils";
 import {
@@ -25,9 +24,6 @@ const MAX_SCORE_THRESHOLD = 0;
 const REDDIT_FULLNAME_PATTERN = /^t3_[a-z0-9]+$/;
 const REDDIT_USERNAME_PATTERN = /^[A-Za-z0-9_-]{3,20}$/;
 const SUBREDDIT_PATTERN = /^[A-Za-z0-9_]{2,21}$/;
-const REDDIT_EGRESS_HOSTS = parseTrustedEgressHosts(
-  "www.reddit.com,oauth.reddit.com",
-);
 
 interface RedditCredentials {
   clientId: string;
@@ -97,26 +93,11 @@ function getUserAgent(credentials: RedditCredentials): string {
 }
 
 async function fetchJson(url: string, init: RequestInit): Promise<unknown> {
-  const { signal, cleanup } = createTimeoutSignal(REQUEST_TIMEOUT_MS);
-  try {
-    const response = await validatedFetch(
-      url,
-      {
-        ...init,
-        redirect: "error",
-        signal,
-      },
-      REDDIT_EGRESS_HOSTS,
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Reddit API request failed with status ${response.status}`,
-      );
-    }
-    return (await response.json()) as unknown;
-  } finally {
-    cleanup();
+  const response = await validatedRedditFetch(url, init, REQUEST_TIMEOUT_MS);
+  if (!response.ok) {
+    throw new Error(`Reddit API request failed with status ${response.status}`);
   }
+  return (await response.json()) as unknown;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -309,29 +290,22 @@ async function requestRedditDeletion(
   token: string,
   fullname: string,
 ): Promise<void> {
-  const { signal, cleanup } = createTimeoutSignal(REQUEST_TIMEOUT_MS);
-  try {
-    const response = await validatedFetch(
-      "https://oauth.reddit.com/api/del",
-      {
-        method: "POST",
-        redirect: "error",
-        headers: {
-          ...getOAuthHeaders(credentials, token),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ id: fullname }),
-        signal,
+  const response = await validatedRedditFetch(
+    "https://oauth.reddit.com/api/del",
+    {
+      method: "POST",
+      headers: {
+        ...getOAuthHeaders(credentials, token),
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      REDDIT_EGRESS_HOSTS,
+      body: new URLSearchParams({ id: fullname }),
+    },
+    REQUEST_TIMEOUT_MS,
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Reddit delete request failed with status ${response.status}`,
     );
-    if (!response.ok) {
-      throw new Error(
-        `Reddit delete request failed with status ${response.status}`,
-      );
-    }
-  } finally {
-    cleanup();
   }
 }
 
