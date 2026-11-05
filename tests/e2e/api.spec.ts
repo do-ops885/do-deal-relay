@@ -61,13 +61,13 @@ function jwtAuthHeaders(): Record<string, string> {
 }
 
 test.describe("Health Endpoints", () => {
-  test("GET /health returns healthy status", async ({ request }) => {
+  test("GET /health reports a valid status", async ({ request }) => {
     const response = await request.get("/health");
 
     expect(response.status()).toBe(200);
 
     const body = jsonRecord(await response.json());
-    expect(body).toHaveProperty("status", "healthy");
+    expect(["healthy", "degraded"]).toContain(body.status);
     expect(body).toHaveProperty("version");
     expect(body).toHaveProperty("timestamp");
   });

@@ -56,6 +56,18 @@ Every API response includes rate limit metadata in the headers:
 
 Check system health status.
 
+Status meanings:
+
+- `unhealthy`: D1 or a KV binding is unavailable.
+- `degraded`: dependencies are reachable but there is no valid snapshot, no
+  pipeline run in the last 24 hours, or the latest run failed.
+- `healthy`: dependencies are reachable, a valid snapshot exists, and the
+  latest run succeeded within the last 24 hours.
+
+Health probes use one bounded metrics index read plus at most 24 point reads;
+they never scan the full `DEALS_LOG` namespace. Only measured values are
+reported (no hard-coded averages or synthetic external-service flags).
+
 **Response:**
 
 ```json
@@ -99,10 +111,7 @@ Readiness probe - returns 200 when all dependencies are healthy.
     "pipeline": {
       "last_run": "2026-04-04T11:00:00Z",
       "last_success": true,
-      "average_duration_ms": 0
-    },
-    "external_services": {
-      "github_api": true
+      "average_duration_ms": 120000
     }
   }
 }
