@@ -3,6 +3,7 @@ import { getProductionSnapshot } from "../../lib/storage";
 import { logger } from "../../lib/global-logger";
 import { notify } from "../../notify";
 import { fetchInBatches, createTimeoutSignal } from "../../lib/utils";
+import { parseTrustedEgressHosts } from "../../lib/egress-policy";
 import { validatedFetch } from "../../lib/security";
 
 // ============================================================================
@@ -54,14 +55,21 @@ const CV_MAX_CONCURRENT = 10;
 // Individual Checks
 // ============================================================================
 
-async function checkLinkLiveness(url: string): Promise<boolean> {
+async function checkLinkLiveness(
+  url: string,
+  trustedHosts: ReadonlySet<string>,
+): Promise<boolean> {
   try {
     const { signal, cleanup } = createTimeoutSignal(CV_HEAD_TIMEOUT_MS);
-    const response = await validatedFetch(url, {
-      method: "HEAD",
-      redirect: "follow",
-      signal,
-    });
+    const response = await validatedFetch(
+      url,
+      {
+        method: "HEAD",
+        redirect: "follow",
+        signal,
+      },
+      trustedHosts,
+    );
     cleanup();
     return response.ok;
   } catch {
@@ -82,14 +90,21 @@ async function checkRewardAccuracy(deal: Deal): Promise<boolean> {
   return true;
 }
 
-async function checkDomainHealth(domain: string): Promise<boolean> {
+async function checkDomainHealth(
+  domain: string,
+  trustedHosts: ReadonlySet<string>,
+): Promise<boolean> {
   try {
     const { signal, cleanup } = createTimeoutSignal(CV_DNS_TIMEOUT_MS);
-    const response = await validatedFetch(`https://${domain}`, {
-      method: "HEAD",
-      signal,
-      redirect: "follow",
-    });
+    const response = await validatedFetch(
+      `https://${domain}`,
+      {
+        method: "HEAD",
+        signal,
+        redirect: "follow",
+      },
+      trustedHosts,
+    );
     cleanup();
     return response.status < 500;
   } catch {
@@ -126,10 +141,13 @@ export async function verifyDealHealth(
   deal: Deal,
   env: Env,
 ): Promise<CVResult> {
+  const trustedHosts = parseTrustedEgressHosts(
+    env.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+  );
   const [link, reward, domain] = await Promise.all([
-    checkLinkLiveness(deal.url),
+    checkLinkLiveness(deal.url, trustedHosts),
     checkRewardAccuracy(deal),
-    checkDomainHealth(deal.source.domain),
+    checkDomainHealth(deal.source.domain, trustedHosts),
   ]);
 
   const healthy = link && reward && domain;

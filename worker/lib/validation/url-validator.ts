@@ -22,6 +22,7 @@ export type {
 } from "./url-validator-types";
 import { respectRateLimit, extractDomain } from "./url-rate-limit";
 import { tryHeadRequest, tryGetRequest, resolveUrl } from "./url-request";
+import { parseTrustedEgressHosts } from "../egress-policy";
 
 // Barrel re-export (IMP-6): redirect detection moved to url-redirects.ts.
 export { detectRedirects } from "./url-redirects";
@@ -51,6 +52,9 @@ export async function validateUrl(
 ): Promise<UrlValidationResult> {
   const startTime = Date.now();
   const domain = extractDomain(url);
+  const trustedHosts = parseTrustedEgressHosts(
+    env?.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+  );
 
   logger.info(`Validating URL: ${url}`, {
     component: "url-validator",
@@ -69,7 +73,7 @@ export async function validateUrl(
 
   try {
     const result = await breaker.execute(async () => {
-      return await performUrlValidation(url);
+      return await performUrlValidation(url, trustedHosts);
     });
 
     const responseTime = Date.now() - startTime;
@@ -109,7 +113,10 @@ export async function validateUrl(
   }
 }
 
-async function performUrlValidation(url: string): Promise<UrlValidationResult> {
+async function performUrlValidation(
+  url: string,
+  trustedHosts: ReadonlySet<string>,
+): Promise<UrlValidationResult> {
   const redirectChain: string[] = [url];
   let currentUrl = url;
   let redirectCount = 0;
@@ -118,7 +125,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
 
   while (redirectCount <= MAX_REDIRECTS) {
     try {
-      const headResult = await tryHeadRequest(currentUrl);
+      const headResult = await tryHeadRequest(currentUrl, trustedHosts);
 
       if (headResult.success) {
         finalStatusCode = headResult.statusCode;
@@ -181,7 +188,7 @@ async function performUrlValidation(url: string): Promise<UrlValidationResult> {
         };
       }
 
-      const getResult = await tryGetRequest(currentUrl);
+      const getResult = await tryGetRequest(currentUrl, trustedHosts);
 
       if (getResult.success) {
         finalStatusCode = getResult.statusCode;

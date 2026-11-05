@@ -1,6 +1,7 @@
 import type { Env } from "../../types";
 import type { SyncConfig, SyncState } from "../webhook/types";
 import { getProductionSnapshot } from "../storage";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 
 const SYNC_BATCH_SIZE = 50;
@@ -79,15 +80,19 @@ export async function executeSync(
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
 
-      const response = await validatedFetch(partnerConfig.endpoint_url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deals: payload,
-          sync_version: state.sync_version,
-        }),
-        signal: controller.signal,
-      });
+      const response = await validatedFetch(
+        partnerConfig.endpoint_url,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deals: payload,
+            sync_version: state.sync_version,
+          }),
+          signal: controller.signal,
+        },
+        parseTrustedEgressHosts(env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+      );
 
       clearTimeout(timeout);
 

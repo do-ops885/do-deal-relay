@@ -1,5 +1,6 @@
 import { CONFIG } from "./config";
 import { createGitHubIssue } from "./lib/github/index";
+import { parseTrustedEgressHosts } from "./lib/egress-policy";
 import { validatedFetch } from "./lib/security";
 import { getRecentLogs } from "./lib/logger";
 import { createStructuredLogger } from "./lib/logger";
@@ -33,6 +34,7 @@ interface NotificationHistory {
 const NOTIFICATION_KEY = "meta:notifications";
 const NOTIFICATION_COOLDOWN_MS =
   CONFIG.NOTIFICATION_COOLDOWN_HOURS * 60 * 60 * 1000;
+const TELEGRAM_EGRESS_HOSTS = parseTrustedEgressHosts("api.telegram.org");
 
 /**
  * Send notification based on event type
@@ -205,6 +207,7 @@ ${event.context ? `\`\`\`json\n${JSON.stringify(event.context, null, 2)}\n\`\`\`
           parse_mode: "Markdown",
         }),
       },
+      TELEGRAM_EGRESS_HOSTS,
     );
 
     if (!response.ok) {

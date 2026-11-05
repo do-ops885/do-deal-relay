@@ -12,11 +12,16 @@ import type {
 } from "../../../worker/lib/webhook/types";
 import type { Env } from "../../../worker/types";
 
-vi.mock("../../../worker/lib/security", () => ({
-  validateFetchUrl: vi.fn().mockResolvedValue(true),
-  validateUrl: vi.fn().mockReturnValue(true),
-  validatedFetch: vi.fn((url, init) => globalThis.fetch(url, init)),
-}));
+vi.mock("../../../worker/lib/security", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../worker/lib/security")>();
+  return {
+    ...actual,
+    validateFetchUrl: vi.fn().mockResolvedValue(true),
+    validateUrl: vi.fn().mockReturnValue(true),
+    validatedFetch: vi.fn((url, init) => globalThis.fetch(url, init)),
+  };
+});
 
 // ============================================================================
 // Mock KV Namespace
@@ -56,6 +61,7 @@ function createEnv(kv: MockKv) {
     DEALS_PROD: kv,
     DEALS_LOG: kv,
     AI_GATEWAY_URL: "https://gateway.test",
+    OUTBOUND_EGRESS_ALLOWED_HOSTS: "example.com,sub1.com,sub2.com",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 }

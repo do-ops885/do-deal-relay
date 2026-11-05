@@ -47,16 +47,21 @@ async function readBoundedText(response: Response): Promise<string> {
 
 export async function sourceSaysExpired(
   sourceUrl: string | null,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<boolean> {
   if (!sourceUrl) return false;
   const { signal, cleanup } = createTimeoutSignal(SOURCE_REQUEST_TIMEOUT_MS);
   try {
-    const response = await validatedFetch(sourceUrl, {
-      headers: { Accept: "text/html,text/plain" },
-      // Do not follow an unvalidated redirect to a private network target.
-      redirect: "manual",
-      signal,
-    });
+    const response = await validatedFetch(
+      sourceUrl,
+      {
+        headers: { Accept: "text/html,text/plain" },
+        // Do not follow an unvalidated redirect to a private network target.
+        redirect: "manual",
+        signal,
+      },
+      trustedHosts,
+    );
     if (!response.ok) return false;
     const contentType = response.headers
       .get("content-type")

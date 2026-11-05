@@ -8,9 +8,11 @@ import { validatedFetch } from "../../../worker/lib/security";
 import { flushValidationTally } from "../../../worker/lib/storage";
 import type { Env, PipelineContext, SourceConfig } from "../../../worker/types";
 
-vi.mock("../../../worker/lib/security", () => ({
-  validatedFetch: vi.fn(),
-}));
+vi.mock("../../../worker/lib/security", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../worker/lib/security")>();
+  return { ...actual, validatedFetch: vi.fn() };
+});
 
 vi.mock("../../../worker/lib/storage", async (importOriginal) => {
   const actual =
@@ -21,6 +23,7 @@ vi.mock("../../../worker/lib/storage", async (importOriginal) => {
 const TEST_ENVIRONMENT = "test";
 const TEST_TRUST_THRESHOLD = "0.3";
 const PARITY_DOMAIN = "parity.com";
+const PARITY_TRUSTED_HOSTS = new Set([PARITY_DOMAIN]);
 const PARITY_PATTERN = "/deals";
 const PARITY_TRUST = 0.7;
 const PARITY_LIMIT = 10;
@@ -142,6 +145,7 @@ describe("discoverSourceReadonly parity", () => {
     const readonly = await discoverSourceReadonly(
       createParitySource(),
       PARITY_LIMIT,
+      PARITY_TRUSTED_HOSTS,
     );
     const main = await discover(env, createPipelineContext());
 
@@ -167,6 +171,7 @@ describe("discoverSourceReadonly parity", () => {
     const readonly = await discoverSourceReadonly(
       createParitySource(),
       PARITY_LIMIT,
+      PARITY_TRUSTED_HOSTS,
     );
 
     expect(readonly.deal_count).toBe(EXPECTED_DEAL_COUNT);
@@ -196,6 +201,7 @@ describe("discoverSourceReadonly parity", () => {
     const readonly = await discoverSourceReadonly(
       createParitySource(),
       PARITY_LIMIT,
+      PARITY_TRUSTED_HOSTS,
     );
     const main = await discover(env, createPipelineContext());
 
