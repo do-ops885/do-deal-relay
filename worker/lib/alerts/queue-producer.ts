@@ -24,6 +24,12 @@ export interface EnqueueSummary {
   fallbackInline: boolean;
   digestRollover: number;
   dropped: number;
+  /**
+   * Messages in a chunk whose sendBatch call failed. The queue may or may
+   * not have accepted them, so they are never re-sent inline; stable
+   * alertIds make a later queue redelivery idempotent.
+   */
+  ambiguous: number;
 }
 
 /**
@@ -43,6 +49,7 @@ export async function enqueueAlertBatch(
     fallbackInline: false,
     digestRollover: 0,
     dropped: 0,
+    ambiguous: 0,
   };
   if (!deals || deals.length === 0 || !env.DEALS_DB) return empty;
 
@@ -115,31 +122,57 @@ export async function enqueueAlertBatch(
       fallbackInline: true,
       digestRollover,
       dropped: cap.dropped,
+      ambiguous: 0,
     };
   }
 
-  try {
-    const chunkSize = 100;
-    for (let i = 0; i < toSend.length; i += chunkSize) {
-      const chunk = toSend.slice(i, i + chunkSize);
-      await queue.sendBatch(chunk.map((body) => ({ body })));
-    }
-  } catch (err) {
-    logger.warn("Alert queue sendBatch failed, inline fallback", {
-      component: "alert-producer",
-      error: toError(err).message,
-    });
+  const chunkSize = 100;
+  let acceptedCount = 0;
+  let failedChunk: AlertQueueMessage[] | null = null;
+
+  for (let i = 0; i < toSend.length; i += chunkSize) {
+    const chunk = toSend.slice(i, i + chunkSize);
     try {
-      await matchAndNotifySubscriptions(env, deals, frequency);
-    } catch {
-      // best-effort only
+      await queue.sendBatch(chunk.map((body) => ({ body })));
+      acceptedCount += chunk.length;
+    } catch (err) {
+      // Stop at the first failure. Earlier chunks are known-accepted and
+      // must never be re-sent inline. Later chunks were never attempted and
+      // are safe to deliver inline. The failing chunk is ambiguous.
+      failedChunk = chunk;
+      logger.warn("Alert queue sendBatch failed; isolating chunk", {
+        component: "alert-producer",
+        error: toError(err).message,
+        accepted: acceptedCount,
+        ambiguous: chunk.length,
+      });
+      break;
     }
-    return {
-      enqueued: 0,
-      fallbackInline: true,
-      digestRollover,
-      dropped: cap.dropped,
-    };
+  }
+
+  let inlineAttempted = false;
+  let ambiguous = 0;
+
+  if (failedChunk !== null) {
+    ambiguous = failedChunk.length;
+    const failedStart = acceptedCount;
+    const notEnqueued = toSend.slice(failedStart + failedChunk.length);
+    const onlySubscriptionIds = new Set(
+      notEnqueued.map((message) => message.subscriptionId),
+    );
+    if (onlySubscriptionIds.size > 0) {
+      inlineAttempted = true;
+      try {
+        await matchAndNotifySubscriptions(env, deals, frequency, {
+          onlySubscriptionIds,
+        });
+      } catch (inlineErr) {
+        logger.warn("Inline alert recovery failed", {
+          component: "alert-producer",
+          error: toError(inlineErr).message,
+        });
+      }
+    }
   }
 
   if (cap.dropped > 0) {
@@ -151,9 +184,10 @@ export async function enqueueAlertBatch(
   }
 
   return {
-    enqueued: toSend.length,
-    fallbackInline: false,
+    enqueued: acceptedCount,
+    fallbackInline: inlineAttempted,
     digestRollover,
     dropped: cap.dropped,
+    ambiguous,
   };
 }

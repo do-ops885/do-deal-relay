@@ -31,9 +31,20 @@ function toBoundedDealIdsJson(dealIds: string[]): string {
 }
 
 /**
- * Idempotency guard for queue redelivery. INSERT OR IGNORE on the
- * (alert_id, subscription_id) primary key: first insert returns true,
- * duplicates return false so the consumer skips resends.
+ * Idempotent delivery state transitions for the (alert_id, subscription_id)
+ * primary key.
+ *
+ * - First write inserts the row.
+ * - A failed retry followed by a successful retry updates the same row to
+ *   `sent` and clears the stale error. This is what lets a redelivered
+ *   message be recognised as already delivered.
+ * - `sent` is terminal: a late/ambiguous failure can never downgrade a
+ *   successful delivery.
+ * - `skipped` and `failed` remain overwriteable so retries can progress.
+ * - `attempts` counts post-insert state changes (retries), preserving a
+ *   bounded attempt history without a second table.
+ *
+ * Returns true when the row was inserted or its state changed.
  */
 export async function recordDelivery(
   db: D1Database,
@@ -42,9 +53,31 @@ export async function recordDelivery(
   const dealIdsJson = toBoundedDealIdsJson(input.dealIds);
   const result = await db
     .prepare(
-      `INSERT OR IGNORE INTO alert_deliveries
-        (alert_id, subscription_id, deal_ids, channel, status, error)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+      `INSERT INTO alert_deliveries
+        (alert_id, subscription_id, deal_ids, channel, status, error, attempts, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, strftime('%s', 'now'))
+       ON CONFLICT(alert_id, subscription_id) DO UPDATE SET
+         deal_ids = CASE
+           WHEN alert_deliveries.status = 'sent' THEN alert_deliveries.deal_ids
+           ELSE excluded.deal_ids
+         END,
+         channel = CASE
+           WHEN alert_deliveries.status = 'sent' THEN alert_deliveries.channel
+           ELSE excluded.channel
+         END,
+         status = CASE
+           WHEN alert_deliveries.status = 'sent' THEN 'sent'
+           ELSE excluded.status
+         END,
+         error = CASE
+           WHEN alert_deliveries.status = 'sent' THEN alert_deliveries.error
+           ELSE excluded.error
+         END,
+         attempts = CASE
+           WHEN alert_deliveries.status = 'sent' THEN alert_deliveries.attempts
+           ELSE alert_deliveries.attempts + 1
+         END,
+         updated_at = excluded.updated_at`,
     )
     .bind(
       input.alertId,

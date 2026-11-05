@@ -176,10 +176,20 @@ export function scoreDealAgainstQuery(deal: Deal, queryStr: string): number {
  * Match a batch of new deals against all active alert subscriptions of a given frequency
  * and send notifications for matches exceeding each subscription's threshold.
  */
+export interface MatchNotifyOptions {
+  /**
+   * Restricts delivery to the given subscription ids. Used by the queue
+   * producer's partial-failure recovery so it never re-notifies a
+   * subscription whose message was already accepted by the queue.
+   */
+  onlySubscriptionIds?: ReadonlySet<string>;
+}
+
 export async function matchAndNotifySubscriptions(
   env: Env,
   deals: Deal[],
   frequency: AlertFrequency = "instant",
+  options: MatchNotifyOptions = {},
 ): Promise<MatcherRunSummary> {
   if (!deals || deals.length === 0 || !env.DEALS_DB) {
     return { subscriptionsProcessed: 0, notificationsSent: 0, results: [] };
@@ -197,6 +207,11 @@ export async function matchAndNotifySubscriptions(
       error: err instanceof Error ? err.message : String(err),
     });
     return { subscriptionsProcessed: 0, notificationsSent: 0, results: [] };
+  }
+
+  if (options.onlySubscriptionIds) {
+    const allowed = options.onlySubscriptionIds;
+    subscriptions = subscriptions.filter((sub) => allowed.has(sub.id));
   }
 
   if (subscriptions.length === 0) {

@@ -78,7 +78,13 @@ describe("d1/alert-deliveries", () => {
       expect(result).toBe(true);
       expect(queries).toHaveLength(1);
       const recorded = queries[0];
-      expect(recorded?.sql).toContain("INSERT OR IGNORE INTO alert_deliveries");
+      expect(recorded?.sql).toContain("INSERT INTO alert_deliveries");
+      expect(recorded?.sql).toContain(
+        "ON CONFLICT(alert_id, subscription_id) DO UPDATE",
+      );
+      expect(recorded?.sql).toContain(
+        "WHEN alert_deliveries.status = 'sent' THEN 'sent'",
+      );
       expect(recorded?.params[0]).toBe("alert-1");
       expect(recorded?.params[1]).toBe("sub-1");
       expect(recorded?.params[2]).toBe(JSON.stringify(["deal-a", "deal-b"]));
@@ -97,9 +103,7 @@ describe("d1/alert-deliveries", () => {
 
       expect(result).toBe(false);
       expect(queries).toHaveLength(1);
-      expect(queries[0]?.sql).toContain(
-        "INSERT OR IGNORE INTO alert_deliveries",
-      );
+      expect(queries[0]?.sql).toContain("INSERT INTO alert_deliveries");
     });
 
     it("bounds oversized deal ids to valid JSON under the size limit", async () => {
