@@ -3,6 +3,7 @@ import type { Snapshot, Env } from "../../types";
 import { CircuitBreaker, createGitHubCircuitBreaker } from "../circuit-breaker";
 import { createGitHubCache } from "../cache";
 import { createStructuredLogger } from "../logger";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 import type { GitHubCommit, GitHubContent } from "./types";
 
@@ -22,6 +23,7 @@ export async function safeResponseJson<T>(response: Response): Promise<T> {
 }
 
 let githubToken: string | undefined;
+const GITHUB_EGRESS_HOSTS = parseTrustedEgressHosts("api.github.com");
 export let githubCircuitBreaker: CircuitBreaker | undefined;
 let githubCache: ReturnType<typeof createGitHubCache> | undefined;
 
@@ -88,6 +90,7 @@ export async function getFileContent(
     const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/contents/${path}?ref=${branch}`,
       { headers },
+      GITHUB_EGRESS_HOSTS,
     );
     if (response.status === 404) return null;
     if (!response.ok) {
@@ -139,6 +142,7 @@ export async function commitFile(
         headers,
         body: JSON.stringify(body),
       },
+      GITHUB_EGRESS_HOSTS,
     );
     if (!response.ok) {
       const error = await response.text();
@@ -203,15 +207,19 @@ export async function createGitHubIssue(
   const body = `## Notification\n\n**Type**: ${type}\n**Severity**: ${details.severity}\n**Run ID**: ${run_id}\n**Timestamp**: ${new Date().toISOString()}\n\n### Message\n${details.message}\n\n### Context\n\`\`\`json\n${JSON.stringify(details.context || {}, null, 2)}\n\`\`\`\n\n---\n*This issue was automatically created by the Deal Discovery System.*`;
   const cb = githubCircuitBreaker;
   const execute = async () => {
-    const response = await validatedFetch(`${baseUrl}/repos/${repo}/issues`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        title,
-        body,
-        labels: [type, details.severity, "automated"],
-      }),
-    });
+    const response = await validatedFetch(
+      `${baseUrl}/repos/${repo}/issues`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title,
+          body,
+          labels: [type, details.severity, "automated"],
+        }),
+      },
+      GITHUB_EGRESS_HOSTS,
+    );
     if (!response.ok)
       throw new Error(`Failed to create issue: ${response.status}`);
     const data = await safeResponseJson<{ number: number }>(response);
@@ -245,6 +253,7 @@ export async function getRecentCommits(
     const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/commits?path=${path}&per_page=${count}`,
       { headers },
+      GITHUB_EGRESS_HOSTS,
     );
     if (!response.ok)
       throw new Error(`Failed to get commits: ${response.status}`);

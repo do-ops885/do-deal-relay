@@ -16,6 +16,10 @@ import { generateWebhookHeaders } from "../hmac";
 import { toError } from "../sanitize-error";
 import { logger } from "../global-logger";
 import { fetchInBatches } from "../utils";
+import {
+  OutboundEgressPolicyError,
+  parseTrustedEgressHosts,
+} from "../egress-policy";
 import { validatedFetch } from "../security";
 import { listAllKvKeys } from "../kv-pagination";
 
@@ -151,6 +155,9 @@ async function sendWebhookToSubscription(
     attempts: [],
     created_at: new Date().toISOString(),
   };
+  const trustedHosts = parseTrustedEgressHosts(
+    env.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+  );
 
   for (let attempt = 1; attempt <= retryPolicy.max_attempts; attempt++) {
     try {
@@ -161,11 +168,15 @@ async function sendWebhookToSubscription(
         event.type,
       );
 
-      const response = await validatedFetch(subscription.url, {
-        method: "POST",
-        headers,
-        body: payload,
-      });
+      const response = await validatedFetch(
+        subscription.url,
+        {
+          method: "POST",
+          headers,
+          body: payload,
+        },
+        trustedHosts,
+      );
 
       const attemptRecord: WebhookAttempt = {
         timestamp: new Date().toISOString(),
@@ -213,6 +224,10 @@ async function sendWebhookToSubscription(
         error: err.message,
       };
       delivery.attempts.push(attemptRecord);
+      if (error instanceof OutboundEgressPolicyError) {
+        delivery.status = "failed";
+        break;
+      }
       delivery.status =
         attempt < retryPolicy.max_attempts ? "retrying" : "failed";
 

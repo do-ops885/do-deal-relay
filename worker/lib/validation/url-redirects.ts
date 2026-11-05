@@ -14,11 +14,17 @@ import {
   type UrlValidationResult,
 } from "./url-validator-types";
 import { resolveUrl } from "./url-request";
+import type { Env } from "../../types";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 
 export async function detectRedirects(
   url: string,
+  env?: Env,
 ): Promise<UrlValidationResult> {
+  const trustedHosts = parseTrustedEgressHosts(
+    env?.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+  );
   const startTime = Date.now();
   const redirectChain: string[] = [url];
   let currentUrl = url;
@@ -32,19 +38,23 @@ export async function detectRedirects(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await validatedFetch(currentUrl, {
-        method: "HEAD",
-        headers: {
-          "User-Agent": CONFIG.USER_AGENT,
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5",
-          "Accept-Encoding": "gzip, deflate, br",
-          Connection: "keep-alive",
+      const response = await validatedFetch(
+        currentUrl,
+        {
+          method: "HEAD",
+          headers: {
+            "User-Agent": CONFIG.USER_AGENT,
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            Connection: "keep-alive",
+          },
+          redirect: "manual",
+          signal: controller.signal,
         },
-        redirect: "manual",
-        signal: controller.signal,
-      });
+        trustedHosts,
+      );
 
       const location = response.headers.get("location");
       if (location && REDIRECT_STATUS_CODES.includes(response.status)) {

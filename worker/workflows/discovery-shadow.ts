@@ -3,6 +3,7 @@ import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import type { Env } from "../types";
 import type { ShadowDiscoveryParams } from "../types/api";
 import { getSourceRegistry } from "../lib/storage";
+import { parseTrustedEgressHosts } from "../lib/egress-policy";
 import {
   discoverSourceReadonly,
   type ShadowSourceSummary,
@@ -88,7 +89,11 @@ export class DiscoveryShadowWorkflow extends WorkflowEntrypoint<
                 sample_keys: [],
               };
             }
-            return await discoverSourceReadonly(source, item.limit);
+            return await discoverSourceReadonly(
+              source,
+              item.limit,
+              parseTrustedEgressHosts(this.env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+            );
           } catch (error) {
             // Isolated: a source failure is recorded, never thrown.
             return {

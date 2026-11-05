@@ -47,6 +47,7 @@ vi.mock("../../../worker/lib/webhook/index", () => ({
 
 describe("Webhook Subscription SSRF Protection", () => {
   const mockEnv = {
+    OUTBOUND_EGRESS_ALLOWED_HOSTS: "example.com",
     WEBHOOK_API_KEYS: {
       get: vi.fn().mockResolvedValue(
         JSON.stringify({
@@ -80,7 +81,7 @@ describe("Webhook Subscription SSRF Protection", () => {
     const data = jsonRecord(await response.json());
 
     expect(response.status).toBe(400);
-    expect(data.error).toMatch(/disallowed|SSRF|blocked/i);
+    expect(data.error).toMatch(/disallowed|SSRF|blocked|trusted/i);
   });
 
   it("should block subscription to non-HTTPS URL", async () => {

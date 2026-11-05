@@ -18,6 +18,10 @@ import {
   type SubscribeRequest,
 } from "./types";
 import { requireAuth as unifiedRequireAuth } from "../../lib/auth";
+import {
+  isTrustedEgressUrl,
+  parseTrustedEgressHosts,
+} from "../../lib/egress-policy";
 import { validateFetchUrl } from "../../lib/security";
 
 // ============================================================================
@@ -93,7 +97,28 @@ export async function handleSubscribe(
       return jsonResponse({ error: "Invalid URL format" }, 400, request, env);
     }
 
-    // SSRF Protection: Ensure the URL is public and uses a safe protocol
+    const trustedHosts = parseTrustedEgressHosts(
+      env.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+    );
+    if (trustedHosts.size === 0) {
+      return jsonResponse(
+        { error: "Outbound webhook destinations are not configured" },
+        503,
+        request,
+        env,
+      );
+    }
+
+    if (!isTrustedEgressUrl(body.url, trustedHosts)) {
+      return jsonResponse(
+        { error: "Destination host is not in the trusted egress policy" },
+        400,
+        request,
+        env,
+      );
+    }
+
+    // SSRF protection also rejects hostnames resolving to blocked address ranges.
     const isSafe = await validateFetchUrl(body.url);
     if (!isSafe) {
       return jsonResponse(

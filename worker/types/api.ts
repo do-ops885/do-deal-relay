@@ -92,6 +92,7 @@ export interface Env {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   EMAIL_WEBHOOK_SECRET?: string;
+  OUTBOUND_EGRESS_ALLOWED_HOSTS?: string;
   WEBHOOK_SECRET: string;
   RESEARCH_USE_REAL_FETCHING?: string;
   _validated?: boolean;
