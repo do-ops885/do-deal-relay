@@ -25,7 +25,6 @@ export interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
   version: string;
   timestamp: string;
-  uptime_seconds?: number;
   checks: {
     kv_connection: boolean;
     last_run_success: boolean;
@@ -49,9 +48,6 @@ export interface HealthStatus {
       last_run: string;
       last_success: boolean;
       average_duration_ms: number;
-    };
-    external_services: {
-      github_api: boolean;
     };
   };
   metrics?: {

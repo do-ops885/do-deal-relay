@@ -1,5 +1,5 @@
 import { VERSION } from "../../version";
-import type { Env, HealthStatus, LogEntry, PipelineMetrics } from "../../types";
+import type { Env, HealthStatus, PipelineMetrics } from "../../types";
 import { getAllowedOrigin, jsonResponse } from "../utils";
 import {
   formatPrometheusMetrics,
@@ -8,7 +8,14 @@ import {
   prometheusResponse,
 } from "../../lib/metrics/prometheus";
 import { logger } from "../../lib/global-logger";
-import { listAllKvKeys } from "../../lib/kv-pagination";
+
+/**
+ * Health probes are polled frequently, so they must never scan the whole
+ * DEALS_LOG namespace. The health path reads a single bounded index entry
+ * plus at most HEALTH_MAX_RUNS metrics records (point reads).
+ */
+export const HEALTH_MAX_RUNS = 24;
+export const HEALTH_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export async function handleHealth(
   env: Env,
@@ -183,18 +190,31 @@ function withCors(response: Response, request: Request, env: Env): Response {
   return response;
 }
 
+/**
+ * Health status contract:
+ * - `unhealthy`: a hard dependency (D1 or any KV binding) is unavailable.
+ * - `degraded`: dependencies are reachable, but the service cannot serve its
+ *   primary purpose yet — no valid snapshot, no successful/fresh pipeline run,
+ *   or the most recent run failed. A missing snapshot is treated as a startup
+ *   condition, not as healthy.
+ * - `healthy`: dependencies reachable, snapshot valid, and the latest run
+ *   completed successfully within the 24h freshness window.
+ *
+ * Only measured values are reported: the old hard-coded averages, the
+ * unconditional `github_api` flag, and the request-duration `uptime_seconds`
+ * were removed because they did not describe real operational state.
+ */
 export async function getHealthStatus(
   request: Request,
   env: Env,
 ): Promise<Response> {
   try {
-    const startTime = Date.now();
-
-    const snapshot = await getLatestSnapshot(env);
-    const logs = await getRecentLogs(env);
-    const d1Check = await checkD1Connection(env);
-
-    const kvChecks = await checkKVConnections(env);
+    const [snapshotValid, d1Check, kvChecks, runs] = await Promise.all([
+      getLatestSnapshot(env),
+      checkD1Connection(env),
+      checkKVConnections(env),
+      getBoundedRunMetrics(env),
+    ]);
 
     const kvProd = kvChecks.DEALS_PROD ?? { connected: false };
     const kvStaging = kvChecks.DEALS_STAGING ?? { connected: false };
@@ -208,36 +228,59 @@ export async function getHealthStatus(
       kvLog.connected &&
       kvLock.connected &&
       kvSources.connected;
-    const allDepsHealthy =
-      snapshot || !allKvConnected ? false : d1Check.connected;
+    const dependenciesConnected = allKvConnected && d1Check.connected;
 
-    const recentRuns = logs.filter((l) => l.phase === "finalize").length;
-    const successfulRuns = logs.filter(
-      (l) => l.phase === "finalize" && l.status === "complete",
-    ).length;
+    const now = Date.now();
+    const windowStart = now - HEALTH_WINDOW_MS;
+    const runs24h = runs.filter((run) => {
+      const ts = runTimestamp(run);
+      return ts !== null && ts >= windowStart;
+    });
+    const successfulRuns24h = runs24h.filter((run) => run.success === true);
+    const latestRun = runs[0] ?? null;
+    const latestRunTimestamp = latestRun ? runTimestamp(latestRun) : null;
+    const lastRunFresh =
+      latestRunTimestamp !== null && latestRunTimestamp >= windowStart;
+    const lastRunSuccess = latestRun?.success === true && lastRunFresh;
 
-    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
-
-    if (!allDepsHealthy || !allKvConnected) {
-      overallStatus = "degraded";
-    }
-
-    if (!d1Check.connected || !allKvConnected) {
+    let overallStatus: "healthy" | "degraded" | "unhealthy";
+    if (!dependenciesConnected) {
       overallStatus = "unhealthy";
+    } else if (!snapshotValid || !lastRunSuccess) {
+      overallStatus = "degraded";
+    } else {
+      overallStatus = "healthy";
     }
 
-    const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+    const averageDurationMs =
+      runs24h.length > 0
+        ? Math.round(
+            runs24h.reduce(
+              (sum, run) =>
+                sum +
+                (Number.isFinite(run.total_duration_ms)
+                  ? run.total_duration_ms
+                  : 0),
+              0,
+            ) / runs24h.length,
+          )
+        : 0;
+    const averageDealsPerRun =
+      runs24h.length > 0
+        ? runs24h.reduce(
+            (sum, run) => sum + (run.deals_processed?.published ?? 0),
+            0,
+          ) / runs24h.length
+        : 0;
 
     const response: HealthStatus = {
       status: overallStatus,
       version: VERSION,
-      timestamp: new Date().toISOString(),
-      uptime_seconds: uptimeSeconds,
+      timestamp: new Date(now).toISOString(),
       checks: {
         kv_connection: allKvConnected,
-        last_run_success:
-          recentRuns > 0 ? successfulRuns === recentRuns : false,
-        snapshot_valid: snapshot !== null,
+        last_run_success: lastRunSuccess,
+        snapshot_valid: snapshotValid,
         d1_connected: d1Check.connected,
       },
       components: {
@@ -254,28 +297,34 @@ export async function getHealthStatus(
           ...(d1Check.error !== undefined ? { error: d1Check.error } : {}),
         },
         pipeline: {
-          last_run: logs.length > 0 ? (logs[0]?.ts ?? "") : "",
-          last_success:
-            logs.length > 0 ? logs[0]?.status === "complete" : false,
-          average_duration_ms: 0,
-        },
-        external_services: {
-          github_api: true,
+          last_run:
+            latestRunTimestamp !== null
+              ? new Date(latestRunTimestamp).toISOString()
+              : "",
+          last_success: lastRunSuccess,
+          average_duration_ms: averageDurationMs,
         },
       },
       metrics: {
-        total_runs_24h: recentRuns,
+        total_runs_24h: runs24h.length,
         success_rate_24h:
-          recentRuns > 0 ? (successfulRuns / recentRuns) * 100 : 0,
-        avg_deals_per_run: 0,
+          runs24h.length > 0
+            ? (successfulRuns24h.length / runs24h.length) * 100
+            : 0,
+        avg_deals_per_run: averageDealsPerRun,
       },
-      ...(logs.length > 0
+      ...(latestRun !== null
         ? {
             last_run: {
-              run_id: logs[0]?.run_id ?? "",
-              timestamp: logs[0]?.ts ?? "",
-              duration_ms: logs[0]?.duration_ms || 0,
-              deals_count: 0,
+              run_id: latestRun.run_id,
+              timestamp:
+                latestRunTimestamp !== null
+                  ? new Date(latestRunTimestamp).toISOString()
+                  : "",
+              duration_ms: Number.isFinite(latestRun.total_duration_ms)
+                ? latestRun.total_duration_ms
+                : 0,
+              deals_count: latestRun.deals_processed?.published ?? 0,
             },
           }
         : {}),
@@ -304,10 +353,59 @@ async function getLatestSnapshot(env: Env): Promise<boolean> {
   }
 }
 
-async function getRecentLogs(env: Env): Promise<LogEntry[]> {
+function runTimestamp(run: PipelineMetrics): number | null {
+  if (typeof run.end_time === "number" && run.end_time > 0) {
+    return run.end_time;
+  }
+  if (typeof run.start_time === "number" && run.start_time > 0) {
+    return run.start_time;
+  }
+  return null;
+}
+
+/**
+ * Bounded health metrics read: one index point read plus at most
+ * HEALTH_MAX_RUNS point reads. Never lists the DEALS_LOG namespace, so
+ * probe cost is independent of total log history.
+ */
+async function getBoundedRunMetrics(env: Env): Promise<PipelineMetrics[]> {
   try {
-    const result = await listAllKvKeys(env.DEALS_LOG);
-    return result.keys.map((k) => JSON.parse(k.metadata as string) as LogEntry);
+    const indexRaw = await env.DEALS_LOG.get("metrics:index");
+    if (!indexRaw) return [];
+
+    let parsedIndex: unknown;
+    try {
+      parsedIndex = JSON.parse(indexRaw);
+    } catch {
+      return [];
+    }
+    if (!Array.isArray(parsedIndex)) return [];
+
+    const ids = parsedIndex
+      .filter((value): value is string => typeof value === "string")
+      .slice(0, HEALTH_MAX_RUNS);
+
+    const records = await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const raw = await env.DEALS_LOG.get(`metrics:${id}`);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw) as Partial<PipelineMetrics>;
+          if (
+            !parsed ||
+            typeof parsed !== "object" ||
+            typeof parsed.run_id !== "string"
+          ) {
+            return null;
+          }
+          return parsed as PipelineMetrics;
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return records.filter((run): run is PipelineMetrics => run !== null);
   } catch {
     return [];
   }
