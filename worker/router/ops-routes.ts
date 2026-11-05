@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { checkBodySize } from "../middleware/body-limit";
+import { enforceBodyLimit } from "../middleware/body-limit";
 import { requireFeature } from "../middleware/feature-gate";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
@@ -32,8 +32,12 @@ export async function tryHandleOpsRoutes(
   if (path === "/api/bulk/import" && request.method === "POST") {
     const featureOff = await requireFeature("bulk_import_export", request, env);
     if (featureOff) return featureOff;
-    const bodyTooLarge = checkBodySize(request, BULK_IMPORT_MAX_BODY_BYTES);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(
+      request,
+      BULK_IMPORT_MAX_BODY_BYTES,
+    );
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,

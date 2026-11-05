@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { checkBodySize } from "../middleware/body-limit";
+import { enforceBodyLimit } from "../middleware/body-limit";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
 import { handleHealth, handleReady, handleLive } from "../routes/core";
@@ -42,20 +42,23 @@ export async function tryHandleLegacyAuthRoutes(
 
   // Auth & User Management
   if (path === "/api/auth/register" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     const rateLimiter = createRateLimitMiddleware(env, "/api/auth/register");
     return rateLimiter(request, () => handleRegister(request, env));
   }
   if (path === "/api/auth/login" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     const rateLimiter = createRateLimitMiddleware(env, "/api/auth/login");
     return rateLimiter(request, () => handleLogin(request, env));
   }
   if (path === "/api/auth/refresh" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     const rateLimiter = createRateLimitMiddleware(env, "/api/auth/refresh");
     return rateLimiter(request, () => handleRefreshToken(request, env));
   }
@@ -65,8 +68,9 @@ export async function tryHandleLegacyAuthRoutes(
     );
   }
   if (path === "/api/auth/me" && request.method === "PUT") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) =>
       handleUpdateProfile(auth, request, env),
     );

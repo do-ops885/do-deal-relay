@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { checkBodySize } from "../middleware/body-limit";
+import { enforceBodyLimit } from "../middleware/body-limit";
 import { requireFeature } from "../middleware/feature-gate";
 import { withAuth } from "../lib/auth";
 import { createRateLimitMiddleware } from "../lib/rate-limit";
@@ -158,8 +158,9 @@ export async function tryHandleLegacyRoutes(
 
   // Deal Submission
   if (path === "/api/submit" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(env, "/api/submit", auth);
       return rateLimiter(request, () => handleSubmit(request, env));
@@ -202,8 +203,9 @@ export async function tryHandleLegacyRoutes(
       });
     }
     if (request.method === "POST") {
-      const bodyTooLarge = checkBodySize(request, 5 * 1024);
-      if (bodyTooLarge) return bodyTooLarge;
+      const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+      if (bodyTooLarge.response) return bodyTooLarge.response;
+      request = bodyTooLarge.request;
       return withAuth(request, env, "user", (auth) => {
         const rateLimiter = createRateLimitMiddleware(
           env,
@@ -235,8 +237,9 @@ export async function tryHandleLegacyRoutes(
 
   // Research API
   if (path === "/api/research" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(env, "/api/research", auth);
       return rateLimiter(request, () => handleResearch(request, env));
@@ -260,8 +263,9 @@ export async function tryHandleLegacyRoutes(
 
   // Semantic search (Vectorize + Workers AI)
   if (path === "/api/semantic-search" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 5 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 5 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,
@@ -328,8 +332,9 @@ export async function tryHandleLegacyRoutes(
     if (request.method === "OPTIONS") {
       return handleMCPRequest(request, env);
     }
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) =>
       handleMCPRequest(request, env, auth),
     );
@@ -342,8 +347,9 @@ export async function tryHandleLegacyRoutes(
     );
   }
   if (path === "/mcp/v1/tools/call" && request.method === "POST") {
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,
@@ -422,16 +428,18 @@ export async function tryHandleLegacyRoutes(
   if (path === "/api/email/incoming" && request.method === "POST") {
     const featureOff = await requireFeature("email_processing", request, env);
     if (featureOff) return featureOff;
-    const bodyTooLarge = checkBodySize(request, 100 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 100 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     const rateLimiter = createRateLimitMiddleware(env, "/api/email/incoming");
     return rateLimiter(request, () => handleEmailIncoming(request, env));
   }
   if (path === "/api/email/parse" && request.method === "POST") {
     const featureOff = await requireFeature("email_processing", request, env);
     if (featureOff) return featureOff;
-    const bodyTooLarge = checkBodySize(request, 10 * 1024);
-    if (bodyTooLarge) return bodyTooLarge;
+    const bodyTooLarge = await enforceBodyLimit(request, 10 * 1024);
+    if (bodyTooLarge.response) return bodyTooLarge.response;
+    request = bodyTooLarge.request;
     return withAuth(request, env, "user", (auth) => {
       const rateLimiter = createRateLimitMiddleware(
         env,

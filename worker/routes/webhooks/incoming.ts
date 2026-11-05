@@ -11,6 +11,13 @@ import {
 } from "../../lib/webhook/index";
 import { verifyHmacSignature } from "../../lib/hmac";
 import { jsonResponse } from "./types";
+import { enforceBodyLimit } from "../../middleware/body-limit";
+
+/**
+ * Hard maximum for a signed partner webhook payload (256 KiB). Enforced
+ * against actual streamed bytes before `request.text()` buffers it.
+ */
+export const WEBHOOK_INCOMING_MAX_BODY_BYTES = 256 * 1024;
 
 // ============================================================================
 // Incoming Webhook Handler
@@ -32,6 +39,14 @@ export async function handleIncomingWebhookRequest(
         env,
       );
     }
+
+    // Enforce a byte limit before buffering the webhook body.
+    const bodyLimit = await enforceBodyLimit(
+      request,
+      WEBHOOK_INCOMING_MAX_BODY_BYTES,
+    );
+    if (bodyLimit.response) return bodyLimit.response;
+    request = bodyLimit.request;
 
     // Look up partner for secret (needed for HMAC verification)
     const partner = await getWebhookPartner(env, partnerId);

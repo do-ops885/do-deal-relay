@@ -15,7 +15,7 @@ import type { RouteConfig, RouteMatch, RouteParams, HttpMethod } from "./types";
 import { authMiddleware } from "./auth";
 import { rateLimitMiddleware } from "./rate-limit";
 import { jsonResponse, getAllowedOrigin } from "../../routes/utils";
-import { checkBodySize } from "../../middleware/body-limit";
+import { enforceBodyLimit } from "../../middleware/body-limit";
 import { logger } from "../global-logger";
 
 // ============================================================================
@@ -160,10 +160,13 @@ export async function executePipeline(
   // 2. Logging
   loggingMiddleware(request, env, config);
 
-  // 3. Body size limit (if configured)
+  // 3. Body size limit (if configured). enforceBodyLimit counts actual
+  // bytes and replaces request with a replayable bounded body.
+  let boundedRequest = request;
   if (config.bodySizeLimit) {
-    const tooLarge = checkBodySize(request, config.bodySizeLimit);
-    if (tooLarge) return tooLarge;
+    const limited = await enforceBodyLimit(request, config.bodySizeLimit);
+    if (limited.response) return limited.response;
+    boundedRequest = limited.request;
   }
 
   // 4. Rate Limit (skipped when route opts out with rateLimit: false,
@@ -184,7 +187,7 @@ export async function executePipeline(
 
   // 6. Execute handler
   try {
-    const response = await config.handler(request, env, params);
+    const response = await config.handler(boundedRequest, env, params);
     return response;
   } catch (error) {
     logger.error("Pipeline handler error", {
