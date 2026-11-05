@@ -59,7 +59,7 @@ describe("schema", () => {
   it("versions are sequential starting from 1", () => {
     const versions = MIGRATIONS.map((m) => m.version);
     expect(versions).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     ]);
   });
 
@@ -241,7 +241,7 @@ describe("index exports", () => {
 
   it("re-exports MIGRATIONS constant", () => {
     expect(MIGRATIONS).toBeDefined();
-    expect(MIGRATIONS.length).toBe(15);
+    expect(MIGRATIONS.length).toBe(16);
   });
 });
 
@@ -269,7 +269,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     ]);
   });
 
@@ -308,6 +308,11 @@ describe("factory functions", () => {
           name: "add_missing_runtime_tables",
           applied_at: 15000,
         },
+        {
+          version: 16,
+          name: "add_alert_delivery_attempts",
+          applied_at: 16000,
+        },
       ],
     });
 
@@ -315,7 +320,7 @@ describe("factory functions", () => {
 
     expect(result.success).toBe(true);
     expect(result.applied).toEqual([]);
-    expect(result.currentVersion).toBe(15);
+    expect(result.currentVersion).toBe(16);
   });
 
   it("getMigrationStatus returns current status", async () => {
@@ -329,9 +334,9 @@ describe("factory functions", () => {
     expect(status.currentVersion).toBe(1);
     expect(status.applied).toEqual([1]);
     expect(status.pending).toEqual([
-      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     ]);
-    expect(status.latestVersion).toBe(15);
+    expect(status.latestVersion).toBe(16);
   });
 
   it("getMigrationStatus on fully migrated DB returns empty pending", async () => {
@@ -369,13 +374,18 @@ describe("factory functions", () => {
           name: "add_missing_runtime_tables",
           applied_at: 15000,
         },
+        {
+          version: 16,
+          name: "add_alert_delivery_attempts",
+          applied_at: 16000,
+        },
       ],
     });
 
     const status = await getMigrationStatus(mockDb);
 
     expect(status.pending).toEqual([]);
-    expect(status.currentVersion).toBe(15);
+    expect(status.currentVersion).toBe(16);
   });
 });
 
@@ -392,7 +402,9 @@ describe("edge cases", () => {
   it("migration up SQL contains expected DDL keywords", () => {
     for (const m of MIGRATIONS) {
       const hasCreateOrInsert =
-        m.up.includes("CREATE") || m.up.includes("INSERT");
+        m.up.includes("CREATE") ||
+        m.up.includes("INSERT") ||
+        m.up.includes("ALTER");
       expect(hasCreateOrInsert).toBe(true);
     }
   });

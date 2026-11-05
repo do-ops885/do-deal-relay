@@ -79,4 +79,16 @@ export const MIGRATIONS_PART_9: Migration[] = [
       DROP TABLE IF EXISTS snapshots;
     `,
   },
+  {
+    version: 16,
+    name: "add_alert_delivery_attempts",
+    up: `
+      ALTER TABLE alert_deliveries ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE alert_deliveries ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0;
+    `,
+    down: `
+      ALTER TABLE alert_deliveries DROP COLUMN updated_at;
+      ALTER TABLE alert_deliveries DROP COLUMN attempts;
+    `,
+  },
 ];
