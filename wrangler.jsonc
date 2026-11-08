@@ -3,10 +3,11 @@
 {
   "name": "do-deal-relay",
   "main": "worker/index.ts",
-  // Newest compatibility date supported by the pinned workerd/miniflare
-  // toolchain (older pin 2026-06-13 was stale). Bump only alongside a
-  // dependency update and re-run `npm run test:integration`.
-  "compatibility_date": "2026-08-22",
+  // Newest compatibility date supported by the pinned workerd runtime.
+  // Wrangler 4.158.0 bundles workerd 1.20261104.1, so 2026-11-04 is the
+  // latest date the local toolchain can validate. Bump this together with
+  // wrangler/miniflare and re-run `npm run test:integration`.
+  "compatibility_date": "2026-11-04",
   // Enable Node.js compatibility for better ecosystem support
   "compatibility_flags": ["nodejs_compat"],
   // Observability for monitoring and debugging
