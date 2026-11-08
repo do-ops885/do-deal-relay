@@ -10,6 +10,7 @@ import {
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
 import { createTimeoutSignal } from "../lib/utils";
+import { parseTrustedEgressHosts } from "../lib/egress-policy";
 import { validatedFetch } from "../lib/security";
 import { getSourceCircuitBreaker } from "../lib/circuit-breaker";
 import {
@@ -91,6 +92,9 @@ export async function discover(
   // getDiscoveryBudgets so both planes resolve identical budgets)
   const { globalBudget, perSourceBase, highTrustBonus, trustThreshold } =
     getDiscoveryBudgets(env);
+  const trustedHosts = parseTrustedEgressHosts(
+    env.OUTBOUND_EGRESS_ALLOWED_HOSTS,
+  );
 
   // Filter sources by trust threshold
   activeSources = activeSources.filter((s) => {
@@ -160,7 +164,12 @@ export async function discover(
     });
 
     try {
-      const result = await discoverFromSource(env, source, effectiveLimit);
+      const result = await discoverFromSource(
+        env,
+        source,
+        effectiveLimit,
+        trustedHosts,
+      );
       deals.push(...result.deals);
       errors.push(...result.errors);
 
@@ -204,6 +213,7 @@ async function discoverFromSource(
   env: Env,
   source: SourceConfig,
   limit: number,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<DiscoveryResult> {
   const breaker = getSourceCircuitBreaker(source.domain, env);
   const breakerState = await breaker.getState();
@@ -215,8 +225,11 @@ async function discoverFromSource(
   }
 
   const validationTally = createValidationTally();
-  const { deals, errors } = await runPatternBatches(source, limit, (ok) =>
-    tallyValidation(validationTally, source.domain, ok),
+  const { deals, errors } = await runPatternBatches(
+    source,
+    limit,
+    trustedHosts,
+    (ok) => tallyValidation(validationTally, source.domain, ok),
   );
 
   // All pattern batches for this source are done: persist tallied validation
@@ -253,6 +266,7 @@ interface PatternFetchOutcome {
 async function runPatternBatches(
   source: SourceConfig,
   limit: number,
+  trustedHosts: ReadonlySet<string>,
   onPattern?: (ok: boolean) => void,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
@@ -271,7 +285,7 @@ async function runPatternBatches(
 
     const results = await Promise.allSettled(
       batch.map(async (pattern) => {
-        const outcome = await fetchPatternDeals(source, pattern);
+        const outcome = await fetchPatternDeals(source, pattern, trustedHosts);
         onPattern?.(outcome.ok);
         return {
           patternDeals: outcome.patternDeals,
@@ -308,6 +322,7 @@ async function runPatternBatches(
 async function fetchPatternDeals(
   source: SourceConfig,
   pattern: string,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<PatternFetchOutcome> {
   try {
     const url = `https://${source.domain}${pattern}`;
@@ -315,14 +330,19 @@ async function fetchPatternDeals(
     const { signal, cleanup } = createTimeoutSignal(CONFIG.FETCH_TIMEOUT_MS);
     let response;
     try {
-      response = await validatedFetch(url, {
-        method: "GET",
-        headers: {
-          "User-Agent": "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-          Accept: "text/html,application/json",
+      response = await validatedFetch(
+        url,
+        {
+          method: "GET",
+          headers: {
+            "User-Agent":
+              "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
+            Accept: "text/html,application/json",
+          },
+          signal,
         },
-        signal,
-      });
+        trustedHosts,
+      );
     } finally {
       cleanup();
     }
@@ -424,8 +444,13 @@ export interface ShadowSourceSummary {
 export async function discoverSourceReadonly(
   source: SourceConfig,
   limit: number,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<ShadowSourceSummary> {
-  const { deals, errors } = await runPatternBatches(source, limit);
+  const { deals, errors } = await runPatternBatches(
+    source,
+    limit,
+    trustedHosts,
+  );
   return {
     domain: source.domain,
     deal_count: deals.length,

@@ -101,6 +101,7 @@ describe("Notification System", () => {
           headers: { "Content-Type": "application/json" },
           body: expect.stringContaining("Test error"),
         }),
+        new Set(["api.telegram.org"]),
       );
     });
 

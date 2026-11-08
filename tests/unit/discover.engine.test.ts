@@ -77,6 +77,9 @@ describe("Discovery Engine", () => {
         }),
       } as unknown as KVNamespace,
       AI_GATEWAY_URL: "https://gateway.test",
+      OUTBOUND_EGRESS_ALLOWED_HOSTS: sources
+        .map((source) => source.domain)
+        .join(","),
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",
@@ -130,6 +133,7 @@ describe("Discovery Engine", () => {
       expect(_validatedFetch).toHaveBeenCalledWith(
         "https://active.com/page",
         expect.any(Object),
+        new Set(["blocked.com", "active.com"]),
       );
     });
 
@@ -264,10 +268,12 @@ describe("Discovery Engine", () => {
       expect(_validatedFetch).toHaveBeenCalledWith(
         "https://test.com/api/deals",
         expect.any(Object),
+        new Set(["test.com"]),
       );
       expect(_validatedFetch).toHaveBeenCalledWith(
         "https://test.com/referrals",
         expect.any(Object),
+        new Set(["test.com"]),
       );
     });
 
@@ -294,6 +300,7 @@ describe("Discovery Engine", () => {
           }),
           signal: expect.any(AbortSignal),
         }),
+        new Set(["headers.com"]),
       );
     });
   });

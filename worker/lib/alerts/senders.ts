@@ -1,6 +1,7 @@
 import type { Env } from "../../types";
 import type { AlertSubscriptionRow } from "../d1/alert-subscriptions";
 import type { Deal } from "../../types/deal";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 import { logger } from "../global-logger";
 import {
@@ -51,15 +52,19 @@ async function sendTelegramMessage(
   chatId: string,
   messageText: string,
 ): Promise<void> {
-  const res = await validatedFetch(telegramUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: messageText,
-      parse_mode: "Markdown",
-    }),
-  });
+  const res = await validatedFetch(
+    telegramUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageText,
+        parse_mode: "Markdown",
+      }),
+    },
+    parseTrustedEgressHosts("api.telegram.org"),
+  );
   if (!res.ok) throw new Error(`Telegram error HTTP ${res.status}`);
 }
 
@@ -88,17 +93,20 @@ export class TelegramSender implements Sender {
 export class DiscordSender implements Sender {
   readonly channel = "discord";
   async send(env: Env, sub: AlertSubscriptionRow, _d: Deal[], text: string) {
-    void env;
     const webhookUrl = sub.destination;
     if (!webhookUrl) throw new Error("Discord webhook missing");
-    const res = await validatedFetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "do-deal-relay-alerts/1.0",
+    const res = await validatedFetch(
+      webhookUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "do-deal-relay-alerts/1.0",
+        },
+        body: JSON.stringify({ content: text }),
       },
-      body: JSON.stringify({ content: text }),
-    });
+      parseTrustedEgressHosts(env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+    );
     if (!res.ok) throw new Error(`Discord HTTP ${res.status}`);
   }
 }
@@ -106,23 +114,26 @@ export class DiscordSender implements Sender {
 export class WebhookSender implements Sender {
   readonly channel = "webhook";
   async send(env: Env, sub: AlertSubscriptionRow, deals: Deal[], _t: string) {
-    void env;
     const webhookUrl = sub.destination;
     if (!webhookUrl) throw new Error("Webhook destination missing");
-    const res = await validatedFetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "do-deal-relay-alerts/1.0",
+    const res = await validatedFetch(
+      webhookUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "do-deal-relay-alerts/1.0",
+        },
+        body: JSON.stringify({
+          event: "deal_alert",
+          subscription_id: sub.id,
+          saved_query_id: sub.saved_query_id,
+          matches: deals,
+          timestamp: new Date().toISOString(),
+        }),
       },
-      body: JSON.stringify({
-        event: "deal_alert",
-        subscription_id: sub.id,
-        saved_query_id: sub.saved_query_id,
-        matches: deals,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+      parseTrustedEgressHosts(env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+    );
     if (!res.ok) throw new Error(`Webhook HTTP ${res.status}`);
   }
 }

@@ -1,4 +1,5 @@
 import { ResearchSource, type FetchResult } from "./types";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import {
   fetchProductHuntDeals,
   fetchGitHubTrending,
@@ -23,6 +24,7 @@ export async function fetchFromSource(
     redditClientId?: string;
     redditClientSecret?: string;
   },
+  outboundEgressAllowedHosts?: string,
 ): Promise<FetchResult> {
   const startTime = Date.now();
 
@@ -47,6 +49,7 @@ export async function fetchFromSource(
       if (source.baseUrl) {
         return fetchGenericPageContent(
           `${source.baseUrl}${source.searchPattern.replace("{query}", encodeURIComponent(query))}`,
+          parseTrustedEgressHosts(outboundEgressAllowedHosts),
         );
       }
       return {
