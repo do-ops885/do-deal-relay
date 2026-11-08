@@ -146,6 +146,17 @@ jobs:
           fi
           echo "✅ Promoting version ${ARTIFACT_VERSION} built from ${ARTIFACT_SHA}"
 
+      - name: Verify source maps are generated for the promoted commit
+        run: |
+          rm -rf /tmp/wrangler-source-maps
+          npx wrangler deploy --dry-run --env production --outdir /tmp/wrangler-source-maps
+          if ! ls /tmp/wrangler-source-maps/*.js.map >/dev/null 2>&1; then
+            echo "❌ wrangler did not emit a source map for this commit"
+            ls -la /tmp/wrangler-source-maps
+            exit 1
+          fi
+          echo "✅ Source maps generated for this commit"
+
       - name: Deploy to Cloudflare Production
         id: deploy
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0

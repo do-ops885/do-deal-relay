@@ -251,8 +251,16 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
       - run: npm ci
-      - name: Run wrangler deploy dry-run
-        run: npx wrangler deploy --dry-run
+      - name: Verify wrangler bundle emits source maps
+        run: |
+          rm -rf /tmp/wrangler-dry-run
+          npx wrangler deploy --dry-run --outdir /tmp/wrangler-dry-run
+          if ! ls /tmp/wrangler-dry-run/*.js.map >/dev/null 2>&1; then
+            echo "❌ wrangler dry-run did not emit a source map"
+            ls -la /tmp/wrangler-dry-run
+            exit 1
+          fi
+          echo "✅ wrangler dry-run emitted source maps"
       - name: Run smoke tests
         run: |
           # Pass required secrets for startup validation
