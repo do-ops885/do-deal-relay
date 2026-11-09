@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "cheerio": "^1.2.0",
-    "discord.js": "^14.27.0",
+    "discord.js": "^14.28.1",
     "telegraf": "^4.16.3",
     "zod": "^4.6.7"
   },
