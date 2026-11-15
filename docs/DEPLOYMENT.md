@@ -337,6 +337,22 @@ wrangler deploy --env staging
 wrangler deploy --env production
 ```
 
+### Source Maps
+
+`wrangler.jsonc` sets `upload_source_maps: true`, so every deploy uploads a
+source map alongside the Worker bundle. Cloudflare stores the map with that
+Worker version and uses it only to symbolicate invocation logs and exception
+stack traces back to the original TypeScript files and lines.
+
+- The map is uploaded with the version being deployed; it is not served from
+  the Worker or any route, and this project configures no static-asset
+  directory that could expose it.
+- The deploy workflow promotes the build artifact for the same commit that is
+  checked out (`build-manifest.json` SHA is verified) and re-runs a local
+  `wrangler deploy --dry-run` to assert a `.js.map` is emitted before uploading.
+- Local `wrangler dev` and `tsc` also emit maps (`sourceMap: true` in
+  `tsconfig.json`), which stay under the gitignored `dist/` directory.
+
 ### Automated Deployment (GitHub Actions)
 
 **Staging**: Push to `develop` branch triggers automatic staging deployment.
