@@ -63,6 +63,22 @@ Structured logs always, plus best-effort `system_metrics` rows when D1 is bound:
 | `webhook_delivery_latency_ms` | histogram | Attempt latency by status |
 | `webhook_retry_total` | counter | Retried attempts |
 | `webhook_dlq_depth` | gauge | DLQ entries after add/remove |
+| `webhook_queue_alert_total` | counter | Raised queue health alerts by kind |
+
+### Queue Health and Alerts
+
+`worker/lib/webhook/health.ts` scores a bounded snapshot of delivery records and the DLQ against explicit thresholds, and is surfaced in two places:
+
+- the `*/30 * * * *` cron logs a warning and increments `webhook_queue_alert_total` per breached threshold;
+- the admin `/metrics` surface returns the snapshot as `webhook_queue` JSON and as Prometheus gauges (`webhook_queue_dlq_depth`, `webhook_queue_retry_rate`, `webhook_queue_oldest_pending_seconds`, `webhook_queue_alerts_active`).
+
+| Threshold | Value | Alert kind |
+|-----------|-------|------------|
+| DLQ depth | >= 1 | `dlq_depth` (status `critical`) |
+| Retry rate | > 0.2 of a >= 5 delivery sample | `retry_rate` |
+| Oldest pending age | >= 15 minutes | `pending_age` |
+
+The retry-rate alert ignores samples below `MIN_SAMPLE_SIZE`, so a single retried message never pages anyone.
 
 ### Event Types
 
@@ -132,6 +148,7 @@ Partners can send `X-Idempotency-Key` header. The system hashes the key and payl
 | `worker/lib/webhook/dlq.ts` | Dead letter queue and idempotent replay |
 | `worker/lib/webhook/queue.ts` | Queue message contract and delivery identity |
 | `worker/lib/webhook/metrics.ts` | Webhook delivery metrics |
+| `worker/lib/webhook/health.ts` | Queue thresholds, health snapshot, Prometheus gauges |
 | `worker/queues/webhook-consumer.ts` | `webhook-queue` consumer |
 | `worker/lib/webhook/subscriptions.ts` | Partner and subscription management |
 | `worker/routes/webhooks/index.ts` | Route registration |

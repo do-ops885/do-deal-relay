@@ -13,6 +13,7 @@ export const WEBHOOK_METRICS = {
   DELIVERY_LATENCY_MS: "webhook_delivery_latency_ms",
   RETRY_TOTAL: "webhook_retry_total",
   DLQ_DEPTH: "webhook_dlq_depth",
+  QUEUE_ALERT_TOTAL: "webhook_queue_alert_total",
 } as const;
 
 /**
