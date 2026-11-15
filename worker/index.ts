@@ -14,6 +14,7 @@ import { DiscoveryShadowWorkflow } from "./workflows/discovery-shadow";
 import { PipelineWorkflow } from "./workflows/pipeline-workflow";
 import type { MessageBatch } from "@cloudflare/workers-types";
 import type { AlertQueueMessage } from "./queues/alert-consumer";
+import type { WebhookQueueMessage } from "./lib/webhook/queue";
 
 let configValidationPromise: Promise<void> | null = null;
 
@@ -85,9 +86,20 @@ export default {
     return handleScheduled(event, env);
   },
 
-  async queue(batch: MessageBatch<AlertQueueMessage>, env: Env): Promise<void> {
+  async queue(
+    batch: MessageBatch<AlertQueueMessage | WebhookQueueMessage>,
+    env: Env,
+  ): Promise<void> {
+    if (batch.queue.startsWith("webhook-queue")) {
+      const { handleWebhookQueueBatch } =
+        await import("./queues/webhook-consumer");
+      return handleWebhookQueueBatch(
+        batch as MessageBatch<WebhookQueueMessage>,
+        env,
+      );
+    }
     const { handleAlertQueueBatch } = await import("./queues/alert-consumer");
-    return handleAlertQueueBatch(batch, env);
+    return handleAlertQueueBatch(batch as MessageBatch<AlertQueueMessage>, env);
   },
 
   async email(

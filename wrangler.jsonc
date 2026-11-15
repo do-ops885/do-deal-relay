@@ -229,7 +229,10 @@
   // retries 10, DLQ alert-queue-dlq (4d persist). Both queues are
   // provisioned in the account (created via `wrangler queues create`).
   "queues": {
-    "producers": [{ "binding": "ALERT_QUEUE", "queue": "alert-queue" }],
+    "producers": [
+      { "binding": "ALERT_QUEUE", "queue": "alert-queue" },
+      { "binding": "WEBHOOK_QUEUE", "queue": "webhook-queue" },
+    ],
     "consumers": [
       {
         "queue": "alert-queue",
@@ -237,6 +240,13 @@
         "max_batch_timeout": 5,
         "max_retries": 10,
         "dead_letter_queue": "alert-queue-dlq",
+      },
+      {
+        "queue": "webhook-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "dead_letter_queue": "webhook-queue-dlq",
       },
     ],
   },
