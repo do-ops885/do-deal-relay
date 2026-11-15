@@ -33,6 +33,13 @@ Before enabling an outbound integration, add its exact host to
 `OUTBOUND_EGRESS_ALLOWED_HOSTS` for every Wrangler environment that uses it.
 Keep the list narrow and review changes as security-sensitive configuration.
 
+`wrangler.jsonc` ships a default list covering the project-owned endpoints the
+runtime calls (discovery source domains, AI Gateway, GitHub, Product Hunt,
+Hacker News, Reddit, Telegram, Discord). Partner hosts and webhook subscriber
+destinations are not included: add them explicitly before enabling the
+integration. Expand the list in the same PR that adds the integration so the
+fail-closed default never takes a new feature offline silently.
+
 ## Validation coverage
 
 `validateFetchUrl()` continues to reject blocked IPv4, IPv6, IPv4-mapped IPv6,

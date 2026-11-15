@@ -8,6 +8,12 @@
   // sent to Cloudflare with the uploaded Worker version and are never served
   // from the Worker or its public routes.
   "upload_source_maps": true,
+  // Config is the single source of truth for bindings. A dashboard-only
+  // plaintext `JWT_SECRET` var shadowed the real secret and blocked
+  // `wrangler secret put` (Cloudflare refuses a secret whose name is already
+  // bound). Delete such a var in the dashboard, then re-add it as a secret;
+  // keep_vars:false keeps future dashboard drift from silently winning.
+  "keep_vars": false,
   // Newest compatibility date supported by the pinned workerd/miniflare
   // toolchain (older pin 2026-06-13 was stale). Bump only alongside a
   // dependency update and re-run `npm run test:integration`.
@@ -114,6 +120,12 @@
     "MCP_RATE_LIMIT_PER_MINUTE": "60",
     "USE_D1_READS": "false",
     "ALLOWED_ORIGINS": "https://do-deal-relay.pages.dev,https://do-deal-relay.com,https://www.do-deal-relay.com",
+    // Exact-host outbound egress allowlist enforced by validatedFetch()
+    // (worker/lib/security.ts). Unset/empty denies every outbound request,
+    // which silently stops discovery, validation, alerts, and webhooks.
+    // Only add hosts the project owns or is contracted to call; webhook
+    // subscriber destinations must be added here by the operator.
+    "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
   },
   "secrets": {
     "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -309,6 +321,7 @@
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
         "USE_D1_READS": "false",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -366,6 +379,7 @@
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
         "USE_D1_READS": "false",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -466,6 +480,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
         "USE_D1_READS": "false",
         "ALLOWED_ORIGINS": "https://do-deal-relay.pages.dev,https://do-deal-relay.com,https://www.do-deal-relay.com",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
