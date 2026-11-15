@@ -2,7 +2,10 @@ import type { Deal, Env } from "../types";
 import { CONFIG } from "../config";
 import { logger } from "./global-logger";
 import { notify } from "../notify";
-import { sendOutgoingWebhooks } from "./webhook/delivery";
+import {
+  getActiveWebhookSubscriptions,
+  sendOutgoingWebhooks,
+} from "./webhook/delivery";
 import { generateId } from "./webhook/types";
 import { toError } from "./sanitize-error";
 
@@ -82,6 +85,10 @@ export async function notifyHighValueDealsWithWebhook(
   let notified = 0;
   let webhookSent = 0;
 
+  // Load the subscription list once for the whole run: the dispatch below is
+  // per-deal, and reloading it each iteration costs O(deals x subscriptions).
+  const subscriptions = await getActiveWebhookSubscriptions(env);
+
   for (const deal of highValueDeals) {
     const numeric = getRewardNumericValue(deal.reward) ?? 0;
 
@@ -112,27 +119,31 @@ export async function notifyHighValueDealsWithWebhook(
     }
 
     try {
-      await sendOutgoingWebhooks(env, {
-        id: `evt_${generateId()}`,
-        type: "high_value_deal",
-        timestamp: new Date().toISOString(),
-        data: {
-          id: deal.id,
-          code: deal.code,
-          url: deal.url,
-          domain: deal.source.domain,
-          title: deal.title,
-          description: deal.description,
-          reward: deal.reward,
-          threshold,
-          source: deal.source,
-          trust_score: deal.source.trust_score,
+      await sendOutgoingWebhooks(
+        env,
+        {
+          id: `evt_${generateId()}`,
+          type: "high_value_deal",
+          timestamp: new Date().toISOString(),
+          data: {
+            id: deal.id,
+            code: deal.code,
+            url: deal.url,
+            domain: deal.source.domain,
+            title: deal.title,
+            description: deal.description,
+            reward: deal.reward,
+            threshold,
+            source: deal.source,
+            trust_score: deal.source.trust_score,
+          },
+          metadata: {
+            request_id: crypto.randomUUID(),
+            trace_id: traceId ?? runId,
+          },
         },
-        metadata: {
-          request_id: crypto.randomUUID(),
-          trace_id: traceId ?? runId,
-        },
-      });
+        subscriptions,
+      );
       webhookSent++;
     } catch (err) {
       logger.warn("Failed to send high-value webhook", {

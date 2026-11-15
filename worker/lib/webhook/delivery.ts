@@ -58,14 +58,17 @@ export {
  *
  * @param env - Worker environment with KV bindings.
  * @param event - The WebhookEvent payload to deliver.
+ * @param preloadedSubscriptions - Optional subscription snapshot, so callers
+ *   dispatching many events can load the list once instead of per event.
  * @returns A promise that resolves when delivery is accepted.
  */
 export async function sendOutgoingWebhooks(
   env: Env,
   event: WebhookEvent,
+  preloadedSubscriptions?: WebhookSubscription[],
 ): Promise<void> {
-  // Get all active subscriptions that want this event
-  const allSubscriptions = await getAllActiveSubscriptions(env);
+  const allSubscriptions =
+    preloadedSubscriptions ?? (await getActiveWebhookSubscriptions(env));
   const matchingSubscriptions = allSubscriptions.filter(
     (sub) =>
       sub.events.includes(event.type) &&
@@ -200,7 +203,11 @@ async function enqueueWebhookDeliveries(
   });
 }
 
-async function getAllActiveSubscriptions(
+/**
+ * Loads every active subscription once. Callers fanning out several events
+ * should reuse the result instead of reloading per event.
+ */
+export async function getActiveWebhookSubscriptions(
   env: Env,
 ): Promise<WebhookSubscription[]> {
   try {
@@ -223,7 +230,7 @@ async function getAllActiveSubscriptions(
     return subscriptions.filter((sub) => sub && sub.active);
   } catch (error) {
     const err = toError(error);
-    logger.error("Failed to get all active subscriptions", {
+    logger.error("Failed to get active webhook subscriptions", {
       component: "webhook",
       error: err.message,
     });
