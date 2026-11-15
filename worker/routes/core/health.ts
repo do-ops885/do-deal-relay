@@ -8,6 +8,10 @@ import {
   prometheusResponse,
 } from "../../lib/metrics/prometheus";
 import { logger } from "../../lib/global-logger";
+import {
+  collectWebhookQueueHealth,
+  formatWebhookQueuePrometheus,
+} from "../../lib/webhook/health";
 
 /**
  * Health probes are polled frequently, so they must never scan the whole
@@ -165,12 +169,19 @@ export async function handleMetrics(
           final_phase: "init",
         } satisfies PipelineMetrics);
 
-      const body = formatPrometheusMetrics(metricsForExport);
+      const queueHealth = await collectWebhookQueueHealth(env);
+      const body = `${formatPrometheusMetrics(metricsForExport)}${formatWebhookQueuePrometheus(queueHealth)}`;
       logPrometheusExport(metricsForExport);
       return withCors(prometheusResponse(body), request, env);
     }
 
-    return jsonResponse({ funnel }, 200, request, env);
+    const queueHealth = await collectWebhookQueueHealth(env);
+    return jsonResponse(
+      { funnel, webhook_queue: queueHealth },
+      200,
+      request,
+      env,
+    );
   } catch (error) {
     logger.error("handleMetrics failed", {
       component: "metrics",

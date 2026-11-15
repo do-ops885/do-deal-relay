@@ -128,4 +128,7 @@ export interface Env {
   // Alert fan-out queue (SPEC-764 step 4, ADR-031); optional so local/test
   // envs without the binding fall back to inline best-effort
   ALERT_QUEUE?: Queue;
+  // Outgoing partner webhook delivery queue; optional so local/test envs
+  // without the binding fall back to inline delivery.
+  WEBHOOK_QUEUE?: Queue;
 }

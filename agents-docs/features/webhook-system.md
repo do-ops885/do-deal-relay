@@ -38,7 +38,47 @@ Partners send referral data with HMAC-SHA256 signed payloads. Processing flow:
 
 ### Outgoing Webhooks
 
-Events dispatched to subscribed partner endpoints with retry guarantees.
+Events are dispatched to subscribed partner endpoints with durable retry guarantees.
+
+1. **Subscription Match** — Active subscriptions are filtered by event type, domain, and status.
+2. **Durable Enqueue** — The producer persists a `pending` delivery record (keyed by the stable `eventId:subscriptionId` identity) and enqueues one `WEBHOOK_QUEUE` message per subscription. The request/pipeline path returns without waiting on subscriber network calls or retry backoff.
+3. **Consumer Delivery** — `worker/queues/webhook-consumer.ts` performs one attempt per message. Delivered identities are acked immediately on redelivery (duplicate suppression); transient failures call `retry()` under the queue's bounded retry budget; permanent failures and exhausted retries are acked and written to the DLQ.
+4. **Inline Fallback** — Without a `WEBHOOK_QUEUE` binding (local, tests, oversized batches over 100 subscribers) delivery runs inline with the same retry policy and DLQ semantics.
+
+Queue configuration (`wrangler.jsonc`): producer `WEBHOOK_QUEUE` → `webhook-queue`, consumer batch 10, timeout 5s, 5 retries, DLQ `webhook-queue-dlq`.
+
+### DLQ Replay
+
+`POST /api/webhooks/dlq/:eventId/:subId/retry` replays a failed delivery without notifying twice: an already-delivered identity is dropped, a queue-bound deployment re-enqueues the original delivery ID, and an inline deployment performs one bounded attempt. Entries that still fail remain inspectable in the DLQ.
+
+### Delivery Metrics
+
+Structured logs always, plus best-effort `system_metrics` rows when D1 is bound:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `webhook_enqueue_total` | counter | Enqueued deliveries |
+| `webhook_enqueue_latency_ms` | histogram | Producer enqueue latency |
+| `webhook_delivery_total` | counter | Terminal deliveries by status |
+| `webhook_delivery_latency_ms` | histogram | Attempt latency by status |
+| `webhook_retry_total` | counter | Retried attempts |
+| `webhook_dlq_depth` | gauge | DLQ entries after add/remove |
+| `webhook_queue_alert_total` | counter | Raised queue health alerts by kind |
+
+### Queue Health and Alerts
+
+`worker/lib/webhook/health.ts` scores a bounded snapshot of delivery records and the DLQ against explicit thresholds, and is surfaced in two places:
+
+- the `*/30 * * * *` cron logs a warning and increments `webhook_queue_alert_total` per breached threshold;
+- the admin `/metrics` surface returns the snapshot as `webhook_queue` JSON and as Prometheus gauges (`webhook_queue_dlq_depth`, `webhook_queue_retry_rate`, `webhook_queue_oldest_pending_seconds`, `webhook_queue_alerts_active`).
+
+| Threshold | Value | Alert kind |
+|-----------|-------|------------|
+| DLQ depth | >= 1 | `dlq_depth` (status `critical`) |
+| Retry rate | > 0.2 of a >= 5 delivery sample active in the last 30 minutes | `retry_rate` |
+| Oldest pending age | >= 15 minutes | `pending_age` |
+
+The retry-rate alert ignores samples below `MIN_SAMPLE_SIZE`, so a single retried message never pages anyone. Its sample is also windowed to the last 30 minutes: delivery records live for 7 days, so counting their full history would keep yesterday's retries alerting today. Pending age is measured for every pending record regardless of age.
 
 ### Event Types
 
@@ -102,7 +142,14 @@ Partners can send `X-Idempotency-Key` header. The system hashes the key and payl
 | `worker/lib/webhook/index.ts` | Module entry point |
 | `worker/lib/webhook/types.ts` | Type definitions and constants |
 | `worker/lib/webhook/incoming.ts` | Incoming webhook processing |
-| `worker/lib/webhook/delivery.ts` | Outgoing delivery and retry logic |
+| `worker/lib/webhook/delivery.ts` | Outgoing dispatch, queue producer, inline fallback |
+| `worker/lib/webhook/attempt.ts` | Single delivery attempt, backoff, delivery constants |
+| `worker/lib/webhook/records.ts` | Delivery record persistence and lookup |
+| `worker/lib/webhook/dlq.ts` | Dead letter queue and idempotent replay |
+| `worker/lib/webhook/queue.ts` | Queue message contract and delivery identity |
+| `worker/lib/webhook/metrics.ts` | Webhook delivery metrics |
+| `worker/lib/webhook/health.ts` | Queue thresholds, health snapshot, Prometheus gauges |
+| `worker/queues/webhook-consumer.ts` | `webhook-queue` consumer |
 | `worker/lib/webhook/subscriptions.ts` | Partner and subscription management |
 | `worker/routes/webhooks/index.ts` | Route registration |
 | `worker/routes/webhooks/incoming.ts` | Incoming webhook route |

@@ -10,6 +10,27 @@ import { checkAndCleanPosts } from "./reddit";
 import { maybeTriggerShadowDiscovery } from "./workflows/shadow-trigger";
 import { maybeTriggerPipelineWorkflow } from "./workflows/pipeline-trigger";
 import { purgeOldDeals } from "./lib/do-mirror";
+import {
+  collectWebhookQueueHealth,
+  reportWebhookQueueAlerts,
+} from "./lib/webhook/health";
+
+/**
+ * Periodic queue alerting: scores the bounded webhook queue snapshot and
+ * emits an alert per breached threshold. Best effort by design - an alerting
+ * failure must never fail the cron run.
+ */
+async function checkWebhookQueueHealth(env: Env): Promise<void> {
+  try {
+    const health = await collectWebhookQueueHealth(env);
+    await reportWebhookQueueAlerts(env, health);
+  } catch (error) {
+    logger.warn("Webhook queue health check failed (non-critical)", {
+      component: "scheduled",
+      error: toError(error).message,
+    });
+  }
+}
 
 export async function handleScheduled(
   event: ScheduledEvent,
@@ -26,6 +47,7 @@ export async function handleScheduled(
 
   try {
     if (cron === "*/30 * * * *") {
+      await checkWebhookQueueHealth(env);
       const result = await checkAndCleanPosts(env);
       logger.info("Reddit moderation completed", {
         component: "scheduled",
