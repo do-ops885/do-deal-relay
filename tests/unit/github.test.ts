@@ -19,6 +19,7 @@ vi.mock("../../worker/lib/security", () => ({
 }));
 
 const TEST_TOKEN = "test-token";
+const GITHUB_EGRESS_HOSTS = new Set(["api.github.com"]);
 
 describe("GitHub Integration", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -83,6 +84,7 @@ describe("GitHub Integration", () => {
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/contents/file.txt?ref=develop",
         expect.any(Object),
+        GITHUB_EGRESS_HOSTS,
       );
     });
   });
@@ -108,6 +110,7 @@ describe("GitHub Integration", () => {
           method: "PUT",
           body: expect.not.stringContaining("sha"),
         }),
+        GITHUB_EGRESS_HOSTS,
       );
     });
 
@@ -133,6 +136,7 @@ describe("GitHub Integration", () => {
           method: "PUT",
           body: expect.stringContaining("old-sha"),
         }),
+        GITHUB_EGRESS_HOSTS,
       );
     });
 
@@ -352,6 +356,7 @@ describe("GitHub Integration", () => {
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining("per_page=10"),
         expect.any(Object),
+        GITHUB_EGRESS_HOSTS,
       );
     });
 

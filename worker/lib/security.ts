@@ -10,8 +10,14 @@ import { logger } from "./global-logger";
 import { createTimeoutSignal } from "./utils";
 import { toError } from "./sanitize-error";
 import { SECURITY_CONSTANTS, isIpAddress, isPrivateIP } from "./security-ip";
+import { isTrustedEgressUrl, OutboundEgressPolicyError } from "./egress-policy";
 
 export { isIpInCidr } from "./security-ip";
+export {
+  isTrustedEgressUrl,
+  OutboundEgressPolicyError,
+  parseTrustedEgressHosts,
+} from "./egress-policy";
 
 /**
  * TTL and size cap for the per-isolate DoH hostname cache. Successful
@@ -124,13 +130,33 @@ export async function validateFetchUrl(url: string): Promise<boolean> {
 
 export async function validatedFetch(
   url: string,
-  init?: RequestInit,
+  init: RequestInit | undefined,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<Response> {
   if (!validateUrl(url)) {
     throw new Error("Invalid or disallowed URL");
   }
 
-  if (!(await validateFetchUrl(url))) {
+  const parsedUrl = new URL(url);
+  const hostname = parsedUrl.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
+  if (isIpAddress(hostname) && !(await validateFetchUrl(url))) {
+    throw new Error("SSRF Blocked: URL failed security validation");
+  }
+
+  if (!isTrustedEgressUrl(url, trustedHosts)) {
+    logger.warn("Outbound fetch blocked outside trusted egress policy", {
+      component: "security",
+      hostname,
+    });
+    throw new OutboundEgressPolicyError(
+      "SSRF Blocked: destination host is not trusted",
+    );
+  }
+
+  if (!isIpAddress(hostname) && !(await validateFetchUrl(url))) {
     throw new Error("SSRF Blocked: URL failed security validation");
   }
 
@@ -151,6 +177,11 @@ export async function validatedFetch(
       redirectUrl = new URL(location, url).toString();
     } catch {
       throw new Error("SSRF Blocked: invalid redirect Location");
+    }
+    if (!isTrustedEgressUrl(redirectUrl, trustedHosts)) {
+      throw new OutboundEgressPolicyError(
+        "SSRF Blocked: redirect target is not trusted",
+      );
     }
     if (!(await validateFetchUrl(redirectUrl))) {
       throw new Error(

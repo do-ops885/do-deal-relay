@@ -6,6 +6,7 @@
 // via the existing extractReferralsFromContent() helper after HTML fetches.
 
 import { fetchGenericPageContent } from "../page-fetcher";
+import { parseTrustedEgressHosts } from "../../egress-policy";
 import type { FetchResult } from "../types";
 import {
   type Scraper,
@@ -42,6 +43,9 @@ export class GenericScraper implements Scraper {
     const pattern =
       env.searchPattern?.replace("{query}", encodeURIComponent(query)) ??
       `?q=${encodeURIComponent(query)}`;
-    return fetchGenericPageContent(`${env.baseUrl}${pattern}`);
+    return fetchGenericPageContent(
+      `${env.baseUrl}${pattern}`,
+      parseTrustedEgressHosts(env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+    );
   }
 }

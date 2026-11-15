@@ -48,12 +48,18 @@ export class RequestManager {
   private readonly inflightRequests: Map<string, InflightEntry>;
   private cleanupTimer: ReturnType<typeof setInterval> | null;
   private readonly inflightTtlMs: number;
+  private readonly trustedHosts: ReadonlySet<string>;
 
-  constructor(kv: KVNamespace, inflightTtlMs: number = INFLIGHT_MAX_AGE_MS) {
+  constructor(
+    kv: KVNamespace,
+    inflightTtlMs: number = INFLIGHT_MAX_AGE_MS,
+    trustedHosts: ReadonlySet<string> = new Set(),
+  ) {
     this.kv = kv;
     this.inflightRequests = new Map();
     this.cleanupTimer = null;
     this.inflightTtlMs = inflightTtlMs;
+    this.trustedHosts = trustedHosts;
   }
 
   async fetch(url: string, options: FetchOptions = {}): Promise<FetchResponse> {
@@ -179,19 +185,23 @@ export class RequestManager {
       const timeoutMs = options.timeoutMs ?? CONFIG.RESEARCH_FETCH_TIMEOUT_MS;
       const { signal, cleanup } = createTimeoutSignal(timeoutMs);
       try {
-        const response = await validatedFetch(url, {
-          method: options.method || "GET",
-          headers: {
-            "User-Agent": CONFIG.USER_AGENT,
-            Accept:
-              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            ...options.headers,
+        const response = await validatedFetch(
+          url,
+          {
+            method: options.method || "GET",
+            headers: {
+              "User-Agent": CONFIG.USER_AGENT,
+              Accept:
+                "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+              ...options.headers,
+            },
+            ...(options.body !== undefined ? { body: options.body } : {}),
+            ...(options.cf !== undefined ? { cf: options.cf } : {}),
+            signal,
           },
-          ...(options.body !== undefined ? { body: options.body } : {}),
-          ...(options.cf !== undefined ? { cf: options.cf } : {}),
-          signal,
-        });
+          this.trustedHosts,
+        );
         const contentType = response.headers.get("content-type") || "";
         const content = await response.text();
         return {

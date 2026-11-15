@@ -1,5 +1,6 @@
 import { CONFIG } from "../../config";
 import { isSafeUrl, validatedFetch } from "../security";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type {
@@ -8,6 +9,10 @@ import type {
   HackerNewsSearchResponse,
 } from "./types";
 import type { FetchResult } from "./types";
+
+const RESEARCH_API_EGRESS_HOSTS = parseTrustedEgressHosts(
+  "api.producthunt.com,api.github.com,hn.algolia.com",
+);
 
 export async function fetchProductHuntDeals(
   apiToken: string | undefined,
@@ -61,16 +66,20 @@ export async function fetchProductHuntDeals(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ query }),
+        signal,
       },
-      body: JSON.stringify({ query }),
-      signal,
-    });
+      RESEARCH_API_EGRESS_HOSTS,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
@@ -171,11 +180,15 @@ export async function fetchGitHubTrending(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers,
-      signal,
-    });
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers,
+        signal,
+      },
+      RESEARCH_API_EGRESS_HOSTS,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
@@ -259,13 +272,17 @@ export async function fetchHackerNewsDeals(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal,
       },
-      signal,
-    });
+      RESEARCH_API_EGRESS_HOSTS,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;

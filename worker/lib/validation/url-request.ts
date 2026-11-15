@@ -6,7 +6,10 @@ import { VALIDATION_TIMEOUT_MS } from "./url-validator-types";
 import { CONFIG } from "../../config";
 import { validatedFetch } from "../security";
 
-export async function tryHeadRequest(url: string): Promise<{
+export async function tryHeadRequest(
+  url: string,
+  trustedHosts: ReadonlySet<string>,
+): Promise<{
   success: boolean;
   statusCode?: number | undefined;
   statusText?: string | undefined;
@@ -16,19 +19,23 @@ export async function tryHeadRequest(url: string): Promise<{
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const response = await validatedFetch(url, {
-      method: "HEAD",
-      headers: {
-        "User-Agent": CONFIG.USER_AGENT,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "HEAD",
+        headers: {
+          "User-Agent": CONFIG.USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+          Connection: "keep-alive",
+        },
+        redirect: "manual",
+        signal: controller.signal,
       },
-      redirect: "manual",
-      signal: controller.signal,
-    });
+      trustedHosts,
+    );
 
     return {
       success: true,
@@ -46,7 +53,10 @@ export async function tryHeadRequest(url: string): Promise<{
   }
 }
 
-export async function tryGetRequest(url: string): Promise<{
+export async function tryGetRequest(
+  url: string,
+  trustedHosts: ReadonlySet<string>,
+): Promise<{
   success: boolean;
   statusCode?: number | undefined;
   statusText?: string | undefined;
@@ -55,19 +65,23 @@ export async function tryGetRequest(url: string): Promise<{
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
   try {
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers: {
-        "User-Agent": CONFIG.USER_AGENT,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent": CONFIG.USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+          Connection: "keep-alive",
+        },
+        redirect: "manual",
+        signal: controller.signal,
       },
-      redirect: "manual",
-      signal: controller.signal,
-    });
+      trustedHosts,
+    );
 
     return {
       success: true,

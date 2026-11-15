@@ -1,9 +1,9 @@
 import type { Env } from "./types";
 import { VERSION } from "./version";
 import { logger } from "./lib/global-logger";
-import { validatedFetch } from "./lib/security";
+import { parseTrustedEgressHosts } from "./lib/egress-policy";
+import { validatedRedditFetch } from "./lib/reddit-fetch";
 import { toError } from "./lib/sanitize-error";
-import { createTimeoutSignal } from "./lib/utils";
 import { sourceSaysExpired } from "./lib/source-expiry";
 import { parseBoundedIntegerConfig } from "./lib/config-utils";
 import {
@@ -93,22 +93,11 @@ function getUserAgent(credentials: RedditCredentials): string {
 }
 
 async function fetchJson(url: string, init: RequestInit): Promise<unknown> {
-  const { signal, cleanup } = createTimeoutSignal(REQUEST_TIMEOUT_MS);
-  try {
-    const response = await validatedFetch(url, {
-      ...init,
-      redirect: "error",
-      signal,
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Reddit API request failed with status ${response.status}`,
-      );
-    }
-    return (await response.json()) as unknown;
-  } finally {
-    cleanup();
+  const response = await validatedRedditFetch(url, init, REQUEST_TIMEOUT_MS);
+  if (!response.ok) {
+    throw new Error(`Reddit API request failed with status ${response.status}`);
   }
+  return (await response.json()) as unknown;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -301,25 +290,22 @@ async function requestRedditDeletion(
   token: string,
   fullname: string,
 ): Promise<void> {
-  const { signal, cleanup } = createTimeoutSignal(REQUEST_TIMEOUT_MS);
-  try {
-    const response = await validatedFetch("https://oauth.reddit.com/api/del", {
+  const response = await validatedRedditFetch(
+    "https://oauth.reddit.com/api/del",
+    {
       method: "POST",
-      redirect: "error",
       headers: {
         ...getOAuthHeaders(credentials, token),
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({ id: fullname }),
-      signal,
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Reddit delete request failed with status ${response.status}`,
-      );
-    }
-  } finally {
-    cleanup();
+    },
+    REQUEST_TIMEOUT_MS,
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Reddit delete request failed with status ${response.status}`,
+    );
   }
 }
 
@@ -441,7 +427,12 @@ export async function checkAndCleanPosts(
         deleted += 1;
         continue;
       }
-      if (await sourceSaysExpired(post.source_url)) {
+      if (
+        await sourceSaysExpired(
+          post.source_url,
+          parseTrustedEgressHosts(env.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+        )
+      ) {
         await deletePost(
           env,
           credentials,

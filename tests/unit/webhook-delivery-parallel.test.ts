@@ -58,6 +58,7 @@ describe("Webhook Delivery Optimization", () => {
       DEALS_STAGING: mockKv,
       DEALS_SOURCES: mockKv,
       AI_GATEWAY_URL: "https://gateway.test",
+      OUTBOUND_EGRESS_ALLOWED_HOSTS: "sub1.com,sub3.com",
       WEBHOOK_SECRET: "test-secret",
       API_ENCRYPTION_KEY: "test-key",
       EMAIL_WEBHOOK_SECRET: "test-email-secret",

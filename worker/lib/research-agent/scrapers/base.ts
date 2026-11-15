@@ -49,6 +49,7 @@ export interface ScraperEnv {
   GITHUB_API_TOKEN?: string;
   REDDIT_CLIENT_ID?: string;
   REDDIT_CLIENT_SECRET?: string;
+  OUTBOUND_EGRESS_ALLOWED_HOSTS?: string;
   AI?: Ai;
 }
 

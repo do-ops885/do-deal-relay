@@ -19,6 +19,7 @@
  */
 
 import { logger } from "../global-logger";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 import { toError } from "../sanitize-error";
 import type {
@@ -418,15 +419,19 @@ export class AIGatewayClient {
     const { signal, cleanup } = createTimeoutSignal(this.config.timeoutMs);
 
     try {
-      const response = await validatedFetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+      const response = await validatedFetch(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(request),
+          signal,
         },
-        body: JSON.stringify(request),
-        signal,
-      });
+        parseTrustedEgressHosts(new URL(url).hostname),
+      );
 
       const statusCode = response.status;
       let data: unknown = null;

@@ -3,6 +3,7 @@ import { logger } from "../../global-logger";
 import { CircuitBreaker, getSourceCircuitBreaker } from "../../circuit-breaker";
 import { CONFIG } from "../../../config";
 import { isSafeUrl, validatedFetch } from "../../security";
+import { parseTrustedEgressHosts } from "../../egress-policy";
 import type { RewardScrapeResult } from "./types";
 import { SCRAPE_TIMEOUT_MS } from "./types";
 import { extractRewardFromHTML } from "./html-extractor";
@@ -12,6 +13,7 @@ export { extractDomain };
 
 async function performRewardScrape(
   url: string,
+  trustedHosts: ReadonlySet<string>,
 ): Promise<Omit<RewardScrapeResult, "scrapedAt">> {
   if (!isSafeUrl(url)) {
     return {
@@ -26,17 +28,21 @@ async function performRewardScrape(
   const timeout = setTimeout(() => controller.abort(), SCRAPE_TIMEOUT_MS);
 
   try {
-    const response = await validatedFetch(url, {
-      headers: {
-        "User-Agent": CONFIG.USER_AGENT,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
+    const response = await validatedFetch(
+      url,
+      {
+        headers: {
+          "User-Agent": CONFIG.USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+        },
+        redirect: "follow",
+        signal: controller.signal,
       },
-      redirect: "follow",
-      signal: controller.signal,
-    });
+      trustedHosts,
+    );
 
     clearTimeout(timeout);
 
@@ -103,7 +109,10 @@ export async function scrapeCurrentRewards(
 
   try {
     const result = await breaker.execute(async () => {
-      return await performRewardScrape(url);
+      return await performRewardScrape(
+        url,
+        parseTrustedEgressHosts(env?.OUTBOUND_EGRESS_ALLOWED_HOSTS),
+      );
     });
 
     logger.info(`Reward scraping completed`, {
