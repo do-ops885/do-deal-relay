@@ -31,6 +31,7 @@ export const WEBHOOK_QUEUE_THRESHOLDS = {
   DLQ_DEPTH: 1,
   RETRY_RATE: 0.2,
   OLDEST_PENDING_AGE_MS: 15 * MINUTE_MS,
+  RETRY_RATE_WINDOW_MS: 30 * MINUTE_MS,
   MIN_SAMPLE_SIZE: 5,
   SAMPLE_LIMIT: 200,
 } as const;
@@ -133,6 +134,12 @@ export function evaluateWebhookQueueHealth(
   };
 }
 
+/**
+ * Samples delivery records. The retry-rate sample is windowed to the last
+ * 30 minutes: records live for 7 days, so counting their whole history would
+ * let stale retries from yesterday page on-call today. Pending age is measured
+ * for every pending record, however old.
+ */
 async function sampleDeliveryRecords(env: Env): Promise<{
   sampled: number;
   retried: number;
@@ -150,22 +157,34 @@ async function sampleDeliveryRecords(env: Env): Promise<{
     (key) => kv.get<WebhookDelivery>(key.name, "json"),
   );
 
+  const now = Date.now();
+  const windowCutoff = now - WEBHOOK_QUEUE_THRESHOLDS.RETRY_RATE_WINDOW_MS;
   let sampled = 0;
   let retried = 0;
   let oldestPendingAgeMs: number | null = null;
 
   for (const record of records) {
     if (!record) continue;
-    sampled++;
-    if ((record.attempts?.length ?? 0) > 1) retried++;
-    if (record.status !== "pending" && record.status !== "retrying") continue;
 
     const createdAt = Date.parse(record.created_at);
-    if (Number.isNaN(createdAt)) continue;
-    const age = Date.now() - createdAt;
-    if (oldestPendingAgeMs === null || age > oldestPendingAgeMs) {
-      oldestPendingAgeMs = age;
+    const attempts = record.attempts ?? [];
+    const isPending =
+      record.status === "pending" || record.status === "retrying";
+
+    if (isPending && !Number.isNaN(createdAt)) {
+      const age = now - createdAt;
+      if (oldestPendingAgeMs === null || age > oldestPendingAgeMs) {
+        oldestPendingAgeMs = age;
+      }
     }
+
+    const lastAttemptAt = attempts.at(-1)?.timestamp;
+    const activityAt = Date.parse(lastAttemptAt ?? "");
+    const effectiveAt = Number.isNaN(activityAt) ? createdAt : activityAt;
+    if (Number.isNaN(effectiveAt) || effectiveAt < windowCutoff) continue;
+
+    sampled++;
+    if (attempts.length > 1) retried++;
   }
 
   return { sampled, retried, oldestPendingAgeMs };

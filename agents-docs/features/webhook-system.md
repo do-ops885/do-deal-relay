@@ -75,10 +75,10 @@ Structured logs always, plus best-effort `system_metrics` rows when D1 is bound:
 | Threshold | Value | Alert kind |
 |-----------|-------|------------|
 | DLQ depth | >= 1 | `dlq_depth` (status `critical`) |
-| Retry rate | > 0.2 of a >= 5 delivery sample | `retry_rate` |
+| Retry rate | > 0.2 of a >= 5 delivery sample active in the last 30 minutes | `retry_rate` |
 | Oldest pending age | >= 15 minutes | `pending_age` |
 
-The retry-rate alert ignores samples below `MIN_SAMPLE_SIZE`, so a single retried message never pages anyone.
+The retry-rate alert ignores samples below `MIN_SAMPLE_SIZE`, so a single retried message never pages anyone. Its sample is also windowed to the last 30 minutes: delivery records live for 7 days, so counting their full history would keep yesterday's retries alerting today. Pending age is measured for every pending record regardless of age.
 
 ### Event Types
 

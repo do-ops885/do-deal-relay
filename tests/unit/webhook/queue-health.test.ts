@@ -142,10 +142,10 @@ describe("collectWebhookQueueHealth", () => {
           subscription_id: "sub_1",
           status: i === 0 ? "pending" : "delivered",
           attempts: [
-            { attempt_number: 1, timestamp: daysAgo(60) },
-            ...(i < 2 ? [{ attempt_number: 2, timestamp: daysAgo(30) }] : []),
+            { attempt_number: 1, timestamp: daysAgo(3) },
+            ...(i < 2 ? [{ attempt_number: 2, timestamp: daysAgo(2) }] : []),
           ],
-          created_at: daysAgo(i === 0 ? 30 : 60),
+          created_at: daysAgo(i === 0 ? 30 : 5),
         }),
       );
     }
@@ -170,6 +170,33 @@ describe("collectWebhookQueueHealth", () => {
     expect(health.oldest_pending_age_ms).toBeGreaterThanOrEqual(
       WEBHOOK_QUEUE_THRESHOLDS.OLDEST_PENDING_AGE_MS,
     );
+  });
+
+  it("excludes stale retries from the retry-rate sample", async () => {
+    for (let i = 0; i < 6; i++) {
+      kv.storage.set(
+        `webhook_delivery:evt_old_${i}:sub_1`,
+        JSON.stringify({
+          event_id: `evt_old_${i}`,
+          subscription_id: "sub_1",
+          status: "delivered",
+          attempts: [
+            { attempt_number: 1, timestamp: daysAgo(180) },
+            { attempt_number: 2, timestamp: daysAgo(150) },
+          ],
+          created_at: daysAgo(200),
+        }),
+      );
+    }
+
+    const health = await collectWebhookQueueHealth({
+      DEALS_STAGING: kv,
+    } as unknown as Env);
+
+    expect(health.sampled_deliveries).toBe(0);
+    expect(health.retried_deliveries).toBe(0);
+    expect(health.retry_rate).toBe(0);
+    expect(health.status).toBe("ok");
   });
 
   it("stays ok when no KV binding is present", async () => {
