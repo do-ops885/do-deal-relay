@@ -4,8 +4,11 @@ import {
   githubCircuitBreaker,
 } from "./core";
 import { withErrorHandling } from "../error-handler";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { validatedFetch } from "../security";
 import type { WorkflowRun, WorkflowStatus } from "./types";
+
+const GITHUB_EGRESS_HOSTS = parseTrustedEgressHosts("api.github.com");
 
 export async function getWorkflowRuns(
   repo: string,
@@ -18,6 +21,7 @@ export async function getWorkflowRuns(
     const response = await validatedFetch(
       `${baseUrl}/repos/${repo}/actions/runs?branch=${branch}&per_page=${perPage}`,
       { headers },
+      GITHUB_EGRESS_HOSTS,
     );
     if (!response.ok)
       throw new Error(`Failed to get workflow runs: ${response.status}`);

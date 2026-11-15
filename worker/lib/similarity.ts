@@ -179,9 +179,23 @@ export function scoreSimilarDeal(
   score +=
     countTargetOverlap(targetCategories, deal.metadata.category) *
     CATEGORY_MATCH_WEIGHT;
-  if (deal.source.domain.toLowerCase() === targetDomain.toLowerCase()) {
+
+  // Exact comparison fast-path avoids string allocations when casing already matches
+  // (e.g. normalized lowercase domains across production deals). Case-insensitive fallback
+  // normalizes candidate domain at most once without redundant allocations on non-matches.
+  const candidateDomain = deal.source.domain;
+  if (candidateDomain === targetDomain) {
     score += DOMAIN_MATCH_WEIGHT;
+  } else {
+    const candidateLower = candidateDomain.toLowerCase();
+    if (
+      candidateLower === targetDomain ||
+      candidateLower === targetDomain.toLowerCase()
+    ) {
+      score += DOMAIN_MATCH_WEIGHT;
+    }
   }
+
   score +=
     countTargetOverlap(targetTags, deal.metadata.tags) * TAG_MATCH_WEIGHT;
   return score;

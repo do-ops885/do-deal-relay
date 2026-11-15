@@ -7,6 +7,7 @@ import type { FetchResult } from "./types";
 
 export async function fetchGenericPageContent(
   url: string,
+  trustedHosts: ReadonlySet<string> = new Set(),
 ): Promise<FetchResult & { parsedContent?: PageContentResult }> {
   const startTime = Date.now();
 
@@ -14,18 +15,22 @@ export async function fetchGenericPageContent(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers: {
-        "User-Agent": CONFIG.USER_AGENT,
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent": CONFIG.USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "gzip, deflate, br",
+          Connection: "keep-alive",
+        },
+        signal,
       },
-      signal,
-    });
+      trustedHosts,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;

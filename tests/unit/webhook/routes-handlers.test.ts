@@ -65,6 +65,7 @@ function createEnv(kv: MockKv) {
     DEALS_LOG: kv,
     DEALS_WEBHOOKS: kv,
     AI_GATEWAY_URL: "https://gateway.test",
+    OUTBOUND_EGRESS_ALLOWED_HOSTS: "example.com",
     TRUST_THRESHOLD: "0.3",
   } as unknown as Env;
 }

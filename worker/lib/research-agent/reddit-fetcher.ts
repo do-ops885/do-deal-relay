@@ -1,10 +1,15 @@
 import { CONFIG } from "../../config";
 import { isSafeUrl, validateFetchUrl, validatedFetch } from "../security";
+import { parseTrustedEgressHosts } from "../egress-policy";
 import { createTimeoutSignal } from "../utils";
 import { toError } from "../sanitize-error";
 import type { RedditListingResponse } from "./types";
 import type { FetchResult } from "./types";
 import { logger } from "../global-logger";
+
+const REDDIT_EGRESS_HOSTS = parseTrustedEgressHosts(
+  "www.reddit.com,oauth.reddit.com",
+);
 
 let redditOAuthToken: { token: string; expiresAt: number } | null = null;
 
@@ -31,16 +36,20 @@ async function getRedditOAuthToken(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+        },
+        body: "grant_type=client_credentials",
+        signal,
       },
-      body: "grant_type=client_credentials",
-      signal,
-    });
+      REDDIT_EGRESS_HOSTS,
+    );
     cleanup();
 
     if (!response.ok) {
@@ -106,14 +115,18 @@ export async function fetchRedditDeals(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "DealDiscoveryBot/1.0 (by /u/dealdiscovery)",
+        },
+        signal,
       },
-      signal,
-    });
+      REDDIT_EGRESS_HOSTS,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;
@@ -187,14 +200,18 @@ async function fetchRedditPublic(
     const { signal, cleanup } = createTimeoutSignal(
       CONFIG.RESEARCH_FETCH_TIMEOUT_MS,
     );
-    const response = await validatedFetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "DealDiscoveryBot/1.0",
+    const response = await validatedFetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "DealDiscoveryBot/1.0",
+        },
+        signal,
       },
-      signal,
-    });
+      REDDIT_EGRESS_HOSTS,
+    );
     cleanup();
 
     const fetchDurationMs = Date.now() - startTime;

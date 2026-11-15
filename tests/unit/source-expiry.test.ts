@@ -4,11 +4,16 @@ const { validatedFetchMock } = vi.hoisted(() => ({
   validatedFetchMock: vi.fn(),
 }));
 
-vi.mock("../../worker/lib/security", () => ({
-  validatedFetch: validatedFetchMock,
-}));
+vi.mock("../../worker/lib/security", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../worker/lib/security")>();
+  return { ...actual, validatedFetch: validatedFetchMock };
+});
 
 import { sourceSaysExpired } from "../../worker/lib/source-expiry";
+import { parseTrustedEgressHosts } from "../../worker/lib/egress-policy";
+
+const TRUSTED_SOURCE_HOSTS = parseTrustedEgressHosts("deals.example.com");
 
 describe("sourceSaysExpired", () => {
   beforeEach(() => {
@@ -24,7 +29,7 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/one"),
+      sourceSaysExpired("https://deals.example.com/one", TRUSTED_SOURCE_HOSTS),
     ).resolves.toBe(true);
   });
 
@@ -37,7 +42,7 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/two"),
+      sourceSaysExpired("https://deals.example.com/two", TRUSTED_SOURCE_HOSTS),
     ).resolves.toBe(false);
   });
 
@@ -53,7 +58,10 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/active"),
+      sourceSaysExpired(
+        "https://deals.example.com/active",
+        TRUSTED_SOURCE_HOSTS,
+      ),
     ).resolves.toBe(false);
   });
 
@@ -69,7 +77,10 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/nested-script"),
+      sourceSaysExpired(
+        "https://deals.example.com/nested-script",
+        TRUSTED_SOURCE_HOSTS,
+      ),
     ).resolves.toBe(false);
   });
 
@@ -85,7 +96,10 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/large"),
+      sourceSaysExpired(
+        "https://deals.example.com/large",
+        TRUSTED_SOURCE_HOSTS,
+      ),
     ).resolves.toBe(false);
   });
 
@@ -98,7 +112,10 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/missing-type"),
+      sourceSaysExpired(
+        "https://deals.example.com/missing-type",
+        TRUSTED_SOURCE_HOSTS,
+      ),
     ).resolves.toBe(false);
   });
 
@@ -111,7 +128,10 @@ describe("sourceSaysExpired", () => {
     );
 
     await expect(
-      sourceSaysExpired("https://deals.example.com/script.js"),
+      sourceSaysExpired(
+        "https://deals.example.com/script.js",
+        TRUSTED_SOURCE_HOSTS,
+      ),
     ).resolves.toBe(false);
   });
 });
