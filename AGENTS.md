@@ -13,7 +13,16 @@
    - Make small, incremental changes. Avoid speculative rewrites or altering established validation pipeline logic.
    - Maintain production reliability and SSRF hardening (`validatedFetch` in `worker/lib/security.ts`).
 
-## 2. Named Constants & System Limits
+## 2. Working Agreement & Operational Defaults
+
+- **Investigate before editing**: Confirm failures or gaps with code and test evidence before modifying files.
+- **Smallest complete change**: Solve the target problem without refactoring, renaming, or reformatting unrelated code.
+- **Never weaken a check to get green**: Fix root causes; never skip, suppress, or dilute failing tests or validation gates.
+- **Verification honesty**: Static linting, schema validation, or fixture tests are not behavioral proof. Explicitly report what ran, what passed, and what was skipped.
+- **Boundaries & Intent**: Act autonomously within the approved scope, but never commit, push, create/merge PRs, or modify git configuration without explicit user intent.
+- **Agentic abstention**: Follow `.agents/skills/agentic-abstention/SKILL.md` when external or environment constraints render further actions infeasible.
+
+## 3. Named Constants & System Limits
 
 | Constant | Value | Enforced By |
 | --- | --- | --- |
@@ -28,7 +37,7 @@
 
 - **Hot Files**: `worker/config.ts`, `worker/index.ts`, `worker/lib/security.ts`, `worker/routes/referrals.ts`, `worker/lib/research-agent/fetcher.ts`, `.github/workflows/*.yml`.
 
-## 3. Production Safeguards & Canonical Infrastructure
+## 4. Production Safeguards & Canonical Infrastructure
 
 - **SSRF Hardening**: All outbound requests must use `validatedFetch` in `worker/lib/security.ts` to enforce DNS/CIDR validation. Never bypass safety checks.
 - **9-Gate Validation Pipeline**: Submissions pass all 9 gates in `worker/validation/pipeline.ts` (`VALIDATION_GATES`). Never weaken or rewrite gates without explicit specification.
@@ -36,7 +45,7 @@
 - **RBAC**: Enforced by `withAuth` in `worker/router/`. `admin` role for `/metrics`, `/api/dora-metrics`, `/dora`, `/api/d1/*`, `/api/status`, feature flags; `user` role for `/api/nlq`, `/api/submit`, deal CRUD.
 - **Banned Patterns**: Hardcoded secrets/tokens, magic numbers, non-null `!` assertions, unused imports, `innerHTML` XSS risks.
 
-## 4. Skill Routing (Load On Demand)
+## 5. Skill Routing (Load On Demand)
 
 Canonical skills reside in `.agents/skills/`. `.claude/`, `.gemini/`, `.qwen/` are symlinks; OpenCode reads the canonical path. Load skills as needed (`skill <name>`) to preserve context.
 
@@ -51,33 +60,33 @@ Canonical skills reside in `.agents/skills/`. `.claude/`, `.gemini/`, `.qwen/` a
 
 - **Skill Hygiene**: Valid YAML frontmatter; required `## Rationalizations` and `## Red Flags` sections; unique content; valid relative links; max 250 lines per `SKILL.md`.
 
-## 5. Process Modes & PEV Loop (Plan-Execute-Verify)
+## 6. Process Modes & PEV Loop (Plan-Execute-Verify)
 
 - **Light Mode** (Small fixes, docs, skills): Plan → Implement → Local verification (`./scripts/quality_gate.sh`) → Atomic commit/PR. Push branch and open/update PR without waiting for explicit prompt.
 - **Full Mode** (Refactors, new subsystems, architecture): Plan spec in `plans/` (`SPEC_TEMPLATE.md`), ADR in `plans/`, GOAP tracking in `plans/GOAP_STATE.md`.
 - **PEV Loop**: Verify assumptions incrementally before each step. Check CI status (`.github/ci-status/ci-status.json`). Fix regressions introduced in current context immediately.
 
-## 6. Verification & Quality Gates
+## 7. Verification & Quality Gates
 
 Run before commit/push: `npm run lint && npm run test:unit && ./scripts/quality_gate.sh`.
 
 - Required CI checks: `CI Summary`, `Type Check`, `Format Check`, `Docs Validation`, `Validation Gates`, `Validate Skills`, `Unit Tests`, `E2E Tests`, `Smoke Tests`, `Security Scan`, `Build`, `Quality Gate`, `CodeQL`, `Codacy Static Code Analysis`, `Workers Builds`.
 - All checks must pass (`SUCCESS`). Resolve all review comments before merging. Never use `--admin` bypass.
 
-## 7. Workflow Commands
+## 8. Workflow Commands
 
 - Tooling setup: `./scripts/agent-toolkit.sh setup` | `./scripts/bootstrap.sh`
 - Quality & Verification: `./scripts/quality_gate.sh` | `./scripts/pev-gates.sh` | `./scripts/skill-eval-check.sh`
 - Local CI rehearsal: `./scripts/run_act_local.sh`
 - Tests & Lint: `npm run lint` | `npm run fmt:fix` | `npm run test:unit` | `npm run test:integration`
 
-## 8. Commit & PR Conventions
+## 9. Commit & PR Conventions
 
 - **Commits**: `type(scope): subject`, lowercase, max 72 chars. No filler/emojis. Example: `fix(security): resolve ssrf validation`.
 - **PRs**: Title `type(scope): description` (max 150 chars); plain text body covering What, Why, Impact (max 1000 chars).
 - **YAML Workflows**: Line 4 (`on:`) must carry `# yamllint disable-line rule:truthy`.
 
-## 9. Post-Task Telemetry
+## 10. Post-Task Telemetry
 
 Upon task completion or abstention, append a JSON record to `.agents/metrics/metrics-{agent}.jsonl` (or `.agents/metrics.jsonl` fallback):
 `{"timestamp": "ISO8601", "agent": "name", "task": "desc", "status": "completed"}`
