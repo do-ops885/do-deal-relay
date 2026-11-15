@@ -1,12 +1,37 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Re-verified:** 2026-10-18
-**Last Updated**: 2026-10-18
-**Version**: 0.19.44
-**Status**: Active — v0.19.44 config-drift resolve: #999 staging KV isolation WIRED (dedicated staging namespaces, prod ids retired from `env.staging`), #998 drift cleaned (compat date 2026-06-13 → 2026-08-22 validated locally, trace sampling 1 → 0.1, D1 prod alias unified, queue comment corrected), #1000 dashboard decision RECORDED (incremental vanilla-JS SPA remains canonical; React epic stays deferred).
+**Re-verified:** 2026-11-15
+**Last Updated**: 2026-11-15
+**Version**: 0.19.45
+**Status**: Active — v0.19.45 production truth-check: #994 owner claims re-verified live ("migrations 1–15 applied, alert + webhook queues exist, Vectorize present"); two P0 production defects fixed (fail-closed egress allowlist unset since PR #1051; plaintext `JWT_SECRET` = public e2e value enabling admin-token forgery); stale `trading212.com` source registry (wildcard patterns, open circuit breaker) reseeded from `DEFAULT_SOURCES`.
 **Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-11-15 Production truth-check — v0.19.45
+
+Read-only audit of the live worker (version `cece4ae2`), D1, KV, queues, and
+Vectorize, followed by two P0 remediations. Register v0.19.45.
+
+| ID | Disposition | Evidence |
+|:---|:---|:---|
+| #994 D1 migrations | ALREADY APPLIED — `schema_migrations` 1–15; 38 tables incl. `alert_subscriptions`, `alert_deliveries`, `ai_act_logs` | `wrangler d1 execute --remote` |
+| #994 queues | ALREADY CREATED — `alert-queue` + `alert-queue-dlq` (2026-10-02), `webhook-queue` + `webhook-queue-dlq` (2026-11-15) | `wrangler queues list` |
+| #994 Vectorize | PRESENT — `deal-embeddings` 768/cosine | `wrangler vectorize list` |
+| P0 egress | FIXED — `validatedFetch` is fail-closed and `OUTBOUND_EGRESS_ALLOWED_HOSTS` was unset in all config scopes, so every outbound fetch (discovery, validation, alerts, webhooks, AI gateway) was rejected | `wrangler.jsonc`; deployed binding now present; `docs/outbound-egress-policy.md` |
+| P0 auth | FIXED — production shipped `JWT_SECRET` as a plaintext var equal to the public e2e value (`e2e-test-jwt-secret-…`); a forged HS256 admin token returned 200 on `/api/status`. Rotated to a random 384-bit value; old-secret token now returns 401 | live probe before/after |
+| Source registry | RESEEDED — registry held one probationary source with wildcard patterns (`/invite/*`) and an open circuit breaker (5 failures), so discovery short-circuited. Reseeded from `DEFAULT_SOURCES` (10 sources, concrete patterns), preserving accumulated trust/counters; breaker cleared | `wrangler kv`; run duration 0.9 s → 5.3 s with 10 sources queried |
+| Run outcomes | STILL 0 DEALS — sources return no parseable referral content via static pattern fetch; `ai_extractor_scraper` remains disabled by default and Reddit credentials are absent. Tracked as a product gap, not an ops gap | `/health` `avg_deals_per_run: 0` |
+
+Owner follow-ups: delete the plaintext `JWT_SECRET` variable in the dashboard,
+then `wrangler secret put JWT_SECRET` (Cloudflare refuses a secret whose name
+is already bound); provider-side seeding/credentials for real ingestion.
+
+Verification: `npm run lint` clean; `npm run test:unit` 3238/3238;
+`./scripts/quality_gate.sh` exit 0; `scripts/ci-workflow-validator.sh` 16/16;
+`scripts/check-launch-readiness.sh` exit 0.
 
 ---
 

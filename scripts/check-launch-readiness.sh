@@ -73,6 +73,19 @@ owner "#994 create queues in every env: wrangler queues create alert-queue (+ al
 owner "#994 run prod seeding + embedding backfill (KV/D1/Vectorize empty since 2026-06-05)"
 owner "#994 confirm Vectorize availability in dashboard; add Reddit app credentials + REDDIT_LIFECYCLE_ENABLED=true (ADR-020)"
 
+section "#994 ops: outbound egress allowlist (validatedFetch is fail-closed)"
+
+EGRESS_ENV_COUNT=$(grep -c '"OUTBOUND_EGRESS_ALLOWED_HOSTS"' wrangler.jsonc || true)
+if [ "${EGRESS_ENV_COUNT:-0}" -eq 4 ]; then
+  pass "#994 OUTBOUND_EGRESS_ALLOWED_HOSTS set for top-level, dev, staging, production"
+else
+  fail "#994 OUTBOUND_EGRESS_ALLOWED_HOSTS must be set in all four config scopes (found ${EGRESS_ENV_COUNT:-0}/4)"
+fi
+check_absent "wrangler.jsonc" 'OUTBOUND_EGRESS_ALLOWED_HOSTS[^,]*\*' "#994 egress allowlist contains no wildcard host"
+check_absent "wrangler.jsonc" 'e2e-test-jwt-secret|ci_test_jwt_secret|do-not-use-in-prod' "#994 no CI/E2E placeholder secret shipped in config"
+check_grep "docs/outbound-egress-policy.md" 'OUTBOUND_EGRESS_ALLOWED_HOSTS' "#994 egress policy documented"
+owner "#994 add any partner/webhook subscriber host to OUTBOUND_EGRESS_ALLOWED_HOSTS before enabling it (fail-closed by design)"
+
 section "#996 otel: external OTLP export (repo-side instrumentation)"
 
 check_grep "wrangler.jsonc" '"traces":' "#996 traces block present"
