@@ -3,6 +3,11 @@
 {
   "name": "do-deal-relay",
   "main": "worker/index.ts",
+  // Upload source maps with each deploy so Workers invocation logs and
+  // exceptions symbolicate back to the original TypeScript files. Maps are
+  // sent to Cloudflare with the uploaded Worker version and are never served
+  // from the Worker or its public routes.
+  "upload_source_maps": true,
   // Newest compatibility date supported by the pinned workerd/miniflare
   // toolchain (older pin 2026-06-13 was stale). Bump only alongside a
   // dependency update and re-run `npm run test:integration`.
