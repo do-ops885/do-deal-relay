@@ -9,9 +9,7 @@ import {
 } from "../lib/storage";
 import { logger } from "../lib/global-logger";
 import { getTrustThreshold } from "../lib/config-utils";
-import { createTimeoutSignal } from "../lib/utils";
 import { parseTrustedEgressHosts } from "../lib/egress-policy";
-import { validatedFetch } from "../lib/security";
 import { getSourceCircuitBreaker } from "../lib/circuit-breaker";
 import {
   parseHTMLContent,
@@ -20,6 +18,12 @@ import {
 } from "./discover-parsers";
 import { calculateAdaptiveBudget, getDefaultBudgets } from "./discovery-budget";
 import { getRewardNumericValue } from "../lib/high-value-notifier";
+import { loadCuratedDeals } from "../lib/curated-deals";
+import { extractDealsWithAI } from "./discovery-ai";
+import {
+  fetchFollowingTrustedRedirects,
+  isAIExtractionEnabled,
+} from "./discovery-fetch";
 
 // ============================================================================
 // Discovery Engine
@@ -116,6 +120,10 @@ export async function discover(
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
+  // AI extraction is fail-closed behind the ai_extractor_scraper flag; resolve
+  // it once per run instead of per fetched page (KV read amortized).
+  const aiExtractionEnabled = await isAIExtractionEnabled(env);
+
   // Validation results are tallied in memory per source and flushed once
   // per source (see discoverFromSource). This collapses one KV GET+PUT
   // pair per URL pattern into one pair per source and removes the lost-update
@@ -169,6 +177,7 @@ export async function discover(
         source,
         effectiveLimit,
         trustedHosts,
+        aiExtractionEnabled,
       );
       deals.push(...result.deals);
       errors.push(...result.errors);
@@ -182,6 +191,18 @@ export async function discover(
         error: (error as Error).message,
       });
     }
+  }
+
+  // Operator-curated candidates enter through the same normalize → gates →
+  // publish path as scraped deals; this only adds candidates.
+  try {
+    const curated = await loadCuratedDeals(env, sources);
+    deals.push(...curated);
+  } catch (error) {
+    errors.push({
+      url: "curated:deals",
+      error: (error as Error).message,
+    });
   }
 
   // Fast pre-filter: cheap checks before expensive validation.
@@ -214,6 +235,7 @@ async function discoverFromSource(
   source: SourceConfig,
   limit: number,
   trustedHosts: ReadonlySet<string>,
+  aiExtractionEnabled: boolean,
 ): Promise<DiscoveryResult> {
   const breaker = getSourceCircuitBreaker(source.domain, env);
   const breakerState = await breaker.getState();
@@ -229,7 +251,9 @@ async function discoverFromSource(
     source,
     limit,
     trustedHosts,
+    aiExtractionEnabled,
     (ok) => tallyValidation(validationTally, source.domain, ok),
+    env,
   );
 
   // All pattern batches for this source are done: persist tallied validation
@@ -267,7 +291,9 @@ async function runPatternBatches(
   source: SourceConfig,
   limit: number,
   trustedHosts: ReadonlySet<string>,
+  aiExtractionEnabled = false,
   onPattern?: (ok: boolean) => void,
+  env?: Env,
 ): Promise<DiscoveryResult> {
   const deals: Deal[] = [];
   const errors: Array<{ url: string; error: string }> = [];
@@ -285,7 +311,13 @@ async function runPatternBatches(
 
     const results = await Promise.allSettled(
       batch.map(async (pattern) => {
-        const outcome = await fetchPatternDeals(source, pattern, trustedHosts);
+        const outcome = await fetchPatternDeals(
+          source,
+          pattern,
+          trustedHosts,
+          aiExtractionEnabled,
+          env,
+        );
         onPattern?.(outcome.ok);
         return {
           patternDeals: outcome.patternDeals,
@@ -323,29 +355,13 @@ async function fetchPatternDeals(
   source: SourceConfig,
   pattern: string,
   trustedHosts: ReadonlySet<string>,
+  aiExtractionEnabled: boolean,
+  env?: Env,
 ): Promise<PatternFetchOutcome> {
   try {
     const url = `https://${source.domain}${pattern}`;
 
-    const { signal, cleanup } = createTimeoutSignal(CONFIG.FETCH_TIMEOUT_MS);
-    let response;
-    try {
-      response = await validatedFetch(
-        url,
-        {
-          method: "GET",
-          headers: {
-            "User-Agent":
-              "DealDiscoveryBot/1.0 (AI Agent; Autonomous Discovery)",
-            Accept: "text/html,application/json",
-          },
-          signal,
-        },
-        trustedHosts,
-      );
-    } finally {
-      cleanup();
-    }
+    const response = await fetchFollowingTrustedRedirects(url, trustedHosts);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -368,9 +384,15 @@ async function fetchPatternDeals(
       throw new Error("Payload exceeds size limit");
     }
 
-    const extracted: ExtractedDeal[] = contentType.includes("application/json")
+    let extracted: ExtractedDeal[] = contentType.includes("application/json")
       ? parseJSONContent(content, source)
       : parseHTMLContent(content, source);
+
+    // Fallback: JS-rendered shells carry no static selectors. When the flag is
+    // on, ask Workers AI to read the page instead of giving up.
+    if (extracted.length === 0 && aiExtractionEnabled && env) {
+      extracted = await extractDealsWithAI(env, content, source);
+    }
 
     const patternDeals: Deal[] = [];
     const patternErrors: Array<{ url: string; error: string }> = [];

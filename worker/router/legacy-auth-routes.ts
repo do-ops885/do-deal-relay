@@ -19,6 +19,7 @@ import {
 import { handleListFlags, handleUpdateFlag } from "../routes/admin/flags";
 import { handleCiStatus } from "../routes/admin/ci-status";
 import { handleReconcileReferrals } from "../routes/admin/referrals";
+import { handleCuratedDeals } from "../routes/admin/curated-deals";
 
 /**
  * Health, auth, and admin identity routes extracted from legacy-routes.ts
@@ -151,6 +152,21 @@ export async function tryHandleAdminKeyRoutes(
   if (path === "/api/admin/referrals/reconcile" && request.method === "POST") {
     return withAuth(request, env, "admin", () =>
       handleReconcileReferrals(request, env),
+    );
+  }
+
+  // Operator-curated referral codes: candidates for the next discovery run.
+  if (
+    path === "/api/admin/curated-deals" &&
+    (request.method === "GET" || request.method === "POST")
+  ) {
+    if (request.method === "POST") {
+      const bodyTooLarge = await enforceBodyLimit(request, 64 * 1024);
+      if (bodyTooLarge.response) return bodyTooLarge.response;
+      request = bodyTooLarge.request;
+    }
+    return withAuth(request, env, "admin", () =>
+      handleCuratedDeals(request, env),
     );
   }
 

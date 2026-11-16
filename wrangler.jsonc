@@ -125,7 +125,7 @@
     // which silently stops discovery, validation, alerts, and webhooks.
     // Only add hosts the project owns or is contracted to call; webhook
     // subscriber destinations must be added here by the operator.
-    "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
+    "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.binance.com,www.coinbase.com,www.paypal.com,www.reddit.com,www.revolut.com,www.trading212.com,www.webull.com",
   },
   "secrets": {
     "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -321,7 +321,7 @@
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
         "USE_D1_READS": "false",
-        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.binance.com,www.coinbase.com,www.paypal.com,www.reddit.com,www.revolut.com,www.trading212.com,www.webull.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -379,7 +379,7 @@
         "MCP_PROTOCOL_VERSION": "2025-11-25",
         "MCP_RATE_LIMIT_PER_MINUTE": "120",
         "USE_D1_READS": "false",
-        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.binance.com,www.coinbase.com,www.paypal.com,www.reddit.com,www.revolut.com,www.trading212.com,www.webull.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
@@ -480,7 +480,7 @@
         "MCP_RATE_LIMIT_PER_MINUTE": "60",
         "USE_D1_READS": "false",
         "ALLOWED_ORIGINS": "https://do-deal-relay.pages.dev,https://do-deal-relay.com,https://www.do-deal-relay.com",
-        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.reddit.com",
+        "OUTBOUND_EGRESS_ALLOWED_HOSTS": "api.github.com,api.producthunt.com,api.telegram.org,binance.com,coinbase.com,crypto.com,discord.com,discordapp.com,gateway.ai.cloudflare.com,hn.algolia.com,news.ycombinator.com,oauth.reddit.com,paypal.com,public.com,reddit.com,revolut.com,robinhood.com,trading212.com,webull.com,wise.com,www.binance.com,www.coinbase.com,www.paypal.com,www.reddit.com,www.revolut.com,www.trading212.com,www.webull.com",
       },
       "secrets": {
         "required": ["WEBHOOK_SECRET", "EMAIL_WEBHOOK_SECRET", "JWT_SECRET"],
