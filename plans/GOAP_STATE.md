@@ -1,12 +1,46 @@
 # GOAP State: Comprehensive Improvement Inventory
 
 **Generated**: 2026-07-06
-**Re-verified:** 2026-11-15
-**Last Updated**: 2026-11-15
-**Version**: 0.19.45
-**Status**: Active — v0.19.45 production truth-check: #994 owner claims re-verified live ("migrations 1–15 applied, alert + webhook queues exist, Vectorize present"); two P0 production defects fixed (fail-closed egress allowlist unset since PR #1051; plaintext `JWT_SECRET` = public e2e value enabling admin-token forgery); stale `trading212.com` source registry (wildcard patterns, open circuit breaker) reseeded from `DEFAULT_SOURCES`.
-**Note**: GOAP Version tracks this register only. System version is solely `VERSION` (0.1.8) per AGENTS.md single-source rule.
+**Re-verified:** 2026-11-16
+**Last Updated**: 2026-11-16
+**Version**: 0.19.46
+**Status**: Active — v0.19.46 closes #1064's implementation gap: discovery had no path to a published deal. Option **C** (operator-curated import) is the deterministic launch unblock; option **B** (redirect following + flag-gated AI extraction) improves organic discovery. Published-deal acceptance still requires real referral codes from the owner.
+**Note**: GOAP Version tracks this register only. System version is solely `VERSION` per AGENTS.md single-source rule.
 **Sources**: [Codebase Audit (04/04)](../reports/analysis/codebase-audit-2026-04-04.md), [Swarm Analysis (04/04)](../reports/analysis/swarm-missing-implementations-2026-04-04.md), [Feature Gap Analysis](../reports/analysis/feature-gap-analysis.md), [ADR-015](ADR-015-harness-cloudflare-2026-best-practices.md), [ADR-024](ADR-024-skill-version-independence.md)
+
+---
+
+## 2026-11-16 Ingestion unblock — v0.19.46 (#1064)
+
+**Decision**: implement both options from #1064, with **C** as the launch
+unblock and **B** as the organic path. Neither option bypasses a gate:
+curated codes and AI-extracted codes are discovery *candidates* only.
+
+| Path | Mechanism | Guardrails |
+|:---|:---|:---|
+| C — curated import | `POST /api/admin/curated-deals` (admin auth) stores codes in `DEALS_SOURCES` key `curated:deals`; every `discover()` run appends them as candidates before the fast pre-filter | zod schema, https + same-domain URL, tracking params stripped, gate-2-breaking URLs rejected at import time; then normalize → dedupe → 9 gates → score → stage → publish unchanged |
+| B1 — redirects | discovery follows ≤2 redirects manually, each hop re-entering `validatedFetch` | egress allowlist, DNS/private-IP checks, and Location validation re-run per hop |
+| B2 — AI extraction | fallback when static parsing yields nothing | fail-closed behind `ai_extractor_scraper` (default off), confidence ≥ `RESEARCH_MIN_CONFIDENCE`, code regex, off-domain model URLs replaced with `https://<domain>/invite/<CODE>` |
+
+New/changed files: `worker/lib/curated-deals.ts`,
+`worker/pipeline/discovery-fetch.ts`, `worker/pipeline/discovery-ai.ts`,
+`worker/pipeline/discover.ts` (curated merge + fallback wiring, still < 500
+lines), `worker/routes/admin/curated-deals.ts`,
+`worker/router/legacy-auth-routes.ts`, `wrangler.jsonc` (egress allowlist
+21 → 27 exact hosts, `www.` variants, all four config scopes).
+
+Evidence: `tests/unit/curated-deals.test.ts` (import canonicalization, upsert,
+rejections, 9-gate pass, blocked-domain skip) and
+`tests/unit/discover.fallbacks.test.ts` (curated merge with all sources
+failing, redirect follow + cap, AI on/off, off-domain URL rewrite);
+`npm run test:unit` 3252 passed, `npm run lint` clean, `quality_gate.sh`
+exit 0.
+
+**Acceptance status**: implementation complete; the published-deal criterion
+(≥1 published through unchanged gates, `/health` `snapshot_valid: true`,
+`avg_deals_per_run > 0`) is **pending real referral codes**. No code is
+fabricated: the owner must supply verified codes, then
+`POST /api/admin/curated-deals` + `POST /api/discover`.
 
 ---
 
