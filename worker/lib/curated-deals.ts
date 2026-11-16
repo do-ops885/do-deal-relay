@@ -236,7 +236,9 @@ export async function importCuratedDeals(
 ): Promise<CuratedImportSummary> {
   const existing = await readCuratedDeals(env);
   const merged = new Map<string, CuratedDealInput>();
-  const keyOf = (entry: CuratedDealInput) => `${entry.domain}:${entry.code}`;
+  function keyOf(entry: CuratedDealInput): string {
+    return `${entry.domain}:${entry.code}`;
+  }
   for (const entry of existing) merged.set(keyOf(entry), entry);
 
   const rejected: CuratedImportRejection[] = [];

@@ -21,15 +21,16 @@ type KVLike = {
   list: () => Promise<{ keys: { name: string }[] }>;
 };
 
-const source = (overrides: Partial<SourceConfig> = {}): SourceConfig => ({
-  domain: "example.com",
-  url_patterns: ["/invite"],
-  trust_initial: 0.7,
-  classification: "probationary",
-  active: true,
-  ...overrides,
-});
-
+function source(overrides: Partial<SourceConfig> = {}): SourceConfig {
+  return {
+    domain: "example.com",
+    url_patterns: ["/invite"],
+    trust_initial: 0.7,
+    classification: "probationary",
+    active: true,
+    ...overrides,
+  };
+}
 const ctx: PipelineContext = {
   run_id: "discover-fallback-run",
   trace_id: "discover-fallback-trace",
@@ -135,7 +136,9 @@ function redirectTo(location: string): Response {
 }
 
 describe("discovery fallbacks", () => {
-  const mockFetch = () => vi.mocked(validatedFetch);
+  function mockFetch() {
+    return vi.mocked(validatedFetch);
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
