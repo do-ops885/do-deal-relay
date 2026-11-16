@@ -57,7 +57,7 @@
     "js-yaml": "^5.5.0",
     "markdownlint-cli": "^0.50.0",
     "miniflare": "4.20260730.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.12",
     "wrangler": "^4.158.0"
